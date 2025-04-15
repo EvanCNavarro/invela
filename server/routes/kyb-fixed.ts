@@ -1,0 +1,569 @@
+import { Router } from 'express';
+import { and, eq, sql } from 'drizzle-orm';
+import { db } from '@db';
+import { kybFields, kybResponses, tasks, companies, files } from '@db/schema';
+import { requireAuth } from '../middleware/auth';
+import Logger from '../utils/logger';
+import fs from 'fs';
+import path from 'path';
+
+const router = Router();
+const logger = new Logger('KYB');
+
+// Define task status enum for clarity
+enum TaskStatus {
+  NOT_STARTED = 'not_started',
+  IN_PROGRESS = 'in_progress',
+  READY_FOR_SUBMISSION = 'ready_for_submission',
+  SUBMITTED = 'submitted',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  CANCELLED = 'cancelled'
+}
+
+// Define response statuses
+enum ResponseStatus {
+  EMPTY = 'EMPTY',
+  COMPLETE = 'COMPLETE',
+  INVALID = 'INVALID'
+}
+
+enum SuggestionStatus {
+  PENDING = 'pending',
+  GENERATED = 'generated',
+  FAILED = 'failed'
+}
+
+// Helper function to convert responses to CSV format
+function convertResponsesToCSV(fields: any[], formData: any) {
+  let csvLines = ['Field,Label,Question,Response'];
+  
+  for (const field of fields) {
+    // Get response data, with fallback to empty string
+    const response = formData[field.field_key] || '';
+    
+    // Convert any objects/arrays to string format
+    const safeResponse = typeof response === 'object' 
+      ? JSON.stringify(response) 
+      : String(response);
+    
+    // Escape CSV special characters
+    const escapedResponse = safeResponse.replace(/"/g, '""');
+    
+    // Create CSV line with quotes around each field to handle commas, newlines, etc.
+    csvLines.push(`${field.field_key},"${field.display_name}","${field.question || ''}","${escapedResponse}"`);
+  }
+  
+  return csvLines.join('\n');
+}
+
+// Debug logging helper functions
+function logTaskDebug(message: string, task: any) {
+  console.log(`[KYB Debug] ${message}:`, {
+    id: task.id,
+    status: task.status,
+    progress: task.progress,
+    metadata: Object.keys(task.metadata || {}),
+    timestamp: new Date().toISOString()
+  });
+}
+
+function logResponseDebug(message: string, responses: any[]) {
+  console.log(`[KYB Debug] ${message}:`, {
+    responseCount: responses.length,
+    fields: responses.slice(0, 5).map(r => ({ 
+      field: r.field_key || r.field_id, 
+      status: r.status,
+      hasValue: !!r.response_value
+    })),
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Get KYB fields for form rendering
+router.get('/api/kyb/fields', async (req, res) => {
+  try {
+    // First sanity check: Verify that kyb_fields table exists
+    try {
+      const fieldCheck = await db.select({ count: sql`count(*)` }).from(kybFields);
+      console.log('[KYB API DIAGNOSTIC] Schema check passed: kyb_fields table exists');
+    } catch (schemaError) {
+      console.error('[KYB API DIAGNOSTIC] Schema check failed:', {
+        error: schemaError instanceof Error ? schemaError.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      return res.status(500).json({ error: 'Database schema error', details: 'KYB fields table may not exist' });
+    }
+    
+    // Get all field definitions
+    const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+    
+    console.log('[KYB API DIAGNOSTIC] Field count:', fields.length);
+    
+    // Provide detailed logging
+    if (fields.length > 0) {
+      console.log('[KYB API DIAGNOSTIC] Fields fetched successfully:', {
+        count: fields.length,
+        fieldKeys: fields.map(f => f.field_key),
+        groups: [...new Set(fields.map(f => f.group))],
+        sampleField: fields[0]
+      });
+    } else {
+      console.error('[KYB API DIAGNOSTIC] No KYB fields found in database');
+    }
+
+    return res.json({ fields });
+  } catch (error) {
+    console.error('Error fetching KYB fields:', error);
+    return res.status(500).json({ error: 'Failed to fetch KYB fields' });
+  }
+});
+
+// Get form progress for a specific task
+router.get('/api/kyb/progress/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    // Get task info including status and any saved progress
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    console.log('[KYB API Debug] Loading progress for task:', taskId);
+    logTaskDebug('Retrieved task', task);
+    
+    // Get all responses for this task
+    const responses = await db.select({
+      field_key: kybFields.field_key,
+      response_value: kybResponses.response_value,
+      status: kybResponses.status
+    })
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
+    
+    logResponseDebug('Retrieved responses', responses);
+      
+    // Convert responses to a form data object
+    const formData: Record<string, any> = {};
+    for (const response of responses) {
+      // Add this response to the form data
+      formData[response.field_key] = response.response_value;
+    }
+    
+    console.log('[KYB API Debug] Retrieved task data:', {
+      id: task.id,
+      responseCount: responses.length,
+      progress: task.progress,
+      status: task.status,
+      formDataKeys: Object.keys(formData),
+      formData
+    });
+
+    // Return saved form data and progress
+    res.json({
+      formData,
+      progress: Math.min(task.progress || 0, 100)
+    });
+  } catch (error) {
+    console.error('[KYB API Debug] Error loading progress:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ error: 'Failed to load progress' });
+  }
+});
+
+// Save KYB form data
+router.post('/api/kyb/save', requireAuth, async (req, res) => {
+  try {
+    const { taskId, formData, fileName } = req.body;
+    
+    if (!taskId) {
+      return res.status(400).json({ error: 'Task ID is required' });
+    }
+    
+    if (!formData) {
+      return res.status(400).json({ error: 'Form data is required' });
+    }
+    
+    // Get user ID from session
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Get all fields and their definitions
+    const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+    
+    if (fields.length === 0) {
+      return res.status(500).json({ error: 'No KYB fields defined' });
+    }
+    
+    // Check if all required fields are completed
+    const requiredFields = fields.filter(field => field.required);
+    
+    for (const field of requiredFields) {
+      if (!formData[field.field_key] && formData[field.field_key] !== false) {
+        return res.status(400).json({ 
+          error: 'Missing required field',
+          field: field.field_key,
+          display_name: field.display_name 
+        });
+      }
+    }
+    
+    // Get task to verify ownership and get company ID
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Verify user has access to this task (task owner, assigned to user, or same company)
+    if (task.created_by !== userId && task.assigned_to !== userId && task.company_id !== req.user?.company_id) {
+      return res.status(403).json({ error: 'You do not have permission to modify this task' });
+    }
+    
+    // Convert form data to CSV for storage
+    logger.info('Converting KYB fields to CSV', {
+      fieldCount: fields.length,
+      formDataKeys: Object.keys(formData).length,
+      sampleKeys: fields.slice(0, 5).map(f => f.field_key)
+    });
+    
+    const csvData = convertResponsesToCSV(fields, formData);
+    
+    // Setup timestamp for all operations
+    const timestamp = new Date();
+    
+    // Track warnings during the process
+    const warnings: string[] = [];
+    
+    // Save CSV file to disk first
+    const timestampStr = timestamp.getTime();
+    const csvFileName = `kyb_${taskId}_${timestampStr}.csv`;
+    const uploadsDir = './uploads';
+    
+    // Make sure uploads directory exists
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // Write CSV to file
+    fs.writeFileSync(`${uploadsDir}/${csvFileName}`, csvData);
+    logger.info(`Saved CSV file to ${uploadsDir}/${csvFileName}`);
+    
+    // Variable to store the created file ID
+    let fileId: number | null = null;
+    
+    try {
+      // Use a single atomic transaction for all database operations
+      fileId = await db.transaction(async (tx) => {
+        logger.info('Starting transaction for KYB submission', { taskId });
+        
+        // 1. Create file record in database
+        const [fileRecord] = await tx.insert(files)
+          .values({
+            name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
+            size: Buffer.from(csvData).length,
+            type: 'text/csv',
+            path: `/uploads/${csvFileName}`,
+            status: 'active',
+            user_id: task.created_by,
+            company_id: task.company_id,
+            document_category: 'kyb',
+            classification_status: 'processed',
+            classification_confidence: 1.0,
+            created_at: timestamp,
+            updated_at: timestamp,
+            upload_time: timestamp,
+            download_count: 0,
+            version: 1.0,
+            metadata: {
+              taskId,
+              taskType: 'kyb',
+              formVersion: '1.0',
+              submissionDate: timestamp.toISOString(),
+              fields: fields.map(f => f.field_key)
+            }
+          })
+          .returning();
+          
+        logger.info('File record created in transaction', { 
+          fileId: fileRecord.id,
+          taskId 
+        });
+        
+        // 2. Update company available tabs if needed
+        const [company] = await tx.select()
+          .from(companies)
+          .where(eq(companies.id, task.company_id));
+          
+        if (company) {
+          // Add file-vault to available tabs if not already present
+          const currentTabs = company.available_tabs || ['task-center'];
+          if (!currentTabs.includes('file-vault')) {
+            await tx.update(companies)
+              .set({
+                available_tabs: [...currentTabs, 'file-vault'],
+                updated_at: timestamp
+              })
+              .where(eq(companies.id, task.company_id));
+          }
+        }
+        
+        // 3. Update task metadata and status
+        await tx.update(tasks)
+          .set({
+            status: TaskStatus.SUBMITTED,
+            progress: 100,
+            updated_at: timestamp,
+            metadata: {
+              ...task.metadata,
+              kybFormFile: fileRecord.id,
+              submissionDate: timestamp.toISOString(),
+              formVersion: '1.0'
+            }
+          })
+          .where(eq(tasks.id, taskId));
+          
+        // 4. Save all form responses
+        for (const field of fields) {
+          const value = formData[field.field_key];
+          const status = value ? ResponseStatus.COMPLETE : ResponseStatus.EMPTY;
+          
+          try {
+            // First try to insert
+            await tx.insert(kybResponses)
+              .values({
+                task_id: taskId,
+                field_id: field.id,
+                response_value: value || '',
+                status,
+                version: 1,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+          } catch (err) {
+            const error = err as Error;
+            if (error.message.includes('duplicate key value violates unique constraint')) {
+              // If duplicate, update instead
+              await tx.update(kybResponses)
+                .set({
+                  response_value: value || '',
+                  status,
+                  version: sql`${kybResponses.version} + 1`,
+                  updated_at: timestamp
+                })
+                .where(
+                  and(
+                    eq(kybResponses.task_id, taskId),
+                    eq(kybResponses.field_id, field.id)
+                  )
+                );
+              warnings.push(`Updated existing response for field: ${field.field_key}`);
+            } else {
+              // For non-duplicate errors, we need to stop the entire transaction
+              throw error;
+            }
+          }
+        }
+        
+        // Transaction successful, return the file ID
+        return fileRecord.id;
+      });
+      
+      // Success - transaction completed
+      logger.info('KYB form complete and responses saved successfully', {
+        taskId,
+        fileId,
+        responseCount: fields.length,
+        warningCount: warnings.length
+      });
+      
+      // Return success response with file ID and any warnings
+      return res.json({
+        success: true,
+        fileId,
+        warnings: warnings.length > 0 ? warnings : undefined
+      });
+      
+    } catch (txError) {
+      // Transaction error handling
+      logger.error('Transaction failed during KYB submission', {
+        error: txError instanceof Error ? txError.message : 'Unknown error',
+        stack: txError instanceof Error ? txError.stack : undefined,
+        taskId
+      });
+      
+      return res.status(500).json({
+        error: 'Transaction failed',
+        details: txError instanceof Error ? txError.message : 'Failed to complete the submission process'
+      });
+    }
+    
+  } catch (error) {
+    // Overall request error handling
+    console.error('[KYB API Debug] Error in KYB form submission', {
+      errorType: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      requestHeaders: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookiePresent: !!req.headers.cookie
+      },
+      sessionID: req.sessionID,
+      authenticatedStatus: req.isAuthenticated?.() || false,
+      userPresent: !!req.user,
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.error('Failed during KYB form submission', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      taskId: req.body?.taskId
+    });
+    
+    // Provide more user-friendly error messages
+    let errorMessage = 'There was a problem submitting your form.';
+    let errorDetails = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('user_id') || error.message.includes('created_by')) {
+        errorMessage = 'Authentication issue detected.';
+        errorDetails = 'Please try signing out and back in, then submit again.';
+      } else if (error.message.includes('database') || error.message.includes('connection')) {
+        errorMessage = 'Database connection issue.';
+        errorDetails = 'Our systems are experiencing temporary difficulties. Please try again in a few moments.';
+      } else if (error.message.includes('constraint') || error.message.includes('duplicate')) {
+        errorMessage = 'Data validation error.';
+        errorDetails = 'Some of your information could not be processed. Please review and try again.';
+      }
+    }
+    
+    // Set appropriate status code based on error type
+    const statusCode = 
+      error instanceof Error && error.message.includes('Unauthorized') ? 401 :
+      error instanceof Error && error.message.includes('not found') ? 404 : 
+      error instanceof Error && error.message.includes('duplicate key') ? 409 : 500;
+    
+    // Send more detailed error response
+    return res.status(statusCode).json({
+      error: errorMessage,
+      details: errorDetails,
+      statusCode,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Export KYB data to CSV
+router.get('/api/kyb/export/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    // Get task data
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Get all KYB fields with their group information
+    const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+
+    // Get all KYB responses for this task
+    const responses = await db.select({
+      response_value: kybResponses.response_value,
+      field_key: kybFields.field_key
+    })
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
+
+    // Transform responses into form data
+    const formData: Record<string, any> = {};
+    for (const response of responses) {
+      // Always include the field in formData with empty string if null
+      formData[response.field_key] = response.response_value || '';
+    }
+
+    // Convert form data to CSV
+    const csvData = convertResponsesToCSV(fields, formData);
+
+    // Set response headers
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="kyb_form_${taskId}.csv"`);
+    
+    // Send CSV data
+    res.send(csvData);
+    
+  } catch (error) {
+    console.error('Error exporting KYB data:', error);
+    res.status(500).json({
+      error: 'Failed to export KYB data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get the summary of all KYB progress in the system
+router.get('/api/kyb/summary', async (req, res) => {
+  try {
+    if (!req.isAuthenticated || !req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get count of KYB tasks by status
+    const taskStatusSummary = await db.select({
+      status: tasks.status,
+      count: sql`count(${tasks.id})`
+    })
+      .from(tasks)
+      .where(eq(tasks.task_type, 'KYB'))
+      .groupBy(tasks.status);
+
+    // Get count of KYB responses by status
+    const responseStatusSummary = await db.select({
+      status: kybResponses.status,
+      count: sql`count(${kybResponses.id})`
+    })
+      .from(kybResponses)
+      .groupBy(kybResponses.status);
+
+    // Get average progress of all KYB tasks
+    const [progressSummary] = await db.select({
+      avgProgress: sql`avg(${tasks.progress})`,
+      minProgress: sql`min(${tasks.progress})`,
+      maxProgress: sql`max(${tasks.progress})`
+    })
+      .from(tasks)
+      .where(eq(tasks.task_type, 'KYB'));
+
+    res.json({
+      taskStatusSummary,
+      responseStatusSummary,
+      progressSummary
+    });
+  } catch (error) {
+    console.error('Error getting KYB summary:', error);
+    res.status(500).json({
+      error: 'Failed to get KYB summary',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+export default router;
