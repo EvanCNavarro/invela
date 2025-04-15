@@ -372,6 +372,16 @@ async function processSecuritySubmission(req, res, task, formData, fileName) {
     const safeFileName = fileName || `security_assessment_${task.id}_${timestamp.toISOString().replace(/:/g, '')}.csv`;
     
     // Save the file to the database
+    const userId = req.user?.id || task.created_by;
+    if (!userId) {
+      logger.error('Unable to determine user ID for file creation', {
+        taskId: task.id,
+        userIdFromRequest: req.user?.id,
+        userIdFromTask: task.created_by,
+      });
+      throw new Error('No valid user ID available for file creation');
+    }
+    
     const [fileId] = await db.insert(files)
       .values({
         name: safeFileName,
@@ -382,7 +392,8 @@ async function processSecuritySubmission(req, res, task, formData, fileName) {
         size: Buffer.from(csvData).length,
         version: 1,
         company_id: task.company_id,
-        created_by: req.user?.id || task.created_by || 0, // Ensure we always have a user ID
+        user_id: userId, // Set this explicitly from authenticated user or task creator
+        created_by: userId, // Keep consistency with user_id
         created_at: timestamp,
         updated_at: timestamp,
         metadata: {
@@ -520,11 +531,21 @@ router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
     
     // Create file in the file vault
     const fileName = `security_assessment_${taskId}_${new Date().toISOString()}.csv`;
+    const userId = req.user?.id || task.created_by;
+    if (!userId) {
+      logger.error('Unable to determine user ID for file creation', {
+        taskId,
+        userIdFromRequest: req.user?.id,
+        userIdFromTask: task.created_by,
+      });
+      throw new Error('No valid user ID available for file creation');
+    }
+    
     const fileCreationResult = await FileCreationService.createFile({
       name: fileName,
       content: csvData,
       type: 'text/csv',
-      userId: req.user?.id || task.created_by || 0, // Ensure we always have a user ID
+      userId: userId, // Use the validated userId
       companyId: task.company_id,
       metadata: {
         taskId,
