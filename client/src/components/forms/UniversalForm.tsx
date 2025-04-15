@@ -362,21 +362,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
-  // Very simplified effect to just register the agreement field
-  // No need for timeouts or refs since we use defaultChecked={true}
+  // Effect to initialize agreement field and log detailed user info
   useEffect(() => {
     if (!form) return;
     
     // Register the field with the form if needed
     if (!form.getValues().hasOwnProperty("agreement_confirmation")) {
       form.register("agreement_confirmation");
-      // Set initial value to true
+      // Set initial value to true - this will now work properly with our controlled component
       form.setValue("agreement_confirmation", true, { 
         shouldValidate: true,
         shouldDirty: false,
       });
+      console.log("Agreement confirmation initialized to TRUE");
     }
   }, [form]);
+  
+  // Debug effect to show complete user data
+  useEffect(() => {
+    if (user) {
+      console.log("User data:", {
+        id: user.id, 
+        email: user.email,
+        full_name: user.full_name || 'Not available',
+        first_name: user.first_name || 'Not available',
+        last_name: user.last_name || 'Not available',
+        name: user.name || 'Not available',
+        role: user.role || 'Not available',
+        allFields: Object.keys(user)
+      });
+    }
+  }, [user]);
   
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
@@ -676,9 +692,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   name="agreement_confirmation"
                                   type="checkbox"
                                   className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                  defaultChecked={true}
+                                  checked={form.getValues("agreement_confirmation") === true}
                                   onChange={(e) => {
-                                    // Only use the onChange handler - much more reliable
                                     form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
                                   }}
                                 />
@@ -688,7 +703,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.full_name ? user.full_name : (user?.email ? user.email.split('@')[0] : 'the authorized representative')}</span>, in my capacity 
+                                  I, <span className="font-semibold">{
+                                    // Try multiple ways to get the user's name in order of preference
+                                    user?.full_name || 
+                                    (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : null) ||
+                                    user?.name ||
+                                    (user?.email ? user.email.split('@')[0] : 'the authorized representative')
+                                  }</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
