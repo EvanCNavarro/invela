@@ -620,6 +620,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: 'Please wait while we process your submission...',
       });
       
+      // Generate a proper filename for the CSV export
+      const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
+      const cleanTitle = formTitle.toLowerCase().replace(/\s+/g, '_');
+      const fileName = `${cleanTitle}_form_${taskId}_${timestamp}.csv`;
+      logger.info(`Generated filename for export: ${fileName}`);
+      
+      // Add filename to the form data
+      data.fileName = fileName;
+      
       // First save the current progress
       await saveProgress();
       
