@@ -2,8 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 
 export interface User {
   id: number;
-  name: string;
   email: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;
   role?: string;
   preferences?: Record<string, any>;
 }
