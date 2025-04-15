@@ -9,6 +9,7 @@ import {
   FormControl,
   FormDescription
 } from '@/components/ui/form';
+import { Controller } from 'react-hook-form';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Accordion,
@@ -362,20 +363,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
-  // Effect to initialize agreement field and log detailed user info
+  // Register the agreement confirmation field once when the form is created
   useEffect(() => {
     if (!form) return;
     
-    // Register the field with the form if needed
-    if (!form.getValues().hasOwnProperty("agreement_confirmation")) {
-      form.register("agreement_confirmation");
-      // Set initial value to true - this will now work properly with our controlled component
+    // Register the field with form and set initial value to true
+    form.register("agreement_confirmation");
+    
+    // Make sure this runs only once on form initialization
+    const timer = setTimeout(() => {
       form.setValue("agreement_confirmation", true, { 
         shouldValidate: true,
         shouldDirty: false,
       });
       console.log("Agreement confirmation initialized to TRUE");
-    }
+    }, 0);
+    
+    return () => clearTimeout(timer);
   }, [form]);
   
   // Debug effect to show complete user data
@@ -675,27 +679,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           <div 
                             onClick={() => {
                               // Toggle when clicking anywhere in the block
-                              const newValue = !form.getValues("agreement_confirmation");
-                              form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                              const currentValue = form.getValues("agreement_confirmation");
+                              form.setValue("agreement_confirmation", !currentValue, { shouldValidate: true });
                             }}
                             className={cn(
                               "border rounded-md p-4 cursor-pointer transition-colors",
-                              form.getValues("agreement_confirmation") 
-                                ? "bg-blue-25 border-blue-100" // Very light blue background when checked (even lighter)
+                              form.watch("agreement_confirmation") 
+                                ? "bg-blue-25 border-blue-100" // Very light blue background when checked
                                 : "bg-white hover:bg-gray-50"
                             )}
                           >
                             <div className="flex items-start gap-3">
                               <div className="flex-shrink-0 mt-1">
-                                <input
-                                  id="agreement_confirmation"
+                                <Controller
                                   name="agreement_confirmation"
-                                  type="checkbox"
-                                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                  checked={form.getValues("agreement_confirmation") === true}
-                                  onChange={(e) => {
-                                    form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
-                                  }}
+                                  control={form.control}
+                                  render={({ field }) => (
+                                    <input
+                                      id="agreement_confirmation"
+                                      type="checkbox"
+                                      className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                      checked={field.value === true}
+                                      onChange={(e) => field.onChange(e.target.checked)}
+                                    />
+                                  )}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -794,7 +801,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               <Button 
                                 type="button"
                                 onClick={form.handleSubmit(handleSubmit)}
-                                disabled={!form.getValues("agreement_confirmation")}
+                                disabled={!form.watch("agreement_confirmation")}
                                 className="flex items-center gap-1"
                               >
                                 Submit
@@ -802,7 +809,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               </Button>
                             </div>
                           </TooltipTrigger>
-                          {!form.getValues("agreement_confirmation") && (
+                          {!form.watch("agreement_confirmation") && (
                             <TooltipContent side="top" className="max-w-[200px] p-3 text-sm leading-snug">
                               <p>Please check the Submission Consent box to enable form submission.</p>
                             </TooltipContent>
