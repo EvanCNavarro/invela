@@ -23,22 +23,65 @@ enum SuggestionStatus {
 
 // Helper function to convert KYB form responses to CSV
 function convertResponsesToCSV(fields: any[], formData: any) {
-  const csvRows = [];
-  const headers = ['Field', 'Label', 'Question', 'Response'];
-  csvRows.push(headers.join(','));
+  try {
+    const csvRows = [];
+    const headers = ['Field', 'Label', 'Question', 'Response'];
+    csvRows.push(headers.join(','));
 
-  for (const field of fields) {
-    const value = formData[field.field_key] || '';
-    const row = [
-      field.field_key,
-      field.display_name,
-      (field.question || '').replace(/,/g, ''),
-      (value || '').replace(/,/g, '')
-    ];
-    csvRows.push(row.join(','));
+    logger.info('Converting KYB fields to CSV', { 
+      fieldCount: fields.length, 
+      formDataKeys: Object.keys(formData).length,
+      sampleKeys: Object.keys(formData).slice(0, 5)
+    });
+
+    for (const field of fields) {
+      // Get value from formData, safely handle nulls/undefined
+      const fieldKey = field.field_key;
+      const value = formData[fieldKey] !== undefined ? formData[fieldKey] : '';
+      
+      // Escape commas in text fields to preserve CSV structure
+      const safeFieldKey = fieldKey.replace(/,/g, ' ');
+      const safeDisplayName = (field.display_name || '').replace(/,/g, ' ');
+      const safeQuestion = (field.question || '').replace(/,/g, ' ');
+      
+      // Convert all values to strings and escape commas
+      let safeValue = '';
+      if (typeof value === 'object' && value !== null) {
+        // If value is an array or object, stringify it
+        safeValue = JSON.stringify(value).replace(/,/g, ';');
+      } else {
+        // For primitive values, just convert to string
+        safeValue = String(value).replace(/,/g, ' ');
+      }
+      
+      const row = [
+        safeFieldKey,
+        safeDisplayName,
+        safeQuestion,
+        safeValue
+      ];
+      
+      csvRows.push(row.join(','));
+    }
+
+    const csvContent = csvRows.join('\n');
+    
+    // Log first few lines for debugging
+    logger.info('CSV generation complete', { 
+      rows: csvRows.length,
+      previewLines: csvContent.split('\n').slice(0, 3),
+      totalLength: csvContent.length
+    });
+    
+    return csvContent;
+  } catch (error) {
+    logger.error('Error generating CSV', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    // Return at least headers in case of error
+    return 'Field,Label,Question,Response\nError generating CSV data';
   }
-
-  return csvRows.join('\n');
 }
 
 // Helper for logging task data (standardized format)
