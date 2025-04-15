@@ -861,12 +861,51 @@ export class KybFormService implements FormServiceInterface {
         })
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to submit form: ${response.status} ${errorText}`);
+      // Get response text first for proper error handling
+      const responseText = await response.text();
+      
+      // Check if response is empty
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('Server returned an empty response');
       }
       
-      return await response.json();
+      // Parse response text to JSON
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('[KybService] Failed to parse response as JSON', parseError, responseText.substring(0, 200));
+        throw new Error('Server returned an invalid response. Please try again.');
+      }
+      
+      // Check if response indicates an error with 207 status (partial success)
+      if (response.status === 207) {
+        console.warn('[KybService] Received partial success response:', responseData);
+        if (responseData.error) {
+          throw new Error(responseData.details || responseData.error);
+        }
+      }
+      
+      // Check if response is not OK
+      if (!response.ok) {
+        console.error('[KybService] Response not OK:', response.status, responseData);
+        throw new Error(responseData.details || responseData.error || `Failed to submit form: ${response.status}`);
+      }
+      
+      // Check if response contains explicit error field
+      if (responseData.error) {
+        console.error('[KybService] Response contains error field:', responseData.error);
+        throw new Error(responseData.details || responseData.error);
+      }
+      
+      // Make sure response has success flag
+      if (!responseData.success) {
+        console.error('[KybService] Response missing success flag:', responseData);
+        throw new Error('Submission incomplete. Please check your form data and try again.');
+      }
+      
+      // Return validated response data
+      return responseData;
     } catch (error) {
       console.error('[KybService] Error submitting form:', error);
       throw error;
