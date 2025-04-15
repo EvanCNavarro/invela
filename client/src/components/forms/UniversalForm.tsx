@@ -131,15 +131,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // Make sure agreement_confirmation is set to false by default
+  // Set agreement_confirmation to true by default
   useEffect(() => {
     if (dataHasLoaded && form) {
-      // Initialize agreement to false if undefined
+      // Initialize agreement to true if undefined
       const currentValue = form.getValues('agreement_confirmation');
       
-      // If value is undefined in the form, initialize it to false
+      // If value is undefined in the form, initialize it to true
       if (currentValue === undefined) {
-        form.setValue('agreement_confirmation', false, { shouldValidate: false });
+        form.setValue('agreement_confirmation', true, { shouldValidate: true });
       }
     }
   }, [dataHasLoaded, form]);
@@ -643,12 +643,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox with default checked state */}
                         <div className="mt-8 space-y-4">
-                          {/* Using useEffect to set default value on initial render */}
-                          {useEffect(() => {
-                            // Set the agreement confirmation to checked by default
-                            form.setValue("agreement_confirmation", true, { shouldValidate: true });
-                          }, [])}
-                          
                           <div 
                             onClick={() => {
                               // Toggle when clicking anywhere in the block
