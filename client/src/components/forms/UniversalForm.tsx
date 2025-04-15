@@ -671,13 +671,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (result && typeof result === 'object') {
               // Check for error field which indicates a problem
               if ('error' in result) {
-                const errorMessage = 'details' in result && result.details 
-                  ? `${result.error}: ${result.details}` 
+                // Safe check for details property
+                const resultDetails = 'details' in result ? (result as any).details : undefined;
+                const errorMessage = resultDetails
+                  ? `${result.error}: ${resultDetails}` 
                   : String(result.error);
                 
                 logger.warn('Server returned error response', { 
                   error: result.error, 
-                  details: result.details,
+                  details: resultDetails,
                   status: 'status' in result ? result.status : undefined
                 });
                 
@@ -759,13 +761,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 taskStatus: "completed"
               });
               
-              // Only after all actions are complete, show success toast
+              // Only log success; don't show toast since we'll show the modal
               logger.info('All post-submission actions completed successfully');
-              toast({
-                title: 'Form submitted successfully',
-                description: 'Your form has been successfully processed.',
-                variant: 'success'
-              });
+              // No toast here - we'll display the success modal instead
             } catch (postSubmitError) {
               // If post-submission actions fail, show an error
               logger.error('Post-submission actions failed', postSubmitError);
