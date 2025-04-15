@@ -658,12 +658,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             }
             
             // Check if this is a partial success response (we need to explicitly check this)
-            if (result.error && result.status === 207) {
+            if (result && typeof result === 'object' && 'error' in result && 'status' in result && result.status === 207) {
               logger.warn('Received partial success response', result);
-              const errorMessage = result.details 
+              const errorMessage = 'details' in result && result.details 
                 ? `${result.error}: ${result.details}` 
                 : result.error;
-              throw new Error(errorMessage);
+              throw new Error(errorMessage as string);
             }
             
             // If we got here without an error, the submission was successful

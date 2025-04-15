@@ -595,9 +595,10 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     
     let fileId; 
     const timestamp = new Date();
+    const warnings: string[] = [];
 
     try {
-      // Use a transaction to ensure file creation, task updates, and company updates are atomic
+      // Use a SINGLE transaction for ALL operations (file creation, task update, AND responses)
       fileId = await db.transaction(async (tx) => {
         // 1. Create file record in the database first
         const [fileRecord] = await tx.insert(files)
@@ -694,37 +695,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           })
           .where(eq(tasks.id, taskId));
           
-        // Return the file ID from the transaction
-        return fileRecord.id;
-      });
-      
-      logger.info('KYB form primary data submitted successfully', {
-        taskId,
-        fileId,
-        timestamp: timestamp.toISOString()
-      });
-
-    } catch (txError) {
-      // If the transaction fails, return detailed error
-      logger.error('Transaction failed during KYB submission', {
-        error: txError instanceof Error ? txError.message : 'Unknown error',
-        stack: txError instanceof Error ? txError.stack : undefined,
-        taskId
-      });
-      
-      return res.status(500).json({
-        error: 'Transaction failed',
-        details: txError instanceof Error ? txError.message : 'Failed to complete the submission process'
-      });
-    }
-
-    // If we get here, the primary transaction succeeded
-    // Now handle field responses separately
-    const warnings: string[] = [];
-    
-    try {  
-      // Save responses to database in a separate transaction
-      await db.transaction(async (tx) => {
+        // 4. Save all form responses within the SAME transaction
         for (const field of fields) {
           const value = formData[field.field_key];
           const status = value ? 'COMPLETE' : 'EMPTY';
@@ -760,10 +731,14 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
                 );
               warnings.push(`Updated existing response for field: ${field.field_key}`);
             } else {
+              // For non-duplicate errors, we need to stop the entire transaction
               throw error;
             }
           }
         }
+
+        // Return the file ID from the transaction
+        return fileRecord.id;
       });
       
       logger.info('KYB form complete and responses saved successfully', {
@@ -780,20 +755,17 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
         warnings: warnings.length > 0 ? warnings : undefined
       });
       
-    } catch (responseErr) {
-      // If saving responses fails, log but still return partial success
-      logger.error('Error saving KYB responses', {
-        error: responseErr instanceof Error ? responseErr.message : 'Unknown error',
-        stack: responseErr instanceof Error ? responseErr.stack : undefined,
+    } catch (txError) {
+      // If the transaction fails, return detailed error
+      logger.error('Transaction failed during KYB submission', {
+        error: txError instanceof Error ? txError.message : 'Unknown error',
+        stack: txError instanceof Error ? txError.stack : undefined,
         taskId
       });
       
-      // Don't throw here as we've already created the file and updated task status
-      return res.status(207).json({
-        error: 'Partial success',
-        details: 'File was created and task updated, but failed to save all responses',
-        fileId,
-        success: true
+      return res.status(500).json({
+        error: 'Transaction failed',
+        details: txError instanceof Error ? txError.message : 'Failed to complete the submission process'
       });
     }
     
