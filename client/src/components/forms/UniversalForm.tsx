@@ -107,6 +107,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<FormField[]>([]);
   
+  // Add a state to track consent status
+  const [consentChecked, setConsentChecked] = useState<boolean>(true);
+  
+  // Track if the form has been initialized to avoid state update loops
+  const [formInitialized, setFormInitialized] = useState<boolean>(false);
+  
   // Use our new form data manager hook to handle form data
   const {
     form,
@@ -170,12 +176,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Create and manage the Review & Submit section
   const [allSections, setAllSections] = useState<FormSection[]>([]);
-  
-  // Add a state to track consent status
-  const [consentChecked, setConsentChecked] = useState<boolean>(true);
-  
-  // Track if the form has been initialized to avoid state update loops
-  const [formInitialized, setFormInitialized] = useState<boolean>(false);
   
   // Update sections when main form sections change to include the Review & Submit section
   useEffect(() => {
@@ -641,35 +641,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox */}
                         <div className="mt-8 space-y-4">
-                          <label 
-                            htmlFor="agreement_confirmation"
-                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 cursor-pointer hover:bg-blue-100 transition-colors"
-                            onClick={(e) => {
-                              // Prevent the event from triggering the checkbox's onChange
-                              // Only handle the click if it's directly on the label (not on the checkbox)
-                              if (e.target === e.currentTarget || !e.currentTarget.contains(e.target as Node) || 
-                                  !(e.target as HTMLElement).closest('button')) {
-                                // Toggle the consent state
-                                const newValue = !consentChecked;
-                                setConsentChecked(newValue);
-                                // Update form value
-                                form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                              }
+                          <div 
+                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 hover:bg-blue-100 transition-colors cursor-pointer"
+                            onClick={() => {
+                              const newValue = !form.getValues("agreement_confirmation");
+                              form.setValue("agreement_confirmation", newValue);
                             }}
                           >
-                            <Checkbox
-                              checked={consentChecked}
-                              onCheckedChange={(checked) => {
-                                // Don't update if the value isn't changing to avoid loops
-                                const newValue = !!checked;
-                                if (newValue !== consentChecked) {
-                                  setConsentChecked(newValue);
-                                  form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                                }
-                              }}
-                              id="agreement_confirmation"
-                              className="mt-1"
-                            />
+                            <div className="flex-shrink-0 mt-1">
+                              <Checkbox
+                                checked={form.getValues("agreement_confirmation") || false}
+                                id="agreement_confirmation"
+                                className="pointer-events-none"
+                              />
+                            </div>
                             <div className="space-y-2 leading-normal">
                               <div className="font-semibold text-gray-800">
                                 Declaration and Consent
@@ -693,7 +678,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 </p>
                               )}
                             </div>
-                          </label>
+                          </div>
                         </div>
                       </div>
                     </div>
