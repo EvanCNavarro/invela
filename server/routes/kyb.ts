@@ -662,8 +662,33 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           userId: fileValues.user_id
         });
         
+        // FIXED: Add explicit type definition for the insert query and validate all required fields
+        const fileInsertData = {
+          name: fileValues.name,
+          size: fileValues.size,
+          type: fileValues.type,
+          path: fileValues.path,
+          status: fileValues.status,
+          user_id: fileValues.user_id,
+          company_id: fileValues.company_id,
+          document_category: 'other', // Set a default document category
+          classification_status: 'processed',
+          classification_confidence: 1.0,
+          created_at: fileValues.created_at,
+          updated_at: fileValues.updated_at,
+          upload_time: fileValues.upload_time,
+          download_count: fileValues.download_count || 0,
+          version: fileValues.version || 1.0,
+          metadata: fileValues.metadata || {}
+        };
+        
+        // Ensure all required fields are definitely populated
+        if (!fileInsertData.user_id || !fileInsertData.company_id) {
+          throw new Error('Required fields missing for file creation: user_id or company_id');
+        }
+        
         const [fileRecord] = await tx.insert(files)
-          .values(fileValues)
+          .values(fileInsertData)
           .returning({ id: files.id });
           
         if (!fileRecord) {
