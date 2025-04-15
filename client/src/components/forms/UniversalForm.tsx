@@ -652,12 +652,49 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 apiError.message.includes('<!DOCTYPE')) {
               // This is likely a case where the API returned HTML instead of JSON
               logger.error('API returned HTML instead of JSON. Possible session timeout or server error', apiError);
-              throw new Error('Server returned invalid data. Your session may have expired. Please try again.');
+              throw new Error('Your session appears to have expired. Please refresh the page and try again.');
             }
             
-            // Rethrow other errors
-            logger.error('Form submission API call failed', apiError);
-            throw apiError;
+            // Improve other error messages
+            if (apiError instanceof Error) {
+              logger.error('Form submission API call failed', apiError);
+              
+              // Handle network errors
+              if (apiError.message.includes('NetworkError') || 
+                  apiError.message.includes('Failed to fetch')) {
+                throw new Error('Cannot connect to the server. Please check your internet connection and try again.');
+              }
+              
+              // Handle timeout errors
+              if (apiError.message.includes('timeout') || 
+                  apiError.message.includes('Timeout')) {
+                throw new Error('The server is taking too long to respond. Please try again later.');
+              }
+              
+              // Handle unauthorized errors (in case specific error message exists)
+              if (apiError.message.includes('unauthorized') || 
+                  apiError.message.includes('Unauthorized') ||
+                  apiError.message.includes('not logged in')) {
+                throw new Error('Your session has expired. Please log in again to continue.');
+              }
+              
+              // For 500 server errors
+              if (apiError.message.includes('500') || 
+                  apiError.message.includes('Internal Server Error')) {
+                throw new Error('We encountered a problem while processing your request. Our team has been notified. Please try again later.');
+              }
+              
+              // If we have a specific error message from API, use it
+              if (typeof apiError.message === 'string' && apiError.message.length > 0 && 
+                  !apiError.message.includes('SyntaxError') && 
+                  !apiError.message.includes('Unexpected token')) {
+                throw new Error(apiError.message);
+              }
+            }
+            
+            // Default fallback error
+            logger.error('Form submission API call failed with unhandled error type', apiError);
+            throw new Error('We couldn\'t complete your submission. Please try again or contact support if the problem persists.');
           }
           
           // Only proceed with success actions if the submission was actually successful
@@ -683,7 +720,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             } catch (postSubmitError) {
               // If post-submission actions fail, show an error
               logger.error('Post-submission actions failed', postSubmitError);
-              throw new Error('Form was submitted but some follow-up actions failed. Please check the Task Center for status.');
+              
+              // Provide a more helpful error message based on the specific error
+              if (postSubmitError instanceof Error) {
+                // Message for file generation errors
+                if (postSubmitError.message.includes('file') || 
+                    postSubmitError.message.includes('File')) {
+                  throw new Error('Your form was submitted, but we couldn\'t create the downloadable report. You can view your submission in the Task Center.');
+                }
+                
+                // Message for task completion errors
+                if (postSubmitError.message.includes('task') || 
+                    postSubmitError.message.includes('Task')) {
+                  throw new Error('Your form was submitted, but we couldn\'t update your task status. Please check the Task Center to verify your submission.');
+                }
+                
+                // If we have a specific error message from post-submission, use it
+                if (typeof postSubmitError.message === 'string' && 
+                    postSubmitError.message.length > 0 && 
+                    !postSubmitError.message.includes('Error')) {
+                  throw new Error(`Your form was submitted, but: ${postSubmitError.message}. Please check the Task Center.`);
+                }
+              }
+              
+              // Default fallback for post-submission errors
+              throw new Error('Your form was submitted successfully, but we couldn\'t complete some follow-up actions. Please check the Task Center for the status of your submission.');
             }
           } else {
             // This shouldn't happen, but just in case
@@ -694,11 +755,76 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           const errMessage = submitError instanceof Error ? submitError.message : 'Form submission failed';
           logger.error('Form submission error:', errMessage, submitError);
           
-          toast({
-            title: 'Submission failed',
-            description: errMessage,
-            variant: 'destructive',
-          });
+          // Enhanced toast with support for different error types
+          if (errMessage.includes('session') || 
+              errMessage.includes('expired') || 
+              errMessage.includes('log in')) {
+            // Session expired errors
+            toast({
+              title: 'Session expired',
+              description: (
+                <div className="space-y-2">
+                  <p>{errMessage}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh page
+                  </Button>
+                </div>
+              ),
+              variant: 'destructive',
+            });
+          } else if (errMessage.includes('internet') || 
+                    errMessage.includes('connect') || 
+                    errMessage.includes('network')) {
+            // Network connectivity errors
+            toast({
+              title: 'Connection issue',
+              description: (
+                <div className="space-y-2">
+                  <p>{errMessage}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => window.location.reload()}
+                  >
+                    Try again
+                  </Button>
+                </div>
+              ),
+              variant: 'destructive',
+            });
+          } else if (errMessage.includes('Task Center')) {
+            // Partial success cases
+            toast({
+              title: 'Partial submission',
+              description: (
+                <div className="space-y-2">
+                  <p>{errMessage}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => window.location.href = '/task-center'}
+                  >
+                    Go to Task Center
+                  </Button>
+                </div>
+              ),
+              variant: 'warning',
+            });
+          } else {
+            // Default error cases
+            toast({
+              title: 'Submission failed',
+              description: errMessage,
+              variant: 'destructive',
+            });
+          }
         }
       } else {
         try {
@@ -723,27 +849,184 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           } catch (postSubmitError) {
             // If post-submission actions fail, show an error
             logger.error('Default post-submission actions failed', postSubmitError);
-            throw new Error('Form was submitted but some follow-up actions failed. Please check the Task Center for status.');
+            
+            // Provide a more helpful error message based on the specific error
+            if (postSubmitError instanceof Error) {
+              // Message for file generation errors
+              if (postSubmitError.message.includes('file') || 
+                  postSubmitError.message.includes('File')) {
+                throw new Error('Your form was submitted, but we couldn\'t create the downloadable report. You can view your submission in the Task Center.');
+              }
+              
+              // Message for task completion errors
+              if (postSubmitError.message.includes('task') || 
+                  postSubmitError.message.includes('Task')) {
+                throw new Error('Your form was submitted, but we couldn\'t update your task status. Please check the Task Center to verify your submission.');
+              }
+              
+              // If we have a specific error message from post-submission, use it
+              if (typeof postSubmitError.message === 'string' && 
+                  postSubmitError.message.length > 0 && 
+                  !postSubmitError.message.includes('Error')) {
+                throw new Error(`Your form was submitted, but: ${postSubmitError.message}. Please check the Task Center.`);
+              }
+            }
+            
+            // Default fallback for post-submission errors
+            throw new Error('Your form was submitted successfully, but we couldn\'t complete some follow-up actions. Please check the Task Center for the status of your submission.');
           }
         } catch (error) {
           logger.error('Error in default form submission:', error);
           
-          toast({
-            title: 'Submission failed',
-            description: 'An unexpected error occurred during form submission.',
-            variant: 'destructive',
-          });
+          // Get error message
+          const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred during form submission.';
+          
+          // Enhanced toast with support for different error types
+          if (errorMsg.includes('session') || 
+              errorMsg.includes('expired') || 
+              errorMsg.includes('log in')) {
+            // Session expired errors
+            toast({
+              title: 'Session expired',
+              description: (
+                <div className="space-y-2">
+                  <p>{errorMsg}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => window.location.reload()}
+                  >
+                    Refresh page
+                  </Button>
+                </div>
+              ),
+              variant: 'destructive',
+            });
+          } else if (errorMsg.includes('internet') || 
+                     errorMsg.includes('connect') || 
+                     errorMsg.includes('network')) {
+            // Network connectivity errors
+            toast({
+              title: 'Connection issue',
+              description: (
+                <div className="space-y-2">
+                  <p>{errorMsg}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => window.location.reload()}
+                  >
+                    Try again
+                  </Button>
+                </div>
+              ),
+              variant: 'destructive',
+            });
+          } else if (errorMsg.includes('Task Center')) {
+            // Partial success cases
+            toast({
+              title: 'Partial submission',
+              description: (
+                <div className="space-y-2">
+                  <p>{errorMsg}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => window.location.href = '/task-center'}
+                  >
+                    Go to Task Center
+                  </Button>
+                </div>
+              ),
+              variant: 'warning',
+            });
+          } else {
+            // Default error cases
+            toast({
+              title: 'Submission failed',
+              description: errorMsg,
+              variant: 'destructive',
+            });
+          }
         }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Form submission failed';
       logger.error('Form submission error:', message, err);
       
-      toast({
-        title: 'Submission failed',
-        description: message,
-        variant: 'destructive',
-      });
+      // Enhanced toast with support for different error types
+      if (message.includes('session') || 
+          message.includes('expired') || 
+          message.includes('log in')) {
+        // Session expired errors
+        toast({
+          title: 'Session expired',
+          description: (
+            <div className="space-y-2">
+              <p>{message}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => window.location.reload()}
+              >
+                Refresh page
+              </Button>
+            </div>
+          ),
+          variant: 'destructive',
+        });
+      } else if (message.includes('internet') || 
+                message.includes('connect') || 
+                message.includes('network')) {
+        // Network connectivity errors
+        toast({
+          title: 'Connection issue',
+          description: (
+            <div className="space-y-2">
+              <p>{message}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => window.location.reload()}
+              >
+                Try again
+              </Button>
+            </div>
+          ),
+          variant: 'destructive',
+        });
+      } else if (message.includes('Task Center')) {
+        // Partial success cases
+        toast({
+          title: 'Partial submission',
+          description: (
+            <div className="space-y-2">
+              <p>{message}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => window.location.href = '/task-center'}
+              >
+                Go to Task Center
+              </Button>
+            </div>
+          ),
+          variant: 'warning',
+        });
+      } else {
+        // Default error cases
+        toast({
+          title: 'Submission failed',
+          description: message,
+          variant: 'destructive',
+        });
+      }
     }
   }, [saveProgress, onSubmit, overallProgress, formTitle, taskId, handleFormSuccess]);
   
