@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql, desc } from 'drizzle-orm';
 import { db } from '@db';
 import { kybFields, kybResponses, tasks, companies, files } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
