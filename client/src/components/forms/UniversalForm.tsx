@@ -641,56 +641,59 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           </Accordion>
                         </div>
                         
-                        {/* Final agreement checkbox */}
+                        {/* Final agreement checkbox - simplified implementation */}
                         <div className="mt-8 space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="agreement_confirmation"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div 
-                                  className={cn(
-                                    "flex items-start space-x-3 border rounded-md p-4 cursor-pointer",
-                                    field.value ? "bg-blue-100 border-blue-200" : "bg-white hover:bg-gray-50"
-                                  )}
-                                  onClick={() => field.onChange(!field.value)}
-                                >
-                                  <FormControl>
-                                    <div className="flex-shrink-0 mt-1">
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                        onClick={(e) => e.stopPropagation()}
-                                      />
-                                    </div>
-                                  </FormControl>
-                                  <div className="space-y-2">
-                                    <div className="font-semibold text-gray-800">
-                                      Declaration and Consent
-                                    </div>
-                                    {taskType === 'security' || taskType === 'security_assessment' ? (
-                                      <p className="text-sm text-gray-700">
-                                        I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                        on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                        hereby certify that all information provided in this security assessment is complete, accurate, 
-                                        and truthful to the best of my knowledge. I acknowledge that this assessment will be used to 
-                                        evaluate our company's security posture, and I understand that providing false information 
-                                        may result in rejection of our application or termination of services.
-                                      </p>
-                                    ) : (
-                                      <p className="text-sm text-gray-700">
-                                        I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                        on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                        hereby certify that all information provided in this form is complete, accurate, 
-                                        and truthful to the best of my knowledge. I understand that providing false information 
-                                        may result in rejection of our application or termination of services.
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </FormItem>
+                          <div 
+                            className={cn(
+                              "flex items-start p-4 gap-3 border rounded-md cursor-pointer",
+                              !!form.getValues('agreement_confirmation') 
+                                ? "bg-blue-100 border-blue-200" 
+                                : "bg-white hover:bg-gray-50"
                             )}
-                          />
+                            onClick={() => {
+                              // Use simple value toggling instead of FormField to avoid infinite updates
+                              const currentValue = form.getValues('agreement_confirmation');
+                              form.setValue('agreement_confirmation', !currentValue, { shouldValidate: true });
+                            }}
+                          >
+                            <div className="flex-shrink-0 mt-1">
+                              <Checkbox
+                                checked={!!form.getValues('agreement_confirmation')}
+                                id="agreement_confirmation"
+                                onClick={(e) => {
+                                  // Stop propagation to prevent double toggling
+                                  e.stopPropagation();
+                                }}
+                                onCheckedChange={(checked) => {
+                                  // Use simple controlled component pattern
+                                  form.setValue('agreement_confirmation', !!checked, { shouldValidate: true });
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="font-semibold text-gray-800">
+                                Declaration and Consent
+                              </div>
+                              {taskType === 'security' || taskType === 'security_assessment' ? (
+                                <p className="text-sm text-gray-700">
+                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                  hereby certify that all information provided in this security assessment is complete, accurate, 
+                                  and truthful to the best of my knowledge. I acknowledge that this assessment will be used to 
+                                  evaluate our company's security posture, and I understand that providing false information 
+                                  may result in rejection of our application or termination of services.
+                                </p>
+                              ) : (
+                                <p className="text-sm text-gray-700">
+                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                  hereby certify that all information provided in this form is complete, accurate, 
+                                  and truthful to the best of my knowledge. I understand that providing false information 
+                                  may result in rejection of our application or termination of services.
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
