@@ -44,8 +44,7 @@ import { useFormStatus, SectionStatus } from '@/hooks/form/use-form-status';
 import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } from './SectionNavigation';
 import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
-import { useUser } from '@/hooks/useUser';
-import type { User } from '@/types/auth';
+import { useUser, User as UserFromHook } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { CheckCircle } from 'lucide-react';
 
@@ -663,7 +662,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             className={cn(
                               "border rounded-md p-4 cursor-pointer transition-colors",
                               form.getValues("agreement_confirmation") 
-                                ? "bg-blue-50 border-blue-200" // Lighter blue background when checked
+                                ? "bg-blue-25 border-blue-100" // Very light blue background when checked (even lighter)
                                 : "bg-white hover:bg-gray-50"
                             )}
                           >
@@ -690,7 +689,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.full_name || user?.name || user?.email || 'the authorized representative'}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.email ? user?.email.split('@')[0] : 'the authorized representative'}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>

@@ -14,6 +14,9 @@ export default {
         '3': '3px',
       },
       colors: {
+        blue: {
+          25: "#F0F7FF",  // Very light blue for consent section
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
