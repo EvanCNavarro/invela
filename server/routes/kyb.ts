@@ -597,14 +597,28 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     try {
       // Use a transaction to ensure file creation, task updates, and company updates are atomic
       fileId = await db.transaction(async (tx) => {
-        // 1. Insert the file record
+        // 1. Generate the file path where we'll save the CSV
+        const filePath = `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`;
+        
+        // Write the CSV data to the physical file
+        const uploadDir = path.join(process.cwd(), 'uploads');
+        
+        // Ensure the uploads directory exists
+        if (!fs.existsSync(uploadDir)) {
+          await fs.promises.mkdir(uploadDir, { recursive: true });
+        }
+        
+        // Write the actual CSV content to disk
+        await fs.promises.writeFile(path.join(process.cwd(), filePath), csvData, 'utf8');
+        
+        // Now insert the file record with reference to the actual file
         const [fileRecord] = await tx.insert(files)
           .values({
             name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
-            content: csvData,
+            content: '', // Not storing content in DB, it's in the file
             type: 'text/csv',
             status: 'active',
-            path: `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`,
+            path: filePath, // Path to the physical file
             size: Buffer.from(csvData).length,
             version: 1,
             company_id: task.company_id,
