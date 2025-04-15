@@ -355,23 +355,33 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
-  // Set agreement_confirmation to true by default (with stronger default approach)
+  // Combined effect for setting agreement confirmation
   useEffect(() => {
     if (form) {
-      // Initialize agreement confirmation to true by default - always set it initially
+      // Set the agreement confirmation to true regardless of which section we're on
+      // This ensures it's always initialized
       form.setValue("agreement_confirmation", true, { shouldValidate: true });
       
-      // Log the value to confirm it was set
-      console.log('Setting default agreement confirmation to TRUE');
+      // Log that it was set
+      console.log(`Setting agreement confirmation to TRUE (form loaded: ${dataHasLoaded}, activeSection: ${activeSection}, isReviewSection: ${activeSection === allSections.length - 1})`);
+      
+      // Register a field that might not exist in the backend
+      if (!form.getValues().hasOwnProperty("agreement_confirmation")) {
+        form.register("agreement_confirmation");
+        form.setValue("agreement_confirmation", true, { shouldValidate: true });
+      }
     }
-  }, [dataHasLoaded, form]);
+  }, [form, dataHasLoaded, activeSection, allSections.length]);
   
-  // Set agreement when navigating to review section
+  // Every time we navigate to the review section, ensure the checkbox is checked
   useEffect(() => {
-    // Only run this effect if we have a form and we're on the review section
-    if (form && activeSection === allSections.length - 1) {
-      form.setValue("agreement_confirmation", true, { shouldValidate: true });
-      console.log('Setting agreement confirmation to TRUE in review section');
+    // Only run when we're on the review section (which is the last section)
+    if (form && allSections.length > 0 && activeSection === allSections.length - 1) {
+      // Force the checkbox to be checked when navigating to the review section
+      setTimeout(() => {
+        form.setValue("agreement_confirmation", true, { shouldValidate: true });
+        console.log('Forced agreement confirmation to TRUE in review section');
+      }, 100); // Small delay to ensure DOM has updated
     }
   }, [form, activeSection, allSections.length]);
   
@@ -672,7 +682,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   id="agreement_confirmation"
                                   name="agreement_confirmation"
                                   type="checkbox"
-                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                  defaultChecked={true}
                                   checked={!!form.getValues("agreement_confirmation")}
                                   onChange={() => {}} // Controlled by parent div onClick
                                   onClick={(e) => {
@@ -768,20 +779,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   if (isReviewPage) {
                     return (
                       <TooltipProvider>
-                        <Tooltip>
+                        <Tooltip delayDuration={50}>
                           <TooltipTrigger asChild>
-                            <Button 
-                              type="button"
-                              onClick={form.handleSubmit(handleSubmit)}
-                              disabled={!form.getValues("agreement_confirmation")}
-                              className="flex items-center gap-1"
-                            >
-                              Submit
-                              <Check className="h-4 w-4" />
-                            </Button>
+                            <div> {/* Wrapper div to ensure tooltip works regardless of button disabled state */}
+                              <Button 
+                                type="button"
+                                onClick={form.handleSubmit(handleSubmit)}
+                                disabled={!form.getValues("agreement_confirmation")}
+                                className="flex items-center gap-1"
+                              >
+                                Submit
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TooltipTrigger>
                           {!form.getValues("agreement_confirmation") && (
-                            <TooltipContent>
+                            <TooltipContent side="top" className="bg-gray-800 text-white">
                               <p>Please check the Submission Consent box to enable submission</p>
                             </TooltipContent>
                           )}
