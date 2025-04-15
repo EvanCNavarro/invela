@@ -589,6 +589,16 @@ router.post('/api/kyb/save', async (req, res) => {
     // Create file using direct DB insert instead of FileCreationService
     const timestamp = new Date();
     // Insert the file and get the ID
+    const userId = req.user?.id || task.created_by;
+    if (!userId) {
+      logger.error('Unable to determine user ID for file creation', {
+        taskId,
+        userIdFromRequest: req.user?.id,
+        userIdFromTask: task.created_by,
+      });
+      throw new Error('No valid user ID available for file creation');
+    }
+    
     const [fileId] = await db.insert(files)
       .values({
         name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
@@ -599,7 +609,8 @@ router.post('/api/kyb/save', async (req, res) => {
         size: Buffer.from(csvData).length,
         version: 1,
         company_id: task.company_id,
-        created_by: req.user?.id || task.created_by,
+        user_id: userId, // Set this explicitly from authenticated user or task creator
+        created_by: userId, // Keep consistency with user_id
         created_at: timestamp,
         updated_at: timestamp,
         metadata: {
