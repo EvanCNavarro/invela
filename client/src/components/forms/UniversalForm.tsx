@@ -41,6 +41,9 @@ import { useFormStatus, SectionStatus } from '@/hooks/form/use-form-status';
 import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } from './SectionNavigation';
 import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
+import { useUser } from '@/hooks/useUser';
+import { useCurrentCompany } from '@/hooks/use-current-company';
+import { CheckCircle } from 'lucide-react';
 
 import SectionContent from './SectionContent';
 
@@ -91,6 +94,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onCancel,
   onProgress
 }) => {
+  // Get user and company data for the consent section
+  const { user } = useUser();
+  const { company } = useCurrentCompany();
+  
   // Core state for form initialization
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -319,7 +326,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Find the first section with incomplete fields
       const firstIncompleteSectionIndex = sectionStatuses.findIndex(
-        status => !status.isCompleted
+        status => status.status !== 'completed'
       );
       
       if (firstIncompleteSectionIndex !== -1) {
@@ -513,19 +520,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               {allSections.map((section, index) => {
                 // Handle the special review section
                 if (section.id === 'review-section') {
+                  
                   return (
                     <div
                       key={section.id}
                       className={index === activeSection ? 'block' : 'hidden'}
                     >
-                      <div className="space-y-8">
-                        <h3 className="text-xl font-semibold">Review & Submit</h3>
-                        <p className="text-gray-600">
-                          Please review your responses below before submitting.
-                        </p>
+                      <div className="space-y-6">
+                        <div className="mb-2">
+                          <h3 className="text-2xl font-semibold text-gray-900">Review & Submit</h3>
+                          <p className="text-gray-600 mt-1">
+                            Please review your responses before submitting the form.
+                          </p>
+                        </div>
                         
                         {/* Review all sections and their answers */}
-                        <div className="space-y-8">
+                        <div className="space-y-6 mt-6">
                           {/* Using shadcn Accordion for collapsible sections, collapsed by default */}
                           <Accordion type="multiple" className="w-full">
                             {sections.map((reviewSection, sectionIndex) => {
@@ -535,18 +545,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 return value !== undefined && value !== null && value !== '';
                               }).length;
                               
+                              // Determine completion status for styling
+                              const isComplete = filledFieldCount === sectionFields.length;
+                              
                               return (
                                 <AccordionItem 
                                   key={`review-${sectionIndex}`} 
                                   value={`section-${sectionIndex}`}
-                                  className="border border-gray-200 rounded-md mb-4 bg-gray-50 overflow-hidden"
+                                  className={cn(
+                                    "border rounded-md mb-4 overflow-hidden",
+                                    isComplete 
+                                      ? "border-emerald-200 bg-emerald-50/50" 
+                                      : "border-gray-200 bg-gray-50"
+                                  )}
                                 >
-                                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-100">
+                                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-100/70">
                                     <div className="flex justify-between w-full items-center">
-                                      <h4 className="font-medium text-lg text-left">
-                                        Section {sectionIndex + 1}: {reviewSection.title}
-                                      </h4>
-                                      <span className="text-sm text-gray-500 mr-2">
+                                      <div className="flex items-center">
+                                        {isComplete && (
+                                          <CheckCircle className="h-5 w-5 text-emerald-500 mr-2" />
+                                        )}
+                                        <h4 className="font-medium text-lg text-left">
+                                          Section {sectionIndex + 1}: {reviewSection.title}
+                                        </h4>
+                                      </div>
+                                      <span className={cn(
+                                        "text-sm mr-2",
+                                        isComplete ? "text-emerald-600" : "text-gray-500"
+                                      )}>
                                         {filledFieldCount}/{sectionFields.length} questions answered
                                       </span>
                                     </div>
@@ -555,13 +581,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                     <div className="space-y-4 pt-2">
                                       {sectionFields.map((field, fieldIndex) => {
                                         const value = form.getValues(field.key);
+                                        const hasValue = value !== undefined && value !== null && value !== '';
+                                        
                                         return (
                                           <div key={field.key} className="flex flex-col space-y-1">
                                             <span className="text-sm font-medium text-gray-700">
                                               {fieldIndex + 1}. {field.question || field.label}
                                             </span>
-                                            <div className="bg-white p-2 border border-gray-200 rounded min-h-[2rem]">
-                                              {value !== undefined && value !== null && value !== '' 
+                                            <div className={cn(
+                                              "p-2 border rounded min-h-[2rem]",
+                                              hasValue 
+                                                ? "bg-white border-gray-200" 
+                                                : "bg-gray-50 border-gray-200"
+                                            )}>
+                                              {hasValue 
                                                 ? (typeof value === 'object' ? JSON.stringify(value) : value.toString())
                                                 : <span className="text-gray-400 italic">No answer provided</span>
                                               }
@@ -581,34 +614,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         <div className="mt-8 space-y-4">
                           <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4">
                             <Checkbox
-                              checked={form.getValues("agreement_confirmation")}
+                              checked={form.getValues("agreement_confirmation") ?? true}
                               onCheckedChange={(checked) => {
                                 form.setValue("agreement_confirmation", checked);
                               }}
                               id="agreement_confirmation"
                               className="mt-1"
+                              defaultChecked={true}
                             />
                             <div className="space-y-1 leading-none">
                               <label 
                                 htmlFor="agreement_confirmation" 
                                 className="font-semibold cursor-pointer text-gray-800"
                               >
-                                Declaration of Accuracy
+                                Declaration and Consent
                               </label>
                               <p className="text-sm text-gray-600">
-                                I, as an authorized representative for this company, confirm that all information provided is accurate, complete, and truthful to the best of my knowledge. I understand that providing false information may result in rejection of our application or termination of services.
+                                I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                hereby certify that all information provided in this form is complete, accurate, 
+                                and truthful to the best of my knowledge. I understand that providing false information 
+                                may result in rejection of our application or termination of services.
                               </p>
                             </div>
                           </div>
-                          
-                          <Button 
-                            type="button"
-                            onClick={form.handleSubmit(handleSubmit)}
-                            disabled={!form.getValues('agreement_confirmation')}
-                            className="w-full font-medium text-base py-6"
-                          >
-                            Submit KYB Form
-                          </Button>
                         </div>
                       </div>
                     </div>
@@ -667,53 +696,80 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   </Button>
                 )}
                 
-                {activeSection < sections.length - 1 ? (
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault(); // Prevent any form submission
-                      setActiveSection(activeSection + 1);
-                    }}
-                    className="flex items-center gap-1"
-                  >
-                    Next
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button 
-                          type="button" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // Only navigate to review section if all fields are complete
-                            if (overallProgress === 100) {
-                              // Navigate to the review section (which is the last section in allSections)
-                              setActiveSection(allSections.length - 1);
-                            } else {
-                              toast({
-                                title: "Form incomplete",
-                                description: "Please complete all required fields before proceeding to review.",
-                                variant: "warning",
-                              });
-                            }
-                          }}
-                          className="flex items-center gap-1"
-                          disabled={overallProgress < 100}
-                        >
-                          Final Review
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      {overallProgress < 100 && (
-                        <TooltipContent>
-                          <p>Complete all required fields ({Math.round(100 - overallProgress)}% remaining) to proceed to final review</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                {/* Show different button based on current section and whether we're on review page */}
+                {(() => {
+                  const isReviewPage = activeSection === allSections.length - 1;
+                  const isLastRegularPage = activeSection === sections.length - 1;
+                  
+                  // If on the review page, show Submit button
+                  if (isReviewPage) {
+                    return (
+                      <Button 
+                        type="button"
+                        onClick={form.handleSubmit(handleSubmit)}
+                        disabled={!form.getValues('agreement_confirmation')}
+                        className="flex items-center gap-1"
+                      >
+                        Submit
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                    );
+                  }
+                  
+                  // If on last regular page, show Final Review button
+                  if (isLastRegularPage) {
+                    return (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                // Only navigate to review section if all fields are complete
+                                if (overallProgress === 100) {
+                                  // Navigate to the review section (which is the last section in allSections)
+                                  setActiveSection(allSections.length - 1);
+                                } else {
+                                  toast({
+                                    title: "Form incomplete",
+                                    description: "Please complete all required fields before proceeding to review.",
+                                    variant: "warning",
+                                  });
+                                }
+                              }}
+                              className="flex items-center gap-1"
+                              disabled={overallProgress < 100}
+                            >
+                              Final Review
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          {overallProgress < 100 && (
+                            <TooltipContent>
+                              <p>Complete all required fields ({Math.round(100 - overallProgress)}% remaining) to proceed to final review</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  }
+                  
+                  // Otherwise show regular Next button
+                  return (
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent any form submission
+                        setActiveSection(activeSection + 1);
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  );
+                })()}
               </div>
             </div>
           </div>

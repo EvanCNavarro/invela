@@ -2,11 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 
 export interface User {
   id: number;
-  name: string | null;
+  name: string;
   email: string;
-  company_id: number;
-  role: string;
-  status: string;
+  role?: string;
+  preferences?: Record<string, any>;
 }
 
 export function useUser() {
@@ -16,8 +15,8 @@ export function useUser() {
     isError, 
     error 
   } = useQuery<User>({ 
-    queryKey: ['/api/auth/me'],
-    retry: false,
+    queryKey: ['/api/users/current'],
+    retry: 2,
     refetchOnWindowFocus: false
   });
 
