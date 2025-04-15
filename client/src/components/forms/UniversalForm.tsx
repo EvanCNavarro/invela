@@ -109,8 +109,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   
-  // Create a state for the consent checkbox
-  const [isConsentChecked, setIsConsentChecked] = useState(false);
+  // We'll use React Hook Form for all form state management
   
   // Use our new form data manager hook to handle form data
   const {
@@ -132,19 +131,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // Make sure agreement_confirmation is set to true as default and keep our state in sync
+  // Make sure agreement_confirmation is set to false by default
   useEffect(() => {
     if (dataHasLoaded && form) {
-      // Initialize agreement to true if undefined
+      // Initialize agreement to false if undefined
       const currentValue = form.getValues('agreement_confirmation');
       
-      // If value is undefined in the form, initialize it to true
+      // If value is undefined in the form, initialize it to false
       if (currentValue === undefined) {
-        form.setValue('agreement_confirmation', true, { shouldValidate: false });
-        setIsConsentChecked(true);
-      } else {
-        // Otherwise sync our state with the form value
-        setIsConsentChecked(!!currentValue);
+        form.setValue('agreement_confirmation', false, { shouldValidate: false });
       }
     }
   }, [dataHasLoaded, form]);
@@ -637,27 +632,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox */}
                         <div className="mt-8 space-y-4">
-                          <div
-                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 hover:bg-blue-100 transition-colors cursor-pointer"
-                            onClick={() => {
-                              // Toggle the state
-                              const newValue = !isConsentChecked;
-                              setIsConsentChecked(newValue);
-                              
-                              // Update the form value
-                              form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                            }}
-                          >
+                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 hover:bg-blue-100 transition-colors">
                             <div className="flex-shrink-0 mt-1">
-                              <Checkbox
-                                checked={isConsentChecked}
-                                id="agreement_confirmation"
-                                onCheckedChange={(checked) => {
-                                  const newValue = !!checked;
-                                  setIsConsentChecked(newValue);
-                                  form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                                }}
-                                onClick={(e) => e.stopPropagation()}
+                              <FormField
+                                control={form.control}
+                                name="agreement_confirmation"
+                                render={({ field }) => (
+                                  <FormItem className="space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        id="agreement_confirmation"
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
                               />
                             </div>
                             <div className="space-y-2 leading-normal">
@@ -753,7 +743,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Button 
                         type="button"
                         onClick={form.handleSubmit(handleSubmit)}
-                        disabled={!isConsentChecked}
+                        disabled={!form.watch("agreement_confirmation")}
                         className="flex items-center gap-1"
                       >
                         Submit
