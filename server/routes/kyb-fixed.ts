@@ -675,9 +675,9 @@ router.get('/api/kyb/diagnostics/:taskId', async (req, res) => {
       };
     });
     
-    // Calculate overall stats
+    // Calculate overall stats with proper type handling
     const duplicateFields = fieldResponseCounts.filter(f => Number(f.response_count) > 1);
-    const missingFields = fieldResponseCounts.filter(f => f.response_count === 0);
+    const missingFields = fieldResponseCounts.filter(f => Number(f.response_count) === 0);
     
     // Return diagnostic info
     return res.json({
@@ -747,6 +747,99 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
     console.error('Error exporting KYB data:', error);
     res.status(500).json({
       error: 'Failed to export KYB data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Endpoint to clean up duplicate responses for a specific task
+router.post('/api/kyb/cleanup/:taskId', requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    // Verify task exists
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Get all KYB fields
+    const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+    
+    // Get response count by field
+    const responseCountByField = await db.select({
+      field_id: kybResponses.field_id,
+      count: sql`count(${kybResponses.id})`
+    })
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, parseInt(taskId)))
+      .groupBy(kybResponses.field_id);
+    
+    // Find fields with more than one response
+    const duplicateFields = responseCountByField
+      .filter(field => Number(field.count) > 1)
+      .map(field => field.field_id);
+    
+    if (duplicateFields.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No duplicate responses found',
+        taskId
+      });
+    }
+    
+    // Transaction to cleanup duplicates
+    const cleanupResults = await db.transaction(async (tx) => {
+      const results = [];
+      
+      for (const fieldId of duplicateFields) {
+        // Get all responses for this field
+        const responses = await tx.select()
+          .from(kybResponses)
+          .where(
+            and(
+              eq(kybResponses.task_id, parseInt(taskId)),
+              eq(kybResponses.field_id, fieldId)
+            )
+          )
+          .orderBy(kybResponses.updated_at, 'desc'); // Most recent first
+        
+        // Keep only the most recent response and delete others
+        if (responses.length > 1) {
+          const [keepResponse, ...deleteResponses] = responses;
+          
+          // Delete all but the most recent response
+          for (const resp of deleteResponses) {
+            await tx.delete(kybResponses)
+              .where(eq(kybResponses.id, resp.id));
+          }
+          
+          const field = fields.find(f => f.id === fieldId);
+          results.push({
+            fieldId,
+            field_key: field?.field_key || 'unknown',
+            deletedCount: deleteResponses.length,
+            keptResponseId: keepResponse.id
+          });
+        }
+      }
+      
+      return results;
+    });
+    
+    return res.json({
+      success: true,
+      message: 'Successfully cleaned up duplicate responses',
+      cleanupResults,
+      taskId
+    });
+  } catch (error) {
+    console.error('Error cleaning up KYB responses:', error);
+    return res.status(500).json({
+      error: 'Failed to clean up KYB responses',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
