@@ -305,7 +305,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             
             // Convert to navigation sections and sort
             const navigationSections = toNavigationSections(serviceSections);
-            setSections(sortSections(navigationSections));
+            // Force type as FormSection[] to satisfy TypeScript
+            setSections(sortSections(navigationSections as any));
           } else {
             logger.warn('No sections returned from form service (empty array or null)');
             setSections([]);
@@ -649,7 +650,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           // Trigger success handler with the result
           handleFormSuccess({ 
-            ...(result || {}),
+            ...((typeof result === 'object' && result !== null) ? result : {}),
             taskId: taskId,
             taskStatus: "completed"
           });
