@@ -355,43 +355,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
-  // Combined effect for setting agreement confirmation
+  // Single consolidated effect to manage agreement confirmation
   useEffect(() => {
-    if (form) {
-      // Set the agreement confirmation to true regardless of which section we're on
-      // This ensures it's always initialized
-      form.setValue("agreement_confirmation", true, { shouldValidate: true });
-      
-      // Log that it was set
-      console.log(`Setting agreement confirmation to TRUE (form loaded: ${dataHasLoaded}, activeSection: ${activeSection}, isReviewSection: ${activeSection === allSections.length - 1})`);
-      
-      // Register a field that might not exist in the backend
-      if (!form.getValues().hasOwnProperty("agreement_confirmation")) {
-        form.register("agreement_confirmation");
-        form.setValue("agreement_confirmation", true, { shouldValidate: true });
-      }
+    // Only proceed if form is initialized
+    if (!form) return;
+    
+    // Register the field if it's not already registered
+    const fieldRegistered = form.getValues().hasOwnProperty("agreement_confirmation");
+    if (!fieldRegistered) {
+      form.register("agreement_confirmation");
     }
-  }, [form, dataHasLoaded, activeSection, allSections.length]);
-  
-  // Every time we navigate to the review section, ensure the checkbox is checked
-  useEffect(() => {
-    // Only run when we're on the review section (which is the last section)
-    if (form && allSections.length > 0 && activeSection === allSections.length - 1) {
-      // Force the checkbox to be checked when navigating to the review section
-      // Using a more aggressive approach with multiple timers to ensure it sticks
-      const setCheckbox = () => {
-        form.setValue("agreement_confirmation", true, { shouldValidate: true });
-        console.log('Forced agreement confirmation to TRUE in review section');
-      };
-      
-      // Immediately set it
-      setCheckbox();
-      
-      // Then set it again after short delays to ensure it takes effect
-      // (this handles race conditions with other state updates)
-      setTimeout(setCheckbox, 100);
-      setTimeout(setCheckbox, 300);
-      setTimeout(setCheckbox, 800);
+    
+    // Use a single approach to setting the value - only when on review section
+    const isReviewSection = allSections.length > 0 && activeSection === allSections.length - 1;
+    
+    if (isReviewSection) {
+      // Set once with a small delay to ensure DOM is ready
+      setTimeout(() => {
+        // Use silent update to prevent triggering re-renders and validation
+        form.setValue("agreement_confirmation", true, { 
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false 
+        });
+      }, 50);
     }
   }, [form, activeSection, allSections.length]);
   
@@ -694,14 +681,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   type="checkbox"
                                   className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                   checked={!!form.getValues("agreement_confirmation")}
-                                  onChange={(e) => {
-                                    // Set the value based on the checkbox state
-                                    form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
-                                  }}
+                                  onChange={() => {}} // Controlled component with empty handler
                                   onClick={(e) => {
-                                    // Stop propagation to prevent double toggle
+                                    // Stop propagation to prevent parent div from firing
                                     e.stopPropagation();
-                                    // Toggle directly here
+                                    // Only handle click directly here to avoid flicker
                                     const newValue = !form.getValues("agreement_confirmation");
                                     form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
                                   }}
@@ -712,7 +696,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.email ? user.email.split('@')[0] : 'the authorized representative')}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : (user?.email ? user.email.split('@')[0] : 'the authorized representative')}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
@@ -806,8 +790,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             </div>
                           </TooltipTrigger>
                           {!form.getValues("agreement_confirmation") && (
-                            <TooltipContent side="top" className="max-w-[220px] p-3 text-sm">
-                              <p>Please check the Submission Consent box to enable submission</p>
+                            <TooltipContent side="top" className="max-w-[200px] p-3 text-sm leading-snug">
+                              <p>Please check the Submission Consent box to enable form submission.</p>
                             </TooltipContent>
                           )}
                         </Tooltip>
