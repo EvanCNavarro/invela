@@ -405,12 +405,25 @@ export default function TaskPage({ params }: TaskPageProps) {
                       description: "Please wait while we process your submission...",
                     });
 
-                    fetch(`/api/kyb/submit/${task.id}`, {
+                    // Generate a proper filename for CSV export
+                    const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
+                    const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
+                    const fileName = `kyb_form_${task.id}_${timestamp}.csv`;
+                    
+                    console.log('[TaskPage] Submitting KYB form with filename:', fileName);
+                    
+                    fetch(`/api/kyb/save`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                       },
-                      body: JSON.stringify({ formData })
+                      credentials: 'include',
+                      body: JSON.stringify({ 
+                        taskId: task.id,
+                        formData, 
+                        fileName 
+                      })
                     })
                     .then(async response => {
                       const data = await response.json();
@@ -510,13 +523,26 @@ export default function TaskPage({ params }: TaskPageProps) {
                       description: "Please wait while we process your submission...",
                     });
 
+                    // Generate a proper filename for security assessment export
+                    const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
+                    const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
+                    const fileName = `security_assessment_${task.id}_${timestamp}.csv`;
+                    
+                    console.log('[TaskPage] Submitting security assessment with filename:', fileName);
+                    
                     // Submit the security assessment
-                    fetch(`/api/security/submit/${task.id}`, {
+                    fetch(`/api/security/save`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                       },
-                      body: JSON.stringify({ formData })
+                      credentials: 'include',
+                      body: JSON.stringify({ 
+                        taskId: task.id,
+                        formData,
+                        fileName
+                      })
                     })
                       .then(async response => {
                         const data = await response.json();
