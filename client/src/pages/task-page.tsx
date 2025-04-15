@@ -731,37 +731,74 @@ export default function TaskPage({ params }: TaskPageProps) {
                         })
                       })
                         .then(async response => {
-                          const data = await response.json();
-                          if (!response.ok) {
-                            throw new Error(data.details || data.error || 'Failed to save compliance form');
+                          // First try to parse the response
+                          try {
+                            const data = await response.json();
+                            
+                            // Then check if the response was successful
+                            if (!response.ok) {
+                              throw new Error(data.details || data.error || 'Failed to save compliance form');
+                            }
+                            
+                            // Verify we got a valid result with a fileId
+                            if (!data || !data.success || !data.fileId) {
+                              throw new Error('Server returned an invalid or incomplete response');
+                            }
+                            
+                            return data;
+                          } catch (parseError) {
+                            // Handle JSON parse errors specifically
+                            if (parseError instanceof SyntaxError) {
+                              console.error('[TaskPage] Failed to parse server response:', parseError);
+                              throw new Error('Server returned an invalid response format. Please try again.');
+                            }
+                            // Re-throw other errors
+                            throw parseError;
                           }
-                          return data;
                         })
                         .then((result) => {
-                          fireSuperConfetti();
-
-                          setFileId(result.fileId);
-                          setIsSubmitted(true);
-                          setShowSuccessModal(true);
-
-                          toast({
-                            title: "Success",
-                            description: result.warnings?.length
-                              ? "Compliance form has been saved successfully with some updates to existing data."
-                              : "Compliance form has been saved successfully.",
-                            variant: "default",
-                          });
-
-                          if (result.warnings?.length) {
-                            result.warnings.forEach((warning: string) => {
-                              console.warn('[Card Form] Warning:', warning);
+                          // Only show success UI if we have a valid result
+                          if (result && result.success && result.fileId) {
+                            // Show confetti animation for success
+                            fireSuperConfetti();
+                            
+                            // Update state for success modal
+                            setFileId(result.fileId);
+                            setIsSubmitted(true);
+                            setShowSuccessModal(true);
+                            
+                            // Show success toast
+                            toast({
+                              title: "Success",
+                              description: result.warnings?.length
+                                ? "Compliance form has been saved successfully with some updates to existing data."
+                                : "Compliance form has been saved successfully.",
+                              variant: "default",
                             });
+                            
+                            // Log any warnings for debugging
+                            if (result.warnings?.length) {
+                              result.warnings.forEach((warning: string) => {
+                                console.warn('[Card Form] Warning:', warning);
+                              });
+                            }
+                          } else {
+                            // This shouldn't happen if we validate in the previous then(),
+                            // but just in case something slips through
+                            throw new Error('Received invalid success response from server');
                           }
                         })
                         .catch(error => {
+                          // Log the error for debugging
                           console.error('[TaskPage] Form submission failed:', error);
+                          
+                          // Reset any partial success state to avoid showing success modal
+                          setIsSubmitted(false);
+                          setShowSuccessModal(false);
+                          
+                          // Show error toast with specific error message
                           toast({
-                            title: "Error",
+                            title: "Submission Failed",
                             description: error.message || "Failed to submit compliance form. Please try again.",
                             variant: "destructive",
                           });
