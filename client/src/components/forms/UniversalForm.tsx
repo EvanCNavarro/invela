@@ -26,7 +26,8 @@ import { cn } from '@/lib/utils';
 import { 
   ArrowLeft, 
   ArrowRight, 
-  Eye 
+  Eye,
+  Check
 } from 'lucide-react';
 import {
   Tooltip,
@@ -552,12 +553,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 <AccordionItem 
                                   key={`review-${sectionIndex}`} 
                                   value={`section-${sectionIndex}`}
-                                  className={cn(
-                                    "border rounded-md mb-4 overflow-hidden",
-                                    isComplete 
-                                      ? "border-emerald-200 bg-emerald-50/50" 
-                                      : "border-gray-200 bg-gray-50"
-                                  )}
+                                  className="border border-gray-200 rounded-md mb-4 bg-gray-50 overflow-hidden"
                                 >
                                   <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-100/70">
                                     <div className="flex justify-between w-full items-center">
@@ -583,10 +579,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                         const value = form.getValues(field.key);
                                         const hasValue = value !== undefined && value !== null && value !== '';
                                         
+                                        // Calculate continuous question number across all sections
+                                        const previousFieldsCount = sections
+                                          .slice(0, sectionIndex)
+                                          .reduce((count, prevSection) => 
+                                            count + fields.filter(f => f.section === prevSection.id).length, 0);
+                                        const continuousQuestionNumber = previousFieldsCount + fieldIndex + 1;
+                                        
                                         return (
                                           <div key={field.key} className="flex flex-col space-y-1">
                                             <span className="text-sm font-medium text-gray-700">
-                                              {fieldIndex + 1}. {field.question || field.label}
+                                              {continuousQuestionNumber}. {field.question || field.label}
                                             </span>
                                             <div className={cn(
                                               "p-2 border rounded min-h-[2rem]",
@@ -612,7 +615,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox */}
                         <div className="mt-8 space-y-4">
-                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4">
+                          <label 
+                            htmlFor="agreement_confirmation"
+                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 cursor-pointer hover:bg-blue-100 transition-colors"
+                            onClick={() => {
+                              const currentValue = form.getValues("agreement_confirmation") ?? true;
+                              form.setValue("agreement_confirmation", !currentValue);
+                            }}
+                          >
                             <Checkbox
                               checked={form.getValues("agreement_confirmation") ?? true}
                               onCheckedChange={(checked) => {
@@ -622,14 +632,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               className="mt-1"
                               defaultChecked={true}
                             />
-                            <div className="space-y-1 leading-none">
-                              <label 
-                                htmlFor="agreement_confirmation" 
-                                className="font-semibold cursor-pointer text-gray-800"
-                              >
+                            <div className="space-y-2 leading-normal">
+                              <div className="font-semibold text-gray-800">
                                 Declaration and Consent
-                              </label>
-                              <p className="text-sm text-gray-600">
+                              </div>
+                              <p className="text-sm text-gray-700">
                                 I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
                                 on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
                                 hereby certify that all information provided in this form is complete, accurate, 
@@ -637,7 +644,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 may result in rejection of our application or termination of services.
                               </p>
                             </div>
-                          </div>
+                          </label>
                         </div>
                       </div>
                     </div>
@@ -711,7 +718,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         className="flex items-center gap-1"
                       >
                         Submit
-                        <CheckCircle className="h-4 w-4" />
+                        <Check className="h-4 w-4" />
                       </Button>
                     );
                   }
