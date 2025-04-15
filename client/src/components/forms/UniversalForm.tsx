@@ -378,10 +378,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Only run when we're on the review section (which is the last section)
     if (form && allSections.length > 0 && activeSection === allSections.length - 1) {
       // Force the checkbox to be checked when navigating to the review section
-      setTimeout(() => {
+      // Using a more aggressive approach with multiple timers to ensure it sticks
+      const setCheckbox = () => {
         form.setValue("agreement_confirmation", true, { shouldValidate: true });
         console.log('Forced agreement confirmation to TRUE in review section');
-      }, 100); // Small delay to ensure DOM has updated
+      };
+      
+      // Immediately set it
+      setCheckbox();
+      
+      // Then set it again after short delays to ensure it takes effect
+      // (this handles race conditions with other state updates)
+      setTimeout(setCheckbox, 100);
+      setTimeout(setCheckbox, 300);
+      setTimeout(setCheckbox, 800);
     }
   }, [form, activeSection, allSections.length]);
   
@@ -683,9 +693,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   name="agreement_confirmation"
                                   type="checkbox"
                                   className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                  defaultChecked={true}
                                   checked={!!form.getValues("agreement_confirmation")}
-                                  onChange={() => {}} // Controlled by parent div onClick
+                                  onChange={(e) => {
+                                    // Set the value based on the checkbox state
+                                    form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
+                                  }}
                                   onClick={(e) => {
                                     // Stop propagation to prevent double toggle
                                     e.stopPropagation();
@@ -700,7 +712,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.email ? user?.email.split('@')[0] : 'the authorized representative'}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.email ? user.email.split('@')[0] : 'the authorized representative')}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
@@ -794,7 +806,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             </div>
                           </TooltipTrigger>
                           {!form.getValues("agreement_confirmation") && (
-                            <TooltipContent side="top" className="bg-gray-800 text-white">
+                            <TooltipContent side="top" className="max-w-[220px] p-3 text-sm">
                               <p>Please check the Submission Consent box to enable submission</p>
                             </TooltipContent>
                           )}
