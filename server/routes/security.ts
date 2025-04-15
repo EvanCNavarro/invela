@@ -382,7 +382,7 @@ async function processSecuritySubmission(req, res, task, formData, fileName) {
         size: Buffer.from(csvData).length,
         version: 1,
         company_id: task.company_id,
-        created_by: req.user.id,
+        created_by: req.user?.id || task.created_by || 0, // Ensure we always have a user ID
         created_at: timestamp,
         updated_at: timestamp,
         metadata: {
@@ -524,7 +524,7 @@ router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
       name: fileName,
       content: csvData,
       type: 'text/csv',
-      userId: task.created_by || (req.user ? req.user.id : 0),
+      userId: req.user?.id || task.created_by || 0, // Ensure we always have a user ID
       companyId: task.company_id,
       metadata: {
         taskId,
