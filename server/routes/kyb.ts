@@ -607,9 +607,14 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
       }
       
       // Use a SINGLE transaction for ALL operations (file creation, task update, AND responses)
-      fileId = await db.transaction(async (tx) => {
-        // 1. Create file record in the database first
-        // Ensure all required fields are properly set to valid values
+      logger.info('Starting database transaction for KYB submission', { taskId });
+      
+      try {
+        fileId = await db.transaction(async (tx) => {
+          logger.info('Transaction started successfully', { taskId });
+          
+          // 1. Create file record in the database first
+          // Ensure all required fields are properly set to valid values
         // FIXED: Create file values object matching the actual schema 
         // (content is not a field in the files table)
         const filePath = `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`;
@@ -662,34 +667,61 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           userId: fileValues.user_id
         });
         
-        // FIXED: Add explicit type definition for the insert query and validate all required fields
-        const fileInsertData = {
-          name: fileValues.name,
-          size: fileValues.size,
-          type: fileValues.type,
-          path: fileValues.path,
-          status: fileValues.status,
-          user_id: fileValues.user_id,
-          company_id: fileValues.company_id,
-          document_category: 'other', // Set a default document category
-          classification_status: 'processed',
-          classification_confidence: 1.0,
-          created_at: fileValues.created_at,
-          updated_at: fileValues.updated_at,
-          upload_time: fileValues.upload_time,
-          download_count: fileValues.download_count || 0,
-          version: fileValues.version || 1.0,
-          metadata: fileValues.metadata || {}
-        };
+        // Use a simpler direct SQL approach to avoid type issues and ensure the insert works
+        logger.info('Preparing to insert file record with essential values');
         
-        // Ensure all required fields are definitely populated
-        if (!fileInsertData.user_id || !fileInsertData.company_id) {
+        // Ensure critical values are definitely populated
+        if (!fileValues.user_id || !fileValues.company_id) {
           throw new Error('Required fields missing for file creation: user_id or company_id');
         }
         
-        const [fileRecord] = await tx.insert(files)
-          .values(fileInsertData)
-          .returning({ id: files.id });
+        // Use direct SQL query to avoid type issues
+        const result = await tx.execute(sql`
+          INSERT INTO files (
+            name, 
+            size, 
+            type, 
+            path, 
+            status, 
+            user_id, 
+            company_id,
+            document_category,
+            classification_status,
+            classification_confidence,
+            created_at, 
+            updated_at, 
+            upload_time, 
+            download_count,
+            version,
+            metadata
+          ) 
+          VALUES (
+            ${fileValues.name}, 
+            ${fileValues.size}, 
+            ${fileValues.type}, 
+            ${fileValues.path}, 
+            ${fileValues.status}, 
+            ${fileValues.user_id}, 
+            ${fileValues.company_id},
+            ${'other'}, 
+            ${'processed'}, 
+            ${1.0}, 
+            ${fileValues.created_at}, 
+            ${fileValues.updated_at}, 
+            ${fileValues.upload_time}, 
+            ${0}, 
+            ${1.0},
+            ${JSON.stringify(fileValues.metadata || {})}
+          )
+          RETURNING id
+        `);
+        
+        if (!result || !result.rows || result.rows.length === 0) {
+          throw new Error('Failed to create file record - no ID returned');
+        }
+        
+        // Extract the file ID from the result
+        const fileRecord = { id: result.rows[0].id };
           
         if (!fileRecord) {
           throw new Error('Failed to create file record');
@@ -803,10 +835,17 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           }
         }
 
+        // Log that we're finishing the transaction successfully
+        logger.info('Transaction completed successfully, returning file ID', {
+          fileId: fileRecord.id,
+          taskId
+        });
+        
         // Return the file ID from the transaction
         return fileRecord.id;
       });
       
+      // This line runs only if transaction returns without error
       logger.info('KYB form complete and responses saved successfully', {
         taskId,
         fileId,
