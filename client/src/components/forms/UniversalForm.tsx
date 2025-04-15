@@ -132,17 +132,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // Set agreement_confirmation to true by default (with stronger default approach)
-  useEffect(() => {
-    if (form) {
-      // Initialize agreement confirmation to true by default - always set it initially
-      // and also whenever we navigate to the review section
-      form.setValue("agreement_confirmation", true, { shouldValidate: true });
-      
-      // Log the value to confirm it was set
-      console.log('Setting default agreement confirmation to TRUE');
-    }
-  }, [dataHasLoaded, form, activeSection]);
+  // Initial agreement confirmation initialization happens later
+  // after activeSection and allSections are defined
   
   // Function to get current form values for status calculation
   const getFormValues = useCallback(() => {
@@ -364,6 +355,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
+  
+  // Set agreement_confirmation to true by default (with stronger default approach)
+  useEffect(() => {
+    if (form) {
+      // Initialize agreement confirmation to true by default - always set it initially
+      form.setValue("agreement_confirmation", true, { shouldValidate: true });
+      
+      // Log the value to confirm it was set
+      console.log('Setting default agreement confirmation to TRUE');
+    }
+  }, [dataHasLoaded, form]);
+  
+  // Set agreement when navigating to review section
+  useEffect(() => {
+    // Only run this effect if we have a form and we're on the review section
+    if (form && activeSection === allSections.length - 1) {
+      form.setValue("agreement_confirmation", true, { shouldValidate: true });
+      console.log('Setting agreement confirmation to TRUE in review section');
+    }
+  }, [form, activeSection, allSections.length]);
   
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
@@ -679,7 +690,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{(user as User)?.full_name || user?.name || user?.email || 'the authorized representative'}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.full_name || user?.name || user?.email || 'the authorized representative'}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
