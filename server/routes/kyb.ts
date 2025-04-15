@@ -610,19 +610,22 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
       fileId = await db.transaction(async (tx) => {
         // 1. Create file record in the database first
         // Ensure all required fields are properly set to valid values
+        // FIXED: Create file values object matching the actual schema 
+        // (content is not a field in the files table)
+        const filePath = `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`;
         const fileValues = {
             name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
-            content: csvData, // Store the actual CSV content in the database
             type: 'text/csv',
             status: 'active',
-            path: `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`,
+            path: filePath,
             size: Buffer.from(csvData).length,
             version: 1,
             company_id: task.company_id, // Already validated above
             user_id: userId, // Already validated above
-            created_by: userId,
             created_at: timestamp,
             updated_at: timestamp,
+            upload_time: timestamp,
+            download_count: 0,
             metadata: {
               taskId,
               taskType: 'kyb',
@@ -631,6 +634,25 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
               fields: fields.map(f => f.field_key)
             }
           };
+            
+        // Save CSV data to file system (for archival)
+        try {
+          const uploadsDir = './uploads';
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+          
+          // Extract filename from path
+          const fileName = filePath.split('/').pop();
+          fs.writeFileSync(`${uploadsDir}/${fileName}`, csvData);
+          logger.info(`Saved CSV file to ${uploadsDir}/${fileName}`);
+        } catch (fsError) {
+          logger.warn('Could not save CSV file to filesystem', {
+            error: fsError instanceof Error ? fsError.message : 'Unknown error',
+            path: filePath
+          });
+          // Continue with transaction - don't abort if file saving fails
+        }
             
         // Log the file values for debugging
         logger.info('Creating file record with values:', {
