@@ -657,13 +657,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               throw new Error('Server returned an invalid response. Please try again.');
             }
             
-            // Check if this is a partial success response (we need to explicitly check this)
-            if (result && typeof result === 'object' && 'error' in result && 'status' in result && result.status === 207) {
-              logger.warn('Received partial success response', result);
-              const errorMessage = 'details' in result && result.details 
-                ? `${result.error}: ${result.details}` 
-                : result.error;
-              throw new Error(errorMessage as string);
+            // Check if this is a partial success or error response 
+            if (result && typeof result === 'object') {
+              // Check for error field which indicates a problem
+              if ('error' in result) {
+                const errorMessage = 'details' in result && result.details 
+                  ? `${result.error}: ${result.details}` 
+                  : String(result.error);
+                
+                logger.warn('Server returned error response', { 
+                  error: result.error, 
+                  details: result.details,
+                  status: 'status' in result ? result.status : undefined
+                });
+                
+                throw new Error(errorMessage);
+              }
+              
+              // Check for missing success flag
+              if (!('success' in result) || result.success !== true) {
+                logger.warn('Response missing success flag', result);
+                throw new Error('The server returned an invalid response format. Please try again.');
+              }
             }
             
             // If we got here without an error, the submission was successful

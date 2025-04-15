@@ -845,7 +845,8 @@ export class KybFormService implements FormServiceInterface {
       }
       
       // Use consistent pattern with other API calls
-      console.log(`[DEBUG KybService] submitting form to /api/kyb/save with fileName: ${fileName}`);
+      console.log(`[KybService] Submitting form to /api/kyb/save with fileName: ${fileName}`);
+      console.log(`[KybService] Task ID: ${taskId}, Form data has ${Object.keys(formData).length} fields`);
       
       const response = await fetch(`/api/kyb/save`, {
         method: 'POST',
@@ -864,8 +865,13 @@ export class KybFormService implements FormServiceInterface {
       // Get response text first for proper error handling
       const responseText = await response.text();
       
+      // Debug: log response status and text
+      console.log(`[KybService] Server response status: ${response.status}`);
+      console.log(`[KybService] Response text length: ${responseText.length}`);
+      
       // Check if response is empty
       if (!responseText || responseText.trim() === '') {
+        console.error('[KybService] Server returned an empty response');
         throw new Error('Server returned an empty response');
       }
       
@@ -873,9 +879,10 @@ export class KybFormService implements FormServiceInterface {
       let responseData;
       try {
         responseData = JSON.parse(responseText);
+        console.log('[KybService] Successfully parsed JSON response:', responseData);
       } catch (parseError) {
         console.error('[KybService] Failed to parse response as JSON', parseError, responseText.substring(0, 200));
-        throw new Error('Server returned an invalid response. Please try again.');
+        throw new Error('Server returned an invalid response format. Please try again.');
       }
       
       // Check if response indicates an error with 207 status (partial success)
