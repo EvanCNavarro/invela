@@ -279,7 +279,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           status: 'active',
           user_id: task.created_by,
           company_id: task.company_id,
-          document_category: 'kyb',
+          document_category: 'other',
           classification_status: 'processed',
           classification_confidence: 1.0,
           created_at: timestamp,
