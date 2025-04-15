@@ -462,12 +462,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                         setIsSubmitted(true);
                         setShowSuccessModal(true);
                         
-                        // Show success toast
-                        toast({
-                          title: "Success",
-                          description: "KYB form has been saved successfully.",
-                          variant: "default",
-                        });
+                        // Don't show success toast here - we'll only show the modal
                       } else {
                         // This shouldn't happen if we validate in the previous then(),
                         // but just in case something slips through
