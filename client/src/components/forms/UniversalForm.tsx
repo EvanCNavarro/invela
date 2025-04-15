@@ -711,38 +711,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 </div>
                                 <p className="text-sm text-gray-700">
                                   I, <span className="font-semibold">{
-                                    // Force use of email (which we know we have) if other name properties are missing
-                                    (() => {
-                                      // Log user details to debug
-                                      console.log("User name extraction attempt:", {
-                                        has_user: !!user,
-                                        full_name: user?.full_name,
-                                        first_name: user?.first_name,
-                                        last_name: user?.last_name,
-                                        name: user?.name,
-                                        email: user?.email
-                                      });
-                                      
-                                      // Since we're seeing has_user: false in the logs, we need to handle this specially
-                                      if (!user && company?.name === "DevelopmentTesting") {
-                                        // If for the demo company, use a nice professional name
-                                        return "Eduardo Navarrete";
-                                      }
-                                      
-                                      if (user?.full_name) return user.full_name;
-                                      if (user?.first_name && user?.last_name) return `${user.first_name} ${user.last_name}`;
-                                      if (user?.name) return user.name;
-                                      if (user?.email) {
-                                        // Format email into a nice name
-                                        const emailParts = user.email.split('@')[0].split(/[._-]/);
-                                        return emailParts
-                                          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-                                          .join(' ');
-                                      }
-                                      
-                                      // Since this is a demo environment, provide a reasonable fallback
-                                      return "John Doe";
-                                    })()
+                                    // Try to get the user's name with proper fallback to "the authorized representative"
+                                    (user?.full_name || 
+                                     (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : null) ||
+                                     user?.name || 
+                                     'the authorized representative')
                                   }</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
