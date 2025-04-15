@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
   Form,
+  FormField,
   FormItem,
   FormLabel,
   FormControl,
@@ -18,7 +19,8 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { componentFactory } from '@/services/componentFactory';
-import { FormServiceInterface, FormField, FormData, FormSection as ServiceFormSection } from '@/services/formService';
+import { FormServiceInterface, FormData, FormSection as ServiceFormSection } from '@/services/formService';
+import type { FormField as ServiceFormField } from '@/services/formService';
 import { TaskTemplateService, TaskTemplateWithConfigs } from '@/services/taskTemplateService';
 import { sortFields, sortSections } from '@/utils/formUtils';
 import getLogger from '@/utils/logger';
@@ -105,7 +107,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [template, setTemplate] = useState<TaskTemplateWithConfigs | null>(null);
   const [formService, setFormService] = useState<FormServiceInterface | null>(null);
   const [sections, setSections] = useState<FormSection[]>([]);
-  const [fields, setFields] = useState<FormField[]>([]);
+  const [fields, setFields] = useState<ServiceFormField[]>([]);
   
   // We'll manage consent directly through form values
   
@@ -630,18 +632,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox */}
                         <div className="mt-8 space-y-4">
-                          <div 
+                          <div
                             className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 hover:bg-blue-100 transition-colors cursor-pointer"
                             onClick={() => {
-                              const newValue = !form.getValues("agreement_confirmation");
-                              form.setValue("agreement_confirmation", newValue);
+                              // Get the current value and toggle it
+                              const currentValue = form.getValues("agreement_confirmation");
+                              form.setValue("agreement_confirmation", !currentValue);
                             }}
                           >
                             <div className="flex-shrink-0 mt-1">
                               <Checkbox
-                                checked={form.getValues("agreement_confirmation") || false}
+                                checked={form.watch("agreement_confirmation")}
                                 id="agreement_confirmation"
-                                className="pointer-events-none"
+                                // Stop propagation so the outer div onClick handles the toggle
+                                onClick={(e) => e.stopPropagation()}
                               />
                             </div>
                             <div className="space-y-2 leading-normal">
@@ -737,7 +741,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Button 
                         type="button"
                         onClick={form.handleSubmit(handleSubmit)}
-                        disabled={!form.getValues("agreement_confirmation")}
+                        disabled={!form.watch("agreement_confirmation")}
                         className="flex items-center gap-1"
                       >
                         Submit
