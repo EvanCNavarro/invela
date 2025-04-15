@@ -845,7 +845,9 @@ export class KybFormService implements FormServiceInterface {
       }
       
       // Use consistent pattern with other API calls
-      const response = await fetch(`/api/kyb/submit`, {
+      console.log(`[DEBUG KybService] submitting form to /api/kyb/save with fileName: ${fileName}`);
+      
+      const response = await fetch(`/api/kyb/save`, {
         method: 'POST',
         credentials: 'include',
         headers: {
