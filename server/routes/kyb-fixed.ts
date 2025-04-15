@@ -3,7 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@db';
 import { kybFields, kybResponses, tasks, companies, files } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-import Logger from '../utils/logger';
+import { Logger } from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -271,31 +271,33 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
         logger.info('Starting transaction for KYB submission', { taskId });
         
         // 1. Create file record in database
+        const fileValues = {
+          name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
+          size: Buffer.from(csvData).length,
+          type: 'text/csv',
+          path: `/uploads/${csvFileName}`,
+          status: 'active',
+          user_id: task.created_by,
+          company_id: task.company_id,
+          document_category: 'kyb',
+          classification_status: 'processed',
+          classification_confidence: 1.0,
+          created_at: timestamp,
+          updated_at: timestamp,
+          upload_time: timestamp,
+          download_count: 0,
+          version: 1.0,
+          metadata: {
+            taskId,
+            taskType: 'kyb',
+            formVersion: '1.0',
+            submissionDate: timestamp.toISOString(),
+            fields: fields.map(f => f.field_key)
+          }
+        };
+        
         const [fileRecord] = await tx.insert(files)
-          .values({
-            name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
-            size: Buffer.from(csvData).length,
-            type: 'text/csv',
-            path: `/uploads/${csvFileName}`,
-            status: 'active',
-            user_id: task.created_by,
-            company_id: task.company_id,
-            document_category: 'kyb',
-            classification_status: 'processed',
-            classification_confidence: 1.0,
-            created_at: timestamp,
-            updated_at: timestamp,
-            upload_time: timestamp,
-            download_count: 0,
-            version: 1.0,
-            metadata: {
-              taskId,
-              taskType: 'kyb',
-              formVersion: '1.0',
-              submissionDate: timestamp.toISOString(),
-              fields: fields.map(f => f.field_key)
-            }
-          })
+          .values(fileValues)
           .returning();
           
         logger.info('File record created in transaction', { 
