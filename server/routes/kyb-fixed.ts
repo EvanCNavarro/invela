@@ -805,7 +805,7 @@ router.post('/api/kyb/cleanup/:taskId', requireAuth, async (req, res) => {
               eq(kybResponses.field_id, fieldId)
             )
           )
-          .orderBy(kybResponses.updated_at, 'desc'); // Most recent first
+          .orderBy(desc(kybResponses.updated_at)); // Most recent first
         
         // Keep only the most recent response and delete others
         if (responses.length > 1) {
