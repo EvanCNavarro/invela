@@ -599,7 +599,7 @@ router.post('/api/kyb/save', async (req, res) => {
         size: Buffer.from(csvData).length,
         version: 1,
         company_id: task.company_id,
-        created_by: task.created_by,
+        created_by: req.user?.id || task.created_by,
         created_at: timestamp,
         updated_at: timestamp,
         metadata: {
