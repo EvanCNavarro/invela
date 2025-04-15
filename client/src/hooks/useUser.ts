@@ -19,7 +19,7 @@ export function useUser() {
     isError, 
     error 
   } = useQuery<User>({ 
-    queryKey: ['/api/users/current'],
+    queryKey: ['/api/user'],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: 1,
     refetchOnWindowFocus: false
