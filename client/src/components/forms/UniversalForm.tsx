@@ -641,8 +641,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           </Accordion>
                         </div>
                         
-                        {/* Final agreement checkbox - fully clickable block with visual feedback */}
+                        {/* Final agreement checkbox with default checked state */}
                         <div className="mt-8 space-y-4">
+                          {/* Using useEffect to set default value on initial render */}
+                          {useEffect(() => {
+                            // Set the agreement confirmation to checked by default
+                            form.setValue("agreement_confirmation", true, { shouldValidate: true });
+                          }, [])}
+                          
                           <div 
                             onClick={() => {
                               // Toggle when clicking anywhere in the block
@@ -652,7 +658,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             className={cn(
                               "border rounded-md p-4 cursor-pointer transition-colors",
                               form.getValues("agreement_confirmation") 
-                                ? "bg-blue-100 border-blue-200" 
+                                ? "bg-blue-50 border-blue-200" // Lighter blue background when checked
                                 : "bg-white hover:bg-gray-50"
                             )}
                           >
@@ -676,15 +682,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               </div>
                               <div className="space-y-2">
                                 <div className="font-semibold text-gray-800">
-                                  Declaration and Consent
+                                  Legal Declaration and Data Processing Consent
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                  hereby certify that all information provided in this form is complete, accurate, 
-                                  and truthful to the best of my knowledge. I understand that providing false information 
-                                  may result in rejection of our application or termination of services.
+                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, in my capacity 
+                                  as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
+                                  hereby:
                                 </p>
+                                <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                                  <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
+                                  <li>Acknowledge that this information will be used by Invela for the purpose of risk assessment and compliance verification;</li>
+                                  <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
+                                  <li>Understand that this information will be securely maintained according to industry-standard data protection protocols;</li>
+                                  <li>Confirm that I am authorized to submit this information on behalf of {company?.name || 'the company'}; and</li>
+                                  <li>Understand that providing false or misleading information may result in the rejection of our application, termination of services, or other legal consequences.</li>
+                                </ul>
                               </div>
                             </div>
                           </div>
