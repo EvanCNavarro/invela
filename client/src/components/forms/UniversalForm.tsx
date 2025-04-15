@@ -631,28 +631,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           <label 
                             htmlFor="agreement_confirmation"
                             className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 cursor-pointer hover:bg-blue-100 transition-colors"
-                            onClick={() => {
-                              // Toggle the consent state
-                              const newValue = !consentChecked;
-                              setConsentChecked(newValue);
-                              // Update form value
-                              form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                              // Explicitly refresh status to ensure submit button updates
-                              setTimeout(refreshStatus, 50);
+                            onClick={(e) => {
+                              // Prevent the event from triggering the checkbox's onChange
+                              // Only handle the click if it's directly on the label (not on the checkbox)
+                              if (e.target === e.currentTarget || !e.currentTarget.contains(e.target as Node) || 
+                                  !(e.target as HTMLElement).closest('button')) {
+                                // Toggle the consent state
+                                const newValue = !consentChecked;
+                                setConsentChecked(newValue);
+                                // Update form value
+                                form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                              }
                             }}
                           >
                             <Checkbox
                               checked={consentChecked}
                               onCheckedChange={(checked) => {
+                                // Don't update if the value isn't changing to avoid loops
                                 const newValue = !!checked;
-                                setConsentChecked(newValue);
-                                form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                                // Explicitly refresh status to ensure submit button updates
-                                setTimeout(refreshStatus, 50);
+                                if (newValue !== consentChecked) {
+                                  setConsentChecked(newValue);
+                                  form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                                }
                               }}
                               id="agreement_confirmation"
                               className="mt-1"
-                              defaultChecked={true}
                             />
                             <div className="space-y-2 leading-normal">
                               <div className="font-semibold text-gray-800">
