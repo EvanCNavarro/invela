@@ -254,7 +254,206 @@ function convertSecurityResponsesToCSV(fields: any[], responses: any[]) {
   ).join('\n');
 }
 
-// Submit security assessment form
+// We're keeping the old endpoint for backward compatibility, but making a new one that matches
+// the client-side API pattern we use for KYB.
+
+// Submit security assessment form (new standardized endpoint)
+router.post('/api/security/save', requireAuth, async (req, res) => {
+  try {
+    // Enhanced logging
+    console.log('[Security API] Save endpoint triggered:', {
+      endpoint: '/api/security/save',
+      method: 'POST',
+      headers: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookiePresent: !!req.headers.cookie
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    // Extract request body fields
+    const { taskId, formData, fileName } = req.body;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        error: 'Bad Request', 
+        message: 'Missing required parameter: taskId' 
+      });
+    }
+    
+    logger.info('Saving security assessment', { taskId, fileName });
+    
+    // Rest of the submission logic is identical to the older endpoint
+    // Continue with your existing implementation here...
+    
+    // Get the task
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, parseInt(taskId.toString()))
+    });
+    
+    if (!task) {
+      logger.error('Task not found for security assessment submission', { taskId });
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    
+    if (!task.company_id) {
+      logger.error('Task has no company_id', { taskId });
+      return res.status(400).json({ message: 'Task is not associated with a company' });
+    }
+    
+    // Continue with the rest of the submission logic...
+    // We'll extract this to a shared function later
+    
+    return processSecuritySubmission(req, res, task, formData, fileName);
+  } catch (error) {
+    logger.error('Error saving security assessment', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({
+      error: 'Failed to save security assessment',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Helper function for processing security submissions
+async function processSecuritySubmission(req, res, task, formData, fileName) {
+  try {
+    // Get all security fields
+    const fields = await db.select().from(securityFields);
+    
+    // Get existing responses
+    const existingResponses = await db.select()
+      .from(securityResponses)
+      .where(eq(securityResponses.company_id, task.company_id));
+    
+    // Process the responses and generate the CSV data
+    // This will be implemented similar to the KYB convertResponsesToCSV function
+    const csvRows = [];
+    const headers = ['Field', 'Question', 'Response', 'Score', 'Max Score'];
+    csvRows.push(headers.join(','));
+    
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+    
+    // Process responses
+    for (const field of fields) {
+      const value = formData[field.field_key] || '';
+      const existingResponse = existingResponses.find(r => r.field_id === field.id);
+      
+      let score = 0;
+      if (typeof value === 'string' && field.scoring_rules && field.scoring_rules.values) {
+        score = field.scoring_rules.values[value] || 0;
+      }
+      
+      totalScore += score;
+      maxPossibleScore += field.max_score || 0;
+      
+      const row = [
+        field.field_key,
+        (field.question || '').replace(/,/g, ' '),
+        (value || '').replace(/,/g, ' '),
+        score.toString(),
+        (field.max_score || 0).toString()
+      ];
+      
+      csvRows.push(row.join(','));
+    }
+    
+    // Calculate the risk score
+    const riskScore = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
+    
+    // Create the CSV file
+    const csvData = csvRows.join('\n');
+    const timestamp = new Date();
+    const safeFileName = fileName || `security_assessment_${task.id}_${timestamp.toISOString().replace(/:/g, '')}.csv`;
+    
+    // Save the file to the database
+    const [fileId] = await db.insert(files)
+      .values({
+        name: safeFileName,
+        content: csvData,
+        type: 'text/csv',
+        status: 'active',
+        path: `/uploads/security_${task.id}_${timestamp.getTime()}.csv`,
+        size: Buffer.from(csvData).length,
+        version: 1,
+        company_id: task.company_id,
+        created_by: req.user.id,
+        created_at: timestamp,
+        updated_at: timestamp,
+        metadata: {
+          taskId: task.id,
+          taskType: 'security',
+          formVersion: '1.0',
+          submissionDate: timestamp.toISOString(),
+          riskScore
+        }
+      })
+      .returning({ id: files.id });
+    
+    // Update the task
+    await db.update(tasks)
+      .set({
+        status: TaskStatus.SUBMITTED,
+        progress: 100,
+        updated_at: new Date(),
+        metadata: {
+          ...task.metadata,
+          securityFormFile: fileId.id,
+          submissionDate: new Date().toISOString(),
+          riskScore
+        }
+      })
+      .where(eq(tasks.id, task.id));
+    
+    // Add the file-vault to available tabs if not already present
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+    
+    if (company) {
+      // Update company risk score and available tabs
+      const currentTabs = company.available_tabs || ['task-center'];
+      const updates: any = { 
+        risk_score: riskScore,
+        updated_at: new Date()
+      };
+      
+      if (!currentTabs.includes('file-vault')) {
+        updates.available_tabs = [...currentTabs, 'file-vault'];
+      }
+      
+      await db.update(companies)
+        .set(updates)
+        .where(eq(companies.id, task.company_id));
+    }
+    
+    logger.info('Security assessment submitted successfully', {
+      taskId: task.id,
+      fileId: fileId.id,
+      riskScore
+    });
+    
+    return res.json({
+      success: true,
+      fileId: fileId.id,
+      riskScore
+    });
+  } catch (error) {
+    logger.error('Error processing security submission', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    throw error;
+  }
+}
+
+// Submit security assessment form (legacy endpoint)
 router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
