@@ -619,42 +619,47 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (onSubmit) {
         try {
           // Wrap onSubmit in a try-catch to handle JSON parsing errors
-          const result = await (async () => {
-            try {
-              // Call the onSubmit handler which typically makes API requests
-              return await onSubmit(data);
-            } catch (apiError: any) {
-              // Check if this is a JSON parse error from an API response
-              if (apiError instanceof SyntaxError && 
-                  apiError.message.includes('Unexpected token') && 
-                  apiError.message.includes('<!DOCTYPE')) {
-                // This is likely a case where the API returned HTML instead of JSON
-                logger.error('API returned HTML instead of JSON. Possible session timeout or server error', apiError);
-                throw new Error('Server returned invalid data. Your session may have expired. Please try again.');
-              }
-              
-              // Rethrow other errors
-              throw apiError;
+          let result;
+          let submissionSuccessful = false;
+          
+          try {
+            // Call the onSubmit handler which typically makes API requests
+            result = await onSubmit(data);
+            // If we got here without an error, the submission was successful
+            submissionSuccessful = true;
+          } catch (apiError: any) {
+            // Check if this is a JSON parse error from an API response
+            if (apiError instanceof SyntaxError && 
+                apiError.message.includes('Unexpected token') && 
+                apiError.message.includes('<!DOCTYPE')) {
+              // This is likely a case where the API returned HTML instead of JSON
+              logger.error('API returned HTML instead of JSON. Possible session timeout or server error', apiError);
+              throw new Error('Server returned invalid data. Your session may have expired. Please try again.');
             }
-          })();
+            
+            // Rethrow other errors
+            throw apiError;
+          }
           
-          // Handle successful submission
-          logger.info('Form submission successful');
-          
-          // Show success toast
-          toast({
-            title: 'Form submitted successfully',
-            description: 'Your form has been successfully processed.',
-            variant: 'success'
-          });
-          
-          // Trigger success handler with the result
-          handleFormSuccess({ 
-            ...((typeof result === 'object' && result !== null) ? result : {}),
-            taskId: taskId,
-            taskStatus: "completed"
-          });
-          
+          // Only proceed with success actions if the submission was actually successful
+          if (submissionSuccessful) {
+            // Handle successful submission
+            logger.info('Form submission successful');
+            
+            // Show success toast
+            toast({
+              title: 'Form submitted successfully',
+              description: 'Your form has been successfully processed.',
+              variant: 'success'
+            });
+            
+            // Trigger success handler with the result
+            handleFormSuccess({ 
+              ...((typeof result === 'object' && result !== null) ? result : {}),
+              taskId: taskId,
+              taskStatus: "completed"
+            });
+          }
         } catch (submitError) {
           // If submission fails, show error toast
           const errMessage = submitError instanceof Error ? submitError.message : 'Form submission failed';
@@ -667,17 +672,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           });
         }
       } else {
-        // If no onSubmit callback, just show a simple success toast
-        toast({
-          title: 'Form submitted',
-          description: 'Your form has been successfully submitted.',
-        });
-        
-        // Show success modal with basic information
-        handleFormSuccess({
-          taskId: taskId,
-          taskStatus: "completed"
-        });
+        try {
+          // If no onSubmit callback, just show a simple success toast
+          toast({
+            title: 'Form submitted',
+            description: 'Your form has been successfully submitted.',
+          });
+          
+          // Show success modal with basic information
+          handleFormSuccess({
+            taskId: taskId,
+            taskStatus: "completed"
+          });
+        } catch (error) {
+          logger.error('Error in default form submission:', error);
+          
+          toast({
+            title: 'Submission failed',
+            description: 'An unexpected error occurred during form submission.',
+            variant: 'destructive',
+          });
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Form submission failed';
