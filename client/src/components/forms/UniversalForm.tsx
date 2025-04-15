@@ -449,76 +449,148 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   }, [updateField, refreshStatus]);
   
   // Track completed actions and show success modal
-  const handleFormSuccess = useCallback((result: any = {}) => {
-    // Create an array of actions that were performed during submission
-    const completedActions: SubmissionAction[] = [];
+  // Function to handle successful form submission with transaction-like behavior
+  const handleFormSuccess = useCallback(async (result: any = {}) => {
+    logger.info('Processing form submission success actions');
     
-    // Track that the task was completed (universal)
-    completedActions.push({
-      type: "task_completion",
-      description: "Task Completed",
-      data: {
-        details: "The form has been successfully submitted and marked as complete."
+    try {
+      // Create an array of actions that were performed during submission
+      const completedActions: SubmissionAction[] = [];
+      const actionPromises: Promise<any>[] = [];
+      let hasError = false;
+      
+      // Track that the task was completed (universal)
+      try {
+        // If there's a task ID, we could make an API call to update task status
+        if (taskId) {
+          logger.info(`Marking task ${taskId} as complete`);
+          // You could add API call here to update task status
+          // const updatePromise = apiRequest.post(`/api/tasks/${taskId}/complete`);
+          // actionPromises.push(updatePromise);
+        }
+        
+        completedActions.push({
+          type: "task_completion",
+          description: "Task Completed",
+          data: {
+            details: "The form has been successfully submitted and marked as complete."
+          }
+        });
+      } catch (err) {
+        logger.error('Failed to complete task status update', err);
+        hasError = true;
       }
-    });
-    
-    // Track file generation if a file ID was returned (universal)
-    if (result.fileId) {
-      completedActions.push({
-        type: "file_generation",
-        description: "Downloadable Survey Created",
-        data: {
-          details: "A downloadable record of your responses has been created in the File Vault.",
-          fileId: result.fileId
+      
+      // Track file generation if a file ID was returned (universal)
+      if (result.fileId) {
+        try {
+          logger.info(`Processing file generation for file ${result.fileId}`);
+          // Could add API call to verify file exists
+          // const filePromise = apiRequest.get(`/api/files/${result.fileId}`);
+          // actionPromises.push(filePromise);
+          
+          completedActions.push({
+            type: "file_generation",
+            description: "Downloadable Survey Created",
+            data: {
+              details: "A downloadable record of your responses has been created in the File Vault.",
+              fileId: result.fileId
+            }
+          });
+        } catch (err) {
+          logger.error('Failed to process file generation', err);
+          hasError = true;
         }
+      }
+      
+      // Track risk assessment if a risk score was returned (task-specific)
+      if (result.riskScore !== undefined) {
+        try {
+          logger.info(`Processing risk score: ${result.riskScore}`);
+          completedActions.push({
+            type: "risk_assessment",
+            description: "Risk Assessment Complete",
+            data: {
+              details: `A risk score of ${result.riskScore} has been calculated based on your responses.`,
+              score: result.riskScore
+            }
+          });
+        } catch (err) {
+          logger.error('Failed to process risk assessment', err);
+          hasError = true;
+        }
+      }
+      
+      // Track next task if provided (task-specific)
+      if (result.nextTaskId) {
+        try {
+          logger.info(`Setting up next task: ${result.nextTaskId}`);
+          completedActions.push({
+            type: "next_task",
+            description: "Next Task Ready",
+            data: {
+              details: "Your next task is now available in the Task Center.",
+              nextTaskId: result.nextTaskId,
+              buttonText: "Go to Next Task",
+              url: `/task/${result.nextTaskId}`
+            }
+          });
+        } catch (err) {
+          logger.error('Failed to set up next task', err);
+          hasError = true;
+        }
+      }
+      
+      // Wait for all action promises to resolve
+      if (actionPromises.length > 0) {
+        try {
+          await Promise.all(actionPromises);
+          logger.info('All submission actions completed successfully');
+        } catch (err) {
+          logger.error('One or more submission actions failed', err);
+          hasError = true;
+        }
+      }
+      
+      // If any action failed, don't show success state
+      if (hasError) {
+        toast({
+          title: 'Submission partially complete',
+          description: 'Some actions could not be completed. Please check the Task Center for details.',
+          variant: 'warning',
+        });
+        return;
+      }
+      
+      // Set submission result with all actions
+      setSubmissionResult({
+        ...result,
+        completedActions
+      });
+      
+      // Show blue confetti animation in background
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+      });
+      
+      // Show the success modal
+      setShowSuccessModal(true);
+      
+    } catch (err) {
+      // Catch-all error handler
+      logger.error('Failed to process form submission success', err);
+      toast({
+        title: 'Error completing submission',
+        description: 'There was a problem finalizing your submission.',
+        variant: 'destructive',
       });
     }
-    
-    // Track risk assessment if a risk score was returned (task-specific)
-    if (result.riskScore !== undefined) {
-      completedActions.push({
-        type: "risk_assessment",
-        description: "Risk Assessment Complete",
-        data: {
-          details: `A risk score of ${result.riskScore} has been calculated based on your responses.`,
-          score: result.riskScore
-        }
-      });
-    }
-    
-    // Track next task if provided (task-specific)
-    if (result.nextTaskId) {
-      completedActions.push({
-        type: "next_task",
-        description: "Next Task Ready",
-        data: {
-          details: "Your next task is now available in the Task Center.",
-          nextTaskId: result.nextTaskId,
-          buttonText: "Go to Next Task",
-          url: `/task/${result.nextTaskId}`
-        }
-      });
-    }
-    
-    // Set submission result with all actions
-    setSubmissionResult({
-      ...result,
-      completedActions
-    });
-    
-    // Show blue confetti animation in background
-    confetti({
-      particleCount: 150,
-      spread: 80,
-      origin: { y: 0.6 },
-      colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-    });
-    
-    // Show the success modal
-    setShowSuccessModal(true);
-  }, []);
+  }, [taskId]);
 
-  // Handle form submission
+  // Handle form submission with improved error handling
   const handleSubmit = useCallback(async (data: FormData) => {
     try {
       // Verify form is complete before submitting
@@ -545,26 +617,48 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Then call the onSubmit callback if provided
       if (onSubmit) {
         try {
-          onSubmit(data);
-          
-          // If onSubmit doesn't throw, assume success and prepare to show success modal
-          // The onSubmit handler typically makes an API call that returns the submission result
-          // However, we can't intercept that result, so we'll show a generic success modal
-          
-          // Wait a short time to allow the onSubmit callback to complete
-          setTimeout(() => {
-            // If modal hasn't been shown yet (by an external call), show a generic one
-            if (!showSuccessModal) {
-              handleFormSuccess({ 
-                taskId: taskId,
-                taskStatus: "completed"
-              });
+          // Wrap onSubmit in a try-catch to handle JSON parsing errors
+          const result = await (async () => {
+            try {
+              // Call the onSubmit handler which typically makes API requests
+              return await onSubmit(data);
+            } catch (apiError: any) {
+              // Check if this is a JSON parse error from an API response
+              if (apiError instanceof SyntaxError && 
+                  apiError.message.includes('Unexpected token') && 
+                  apiError.message.includes('<!DOCTYPE')) {
+                // This is likely a case where the API returned HTML instead of JSON
+                logger.error('API returned HTML instead of JSON. Possible session timeout or server error', apiError);
+                throw new Error('Server returned invalid data. Your session may have expired. Please try again.');
+              }
+              
+              // Rethrow other errors
+              throw apiError;
             }
-          }, 1000);
+          })();
+          
+          // Handle successful submission
+          logger.info('Form submission successful');
+          
+          // Show success toast
+          toast({
+            title: 'Form submitted successfully',
+            description: 'Your form has been successfully processed.',
+            variant: 'success'
+          });
+          
+          // Trigger success handler with the result
+          handleFormSuccess({ 
+            ...(result || {}),
+            taskId: taskId,
+            taskStatus: "completed"
+          });
           
         } catch (submitError) {
           // If submission fails, show error toast
           const errMessage = submitError instanceof Error ? submitError.message : 'Form submission failed';
+          logger.error('Form submission error:', errMessage, submitError);
+          
           toast({
             title: 'Submission failed',
             description: errMessage,
@@ -572,6 +666,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           });
         }
       } else {
+        // Close the "submitting" toast
+        submissionToast.dismiss();
+        
         // If no onSubmit callback, just show a simple success toast
         toast({
           title: 'Form submitted',
@@ -586,7 +683,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Form submission failed';
-      logger.error('Form submission error:', message);
+      logger.error('Form submission error:', message, err);
       
       toast({
         title: 'Submission failed',
@@ -594,7 +691,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [saveProgress, onSubmit, overallProgress, formTitle, taskId, showSuccessModal, handleFormSuccess]);
+  }, [saveProgress, onSubmit, overallProgress, formTitle, taskId, handleFormSuccess]);
   
   // Handle cancellation
   const handleCancel = useCallback(() => {
