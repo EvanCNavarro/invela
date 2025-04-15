@@ -101,6 +101,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const { user } = useUser();
   const { company } = useCurrentCompany();
   
+  // Log the user object to debug what fields are available
+  useEffect(() => {
+    if (user) {
+      console.log('User data from API:', user);
+    }
+  }, [user]);
+  
   // Core state for form initialization
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -355,47 +362,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
-  // Reference to track if we've already checked the box for this review section visit
-  const hasCheckedRef = useRef(false);
-  
-  // Monitor section changes to handle checkbox state when navigating to review section
+  // Very simplified effect to just register the agreement field
+  // No need for timeouts or refs since we use defaultChecked={true}
   useEffect(() => {
-    if (!form || allSections.length === 0) return;
+    if (!form) return;
     
     // Register the field with the form if needed
     if (!form.getValues().hasOwnProperty("agreement_confirmation")) {
       form.register("agreement_confirmation");
+      // Set initial value to true
+      form.setValue("agreement_confirmation", true, { 
+        shouldValidate: true,
+        shouldDirty: false,
+      });
     }
-    
-    // Check if we're on the review section
-    const isReviewSection = activeSection === allSections.length - 1;
-    
-    if (isReviewSection) {
-      // Set agreement to true immediately
-      form.setValue("agreement_confirmation", true, { shouldValidate: true });
-      
-      // Also reset our reference flag
-      hasCheckedRef.current = true;
-      
-      // Add multiple backup attempts to handle any race conditions
-      const checkFn = () => {
-        if (hasCheckedRef.current) {
-          form.setValue("agreement_confirmation", true, { shouldValidate: true });
-        }
-      };
-      
-      // Set multiple timeouts at different intervals
-      const t1 = setTimeout(checkFn, 100);
-      const t2 = setTimeout(checkFn, 500);
-      
-      // Cleanup function to prevent memory leaks
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        hasCheckedRef.current = false;
-      };
-    }
-  }, [form, activeSection, allSections.length]);
+  }, [form]);
   
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
@@ -695,15 +676,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   name="agreement_confirmation"
                                   type="checkbox"
                                   className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                  onClick={(e) => {
-                                    // Stop propagation to prevent parent div from firing
-                                    e.stopPropagation();
-                                    // Only handle click directly here to avoid flicker
-                                    const newValue = !form.getValues("agreement_confirmation");
-                                    form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
-                                  }}
+                                  defaultChecked={true}
                                   onChange={(e) => {
-                                    // Handle the change event by updating the form state
+                                    // Only use the onChange handler - much more reliable
                                     form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
                                   }}
                                 />
