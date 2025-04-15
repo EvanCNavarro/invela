@@ -109,7 +109,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   
-  // We'll manage consent directly through form values
+  // Create a state for the consent checkbox
+  const [isConsentChecked, setIsConsentChecked] = useState(false);
   
   // Use our new form data manager hook to handle form data
   const {
@@ -131,7 +132,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // Make sure agreement_confirmation is set to true as default
+  // Make sure agreement_confirmation is set to true as default and keep our state in sync
   useEffect(() => {
     if (dataHasLoaded && form) {
       // Initialize agreement to true if undefined
@@ -140,6 +141,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // If value is undefined in the form, initialize it to true
       if (currentValue === undefined) {
         form.setValue('agreement_confirmation', true, { shouldValidate: false });
+        setIsConsentChecked(true);
+      } else {
+        // Otherwise sync our state with the form value
+        setIsConsentChecked(!!currentValue);
       }
     }
   }, [dataHasLoaded, form]);
@@ -635,16 +640,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           <div
                             className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 hover:bg-blue-100 transition-colors cursor-pointer"
                             onClick={() => {
-                              // Get the current value and toggle it
-                              const currentValue = form.getValues("agreement_confirmation");
-                              form.setValue("agreement_confirmation", !currentValue);
+                              // Toggle the state
+                              const newValue = !isConsentChecked;
+                              setIsConsentChecked(newValue);
+                              
+                              // Update the form value
+                              form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
                             }}
                           >
                             <div className="flex-shrink-0 mt-1">
                               <Checkbox
-                                checked={form.watch("agreement_confirmation")}
+                                checked={isConsentChecked}
                                 id="agreement_confirmation"
-                                // Stop propagation so the outer div onClick handles the toggle
+                                onCheckedChange={(checked) => {
+                                  const newValue = !!checked;
+                                  setIsConsentChecked(newValue);
+                                  form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                                }}
                                 onClick={(e) => e.stopPropagation()}
                               />
                             </div>
@@ -741,7 +753,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Button 
                         type="button"
                         onClick={form.handleSubmit(handleSubmit)}
-                        disabled={!form.watch("agreement_confirmation")}
+                        disabled={!isConsentChecked}
                         className="flex items-center gap-1"
                       >
                         Submit
