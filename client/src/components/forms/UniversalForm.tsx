@@ -676,17 +676,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               </div>
                               <div className="space-y-2">
                                 <div className="font-semibold text-gray-800">
-                                  Submission Consent
+                                  Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.full_name || user?.name || 'the authorized representative'}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.name || user?.email || 'the authorized representative'}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
                                 <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
                                   <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
                                   <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
-                                  <li>Understand that this information will be securely maintained according to industry-standard data protection protocols;</li>
                                   <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
                                 </ul>
                               </div>
@@ -755,18 +754,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   const isReviewPage = activeSection === allSections.length - 1;
                   const isLastRegularPage = activeSection === sections.length - 1;
                   
-                  // If on the review page, show Submit button
+                  // If on the review page, show Submit button with tooltip when disabled
                   if (isReviewPage) {
                     return (
-                      <Button 
-                        type="button"
-                        onClick={form.handleSubmit(handleSubmit)}
-                        disabled={!form.getValues("agreement_confirmation")}
-                        className="flex items-center gap-1"
-                      >
-                        Submit
-                        <Check className="h-4 w-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button"
+                              onClick={form.handleSubmit(handleSubmit)}
+                              disabled={!form.getValues("agreement_confirmation")}
+                              className="flex items-center gap-1"
+                            >
+                              Submit
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          {!form.getValues("agreement_confirmation") && (
+                            <TooltipContent>
+                              <p>Please check the Submission Consent box to enable submission</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
                     );
                   }
                   
