@@ -146,7 +146,8 @@ export function useFormDataManager({
       const normalizedValue = (value === null || value === undefined) ? '' : value;
       
       // Always update in the form service, ensuring field clearing operations work
-      formService.updateFormData(name, normalizedValue);
+      // Pass taskId to enable immediate saving on critical operations
+      formService.updateFormData(name, normalizedValue, taskId);
       
       // Update in React Hook Form
       form.setValue(name, normalizedValue, { 
@@ -263,7 +264,8 @@ export function useFormDataManager({
     // Update form service if available
     if (formService) {
       Object.entries(resetData).forEach(([key, value]) => {
-        formService.updateFormData(key, value);
+        // Pass taskId to enable immediate saving when needed
+        formService.updateFormData(key, value, taskId);
       });
     }
     
