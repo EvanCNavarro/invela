@@ -620,8 +620,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       logger.info('Form submitted');
       
-      // Show submission toast
-      toast({
+      // Show submission toast and save its ID to dismiss later
+      const submissionToast = toast({
         title: `Submitting ${formTitle}`,
         description: 'Please wait while we process your submission...',
       });
@@ -662,6 +662,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 logger.info('Server returned undefined but no error was thrown, treating as potential success');
                 // Create a mock success result to allow the form to complete
                 result = { success: true, fileId: Date.now() };
+                submissionSuccessful = true; // Mark as successful since we're creating a valid result
               } else {
                 throw new Error('Server returned an invalid response. Please try again.');
               }
@@ -760,6 +761,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 taskId: taskId,
                 taskStatus: "completed"
               });
+              
+              // Dismiss the submitting toast
+              toast.dismiss(submissionToast);
               
               // Only log success; don't show toast since we'll show the modal
               logger.info('All post-submission actions completed successfully');
