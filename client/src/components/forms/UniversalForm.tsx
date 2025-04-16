@@ -539,10 +539,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
       
       // Set submission result following the SubmissionResult interface
+      const numericFileId = fileId && typeof fileId === 'number' ? fileId : 
+                           fileId && typeof fileId === 'string' ? parseInt(fileId, 10) : undefined;
+      
       setSubmissionResult({
-        fileId: fileId ? Number(fileId) : undefined,
+        fileId: numericFileId,
         completedActions,
-        taskId: Number(taskId) || undefined,
+        taskId: taskId ? Number(taskId) : undefined,
         taskStatus: 'completed'
       });
       
