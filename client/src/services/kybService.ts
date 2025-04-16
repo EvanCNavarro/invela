@@ -65,6 +65,7 @@ export class KybFormService implements FormServiceInterface {
   private formData: Record<string, any> = {};
   private initialized = false;
   private templateId: number | null = null;
+  private taskStatus: string = 'not_started'; // Status of the task/form
   private logger = getLogger('KYB Service');
   
   // For debouncing and state tracking
@@ -810,7 +811,13 @@ export class KybFormService implements FormServiceInterface {
       
       // Get progress data from the server
       const progressData = await this.getKybProgress(taskId);
-      const { formData } = progressData;
+      const { formData, status } = progressData;
+      
+      // Store the server-provided status if available
+      if (status) {
+        console.log(`[DEBUG KybService] Server provided status: ${status}`);
+        this.taskStatus = status;
+      }
       
       // If no data was returned but we have existing data, keep the current data
       if (!formData || Object.keys(formData).length === 0) {
