@@ -489,13 +489,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </div>
 
-            {showSuccessModal && (
-              <KYBSuccessModal
-                open={showSuccessModal}
-                onOpenChange={(open) => setShowSuccessModal(open)}
-                companyName={displayName}
-              />
-            )}
+            {/* Success modal now handled by UniversalForm component */}
           </div>
         </PageTemplate>
       </DashboardLayout>
@@ -639,13 +633,7 @@ export default function TaskPage({ params }: TaskPageProps) {
             </div>
           </div>
           
-          {showSuccessModal && (
-            <SecuritySuccessModal
-              open={showSuccessModal}
-              onOpenChange={(open) => setShowSuccessModal(open)}
-              companyName={displayName}
-            />
-          )}
+          {/* Success modal now handled by UniversalForm component */}
         </PageTemplate>
       </DashboardLayout>
     );
