@@ -496,11 +496,54 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // First save the current progress
       await saveProgress();
       
-      // Set successful submission result
+      // Set successful submission result with detailed completion actions
+      const completedActions = [
+        {
+          type: "task_completion",
+          description: "Task Completed",
+          data: { 
+            details: "Your form has been successfully submitted and marked as complete."
+          }
+        }
+      ];
+      
+      // Add file generation action if applicable
+      if (fileId) {
+        completedActions.push({
+          type: "file_generation",
+          description: `${taskType.toUpperCase()} Form file created`,
+          data: { 
+            details: "The form data has been saved as a document in your file vault."
+          }
+        });
+      }
+      
+      // Add file vault unlocked action for KYB form
+      if (taskType === 'kyb' || taskType === 'company_kyb') {
+        completedActions.push({
+          type: "file_vault_unlocked",
+          description: "File Vault unlocked",
+          data: { 
+            details: "You now have access to upload and manage documents in the File Vault." 
+          }
+        });
+      }
+      
+      // Add next task unlocked action
+      completedActions.push({
+        type: "next_task",
+        description: "Next task unlocked",
+        data: { 
+          details: "You can now proceed to the next step in your onboarding process."
+        }
+      });
+      
+      // Set submission result following the SubmissionResult interface
       setSubmissionResult({
-        success: true,
-        message: "Your form has been successfully submitted.",
-        timestamp: new Date().toISOString()
+        fileId: fileId ? Number(fileId) : undefined,
+        completedActions,
+        taskId: Number(taskId) || undefined,
+        taskStatus: 'completed'
       });
       
       // Show success modal

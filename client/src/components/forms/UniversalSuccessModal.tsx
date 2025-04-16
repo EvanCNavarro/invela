@@ -19,7 +19,12 @@ export interface SubmissionAction {
   type: string;       // Type of action: "task_completion", "file_generation", etc.
   description: string; // Human-readable description
   icon?: string;      // Icon name for this action
-  data?: any;         // Additional data related to this action
+  data?: {
+    details: string;   // Human-readable details about this action
+    buttonText?: string; // Optional button text for navigation actions
+    url?: string;      // Optional URL for navigation actions
+    fileId?: number;   // Optional file ID for file-related actions
+  };
 }
 
 interface UniversalSuccessModalProps {
