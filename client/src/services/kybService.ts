@@ -731,29 +731,48 @@ export class KybFormService implements FormServiceInterface {
         };
       }
       
-      // Enhanced debug logging - log sample of form data
+      // Enhanced debug logging - log complete form data for debugging
       const formDataKeys = Object.keys(formData);
-      const sampleData = {};
-      if (formDataKeys.length > 0) {
-        // Log up to 3 sample field values for debugging
-        const sampleKeys = formDataKeys.slice(0, 3);
-        sampleKeys.forEach(key => {
-          sampleData[key] = formData[key];
-        });
-      }
       
       console.log(`[KybService] ===== SAVING PROGRESS =====`);
       console.log(`[KybService] Task ID: ${taskId}, Progress: ${progress}, Total Fields: ${formDataKeys.length}`);
-      console.log(`[KybService] Sample data:`, sampleData);
+      
+      // CRITICAL DEBUG - Log all form data values being sent to server
+      console.log(`[KybService] COMPLETE FORM DATA BEING SENT TO SERVER:`);
+      Object.entries(formData).forEach(([key, value]) => {
+        console.log(`[KybService] Field ${key}: "${value}" (${typeof value})`);
+      });
       
       // Normalize form data before sending to server (remove null values)
       const normalizedFormData = Object.fromEntries(
         Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
       );
       
+      // Check if any values were modified during normalization
+      const modifiedFields = Object.entries(normalizedFormData).filter(([key, value]) => {
+        return value !== formData[key];
+      });
+      
+      if (modifiedFields.length > 0) {
+        console.log(`[KybService] WARNING: ${modifiedFields.length} fields were modified during normalization`);
+        modifiedFields.forEach(([key, value]) => {
+          console.log(`[KybService] - Field ${key}: "${formData[key]}" → "${value}"`);
+        });
+      }
+      
       // Log request details
       console.log(`[KybService] Making API request to /api/kyb/progress`);
       console.log(`[KybService] Request timestamp: ${new Date().toISOString()}`);
+      
+      // Save a copy of the request body for debugging
+      const requestBody = {
+        taskId,
+        progress,
+        status: status || undefined,
+        formData: normalizedFormData
+      };
+      
+      console.log(`[KybService] Request body preview:`, JSON.stringify(requestBody).substring(0, 100) + '...');
       
       // Send the minimum necessary data to reduce payload size
       const response = await fetch(`/api/kyb/progress`, {
@@ -763,12 +782,7 @@ export class KybFormService implements FormServiceInterface {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          taskId,  // Essential - Include taskId in the request body
-          progress,
-          status: status || undefined, // Include explicit status if provided
-          formData: normalizedFormData
-        })
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
