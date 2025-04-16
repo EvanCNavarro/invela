@@ -75,11 +75,17 @@ export default function TaskPage({ params }: TaskPageProps) {
     navigate('/task-center');
   }, [navigate]);
   
-  // Fetch task data from API
-  const { data: task, isLoading, error, refetch } = useQuery<Task | null>({
-    queryKey: ['/api/tasks', params.taskSlug],
+  // Fetch tasks from API and find the one with the matching ID
+  const { data: tasksData, isLoading, error, refetch } = useQuery<Task[]>({
+    queryKey: ['/api/tasks'],
     retry: 2
   });
+  
+  // Extract the specific task from the tasks list
+  const task = useMemo(() => {
+    if (!tasksData) return null;
+    return tasksData.find(t => t.id === Number(params.taskSlug)) || null;
+  }, [tasksData, params.taskSlug]);
   
   // Process task data when it's received
   const processTaskData = useCallback((taskData: Task) => {
