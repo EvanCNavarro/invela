@@ -557,7 +557,8 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     // Return saved form data and progress
     res.json({
       formData,
-      progress: Math.min(task.progress || 0, 100)
+      progress: Math.min(task.progress || 0, 100),
+      status: task.status // Include task status in the response
     });
   } catch (error) {
     console.error('[KYB API Debug] Error loading progress:', {
@@ -889,10 +890,11 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       formData
     });
 
-    // Return saved form data and progress
+    // Return saved form data and progress with task status
     res.json({
       formData,
-      progress: Math.min(task.progress || 0, 100)
+      progress: Math.min(task.progress || 0, 100),
+      status: task.status // Include task status in the response
     });
   } catch (error) {
     console.error('[KYB API Debug] Error loading progress:', {
