@@ -180,12 +180,24 @@ export function useFormStatus({
           const emptyPatterns = ['', 'undefined', 'null', 'NaN', '[]', '{}', '0', 'false'];
           const isEmptyPattern = emptyPatterns.includes(stringValue.toLowerCase());
           
+          // Detect placeholder/test values that shouldn't be considered as valid input
+          const placeholderPatterns = ['asdf', 'test', 'placeholder', 'aaa', 'bbb', 'xxx', 'zzz'];
+          const isPlaceholder = placeholderPatterns.some(pattern => 
+            stringValue.toLowerCase() === pattern || 
+            stringValue.toLowerCase().includes(pattern)
+          );
+          
+          // Only in development mode, allow placeholder values (for testing)
+          const allowPlaceholders = process.env.NODE_ENV === 'development';
+          
           // Ultra aggressive check for filled state
           isFilled = (
             value !== undefined && 
             value !== null && 
             stringValue !== '' &&
             !isEmptyPattern &&
+            // If in production, reject placeholder values
+            (allowPlaceholders || !isPlaceholder) &&
             // Number check - 0 is considered filled
             (typeof value === 'number' || stringValue.length > 0)
           );
