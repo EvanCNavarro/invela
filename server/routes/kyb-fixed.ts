@@ -731,17 +731,18 @@ router.get('/api/kyb/diagnostics/:taskId', async (req, res) => {
 
 // Export KYB data to CSV
 router.get('/api/kyb/export/:taskId', async (req, res) => {
+  const taskIdParam = req.params.taskId;
+  
   try {
-    const { taskId } = req.params;
-    logger.info(`Exporting KYB form data for task ${taskId}`);
+    logger.info('Exporting KYB form data', { taskId: Number(taskIdParam) });
     
     // Get task data
     const [task] = await db.select()
       .from(tasks)
-      .where(eq(tasks.id, parseInt(taskId)));
+      .where(eq(tasks.id, parseInt(taskIdParam)));
 
     if (!task) {
-      logger.warn(`Task not found for export: ${taskId}`);
+      logger.warn('Task not found for export', { taskId: Number(taskIdParam) });
       return res.status(404).json({ error: 'Task not found' });
     }
 
@@ -751,11 +752,14 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
       : [];
 
     const companyName = company?.name || 'Unknown Company';
-    logger.info(`Exporting KYB data for company: ${companyName}`);
+    logger.info('Exporting KYB data for company', { 
+      companyName: String(companyName),
+      companyId: Number(task.company_id || 0)
+    });
 
     // Get all KYB fields with their group information
     const fields = await db.select().from(kybFields).orderBy(kybFields.order);
-    logger.info(`Retrieved ${fields.length} field definitions`);
+    logger.info('Retrieved field definitions', { count: fields.length });
 
     // Get all KYB responses for this task
     const responses = await db.select({
@@ -768,9 +772,9 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
     })
       .from(kybResponses)
       .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, parseInt(taskId)));
+      .where(eq(kybResponses.task_id, parseInt(taskIdParam)));
 
-    logger.info(`Retrieved ${responses.length} field responses`);
+    logger.info('Retrieved field responses', { count: responses.length });
 
     // Transform responses into form data
     const formData: Record<string, any> = {};
@@ -795,7 +799,7 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
           })
           .where(eq(files.id, fileId));
         
-        logger.info(`Incremented download count for file ID ${fileId}`);
+        logger.info('Incremented download count', { fileId: Number(fileId) });
       }
     } catch (trackError) {
       // Don't fail the download if tracking fails
@@ -806,18 +810,25 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
 
     // Set response headers
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="kyb_form_${taskId}_${companyName.replace(/[^a-z0-9]/gi, '_')}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="kyb_form_${taskIdParam}_${companyName.replace(/[^a-z0-9]/gi, '_')}.csv"`);
     
     // Send CSV data
     res.send(csvData);
     logger.info('Successfully sent CSV export', { 
-      taskId, 
-      companyName, 
+      taskId: Number(taskIdParam), 
+      companyName: String(companyName), 
       responseCount: responses.length 
     });
     
   } catch (error) {
-    logger.error('Error exporting KYB data:', error);
+    // Cast the context object to LogContext to avoid TypeScript issues
+    const logContext = {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      errorType: error instanceof Error ? error.name : 'Unknown',
+      taskId: Number(taskIdParam || 0)
+    };
+    
+    logger.error('Error exporting KYB data', logContext);
     res.status(500).json({
       error: 'Failed to export KYB data',
       details: error instanceof Error ? error.message : 'Unknown error'
