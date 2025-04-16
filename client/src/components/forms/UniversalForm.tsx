@@ -534,28 +534,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [onDownload, fileId, taskType, toast]);
   
-  // Helper function to check for placeholder/test values in form data
-  const checkForPlaceholderValues = useCallback((data: FormData): string[] => {
-    const placeholderPatterns = ['asdf', 'test', 'placeholder', 'aaa', 'bbb', 'xxx', 'zzz'];
-    const fieldsWithPlaceholders: string[] = [];
+  // Helper function to check for completely empty values in form data
+  const checkForEmptyValues = useCallback((data: FormData): string[] => {
+    const emptyFields: string[] = [];
     
-    // Check each field for placeholder values
+    // Check each field for truly empty values
     Object.entries(data).forEach(([key, value]) => {
-      if (typeof value === 'string' && value.trim() !== '') {
-        const lowerValue = value.toLowerCase().trim();
-        
-        // Check if any placeholder pattern is used
-        const hasPlaceholder = placeholderPatterns.some(pattern => 
-          lowerValue === pattern || lowerValue.includes(pattern)
-        );
-        
-        if (hasPlaceholder) {
-          fieldsWithPlaceholders.push(key);
-        }
+      if (value === null || value === undefined || 
+          (typeof value === 'string' && value.trim() === '') ||
+          (Array.isArray(value) && value.length === 0) ||
+          (typeof value === 'object' && value !== null && Object.keys(value).length === 0)) {
+        emptyFields.push(key);
       }
     });
     
-    return fieldsWithPlaceholders;
+    return emptyFields;
   }, []);
   
   // Handle form submission
@@ -574,37 +567,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         return;
       }
       
-      // Check for placeholder values
-      const fieldsWithPlaceholders = checkForPlaceholderValues(data);
+      // Double-check for any remaining empty fields
+      const emptyFields = checkForEmptyValues(data);
       
-      // Warn if placeholder values are detected
-      if (fieldsWithPlaceholders.length > 0) {
-        // Get field names
-        const fieldNames = fieldsWithPlaceholders.map(key => {
-          // Find the matching field to get a user-friendly name
+      // Show warning if there are empty fields that weren't caught earlier
+      if (emptyFields.length > 0) {
+        const fieldNames = emptyFields.map(key => {
           const field = fields.find(f => f.key === key);
           return field ? field.label : key;
         });
         
         // Create a warning message
-        const warningMessage = `Warning: Test or placeholder values were detected in the following fields: ${fieldNames.join(', ')}. Please update these fields with actual information before submitting.`;
+        const warningMessage = `The following fields are empty: ${fieldNames.join(', ')}. Please fill them in before submitting.`;
         
         // Show warning toast
         toast({
-          title: "Placeholder Values Detected",
+          title: "Empty Fields Detected",
           description: warningMessage,
           variant: "warning",
-          duration: 8000, // Show longer to ensure it's noticed
+          duration: 5000,
         });
         
-        // Ask for confirmation if in development
-        if (process.env.NODE_ENV === 'development') {
-          // Allow submission to continue in development for testing
-          logger.warn('Proceeding with submission despite placeholder values in development mode');
-        } else {
-          // In production, prevent submission with placeholder values
-          return;
-        }
+        return;
       }
       
       // Show immediate toast notification to indicate form is being processed
@@ -715,7 +699,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [overallProgress, saveProgress, onSubmit, toast]);
+  }, [overallProgress, saveProgress, onSubmit, toast, checkForEmptyValues, fields]);
   
   // Handle cancel button click
   const handleCancel = useCallback(() => {
