@@ -32,7 +32,10 @@ import {
   ArrowUp,
   Download,
   Eye,
-  Check
+  Check,
+  FileJson,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import {
   Tooltip,
@@ -40,6 +43,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Import our new improved hooks and components
 import { useFormDataManager } from '@/hooks/form/use-form-data-manager';
@@ -1169,82 +1178,109 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     const submittedBy = taskMetadata?.submittedBy || 'Not available';
     const fileId = taskMetadata?.kybFormFile || null;
     
+    // Get total field count for numbering
+    const totalFieldCount = fields.length;
+    let fieldCounter = 0;
+    
     return (
       <div className="w-full mx-auto">
         <div className="bg-white rounded-md shadow-sm overflow-hidden">
-          {/* Header with submission information */}
+          {/* Header with title and submission information - aligned to opposite sides */}
           <div className="bg-gray-100 p-4 border-b flex justify-between items-center">
             <div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="text-emerald-500 h-5 w-5" />
-                <h2 className="text-lg font-bold text-gray-900">Form Submitted</h2>
-              </div>
-              <div className="text-sm text-gray-600 mt-1">
-                <p>Submitted on: {submissionDate}</p>
-                <p className="mt-0.5">Submitted by: {submittedBy}</p>
-              </div>
+              <h2 className="text-xl font-semibold text-gray-900">{formTitle}</h2>
+              <p className="text-sm text-gray-600">{formDescription}</p>
             </div>
             
-            {/* Download button */}
-            {fileId && (
-              <Button 
-                variant="outline" 
-                className="flex items-center space-x-1"
-                onClick={() => window.open(`/api/files/${fileId}/download`, '_blank')}
-              >
-                <Download className="h-4 w-4" />
-                <span>Download Form</span>
-              </Button>
-            )}
+            {/* Submission info and download button in a success-styled section */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-md p-3 flex flex-col items-end">
+              <div className="flex items-center space-x-2 mb-2">
+                <CheckCircle className="text-emerald-500 h-5 w-5" />
+                <span className="font-medium text-emerald-700">Form Submitted</span>
+              </div>
+              
+              <div className="text-xs text-gray-600 mb-2 text-right">
+                <p>Submitted on: {submissionDate}</p>
+                <p>Submitted by: {submittedBy}</p>
+              </div>
+              
+              {/* Download dropdown button */}
+              {fileId && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center space-x-1"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Download</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => window.open(`/api/files/${fileId}/download?format=json`, '_blank')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.open(`/api/files/${fileId}/download?format=csv`, '_blank')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.open(`/api/files/${fileId}/download?format=txt`, '_blank')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as TXT
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
           
-          {/* Form content in read-only mode */}
-          <div className="p-4">
-            <Form {...form}>
-              <form className="space-y-6">
-                {/* Sections with answers */}
-                {sections.map((section, sectionIndex) => {
-                  const sectionFields = fields.filter(field => field.section === section.id);
+          {/* Form content in read-only mode with consistent formatting */}
+          <div className="p-6">
+            {/* Sections with answers */}
+            {sections.map((section, sectionIndex) => {
+              const sectionFields = fields.filter(field => field.section === section.id);
+              
+              return (
+                <div key={section.id} className="mb-8">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">
+                    {section.title}
+                  </h3>
                   
-                  return (
-                    <div key={section.id} className="mb-8">
-                      <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-                        {section.title}
-                      </h3>
-                      
-                      <div className="space-y-4">
-                        {sectionFields.map((field, fieldIndex) => {
-                          const value = form.getValues(field.key);
-                          return (
-                            <div key={field.key} className="border-b pb-3">
-                              <div className="font-medium text-gray-700 mb-1">
-                                {field.question || field.label}
-                              </div>
-                              <div className="bg-gray-50 p-3 rounded text-gray-800">
-                                {value ? String(value) : <em className="text-gray-400">No answer provided</em>}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-                
-                {/* Back to top button */}
-                <div className="flex justify-center mt-8">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex items-center space-x-2"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                    <span>Back to top</span>
-                  </Button>
+                  <div className="space-y-4">
+                    {sectionFields.map((field) => {
+                      fieldCounter++;
+                      const value = form.getValues(field.key);
+                      return (
+                        <div key={field.key} className="pb-3">
+                          <div className="font-medium text-gray-700 mb-1">
+                            <span className="mr-2">{fieldCounter}.</span>
+                            {field.question || field.label}
+                          </div>
+                          <div className="text-gray-800">
+                            {value ? String(value) : <em className="text-gray-400">No answer provided</em>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </form>
-            </Form>
+              );
+            })}
+            
+            {/* Back to top button */}
+            <div className="flex justify-center mt-8">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center space-x-2"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
+                <ArrowUp className="h-4 w-4" />
+                <span>Back to top</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
