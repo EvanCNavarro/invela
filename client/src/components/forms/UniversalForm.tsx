@@ -508,6 +508,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               fileId: result.fileId
             }
           });
+          
+          // For KYB forms, also add the File Vault unlocked notification
+          if (taskType === "kyb" || taskType === "company_kyb") {
+            completedActions.push({
+              type: "file_vault_unlocked",
+              description: "File Vault Tab Unlocked",
+              data: {
+                details: "A new tab is now available in your navigation menu! The File Vault stores all your uploaded and generated documents in one secure location."
+              }
+            });
+          }
         } catch (err) {
           logger.error('Failed to process file generation', err);
           hasError = true;

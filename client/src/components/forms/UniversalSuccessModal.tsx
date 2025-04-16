@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { CheckCircle, FileText, ArrowRight, Shield, Check } from "lucide-react";
+import { CheckCircle, FileText, ArrowRight, Shield, Check, Archive } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export interface SubmissionResult {
@@ -101,7 +101,8 @@ export function UniversalSuccessModal({
           iconColor = "text-blue-600";
           break;
         case "file_vault_unlocked":
-          ActionIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-archive"><path d="m2 6 2 12h16l2-12"/><path d="M4 6h16"/><path d="M10 10h4"/></svg>;
+          // Use the Archive icon from lucide-react
+          ActionIcon = Archive;
           bgClass = "bg-blue-50";
           borderClass = "border-blue-200";
           iconColor = "text-blue-600";

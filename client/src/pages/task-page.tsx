@@ -17,8 +17,7 @@ import {
 import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
-import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
+// Modal handling now done by UniversalForm component
 import { fireEnhancedConfetti, fireSuperConfetti } from '@/utils/confetti';
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
