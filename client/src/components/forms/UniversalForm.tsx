@@ -138,6 +138,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     completedActions: []
   });
   
+  // Function to handle back navigation
+  const handleBackClick = useCallback(() => {
+    // Navigate back to task center
+    window.location.href = '/task-center';
+  }, []);
+  
   // Log the user object to debug what fields are available
   useEffect(() => {
     if (user) {
