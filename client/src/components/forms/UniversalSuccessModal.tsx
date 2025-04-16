@@ -50,36 +50,23 @@ export function UniversalSuccessModal({
   const [, navigate] = useLocation();
   const [titleText, setTitleText] = useState("Form Submitted Successfully");
   
-  // Play confetti animation when modal opens
+  // Play a single subtle confetti animation when modal opens
   useEffect(() => {
     if (open) {
       // Import and use confetti dynamically
       import('canvas-confetti').then(confetti => {
-        const duration = 3 * 1000;
-        const end = Date.now() + duration;
-        
-        // Create a festive celebration effect
-        (function frame() {
-          confetti.default({
-            particleCount: 2,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4']
-          });
-          
-          confetti.default({
-            particleCount: 2,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4']
-          });
-          
-          if (Date.now() < end) {
-            requestAnimationFrame(frame);
-          }
-        }());
+        // Create a single subtle celebration effect
+        confetti.default({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4', '#ffffff'],
+          startVelocity: 30,
+          gravity: 1.2,
+          ticks: 50,
+          shapes: ['circle', 'square'],
+          scalar: 0.8
+        });
       });
     }
   }, [open]);
@@ -121,9 +108,9 @@ export function UniversalSuccessModal({
     return submissionResult.completedActions.map((action, index) => {
       // Select icon based on action type
       let ActionIcon = FileText;
-      let bgClass = "bg-slate-50";
-      let borderClass = "";
-      let iconColor = "text-blue-600";
+      let bgClass = "bg-white";
+      let borderClass = "border-gray-200";
+      let iconColor = "text-gray-600";
       
       // Customize appearance based on action type
       switch(action.type) {
@@ -135,16 +122,18 @@ export function UniversalSuccessModal({
           break;
         case "file_generation":
           ActionIcon = FileText;
-          bgClass = "bg-blue-50";
-          borderClass = "border-blue-200";
-          iconColor = "text-blue-600";
+          // White background for middle components
+          bgClass = "bg-white";
+          borderClass = "border-gray-200";
+          iconColor = "text-gray-600";
           break;
         case "file_vault_unlocked":
           // Use the Archive icon from lucide-react
           ActionIcon = Archive;
-          bgClass = "bg-blue-50";
-          borderClass = "border-blue-200";
-          iconColor = "text-blue-600";
+          // White background for middle components
+          bgClass = "bg-white";
+          borderClass = "border-gray-200";
+          iconColor = "text-gray-600";
           break;
         case "next_task":
           ActionIcon = ArrowRight;
@@ -154,9 +143,10 @@ export function UniversalSuccessModal({
           break;
         case "risk_assessment":
           ActionIcon = Shield;
-          bgClass = "bg-amber-50";
-          borderClass = "border-amber-200";
-          iconColor = "text-amber-600";
+          // White background for middle components
+          bgClass = "bg-white";
+          borderClass = "border-gray-200";
+          iconColor = "text-gray-600";
           break;
       }
       
