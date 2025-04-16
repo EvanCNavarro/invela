@@ -734,10 +734,16 @@ export class KybFormService implements FormServiceInterface {
           try {
             responseData = JSON.parse(responseText);
             console.log(`[KybService] Successfully saved progress for task ${taskId}`);
+            
+            // If the server returned savedData with formData, update our local form data
+            if (responseData.savedData && responseData.savedData.formData) {
+              console.log('[KybService] Updating local form data with server response data');
+              this.updateLocalFormDataFromServer(responseData.savedData.formData);
+            }
           } catch (jsonError) {
             // If the response isn't valid JSON but status was OK, assume success
             if (response.status >= 200 && response.status < 300) {
-              console.warn('[KybService] Received non-JSON successful response');
+              console.log('[KybService] Received successful response (status: ' + response.status + ')');
               responseData = { success: true };
             } else {
               throw jsonError;
