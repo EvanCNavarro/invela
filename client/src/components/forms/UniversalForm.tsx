@@ -403,18 +403,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     if (
       taskStatus === 'ready_for_submission' && 
-      allSections.length > 1 && 
-      activeSection !== allSections.length - 1 && 
-      overallProgress === 100
+      allSections.length > 1
     ) {
-      // If task is ready for submission, form is complete, and we're not on the review page,
-      // automatically navigate to the review page ONLY ON INITIAL LOAD
-      console.log('[UniversalForm] Task is ready for submission, navigating to review section (initial load)');
+      // If task is ready for submission, automatically navigate to the review page
+      // regardless of form completion status
+      logger.info('[UniversalForm] Task is ready for submission, navigating to review section (initial load)');
       
       // Set a slight delay to ensure the form is fully rendered
       setTimeout(() => {
         setActiveSection(allSections.length - 1);
         setInitialLoadComplete(true); // Mark initial load as complete to prevent future auto-navigation
+      }, 300);
+    } else if (
+      (taskStatus === 'completed' || taskStatus === 'submitted') &&
+      allSections.length > 1
+    ) {
+      // For completed or submitted tasks, also navigate to the review section
+      logger.info('[UniversalForm] Task is completed/submitted, navigating to review section');
+      setTimeout(() => {
+        setActiveSection(allSections.length - 1);
+        setInitialLoadComplete(true);
       }, 300);
     } else {
       // If we don't need to auto-navigate, still mark initial load as complete
@@ -506,7 +514,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // First save the current progress
       await saveProgress();
       
-      // Set successful submission result with detailed completion actions
+      // Prepare the completed actions array
       const completedActions = [
         {
           type: "task_completion",
@@ -548,10 +556,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         }
       });
       
-      // Set submission result following the SubmissionResult interface
+      // Prepare the numeric file ID
       const numericFileId = fileId && typeof fileId === 'number' ? fileId : 
                            fileId && typeof fileId === 'string' ? parseInt(fileId, 10) : undefined;
       
+      // Pause briefly to ensure all backend processes complete before showing success modal
+      // This allows time for file generation, status updates, etc.
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Set submission result following the SubmissionResult interface
       setSubmissionResult({
         fileId: numericFileId,
         completedActions,
@@ -571,7 +584,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: "success",
       });
       
-      // Show success modal
+      // Show success modal after all backend processes are complete
       setShowSuccessModal(true);
       
       // Then call the onSubmit callback if provided
