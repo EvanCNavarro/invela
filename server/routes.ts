@@ -1,4 +1,4 @@
-import { Express } from 'express';
+import { Express, Router } from 'express';
 import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
@@ -14,6 +14,7 @@ import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb-fixed';
+import { getKybProgress } from './routes/kyb-update';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import filesRouter from './routes/files';
@@ -31,6 +32,12 @@ const pdfExtract = new PDFExtract();
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
+  
+  // Register KYB progress route with status update support
+  const kybProgressRouter = Router();
+  getKybProgress(kybProgressRouter);
+  app.use(kybProgressRouter);
+  
   app.use(cardRouter);
   app.use(securityRouter);
   app.use(filesRouter);
