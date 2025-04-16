@@ -83,6 +83,8 @@ const toNavigationSections = (serviceSections: ServiceFormSection[]): Navigation
 interface UniversalFormProps {
   taskId?: number;
   taskType: string;
+  taskStatus?: string;
+  taskMetadata?: Record<string, any>;
   initialData?: FormData;
   onSubmit?: (data: FormData) => void;
   onCancel?: () => void;
@@ -95,6 +97,8 @@ interface UniversalFormProps {
 export const UniversalForm: React.FC<UniversalFormProps> = ({
   taskId,
   taskType,
+  taskStatus,
+  taskMetadata,
   initialData = {},
   onSubmit,
   onCancel,
@@ -1150,7 +1154,102 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
-  // Render main form
+  // Check if the task is already submitted or completed
+  const isTaskCompleted = taskStatus === 'completed' || taskStatus === 'submitted';
+  
+  // Render the special completed/submitted form view
+  if (isTaskCompleted) {
+    // Get metadata info about submission
+    const submissionDate = taskMetadata?.submissionDate 
+      ? new Date(taskMetadata.submissionDate).toLocaleString() 
+      : 'Not available';
+    
+    const submittedBy = taskMetadata?.submittedBy || 'Not available';
+    const fileId = taskMetadata?.kybFormFile || null;
+    
+    return (
+      <div className="w-full mx-auto">
+        <div className="bg-white rounded-md shadow-sm overflow-hidden">
+          {/* Header with submission information */}
+          <div className="bg-gray-100 p-4 border-b flex justify-between items-center">
+            <div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="text-emerald-500 h-5 w-5" />
+                <h2 className="text-lg font-bold text-gray-900">Form Submitted</h2>
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                <p>Submitted on: {submissionDate}</p>
+                <p className="mt-0.5">Submitted by: {submittedBy}</p>
+              </div>
+            </div>
+            
+            {/* Download button */}
+            {fileId && (
+              <Button 
+                variant="outline" 
+                className="flex items-center space-x-1"
+                onClick={() => window.open(`/api/files/${fileId}/download`, '_blank')}
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Form</span>
+              </Button>
+            )}
+          </div>
+          
+          {/* Form content in read-only mode */}
+          <div className="p-4">
+            <Form {...form}>
+              <form className="space-y-6">
+                {/* Sections with answers */}
+                {sections.map((section, sectionIndex) => {
+                  const sectionFields = fields.filter(field => field.section === section.id);
+                  
+                  return (
+                    <div key={section.id} className="mb-8">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+                        {section.title}
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        {sectionFields.map((field, fieldIndex) => {
+                          const value = form.getValues(field.key);
+                          return (
+                            <div key={field.key} className="border-b pb-3">
+                              <div className="font-medium text-gray-700 mb-1">
+                                {field.question || field.label}
+                              </div>
+                              <div className="bg-gray-50 p-3 rounded text-gray-800">
+                                {value ? String(value) : <em className="text-gray-400">No answer provided</em>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Back to top button */}
+                <div className="flex justify-center mt-8">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex items-center space-x-2"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                    <span>Back to top</span>
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Regular form view (not completed/submitted)
   return (
     <div className="w-full mx-auto">      
       <Form {...form}>
