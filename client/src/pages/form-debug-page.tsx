@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { useQuery } from '@tanstack/react-query';
+import { Loader2, AlertTriangle, FileCheck, FileX } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface FormDataField {
   field_key: string;
@@ -36,190 +38,274 @@ interface DebugApiResponse {
   responses: FormDataField[];
 }
 
+interface TaskWithIssues {
+  taskId: number;
+  title: string;
+  testFields: Array<{
+    fieldKey: string;
+    value: string;
+  }>;
+}
+
+interface TasksWithIssuesResponse {
+  tasksWithIssues: TaskWithIssues[];
+}
+
 /**
  * A debugging page for form data persistence issues 
  */
 export default function FormDebugPage() {
   const [taskId, setTaskId] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<DebugApiResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [inspectedTaskId, setInspectedTaskId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const fetchDebugInfo = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const parsedTaskId = parseInt(taskId);
-      if (isNaN(parsedTaskId)) {
-        throw new Error('Invalid task ID');
-      }
-      
-      // Fetch from our debug endpoint
-      const response = await fetch(`/api/debug/form/${parsedTaskId}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error fetching debug info: ${response.status} - ${errorText}`);
-      }
-      
-      const data = await response.json();
-      setResults(data);
-      
-      // Check for "asdf" test values
-      if (data.asdfFields && data.asdfFields.length > 0) {
-        console.warn(`Found ${data.asdfFields.length} fields with "asdf" values in task ${parsedTaskId}:`);
-        console.warn(data.asdfFields);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      console.error('Error fetching debug info:', err);
-    } finally {
-      setLoading(false);
+  // Query for tasks with issues
+  const tasksWithIssuesQuery = useQuery<TasksWithIssuesResponse>({
+    queryKey: ['/api/debug/tasks-with-issues'],
+    enabled: true, // Always run this query
+  });
+
+  // Query for specific task data
+  const taskDebugQuery = useQuery<DebugApiResponse>({
+    queryKey: ['/api/debug/form', inspectedTaskId],
+    enabled: !!inspectedTaskId, // Only run when inspectedTaskId is set
+  });
+
+  // Handle task inspection
+  const handleInspectTask = () => {
+    if (!taskId) {
+      toast({
+        title: 'Task ID required',
+        description: 'Please enter a task ID to inspect',
+        variant: 'destructive',
+      });
+      return;
     }
-  }, [taskId]);
+
+    setInspectedTaskId(taskId);
+  };
+
+  // Handle clicking on a task from the issues list
+  const handleSelectTask = (id: number) => {
+    setTaskId(id.toString());
+    setInspectedTaskId(id.toString());
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Form Data Debug Tool</h1>
-      
-      <Card className="mb-4">
+    <div className="container mx-auto py-8 space-y-8">
+      <h1 className="text-3xl font-bold">Form Debug Dashboard</h1>
+      <p className="text-gray-600">
+        This page helps diagnose form data persistence issues by showing detailed information about form field values.
+      </p>
+
+      {/* Task selector */}
+      <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Debug Form Data</CardTitle>
+          <CardTitle>Inspect Task Data</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-4 mb-4">
+          <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block mb-2">Task ID</label>
+              <Label htmlFor="taskId">Task ID</Label>
               <Input
-                type="number"
+                id="taskId"
                 value={taskId}
                 onChange={(e) => setTaskId(e.target.value)}
-                placeholder="Enter task ID to debug"
+                placeholder="Enter task ID to inspect"
               />
             </div>
-            <Button 
-              onClick={fetchDebugInfo}
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Fetch Debug Info'}
-            </Button>
+            <div className="flex items-end">
+              <Button 
+                onClick={handleInspectTask}
+                disabled={!taskId || taskDebugQuery.isPending}
+              >
+                {taskDebugQuery.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Inspect Task
+              </Button>
+            </div>
           </div>
-          
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+        </CardContent>
+      </Card>
+
+      {/* Tasks with issues */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Tasks with Test Data
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tasksWithIssuesQuery.isPending ? (
+            <div className="py-8 flex justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : tasksWithIssuesQuery.isError ? (
+            <div className="py-8 text-center text-red-500">
+              Error loading tasks with issues: {tasksWithIssuesQuery.error.message}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tasksWithIssuesQuery.data?.tasksWithIssues?.length === 0 ? (
+                <div className="py-4 text-center text-gray-500">
+                  No tasks with test data found
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {tasksWithIssuesQuery.data?.tasksWithIssues?.map((task) => (
+                    <div key={task.taskId} className="py-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold">Task #{task.taskId}: {task.title}</h3>
+                        <Button variant="outline" size="sm" onClick={() => handleSelectTask(task.taskId)}>
+                          Inspect
+                        </Button>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Fields with test data: {task.testFields.map(f => f.fieldKey).join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
-      
-      {results && (
+
+      {/* Task inspection results */}
+      {taskDebugQuery.isPending ? (
+        <Card>
+          <CardContent className="py-8 flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </CardContent>
+        </Card>
+      ) : taskDebugQuery.isError ? (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-600">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Error inspecting task: {taskDebugQuery.error.message}</p>
+          </CardContent>
+        </Card>
+      ) : taskDebugQuery.data && (
         <>
-          <Card className="mb-4">
+          {/* Task overview */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Task Overview</CardTitle>
+              <CardTitle>Task #{taskDebugQuery.data.task.id}: {taskDebugQuery.data.task.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">ID</div>
-                  <div className="font-medium">{results.task.id}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="font-medium">{results.task.status}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Progress</div>
-                  <div className="font-medium">{results.task.progress}%</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Last Updated</div>
-                  <div className="font-medium">{new Date(results.task.updated_at).toLocaleString()}</div>
-                </div>
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Title</div>
-                <div className="font-medium mb-4">{results.task.title}</div>
-              </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Total Form Fields</div>
-                  <div className="font-medium">{results.formDataFields}</div>
+                  <h3 className="font-semibold mb-2">Task Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Status:</span>
+                      <span>{taskDebugQuery.data.task.status}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Progress:</span>
+                      <span>{taskDebugQuery.data.task.progress}%</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Created:</span>
+                      <span>{new Date(taskDebugQuery.data.task.created_at).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Updated:</span>
+                      <span>{new Date(taskDebugQuery.data.task.updated_at).toLocaleString()}</span>
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Response Count</div>
-                  <div className="font-medium">{results.responseCount}</div>
+                  <h3 className="font-semibold mb-2">Form Data Overview</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Form fields:</span>
+                      <span>{taskDebugQuery.data.formDataFields}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Form responses:</span>
+                      <span>{taskDebugQuery.data.responseCount}</span>
+                    </div>
+                    <div className="flex justify-between border-b pb-1">
+                      <span className="text-gray-600">Fields with test values:</span>
+                      <span className={taskDebugQuery.data.asdfFields.length > 0 ? "text-amber-600 font-medium" : "text-green-600"}>
+                        {taskDebugQuery.data.asdfFields.length}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          {results.asdfFields.length > 0 && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Test Data Detected</AlertTitle>
-              <AlertDescription>
-                Found {results.asdfFields.length} fields with "asdf" test values: {results.asdfFields.join(', ')}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <Card className="mb-4">
+
+          {/* Fields of interest */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Key Fields</CardTitle>
+              <CardTitle>Fields of Interest</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">corporateRegistration</div>
-                  <div className="font-medium">{results.keysOfInterest.corporateRegistration || '(not set)'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">goodStanding</div>
-                  <div className="font-medium">{results.keysOfInterest.goodStanding || '(not set)'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">regulatoryActions</div>
-                  <div className="font-medium">{results.keysOfInterest.regulatoryActions || '(not set)'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">investigationsIncidents</div>
-                  <div className="font-medium">{results.keysOfInterest.investigationsIncidents || '(not set)'}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FieldCard 
+                    label="Corporate Registration" 
+                    value={taskDebugQuery.data.keysOfInterest.corporateRegistration} 
+                    isTest={taskDebugQuery.data.keysOfInterest.corporateRegistration?.toLowerCase() === 'asdf'}
+                  />
+                  <FieldCard 
+                    label="Good Standing" 
+                    value={taskDebugQuery.data.keysOfInterest.goodStanding} 
+                    isTest={taskDebugQuery.data.keysOfInterest.goodStanding?.toLowerCase() === 'asdf'}
+                  />
+                  <FieldCard 
+                    label="Regulatory Actions" 
+                    value={taskDebugQuery.data.keysOfInterest.regulatoryActions} 
+                    isTest={taskDebugQuery.data.keysOfInterest.regulatoryActions?.toLowerCase() === 'asdf'}
+                  />
+                  <FieldCard 
+                    label="Investigations & Incidents" 
+                    value={taskDebugQuery.data.keysOfInterest.investigationsIncidents} 
+                    isTest={taskDebugQuery.data.keysOfInterest.investigationsIncidents?.toLowerCase() === 'asdf'}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
+          {/* All form fields */}
           <Card>
             <CardHeader>
-              <CardTitle>Form Field Responses</CardTitle>
+              <CardTitle>All Form Responses</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Field Key</th>
-                      <th className="text-left p-2">Value</th>
-                      <th className="text-left p-2">Status</th>
-                      <th className="text-left p-2">Version</th>
-                      <th className="text-left p-2">Last Updated</th>
+                    <tr className="bg-gray-100">
+                      <th className="text-left p-2 border">Field Key</th>
+                      <th className="text-left p-2 border">Value</th>
+                      <th className="text-left p-2 border">Status</th>
+                      <th className="text-left p-2 border">Version</th>
+                      <th className="text-left p-2 border">Last Updated</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {results.responses.map((field, index) => (
-                      <tr key={index} className={`${index % 2 === 0 ? 'bg-muted/50' : ''} ${field.value === 'asdf' ? 'bg-red-100' : ''}`}>
-                        <td className="p-2">{field.field_key}</td>
-                        <td className="p-2">{field.value || '(empty)'}</td>
-                        <td className="p-2">{field.status}</td>
-                        <td className="p-2">{field.version}</td>
-                        <td className="p-2">{new Date(field.updated_at).toLocaleString()}</td>
+                    {taskDebugQuery.data.responses.map((field, index) => (
+                      <tr key={index} className={field.value?.toLowerCase() === 'asdf' ? 'bg-amber-50' : 'even:bg-gray-50'}>
+                        <td className="p-2 border">{field.field_key}</td>
+                        <td className="p-2 border">
+                          <div className="flex items-center">
+                            {field.value || <span className="text-gray-400 italic">Empty</span>}
+                            {field.value?.toLowerCase() === 'asdf' && (
+                              <span className="ml-2 text-amber-600 text-xs font-medium">TEST VALUE</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-2 border">{field.status}</td>
+                        <td className="p-2 border">{field.version}</td>
+                        <td className="p-2 border">{new Date(field.updated_at).toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -229,6 +315,33 @@ export default function FormDebugPage() {
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+function FieldCard({ label, value, isTest }: { label: string; value: string | null; isTest: boolean }) {
+  return (
+    <div className={`p-4 rounded-lg border ${isTest ? 'border-amber-200 bg-amber-50' : 'border-gray-200'}`}>
+      <div className="flex justify-between items-start mb-2">
+        <h4 className="font-medium">{label}</h4>
+        {isTest ? (
+          <FileX className="h-5 w-5 text-amber-600" />
+        ) : value ? (
+          <FileCheck className="h-5 w-5 text-green-600" />
+        ) : (
+          <AlertTriangle className="h-5 w-5 text-gray-400" />
+        )}
+      </div>
+      <div className="text-sm">
+        {value ? (
+          <div className="break-words">
+            {value}
+            {isTest && <span className="ml-2 text-amber-600 text-xs font-medium">TEST VALUE</span>}
+          </div>
+        ) : (
+          <span className="text-gray-400 italic">No value set</span>
+        )}
+      </div>
     </div>
   );
 }
