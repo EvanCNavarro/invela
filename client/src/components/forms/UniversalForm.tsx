@@ -104,6 +104,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const { user } = useUser();
   const { company } = useCurrentCompany();
   
+  // Initialize the toast hook to get the dismiss function
+  const { dismiss } = useToast();
+  
   // Success modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult>({
