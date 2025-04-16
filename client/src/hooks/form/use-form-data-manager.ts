@@ -97,11 +97,11 @@ export function useFormDataManager({
     }
     
     try {
-      logger.info(`Saving progress for task ID: ${taskId}`);
+      logger.info(`[SAVE DEBUG] Saving progress for task ID: ${taskId}`);
       
       // Get latest data from the form service
       const currentData = formService.getFormData();
-      logger.debug(`Form data before save: ${Object.keys(currentData).length} fields`);
+      logger.info(`[SAVE DEBUG] Form data before save: ${Object.keys(currentData).length} fields`);
       
       // Save to the server
       const result = await formService.save({
@@ -109,11 +109,11 @@ export function useFormDataManager({
         includeMetadata: true
       });
       
-      logger.info(`Save result: ${result ? 'success' : 'failed'}`);
+      logger.info(`[SAVE DEBUG] Save result: ${result ? 'SUCCESS' : 'FAILED'}`);
       return !!result;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save progress';
-      logger.error('Save progress error:', message);
+      logger.error('[SAVE DEBUG] Save progress error:', message);
       setError(message);
       return false;
     }
@@ -126,7 +126,14 @@ export function useFormDataManager({
       return;
     }
     
+    if (!taskId) {
+      logger.error('[SAVE DEBUG] CRITICAL ERROR: Cannot update field - taskId is not available');
+      return;
+    }
+    
     try {
+      logger.info(`[SAVE DEBUG] Starting field update for ${name} with taskId ${taskId}`);
+      
       // Get current form data for comparison
       const currentData = formService.getFormData();
       const prevValue = currentData[name];
@@ -137,9 +144,9 @@ export function useFormDataManager({
         (value === '' || value === null || value === undefined);
       
       if (isClearing) {
-        logger.debug(`Clearing field ${name}: ${prevValue} → (empty)`);
+        logger.info(`[SAVE DEBUG] Clearing field ${name}: "${prevValue}" → (empty)`);
       } else {
-        logger.debug(`Updating field ${name}: ${prevValue} → ${value}`);
+        logger.info(`[SAVE DEBUG] Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
       // Normalize value consistently
@@ -147,6 +154,7 @@ export function useFormDataManager({
       
       // Always update in the form service, ensuring field clearing operations work
       // Pass taskId to enable immediate saving on critical operations
+      logger.info(`[SAVE DEBUG] Calling updateFormData with taskId: ${taskId}`);
       formService.updateFormData(name, normalizedValue, taskId);
       
       // Update in React Hook Form
@@ -165,35 +173,35 @@ export function useFormDataManager({
           onDataChange(updated);
         }
         
+        logger.info(`[SAVE DEBUG] Local state updated for field ${name}`);
         return updated;
       });
       
-      // Force an immediate save when clearing a field to ensure deletion is persisted
-      if (isClearing && taskId) {
-        logger.info(`Field ${name} was cleared, saving changes immediately`);
-        saveProgress().catch(err => {
-          logger.error('Auto-save after field clearing failed:', err);
-        });
-      }
-      // For regular updates, use the debounced auto-save
-      else if (taskId) {
+      // Force always saving immediately for all field changes to ensure persistence
+      if (taskId) {
+        logger.info(`[SAVE DEBUG] Initiating immediate save for field ${name} with taskId ${taskId}`);
+        
         // Clear previous timer
         if (saveTimerRef.current) {
           clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
         }
         
-        // Set new timer
-        saveTimerRef.current = setTimeout(() => {
-          saveProgress().catch(err => {
-            logger.error('Auto-save failed:', err);
+        // FORCE IMMEDIATE SAVE FOR ALL FIELDS - Don't debounce
+        logger.info('[SAVE DEBUG] Forcing immediate save without debounce');
+        saveProgress()
+          .then(result => {
+            logger.info(`[SAVE DEBUG] Immediate save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+          })
+          .catch(err => {
+            logger.error('[SAVE DEBUG] Immediate save failed with error:', err);
           });
-        }, 1500);
       }
     } catch (error) {
-      logger.error(`Error updating field ${name}:`, error);
+      logger.error(`[SAVE DEBUG] Error updating field ${name}:`, error);
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
-
+  
   // Load saved data from the server once when fields and service are available
   useEffect(() => {
     // Skip if no fields, service, or taskId, or if we've already loaded data
@@ -206,11 +214,11 @@ export function useFormDataManager({
         setIsLoading(true);
         setError(null);
         
-        logger.info(`Loading saved data for task ID: ${taskId}`);
+        logger.info(`[SAVE DEBUG] Loading saved data for task ID: ${taskId}`);
         const savedData = await formService.loadProgress(taskId);
         
         if (savedData && Object.keys(savedData).length > 0) {
-          logger.info(`Received saved data with ${Object.keys(savedData).length} fields`);
+          logger.info(`[SAVE DEBUG] Received saved data with ${Object.keys(savedData).length} fields`);
           
           // Normalize any null values to empty strings
           const normalizedData = Object.fromEntries(
@@ -223,7 +231,7 @@ export function useFormDataManager({
             ...normalizedData
           };
           
-          logger.info(`Updating form with normalized data: ${Object.keys(completeData).length} fields`);
+          logger.info(`[SAVE DEBUG] Updating form with normalized data: ${Object.keys(completeData).length} fields`);
           setFormData(completeData);
           form.reset(completeData);
           
@@ -232,7 +240,7 @@ export function useFormDataManager({
             onDataChange(completeData);
           }
         } else {
-          logger.info('No saved data found, using default values');
+          logger.info('[SAVE DEBUG] No saved data found, using default values');
         }
         
         // Mark as loaded regardless of result
@@ -240,7 +248,7 @@ export function useFormDataManager({
         setHasLoaded(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to load saved data';
-        logger.error('Failed to load form data:', message);
+        logger.error('[SAVE DEBUG] Failed to load form data:', message);
         setError(message);
       } finally {
         setIsLoading(false);
@@ -273,7 +281,7 @@ export function useFormDataManager({
     if (onDataChange) {
       onDataChange(resetData);
     }
-  }, [form, defaultValues, formService, onDataChange]);
+  }, [form, defaultValues, formService, onDataChange, taskId]);
   
   // Return all the form state and methods
   return {
