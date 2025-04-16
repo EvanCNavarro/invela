@@ -202,19 +202,21 @@ export function useFormDataManager({
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
   
-  // Load saved data from the server once when fields and service are available
+  // Load saved data from the server any time we mount or the form service, task, or fields change
   useEffect(() => {
-    // Skip if no fields, service, or taskId, or if we've already loaded data
-    if (fields.length === 0 || !formService || !taskId || dataLoadedRef.current) {
+    // Skip if no fields, service, or taskId
+    if (fields.length === 0 || !formService || !taskId) {
       return;
     }
     
     const loadSavedData = async () => {
       try {
+        // Reset the loaded flag at the start of each loading operation
+        dataLoadedRef.current = false;
         setIsLoading(true);
         setError(null);
         
-        logger.info(`[SAVE DEBUG] Loading saved data for task ID: ${taskId}`);
+        logger.info(`[SAVE DEBUG] Loading fresh data for task ID: ${taskId}`);
         const savedData = await formService.loadProgress(taskId);
         
         if (savedData && Object.keys(savedData).length > 0) {
@@ -241,6 +243,9 @@ export function useFormDataManager({
           }
         } else {
           logger.info('[SAVE DEBUG] No saved data found, using default values');
+          // Still reset the form with default values
+          setFormData(defaultValues);
+          form.reset(defaultValues);
         }
         
         // Mark as loaded regardless of result
@@ -255,7 +260,13 @@ export function useFormDataManager({
       }
     };
     
+    // Always load data when this effect runs
     loadSavedData();
+    
+    // Clean up - reset loaded flag when unmounting so we reload on next mount
+    return () => {
+      dataLoadedRef.current = false;
+    };
   }, [fields, formService, taskId, defaultValues, form, onDataChange]);
   
   // Function to reset the form with new data
