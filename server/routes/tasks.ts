@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { tasks, TaskStatus, companies } from "@db/schema";
+import { tasks, TaskStatus, companies, kybFields, kybResponses } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastMessage } from "../services/websocket"; // Use the correct import path
