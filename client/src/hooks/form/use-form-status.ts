@@ -176,18 +176,20 @@ export function useFormStatus({
           // First convert to string and trim to handle spaces
           const stringValue = typeof value === 'string' ? value.trim() : String(value).trim();
           
-          // Extensive validation against various "empty" patterns
-          const emptyPatterns = ['', 'undefined', 'null', 'NaN', '[]', '{}', '0', 'false'];
+          // BUGFIX: Improved validation against only truly empty patterns
+          // Removed '0' and 'false' from empty patterns since they are valid values
+          const emptyPatterns = ['', 'undefined', 'null', 'NaN', '[]', '{}'];
           const isEmptyPattern = emptyPatterns.includes(stringValue.toLowerCase());
           
-          // Ultra aggressive check for filled state - but treat all non-empty values as valid
+          // Fix validation logic to consider any non-empty string as valid
+          // This is critical for fields with values like "0" or "false" which are valid inputs
           isFilled = (
             value !== undefined && 
             value !== null && 
             stringValue !== '' &&
             !isEmptyPattern &&
-            // Number check - 0 is considered filled
-            (typeof value === 'number' || stringValue.length > 0)
+            // Consider ANY string with length as valid (including "0", "false", etc.)
+            stringValue.length > 0
           );
           
           logger.debug(`String/primitive field ${field.key} filled status: ${isFilled}, value: "${stringValue}"`);
@@ -260,6 +262,39 @@ export function useFormStatus({
           status,
           isCompleted
         });
+        
+        // BUGFIX: Add special enhanced logging for the Governance & Leadership section
+        // to help identify which field is causing the section to appear incomplete
+        if (section.title === "Governance & Leadership" && remainingFields > 0) {
+          logger.debug(`⚠️ Governance & Leadership section shows ${remainingFields} remaining fields:`, {
+            sectionId: section.id,
+            fieldCount: relevantFields.length
+          });
+          
+          // List all fields in this section with their values and filled status
+          relevantFields.forEach(field => {
+            const value = formValues[field.key];
+            const valueType = typeof value;
+            const stringValue = String(value || '');
+            
+            // Determine if field is filled using our validation logic
+            let isFieldFilled = false;
+            if (valueType === 'boolean') {
+              isFieldFilled = true;
+            } else if (Array.isArray(value)) {
+              isFieldFilled = value.length > 0;
+            } else if (valueType === 'object' && value !== null) {
+              isFieldFilled = Object.keys(value).length > 0;
+            } else {
+              // For strings and primitives
+              isFieldFilled = value !== undefined && 
+                              value !== null && 
+                              stringValue.trim() !== '';
+            }
+            
+            logger.debug(`- Field "${field.key}" (${field.id}): "${stringValue}" (${valueType}) - ${isFieldFilled ? '✅ FILLED' : '❌ EMPTY'}`);
+          });
+        }
       }
     });
     
