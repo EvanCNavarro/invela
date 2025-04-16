@@ -805,6 +805,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   );
                 })}
               </Accordion>
+              
+              {/* Navigation buttons for submitted forms - outside both boxes */}
+              <div className="flex justify-between mt-8">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = '/task-center'}
+                  className="flex items-center"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Task Center
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="flex items-center"
+                >
+                  <ArrowUp className="mr-2 h-4 w-4" /> Back to Top
+                </Button>
+              </div>
             </div>
           ) : (
             /* For non-submitted forms, show the regular form editor */
