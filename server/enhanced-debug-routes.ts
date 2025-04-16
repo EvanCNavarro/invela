@@ -134,7 +134,7 @@ router.get('/form/:taskId', async (req: Request, res: Response) => {
 router.get('/tasks-with-issues', async (req: Request, res: Response) => {
   try {
     // Get all form responses containing "asdf"
-    const problematicResponses = await db.execute(sql`
+    const result = await db.execute(sql`
       SELECT 
         kr.task_id, 
         kf.field_key,
@@ -147,23 +147,34 @@ router.get('/tasks-with-issues', async (req: Request, res: Response) => {
       ORDER BY kr.task_id
     `);
     
-    // Group by task ID to create a summary
-    const taskSummary = {};
+    // The result from db.execute doesn't have a reduce method, so we need to convert it
+    const problematicResponses = result.rows || [];
     
-    for (const row of problematicResponses as any[]) {
-      if (!taskSummary[row.task_id]) {
-        taskSummary[row.task_id] = {
-          taskId: row.task_id,
-          title: row.title,
+    // Group by task ID to create a summary
+    const taskSummary: Record<string, any> = {};
+    
+    for (const row of problematicResponses) {
+      const taskId = row.task_id;
+      if (!taskId) continue; // Skip if no task_id
+      
+      if (!taskSummary[taskId]) {
+        taskSummary[taskId] = {
+          taskId: taskId,
+          title: row.title || `Task #${taskId}`,
           testFields: []
         };
       }
       
-      taskSummary[row.task_id].testFields.push({
+      taskSummary[taskId].testFields.push({
         fieldKey: row.field_key,
         value: row.response_value
       });
     }
+    
+    logger.info('Found tasks with test data', { 
+      count: Object.keys(taskSummary).length,
+      taskIds: Object.keys(taskSummary) 
+    });
     
     return res.json({
       tasksWithIssues: Object.values(taskSummary)
