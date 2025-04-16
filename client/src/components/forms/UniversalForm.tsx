@@ -29,6 +29,8 @@ import { cn } from '@/lib/utils';
 import { 
   ArrowLeft, 
   ArrowRight, 
+  ArrowUp,
+  Download,
   Eye,
   Check
 } from 'lucide-react';
