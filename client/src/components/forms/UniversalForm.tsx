@@ -747,28 +747,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             <div className="space-y-6">
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 mb-6">
                 <div>
-                  <h4 className="font-semibold text-blue-900 text-lg mb-4">
+                  <h4 className="font-semibold text-blue-900 text-lg mb-4 flex items-center">
+                    <ClipboardCheck className="h-5 w-5 mr-2 text-blue-600" />
                     Submission Details
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 text-sm text-blue-700">
-                    {/* First row - Most important information */}
-                    <div className="flex items-center">
-                      <ClipboardCheck className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Status: </span>
-                      <span className="ml-1">{taskStatus || 'Submitted'}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Building2 className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Company: </span>
-                      <span className="ml-1">{displayCompanyName || 'N/A'}</span>
-                    </div>
+                    {/* First row - Ordered as requested */}
                     <div className="flex items-center">
                       <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
                       <span className="font-medium">Form Type: </span>
                       <span className="ml-1">{formTitle || taskType}</span>
                     </div>
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
+                      <span className="font-medium">Total Questions: </span>
+                      <span className="ml-1">{fields.filter(f => f.section !== 'review-section').length}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <ClipboardCheck className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
+                      <span className="font-medium">Status: </span>
+                      <span className="ml-1">{taskStatus || 'Submitted'}</span>
+                    </div>
                     
-                    {/* Second row - Supporting details */}
+                    {/* Second row - Ordered as requested */}
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
                       <span className="font-medium">Submitted: </span>
@@ -780,9 +781,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <span className="ml-1">{user?.name || user?.email || 'N/A'}</span>
                     </div>
                     <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Total Questions: </span>
-                      <span className="ml-1">{fields.filter(f => f.section !== 'review-section').length}</span>
+                      <Building2 className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
+                      <span className="font-medium">Company: </span>
+                      <span className="ml-1">{displayCompanyName || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -835,7 +836,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   <span className="text-sm font-medium text-gray-800 mr-1.5">{questionNumber}.</span>
                                   <span className="font-medium text-gray-800">{field.question || field.label}</span>
                                 </div>
-                                <div className="flex items-start mt-2 ml-7">
+                                <div className="mt-2">
                                   {fieldValue && fieldValue !== '-' ? (
                                     <div className="flex items-start text-gray-700">
                                       <Check className="h-4 w-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
