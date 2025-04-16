@@ -534,6 +534,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [onDownload, fileId, taskType, toast]);
   
+  // Helper function to check for placeholder/test values in form data
+  const checkForPlaceholderValues = useCallback((data: FormData): string[] => {
+    const placeholderPatterns = ['asdf', 'test', 'placeholder', 'aaa', 'bbb', 'xxx', 'zzz'];
+    const fieldsWithPlaceholders: string[] = [];
+    
+    // Check each field for placeholder values
+    Object.entries(data).forEach(([key, value]) => {
+      if (typeof value === 'string' && value.trim() !== '') {
+        const lowerValue = value.toLowerCase().trim();
+        
+        // Check if any placeholder pattern is used
+        const hasPlaceholder = placeholderPatterns.some(pattern => 
+          lowerValue === pattern || lowerValue.includes(pattern)
+        );
+        
+        if (hasPlaceholder) {
+          fieldsWithPlaceholders.push(key);
+        }
+      }
+    });
+    
+    return fieldsWithPlaceholders;
+  }, []);
+  
   // Handle form submission
   const handleSubmit = useCallback(async (data: FormData) => {
     // Create a variable to store the toast id, accessible in both try/catch blocks
@@ -548,6 +572,39 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           variant: "warning",
         });
         return;
+      }
+      
+      // Check for placeholder values
+      const fieldsWithPlaceholders = checkForPlaceholderValues(data);
+      
+      // Warn if placeholder values are detected
+      if (fieldsWithPlaceholders.length > 0) {
+        // Get field names
+        const fieldNames = fieldsWithPlaceholders.map(key => {
+          // Find the matching field to get a user-friendly name
+          const field = fields.find(f => f.key === key);
+          return field ? field.label : key;
+        });
+        
+        // Create a warning message
+        const warningMessage = `Warning: Test or placeholder values were detected in the following fields: ${fieldNames.join(', ')}. Please update these fields with actual information before submitting.`;
+        
+        // Show warning toast
+        toast({
+          title: "Placeholder Values Detected",
+          description: warningMessage,
+          variant: "warning",
+          duration: 8000, // Show longer to ensure it's noticed
+        });
+        
+        // Ask for confirmation if in development
+        if (process.env.NODE_ENV === 'development') {
+          // Allow submission to continue in development for testing
+          logger.warn('Proceeding with submission despite placeholder values in development mode');
+        } else {
+          // In production, prevent submission with placeholder values
+          return;
+        }
       }
       
       // Show immediate toast notification to indicate form is being processed
