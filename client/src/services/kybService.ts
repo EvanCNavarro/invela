@@ -731,12 +731,29 @@ export class KybFormService implements FormServiceInterface {
         };
       }
       
-      console.log(`[KybService] Saving progress for task ID: ${taskId}, progress: ${progress}, fields: ${Object.keys(formData).length}`);
+      // Enhanced debug logging - log sample of form data
+      const formDataKeys = Object.keys(formData);
+      const sampleData = {};
+      if (formDataKeys.length > 0) {
+        // Log up to 3 sample field values for debugging
+        const sampleKeys = formDataKeys.slice(0, 3);
+        sampleKeys.forEach(key => {
+          sampleData[key] = formData[key];
+        });
+      }
+      
+      console.log(`[KybService] ===== SAVING PROGRESS =====`);
+      console.log(`[KybService] Task ID: ${taskId}, Progress: ${progress}, Total Fields: ${formDataKeys.length}`);
+      console.log(`[KybService] Sample data:`, sampleData);
       
       // Normalize form data before sending to server (remove null values)
       const normalizedFormData = Object.fromEntries(
         Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
       );
+      
+      // Log request details
+      console.log(`[KybService] Making API request to /api/kyb/progress`);
+      console.log(`[KybService] Request timestamp: ${new Date().toISOString()}`);
       
       // Send the minimum necessary data to reduce payload size
       const response = await fetch(`/api/kyb/progress`, {
