@@ -135,10 +135,12 @@ export function useFormStatus({
       
       // Count filled fields directly without caching
       let filledCount = 0;
+      let unfilledFields = [];
+      
       relevantFields.forEach(field => {
         const value = formValues[field.key];
         
-        // Enhanced field value determination logic
+        // Enhanced field value determination logic with more aggressive validation
         let isFilled = false;
         
         // Special handling for different field types
@@ -156,14 +158,37 @@ export function useFormStatus({
           // Trim the value to handle spaces-only inputs
           const stringValue = typeof value === 'string' ? value.trim() : String(value);
           
-          isFilled = value !== undefined && value !== null && stringValue !== '';
+          // More aggressive check for filled state - ensure we don't have empty strings
+          // or strings with just spaces
+          isFilled = (
+            value !== undefined && 
+            value !== null && 
+            stringValue !== '' &&
+            stringValue !== 'undefined' && 
+            stringValue !== 'null'
+          );
         }
         
         if (isFilled) {
           logger.debug(`Field ${field.key} is filled with value: ${typeof value === 'object' ? 'object' : value}`);
           filledCount++;
+        } else {
+          // Track unfilled fields for debugging
+          unfilledFields.push({
+            key: field.key,
+            value: value,
+            type: typeof value
+          });
         }
       });
+      
+      // Log unfilled fields for debugging
+      if (unfilledFields.length > 0) {
+        logger.debug(`Section "${section.title}" has ${unfilledFields.length} unfilled fields:`);
+        unfilledFields.forEach(field => {
+          logger.debug(`- Field ${field.key} is NOT filled. Value: ${field.value} (${field.type})`);
+        });
+      }
       
       // Update totals for overall progress calculation
       totalFields += relevantFields.length;
