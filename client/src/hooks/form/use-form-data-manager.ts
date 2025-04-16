@@ -53,6 +53,9 @@ export function useFormDataManager({
   // Flag to track if we've loaded data from the server
   const dataLoadedRef = useRef(false);
   
+  // Ref to track the latest form data for unmount saves
+  const latestFormDataRef = useRef<FormData>(initialData || {});
+  
   // Create default values for all fields
   const createDefaultValues = useCallback((fieldList: FormField[]): FormData => {
     const defaults: FormData = {};
@@ -193,6 +196,9 @@ export function useFormDataManager({
       setFormData(current => {
         const updated = { ...current, [name]: normalizedValue };
         
+        // Store latest form data in ref for unmount saves
+        latestFormDataRef.current = updated;
+        
         // Notify parent component if callback provided
         if (onDataChange) {
           onDataChange(updated);
@@ -227,6 +233,45 @@ export function useFormDataManager({
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
   
+  // Effect to ensure data is saved when component unmounts
+  useEffect(() => {
+    // Skip if no service or taskId
+    if (!formService || !taskId) {
+      return;
+    }
+    
+    // Return cleanup function that will execute on unmount
+    return () => {
+      // Always cancel any pending timer if it exists
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      
+      logger.info('[SAVE DEBUG] Unmount detected - Forcing immediate save of latest data');
+      
+      // Get the latest form data from our ref (which should be up-to-date)
+      const latestData = latestFormDataRef.current;
+      
+      // If we have a formService and taskId, save the data immediately
+      if (formService && taskId && Object.keys(latestData).length > 0) {
+        // Update the form service data with latest values
+        Object.entries(latestData).forEach(([key, value]) => {
+          formService.updateFormData(key, value);
+        });
+        
+        // Perform an immediate save
+        formService.save({ taskId, includeMetadata: true })
+          .then(result => {
+            logger.info(`[SAVE DEBUG] Unmount save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+          })
+          .catch(err => {
+            logger.error('[SAVE DEBUG] Unmount save failed with error:', err);
+          });
+      }
+    };
+  }, [formService, taskId]);
+
   // Load saved data from the server when the form is initialized or critical dependencies change
   useEffect(() => {
     // Skip if no fields, service, or taskId
