@@ -622,13 +622,30 @@ export class KybFormService implements FormServiceInterface {
    * Update local form data from server response
    * This ensures we're always in sync with the database
    */
-  updateLocalFormDataFromServer(serverFormData: Record<string, any>): void {
+  /**
+   * Update local form data from server response
+   * This ensures we're always in sync with the database
+   * CRITICAL FIX: Added value verification to prevent outdated values from overwriting newer values
+   */
+  updateLocalFormDataFromServer(serverFormData: Record<string, any>, currentOperationId?: number): void {
     if (!serverFormData || typeof serverFormData !== 'object') {
       console.warn('[FORM DEBUG] Invalid server form data received');
       return;
     }
     
     console.log(`[FORM DEBUG] Updating local form data with ${Object.keys(serverFormData).length} fields from server`);
+    
+    // If this is an update from a specific operation, log that
+    if (currentOperationId) {
+      console.log(`[FORM DEBUG] Update from operation #${currentOperationId}, latest operation is #${this.saveOperationCounter}`);
+    }
+    
+    // Check if we have a snapshot from the current operation
+    const isOutdatedOperation = currentOperationId && currentOperationId < this.saveOperationCounter;
+    if (isOutdatedOperation) {
+      console.log(`[FORM DEBUG] ⚠️ WARNING: Received outdated server response (op #${currentOperationId}), current operation is #${this.saveOperationCounter}`);
+      console.log('[FORM DEBUG] Will verify each field value before applying server updates');
+    }
     
     // Normalize the data (convert nulls to empty strings)
     const normalizedFormData = Object.fromEntries(
@@ -651,21 +668,52 @@ export class KybFormService implements FormServiceInterface {
       console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
     });
     
-    // Update the local form data
-    this.formData = { ...normalizedFormData };
+    // Create a merged data set, preferring local values for outdated operations
+    const mergedData: Record<string, any> = {};
+    
+    // For each field, decide whether to use server value or current value
+    Object.keys({ ...this.formData, ...normalizedFormData }).forEach(key => {
+      const serverValue = normalizedFormData[key];
+      const currentValue = this.formData[key];
+      const latestValue = this.latestFormDataSnapshot[key];
+      
+      // If this is an outdated operation and we have a more recent value, keep the current value
+      if (isOutdatedOperation && key in this.latestFormDataSnapshot) {
+        // Check if server value differs from the value in our latest snapshot
+        if (String(latestValue) !== String(serverValue)) {
+          console.log(`[FORM DEBUG] VALUE CONFLICT for field "${key}": 
+            Server has "${serverValue}", 
+            Current has "${currentValue}", 
+            Latest snapshot has "${latestValue}" 
+            - KEEPING LATEST`);
+          
+          // Keep the current value as it is more up-to-date
+          mergedData[key] = currentValue;
+        } else {
+          // No conflict, use server value
+          mergedData[key] = serverValue;
+        }
+      } else {
+        // For current operations or when no operation ID is provided, trust server data
+        mergedData[key] = serverValue !== undefined ? serverValue : currentValue;
+      }
+    });
+    
+    // Update the local form data with our merged data
+    this.formData = { ...mergedData };
     
     // Also update the values in the fields array and sections
     this.fields = this.fields.map(field => 
-      normalizedFormData.hasOwnProperty(field.key) 
-        ? { ...field, value: normalizedFormData[field.key] } 
+      mergedData.hasOwnProperty(field.key) 
+        ? { ...field, value: mergedData[field.key] } 
         : field
     );
     
     this.sections = this.sections.map(section => ({
       ...section,
       fields: section.fields.map(field => 
-        normalizedFormData.hasOwnProperty(field.key) 
-          ? { ...field, value: normalizedFormData[field.key] } 
+        mergedData.hasOwnProperty(field.key) 
+          ? { ...field, value: mergedData[field.key] } 
           : field
       )
     }));
@@ -685,10 +733,14 @@ export class KybFormService implements FormServiceInterface {
       console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
     });
     
-    // Update the last saved data reference
-    this.lastSavedData = JSON.stringify(normalizedFormData);
-    
-    console.log('[FORM DEBUG] Local form data updated from server - lastSavedData reference updated');
+    // Only update lastSavedData if this is the current operation or no operation ID provided
+    if (!isOutdatedOperation) {
+      // Update the last saved data reference
+      this.lastSavedData = JSON.stringify(this.formData);
+      console.log('[FORM DEBUG] Local form data updated from server - lastSavedData reference updated');
+    } else {
+      console.log('[FORM DEBUG] Not updating lastSavedData reference (outdated operation)');
+    }
   }
 
   /**
