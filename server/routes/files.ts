@@ -633,20 +633,35 @@ router.get("/api/files/:id/download", async (req, res) => {
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
 
-    // Check if this is a KYB form CSV file (stored directly in the database)
-    const isKybForm = fileRecord.name.startsWith('kyb_') && fileRecord.type === 'text/csv';
+    // Check if this is a KYB form CSV file
+    const isKybCsvFile = fileRecord.name.toLowerCase().includes('kyb_form') && 
+                          fileRecord.type === 'text/csv';
     
-    if (isKybForm) {
-      console.log('[Files] Serving KYB form directly from database');
-      // KYB forms have their content stored directly in the path field
-      const fileContent = fileRecord.path;
+    if (isKybCsvFile) {
+      console.log('[Files] Handling KYB CSV file download');
       
-      // Set appropriate headers
-      res.setHeader('Content-Type', fileRecord.type || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename=${fileRecord.name}`);
+      // Determine the path: KYB CSVs are always in the uploads directory with a specific pattern
+      const kybFileName = path.basename(fileRecord.path);
+      const filePath = path.join('./uploads', kybFileName);
       
-      // Send the file content directly
-      return res.send(fileContent);
+      if (!fs.existsSync(filePath)) {
+        console.error('[Files] KYB CSV file missing from disk:', filePath);
+        return res.status(404).json({ error: "CSV file not found on disk" });
+      }
+      
+      // For CSV files, set more specific headers for better browser handling
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.name}"`);
+      
+      // Read and send the file content
+      try {
+        const csvContent = fs.readFileSync(filePath, 'utf8');
+        console.log('[Files] Successfully read CSV file of size:', csvContent.length);
+        return res.send(csvContent);
+      } catch (readError) {
+        console.error('[Files] Error reading CSV file:', readError);
+        return res.status(500).json({ error: "Error reading CSV file" });
+      }
     } else {
       // Regular files are stored on disk
       const filePath = path.join(uploadDir, fileRecord.path);
