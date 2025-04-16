@@ -13,7 +13,7 @@ import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
-import kybRouter from './routes/kyb-fixed';
+import kybRouter from './routes/kyb';
 import { getKybProgress } from './routes/kyb-update';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';

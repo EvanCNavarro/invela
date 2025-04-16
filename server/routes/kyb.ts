@@ -619,18 +619,43 @@ router.post('/api/kyb/progress', async (req, res) => {
     });
     
     // Check for asdf values in updated form data
-    const asdfFields = Object.entries(updatedFormData)
+    const updatedAsdfFields = Object.entries(updatedFormData)
       .filter(([_, value]) => value === 'asdf')
       .map(([key]) => key);
       
-    if (asdfFields.length > 0) {
-      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${asdfFields.length} fields with value "asdf" in response:`);
-      console.log(`[SERVER DEBUG] ${asdfFields.join(', ')}`);
+    if (updatedAsdfFields.length > 0) {
+      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${updatedAsdfFields.length} fields with value "asdf" in response:`);
+      console.log(`[SERVER DEBUG] ${updatedAsdfFields.join(', ')}`);
     } else {
       console.log('[SERVER DEBUG] No fields with value "asdf" found in response data');
     }
     
     console.log(`[SERVER DEBUG] Sending response with ${Object.keys(updatedFormData).length} fields, status: ${newStatus}, progress: ${progress}%`);
+    
+    // CRITICAL FIX: Also update the savedFormData in the task table
+    // This ensures data persistence across navigation
+    try {
+      console.log(`[SERVER DEBUG] Updating task.savedFormData to ensure persistence across navigation`);
+      
+      // Cast the types to allow savedFormData to be accepted
+      // since the TypeScript definition doesn't explicitly include this field
+      const taskUpdate: any = {
+        updated_at: new Date()
+      };
+      
+      // Add the data to the update object
+      taskUpdate.savedFormData = updatedFormData;
+      
+      await db.update(tasks)
+        .set(taskUpdate)
+        .where(eq(tasks.id, taskId));
+        
+      console.log(`[SERVER DEBUG] ✅ Successfully updated task.savedFormData with latest form data`);
+    } catch (taskUpdateError) {
+      console.error(`[SERVER DEBUG] ❌ Failed to update task.savedFormData:`, taskUpdateError);
+      // Continue anyway since we've already updated the responses
+    }
+    
     console.log('===============================================');
 
     res.json({
@@ -963,8 +988,40 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
 
     // Transform responses into form data
     const formData: Record<string, any> = {};
+    
+    // First load any existing savedFormData from the task as a backup source
+    // This creates a fallback mechanism in case the kybResponses data is incomplete
+    // Access with type assertion since the TypeScript schema doesn't recognize this property
+    const savedFormData = (task as any).savedFormData;
+    
+    if (savedFormData) {
+      console.log('[SERVER DEBUG] Found existing savedFormData in task, using as initial data source');
+      console.log(`[SERVER DEBUG] Task savedFormData has ${Object.keys(savedFormData).length} fields`);
+      
+      // Merge the savedFormData into our form data
+      Object.entries(savedFormData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData[key] = value;
+          console.log(`[SERVER DEBUG] Loaded from task.savedFormData: ${key} = "${value}"`);
+        }
+      });
+    } else {
+      console.log('[SERVER DEBUG] No savedFormData found in task table');
+    }
+    
+    // Then load (and override) with the most current data from kybResponses
+    // This ensures we always use the most up-to-date values
     for (const response of responses) {
       if (response.response_value !== null) {
+        // If both sources have data but they differ, log the discrepancy
+        if (formData[response.field_key] !== undefined && 
+            formData[response.field_key] !== response.response_value) {
+          console.log(`[SERVER DEBUG] Data mismatch for field ${response.field_key}:`);
+          console.log(`[SERVER DEBUG] - savedFormData: "${formData[response.field_key]}"`);
+          console.log(`[SERVER DEBUG] - kybResponses: "${response.response_value}"`);
+          console.log(`[SERVER DEBUG] Using kybResponses value (more current)`);
+        }
+        
         formData[response.field_key] = response.response_value;
       }
     }
@@ -989,13 +1046,13 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     });
     
     // Check for asdf values in form data
-    const asdfFields = Object.entries(formData)
+    const getResponseAsdfFields = Object.entries(formData)
       .filter(([_, value]) => value === 'asdf')
       .map(([key]) => key);
       
-    if (asdfFields.length > 0) {
-      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${asdfFields.length} fields with value "asdf" in GET response:`);
-      console.log(`[SERVER DEBUG] ${asdfFields.join(', ')}`);
+    if (getResponseAsdfFields.length > 0) {
+      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${getResponseAsdfFields.length} fields with value "asdf" in GET response:`);
+      console.log(`[SERVER DEBUG] ${getResponseAsdfFields.join(', ')}`);
     } else {
       console.log('[SERVER DEBUG] No fields with value "asdf" found in GET response data');
     }
