@@ -100,6 +100,12 @@ export function UniversalSuccessModal({
           borderClass = "border-blue-200";
           iconColor = "text-blue-600";
           break;
+        case "file_vault_unlocked":
+          ActionIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-archive"><path d="m2 6 2 12h16l2-12"/><path d="M4 6h16"/><path d="M10 10h4"/></svg>;
+          bgClass = "bg-blue-50";
+          borderClass = "border-blue-200";
+          iconColor = "text-blue-600";
+          break;
         case "next_task":
           ActionIcon = ArrowRight;
           bgClass = "bg-indigo-50";
