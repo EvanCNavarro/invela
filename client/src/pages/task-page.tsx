@@ -53,441 +53,269 @@ interface Task {
   savedFormData?: Record<string, any>;
 }
 
-// Define task type as a valid type
 type TaskContentType = 'kyb' | 'card' | 'security' | 'unknown';
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
-  // All state variables defined at the top level
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [fileId, setFileId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [fileId, setFileId] = useState<number | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [derivedCompanyName, setDerivedCompanyName] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  
+  // Task info state
   const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [derivedCompanyName, setDerivedCompanyName] = useState('');
   
-  // Parse taskSlug into a numeric ID if possible
-  const parsedId = parseInt(params.taskSlug);
-  const taskId = !isNaN(parsedId) ? parsedId : null;
-  
-  // The url for fetching tasks
-  const apiEndpoint = taskId ? `/api/tasks.json/${taskId}` : '/api/tasks';
-  
-  // Function to extract company name from task title
-  const extractCompanyNameFromTitle = useCallback((title: string): string => {
-    // Enhanced regex pattern to better match all task formats including 1033 Open Banking Survey
-    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|1033 Open Banking Survey|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/i);
-    if (match && match[6]) {
-      return match[6].trim();
-    }
-    
-    // Secondary pattern matching specifically for 1033 tasks
-    const openBankingMatch = title?.match(/(\d+\.\s*)?(1033|Open Banking)(\s*\(1033\))?(\s*Survey)?:\s*(.*)/i);
-    if (openBankingMatch && openBankingMatch[5]) {
-      return openBankingMatch[5].trim();
-    }
-    
-    return 'Unknown Company';
-  }, []);
-  
-  // Log task initialization for debugging
-  useEffect(() => {
-    console.log('[TaskPage] Task initialization:', { 
-      taskSlug: params.taskSlug,
-      parsedId,
-      taskId,
-      apiEndpoint: taskId ? apiEndpoint : '/api/tasks',
-      timestamp: new Date().toISOString()
-    });
-  }, [params.taskSlug, parsedId, taskId, apiEndpoint]);
-  
-  // Handle back button click
+  // Handle page navigation
   const handleBackClick = useCallback(() => {
     navigate('/task-center');
   }, [navigate]);
   
-  // Handle file downloads
-  const handleDownload = useCallback(async (format: 'json' | 'csv' | 'txt') => {
-    if (!fileId) return;
-    
-    try {
-      const response = await fetch(`/api/files/${fileId}/download?format=${format}`);
-      if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.statusText}`);
-      }
-      
-      // Handle file download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `compliance_data_${taskContentType}_${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error('[TaskPage] Download error:', err);
-      toast({
-        title: "Download Failed",
-        description: "Could not download the file. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  }, [fileId, taskContentType, toast]);
-  
-  // Fetch task data
-  const { data: task, isLoading, error } = useQuery<Task>({
-    queryKey: [apiEndpoint, taskId, params.taskSlug],
-    queryFn: async () => {
-      try {
-        let response;
-        
-        // If we have a task ID, use direct ID lookup with special endpoint
-        if (taskId) {
-          console.log('[TaskPage] Fetching task data by ID:', { 
-            taskId,
-            fullUrl: apiEndpoint,
-            timestamp: new Date().toISOString()
-          });
-          
-          response = await fetch(apiEndpoint);
-        } 
-        // Otherwise try to parse the slug for name-based lookup
-        else {
-          // Parse the slug format: "{taskType}-{companyName}"
-          const match = params.taskSlug.match(/^(kyb|card|security)-(.+)$/i);
-          
-          if (match) {
-            const [, type, companyName] = match;
-            console.log('[TaskPage] Fetching task by type and company name:', { 
-              type, 
-              companyName,
-              timestamp: new Date().toISOString()
-            });
-            
-            // Determine the endpoint based on task type
-            let lookupEndpoint = '';
-            if (type.toLowerCase() === 'kyb') {
-              lookupEndpoint = `/api/tasks/kyb/${encodeURIComponent(companyName)}`;
-            } else if (type.toLowerCase() === 'card') {
-              lookupEndpoint = `/api/tasks/card/${encodeURIComponent(companyName)}`;
-            } else if (type.toLowerCase() === 'security') {
-              lookupEndpoint = `/api/tasks/security/${encodeURIComponent(companyName)}`;
-            }
-            
-            if (lookupEndpoint) {
-              response = await fetch(lookupEndpoint);
-            } else {
-              throw new Error(`Unsupported task type: ${type}`);
-            }
-          } else {
-            throw new Error(`Invalid task slug format: ${params.taskSlug}`);
-          }
-        }
-        
-        if (!response.ok) {
-          console.error('[TaskPage] Failed to fetch task:', { 
-            status: response.status, 
-            url: response.url,
-            timestamp: new Date().toISOString()
-          });
-          throw new Error(`Failed to fetch task: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        console.log('[TaskPage] Task data received:', { 
-          taskId: data.id,
-          taskType: data.task_type,
-          title: data.title,
-          status: data.status,
-          timestamp: new Date().toISOString()
-        });
-        
-        return data;
-      } catch (err) {
-        console.error('[TaskPage] Error fetching task:', err);
-        throw err;
-      }
-    },
-    staleTime: 300000 // 5 minutes
+  // Fetch task data from API
+  const { data: task, isLoading, error, refetch } = useQuery<Task | null>({
+    queryKey: ['/api/tasks', params.taskSlug],
+    retry: 2
   });
   
-  // Define the task processing logic outside the render cycle
+  // Process task data when it's received
   const processTaskData = useCallback((taskData: Task) => {
-    if (!taskData) return;
+    console.log('[TaskPage] Processing task data:', taskData);
     
-    // Determine task type for rendering
+    // Determine the task content type
     let type: TaskContentType = 'unknown';
     
-    if (taskData.task_type === 'company_kyb' || taskData.task_type === 'company_onboarding_KYB') {
+    if (taskData.task_type === 'company_kyb' || taskData.task_type === 'kyb') {
       type = 'kyb';
-    } else if (taskData.task_type === 'company_card' || 
-              (taskData.task_type === 'company_task' && 
-               taskData.title && 
-               taskData.title.toLowerCase().includes('1033') || 
-               taskData.title.toLowerCase().includes('open banking'))) {
-      type = 'card';
-    } else if (taskData.task_type === 'security_assessment') {
+    } else if (taskData.task_type === 'security_assessment' || taskData.task_type === 'security') {
       type = 'security';
+    } else if (taskData.task_type === 'company_card' || taskData.task_type === 'card') {
+      type = 'card';
     }
     
-    // Extract company information
-    const extractedName = extractCompanyNameFromTitle(taskData.title);
+    setTaskContentType(type);
     
-    // Set display name from metadata or fallback to extracted name
-    const displayNameValue = taskData?.metadata?.company?.name || 
-                            taskData?.metadata?.companyName || 
-                            extractedName || 
-                            'Unknown Company';
+    // Set display names based on available data
+    if (taskData.metadata) {
+      // Display name is used for the UI elements like headers
+      const derivedName = taskData.metadata.companyName || 
+                           (taskData.metadata.company ? taskData.metadata.company.name : null) || 
+                           'Unknown Company';
+      
+      setDisplayName(derivedName);
+      setDerivedCompanyName(derivedName);
+      
+      // Set fileId for direct downloads if present
+      if (type === 'kyb' && taskData.metadata.kybFormFile) {
+        setFileId(taskData.metadata.kybFormFile);
+      } else if (type === 'security' && taskData.metadata.securityFormFile) {
+        setFileId(taskData.metadata.securityFormFile);
+      } else if (type === 'card' && taskData.metadata.cardFormFile) {
+        setFileId(taskData.metadata.cardFormFile);
+      } else if (taskData.metadata.fileId) {
+        // Generic fileId if specific type not found
+        setFileId(taskData.metadata.fileId);
+      }
+    }
     
-    // Log company name extraction for debugging
-    console.log('[TaskPage] Company name extraction:', { 
-      title: taskData.title,
-      extractedName,
-      displayNameValue,
-      metadataCompanyName: taskData?.metadata?.company?.name,
-      metadataDirectCompanyName: taskData?.metadata?.companyName,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Return the processed values
-    return {
-      type,
-      extractedName,
-      displayNameValue,
-      shouldRedirect: type === 'unknown',
-      isSubmitted: !!(
-        (type === 'kyb' && taskData.metadata?.kybFormFile) ||
-        (type === 'card' && taskData.metadata?.cardFormFile) ||
-        (type === 'security' && taskData.metadata?.securityFormFile)
-      ),
-      fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
-              type === 'card' ? taskData.metadata?.cardFormFile :
-              type === 'security' ? taskData.metadata?.securityFormFile : null
-    };
-  }, [extractCompanyNameFromTitle]);
+    // Check if the task has been submitted
+    if (taskData.status === 'submitted' || taskData.status === 'completed') {
+      setIsSubmitted(true);
+    }
+  }, []);
   
-  // Process task data once loaded - using useEffect properly
+  // Process task data when it loads
   useEffect(() => {
-    if (!task) return;
-    
-    const processedData = processTaskData(task);
-    if (!processedData) return;
-    
-    // Update state variables safely in useEffect
-    setTaskContentType(processedData.type);
-    setDerivedCompanyName(processedData.extractedName);
-    setDisplayName(processedData.displayNameValue);
-    setShouldRedirect(processedData.shouldRedirect);
-    setIsSubmitted(processedData.isSubmitted);
-    
-    if (processedData.fileId) {
-      setFileId(processedData.fileId);
-    }
-    
-    // Log for debugging
-    if (processedData.shouldRedirect) {
-      console.log('[TaskPage] Unknown task type, redirecting to task center:', task.task_type);
+    if (task) {
+      processTaskData(task);
     }
   }, [task, processTaskData]);
   
-  // Handle error states
-  useEffect(() => {
-    if (error) {
-      console.error('[TaskPage] Task fetch error:', error);
+  // Handle file download
+  const handleDownload = useCallback((format: 'json' | 'csv' | 'txt') => {
+    if (!fileId) {
       toast({
-        title: "Error",
-        description: "Failed to load task details. Please try again or contact support.",
+        title: "Download Failed",
+        description: "No file associated with this task",
         variant: "destructive",
       });
-      
-      // Redirect back to task center after short delay
-      const timer = setTimeout(() => {
-        navigate('/task-center');
-      }, 3000);
-      
-      return () => clearTimeout(timer);
+      return;
     }
-  }, [error, navigate, toast]);
+    
+    fetch(`/api/files/${fileId}/download?format=${format}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to download file: ${response.statusText}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `compliance_data_${taskContentType}_${new Date().toISOString().split('T')[0]}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      })
+      .catch(err => {
+        console.error('Download error:', err);
+        toast({
+          title: "Download Failed",
+          description: "Could not download the file. Please try again later.",
+          variant: "destructive",
+        });
+      });
+  }, [fileId, taskContentType, toast]);
   
-  // Handle redirection for unknown task types
-  useEffect(() => {
-    if (shouldRedirect) {
-      navigate('/task-center');
-    }
-  }, [shouldRedirect, navigate]);
-  
-  // Show loading spinner while fetching data
+  // Loading state
   if (isLoading) {
     return (
       <DashboardLayout>
         <PageTemplate className="container">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <LoadingSpinner size="lg" />
+          <div className="flex flex-col items-center justify-center h-80">
+            <LoadingSpinner />
+            <div className="mt-4 text-muted-foreground">Loading task...</div>
           </div>
         </PageTemplate>
       </DashboardLayout>
     );
   }
   
-  // Show loading spinner for unknown task types while redirecting
-  if (shouldRedirect) {
+  // Error state
+  if (error || !task) {
     return (
       <DashboardLayout>
         <PageTemplate className="container">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <LoadingSpinner size="lg" />
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-4">Task Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                {error ? `Error: ${(error as Error).message}` : 'The requested task could not be found.'}
+              </p>
+              <div className="flex space-x-4 justify-center">
+                <Button onClick={() => refetch()}>
+                  Try Again
+                </Button>
+                <Button variant="outline" onClick={handleBackClick}>
+                  Back to Task Center
+                </Button>
+              </div>
+            </div>
           </div>
         </PageTemplate>
       </DashboardLayout>
     );
   }
   
-  // KYB Task Form Rendering
+  // KYB Form Rendering
   if (taskContentType === 'kyb' && task) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
-            
-            {isSubmitted && (
-              <div className="flex justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Download as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Download as TXT
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
           </div>
-
+          
           <div className="w-full">
-            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
-              <div className="mb-5">
-                <h2 className="text-xl font-semibold">KYB Form: {derivedCompanyName}</h2>
-                <p className="text-sm text-gray-500">Submit KYB (Know Your Business) details to verify "{displayName}"</p>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-                <UniversalForm
-                  taskId={task.id}
-                  taskType="kyb"
-                  taskStatus={task.status}
-                  taskMetadata={task.metadata || {}}
-                  initialData={task.savedFormData}
-                  onSubmit={(formData) => {
-                    // No loading toast needed, it will be handled by UniversalForm
+            <UniversalForm
+              taskId={task.id}
+              taskType="kyb"
+              taskStatus={task.status}
+              taskMetadata={task.metadata || {}}
+              initialData={task.savedFormData}
+              taskTitle={task.title}
+              companyName={derivedCompanyName}
+              fileId={fileId}
+              onDownload={handleDownload}
+              onSubmit={(formData) => {
+                // No loading toast needed, it will be handled by UniversalForm
 
-                    // Generate a proper filename for CSV export
-                    const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
-                    const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
-                    const fileName = `kyb_form_${task.id}_${timestamp}.csv`;
+                // Generate a proper filename for CSV export
+                const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
+                const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
+                const fileName = `kyb_form_${task.id}_${timestamp}.csv`;
+                
+                console.log('[TaskPage] Submitting KYB form with filename:', fileName);
+                
+                fetch(`/api/kyb/save`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({ 
+                    taskId: task.id,
+                    formData, 
+                    fileName 
+                  })
+                })
+                .then(async response => {
+                  // First try to parse the response
+                  try {
+                    const data = await response.json();
                     
-                    console.log('[TaskPage] Submitting KYB form with filename:', fileName);
+                    // Then check if the response was successful
+                    if (!response.ok) {
+                      throw new Error(data.details || data.error || 'Failed to save KYB form');
+                    }
                     
-                    fetch(`/api/kyb/save`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                      },
-                      credentials: 'include',
-                      body: JSON.stringify({ 
-                        taskId: task.id,
-                        formData, 
-                        fileName 
-                      })
-                    })
-                    .then(async response => {
-                      // First try to parse the response
-                      try {
-                        const data = await response.json();
-                        
-                        // Then check if the response was successful
-                        if (!response.ok) {
-                          throw new Error(data.details || data.error || 'Failed to save KYB form');
-                        }
-                        
-                        // Verify we got a valid result with a fileId
-                        if (!data || !data.success || !data.fileId) {
-                          throw new Error('Server returned an invalid or incomplete response');
-                        }
-                        
-                        return data;
-                      } catch (parseError) {
-                        // Handle JSON parse errors specifically
-                        if (parseError instanceof SyntaxError) {
-                          console.error('[TaskPage] Failed to parse server response:', parseError);
-                          throw new Error('Server returned an invalid response format. Please try again.');
-                        }
-                        // Re-throw other errors
-                        throw parseError;
-                      }
-                    })
-                    .then((result) => {
-                      // Only show success UI if we have a valid result
-                      if (result && result.success && result.fileId) {
-                        // Show confetti animation for success
-                        fireEnhancedConfetti();
-                        
-                        // Update state for success modal
-                        setFileId(result.fileId);
-                        setIsSubmitted(true);
-                        setShowSuccessModal(true);
-                        
-                        // Don't show success toast here - we'll only show the modal
-                      } else {
-                        // This shouldn't happen if we validate in the previous then(),
-                        // but just in case something slips through
-                        throw new Error('Received invalid success response from server');
-                      }
-                    })
-                    .catch(error => {
-                      // Log the error for debugging
-                      console.error('[TaskPage] Form submission failed:', error);
-                      
-                      // Reset any partial success state to avoid showing success modal
-                      setIsSubmitted(false);
-                      setShowSuccessModal(false);
-                      
-                      // Show error toast with specific error message
-                      toast({
-                        title: "Submission Failed",
-                        description: error.message || "Failed to save KYB form. Please try again.",
-                        variant: "destructive",
-                      });
-                    });
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Success modal now handled by UniversalForm component */}
+                    // Verify we got a valid result with a fileId
+                    if (!data || !data.success || !data.fileId) {
+                      throw new Error('Server returned an invalid or incomplete response');
+                    }
+                    
+                    return data;
+                  } catch (parseError) {
+                    // Handle JSON parse errors specifically
+                    if (parseError instanceof SyntaxError) {
+                      console.error('[TaskPage] Failed to parse server response:', parseError);
+                      throw new Error('Server returned an invalid response format. Please try again.');
+                    }
+                    // Re-throw other errors
+                    throw parseError;
+                  }
+                })
+                .then((result) => {
+                  // Only show success UI if we have a valid result
+                  if (result && result.success && result.fileId) {
+                    // Show confetti animation for success
+                    fireEnhancedConfetti();
+                    
+                    // Update state for success modal
+                    setFileId(result.fileId);
+                    setIsSubmitted(true);
+                    setShowSuccessModal(true);
+                    
+                    // Don't show success toast here - we'll only show the modal
+                  } else {
+                    // This shouldn't happen if we validate in the previous then(),
+                    // but just in case something slips through
+                    throw new Error('Received invalid success response from server');
+                  }
+                })
+                .catch(error => {
+                  // Log the error for debugging
+                  console.error('[TaskPage] Form submission failed:', error);
+                  
+                  // Reset any partial success state to avoid showing success modal
+                  setIsSubmitted(false);
+                  setShowSuccessModal(false);
+                  
+                  // Show error toast with specific error message
+                  toast({
+                    title: "Submission Failed",
+                    description: error.message || "Failed to save KYB form. Please try again.",
+                    variant: "destructive",
+                  });
+                });
+              }}
+            />
           </div>
         </PageTemplate>
       </DashboardLayout>
@@ -501,134 +329,104 @@ export default function TaskPage({ params }: TaskPageProps) {
         <PageTemplate className="space-y-6">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
-            
-            {isSubmitted && (
-              <div className="flex justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
           </div>
 
           <div className="w-full">
-            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
-              <div className="mb-5">
-                <h2 className="text-xl font-semibold">Security Assessment: {derivedCompanyName}</h2>
-                <p className="text-sm text-gray-500">Submit security assessment details to verify "{displayName}"</p>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-                <SecurityFormPlayground
-                  taskId={task.id}
-                  companyName={derivedCompanyName}
-                  companyData={{
-                    name: displayName,
-                    description: task.metadata?.company?.description || undefined
-                  }}
-                  savedFormData={task.savedFormData}
-                  taskStatus={task.status}
-                  isSubmitted={isSubmitted}
-                  onSubmit={(formData) => {
-                    // No loading toast needed, it will be handled by UniversalForm
+            <SecurityFormPlayground
+              taskId={task.id}
+              companyName={derivedCompanyName}
+              companyData={{
+                name: displayName,
+                description: task.metadata?.company?.description || undefined
+              }}
+              savedFormData={task.savedFormData}
+              taskStatus={task.status}
+              isSubmitted={isSubmitted}
+              onSubmit={(formData) => {
+                // No loading toast needed, it will be handled by UniversalForm
 
-                    // Generate a proper filename for security assessment export
-                    const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
-                    const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
-                    const fileName = `security_assessment_${task.id}_${timestamp}.csv`;
+                // Generate a proper filename for security assessment export
+                const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
+                const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
+                const fileName = `security_assessment_${task.id}_${timestamp}.csv`;
+                
+                console.log('[TaskPage] Submitting security assessment with filename:', fileName);
+                
+                // Submit the security assessment
+                fetch(`/api/security/save`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({ 
+                    taskId: task.id,
+                    formData,
+                    fileName
+                  })
+                })
+                  .then(async response => {
+                    // First try to parse the response
+                    try {
+                      const data = await response.json();
+                      
+                      // Then check if the response was successful
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                      }
+                      
+                      // Verify we got a valid result
+                      if (!data || !data.success) {
+                        throw new Error('Server returned an invalid or incomplete response');
+                      }
+                      
+                      return data;
+                    } catch (parseError) {
+                      // Handle JSON parse errors specifically
+                      if (parseError instanceof SyntaxError) {
+                        console.error('[TaskPage] Failed to parse server response:', parseError);
+                        throw new Error('Server returned an invalid response format. Please try again.');
+                      }
+                      // Re-throw other errors
+                      throw parseError;
+                    }
+                  })
+                  .then((result) => {
+                    // Only show success UI if we have a valid result
+                    if (result && result.success) {
+                      // Show confetti animation for success
+                      fireSuperConfetti();
+                      
+                      // Update state for success modal
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+                      
+                      // Don't show success toast - we'll only show the modal
+                    } else {
+                      // This shouldn't happen if we validate in the previous then(),
+                      // but just in case something slips through
+                      throw new Error('Received invalid success response from server');
+                    }
+                  })
+                  .catch(error => {
+                    // Log the error for debugging
+                    console.error('[TaskPage] Security assessment submission failed:', error);
                     
-                    console.log('[TaskPage] Submitting security assessment with filename:', fileName);
+                    // Reset any partial success state to avoid showing success modal
+                    setIsSubmitted(false);
+                    setShowSuccessModal(false);
                     
-                    // Submit the security assessment
-                    fetch(`/api/security/save`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                      },
-                      credentials: 'include',
-                      body: JSON.stringify({ 
-                        taskId: task.id,
-                        formData,
-                        fileName
-                      })
-                    })
-                      .then(async response => {
-                        // First try to parse the response
-                        try {
-                          const data = await response.json();
-                          
-                          // Then check if the response was successful
-                          if (!response.ok) {
-                            throw new Error(data.details || data.error || 'Failed to submit security assessment');
-                          }
-                          
-                          // Verify we got a valid result
-                          if (!data || !data.success) {
-                            throw new Error('Server returned an invalid or incomplete response');
-                          }
-                          
-                          return data;
-                        } catch (parseError) {
-                          // Handle JSON parse errors specifically
-                          if (parseError instanceof SyntaxError) {
-                            console.error('[TaskPage] Failed to parse server response:', parseError);
-                            throw new Error('Server returned an invalid response format. Please try again.');
-                          }
-                          // Re-throw other errors
-                          throw parseError;
-                        }
-                      })
-                      .then((result) => {
-                        // Only show success UI if we have a valid result
-                        if (result && result.success) {
-                          // Show confetti animation for success
-                          fireSuperConfetti();
-                          
-                          // Update state for success modal
-                          setIsSubmitted(true);
-                          setShowSuccessModal(true);
-                          
-                          // Don't show success toast - we'll only show the modal
-                        } else {
-                          // This shouldn't happen if we validate in the previous then(),
-                          // but just in case something slips through
-                          throw new Error('Received invalid success response from server');
-                        }
-                      })
-                      .catch(error => {
-                        // Log the error for debugging
-                        console.error('[TaskPage] Security assessment submission failed:', error);
-                        
-                        // Reset any partial success state to avoid showing success modal
-                        setIsSubmitted(false);
-                        setShowSuccessModal(false);
-                        
-                        // Show error toast with specific error message
-                        toast({
-                          title: "Submission Failed",
-                          description: error.message || "Failed to submit security assessment. Please try again.",
-                          variant: "destructive",
-                        });
-                      });
-                  }}
-                />
-              </div>
-            </div>
+                    // Show error toast with specific error message
+                    toast({
+                      title: "Submission Failed",
+                      description: error.message || "Failed to submit security assessment. Please try again.",
+                      variant: "destructive",
+                    });
+                  });
+              }}
+            />
           </div>
-          
-          {/* Success modal now handled by UniversalForm component */}
         </PageTemplate>
       </DashboardLayout>
     );
@@ -641,33 +439,6 @@ export default function TaskPage({ params }: TaskPageProps) {
         <PageTemplate className="space-y-6">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
-            
-            {isSubmitted && (
-              <div className="flex justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Download as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Download as Text
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
           </div>
 
           <div className="w-full">
