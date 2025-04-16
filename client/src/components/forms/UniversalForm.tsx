@@ -730,7 +730,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       </div>
                       <div className="flex items-center">
                         <ClipboardCheck className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span>Status: Complete</span>
+                        <span>Status: {taskStatus || 'Submitted'}</span>
                       </div>
                       <div className="flex items-center">
                         <Building2 className="h-4 w-4 mr-1.5 text-blue-500" />
@@ -739,6 +739,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <div className="flex items-center">
                         <UserCircle className="h-4 w-4 mr-1.5 text-blue-500" />
                         <span>Submitted by: {user?.name || user?.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <FileText className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span>Total Questions: {fields.filter(f => f.section !== 'review-section').length}</span>
                       </div>
                     </div>
                   </div>
@@ -759,13 +763,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     >
                       <AccordionTrigger className="px-4 py-3 hover:no-underline bg-gray-50 hover:bg-gray-100">
                         <div className="flex items-center">
-                          <div className="bg-emerald-50 text-emerald-600 rounded-full h-7 w-7 flex items-center justify-center mr-3">
+                          <div className="bg-gray-100 text-gray-700 rounded-full h-7 w-7 flex items-center justify-center mr-3">
                             <span className="font-medium">{sectionIndex + 1}</span>
                           </div>
                           <h3 className="text-lg font-semibold text-gray-800">{section.title}</h3>
-                          <span className="ml-3 px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-                            Completed
-                          </span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="px-5 py-3 bg-white">
@@ -785,16 +786,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             const displayValue = fieldValue ? String(fieldValue) : '-';
                             
                             return (
-                              <div key={field.key} className="border-b border-gray-100 pb-5 last:border-0 last:pb-2">
+                              <div key={field.key} className="pb-5 last:pb-2">
                                 <div className="mb-1.5">
-                                  <span className="text-sm font-medium text-emerald-600 mr-1.5">{questionNumber}/{totalQuestions}.</span>
+                                  <span className="text-sm font-medium text-gray-800 mr-1.5">{questionNumber}.</span>
                                   <span className="font-medium text-gray-800">{field.question || field.label}</span>
                                 </div>
-                                <div className="flex items-center pl-7 mt-2">
-                                  <div className="text-gray-600">
-                                    <span className="font-medium mr-1.5">Answer:</span>
-                                    {displayValue}
-                                  </div>
+                                <div className="flex items-start pl-7 mt-2">
+                                  {fieldValue && fieldValue !== '-' ? (
+                                    <div className="flex items-start text-gray-700">
+                                      <CheckCircle className="h-4 w-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
+                                      <span>{displayValue}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-start text-gray-500">
+                                      <XCircle className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                                      <span className="italic">No answer provided</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -810,7 +818,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               <div className="flex justify-between mt-8">
                 <Button 
                   variant="outline" 
-                  onClick={() => window.location.href = '/task-center'}
+                  onClick={() => {
+                    // Use proper React Router navigation instead of window.location
+                    window.history.pushState({}, '', '/task-center');
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
                   className="flex items-center"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to Task Center
