@@ -3,9 +3,9 @@ import { FormSection } from '@/components/forms/SectionNavigation';
 import type { FormField } from '@/services/formService';
 import getLogger from '@/utils/logger';
 
-// Logger instance for this module
+// Logger instance for this module - disable debug logs for performance
 const logger = getLogger('FormStatus', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+  levels: { debug: false, info: true, warn: true, error: true } 
 });
 
 // TypeScript interfaces for our hook
