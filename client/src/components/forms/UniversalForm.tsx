@@ -521,7 +521,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: "default",
       });
       
-      logger.info('Form submitted');
+      // Set completion_date to the current timestamp
+      const currentDate = new Date().toISOString();
+      data.completion_date = currentDate;
+      
+      logger.info('Form submitted with completion date:', currentDate);
       
       // First save the current progress
       await saveProgress();
