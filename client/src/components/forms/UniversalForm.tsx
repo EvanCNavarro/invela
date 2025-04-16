@@ -36,8 +36,10 @@ import {
   FileJson,
   FileSpreadsheet,
   FileText,
-  CheckCircle
+  CheckCircle,
+  CheckCircle2
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -704,20 +706,105 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
-              {/* Progress bar showing overall completion */}
-              <div className="mb-3">
-                <FormProgressBar progress={overallProgress} />
+          {/* For submitted forms, show a read-only review layout */}
+          {isSubmitted ? (
+            <div className="space-y-6">
+              <div className="bg-green-50 border border-green-100 rounded-lg p-4 mb-6">
+                <div className="flex items-center">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
+                  <span className="font-medium text-green-800">
+                    This form has been successfully submitted and marked as complete.
+                  </span>
+                </div>
+                {submissionDate && (
+                  <p className="ml-7 text-sm text-green-600 mt-1">
+                    Submitted on {submissionDate}
+                  </p>
+                )}
               </div>
               
-              {/* Section navigation tabs */}
-              <ResponsiveSectionNavigation
-                sections={allSections}
-                sectionStatuses={sectionStatuses}
-                activeSection={activeSection}
-                onSectionChange={(index) => {
-                  // Only allow access to the review section if the form is complete
+              {allSections.filter(section => section.id !== 'review-section').map((section, sectionIndex) => {
+                const sectionFields = fields.filter(field => field.section === section.id);
+                
+                if (sectionFields.length === 0) return null;
+                
+                return (
+                  <div key={section.id} className="mb-8">
+                    <div className="flex items-center mb-3 pb-2 border-b">
+                      <div className="bg-green-50 text-green-600 rounded-full h-7 w-7 flex items-center justify-center mr-2">
+                        <span className="font-medium">{sectionIndex + 1}</span>
+                      </div>
+                      <h3 className="text-lg font-semibold">{section.title}</h3>
+                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-green-50 text-green-600 border border-green-200">
+                        Completed
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-4 mt-4">
+                      {sectionFields.map((field, fieldIndex) => {
+                        // Use field.key instead of field.field_key
+                        const fieldValue = formData[field.key];
+                        const displayValue = fieldValue ? String(fieldValue) : '-';
+                        
+                        return (
+                          <div key={field.key} className="bg-white border border-gray-100 rounded-lg p-4 shadow-sm">
+                            <div className="flex">
+                              <div className="font-medium text-sm text-gray-500 mr-2">{fieldIndex + 1}/{sectionFields.length}</div>
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-800 mb-1">{field.label}</h4>
+                                <p className="text-gray-600 mb-3">{field.question || field.label}</p>
+                                <div className="flex items-center bg-gray-50 p-3 rounded border border-gray-200">
+                                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                                  <span className="font-medium">{displayValue}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              <div className="flex justify-between items-center pt-4 mt-8 border-t">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={handleBackClick}
+                  className="flex items-center"
+                >
+                  <ArrowLeft className="mr-1 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="flex items-center"
+                >
+                  <ArrowUp className="mr-1 h-4 w-4" />
+                  Back to Top
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* For non-submitted forms, show the regular form editor */
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+                {/* Progress bar showing overall completion */}
+                <div className="mb-3">
+                  <FormProgressBar progress={overallProgress} />
+                </div>
+                
+                {/* Section navigation tabs */}
+                <ResponsiveSectionNavigation
+                  sections={allSections}
+                  sectionStatuses={sectionStatuses}
+                  activeSection={activeSection}
+                  onSectionChange={(index) => {
+                    // Only allow access to the review section if the form is complete
                   if (index === allSections.length - 1 && overallProgress < 100) {
                     toast({
                       title: "Form incomplete",
@@ -1031,6 +1118,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               </div>
             </form>
           </Form>
+          )}
         </div>
       </div>
       
