@@ -2,157 +2,177 @@
  * Enhanced debugging routes for KYB form data
  * These routes expose detailed debugging information
  */
-
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { db } from '@db';
+import { eq, desc, sql, and } from 'drizzle-orm';
 import { tasks, kybFields, kybResponses } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
-import { logTaskResponses, logFormDifferences } from './utils/form-debug';
+import { LoggingService } from './services/logging-service';
 
+const logger = new LoggingService('DebugAPI');
 const router = Router();
 
-// Enhanced debug endpoint to get form data for a task
-router.get('/api/debug/form/:taskId', async (req, res) => {
+// Helper to check if a field contains "asdf" test value
+const isTestValue = (value: string | null): boolean => {
+  if (!value) return false;
+  
+  // "asdf" is a common test value pattern that can cause issues
+  return value.toLowerCase() === 'asdf';
+};
+
+/**
+ * Enhanced debugging endpoint for form data
+ * This provides detailed information about response data for a given task
+ */
+router.get('/form/:taskId', async (req: Request, res: Response) => {
   try {
-    const { taskId } = req.params;
-    const taskIdNum = parseInt(taskId);
+    const taskId = parseInt(req.params.taskId);
     
-    console.log(`[DEBUG API] Detailed form data request for task ${taskId}`);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
     
-    // Get comprehensive task data
-    await logTaskResponses(taskIdNum);
+    // Get task information
+    const taskInfo = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
     
-    // Get database records
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskIdNum));
+    if (!taskInfo) {
+      return res.status(404).json({ error: `Task with ID ${taskId} not found` });
+    }
+    
+    // Get all form fields - KYB fields are global, not per task
+    const formFields = await db.query.kybFields.findMany();
+    
+    // Get all form responses for the task
+    const formResponses = await db.query.kybResponses.findMany({
+      where: eq(kybResponses.task_id, taskId),
+      orderBy: [desc(kybResponses.version)]
+    });
+    
+    // Track important fields (fields that might have test data)
+    const keysOfInterest = {
+      corporateRegistration: null as string | null,
+      goodStanding: null as string | null,
+      regulatoryActions: null as string | null,
+      investigationsIncidents: null as string | null
+    };
+    
+    // Group responses by field_id to get the latest response for each field
+    const latestResponses = formResponses.reduce((latest, response) => {
+      // Find the field key for this response
+      const fieldInfo = formFields.find(f => f.id === response.field_id);
       
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    
-    // Get all field responses
-    const responses = await db.select({
-      id: kybResponses.id,
-      response_value: kybResponses.response_value,
-      field_id: kybResponses.field_id,
-      field_key: kybFields.field_key,
-      status: kybResponses.status,
-      version: kybResponses.version,
-      updated_at: kybResponses.updated_at
-    })
-      .from(kybResponses)
-      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, taskIdNum));
-    
-    // Transform into formData format
-    const formData: Record<string, any> = {};
-    for (const response of responses) {
-      if (response.response_value !== null) {
-        formData[response.field_key] = response.response_value;
+      if (!fieldInfo) return latest;
+      
+      const fieldKey = fieldInfo.field_key;
+      
+      // Check if we've already seen this field, and if the current response is newer
+      if (!latest[fieldKey] || response.version > latest[fieldKey].version) {
+        latest[fieldKey] = {
+          field_key: fieldKey,
+          value: response.response_value,
+          status: response.status,
+          version: response.version,
+          updated_at: response.updated_at?.toISOString() || 'unknown'
+        };
+        
+        // Track fields of interest
+        if (fieldKey === 'corporateRegistration') {
+          keysOfInterest.corporateRegistration = response.response_value;
+        } else if (fieldKey === 'goodStanding') {
+          keysOfInterest.goodStanding = response.response_value;
+        } else if (fieldKey === 'regulatoryActions') {
+          keysOfInterest.regulatoryActions = response.response_value;
+        } else if (fieldKey === 'investigationsIncidents') {
+          keysOfInterest.investigationsIncidents = response.response_value;
+        }
       }
-    }
+      
+      return latest;
+    }, {} as Record<string, any>);
+    
+    // Convert to array for the frontend
+    const responseArray = Object.values(latestResponses);
+    
+    // Convert to a simple form data object for debugging
+    const formData = responseArray.reduce((data, field: any) => {
+      data[field.field_key] = field.value;
+      return data;
+    }, {} as Record<string, string>);
     
     // Check for "asdf" test values
-    const asdfFields = responses
-      .filter(r => r.response_value === 'asdf')
-      .map(r => r.field_key);
+    const asdfFields = responseArray
+      .filter((field: any) => isTestValue(field.value))
+      .map((field: any) => field.field_key);
     
-    // Format response data for debugging
-    const responseData = responses.map(r => ({
-      id: r.id,
-      field_key: r.field_key,
-      field_id: r.field_id,
-      value: r.response_value,
-      status: r.status,
-      version: r.version,
-      updated_at: r.updated_at
-    }));
+    logger.info(`Debug endpoint accessed for task ${taskId}`, {
+      asdfFieldCount: asdfFields.length,
+      responseCount: responseArray.length
+    });
     
-    // Return comprehensive debug information
-    res.json({
-      task: {
-        id: task.id,
-        title: task.title,
-        status: task.status,
-        progress: task.progress,
-        created_at: task.created_at,
-        updated_at: task.updated_at,
-        metadata: task.metadata
-      },
-      formDataFields: Object.keys(formData).length,
-      responseCount: responses.length,
-      asdfFields: asdfFields,
-      keysOfInterest: {
-        corporateRegistration: formData['corporateRegistration'] || null,
-        goodStanding: formData['goodStanding'] || null,
-        regulatoryActions: formData['regulatoryActions'] || null,
-        investigationsIncidents: formData['investigationsIncidents'] || null
-      },
-      // Include the full data for debugging
-      formData: formData,
-      responses: responseData
+    return res.json({
+      task: taskInfo,
+      formDataFields: formFields.length, 
+      responseCount: formResponses.length,
+      asdfFields,
+      keysOfInterest,
+      formData,
+      responses: responseArray
     });
   } catch (error) {
-    console.error('[DEBUG API] Error in form data debug endpoint:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+    logger.error('Error in form debug endpoint', { error });
+    return res.status(500).json({ 
+      error: 'Error retrieving debug information',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Debug endpoint to compare form data between test-form-update and database
-router.get('/api/debug/form-sources/:taskId', async (req, res) => {
+/**
+ * List all tasks with form issues (test values, etc.)
+ */
+router.get('/tasks-with-issues', async (req: Request, res: Response) => {
   try {
-    const { taskId } = req.params;
-    const taskIdNum = parseInt(taskId);
+    // Get all form responses containing "asdf"
+    const problematicResponses = await db.execute(sql`
+      SELECT 
+        kr.task_id, 
+        kf.field_key,
+        kr.response_value,
+        t.title
+      FROM kyb_responses kr
+      JOIN kyb_fields kf ON kr.field_id = kf.id
+      JOIN tasks t ON kr.task_id = t.id
+      WHERE LOWER(kr.response_value) = 'asdf'
+      ORDER BY kr.task_id
+    `);
     
-    console.log(`[DEBUG API] Form data source comparison for task ${taskId}`);
-    
-    // Get the current database state of the form
-    const responses = await db.select({
-      response_value: kybResponses.response_value,
-      field_key: kybFields.field_key
-    })
-      .from(kybResponses)
-      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, taskIdNum));
-    
-    // Transform into formData format
-    const dbFormData: Record<string, any> = {};
-    for (const response of responses) {
-      if (response.response_value !== null) {
-        dbFormData[response.field_key] = response.response_value;
+    // Group by task ID to create a summary
+    const taskSummary = problematicResponses.reduce((summary: any, row: any) => {
+      if (!summary[row.task_id]) {
+        summary[row.task_id] = {
+          taskId: row.task_id,
+          title: row.title,
+          testFields: []
+        };
       }
-    }
+      
+      summary[row.task_id].testFields.push({
+        fieldKey: row.field_key,
+        value: row.response_value
+      });
+      
+      return summary;
+    }, {});
     
-    // Check fields that use "asdf" in the database
-    const dbAsdfFields = Object.entries(dbFormData)
-      .filter(([_, value]) => value === 'asdf')
-      .map(([key]) => key);
-    
-    // Return the database state
-    res.json({
-      taskId: taskIdNum,
-      databaseForm: {
-        fieldCount: Object.keys(dbFormData).length,
-        asdfFields: dbAsdfFields,
-        data: dbFormData
-      },
-      keysOfInterest: {
-        corporateRegistration: dbFormData['corporateRegistration'] || null,
-        goodStanding: dbFormData['goodStanding'] || null,
-        regulatoryActions: dbFormData['regulatoryActions'] || null,
-        investigationsIncidents: dbFormData['investigationsIncidents'] || null
-      }
+    return res.json({
+      tasksWithIssues: Object.values(taskSummary)
     });
   } catch (error) {
-    console.error('[DEBUG API] Error in form sources debug endpoint:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+    logger.error('Error checking for tasks with issues', { error });
+    return res.status(500).json({ 
+      error: 'Error checking for tasks with issues',
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 });

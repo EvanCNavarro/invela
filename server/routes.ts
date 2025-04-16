@@ -40,7 +40,7 @@ export function registerRoutes(app: Express): Express {
   app.use(kybProgressRouter);
   
   // Register enhanced debugging routes
-  app.use(enhancedDebugRoutes);
+  app.use('/api/debug', enhancedDebugRoutes);
   
   app.use(cardRouter);
   app.use(securityRouter);

@@ -24,6 +24,7 @@ import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
+import FormDebugPage from "@/pages/form-debug-page";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -271,6 +272,11 @@ function Router() {
         {/* Form Update Test Page - For Debugging */}
         <Route path="/test-form-update">
           <TestFormUpdate />
+        </Route>
+        
+        {/* Form Debug Page - For Troubleshooting Form Data Issues */}
+        <Route path="/form-debug">
+          <FormDebugPage />
         </Route>
 
         <Route component={NotFound} />
