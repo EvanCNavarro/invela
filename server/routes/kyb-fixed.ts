@@ -34,24 +34,53 @@ enum SuggestionStatus {
   FAILED = 'failed'
 }
 
-// Helper function to convert responses to CSV format
+// Helper function to convert responses to CSV format with proper formatting
 function convertResponsesToCSV(fields: any[], formData: any) {
-  let csvLines = ['Field,Label,Question,Response'];
+  // Group fields by their section/group for better organization
+  const fieldsByGroup: Record<string, any[]> = {};
   
   for (const field of fields) {
-    // Get response data, with fallback to empty string
-    const response = formData[field.field_key] || '';
+    const group = field.group || 'Other';
+    if (!fieldsByGroup[group]) {
+      fieldsByGroup[group] = [];
+    }
+    fieldsByGroup[group].push(field);
+  }
+  
+  // Start with a more comprehensive header
+  const timestamp = new Date().toISOString();
+  let csvLines = [
+    `KYB Form Export (Generated: ${timestamp})`,
+    '', // Empty line for spacing
+    'Section,Field ID,Question,Response'
+  ];
+  
+  // Add each field grouped by section
+  for (const [group, groupFields] of Object.entries(fieldsByGroup)) {
+    // Add a blank line before each section (except the first)
+    if (csvLines.length > 3) {
+      csvLines.push('');
+    }
     
-    // Convert any objects/arrays to string format
-    const safeResponse = typeof response === 'object' 
-      ? JSON.stringify(response) 
-      : String(response);
-    
-    // Escape CSV special characters
-    const escapedResponse = safeResponse.replace(/"/g, '""');
-    
-    // Create CSV line with quotes around each field to handle commas, newlines, etc.
-    csvLines.push(`${field.field_key},"${field.display_name}","${field.question || ''}","${escapedResponse}"`);
+    // Process each field in this group
+    for (const field of groupFields) {
+      // Get response data, with fallback to empty string
+      const response = formData[field.field_key] || '';
+      
+      // Convert any objects/arrays to string format
+      const safeResponse = typeof response === 'object' 
+        ? JSON.stringify(response) 
+        : String(response);
+      
+      // Escape CSV special characters
+      const escapedResponse = safeResponse.replace(/"/g, '""');
+      
+      // Get the question text or fall back to display name
+      const questionText = field.question || field.display_name || field.field_key;
+      
+      // Create CSV line with quotes around each field to handle commas, newlines, etc.
+      csvLines.push(`"${group}","${field.field_key}","${questionText}","${escapedResponse}"`);
+    }
   }
   
   return csvLines.join('\n');
@@ -704,6 +733,7 @@ router.get('/api/kyb/diagnostics/:taskId', async (req, res) => {
 router.get('/api/kyb/export/:taskId', async (req, res) => {
   try {
     const { taskId } = req.params;
+    logger.info(`Exporting KYB form data for task ${taskId}`);
     
     // Get task data
     const [task] = await db.select()
@@ -711,20 +741,36 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
       .where(eq(tasks.id, parseInt(taskId)));
 
     if (!task) {
+      logger.warn(`Task not found for export: ${taskId}`);
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    // Get company name for inclusion in the export
+    const [company] = task.company_id 
+      ? await db.select().from(companies).where(eq(companies.id, task.company_id))
+      : [];
+
+    const companyName = company?.name || 'Unknown Company';
+    logger.info(`Exporting KYB data for company: ${companyName}`);
+
     // Get all KYB fields with their group information
     const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+    logger.info(`Retrieved ${fields.length} field definitions`);
 
     // Get all KYB responses for this task
     const responses = await db.select({
       response_value: kybResponses.response_value,
-      field_key: kybFields.field_key
+      field_key: kybFields.field_key,
+      field_id: kybFields.id,
+      display_name: kybFields.display_name,
+      question: kybFields.question,
+      group: kybFields.group
     })
       .from(kybResponses)
       .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
       .where(eq(kybResponses.task_id, parseInt(taskId)));
+
+    logger.info(`Retrieved ${responses.length} field responses`);
 
     // Transform responses into form data
     const formData: Record<string, any> = {};
@@ -736,15 +782,42 @@ router.get('/api/kyb/export/:taskId', async (req, res) => {
     // Convert form data to CSV
     const csvData = convertResponsesToCSV(fields, formData);
 
+    // Add tracking for the download
+    try {
+      // Look for file ID in task metadata
+      const fileId = task.metadata?.kybFormFile;
+      if (fileId) {
+        // Increment the download count
+        await db.update(files)
+          .set({ 
+            download_count: sql`download_count + 1`,
+            updated_at: new Date()
+          })
+          .where(eq(files.id, fileId));
+        
+        logger.info(`Incremented download count for file ID ${fileId}`);
+      }
+    } catch (trackError) {
+      // Don't fail the download if tracking fails
+      logger.error('Failed to track download', { 
+        error: trackError instanceof Error ? trackError.message : 'Unknown error' 
+      });
+    }
+
     // Set response headers
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="kyb_form_${taskId}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="kyb_form_${taskId}_${companyName.replace(/[^a-z0-9]/gi, '_')}.csv"`);
     
     // Send CSV data
     res.send(csvData);
+    logger.info('Successfully sent CSV export', { 
+      taskId, 
+      companyName, 
+      responseCount: responses.length 
+    });
     
   } catch (error) {
-    console.error('Error exporting KYB data:', error);
+    logger.error('Error exporting KYB data:', error);
     res.status(500).json({
       error: 'Failed to export KYB data',
       details: error instanceof Error ? error.message : 'Unknown error'
