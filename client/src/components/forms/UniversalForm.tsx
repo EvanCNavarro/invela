@@ -394,10 +394,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     return descriptions[taskType] || 'Please complete all required information';
   }, [template, taskType]);
   
-  // Auto-navigate to review section for ready_for_submission tasks
+  // Auto-navigate to review section for ready_for_submission tasks - ONLY ON INITIAL LOAD
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
   useEffect(() => {
     // Don't run this effect until allSections is populated
-    if (!allSections.length) return;
+    if (!allSections.length || initialLoadComplete) return;
     
     if (
       taskStatus === 'ready_for_submission' && 
@@ -406,13 +408,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       overallProgress === 100
     ) {
       // If task is ready for submission, form is complete, and we're not on the review page,
-      // automatically navigate to the review page
-      console.log('[UniversalForm] Task is ready for submission, navigating to review section');
+      // automatically navigate to the review page ONLY ON INITIAL LOAD
+      console.log('[UniversalForm] Task is ready for submission, navigating to review section (initial load)');
+      
+      // Set a slight delay to ensure the form is fully rendered
       setTimeout(() => {
         setActiveSection(allSections.length - 1);
+        setInitialLoadComplete(true); // Mark initial load as complete to prevent future auto-navigation
       }, 300);
+    } else {
+      // If we don't need to auto-navigate, still mark initial load as complete
+      setInitialLoadComplete(true);
     }
-  }, [taskStatus, allSections, activeSection, overallProgress, setActiveSection]);
+  }, [taskStatus, allSections, activeSection, overallProgress, setActiveSection, initialLoadComplete]);
 
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
@@ -851,7 +859,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     {activeSection === allSections.length - 2 && overallProgress === 100 && (
                       <Button 
                         type="button"
-                        variant="outline"
+                        variant="default" // Changed to primary button instead of outline
                         className="flex items-center gap-1"
                         onClick={() => {
                           setActiveSection(allSections.length - 1); // Navigate to Review & Submit
