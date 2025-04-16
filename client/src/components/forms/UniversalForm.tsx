@@ -722,33 +722,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           {isSubmitted ? (
             <div className="space-y-6">
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 mb-6">
-                <div className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-blue-900 text-base mb-1">
-                      This {taskType === 'kyb' || taskType === 'company_kyb' ? 'KYB Form' : 'Form'} has been successfully submitted
-                    </h4>
-                    <div className="flex flex-wrap gap-x-8 gap-y-2 mt-3 text-sm text-blue-700">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span>Submitted: {submissionDate || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <ClipboardCheck className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span>Status: {taskStatus || 'Submitted'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Building2 className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span>Company: {displayCompanyName || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <UserCircle className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span>Submitted by: {user?.name || user?.email || 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span>Total Questions: {fields.filter(f => f.section !== 'review-section').length}</span>
-                      </div>
+                <div>
+                  <h4 className="font-medium text-blue-900 text-base mb-3">
+                    Submission Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm text-blue-700">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span>Submitted: {submissionDate || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <ClipboardCheck className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span>Status: {taskStatus || 'Submitted'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Building2 className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span>Company: {displayCompanyName || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <UserCircle className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span>Submitted by: {user?.name || user?.email || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span>Total Questions: {fields.filter(f => f.section !== 'review-section').length}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <ClipboardCheck className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                      <span>Form Type: {formTitle || taskType}</span>
                     </div>
                   </div>
                 </div>
@@ -799,7 +800,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 <div className="flex items-start pl-7 mt-2">
                                   {fieldValue && fieldValue !== '-' ? (
                                     <div className="flex items-start text-gray-700">
-                                      <CheckCircle className="h-4 w-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
+                                      <Check className="h-4 w-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
                                       <span>{displayValue}</span>
                                     </div>
                                   ) : (
@@ -927,7 +928,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                         <div className="flex justify-between w-full items-center">
                                           <div className="flex items-center">
                                             {isComplete && (
-                                              <CheckCircle className="h-5 w-5 text-emerald-500 mr-2" />
+                                              <Check className="h-5 w-5 text-emerald-500 mr-2" />
                                             )}
                                             <h4 className="font-medium text-lg text-left">
                                               Section {sectionIndex + 1}: {reviewSection.title}
