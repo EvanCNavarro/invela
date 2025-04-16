@@ -30,6 +30,7 @@ import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilder
 import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilderPage";
 import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
+import TestFormUpdate from "./test-form-update";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -265,6 +266,11 @@ function Router() {
         {/* Diagnostic Page - For Developers */}
         <Route path="/diagnostic">
           <DiagnosticPage />
+        </Route>
+        
+        {/* Form Update Test Page - For Debugging */}
+        <Route path="/test-form-update">
+          <TestFormUpdate />
         </Route>
 
         <Route component={NotFound} />
