@@ -648,13 +648,35 @@ export class KybFormService implements FormServiceInterface {
           console.log('[KybService] Empty response from server when saving progress (this may be normal)');
           responseData = { success: true };
         } else {
-          responseData = JSON.parse(responseText);
-          console.log(`[KybService] Successfully saved progress for task ${taskId}`);
+          try {
+            responseData = JSON.parse(responseText);
+            console.log(`[KybService] Successfully saved progress for task ${taskId}`);
+          } catch (jsonError) {
+            // If the response isn't valid JSON but status was OK, assume success
+            if (response.status >= 200 && response.status < 300) {
+              console.warn('[KybService] Received non-JSON successful response');
+              responseData = { success: true };
+            } else {
+              throw jsonError;
+            }
+          }
         }
       } catch (parseError) {
         console.error('[KybService] Error parsing save response:', parseError);
-        console.error('[KybService] Raw response:', responseText.substring(0, 200));
-        responseData = { success: true }; // Assume success if we received a 200 OK
+        // Only show start of response to avoid flooding console
+        console.error('[KybService] Raw response:', responseText && responseText.length > 200 
+          ? responseText.substring(0, 200) + '...' 
+          : responseText || '(empty response)');
+        
+        // Still assume success if we received a 2xx OK status
+        if (response.status >= 200 && response.status < 300) {
+          responseData = { success: true }; 
+        } else {
+          responseData = { 
+            success: false,
+            error: `Error processing server response: ${response.status}` 
+          };
+        }
       }
       
       return responseData;
