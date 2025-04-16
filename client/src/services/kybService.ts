@@ -518,6 +518,13 @@ export class KybFormService implements FormServiceInterface {
                 if (String(savedValue) !== newValueStr) {
                   console.error(`[FORM DEBUG] ${updateTimestamp}: ⚠️ VALUE MISMATCH in server response!`);
                   console.error(`[FORM DEBUG] ${updateTimestamp}: Expected "${newValueStr}", got "${savedValue}"`);
+                  
+                  // CRITICAL FIX: Force local value to match current client value
+                  // This ensures client changes take precedence over inconsistent server values
+                  if (result.savedData.formData) {
+                    console.log(`[FORM DEBUG] ${updateTimestamp}: Correcting server response data to match client value`);
+                    result.savedData.formData[fieldKey] = normalizedValue;
+                  }
                 }
               }
             } else {
@@ -679,15 +686,23 @@ export class KybFormService implements FormServiceInterface {
       
       // If this is an outdated operation and we have a more recent value, keep the current value
       if (isOutdatedOperation && key in this.latestFormDataSnapshot) {
-        // Check if server value differs from the value in our latest snapshot
-        if (String(latestValue) !== String(serverValue)) {
+        // Check if server value differs from either the current value or latest snapshot
+        const serverValueStr = String(serverValue);
+        const currentValueStr = String(currentValue);
+        const latestValueStr = String(latestValue);
+        
+        // ENHANCED CONFLICT DETECTION: Check both current and latest snapshot values
+        const serverDiffersFromLatest = latestValueStr !== serverValueStr;
+        const serverDiffersFromCurrent = currentValueStr !== serverValueStr;
+        
+        if (serverDiffersFromLatest || serverDiffersFromCurrent) {
           console.log(`[FORM DEBUG] VALUE CONFLICT for field "${key}": 
-            Server has "${serverValue}", 
-            Current has "${currentValue}", 
-            Latest snapshot has "${latestValue}" 
-            - KEEPING LATEST`);
+            Server has "${serverValue}" (${typeof serverValue}), 
+            Current has "${currentValue}" (${typeof currentValue}), 
+            Latest snapshot has "${latestValue}" (${typeof latestValue})
+            - KEEPING CLIENT VALUE`);
           
-          // Keep the current value as it is more up-to-date
+          // Always prefer the current client value when there's any conflict
           mergedData[key] = currentValue;
         } else {
           // No conflict, use server value
@@ -813,7 +828,24 @@ export class KybFormService implements FormServiceInterface {
         if (result && result.success) {
           // Only update lastSavedData if this was the most recent operation
           if (operationId === this.saveOperationCounter) {
+            // CRITICAL FIX: Store the stringified version of form data
+            // This ensures that comparisons work correctly when checking for updates
             this.lastSavedData = currentDataString;
+            
+            // Extra verification - make sure the server data matches our expected values
+            if (result.savedData && result.savedData.formData) {
+              // Check for any mismatches between what we sent and what was saved
+              const differences = this.compareFormData(this.latestFormDataSnapshot, result.savedData.formData);
+              if (differences.length > 0) {
+                console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ⚠️ DETECTED ${differences.length} VALUE MISMATCHES from server`);
+                
+                // Log the first few differences for debugging
+                differences.slice(0, 3).forEach(diff => {
+                  console.log(`[FORM DEBUG] ${saveTimestamp}: Field "${diff.key}": sent "${diff.currentValue}", got "${diff.serverValue}"`);
+                });
+              }
+            }
+            
             console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ✅ API call successful - updated lastSavedData reference`);
             console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Successfully saved progress (${progress}%) with ${Object.keys(this.latestFormDataSnapshot).length} fields`);
           } else {
