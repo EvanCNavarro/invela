@@ -943,7 +943,10 @@ export class KybFormService implements FormServiceInterface {
             // If the server returned savedData with formData, update our local form data
             if (responseData.savedData && responseData.savedData.formData) {
               console.log('[KybService] Updating local form data with server response data');
-              this.updateLocalFormDataFromServer(responseData.savedData.formData);
+              // CRITICAL FIX: Pass current operation ID to prevent race conditions
+              // This allows the update function to handle out-of-order responses
+              const currentOperationId = this.saveOperationCounter;
+              this.updateLocalFormDataFromServer(responseData.savedData.formData, currentOperationId);
             }
           } catch (jsonError) {
             // If the response isn't valid JSON but status was OK, assume success
@@ -1184,7 +1187,9 @@ export class KybFormService implements FormServiceInterface {
       
       // Use our new method for consistent handling of form data updates
       console.log(`[FORM DEBUG] Updating local form data from server data`);
-      this.updateLocalFormDataFromServer(formData);
+      // Reset operation counter for initial load to ensure we use server data
+      const initialLoadOperationId = 0;
+      this.updateLocalFormDataFromServer(formData, initialLoadOperationId);
       
       // Verify our data was updated correctly
       const afterUpdate = this.formData;
