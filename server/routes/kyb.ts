@@ -297,23 +297,31 @@ router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData, fieldUpdates, status } = req.body;
 
-    // Enhanced logging to debug form saving issues
-    console.log('[KYB SAVE DEBUG] Progress update received:', {
-      timestamp: new Date().toISOString(),
-      taskId,
-      requestedProgress: progress,
-      requestedStatus: status || 'not provided',
-      formDataFields: Object.keys(formData || {}),
-      formDataValues: formData ? JSON.stringify(formData).substring(0, 200) + '...' : 'none',
-      fieldUpdates: fieldUpdates ? Object.keys(fieldUpdates) : 'none',
-      requestMethod: req.method,
-      contentType: req.headers['content-type'],
-      contentLength: req.headers['content-length'],
-      userAgent: req.headers['user-agent']
-    });
+    // Even more detailed logging to debug form saving issues
+    console.log('===============================================');
+    console.log(`[SERVER DEBUG] KYB PROGRESS SAVE REQUEST RECEIVED at ${new Date().toISOString()}`);
+    console.log('===============================================');
+    console.log(`Task ID: ${taskId}`);
+    console.log(`Progress: ${progress}`);
+    console.log(`Status: ${status || 'not provided'}`);
+    console.log(`Field count: ${formData ? Object.keys(formData).length : 0}`);
+    
+    // Log a sampling of field values for verification
+    if (formData) {
+      console.log('Sample form data values:');
+      Object.entries(formData).slice(0, 5).forEach(([key, value]) => {
+        console.log(`- ${key}: "${value}" (${typeof value})`);
+      });
+    }
+    
+    console.log('Request details:');
+    console.log(`- Method: ${req.method}`);
+    console.log(`- Content-Type: ${req.headers['content-type']}`);
+    console.log(`- Content-Length: ${req.headers['content-length']}`);
+    console.log('===============================================');
 
     if (!taskId) {
-      console.warn('[KYB SAVE DEBUG] Missing task ID in request');
+      console.warn('[SERVER DEBUG] ERROR: Missing task ID in request');
       return res.status(400).json({
         error: 'Task ID is required',
         code: 'MISSING_TASK_ID'
@@ -340,66 +348,99 @@ router.post('/api/kyb/progress', async (req, res) => {
     // Update KYB responses for each field
     const timestamp = new Date();
     const processedFields = new Set();
+    
+    console.log('===============================================');
+    console.log(`[SERVER DEBUG] PROCESSING FORM DATA FIELDS AT ${timestamp.toISOString()}`);
+    console.log(`[SERVER DEBUG] Task ID: ${taskId}, Field count: ${Object.keys(formData).length}`);
+    console.log('===============================================');
 
     for (const [fieldKey, value] of Object.entries(formData)) {
       const fieldId = fieldMap.get(fieldKey);
-      if (!fieldId) continue;
+      
+      if (!fieldId) {
+        console.error(`[SERVER DEBUG] ERROR: Field not found in database schema: "${fieldKey}"`);
+        continue;
+      }
 
       processedFields.add(fieldKey);
+      
       // Important change: Always store empty string values directly in the database
       // Never convert empty strings to null - this prevents the form from handling them correctly
+      const originalValue = value;
       const responseValue = value === null ? '' : String(value);
       const status = responseValue === '' ? 'EMPTY' : 'COMPLETE';
+      
+      console.log(`[SERVER DEBUG] Processing field: "${fieldKey}" (ID: ${fieldId})`);
+      console.log(`[SERVER DEBUG] Original value: ${originalValue === '' ? '(empty string)' : originalValue === null ? '(null)' : originalValue}`);
+      console.log(`[SERVER DEBUG] Normalized value: "${responseValue}" (${typeof responseValue})`);
+      console.log(`[SERVER DEBUG] Field status: ${status}`);
 
-      // Check if response exists
-      const [existingResponse] = await db.select()
-        .from(kybResponses)
-        .where(
-          and(
-            eq(kybResponses.task_id, taskId),
-            eq(kybResponses.field_id, fieldId)
-          )
-        );
+      try {
+        // Check if response exists
+        const [existingResponse] = await db.select()
+          .from(kybResponses)
+          .where(
+            and(
+              eq(kybResponses.task_id, taskId),
+              eq(kybResponses.field_id, fieldId)
+            )
+          );
+          
+        console.log(`[SERVER DEBUG] Existing response found: ${existingResponse ? 'YES' : 'NO'}`);
 
-      if (existingResponse) {
-        // Update existing response
-        await db.update(kybResponses)
-          .set({
-            response_value: responseValue,
-            status,
-            version: existingResponse.version + 1,
-            updated_at: timestamp
-          })
-          .where(eq(kybResponses.id, existingResponse.id));
+        if (existingResponse) {
+          try {
+            // Update existing response
+            console.log(`[SERVER DEBUG] UPDATING field "${fieldKey}" in database`);
+            console.log(`[SERVER DEBUG] - Old value: "${existingResponse.response_value}" (${typeof existingResponse.response_value})`);
+            console.log(`[SERVER DEBUG] - New value: "${responseValue}" (${typeof responseValue})`);
+            console.log(`[SERVER DEBUG] - Old status: ${existingResponse.status}, New status: ${status}`);
+            
+            await db.update(kybResponses)
+              .set({
+                response_value: responseValue,
+                status,
+                version: existingResponse.version + 1,
+                updated_at: timestamp
+              })
+              .where(eq(kybResponses.id, existingResponse.id));
 
-        console.log('[KYB API Debug] Updated field response:', {
-          fieldKey,
-          oldValue: existingResponse.response_value,
-          newValue: responseValue,
-          oldStatus: existingResponse.status,
-          newStatus: status,
-          timestamp: timestamp.toISOString()
-        });
-      } else {
-        // Create new response
-        await db.insert(kybResponses)
-          .values({
-            task_id: taskId,
-            field_id: fieldId,
-            response_value: responseValue,
-            status,
-            version: 1,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
+            console.log(`[SERVER DEBUG] ✅ UPDATE SUCCESSFUL for field "${fieldKey}" (ID: ${existingResponse.id})`);
+          } catch (error) {
+            console.error(`[SERVER DEBUG] ❌ DATABASE ERROR updating response for field "${fieldKey}":`);
+            console.error(error);
+          }
+        } else {
+          try {
+            // Create new response
+            console.log(`[SERVER DEBUG] INSERTING new response for field "${fieldKey}"`);
+            console.log(`[SERVER DEBUG] - Value: "${responseValue}" (${typeof responseValue})`);
+            console.log(`[SERVER DEBUG] - Status: ${status}`);
+            
+            const result = await db.insert(kybResponses)
+              .values({
+                task_id: taskId,
+                field_id: fieldId,
+                response_value: responseValue,
+                status,
+                version: 1,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
 
-        console.log('[KYB API Debug] Created new field response:', {
-          fieldKey,
-          value: responseValue,
-          status,
-          timestamp: timestamp.toISOString()
-        });
+            console.log(`[SERVER DEBUG] ✅ INSERT SUCCESSFUL for field "${fieldKey}"`);
+          } catch (error) {
+            console.error(`[SERVER DEBUG] ❌ DATABASE ERROR inserting response for field "${fieldKey}":`);
+            console.error(error);
+          }
+        }
+      } catch (error) {
+        console.error(`[SERVER DEBUG] ❌ ERROR processing field "${fieldKey}":`);
+        console.error(error);
       }
+      
+      console.log(`[SERVER DEBUG] --- Finished processing field "${fieldKey}" ---`);
+      console.log('');
     }
 
     // Handle fields that were in the database but not in the current formData
