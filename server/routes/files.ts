@@ -10,6 +10,18 @@ import { createDocumentChunks, processChunk } from '../services/documentChunking
 import { broadcastDocumentCountUpdate } from '../services/websocket';
 import { aggregateAnswers } from '../services/answerAggregation';
 
+// Define interfaces for type safety
+interface Field {
+  field_key: string;
+  question: string;
+  [key: string]: any; // For any additional properties
+}
+
+interface ProcessingField {
+  field_key: string;
+  question: string;
+}
+
 // Create router instance first
 const router = Router();
 
@@ -23,7 +35,7 @@ if (!fs.existsSync(uploadDir)) {
 async function processDocument(
   fileId: number,
   chunks: any[],
-  fields: any[],
+  fields: Field[],
   metadata: any
 ) {
   let allAnswers: any[] = [];
@@ -383,7 +395,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
     }
 
     // Validate field structure
-    const invalidFields = fields.filter(field => 
+    const invalidFields = fields.filter((field: Field) => 
       !field.field_key || 
       !field.question ||
       typeof field.field_key !== 'string' ||
@@ -403,7 +415,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
     console.log('[Document Processing] Processing request:', {
       fileId,
-      fieldKeys: fields.map(f => f.field_key),
+      fieldKeys: fields.map((f: Field) => f.field_key),
       timestamp: new Date().toISOString()
     });
 
@@ -421,7 +433,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
     // Initialize metadata with field information
     const initialMetadata = {
       status: 'processing',
-      fields: fields.map(f => ({
+      fields: fields.map((f: Field) => ({
         field_key: f.field_key,
         question: f.question
       })),
@@ -449,7 +461,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
     res.json({
       status: 'processing',
       totalChunks: chunks.length,
-      fields: fields.map(f => f.field_key)
+      fields: fields.map((f: Field) => f.field_key)
     });
 
     // Start background processing
