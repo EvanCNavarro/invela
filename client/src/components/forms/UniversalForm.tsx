@@ -480,6 +480,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Handle form submission
   const handleSubmit = useCallback(async (data: FormData) => {
+    // Create a variable to store the toast id, accessible in both try/catch blocks
+    let submittingToastId: { id: string; dismiss: () => void; update: (props: any) => void } | null = null;
+    
     try {
       // Verify form is complete before submitting
       if (overallProgress < 100) {
@@ -490,6 +493,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         });
         return;
       }
+      
+      // Show immediate toast notification to indicate form is being processed
+      submittingToastId = toast({
+        title: "Submitting Form...",
+        description: "Please wait while we process your submission.",
+        variant: "default",
+      });
       
       logger.info('Form submitted');
       
@@ -549,6 +559,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         taskStatus: 'completed'
       });
       
+      // Dismiss the submitting toast
+      submittingToastId.dismiss();
+      
+      // Show success toast notification
+      toast({
+        title: "Form Submitted Successfully",
+        description: "Your form has been submitted successfully.",
+        variant: "success",
+      });
+      
       // Show success modal
       setShowSuccessModal(true);
       
@@ -558,6 +578,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     } catch (error) {
       logger.error('Form submission error:', error);
+      
+      // Dismiss the submitting toast if it exists
+      if (submittingToastId) {
+        submittingToastId.dismiss();
+      }
+      
+      // Show error toast
       toast({
         title: 'Submission Failed',
         description: error instanceof Error ? error.message : 'An unknown error occurred.',
