@@ -292,7 +292,9 @@ export function useFormStatus({
                               stringValue.trim() !== '';
             }
             
-            logger.debug(`- Field "${field.key}" (${field.id}): "${stringValue}" (${valueType}) - ${isFieldFilled ? '✅ FILLED' : '❌ EMPTY'}`);
+            // Safe access to field ID (which might not exist on all FormField objects)
+            const fieldId = 'id' in field ? field.id : '(no id)';
+            logger.debug(`- Field "${field.key}" (${fieldId}): "${stringValue}" (${valueType}) - ${isFieldFilled ? '✅ FILLED' : '❌ EMPTY'}`);
           });
         }
       }
