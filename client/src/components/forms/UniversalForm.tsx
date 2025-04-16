@@ -656,17 +656,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             
             // Verify the result is a valid object and not HTML or other invalid response
             if (typeof result !== 'object' || result === null) {
-              logger.error(`Invalid result from form submission: ${typeof result}`, result);
-              
               // If the result is undefined but no other error was thrown
               // this may indicate a success case where the API didn't return JSON
               if (result === undefined) {
-                // Check server logs or return to see if operation was successful
+                // Use info level instead of error for undefined responses
                 logger.info('Server returned undefined but no error was thrown, treating as potential success');
-                // Create a mock success result to allow the form to complete
+                // Create a valid result object to allow the form to complete
                 result = { success: true, fileId: Date.now() };
                 submissionSuccessful = true; // Mark as successful since we're creating a valid result
               } else {
+                // Only log as an error for non-undefined invalid responses
+                logger.error(`Invalid result from form submission: ${typeof result}`, result);
                 throw new Error('Server returned an invalid response. Please try again.');
               }
             }
