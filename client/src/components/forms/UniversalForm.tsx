@@ -37,7 +37,11 @@ import {
   FileSpreadsheet,
   FileText,
   CheckCircle,
-  CheckCircle2
+  CheckCircle2,
+  Calendar,
+  ClipboardCheck,
+  Building2,
+  UserCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -715,85 +719,95 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           {/* For submitted forms, show a read-only review layout */}
           {isSubmitted ? (
             <div className="space-y-6">
-              <div className="bg-green-50 border border-green-100 rounded-lg p-4 mb-6">
-                <div className="flex items-center">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="font-medium text-green-800">
-                    This form has been successfully submitted and marked as complete.
-                  </span>
-                </div>
-                {submissionDate && (
-                  <p className="ml-7 text-sm text-green-600 mt-1">
-                    Submitted on {submissionDate}
-                  </p>
-                )}
-              </div>
-              
-              {allSections.filter(section => section.id !== 'review-section').map((section, sectionIndex) => {
-                const sectionFields = fields.filter(field => field.section === section.id);
-                
-                if (sectionFields.length === 0) return null;
-                
-                return (
-                  <div key={section.id} className="mb-8">
-                    <div className="flex items-center mb-3 pb-2 border-b">
-                      <div className="bg-green-50 text-green-600 rounded-full h-7 w-7 flex items-center justify-center mr-2">
-                        <span className="font-medium">{sectionIndex + 1}</span>
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 mb-6">
+                <div className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600 mr-3 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-blue-900 text-base mb-1">
+                      This {taskType === 'kyb' || taskType === 'company_kyb' ? 'KYB Form' : 'Form'} has been successfully submitted
+                    </h4>
+                    <div className="flex flex-wrap gap-x-8 gap-y-2 mt-3 text-sm text-blue-700">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span>Submitted: {submissionDate || 'N/A'}</span>
                       </div>
-                      <h3 className="text-lg font-semibold">{section.title}</h3>
-                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-green-50 text-green-600 border border-green-200">
-                        Completed
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-4 mt-4">
-                      {sectionFields.map((field, fieldIndex) => {
-                        // Use field.key instead of field.field_key
-                        const fieldValue = formData[field.key];
-                        const displayValue = fieldValue ? String(fieldValue) : '-';
-                        
-                        return (
-                          <div key={field.key} className="bg-white border border-gray-100 rounded-lg p-4 shadow-sm">
-                            <div className="flex">
-                              <div className="font-medium text-sm text-gray-500 mr-2">{fieldIndex + 1}/{sectionFields.length}</div>
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-800 mb-1">{field.label}</h4>
-                                <p className="text-gray-600 mb-3">{field.question || field.label}</p>
-                                <div className="flex items-center bg-gray-50 p-3 rounded border border-gray-200">
-                                  <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                                  <span className="font-medium">{displayValue}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <div className="flex items-center">
+                        <ClipboardCheck className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span>Status: Complete</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Building2 className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span>Company: {displayCompanyName || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <UserCircle className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span>Submitted by: {user?.name || user?.email || 'N/A'}</span>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-              
-              <div className="flex justify-between items-center pt-4 mt-8 border-t">
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={handleBackClick}
-                  className="flex items-center"
-                >
-                  <ArrowLeft className="mr-1 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="flex items-center"
-                >
-                  <ArrowUp className="mr-1 h-4 w-4" />
-                  Back to Top
-                </Button>
+                </div>
               </div>
+              
+              <Accordion type="multiple" defaultValue={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)} className="w-full">
+                {allSections.filter(section => section.id !== 'review-section').map((section, sectionIndex) => {
+                  const sectionFields = fields.filter(field => field.section === section.id);
+                  
+                  if (sectionFields.length === 0) return null;
+                  
+                  return (
+                    <AccordionItem 
+                      key={`section-${sectionIndex}`} 
+                      value={`section-${sectionIndex}`}
+                      className="mb-4 border border-gray-200 rounded-lg overflow-hidden"
+                    >
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline bg-gray-50 hover:bg-gray-100">
+                        <div className="flex items-center">
+                          <div className="bg-emerald-50 text-emerald-600 rounded-full h-7 w-7 flex items-center justify-center mr-3">
+                            <span className="font-medium">{sectionIndex + 1}</span>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-800">{section.title}</h3>
+                          <span className="ml-3 px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            Completed
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-5 py-3 bg-white">
+                        <div className="space-y-5 mt-1">
+                          {sectionFields.map((field, fieldIndex) => {
+                            // Calculate continuous question number across all sections
+                            const previousSectionsFieldCount = allSections
+                              .slice(0, sectionIndex)
+                              .filter(s => s.id !== 'review-section')
+                              .reduce((count, prevSection) => 
+                                count + fields.filter(f => f.section === prevSection.id).length, 0);
+                            const questionNumber = previousSectionsFieldCount + fieldIndex + 1;
+                            const totalQuestions = fields.filter(f => f.section !== 'review-section').length;
+                            
+                            // Get field value
+                            const fieldValue = formData[field.key];
+                            const displayValue = fieldValue ? String(fieldValue) : '-';
+                            
+                            return (
+                              <div key={field.key} className="border-b border-gray-100 pb-5 last:border-0 last:pb-2">
+                                <div className="mb-1.5">
+                                  <span className="text-sm font-medium text-emerald-600 mr-1.5">{questionNumber}/{totalQuestions}.</span>
+                                  <span className="font-medium text-gray-800">{field.question || field.label}</span>
+                                </div>
+                                <div className="flex items-center pl-7 mt-2">
+                                  <div className="text-gray-600">
+                                    <span className="font-medium mr-1.5">Answer:</span>
+                                    {displayValue}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
             </div>
           ) : (
             /* For non-submitted forms, show the regular form editor */
