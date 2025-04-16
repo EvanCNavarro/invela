@@ -489,12 +489,18 @@ export class KybFormService implements FormServiceInterface {
     console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
     console.log(`[DEBUG KybService] Form data now contains key ${fieldKey} with value:`, this.formData[fieldKey]);
     
-    // IMPORTANT: Immediately trigger a save if a field is being cleared
-    // or if we have a taskId provided with the update
-    if ((isClearing || taskId) && taskId) {
-      console.log(`[DEBUG KybService] Immediately saving after ${isClearing ? 'field clearing' : 'field update'}`);
+    // IMPORTANT: Immediately trigger a save for all field updates when taskId is provided
+    if (taskId) {
+      console.log(`[DEBUG KybService] Immediately saving after field update (${isClearing ? 'clearing field' : 'updating value'})`);
       
-      // We need to trigger a non-debounced save here to ensure the cleared field gets saved
+      // We need to ensure all field updates are saved to the database
+      // Force immediate save by clearing any existing timer
+      if (this.saveProgressTimer) {
+        clearTimeout(this.saveProgressTimer);
+        this.saveProgressTimer = null;
+      }
+      
+      // Call saveProgress directly for immediate save
       this.saveProgress(taskId);
     }
   }
@@ -606,42 +612,42 @@ export class KybFormService implements FormServiceInterface {
       }
     }
     
-    // Force a save if lastSavedData is empty (first save) or if the data has changed
-    if (!this.lastSavedData || currentDataString !== this.lastSavedData) {
-      // Clear any existing timer
-      if (this.saveProgressTimer) {
-        clearTimeout(this.saveProgressTimer);
-        this.saveProgressTimer = null;
-      }
-      
-      // Set a new timer for debouncing (800ms)
-      this.saveProgressTimer = setTimeout(async () => {
-        try {
-          console.log(`[KybService] Saving ${Object.keys(this.formData).length} fields to database...`);
-          const progress = this.calculateProgress();
-          
-          // Calculate appropriate status based on progress
-          const status = this.calculateTaskStatus();
-          
-          // Save to server first, only update lastSavedData if successful
-          const result = await this.saveKybProgress(taskId, progress, this.formData, status);
-          
-          // Only update lastSavedData if the save was successful
-          if (result && result.success) {
-            // Update last saved data reference AFTER successful save
-            this.lastSavedData = currentDataString;
-            console.log(`[KybService] Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
-          } else {
-            console.error('[KybService] Failed to save progress:', result?.error || 'Unknown error');
-          }
-        } catch (error) {
-          console.error('[KybService] Error saving progress:', error);
-          // Silent failure to allow user to continue working
-        }
-      }, 800);
-    } else {
-      console.log('[KybService] Skipping save - data unchanged');
+    // CRITICAL FIX: Always save form data when saveProgress is called
+    // This ensures all form changes are persisted
+    
+    // Clear any existing timer
+    if (this.saveProgressTimer) {
+      clearTimeout(this.saveProgressTimer);
+      this.saveProgressTimer = null;
     }
+    
+    // Set a new timer for debouncing (reduced to 400ms)
+    this.saveProgressTimer = setTimeout(async () => {
+      try {
+        console.log(`[KybService] Saving ${Object.keys(this.formData).length} fields to database...`);
+        const progress = this.calculateProgress();
+        
+        // Calculate appropriate status based on progress
+        const status = this.calculateTaskStatus();
+        
+        console.log(`[KybService] Calculated status for save: ${status} with progress ${progress}%`);
+        
+        // Save to server first, only update lastSavedData if successful
+        const result = await this.saveKybProgress(taskId, progress, this.formData, status);
+        
+        // Only update lastSavedData if the save was successful
+        if (result && result.success) {
+          // Update last saved data reference AFTER successful save
+          this.lastSavedData = currentDataString;
+          console.log(`[KybService] Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
+        } else {
+          console.error('[KybService] Failed to save progress:', result?.error || 'Unknown error');
+        }
+      } catch (error) {
+        console.error('[KybService] Error saving progress:', error);
+        // Silent failure to allow user to continue working
+      }
+    }, 400); // Reduced debounce time for more responsive saving
   }
 
   /**
