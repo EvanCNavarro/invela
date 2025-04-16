@@ -463,15 +463,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [taskStatus, allSections, activeSection, overallProgress, setActiveSection, initialLoadComplete]);
 
-  // Handle field change events
+  // Handle field change events with improved status synchronization
   const handleFieldChange = useCallback((name: string, value: any) => {
     logger.debug(`Field change: ${name} = ${value}`);
+    
+    // First, update the field data
     updateField(name, value);
     
-    // Refresh status after a short delay to allow form data to update
+    // Refresh status immediately after field update
+    refreshStatus();
+    
+    // Additionally, force a second refresh after a longer delay to ensure
+    // all side effects from the field update have completed
+    // This helps especially with rapid data entry
     setTimeout(() => {
+      logger.debug(`Performing delayed refresh for field ${name}`);
       refreshStatus();
-    }, 100);
+      
+      // Force a third refresh as a failsafe if needed
+      // This ensures field status is properly synchronized even in complex form interactions
+      setTimeout(() => {
+        logger.debug(`Performing final failsafe refresh for field ${name}`);
+        refreshStatus();
+      }, 300);
+    }, 200);
   }, [updateField, refreshStatus]);
   
   // Handle download action for different formats

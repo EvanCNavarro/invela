@@ -187,7 +187,7 @@ export function useFormDataManager({
     }
   }, [formService, taskId]);
   
-  // Function to update a single field value
+  // Function to update a single field value with enhanced synchronization and validation
   const updateField = useCallback((name: string, value: any) => {
     if (!formService) {
       logger.warn('Cannot update field - form service is not available');
@@ -200,7 +200,9 @@ export function useFormDataManager({
     }
     
     try {
-      logger.info(`[SAVE DEBUG] Starting field update for ${name} with taskId ${taskId}`);
+      // Add timestamp to track update time
+      const updateTimestamp = Date.now();
+      logger.info(`[SAVE DEBUG] ${updateTimestamp}: Starting field update for ${name} with taskId ${taskId}`);
       
       // Get current form data for comparison
       const currentData = formService.getFormData();
@@ -212,17 +214,30 @@ export function useFormDataManager({
         (value === '' || value === null || value === undefined);
       
       if (isClearing) {
-        logger.info(`[SAVE DEBUG] Clearing field ${name}: "${prevValue}" → (empty)`);
+        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Clearing field ${name}: "${prevValue}" → (empty)`);
       } else {
-        logger.info(`[SAVE DEBUG] Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
+        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
-      // Normalize value consistently
-      const normalizedValue = (value === null || value === undefined) ? '' : value;
+      // Enhanced normalization for more consistent value handling
+      let normalizedValue: any;
+      if (value === null || value === undefined) {
+        normalizedValue = '';
+      } else if (typeof value === 'string') {
+        // Normalize string values - trim and handle special cases
+        normalizedValue = value.trim();
+        // Convert "null" and "undefined" strings to empty strings
+        if (normalizedValue === 'null' || normalizedValue === 'undefined') {
+          normalizedValue = '';
+        }
+      } else {
+        // Keep non-string values as-is (arrays, objects, booleans, etc.)
+        normalizedValue = value;
+      }
       
       // Always update in the form service, ensuring field clearing operations work
       // Pass taskId to enable immediate saving on critical operations
-      logger.info(`[SAVE DEBUG] Calling updateFormData with taskId: ${taskId}`);
+      logger.info(`[SAVE DEBUG] ${updateTimestamp}: Calling updateFormData with taskId: ${taskId}`);
       formService.updateFormData(name, normalizedValue, taskId);
       
       // Update in React Hook Form
@@ -244,13 +259,21 @@ export function useFormDataManager({
           onDataChange(updated);
         }
         
-        logger.info(`[SAVE DEBUG] Local state updated for field ${name}`);
+        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Local state updated for field ${name}`);
+        
+        // Add additional debug validation - ensure the value was actually set correctly
+        const setVerification = updated[name] === normalizedValue;
+        if (!setVerification) {
+          logger.error(`[SAVE DEBUG] ${updateTimestamp}: VALUE MISMATCH - State was not updated correctly for ${name}`);
+          logger.error(`[SAVE DEBUG] Expected: ${normalizedValue}, Actual: ${updated[name]}`);
+        }
+        
         return updated;
       });
       
       // Force always saving immediately for all field changes to ensure persistence
       if (taskId) {
-        logger.info(`[SAVE DEBUG] Initiating immediate save for field ${name} with taskId ${taskId}`);
+        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Initiating immediate save for field ${name} with taskId ${taskId}`);
         
         // Clear previous timer
         if (saveTimerRef.current) {
@@ -259,13 +282,40 @@ export function useFormDataManager({
         }
         
         // FORCE IMMEDIATE SAVE FOR ALL FIELDS - Don't debounce
-        logger.info('[SAVE DEBUG] Forcing immediate save without debounce');
+        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Forcing immediate save without debounce`);
         saveProgress()
           .then(result => {
-            logger.info(`[SAVE DEBUG] Immediate save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+            logger.info(`[SAVE DEBUG] ${updateTimestamp}: Immediate save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+            
+            // Verify data after save
+            const postSaveData = formService.getFormData();
+            const savedValue = postSaveData[name];
+            const savedValueMatch = savedValue === normalizedValue;
+            
+            if (!savedValueMatch) {
+              logger.error(`[SAVE DEBUG] ${updateTimestamp}: POST-SAVE VERIFICATION FAILED for field ${name}`);
+              logger.error(`[SAVE DEBUG] Expected: ${normalizedValue}, Saved: ${savedValue}`);
+              
+              // Attempt to fix the value by updating it again
+              logger.info(`[SAVE DEBUG] ${updateTimestamp}: Attempting to fix value by updating again`);
+              formService.updateFormData(name, normalizedValue, taskId);
+              
+              // Force a second save to ensure persistence
+              setTimeout(() => {
+                saveProgress()
+                  .then(fixResult => {
+                    logger.info(`[SAVE DEBUG] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
+                  })
+                  .catch(fixErr => {
+                    logger.error(`[SAVE DEBUG] ${updateTimestamp}: Fix save failed with error:`, fixErr);
+                  });
+              }, 100);
+            } else {
+              logger.info(`[SAVE DEBUG] ${updateTimestamp}: Post-save verification passed for field ${name}`);
+            }
           })
           .catch(err => {
-            logger.error('[SAVE DEBUG] Immediate save failed with error:', err);
+            logger.error(`[SAVE DEBUG] ${updateTimestamp}: Immediate save failed with error:`, err);
           });
       }
     } catch (error) {
