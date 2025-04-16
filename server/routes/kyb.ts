@@ -600,12 +600,38 @@ router.post('/api/kyb/progress', async (req, res) => {
       .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
       .where(eq(kybResponses.task_id, taskId));
 
+    console.log('===============================================');
+    console.log(`[SERVER DEBUG] PREPARING RESPONSE at ${new Date().toISOString()}`);
+    console.log(`[SERVER DEBUG] Found ${updatedResponses.length} fields in database after update`);
+    console.log('===============================================');
+
     const updatedFormData: Record<string, any> = {};
     for (const response of updatedResponses) {
       if (response.response_value !== null) {
         updatedFormData[response.field_key] = response.response_value;
       }
     }
+    
+    // CRITICAL DEBUG - Check for important fields for verification
+    const keysOfInterest = ['corporateRegistration', 'goodStanding', 'regulatoryActions', 'investigationsIncidents'];
+    keysOfInterest.forEach(key => {
+      console.log(`[SERVER DEBUG] Checking field ${key} in updated data: ${key in updatedFormData ? `"${updatedFormData[key]}"` : 'NOT PRESENT'}`);
+    });
+    
+    // Check for asdf values in updated form data
+    const asdfFields = Object.entries(updatedFormData)
+      .filter(([_, value]) => value === 'asdf')
+      .map(([key]) => key);
+      
+    if (asdfFields.length > 0) {
+      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${asdfFields.length} fields with value "asdf" in response:`);
+      console.log(`[SERVER DEBUG] ${asdfFields.join(', ')}`);
+    } else {
+      console.log('[SERVER DEBUG] No fields with value "asdf" found in response data');
+    }
+    
+    console.log(`[SERVER DEBUG] Sending response with ${Object.keys(updatedFormData).length} fields, status: ${newStatus}, progress: ${progress}%`);
+    console.log('===============================================');
 
     res.json({
       success: true,
@@ -1009,9 +1035,34 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       responseCount: responses.length,
       progress: task.progress,
       status: task.status,
-      formDataKeys: Object.keys(formData),
-      formData
+      formDataKeys: Object.keys(formData)
     });
+    
+    // CRITICAL DEBUG - Check for important fields for verification
+    console.log('===============================================');
+    console.log(`[SERVER DEBUG] PREPARING GET RESPONSE at ${new Date().toISOString()}`);
+    console.log(`[SERVER DEBUG] Task ID: ${taskId}, Found ${responses.length} fields in database`);
+    console.log('===============================================');
+    
+    const keysOfInterest = ['corporateRegistration', 'goodStanding', 'regulatoryActions', 'investigationsIncidents'];
+    keysOfInterest.forEach(key => {
+      console.log(`[SERVER DEBUG] Checking field ${key} in retrieved data: ${key in formData ? `"${formData[key]}"` : 'NOT PRESENT'}`);
+    });
+    
+    // Check for asdf values in form data
+    const asdfFields = Object.entries(formData)
+      .filter(([_, value]) => value === 'asdf')
+      .map(([key]) => key);
+      
+    if (asdfFields.length > 0) {
+      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${asdfFields.length} fields with value "asdf" in GET response:`);
+      console.log(`[SERVER DEBUG] ${asdfFields.join(', ')}`);
+    } else {
+      console.log('[SERVER DEBUG] No fields with value "asdf" found in GET response data');
+    }
+    
+    console.log(`[SERVER DEBUG] Sending GET response with ${Object.keys(formData).length} fields, status: ${task.status}, progress: ${task.progress}%`);
+    console.log('===============================================');
 
     // Return saved form data and progress with task status
     res.json({
