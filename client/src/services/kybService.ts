@@ -430,10 +430,13 @@ export class KybFormService implements FormServiceInterface {
    * This method now immediately saves data to the server, especially when clearing fields
    */
   updateFormData(fieldKey: string, value: any, taskId?: number): void {
-    // Log the update attempt for debugging
-    console.log(`[DEBUG KybService] Field update: ${fieldKey} = ${value !== undefined && value !== null ? 
-      (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
-    console.log(`[DEBUG KybService] Current form data before update has ${Object.keys(this.formData).length} fields`);
+    // Log the update attempt for debugging with more details
+    console.log(`[FIELD DEBUG] updateFormData called for field "${fieldKey}" with taskId: ${taskId || 'none'}`);
+    console.log(`[FIELD DEBUG] Value type: ${typeof value}, Value: ${
+      value !== undefined && value !== null ? 
+      (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'
+    }`);
+    console.log(`[FIELD DEBUG] Current form data before update has ${Object.keys(this.formData).length} fields`);
     
     // Store the old value for reference
     const oldValue = this.formData[fieldKey];
@@ -448,7 +451,7 @@ export class KybFormService implements FormServiceInterface {
                        (normalizedValue === '' || normalizedValue === null);
     
     if (isClearing) {
-      console.log(`[DEBUG KybService] Clearing field ${fieldKey} from "${oldValue}" to empty value`);
+      console.log(`[FIELD DEBUG] CLEARING field ${fieldKey} from "${oldValue}" to empty value`);
     }
     
     // More accurate change detection - convert to strings to ensure proper comparison
@@ -457,27 +460,34 @@ export class KybFormService implements FormServiceInterface {
     const newValueStr = normalizedValue !== undefined ? String(normalizedValue) : '';
     
     // Use string comparison to detect changes, but always update when clearing a field
-    if (oldValueStr === newValueStr && oldValue !== undefined && !isClearing) {
-      console.log(`[DEBUG KybService] Skipping update - value unchanged for field ${fieldKey}`);
+    const hasChanged = oldValueStr !== newValueStr || isClearing;
+    console.log(`[FIELD DEBUG] Value change detection: ${hasChanged ? 'CHANGED' : 'UNCHANGED'}`);
+    console.log(`[FIELD DEBUG] - Old value: "${oldValueStr}" (${typeof oldValue})`);
+    console.log(`[FIELD DEBUG] - New value: "${newValueStr}" (${typeof normalizedValue})`);
+    
+    if (!hasChanged) {
+      console.log(`[FIELD DEBUG] Skipping update - value unchanged for field ${fieldKey}`);
       return; // Value hasn't changed, no need to update
     }
     
     // Always update the value in the internal formData object
     this.formData[fieldKey] = normalizedValue;
     
-    // Improved debug logging with type info
-    console.log(`[DEBUG KybService] Updated field ${fieldKey} from "${oldValue || ''}" (${typeof oldValue}) to "${normalizedValue || ''}" (${typeof normalizedValue})`);
-    
     // Verify the update happened
-    console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
-    console.log(`[DEBUG KybService] Form data now contains key ${fieldKey} with value: ${this.formData[fieldKey]}`);
+    console.log(`[FIELD DEBUG] Updated formData object for field "${fieldKey}"`);
+    console.log(`[FIELD DEBUG] Form data after update has ${Object.keys(this.formData).length} fields`);
     
     // Update the field value in fields array
+    const fieldUpdated = this.fields.some(field => field.key === fieldKey);
     this.fields = this.fields.map(field => 
       field.key === fieldKey ? { ...field, value: normalizedValue } : field
     );
     
     // Update the field value in sections
+    const sectionUpdated = this.sections.some(section => 
+      section.fields.some(field => field.key === fieldKey)
+    );
+    
     this.sections = this.sections.map(section => ({
       ...section,
       fields: section.fields.map(field => 
@@ -485,23 +495,27 @@ export class KybFormService implements FormServiceInterface {
       )
     }));
     
-    // Log summary of update
-    console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
-    console.log(`[DEBUG KybService] Form data now contains key ${fieldKey} with value:`, this.formData[fieldKey]);
+    console.log(`[FIELD DEBUG] Updated field in fields array: ${fieldUpdated ? 'YES' : 'NO'}`);
+    console.log(`[FIELD DEBUG] Updated field in sections: ${sectionUpdated ? 'YES' : 'NO'}`);
     
-    // IMPORTANT: Immediately trigger a save for all field updates when taskId is provided
+    // CRITICAL - ALWAYS immediately trigger a save for all field updates when taskId is provided
     if (taskId) {
-      console.log(`[DEBUG KybService] Immediately saving after field update (${isClearing ? 'clearing field' : 'updating value'})`);
+      console.log(`[FIELD DEBUG] IMMEDIATE SAVE triggered for field "${fieldKey}" with taskId ${taskId}`);
+      console.log(`[FIELD DEBUG] Save reason: ${isClearing ? 'FIELD CLEARED' : 'FIELD UPDATED'}`);
       
       // We need to ensure all field updates are saved to the database
       // Force immediate save by clearing any existing timer
       if (this.saveProgressTimer) {
         clearTimeout(this.saveProgressTimer);
         this.saveProgressTimer = null;
+        console.log(`[FIELD DEBUG] Cleared existing save timer`);
       }
       
       // Call saveProgress directly for immediate save
+      console.log(`[FIELD DEBUG] Calling saveProgress(${taskId}) directly`);
       this.saveProgress(taskId);
+    } else {
+      console.log(`[FIELD DEBUG] WARNING: No taskId provided - changes will NOT be saved immediately`);
     }
   }
 
@@ -569,15 +583,23 @@ export class KybFormService implements FormServiceInterface {
    */
   async saveProgress(taskId?: number): Promise<void> {
     if (!taskId) {
-      console.error("Task ID is required to save progress");
+      console.error("[SAVE DEBUG] CRITICAL ERROR: Task ID is required to save progress");
       return;
     }
     
     // Get current form data JSON
     const currentDataString = JSON.stringify(this.formData);
     
-    // Debug logging to track data changes
-    console.log(`[DEBUG KybService] Current form data: ${Object.keys(this.formData).length} fields`);
+    // Enhanced debug logging to track data changes
+    console.log(`[SAVE DEBUG] Starting saveProgress for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
+    console.log(`[SAVE DEBUG] Current form data keys: ${Object.keys(this.formData).join(', ')}`);
+    
+    // Sample the first few fields to verify content
+    const sampleFields = Object.entries(this.formData).slice(0, 3);
+    console.log('[SAVE DEBUG] Sample form data values:');
+    sampleFields.forEach(([key, value]) => {
+      console.log(`[SAVE DEBUG] - ${key}: "${value}" (${typeof value})`);
+    });
     
     if (this.lastSavedData) {
       try {
@@ -595,21 +617,23 @@ export class KybFormService implements FormServiceInterface {
         
         // Log changes for debugging
         if (changedFields.length > 0) {
-          console.log(`[DEBUG KybService] Changed fields: ${changedFields.join(', ')}`);
+          console.log(`[SAVE DEBUG] Changes detected in ${changedFields.length} fields: ${changedFields.join(', ')}`);
           changedFields.forEach(field => {
-            console.log(`[DEBUG KybService] Field [${field}] changed from "${previousData[field] || ''}" to "${this.formData[field] || ''}"`);
+            console.log(`[SAVE DEBUG] Field [${field}] changed from "${previousData[field] || ''}" to "${this.formData[field] || ''}"`);
           });
         } else {
           // If no changes detected but JSON strings are different
           if (currentDataString !== this.lastSavedData) {
-            console.log('[DEBUG KybService] JSON strings differ but no field changes detected - forcing save');
+            console.log('[SAVE DEBUG] JSON strings differ but no field changes detected - forcing save anyway');
           } else {
-            console.log('[DEBUG KybService] No fields have changed values');
+            console.log('[SAVE DEBUG] No fields have changed values - forcing save anyway');
           }
         }
       } catch (err) {
-        console.error('[DEBUG KybService] Error comparing data changes:', err);
+        console.error('[SAVE DEBUG] Error comparing data changes:', err);
       }
+    } else {
+      console.log('[SAVE DEBUG] First save - no previous data for comparison');
     }
     
     // CRITICAL FIX: Always save form data when saveProgress is called

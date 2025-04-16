@@ -295,18 +295,25 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 // Save progress for KYB form
 router.post('/api/kyb/progress', async (req, res) => {
   try {
-    const { taskId, progress, formData, fieldUpdates } = req.body;
+    const { taskId, progress, formData, fieldUpdates, status } = req.body;
 
-    console.log('[KYB API Debug] Progress update initiated:', {
+    // Enhanced logging to debug form saving issues
+    console.log('[KYB SAVE DEBUG] Progress update received:', {
+      timestamp: new Date().toISOString(),
       taskId,
       requestedProgress: progress,
-      formDataKeys: Object.keys(formData || {}),
-      fieldUpdates: fieldUpdates ? Object.keys(fieldUpdates) : [],
-      timestamp: new Date().toISOString()
+      requestedStatus: status || 'not provided',
+      formDataFields: Object.keys(formData || {}),
+      formDataValues: formData ? JSON.stringify(formData).substring(0, 200) + '...' : 'none',
+      fieldUpdates: fieldUpdates ? Object.keys(fieldUpdates) : 'none',
+      requestMethod: req.method,
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length'],
+      userAgent: req.headers['user-agent']
     });
 
     if (!taskId) {
-      console.warn('[KYB API Debug] Missing task ID in request');
+      console.warn('[KYB SAVE DEBUG] Missing task ID in request');
       return res.status(400).json({
         error: 'Task ID is required',
         code: 'MISSING_TASK_ID'
