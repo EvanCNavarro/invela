@@ -781,9 +781,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 submissionToast.dismiss();
               }
               
-              // Only log success; don't show toast since we'll show the modal
+              // Show a success toast before showing the modal
+              toast({
+                title: "Success!",
+                description: `${formTitle} completed successfully`,
+                variant: "success",
+              });
+              
               logger.info('All post-submission actions completed successfully');
-              // No toast here - we'll display the success modal instead
             } catch (postSubmitError) {
               // If post-submission actions fail, show an error
               logger.error('Post-submission actions failed', postSubmitError);
