@@ -154,8 +154,52 @@ export function useFormStatus({
         } else {
           // For strings and primitives, check if they're not empty
           // Trim the value to handle spaces-only inputs
+          const stringValue = typeof value === 'string' ? value.trim() : String(value);
+          
+          // Check for common test data patterns
+          const lowerValue = stringValue.toLowerCase();
+          
+          // List of common test data values
+          const isExactTestValue = [
+            'asdf',
+            'test',
+            'testing',
+            'test123',
+            'abc',
+            'abcd',
+            'asdfasdf',
+            'placeholder',
+            'example',
+            'foo',
+            'bar',
+            'baz',
+            'lorem',
+            'ipsum',
+            'aaa',
+            'zzz',
+            'xxx'
+          ].includes(lowerValue);
+          
+          // Check for repetitive patterns - but only for values that aren't potentially real data
+          // This applies regex only if the string looks suspicious
+          const isRepetitivePattern = 
+            // Only apply these patterns for values longer than 2 chars (to avoid rejecting valid codes)
+            stringValue.length > 2 && 
+            // Only for alphabetic entries (to avoid rejecting valid numeric inputs)
+            /^[a-z]+$/i.test(lowerValue) && 
+            // Repetitive character patterns
+            (/^([a-z])\1{2,}$/i.test(lowerValue) || // catches 'aaa', 'zzzzz', etc
+             /^[a-z]{1,3}$/i.test(lowerValue)); // Only catches very short alphabetic strings
+          
+          const isTestData = isExactTestValue || isRepetitivePattern;
+          
           isFilled = value !== undefined && value !== null && 
-                   (typeof value === 'string' ? value.trim() !== '' : String(value) !== '');
+                    stringValue !== '' && !isTestData;
+          
+          // Log test data detection
+          if (isTestData) {
+            logger.warn(`Field ${field.key} contains test data "${value}" - not counting as filled`);
+          }
         }
         
         if (isFilled) {
