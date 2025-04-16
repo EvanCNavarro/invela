@@ -53,21 +53,28 @@ export function UniversalSuccessModal({
   // Play a single subtle confetti animation when modal opens
   useEffect(() => {
     if (open) {
-      // Import and use confetti dynamically
-      import('canvas-confetti').then(confetti => {
-        // Create a single subtle celebration effect
-        confetti.default({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4', '#ffffff'],
-          startVelocity: 30,
-          gravity: 1.2,
-          ticks: 50,
-          shapes: ['circle', 'square'],
-          scalar: 0.8
+      // Add a small delay to ensure modal is visible first
+      const animationTimeout = setTimeout(() => {
+        // Import and use confetti dynamically
+        import('canvas-confetti').then(confetti => {
+          // Create a single subtle celebration effect
+          confetti.default({
+            particleCount: 75,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4', '#ffffff'],
+            startVelocity: 25,
+            gravity: 1.2,
+            ticks: 50,
+            shapes: ['circle', 'square'],
+            scalar: 0.7,
+            zIndex: 1 // Set z-index to ensure confetti appears behind the modal
+          });
         });
-      });
+      }, 300); // Small delay to ensure modal has appeared
+
+      // Clean up timeout if modal is closed
+      return () => clearTimeout(animationTimeout);
     }
   }, [open]);
   
