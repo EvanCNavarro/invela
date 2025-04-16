@@ -521,7 +521,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (fileId) {
         completedActions.push({
           type: "file_generation",
-          description: `${taskType.toUpperCase()} Form file created`,
+          description: `${taskType.toUpperCase()} Form File Created`,
           data: { 
             details: "The form data has been saved as a document in your file vault."
           }
@@ -532,7 +532,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (taskType === 'kyb' || taskType === 'company_kyb') {
         completedActions.push({
           type: "file_vault_unlocked",
-          description: "File Vault unlocked",
+          description: "File Vault Unlocked",
           data: { 
             details: "You now have access to upload and manage documents in the File Vault." 
           }
@@ -542,7 +542,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Add next task unlocked action
       completedActions.push({
         type: "next_task",
-        description: "Next task unlocked",
+        description: "Next Task Unlocked",
         data: { 
           details: "You can now proceed to the next step in your onboarding process."
         }
