@@ -626,15 +626,10 @@ export class KybFormService implements FormServiceInterface {
   }
 
   /**
-   * Update local form data from server response
-   * This ensures we're always in sync with the database
+   * Simplified update logic for handling server data
+   * This ensures client data always takes precedence over server data
    */
-  /**
-   * Update local form data from server response
-   * This ensures we're always in sync with the database
-   * CRITICAL FIX: Added value verification to prevent outdated values from overwriting newer values
-   */
-  updateLocalFormDataFromServer(serverFormData: Record<string, any>, currentOperationId?: number): void {
+  updateLocalFormDataFromServer(serverFormData: Record<string, any>): void {
     if (!serverFormData || typeof serverFormData !== 'object') {
       console.warn('[FORM DEBUG] Invalid server form data received');
       return;
@@ -642,120 +637,84 @@ export class KybFormService implements FormServiceInterface {
     
     console.log(`[FORM DEBUG] Updating local form data with ${Object.keys(serverFormData).length} fields from server`);
     
-    // If this is an update from a specific operation, log that
-    if (currentOperationId) {
-      console.log(`[FORM DEBUG] Update from operation #${currentOperationId}, latest operation is #${this.saveOperationCounter}`);
-    }
-    
-    // Check if we have a snapshot from the current operation
-    const isOutdatedOperation = currentOperationId && currentOperationId < this.saveOperationCounter;
-    if (isOutdatedOperation) {
-      console.log(`[FORM DEBUG] ⚠️ WARNING: Received outdated server response (op #${currentOperationId}), current operation is #${this.saveOperationCounter}`);
-      console.log('[FORM DEBUG] Will verify each field value before applying server updates');
-    }
-    
-    // Normalize the data (convert nulls to empty strings)
-    const normalizedFormData = Object.fromEntries(
+    // Normalize server data (convert nulls to empty strings)
+    const normalizedServerData = Object.fromEntries(
       Object.entries(serverFormData).map(([key, value]) => [key, value === null ? '' : value])
     );
     
-    // Log specific fields of interest before update
-    const keysOfInterest = ['corporateRegistration', 'goodStanding', 'regulatoryActions', 'investigationsIncidents'];
-    const beforeUpdate = this.formData;
-    const beforeFields = keysOfInterest.map(key => {
-      return {
-        key,
-        value: beforeUpdate[key],
-        exists: key in beforeUpdate
-      };
-    });
+    // Get the current client data
+    const clientData = this.formData;
     
-    console.log(`[FORM DEBUG] Key fields before update:`);
-    beforeFields.forEach(field => {
-      console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
-    });
+    // Create result data - start with a copy of client data
+    const resultData = { ...clientData };
     
-    // Create a merged data set, preferring local values for outdated operations
-    const mergedData: Record<string, any> = {};
+    // For consistency tracking
+    const changedFields: string[] = [];
+    const keptClientFields: string[] = [];
     
-    // For each field, decide whether to use server value or current value
-    Object.keys({ ...this.formData, ...normalizedFormData }).forEach(key => {
-      const serverValue = normalizedFormData[key];
-      const currentValue = this.formData[key];
-      const latestValue = this.latestFormDataSnapshot[key];
+    // Apply server values, but only if they don't conflict with client changes
+    // This is the key to preserving user input during rapid typing
+    Object.keys(normalizedServerData).forEach(key => {
+      const serverValue = normalizedServerData[key];
+      const clientValue = clientData[key];
       
-      // If this is an outdated operation and we have a more recent value, keep the current value
-      if (isOutdatedOperation && key in this.latestFormDataSnapshot) {
-        // Check if server value differs from either the current value or latest snapshot
-        const serverValueStr = String(serverValue);
-        const currentValueStr = String(currentValue);
-        const latestValueStr = String(latestValue);
-        
-        // ENHANCED CONFLICT DETECTION: Check both current and latest snapshot values
-        const serverDiffersFromLatest = latestValueStr !== serverValueStr;
-        const serverDiffersFromCurrent = currentValueStr !== serverValueStr;
-        
-        if (serverDiffersFromLatest || serverDiffersFromCurrent) {
-          console.log(`[FORM DEBUG] VALUE CONFLICT for field "${key}": 
-            Server has "${serverValue}" (${typeof serverValue}), 
-            Current has "${currentValue}" (${typeof currentValue}), 
-            Latest snapshot has "${latestValue}" (${typeof latestValue})
-            - KEEPING CLIENT VALUE`);
-          
-          // Always prefer the current client value when there's any conflict
-          mergedData[key] = currentValue;
-        } else {
-          // No conflict, use server value
-          mergedData[key] = serverValue;
-        }
+      // Always need to compare as strings for consistent behavior
+      const serverValueStr = String(serverValue);
+      const clientValueStr = String(clientValue);
+      
+      // If we have a value and it differs from server, preserve the client value
+      if (clientValue !== undefined && serverValueStr !== clientValueStr) {
+        // Keep client value since it represents the current UI state
+        resultData[key] = clientValue;
+        keptClientFields.push(key);
       } else {
-        // For current operations or when no operation ID is provided, trust server data
-        mergedData[key] = serverValue !== undefined ? serverValue : currentValue;
+        // No conflict - update with server value
+        resultData[key] = serverValue;
+        
+        // Only mark as changed if it's actually different
+        if (clientValue !== serverValue) {
+          changedFields.push(key);
+        }
       }
     });
     
-    // Update the local form data with our merged data
-    this.formData = { ...mergedData };
+    // Log what happened
+    if (keptClientFields.length > 0) {
+      console.log(`[FORM DEBUG] Preserved ${keptClientFields.length} client fields that differed from server`);
+      if (keptClientFields.length < 5) {
+        keptClientFields.forEach(key => {
+          console.log(`[FORM DEBUG] - Kept client value for "${key}": "${clientData[key]}" (server had "${normalizedServerData[key]}")`);
+        });
+      } else {
+        console.log(`[FORM DEBUG] - Too many fields to list individually (${keptClientFields.length})`);
+      }
+    }
     
-    // Also update the values in the fields array and sections
+    if (changedFields.length > 0) {
+      console.log(`[FORM DEBUG] Updated ${changedFields.length} fields with server values`);
+    }
+    
+    // Update the local form data with our result data
+    this.formData = resultData;
+    
+    // Also update the values in the fields array and sections for UI consistency
     this.fields = this.fields.map(field => 
-      mergedData.hasOwnProperty(field.key) 
-        ? { ...field, value: mergedData[field.key] } 
+      resultData.hasOwnProperty(field.key) 
+        ? { ...field, value: resultData[field.key] } 
         : field
     );
     
     this.sections = this.sections.map(section => ({
       ...section,
       fields: section.fields.map(field => 
-        mergedData.hasOwnProperty(field.key) 
-          ? { ...field, value: mergedData[field.key] } 
+        resultData.hasOwnProperty(field.key) 
+          ? { ...field, value: resultData[field.key] } 
           : field
       )
     }));
     
-    // Log specific fields of interest after update
-    const afterUpdate = this.formData;
-    const afterFields = keysOfInterest.map(key => {
-      return {
-        key,
-        value: afterUpdate[key],
-        exists: key in afterUpdate
-      };
-    });
-    
-    console.log(`[FORM DEBUG] Key fields after update:`);
-    afterFields.forEach(field => {
-      console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
-    });
-    
-    // Only update lastSavedData if this is the current operation or no operation ID provided
-    if (!isOutdatedOperation) {
-      // Update the last saved data reference
-      this.lastSavedData = JSON.stringify(this.formData);
-      console.log('[FORM DEBUG] Local form data updated from server - lastSavedData reference updated');
-    } else {
-      console.log('[FORM DEBUG] Not updating lastSavedData reference (outdated operation)');
-    }
+    // Store the last saved data reference for future comparisons
+    this.lastSavedData = JSON.stringify(normalizedServerData);
   }
 
   /**
@@ -777,107 +736,94 @@ export class KybFormService implements FormServiceInterface {
   }
 
   // Track pending save operations to prevent race conditions
-  private saveOperationCounter = 0;
-  private latestFormDataSnapshot: Record<string, any> = {};
-  private pendingSavePromise: Promise<any> | null = null;
+  // Write buffer to ensure we're always saving the latest data
+  private writeBuffer: Record<string, any> = {};
+  private isSaving = false;
+  private saveDebounceMs = 500; // Delay saves by 500ms to allow for rapid typing
 
   /**
-   * Save form progress with synchronized save operations to prevent race conditions
-   * CRITICAL BUGFIX: Queue operations to ensure consistency
+   * Simplified saving logic that's more reliable for rapid user input
+   * This uses a write buffer to ensure we always save the most recent data
    */
   async saveProgress(taskId?: number): Promise<void> {
     const saveTimestamp = Date.now();
-    const operationId = ++this.saveOperationCounter;
-    console.log(`[FORM DEBUG] ----- saveProgress #${operationId} BEGIN ${saveTimestamp} -----`);
+    console.log(`[FORM DEBUG] ----- saveProgress BEGIN ${saveTimestamp} -----`);
     
     if (!taskId) {
-      console.error(`[FORM DEBUG] ${saveTimestamp}: CRITICAL ERROR: Task ID is required to save progress`);
-      console.log(`[FORM DEBUG] ----- saveProgress #${operationId} END ${saveTimestamp} (no taskId) -----`);
+      console.error(`[FORM DEBUG] CRITICAL ERROR: Task ID is required to save progress`);
       return;
     }
     
-    // Take a snapshot of current form data
-    this.latestFormDataSnapshot = {...this.formData};
-    const currentDataString = JSON.stringify(this.latestFormDataSnapshot);
+    // SIMPLIFICATION: Always update the write buffer with the latest data
+    // This way, even if multiple saves are triggered, the latest data is always used
+    this.writeBuffer = {...this.formData};
     
     // Enhanced debug logging to track data changes
-    console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Starting SYNCHRONIZED save for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
+    console.log(`[FORM DEBUG] Updated write buffer for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
     
-    // CRITICAL FIX: Always clear any existing timer to prevent race conditions
+    // Clear any existing timer to prevent multiple save operations
     if (this.saveProgressTimer) {
       clearTimeout(this.saveProgressTimer);
       this.saveProgressTimer = null;
-      console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Cleared existing save timer`);
     }
     
-    // Wait for any previous save operation to complete before starting a new one
-    const executeOperation = async () => {
+    // Schedule a new save operation after a short delay
+    // This allows for batching rapid changes, improving performance and reliability
+    this.saveProgressTimer = setTimeout(async () => {
+      // If already saving, the next save operation will pick up the latest data from writeBuffer
+      if (this.isSaving) {
+        console.log(`[FORM DEBUG] Save already in progress. Latest changes queued in write buffer.`);
+        return;
+      }
+      
+      this.isSaving = true;
+      
       try {
-        console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ⚠️ EXECUTING SYNCHRONIZED SAVE`);
+        // Use the data from our write buffer to ensure we save the most recent changes
+        const dataToSave = {...this.writeBuffer};
         
         // Calculate progress and status
         const progress = this.calculateProgress();
         const status = this.calculateTaskStatus();
         
-        console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Calculated status for save: ${status} with progress ${progress}%`);
-        console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Making synchronized API call to saveKybProgress for taskId: ${taskId}`);
+        console.log(`[FORM DEBUG] Executing save with status: ${status}, progress: ${progress}%`);
         
-        // Use our captured snapshot to prevent race conditions with other updates
-        const result = await this.saveKybProgress(taskId, progress, this.latestFormDataSnapshot, status);
+        // Save the data
+        const result = await this.saveKybProgress(taskId, progress, dataToSave, status);
         
         if (result && result.success) {
-          // Only update lastSavedData if this was the most recent operation
-          if (operationId === this.saveOperationCounter) {
-            // CRITICAL FIX: Store the stringified version of form data
-            // This ensures that comparisons work correctly when checking for updates
-            this.lastSavedData = currentDataString;
-            
-            // Extra verification - make sure the server data matches our expected values
-            if (result.savedData && result.savedData.formData) {
-              // Check for any mismatches between what we sent and what was saved
-              const differences = this.compareFormData(this.latestFormDataSnapshot, result.savedData.formData);
-              if (differences.length > 0) {
-                console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ⚠️ DETECTED ${differences.length} VALUE MISMATCHES from server`);
-                
-                // Log the first few differences for debugging
-                differences.slice(0, 3).forEach(diff => {
-                  console.log(`[FORM DEBUG] ${saveTimestamp}: Field "${diff.key}": sent "${diff.currentValue}", got "${diff.serverValue}"`);
-                });
-              }
+          // Store the last saved data for change detection
+          this.lastSavedData = JSON.stringify(dataToSave);
+          
+          // Basic verification - if server data doesn't match what we sent
+          if (result.savedData && result.savedData.formData) {
+            const differences = this.compareFormData(dataToSave, result.savedData.formData);
+            if (differences.length > 0) {
+              console.log(`[FORM DEBUG] Detected ${differences.length} field differences from server response`);
+              // Don't worry about the differences - client data always takes precedence
             }
-            
-            console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ✅ API call successful - updated lastSavedData reference`);
-            console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Successfully saved progress (${progress}%) with ${Object.keys(this.latestFormDataSnapshot).length} fields`);
-          } else {
-            console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ⚠️ API call successful but newer save operation exists - not updating lastSavedData`);
           }
+          
+          console.log(`[FORM DEBUG] ✅ Save completed successfully - progress: ${progress}%`);
         } else {
-          console.error(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ❌ API call failed:`, result?.error || 'Unknown error');
+          console.error(`[FORM DEBUG] ❌ Save failed:`, result?.error || 'Unknown error');
         }
-        
-        console.log(`[FORM DEBUG] ----- saveProgress #${operationId} END ${saveTimestamp} -----`);
-        return result;
       } catch (error) {
-        console.error(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ❌ Exception during save:`, error);
-        console.log(`[FORM DEBUG] ----- saveProgress #${operationId} END ${saveTimestamp} (with error) -----`);
-        throw error;
+        console.error(`[FORM DEBUG] ❌ Exception during save:`, error);
+      } finally {
+        this.isSaving = false;
+        console.log(`[FORM DEBUG] ----- saveProgress END ${saveTimestamp} -----`);
+        
+        // Check if write buffer changed during save - if so, save again
+        const currentBufferData = JSON.stringify(this.writeBuffer);
+        const savedData = JSON.stringify(dataToSave);
+        
+        if (currentBufferData !== savedData) {
+          console.log(`[FORM DEBUG] Write buffer changed during save, triggering another save`);
+          this.saveProgress(taskId);
+        }
       }
-    };
-    
-    // Chain this save operation to wait for any previous ones
-    if (this.pendingSavePromise) {
-      console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Waiting for previous save operation to complete...`);
-      this.pendingSavePromise = this.pendingSavePromise
-        .catch(() => {}) // Ignore errors from previous operation
-        .then(() => executeOperation());
-    } else {
-      console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: No pending operations - executing immediately`);
-      this.pendingSavePromise = executeOperation();
-    }
-    
-    // We intentionally don't wait for the save to complete before returning
-    // This ensures the UI remains responsive while the save happens in the background
-    console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Save operation queued, continuing execution`);
+    }, this.saveDebounceMs);
   }
 
   /**
@@ -975,10 +921,8 @@ export class KybFormService implements FormServiceInterface {
             // If the server returned savedData with formData, update our local form data
             if (responseData.savedData && responseData.savedData.formData) {
               console.log('[KybService] Updating local form data with server response data');
-              // CRITICAL FIX: Pass current operation ID to prevent race conditions
-              // This allows the update function to handle out-of-order responses
-              const currentOperationId = this.saveOperationCounter;
-              this.updateLocalFormDataFromServer(responseData.savedData.formData, currentOperationId);
+              // Update with server data - client values will take precedence
+              this.updateLocalFormDataFromServer(responseData.savedData.formData);
             }
           } catch (jsonError) {
             // If the response isn't valid JSON but status was OK, assume success
@@ -1219,9 +1163,7 @@ export class KybFormService implements FormServiceInterface {
       
       // Use our new method for consistent handling of form data updates
       console.log(`[FORM DEBUG] Updating local form data from server data`);
-      // Reset operation counter for initial load to ensure we use server data
-      const initialLoadOperationId = 0;
-      this.updateLocalFormDataFromServer(formData, initialLoadOperationId);
+      this.updateLocalFormDataFromServer(formData);
       
       // Verify our data was updated correctly
       const afterUpdate = this.formData;
