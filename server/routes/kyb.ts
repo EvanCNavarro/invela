@@ -429,14 +429,27 @@ router.post('/api/kyb/progress', async (req, res) => {
       }
     }
 
-    // Determine appropriate status based on progress
+    // Determine appropriate status based on explicit status provided or progress
     let newStatus = existingTask.status;
-    if (progress === 0) {
-      newStatus = TaskStatus.NOT_STARTED;
-    } else if (progress < 100) {
-      newStatus = TaskStatus.IN_PROGRESS;
-    } else if (progress === 100) {
-      newStatus = TaskStatus.READY_FOR_SUBMISSION;
+    
+    // If client provided an explicit status, use that
+    if (req.body.status) {
+      console.log('[KYB API Debug] Using client-provided status:', req.body.status);
+      newStatus = req.body.status;
+    } 
+    // Otherwise calculate based on progress
+    else {
+      if (progress === 0) {
+        newStatus = TaskStatus.NOT_STARTED;
+      } else if (progress < 100) {
+        newStatus = TaskStatus.IN_PROGRESS;
+      } else if (progress === 100) {
+        newStatus = TaskStatus.READY_FOR_SUBMISSION;
+      }
+      console.log('[KYB API Debug] Calculated status from progress:', { 
+        progress, 
+        calculatedStatus: newStatus 
+      });
     }
 
     // Update task progress and metadata
