@@ -45,6 +45,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -832,7 +833,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   <span className="font-medium text-gray-800">{field.question || field.label}</span>
                                 </div>
                                 <div className="mt-2">
-                                  {fieldValue && fieldValue !== '-' ? (
+                                  {isDataLoading ? (
+                                    <div className="flex items-start">
+                                      <Skeleton className="h-4 w-4 mr-2 mt-0.5 rounded-full" />
+                                      <Skeleton className="h-4 w-40" />
+                                    </div>
+                                  ) : fieldValue && fieldValue !== '-' ? (
                                     <div className="flex items-start text-gray-700">
                                       <Check className="h-4 w-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
                                       <span className="text-gray-700">{displayValue}</span>
@@ -1005,7 +1011,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                                     ? "bg-white border-gray-200" 
                                                     : "bg-gray-50 border-gray-200"
                                                 )}>
-                                                  {hasValue 
+                                                  {isDataLoading ? (
+                                                    <Skeleton className="h-4 w-3/4" />
+                                                  ) : hasValue 
                                                     ? (typeof value === 'object' ? JSON.stringify(value) : value.toString())
                                                     : <span className="text-gray-400 italic">No answer provided</span>
                                                   }
