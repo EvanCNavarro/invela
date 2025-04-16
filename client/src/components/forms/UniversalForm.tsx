@@ -75,9 +75,9 @@ import SectionContent from './SectionContent';
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
 
-// Logger instance for this component
+// Logger instance for this component - debug disabled for performance
 const logger = getLogger('UniversalForm', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+  levels: { debug: false, info: true, warn: true, error: true } 
 });
 
 /**
