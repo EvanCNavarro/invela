@@ -880,6 +880,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             type="submit"
                             disabled={!form.getValues("agreement_confirmation") || overallProgress < 100}
                             className="bg-primary"
+                            onClick={(e) => {
+                              // If disabled, don't do anything
+                              if (!form.getValues("agreement_confirmation") || overallProgress < 100) {
+                                return;
+                              }
+                              // Prevent confetti animation if clicking directly on button instead of form submission
+                              if (e) e.preventDefault();
+                              
+                              logger.info('Submit button clicked - manually submitting form');
+                              
+                              // Manually trigger form submission
+                              form.handleSubmit((data) => {
+                                handleSubmit(data);
+                              })();
+                            }}
                           >
                             Submit <Check className="ml-2 h-4 w-4" />
                           </Button>
