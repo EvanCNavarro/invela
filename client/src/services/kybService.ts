@@ -643,11 +643,8 @@ export class KybFormService implements FormServiceInterface {
    */
   updateLocalFormDataFromServer(serverFormData: Record<string, any>): void {
     if (!serverFormData || typeof serverFormData !== 'object') {
-      console.warn('[FORM DEBUG] Invalid server form data received');
       return;
     }
-    
-    console.log(`[FORM DEBUG] Updating local form data with ${Object.keys(serverFormData).length} fields from server`);
     
     // Normalize server data (convert nulls to empty strings)
     const normalizedServerData = Object.fromEntries(
@@ -659,10 +656,6 @@ export class KybFormService implements FormServiceInterface {
     
     // Create result data - start with a copy of client data
     const resultData = { ...clientData };
-    
-    // For consistency tracking
-    const changedFields: string[] = [];
-    const keptClientFields: string[] = [];
     
     // Apply server values, but only if they don't conflict with client changes
     // This is the key to preserving user input during rapid typing
@@ -678,33 +671,11 @@ export class KybFormService implements FormServiceInterface {
       if (clientValue !== undefined && serverValueStr !== clientValueStr) {
         // Keep client value since it represents the current UI state
         resultData[key] = clientValue;
-        keptClientFields.push(key);
       } else {
         // No conflict - update with server value
         resultData[key] = serverValue;
-        
-        // Only mark as changed if it's actually different
-        if (clientValue !== serverValue) {
-          changedFields.push(key);
-        }
       }
     });
-    
-    // Log what happened
-    if (keptClientFields.length > 0) {
-      console.log(`[FORM DEBUG] Preserved ${keptClientFields.length} client fields that differed from server`);
-      if (keptClientFields.length < 5) {
-        keptClientFields.forEach(key => {
-          console.log(`[FORM DEBUG] - Kept client value for "${key}": "${clientData[key]}" (server had "${normalizedServerData[key]}")`);
-        });
-      } else {
-        console.log(`[FORM DEBUG] - Too many fields to list individually (${keptClientFields.length})`);
-      }
-    }
-    
-    if (changedFields.length > 0) {
-      console.log(`[FORM DEBUG] Updated ${changedFields.length} fields with server values`);
-    }
     
     // Update the local form data with our result data
     this.formData = resultData;
