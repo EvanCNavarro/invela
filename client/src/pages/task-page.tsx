@@ -399,10 +399,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   taskType="kyb"
                   initialData={task.savedFormData}
                   onSubmit={(formData) => {
-                    toast({
-                      title: "Submitting KYB Form",
-                      description: "Please wait while we process your submission...",
-                    });
+                    // No loading toast needed, it will be handled by UniversalForm
 
                     // Generate a proper filename for CSV export
                     const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
@@ -542,10 +539,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   taskStatus={task.status}
                   isSubmitted={isSubmitted}
                   onSubmit={(formData) => {
-                    toast({
-                      title: "Submitting Security Assessment",
-                      description: "Please wait while we process your submission...",
-                    });
+                    // No loading toast needed, it will be handled by UniversalForm
 
                     // Generate a proper filename for security assessment export
                     const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
