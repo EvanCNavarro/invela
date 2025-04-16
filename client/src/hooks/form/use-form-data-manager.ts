@@ -202,22 +202,35 @@ export function useFormDataManager({
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
   
-  // Load saved data from the server any time we mount or the form service, task, or fields change
+  // Load saved data from the server when the form is initialized or critical dependencies change
   useEffect(() => {
     // Skip if no fields, service, or taskId
     if (fields.length === 0 || !formService || !taskId) {
       return;
     }
     
+    // Use a loading key to handle concurrency rather than a ref
+    // This ensures we don't get stuck in loading state
+    let loadingKey = Date.now();
+    const thisLoadingKey = loadingKey;
+    
     const loadSavedData = async () => {
       try {
-        // Reset the loaded flag at the start of each loading operation
-        dataLoadedRef.current = false;
-        setIsLoading(true);
+        // Only set loading state if we haven't already loaded data
+        // or if we're deliberately forcing a reload
+        if (!dataLoadedRef.current) {
+          setIsLoading(true);
+        }
         setError(null);
         
-        logger.info(`[SAVE DEBUG] Loading fresh data for task ID: ${taskId}`);
+        logger.info(`[SAVE DEBUG] Loading data for task ID: ${taskId}`);
         const savedData = await formService.loadProgress(taskId);
+        
+        // Skip processing if another load operation has started
+        if (thisLoadingKey !== loadingKey) {
+          logger.debug('[SAVE DEBUG] Ignoring outdated load request');
+          return;
+        }
         
         if (savedData && Object.keys(savedData).length > 0) {
           logger.info(`[SAVE DEBUG] Received saved data with ${Object.keys(savedData).length} fields`);
@@ -252,20 +265,45 @@ export function useFormDataManager({
         dataLoadedRef.current = true;
         setHasLoaded(true);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to load saved data';
-        logger.error('[SAVE DEBUG] Failed to load form data:', message);
-        setError(message);
+        // Only process error if this is still the active request
+        if (thisLoadingKey === loadingKey) {
+          const message = error instanceof Error ? error.message : 'Failed to load saved data';
+          logger.error('[SAVE DEBUG] Failed to load form data:', message);
+          setError(message);
+        }
       } finally {
-        setIsLoading(false);
+        // Only change loading state if this is still the active request
+        if (thisLoadingKey === loadingKey) {
+          setIsLoading(false);
+        }
       }
     };
     
-    // Always load data when this effect runs
-    loadSavedData();
+    // Load data if we haven't loaded it yet
+    if (!dataLoadedRef.current) {
+      loadSavedData();
+    }
     
-    // Clean up - reset loaded flag when unmounting so we reload on next mount
+    // Expose a method to force reload data that can be called from parent components
+    const reloadData = () => {
+      loadingKey = Date.now(); // Update the loading key to cancel any in-progress loads
+      dataLoadedRef.current = false; // Reset the loaded flag
+      loadSavedData(); // Start a new load
+    };
+    
+    // Add reload method to window for debugging
+    if (typeof window !== 'undefined') {
+      (window as any).reloadFormData = reloadData;
+    }
+    
+    // Clean up function that preserves the loaded state
+    // This prevents unnecessary reloads when component re-renders
     return () => {
-      dataLoadedRef.current = false;
+      // We intentionally do NOT reset dataLoadedRef.current here
+      // to prevent unnecessary reloads on re-renders
+      
+      // But we do update the loading key to cancel any in-progress requests
+      loadingKey = Date.now();
     };
   }, [fields, formService, taskId, defaultValues, form, onDataChange]);
   
