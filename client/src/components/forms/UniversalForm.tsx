@@ -97,9 +97,13 @@ interface UniversalFormProps {
   taskStatus?: string;
   taskMetadata?: Record<string, any>;
   initialData?: FormData;
+  taskTitle?: string; // Title of the task from task-page
+  companyName?: string; // Company name for display in the header
+  fileId?: number | null; // For download functionality
   onSubmit?: (data: FormData) => void;
   onCancel?: () => void;
   onProgress?: (progress: number) => void;
+  onDownload?: (format: 'json' | 'csv' | 'txt') => void; // Function to handle downloads
 }
 
 /**
