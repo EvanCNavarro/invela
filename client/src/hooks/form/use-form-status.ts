@@ -181,16 +181,20 @@ export function useFormStatus({
           const emptyPatterns = ['', 'undefined', 'null', 'NaN', '[]', '{}'];
           const isEmptyPattern = emptyPatterns.includes(stringValue.toLowerCase());
           
+          // CRITICAL FIX: Before declaring a field filled, verify the field value actually exists
+          // and isn't just a placeholder or empty string
+          const hasRealValue = value !== undefined && 
+                               value !== null &&
+                               stringValue !== '' &&
+                               !isEmptyPattern &&
+                               stringValue.length > 0;
+          
+          // Log the field value and fill status for debugging
+          logger.debug(`Field ${field.key} value check: "${stringValue}" (${typeof value}), hasRealValue: ${hasRealValue}`);
+          
           // Fix validation logic to consider any non-empty string as valid
           // This is critical for fields with values like "0" or "false" which are valid inputs
-          isFilled = (
-            value !== undefined && 
-            value !== null && 
-            stringValue !== '' &&
-            !isEmptyPattern &&
-            // Consider ANY string with length as valid (including "0", "false", etc.)
-            stringValue.length > 0
-          );
+          isFilled = hasRealValue;
           
           logger.debug(`String/primitive field ${field.key} filled status: ${isFilled}, value: "${stringValue}"`);
         }
