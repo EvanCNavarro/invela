@@ -181,6 +181,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     return formService ? formService.getFormData() : formData;
   }, [formService, formData]);
   
+  // Create and manage the Review & Submit section first
+  const [allSections, setAllSections] = useState<FormSection[]>([]);
+  
   // Use our new form status hook to track section and overall progress
   const {
     sectionStatuses,
@@ -196,26 +199,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     requiredOnly: true,
     onChange: onProgress
   });
-  
-  // Check if we should automatically go to the review section based on task status
-  useEffect(() => {
-    if (
-      taskStatus === 'ready_for_submission' && 
-      allSections.length > 1 && 
-      activeSection !== allSections.length - 1 && 
-      overallProgress === 100
-    ) {
-      // If task is ready for submission, form is complete, and we're not on the review page,
-      // automatically navigate to the review page
-      console.log('[UniversalForm] Task is ready for submission, navigating to review section');
-      setTimeout(() => {
-        setActiveSection(allSections.length - 1);
-      }, 100);
-    }
-  }, [taskStatus, allSections.length, activeSection, overallProgress, setActiveSection]);
-  
-  // Create and manage the Review & Submit section
-  const [allSections, setAllSections] = useState<FormSection[]>([]);
   
   // Update sections when main form sections change to include the Review & Submit section
   useEffect(() => {
@@ -410,6 +393,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     return descriptions[taskType] || 'Please complete all required information';
   }, [template, taskType]);
+  
+  // Auto-navigate to review section for ready_for_submission tasks
+  useEffect(() => {
+    // Don't run this effect until allSections is populated
+    if (!allSections.length) return;
+    
+    if (
+      taskStatus === 'ready_for_submission' && 
+      allSections.length > 1 && 
+      activeSection !== allSections.length - 1 && 
+      overallProgress === 100
+    ) {
+      // If task is ready for submission, form is complete, and we're not on the review page,
+      // automatically navigate to the review page
+      console.log('[UniversalForm] Task is ready for submission, navigating to review section');
+      setTimeout(() => {
+        setActiveSection(allSections.length - 1);
+      }, 300);
+    }
+  }, [taskStatus, allSections, activeSection, overallProgress, setActiveSection]);
 
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
