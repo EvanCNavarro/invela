@@ -554,6 +554,7 @@ export class KybFormService implements FormServiceInterface {
     // Store the calculated status for future reference
     this.taskStatus = calculatedStatus;
     
+    console.log(`[KybService] Calculated task status: ${calculatedStatus} based on progress ${progress}%`);
     return calculatedStatus;
   }
 
