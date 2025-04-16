@@ -425,14 +425,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Helper function to handle accordion state changes
   const handleAccordionValueChange = useCallback((value: string[]) => {
-    // If no values, expand all sections (ensure they're always expanded)
-    if (value.length === 0) {
-      const allSectionIds = sections.map((_, i) => `section-${i}`);
-      setExpandedSections(allSectionIds);
-    } else {
-      setExpandedSections(value);
-    }
-  }, [sections]);
+    // Always respect the user's choice when manually toggling accordions
+    setExpandedSections(value);
+  }, []);
   
   useEffect(() => {
     // Don't run this effect until allSections is populated
