@@ -50,6 +50,40 @@ export function UniversalSuccessModal({
   const [, navigate] = useLocation();
   const [titleText, setTitleText] = useState("Form Submitted Successfully");
   
+  // Play confetti animation when modal opens
+  useEffect(() => {
+    if (open) {
+      // Import and use confetti dynamically
+      import('canvas-confetti').then(confetti => {
+        const duration = 3 * 1000;
+        const end = Date.now() + duration;
+        
+        // Create a festive celebration effect
+        (function frame() {
+          confetti.default({
+            particleCount: 2,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4']
+          });
+          
+          confetti.default({
+            particleCount: 2,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4']
+          });
+          
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        }());
+      });
+    }
+  }, [open]);
+  
   // Determine the appropriate title based on task type
   useEffect(() => {
     switch(taskType) {
