@@ -508,6 +508,28 @@ export class KybFormService implements FormServiceInterface {
     
     return Math.round((filledRequiredFields.length / requiredFields.length) * 100);
   }
+  
+  /**
+   * Helper method to check if form has been submitted
+   * @returns True if the form has a submission date
+   */
+  getLastSubmissionDate(): string | null {
+    // This is a placeholder - in a real implementation, this would retrieve the submission date
+    // from the task metadata or another source
+    return null;
+  }
+
+  /**
+   * Calculate appropriate task status based on current progress
+   * @param isSubmitted Whether the form has been submitted
+   * @returns The appropriate task status
+   */
+  calculateTaskStatus(isSubmitted: boolean = false): string {
+    const progress = this.calculateProgress();
+    
+    // Use the centralized utility function to ensure consistency across the application
+    return calculateTaskStatus(progress, isSubmitted);
+  }
 
   /**
    * Save form progress with improved debouncing and change detection
@@ -571,8 +593,11 @@ export class KybFormService implements FormServiceInterface {
           console.log(`[KybService] Saving ${Object.keys(this.formData).length} fields to database...`);
           const progress = this.calculateProgress();
           
+          // Calculate appropriate status based on progress
+          const status = this.calculateTaskStatus();
+          
           // Save to server first, only update lastSavedData if successful
-          const result = await this.saveKybProgress(taskId, progress, this.formData);
+          const result = await this.saveKybProgress(taskId, progress, this.formData, status);
           
           // Only update lastSavedData if the save was successful
           if (result && result.success) {
@@ -596,7 +621,7 @@ export class KybFormService implements FormServiceInterface {
    * Save KYB progress to the server
    * Clean implementation with proper error handling and efficient request processing
    */
-  async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
+  async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>, status?: string) {
     try {
       // Check if taskId is provided
       if (!taskId) {
@@ -625,6 +650,7 @@ export class KybFormService implements FormServiceInterface {
         body: JSON.stringify({
           taskId,  // Essential - Include taskId in the request body
           progress,
+          status: status || undefined, // Include explicit status if provided
           formData: normalizedFormData
         })
       });
@@ -1016,6 +1042,6 @@ export const kybService = new KybFormService();
 export const getKybFields = (): Promise<KybField[]> => kybService.getKybFields();
 export const getKybFieldsByStepIndex = (stepIndex: number): Promise<KybField[]> => kybService.getKybFieldsByStepIndex(stepIndex);
 export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybField[]> => kybService.groupFieldsBySection(fields);
-export const saveKybProgress = (taskId: number, progress: number, formData: Record<string, any>) => kybService.saveKybProgress(taskId, progress, formData);
+export const saveKybProgress = (taskId: number, progress: number, formData: Record<string, any>, status?: string) => kybService.saveKybProgress(taskId, progress, formData, status);
 export const getKybProgress = (taskId: number): Promise<KybProgressResponse> => kybService.getKybProgress(taskId);
 export const submitKybForm = (taskId: number, formData: Record<string, any>, fileName?: string) => kybService.submitKybForm(taskId, formData, fileName);
