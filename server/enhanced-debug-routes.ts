@@ -6,7 +6,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '@db';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { tasks, kybFields, kybResponses } from '@db/schema';
-import { LoggingService } from './services/logging-service';
+import { LoggingService } from '../server/services/logging-service';
 
 const logger = new LoggingService('DebugAPI');
 const router = Router();
@@ -148,22 +148,22 @@ router.get('/tasks-with-issues', async (req: Request, res: Response) => {
     `);
     
     // Group by task ID to create a summary
-    const taskSummary = problematicResponses.reduce((summary: any, row: any) => {
-      if (!summary[row.task_id]) {
-        summary[row.task_id] = {
+    const taskSummary = {};
+    
+    for (const row of problematicResponses as any[]) {
+      if (!taskSummary[row.task_id]) {
+        taskSummary[row.task_id] = {
           taskId: row.task_id,
           title: row.title,
           testFields: []
         };
       }
       
-      summary[row.task_id].testFields.push({
+      taskSummary[row.task_id].testFields.push({
         fieldKey: row.field_key,
         value: row.response_value
       });
-      
-      return summary;
-    }, {});
+    }
     
     return res.json({
       tasksWithIssues: Object.values(taskSummary)
