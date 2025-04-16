@@ -397,6 +397,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                 <UniversalForm
                   taskId={task.id}
                   taskType="kyb"
+                  taskStatus={task.status}
+                  taskMetadata={task.metadata || {}}
                   initialData={task.savedFormData}
                   onSubmit={(formData) => {
                     // No loading toast needed, it will be handled by UniversalForm
