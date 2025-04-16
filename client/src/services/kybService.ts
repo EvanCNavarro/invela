@@ -838,48 +838,17 @@ export class KybFormService implements FormServiceInterface {
     try {
       // Check if taskId is provided
       if (!taskId) {
-        console.error('[KybService] Missing taskId in saveKybProgress');
+        console.error('Missing taskId in saveKybProgress');
         return {
           success: false,
           error: 'Task ID is required'
         };
       }
       
-      // Enhanced debug logging - log complete form data for debugging
-      const formDataKeys = Object.keys(formData);
-      
-      console.log(`[KybService] SAVING PROGRESS - Task ID: ${taskId}, Progress: ${progress}, Total Fields: ${formDataKeys.length}`);
-      
       // Normalize form data before sending to server (remove null values)
       const normalizedFormData = Object.fromEntries(
         Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
       );
-      
-      // Check if any values were modified during normalization
-      const modifiedFields = Object.entries(normalizedFormData).filter(([key, value]) => {
-        return value !== formData[key];
-      });
-      
-      if (modifiedFields.length > 0) {
-        console.log(`[KybService] WARNING: ${modifiedFields.length} fields were modified during normalization`);
-        modifiedFields.forEach(([key, value]) => {
-          console.log(`[KybService] - Field ${key}: "${formData[key]}" → "${value}"`);
-        });
-      }
-      
-      // Log request details
-      console.log(`[KybService] Making API request to /api/kyb/progress`);
-      console.log(`[KybService] Request timestamp: ${new Date().toISOString()}`);
-      
-      // Save a copy of the request body for debugging
-      const requestBody = {
-        taskId,
-        progress,
-        status: status || undefined,
-        formData: normalizedFormData
-      };
-      
-      console.log(`[KybService] Request body preview:`, JSON.stringify(requestBody).substring(0, 100) + '...');
       
       // Send the minimum necessary data to reduce payload size
       const response = await fetch(`/api/kyb/progress`, {
@@ -889,12 +858,17 @@ export class KybFormService implements FormServiceInterface {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          taskId,
+          progress,
+          status: status || undefined,
+          formData: normalizedFormData
+        })
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[KybService] Error saving form data: ${response.status} - ${errorText}`);
+        console.error(`Error saving form data: ${response.status} - ${errorText}`);
         return {
           success: false,
           error: `Failed to save: ${response.status}`
@@ -906,25 +880,20 @@ export class KybFormService implements FormServiceInterface {
       let responseData;
       
       try {
-        // Log response for debugging if empty
+        // Handle empty response
         if (!responseText || responseText.trim() === '') {
-          console.log('[KybService] Empty response from server when saving progress (this may be normal)');
           responseData = { success: true };
         } else {
           try {
             responseData = JSON.parse(responseText);
-            console.log(`[KybService] Successfully saved progress for task ${taskId}`);
             
             // If the server returned savedData with formData, update our local form data
             if (responseData.savedData && responseData.savedData.formData) {
-              console.log('[KybService] Updating local form data with server response data');
-              // Update with server data - client values will take precedence
               this.updateLocalFormDataFromServer(responseData.savedData.formData);
             }
           } catch (jsonError) {
             // If the response isn't valid JSON but status was OK, assume success
             if (response.status >= 200 && response.status < 300) {
-              console.log('[KybService] Received successful response (status: ' + response.status + ')');
               responseData = { success: true };
             } else {
               throw jsonError;
@@ -932,11 +901,7 @@ export class KybFormService implements FormServiceInterface {
           }
         }
       } catch (parseError) {
-        console.error('[KybService] Error parsing save response:', parseError);
-        // Only show start of response to avoid flooding console
-        console.error('[KybService] Raw response:', responseText && responseText.length > 200 
-          ? responseText.substring(0, 200) + '...' 
-          : responseText || '(empty response)');
+        console.error('Error parsing save response:', parseError);
         
         // Still assume success if we received a 2xx OK status
         if (response.status >= 200 && response.status < 300) {
@@ -951,7 +916,7 @@ export class KybFormService implements FormServiceInterface {
       
       return responseData;
     } catch (error) {
-      console.error('[KybService] Network error while saving form data:', error);
+      console.error('Network error while saving form data:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error'
@@ -965,10 +930,7 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybProgress(taskId: number): Promise<KybProgressResponse> {
     try {
-      console.log(`[KybService] Getting progress data for task ID: ${taskId}`);
-      
-      // Make a query to get progress data, using taskId as a path parameter
-      // Fix the URL path to match the server endpoint
+      // Make a query to get progress data
       const response = await fetch(`/api/kyb/progress/${taskId}`, {
         method: 'GET',
         credentials: 'include',
@@ -978,35 +940,22 @@ export class KybFormService implements FormServiceInterface {
       });
       
       if (!response.ok) {
-        console.error(`[KybService] Error loading form data: ${response.status}`);
+        console.error(`Error loading form data: ${response.status}`);
         return { formData: {}, progress: 0 };
       }
       
       // Check for empty response before parsing
       const text = await response.text();
       if (!text || text.trim() === '') {
-        console.warn('[KybService] Empty response received from server');
         return { formData: {}, progress: 0 };
       }
       
       // Safely parse the JSON
       let data;
       try {
-        // Log the raw response text for debugging
-        console.log(`[KybService] Raw response:`, text.substring(0, 100) + (text.length > 100 ? '...' : ''));
-        
-        // Handle empty responses by returning a default object
-        if (!text || text.trim() === '') {
-          console.warn('[KybService] Empty JSON response, using default empty object');
-          data = { formData: {}, progress: 0 };
-        } else {
-          data = JSON.parse(text);
-          console.log(`[KybService] Successfully parsed progress data:`, data);
-        }
+        data = JSON.parse(text);
       } catch (parseError) {
-        console.error('[KybService] Error parsing JSON response:', parseError);
-        console.error('[KybService] Raw response that failed to parse:', text.substring(0, 200));
-        
+        console.error('Error parsing JSON response:', parseError);
         // If we get an error parsing, return a default object
         return { formData: {}, progress: 0 };
       }
@@ -1021,8 +970,6 @@ export class KybFormService implements FormServiceInterface {
           Object.entries(data.formData).map(([key, value]) => [key, value === null ? '' : value])
         );
         
-        console.log(`[KybService] Normalized form data with ${Object.keys(normalizedFormData).length} fields`);
-        
         return {
           formData: normalizedFormData,
           progress: data.progress || 0,
@@ -1036,7 +983,7 @@ export class KybFormService implements FormServiceInterface {
         status: data.status
       };
     } catch (error) {
-      console.error('[KybService] Network error while loading form data:', error);
+      console.error('Network error while loading form data:', error);
       return { formData: {}, progress: 0 };
     }
   }
@@ -1045,8 +992,6 @@ export class KybFormService implements FormServiceInterface {
    * Load saved progress for a task
    */
   async loadProgress(taskId: number): Promise<Record<string, any>> {
-    console.log(`Loading progress for task ID: ${taskId}`);
-    
     try {
       // Get current form data before loading - we'll use this if the API call fails
       const currentFormData = this.formData;
@@ -1054,8 +999,6 @@ export class KybFormService implements FormServiceInterface {
       // Get progress data from the server
       const progressData = await this.getKybProgress(taskId);
       const { formData, status } = progressData;
-      
-      console.log(`API call completed, returned ${formData ? Object.keys(formData).length : 0} fields`);
       
       // Store the server-provided status if available
       if (status) {
