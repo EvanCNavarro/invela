@@ -709,70 +709,91 @@ export class KybFormService implements FormServiceInterface {
     return calculatedStatus;
   }
 
+  // Track pending save operations to prevent race conditions
+  private saveOperationCounter = 0;
+  private latestFormDataSnapshot: Record<string, any> = {};
+  private pendingSavePromise: Promise<any> | null = null;
+
   /**
-   * Save form progress with NO debouncing to fix data persistence issues
-   * CRITICAL BUGFIX: Completely rewritten to remove all debouncing delays
+   * Save form progress with synchronized save operations to prevent race conditions
+   * CRITICAL BUGFIX: Queue operations to ensure consistency
    */
   async saveProgress(taskId?: number): Promise<void> {
     const saveTimestamp = Date.now();
-    console.log(`[FORM DEBUG] ----- saveProgress BEGIN ${saveTimestamp} -----`);
+    const operationId = ++this.saveOperationCounter;
+    console.log(`[FORM DEBUG] ----- saveProgress #${operationId} BEGIN ${saveTimestamp} -----`);
     
     if (!taskId) {
       console.error(`[FORM DEBUG] ${saveTimestamp}: CRITICAL ERROR: Task ID is required to save progress`);
-      console.log(`[FORM DEBUG] ----- saveProgress END ${saveTimestamp} (no taskId) -----`);
+      console.log(`[FORM DEBUG] ----- saveProgress #${operationId} END ${saveTimestamp} (no taskId) -----`);
       return;
     }
     
-    // Get current form data JSON
-    const currentDataString = JSON.stringify(this.formData);
+    // Take a snapshot of current form data
+    this.latestFormDataSnapshot = {...this.formData};
+    const currentDataString = JSON.stringify(this.latestFormDataSnapshot);
     
     // Enhanced debug logging to track data changes
-    console.log(`[FORM DEBUG] ${saveTimestamp}: Starting IMMEDIATE save for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
+    console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Starting SYNCHRONIZED save for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
     
     // CRITICAL FIX: Always clear any existing timer to prevent race conditions
     if (this.saveProgressTimer) {
       clearTimeout(this.saveProgressTimer);
       this.saveProgressTimer = null;
-      console.log(`[FORM DEBUG] ${saveTimestamp}: Cleared existing save timer`);
+      console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Cleared existing save timer`);
     }
     
-    // *** CRITICAL FIX: Remove ALL debouncing - execute save immediately ***
-    try {
-      console.log(`[FORM DEBUG] ${saveTimestamp}: ⚠️ EXECUTING IMMEDIATE SAVE with zero delay`);
-      console.log(`[FORM DEBUG] ${saveTimestamp}: Saving ${Object.keys(this.formData).length} fields to database...`);
-      
-      // Calculate progress and status
-      const progress = this.calculateProgress();
-      const status = this.calculateTaskStatus();
-      
-      console.log(`[FORM DEBUG] ${saveTimestamp}: Calculated status for save: ${status} with progress ${progress}%`);
-      console.log(`[FORM DEBUG] ${saveTimestamp}: Making direct API call to saveKybProgress for taskId: ${taskId}`);
-      
-      // Save to server directly, with no setTimeout
-      this.saveKybProgress(taskId, progress, this.formData, status)
-        .then(result => {
-          if (result && result.success) {
-            // Update last saved data reference AFTER successful save
+    // Wait for any previous save operation to complete before starting a new one
+    const executeOperation = async () => {
+      try {
+        console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ⚠️ EXECUTING SYNCHRONIZED SAVE`);
+        
+        // Calculate progress and status
+        const progress = this.calculateProgress();
+        const status = this.calculateTaskStatus();
+        
+        console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Calculated status for save: ${status} with progress ${progress}%`);
+        console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Making synchronized API call to saveKybProgress for taskId: ${taskId}`);
+        
+        // Use our captured snapshot to prevent race conditions with other updates
+        const result = await this.saveKybProgress(taskId, progress, this.latestFormDataSnapshot, status);
+        
+        if (result && result.success) {
+          // Only update lastSavedData if this was the most recent operation
+          if (operationId === this.saveOperationCounter) {
             this.lastSavedData = currentDataString;
-            console.log(`[FORM DEBUG] ${saveTimestamp}: ✅ API call successful - updated lastSavedData reference`);
-            console.log(`[FORM DEBUG] ${saveTimestamp}: Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
+            console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ✅ API call successful - updated lastSavedData reference`);
+            console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Successfully saved progress (${progress}%) with ${Object.keys(this.latestFormDataSnapshot).length} fields`);
           } else {
-            console.error(`[FORM DEBUG] ${saveTimestamp}: ❌ API call failed:`, result?.error || 'Unknown error');
+            console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ⚠️ API call successful but newer save operation exists - not updating lastSavedData`);
           }
-          console.log(`[FORM DEBUG] ----- saveProgress END ${saveTimestamp} -----`);
-        })
-        .catch(error => {
-          console.error(`[FORM DEBUG] ${saveTimestamp}: ❌ Exception during save:`, error);
-          console.log(`[FORM DEBUG] ----- saveProgress END ${saveTimestamp} (with error) -----`);
-        });
-    } catch (error) {
-      console.error(`[FORM DEBUG] ${saveTimestamp}: ❌ FATAL ERROR during immediate save:`, error);
-      console.log(`[FORM DEBUG] ----- saveProgress END ${saveTimestamp} (with fatal error) -----`);
+        } else {
+          console.error(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ❌ API call failed:`, result?.error || 'Unknown error');
+        }
+        
+        console.log(`[FORM DEBUG] ----- saveProgress #${operationId} END ${saveTimestamp} -----`);
+        return result;
+      } catch (error) {
+        console.error(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: ❌ Exception during save:`, error);
+        console.log(`[FORM DEBUG] ----- saveProgress #${operationId} END ${saveTimestamp} (with error) -----`);
+        throw error;
+      }
+    };
+    
+    // Chain this save operation to wait for any previous ones
+    if (this.pendingSavePromise) {
+      console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Waiting for previous save operation to complete...`);
+      this.pendingSavePromise = this.pendingSavePromise
+        .catch(() => {}) // Ignore errors from previous operation
+        .then(() => executeOperation());
+    } else {
+      console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: No pending operations - executing immediately`);
+      this.pendingSavePromise = executeOperation();
     }
     
     // We intentionally don't wait for the save to complete before returning
     // This ensures the UI remains responsive while the save happens in the background
-    console.log(`[FORM DEBUG] ${saveTimestamp}: Save operation initiated, continuing execution`);
+    console.log(`[FORM DEBUG] ${saveTimestamp}: #${operationId}: Save operation queued, continuing execution`);
   }
 
   /**
