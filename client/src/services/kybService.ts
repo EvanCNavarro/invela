@@ -427,8 +427,9 @@ export class KybFormService implements FormServiceInterface {
 
   /**
    * Update form data for a specific field
+   * This method now immediately saves data to the server, especially when clearing fields
    */
-  updateFormData(fieldKey: string, value: any): void {
+  updateFormData(fieldKey: string, value: any, taskId?: number): void {
     // Log the update attempt for debugging
     console.log(`[DEBUG KybService] Field update: ${fieldKey} = ${value !== undefined && value !== null ? 
       (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
@@ -487,6 +488,15 @@ export class KybFormService implements FormServiceInterface {
     // Log summary of update
     console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
     console.log(`[DEBUG KybService] Form data now contains key ${fieldKey} with value:`, this.formData[fieldKey]);
+    
+    // IMPORTANT: Immediately trigger a save if a field is being cleared
+    // or if we have a taskId provided with the update
+    if ((isClearing || taskId) && taskId) {
+      console.log(`[DEBUG KybService] Immediately saving after ${isClearing ? 'field clearing' : 'field update'}`);
+      
+      // We need to trigger a non-debounced save here to ensure the cleared field gets saved
+      this.saveProgress(taskId);
+    }
   }
 
   /**
