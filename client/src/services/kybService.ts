@@ -431,12 +431,14 @@ export class KybFormService implements FormServiceInterface {
    */
   updateFormData(fieldKey: string, value: any, taskId?: number): void {
     // Log the update attempt for debugging with more details
-    console.log(`[FIELD DEBUG] updateFormData called for field "${fieldKey}" with taskId: ${taskId || 'none'}`);
-    console.log(`[FIELD DEBUG] Value type: ${typeof value}, Value: ${
+    console.log(`[FORM DEBUG] ----- updateFormData BEGIN -----`);
+    console.log(`[FORM DEBUG] updateFormData called for field "${fieldKey}" with taskId: ${taskId || 'none'}`);
+    console.log(`[FORM DEBUG] Service state: initialized=${this.initialized}, lastSave=${this.lastSavedData ? 'present' : 'none'}`);
+    console.log(`[FORM DEBUG] Value type: ${typeof value}, Value: ${
       value !== undefined && value !== null ? 
       (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'
     }`);
-    console.log(`[FIELD DEBUG] Current form data before update has ${Object.keys(this.formData).length} fields`);
+    console.log(`[FORM DEBUG] Current form data before update has ${Object.keys(this.formData).length} fields`);
     
     // Store the old value for reference
     const oldValue = this.formData[fieldKey];
@@ -446,12 +448,16 @@ export class KybFormService implements FormServiceInterface {
     // Empty string is a valid value that should be stored and saved to database
     const normalizedValue = (value === null || value === undefined) ? '' : value;
     
+    // EXTRA DEBUG: Show stack trace to identify which component is calling this
+    const stackTrace = new Error().stack;
+    console.log(`[FORM DEBUG] Called from: ${stackTrace}`);
+    
     // Track if the field previously had a value but is now being cleared
     const isClearing = (oldValue !== undefined && oldValue !== null && oldValue !== '') && 
                        (normalizedValue === '' || normalizedValue === null);
     
     if (isClearing) {
-      console.log(`[FIELD DEBUG] CLEARING field ${fieldKey} from "${oldValue}" to empty value`);
+      console.log(`[FORM DEBUG] CLEARING field ${fieldKey} from "${oldValue}" to empty value`);
     }
     
     // More accurate change detection - convert to strings to ensure proper comparison
@@ -461,12 +467,13 @@ export class KybFormService implements FormServiceInterface {
     
     // Use string comparison to detect changes, but always update when clearing a field
     const hasChanged = oldValueStr !== newValueStr || isClearing;
-    console.log(`[FIELD DEBUG] Value change detection: ${hasChanged ? 'CHANGED' : 'UNCHANGED'}`);
-    console.log(`[FIELD DEBUG] - Old value: "${oldValueStr}" (${typeof oldValue})`);
-    console.log(`[FIELD DEBUG] - New value: "${newValueStr}" (${typeof normalizedValue})`);
+    console.log(`[FORM DEBUG] Value change detection: ${hasChanged ? 'CHANGED' : 'UNCHANGED'}`);
+    console.log(`[FORM DEBUG] - Old value: "${oldValueStr}" (${typeof oldValue})`);
+    console.log(`[FORM DEBUG] - New value: "${newValueStr}" (${typeof normalizedValue})`);
     
     if (!hasChanged) {
-      console.log(`[FIELD DEBUG] Skipping update - value unchanged for field ${fieldKey}`);
+      console.log(`[FORM DEBUG] Skipping update - value unchanged for field ${fieldKey}`);
+      console.log(`[FORM DEBUG] ----- updateFormData END (no change) -----`);
       return; // Value hasn't changed, no need to update
     }
     
@@ -474,8 +481,8 @@ export class KybFormService implements FormServiceInterface {
     this.formData[fieldKey] = normalizedValue;
     
     // Verify the update happened
-    console.log(`[FIELD DEBUG] Updated formData object for field "${fieldKey}"`);
-    console.log(`[FIELD DEBUG] Form data after update has ${Object.keys(this.formData).length} fields`);
+    console.log(`[FORM DEBUG] Updated formData object for field "${fieldKey}"`);
+    console.log(`[FORM DEBUG] Form data after update has ${Object.keys(this.formData).length} fields`);
     
     // Update the field value in fields array
     const fieldUpdated = this.fields.some(field => field.key === fieldKey);
@@ -495,28 +502,30 @@ export class KybFormService implements FormServiceInterface {
       )
     }));
     
-    console.log(`[FIELD DEBUG] Updated field in fields array: ${fieldUpdated ? 'YES' : 'NO'}`);
-    console.log(`[FIELD DEBUG] Updated field in sections: ${sectionUpdated ? 'YES' : 'NO'}`);
+    console.log(`[FORM DEBUG] Updated field in fields array: ${fieldUpdated ? 'YES' : 'NO'}`);
+    console.log(`[FORM DEBUG] Updated field in sections: ${sectionUpdated ? 'YES' : 'NO'}`);
     
     // CRITICAL - ALWAYS immediately trigger a save for all field updates when taskId is provided
     if (taskId) {
-      console.log(`[FIELD DEBUG] IMMEDIATE SAVE triggered for field "${fieldKey}" with taskId ${taskId}`);
-      console.log(`[FIELD DEBUG] Save reason: ${isClearing ? 'FIELD CLEARED' : 'FIELD UPDATED'}`);
+      console.log(`[FORM DEBUG] IMMEDIATE SAVE triggered for field "${fieldKey}" with taskId ${taskId}`);
+      console.log(`[FORM DEBUG] Save reason: ${isClearing ? 'FIELD CLEARED' : 'FIELD UPDATED'}`);
       
       // We need to ensure all field updates are saved to the database
       // Force immediate save by clearing any existing timer
       if (this.saveProgressTimer) {
         clearTimeout(this.saveProgressTimer);
         this.saveProgressTimer = null;
-        console.log(`[FIELD DEBUG] Cleared existing save timer`);
+        console.log(`[FORM DEBUG] Cleared existing save timer`);
       }
       
       // Call saveProgress directly for immediate save
-      console.log(`[FIELD DEBUG] Calling saveProgress(${taskId}) directly`);
+      console.log(`[FORM DEBUG] Calling saveProgress(${taskId}) directly`);
       this.saveProgress(taskId);
     } else {
-      console.log(`[FIELD DEBUG] WARNING: No taskId provided - changes will NOT be saved immediately`);
+      console.log(`[FORM DEBUG] WARNING: No taskId provided - changes will NOT be saved immediately`);
     }
+    
+    console.log(`[FORM DEBUG] ----- updateFormData END -----`);
   }
 
   /**
@@ -561,21 +570,77 @@ export class KybFormService implements FormServiceInterface {
   }
   
   /**
+   * Compare two form data objects and return the differences
+   * This is useful for debugging to see what changed between client and server
+   */
+  compareFormData(currentData: Record<string, any>, serverData: Record<string, any>): Array<{key: string, currentValue: any, serverValue: any}> {
+    const differences: Array<{key: string, currentValue: any, serverValue: any}> = [];
+    
+    // Check all keys in current data
+    for (const key of Object.keys(currentData)) {
+      // Convert to string for comparison to handle different types correctly
+      const currentValue = currentData[key] !== undefined ? currentData[key] : '';
+      const serverValue = serverData[key] !== undefined ? serverData[key] : '';
+      
+      // Compare as strings to handle different types
+      const currentValueStr = String(currentValue);
+      const serverValueStr = String(serverValue);
+      
+      if (currentValueStr !== serverValueStr) {
+        differences.push({
+          key,
+          currentValue,
+          serverValue
+        });
+      }
+    }
+    
+    // Check for keys in server data that are not in current data
+    for (const key of Object.keys(serverData)) {
+      if (!(key in currentData)) {
+        differences.push({
+          key,
+          currentValue: undefined,
+          serverValue: serverData[key]
+        });
+      }
+    }
+    
+    return differences;
+  }
+
+  /**
    * Update local form data from server response
    * This ensures we're always in sync with the database
    */
   updateLocalFormDataFromServer(serverFormData: Record<string, any>): void {
     if (!serverFormData || typeof serverFormData !== 'object') {
-      console.warn('[KybService] Invalid server form data received');
+      console.warn('[FORM DEBUG] Invalid server form data received');
       return;
     }
     
-    console.log(`[KybService] Updating local form data with ${Object.keys(serverFormData).length} fields from server`);
+    console.log(`[FORM DEBUG] Updating local form data with ${Object.keys(serverFormData).length} fields from server`);
     
     // Normalize the data (convert nulls to empty strings)
     const normalizedFormData = Object.fromEntries(
       Object.entries(serverFormData).map(([key, value]) => [key, value === null ? '' : value])
     );
+    
+    // Log specific fields of interest before update
+    const keysOfInterest = ['corporateRegistration', 'goodStanding', 'regulatoryActions', 'investigationsIncidents'];
+    const beforeUpdate = this.formData;
+    const beforeFields = keysOfInterest.map(key => {
+      return {
+        key,
+        value: beforeUpdate[key],
+        exists: key in beforeUpdate
+      };
+    });
+    
+    console.log(`[FORM DEBUG] Key fields before update:`);
+    beforeFields.forEach(field => {
+      console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
+    });
     
     // Update the local form data
     this.formData = { ...normalizedFormData };
@@ -596,10 +661,25 @@ export class KybFormService implements FormServiceInterface {
       )
     }));
     
+    // Log specific fields of interest after update
+    const afterUpdate = this.formData;
+    const afterFields = keysOfInterest.map(key => {
+      return {
+        key,
+        value: afterUpdate[key],
+        exists: key in afterUpdate
+      };
+    });
+    
+    console.log(`[FORM DEBUG] Key fields after update:`);
+    afterFields.forEach(field => {
+      console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
+    });
+    
     // Update the last saved data reference
     this.lastSavedData = JSON.stringify(normalizedFormData);
     
-    console.log('[KybService] Local form data updated from server');
+    console.log('[FORM DEBUG] Local form data updated from server - lastSavedData reference updated');
   }
 
   /**
@@ -624,24 +704,47 @@ export class KybFormService implements FormServiceInterface {
    * Save form progress with improved debouncing and change detection
    */
   async saveProgress(taskId?: number): Promise<void> {
+    console.log(`[FORM DEBUG] ----- saveProgress BEGIN -----`);
+    
     if (!taskId) {
-      console.error("[SAVE DEBUG] CRITICAL ERROR: Task ID is required to save progress");
+      console.error("[FORM DEBUG] CRITICAL ERROR: Task ID is required to save progress");
+      console.log(`[FORM DEBUG] ----- saveProgress END (no taskId) -----`);
       return;
     }
     
     // Get current form data JSON
     const currentDataString = JSON.stringify(this.formData);
     
+    // Get stack trace to identify caller
+    const stackTrace = new Error().stack;
+    console.log(`[FORM DEBUG] saveProgress called from: ${stackTrace}`);
+    
     // Enhanced debug logging to track data changes
-    console.log(`[SAVE DEBUG] Starting saveProgress for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
-    console.log(`[SAVE DEBUG] Current form data keys: ${Object.keys(this.formData).join(', ')}`);
+    console.log(`[FORM DEBUG] Starting saveProgress for taskId: ${taskId} with ${Object.keys(this.formData).length} fields`);
+    console.log(`[FORM DEBUG] Service state: initialized=${this.initialized}, lastSaveExists=${this.lastSavedData ? 'yes' : 'no'}`);
+    console.log(`[FORM DEBUG] Current form data keys: ${Object.keys(this.formData).join(', ')}`);
     
     // Sample the first few fields to verify content
     const sampleFields = Object.entries(this.formData).slice(0, 3);
-    console.log('[SAVE DEBUG] Sample form data values:');
+    console.log('[FORM DEBUG] Sample form data values:');
     sampleFields.forEach(([key, value]) => {
-      console.log(`[SAVE DEBUG] - ${key}: "${value}" (${typeof value})`);
+      console.log(`[FORM DEBUG] - ${key}: "${value}" (${typeof value})`);
     });
+    
+    // Verify specific test fields - check for important fields or test values
+    const businessType = this.formData['businessType'];
+    const registrationNumber = this.formData['registrationNumber'];
+    console.log(`[FORM DEBUG] Key field values - businessType: "${businessType}", registrationNumber: "${registrationNumber}"`);
+    
+    // Check for asdf values (test data) in the form
+    const asdfValues = Object.entries(this.formData)
+      .filter(([_, value]) => value === 'asdf')
+      .map(([key]) => key);
+    
+    if (asdfValues.length > 0) {
+      console.log(`[FORM DEBUG] WARNING: Found ${asdfValues.length} fields with value "asdf":`);
+      console.log(`[FORM DEBUG] ASDF fields: ${asdfValues.join(', ')}`);
+    }
     
     if (this.lastSavedData) {
       try {
@@ -659,23 +762,23 @@ export class KybFormService implements FormServiceInterface {
         
         // Log changes for debugging
         if (changedFields.length > 0) {
-          console.log(`[SAVE DEBUG] Changes detected in ${changedFields.length} fields: ${changedFields.join(', ')}`);
+          console.log(`[FORM DEBUG] Changes detected in ${changedFields.length} fields: ${changedFields.join(', ')}`);
           changedFields.forEach(field => {
-            console.log(`[SAVE DEBUG] Field [${field}] changed from "${previousData[field] || ''}" to "${this.formData[field] || ''}"`);
+            console.log(`[FORM DEBUG] Field [${field}] changed from "${previousData[field] || ''}" to "${this.formData[field] || ''}"`);
           });
         } else {
           // If no changes detected but JSON strings are different
           if (currentDataString !== this.lastSavedData) {
-            console.log('[SAVE DEBUG] JSON strings differ but no field changes detected - forcing save anyway');
+            console.log('[FORM DEBUG] JSON strings differ but no field changes detected - forcing save anyway');
           } else {
-            console.log('[SAVE DEBUG] No fields have changed values - forcing save anyway');
+            console.log('[FORM DEBUG] No fields have changed values - forcing save anyway');
           }
         }
       } catch (err) {
-        console.error('[SAVE DEBUG] Error comparing data changes:', err);
+        console.error('[FORM DEBUG] Error comparing data changes:', err);
       }
     } else {
-      console.log('[SAVE DEBUG] First save - no previous data for comparison');
+      console.log('[FORM DEBUG] First save - no previous data for comparison');
     }
     
     // CRITICAL FIX: Always save form data when saveProgress is called
@@ -685,18 +788,23 @@ export class KybFormService implements FormServiceInterface {
     if (this.saveProgressTimer) {
       clearTimeout(this.saveProgressTimer);
       this.saveProgressTimer = null;
+      console.log('[FORM DEBUG] Cleared existing timer');
     }
+    
+    console.log(`[FORM DEBUG] Setting debounce timer (400ms)`);
     
     // Set a new timer for debouncing (reduced to 400ms)
     this.saveProgressTimer = setTimeout(async () => {
       try {
-        console.log(`[KybService] Saving ${Object.keys(this.formData).length} fields to database...`);
+        console.log(`[FORM DEBUG] Debounce timer expired, now executing actual save`);
+        console.log(`[FORM DEBUG] Saving ${Object.keys(this.formData).length} fields to database...`);
         const progress = this.calculateProgress();
         
         // Calculate appropriate status based on progress
         const status = this.calculateTaskStatus();
         
-        console.log(`[KybService] Calculated status for save: ${status} with progress ${progress}%`);
+        console.log(`[FORM DEBUG] Calculated status for save: ${status} with progress ${progress}%`);
+        console.log(`[FORM DEBUG] Making API call to saveKybProgress for taskId: ${taskId}`);
         
         // Save to server first, only update lastSavedData if successful
         const result = await this.saveKybProgress(taskId, progress, this.formData, status);
@@ -705,15 +813,20 @@ export class KybFormService implements FormServiceInterface {
         if (result && result.success) {
           // Update last saved data reference AFTER successful save
           this.lastSavedData = currentDataString;
-          console.log(`[KybService] Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
+          console.log(`[FORM DEBUG] API call successful - updated lastSavedData reference`);
+          console.log(`[FORM DEBUG] Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
         } else {
-          console.error('[KybService] Failed to save progress:', result?.error || 'Unknown error');
+          console.error('[FORM DEBUG] API call failed:', result?.error || 'Unknown error');
         }
       } catch (error) {
-        console.error('[KybService] Error saving progress:', error);
+        console.error('[FORM DEBUG] Exception during save:', error);
         // Silent failure to allow user to continue working
       }
+      
+      console.log(`[FORM DEBUG] ----- saveProgress END (timer callback complete) -----`);
     }, 400); // Reduced debounce time for more responsive saving
+    
+    console.log(`[FORM DEBUG] ----- saveProgress END (timer set) -----`);
   }
 
   /**
@@ -937,43 +1050,144 @@ export class KybFormService implements FormServiceInterface {
    * Load saved progress for a task
    */
   async loadProgress(taskId: number): Promise<Record<string, any>> {
+    console.log(`[FORM DEBUG] ----- loadProgress BEGIN for taskId: ${taskId} -----`);
+    
+    // Get stack trace to identify caller
+    const stackTrace = new Error().stack;
+    console.log(`[FORM DEBUG] loadProgress called from: ${stackTrace}`);
+    
     try {
-      console.log(`[DEBUG KybService] Loading progress for task ID: ${taskId}`);
+      console.log(`[FORM DEBUG] Loading progress for task ID: ${taskId}`);
+      console.log(`[FORM DEBUG] Service state: initialized=${this.initialized}, lastSaveExists=${this.lastSavedData ? 'yes' : 'no'}`);
       
       // Get current form data before loading - we'll use this if the API call fails
       const currentFormData = this.formData;
+      console.log(`[FORM DEBUG] Current form data before loading: ${Object.keys(currentFormData).length} fields`);
+      
+      // Show sample of current data
+      if (Object.keys(currentFormData).length > 0) {
+        const sampleKeys = Object.keys(currentFormData).slice(0, 3);
+        console.log(`[FORM DEBUG] Current data samples:`);
+        sampleKeys.forEach(key => {
+          console.log(`[FORM DEBUG] - ${key}: "${currentFormData[key]}" (${typeof currentFormData[key]})`);
+        });
+      }
+      
+      // Log specific fields we're interested in
+      const keysOfInterest = ['corporateRegistration', 'goodStanding', 'regulatoryActions', 'investigationsIncidents'];
+      const currentInterestingFields = keysOfInterest.map(key => {
+        return {
+          key,
+          value: currentFormData[key],
+          exists: key in currentFormData
+        };
+      });
+      
+      console.log(`[FORM DEBUG] Important fields before loading:`);
+      currentInterestingFields.forEach(field => {
+        console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
+      });
       
       // Get progress data from the server
+      console.log(`[FORM DEBUG] Making API call to getKybProgress for taskId: ${taskId}`);
       const progressData = await this.getKybProgress(taskId);
       const { formData, status } = progressData;
       
+      console.log(`[FORM DEBUG] API call completed with status: ${status || 'none'}`);
+      console.log(`[FORM DEBUG] Data returned from server: ${formData ? Object.keys(formData).length : 0} fields`);
+      
+      // If form data is returned, log a sample
+      if (formData && Object.keys(formData).length > 0) {
+        const sampleServerKeys = Object.keys(formData).slice(0, 3);
+        console.log(`[FORM DEBUG] Server data samples:`);
+        sampleServerKeys.forEach(key => {
+          console.log(`[FORM DEBUG] - ${key}: "${formData[key]}" (${typeof formData[key]})`);
+        });
+        
+        // Log important fields from server
+        const serverInterestingFields = keysOfInterest.map(key => {
+          return {
+            key,
+            value: formData[key],
+            exists: key in formData
+          };
+        });
+        
+        console.log(`[FORM DEBUG] Important fields from server:`);
+        serverInterestingFields.forEach(field => {
+          console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
+        });
+      }
+      
       // Store the server-provided status if available
       if (status) {
-        console.log(`[DEBUG KybService] Server provided status: ${status}`);
+        console.log(`[FORM DEBUG] Server provided status: ${status}, updating local taskStatus`);
         this.taskStatus = status;
       }
       
       // If no data was returned but we have existing data, keep the current data
       if (!formData || Object.keys(formData).length === 0) {
-        console.log('[DEBUG KybService] No saved data found or empty data object received');
+        console.log('[FORM DEBUG] No saved data found or empty data object received from server');
         if (Object.keys(currentFormData).length > 0) {
-          console.log(`[DEBUG KybService] Using existing form data with ${Object.keys(currentFormData).length} fields`);
+          console.log(`[FORM DEBUG] Using existing form data with ${Object.keys(currentFormData).length} fields`);
+          console.log(`[FORM DEBUG] ----- loadProgress END (kept current data) -----`);
           return currentFormData;
         }
         
-        console.log('[DEBUG KybService] No existing form data, using empty object');
+        console.log('[FORM DEBUG] No existing form data, using empty object');
         this.loadFormData({});
+        console.log(`[FORM DEBUG] ----- loadProgress END (empty data) -----`);
         return {};
       }
       
-      console.log(`[DEBUG KybService] For already initialized service - loaded saved data with ${Object.keys(formData).length} fields`);
+      console.log(`[FORM DEBUG] For already initialized service - loaded saved data with ${Object.keys(formData).length} fields`);
+      
+      // Check for "asdf" values in server data
+      const asdfValues = Object.entries(formData)
+        .filter(([_, value]) => value === 'asdf')
+        .map(([key]) => key);
+      
+      if (asdfValues.length > 0) {
+        console.log(`[FORM DEBUG] WARNING: Found ${asdfValues.length} fields with value "asdf" from server:`);
+        console.log(`[FORM DEBUG] ASDF fields: ${asdfValues.join(', ')}`);
+      }
+      
+      // Compare current data with server data
+      const differences = this.compareFormData(currentFormData, formData);
+      if (differences.length > 0) {
+        console.log(`[FORM DEBUG] Found ${differences.length} differences between current and server data:`);
+        differences.forEach(diff => {
+          console.log(`[FORM DEBUG] - ${diff.key}: current="${diff.currentValue}" (${typeof diff.currentValue}) vs server="${diff.serverValue}" (${typeof diff.serverValue})`);
+        });
+      } else {
+        console.log(`[FORM DEBUG] Current data and server data are identical`);
+      }
       
       // Use our new method for consistent handling of form data updates
+      console.log(`[FORM DEBUG] Updating local form data from server data`);
       this.updateLocalFormDataFromServer(formData);
       
+      // Verify our data was updated correctly
+      const afterUpdate = this.formData;
+      const afterInterestingFields = keysOfInterest.map(key => {
+        return {
+          key,
+          value: afterUpdate[key],
+          exists: key in afterUpdate
+        };
+      });
+      
+      console.log(`[FORM DEBUG] Form data after update: ${Object.keys(afterUpdate).length} fields`);
+      console.log(`[FORM DEBUG] Important fields after update:`);
+      afterInterestingFields.forEach(field => {
+        console.log(`[FORM DEBUG] - ${field.key}: ${field.exists ? `"${field.value}"` : 'NOT PRESENT'}`);
+      });
+      
+      console.log(`[FORM DEBUG] ----- loadProgress END (success) -----`);
       return this.formData;
     } catch (error) {
-      console.error(`Error loading progress for task ${taskId}:`, error);
+      console.error(`[FORM DEBUG] Error loading progress for task ${taskId}:`, error);
+      console.log(`[FORM DEBUG] ----- loadProgress END (error) -----`);
       
       // If we already have data, keep it
       if (Object.keys(this.formData).length > 0) {
