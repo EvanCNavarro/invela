@@ -38,6 +38,7 @@ enum SuggestionStatus {
 function convertResponsesToCSV(fields: any[], formData: any) {
   // Group fields by their section/group for better organization
   const fieldsByGroup: Record<string, any[]> = {};
+  let totalFields = 0;
   
   for (const field of fields) {
     const group = field.group || 'Other';
@@ -45,23 +46,20 @@ function convertResponsesToCSV(fields: any[], formData: any) {
       fieldsByGroup[group] = [];
     }
     fieldsByGroup[group].push(field);
+    totalFields++;
   }
   
-  // Start with a more comprehensive header
+  // Start with a comprehensive header
   const timestamp = new Date().toISOString();
   let csvLines = [
     `KYB Form Export (Generated: ${timestamp})`,
-    '', // Empty line for spacing
-    'Section,Field ID,Question,Response'
+    `Total Questions: ${totalFields}`,
+    'Question#,Section,Field ID,Question,Response'
   ];
   
-  // Add each field grouped by section
+  // Add each field grouped by section (without spaces between sections)
+  let questionCounter = 1;
   for (const [group, groupFields] of Object.entries(fieldsByGroup)) {
-    // Add a blank line before each section (except the first)
-    if (csvLines.length > 3) {
-      csvLines.push('');
-    }
-    
     // Process each field in this group
     for (const field of groupFields) {
       // Get response data, with fallback to empty string
@@ -79,7 +77,10 @@ function convertResponsesToCSV(fields: any[], formData: any) {
       const questionText = field.question || field.display_name || field.field_key;
       
       // Create CSV line with quotes around each field to handle commas, newlines, etc.
-      csvLines.push(`"${group}","${field.field_key}","${questionText}","${escapedResponse}"`);
+      csvLines.push(`${questionCounter},"${group}","${field.field_key}","${questionText}","${escapedResponse}"`);
+      
+      // Increment question counter
+      questionCounter++;
     }
   }
   
