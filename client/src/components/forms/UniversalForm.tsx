@@ -413,13 +413,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Auto-navigate to review section for ready_for_submission tasks - ONLY ON INITIAL LOAD
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
-  // Initialize expanded accordion sections when component loads
+  // Initialize expanded accordion sections when component loads or refreshes
   useEffect(() => {
     if (sections.length > 0) {
       // Set all sections to be expanded by default
       const sectionValues = sections.map((_, i) => `section-${i}`);
       setExpandedSections(sectionValues);
       console.log('[UniversalForm] Setting initial expanded sections:', sectionValues);
+    }
+  }, [sections]);
+  
+  // Helper function to handle accordion state changes
+  const handleAccordionValueChange = useCallback((value: string[]) => {
+    // If no values, expand all sections (ensure they're always expanded)
+    if (value.length === 0) {
+      const allSectionIds = sections.map((_, i) => `section-${i}`);
+      setExpandedSections(allSectionIds);
+    } else {
+      setExpandedSections(value);
     }
   }, [sections]);
   
@@ -779,8 +790,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               
               <Accordion 
                 type="multiple" 
-                value={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)}
-                defaultValue={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)} 
+                value={expandedSections}
+                onValueChange={handleAccordionValueChange}
                 className="w-full mb-6"
               >
                 {allSections.filter(section => section.id !== 'review-section').map((section, sectionIndex) => {
@@ -936,8 +947,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             <div className="space-y-6 mt-6">
                               <Accordion 
                                 type="multiple" 
-                                value={sections.map((_, i) => `section-${i}`)}
-                                defaultValue={sections.map((_, i) => `section-${i}`)} 
+                                value={expandedSections}
+                                onValueChange={handleAccordionValueChange}
                                 className="w-full"
                               >
                                 {sections.map((reviewSection, sectionIndex) => {
