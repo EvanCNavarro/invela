@@ -554,16 +554,41 @@ export class KybFormService implements FormServiceInterface {
   /**
    * Calculate form completion progress
    */
+  /**
+   * Calculate form completion progress
+   * This ensures consistent progress calculation with the UI
+   */
   calculateProgress(): number {
-    const requiredFields = this.fields.filter(field => field.required);
-    if (requiredFields.length === 0) return 100;
+    // If no fields are defined, return 0
+    if (this.fields.length === 0) {
+      console.log('[FORM DEBUG] No fields found during progress calculation');
+      return 0;
+    }
     
-    const filledRequiredFields = requiredFields.filter(field => {
+    // Count all fields regardless of required status to match UI behavior
+    const fieldStatuses = this.fields.map(field => {
       const value = this.formData[field.key];
-      return value !== undefined && value !== null && value !== '';
+      // Consistent with UI criteria for field completion
+      const hasValue = value !== undefined && value !== null && value !== '';
+      return {
+        key: field.key,
+        hasValue,
+        value: value
+      };
     });
     
-    return Math.round((filledRequiredFields.length / requiredFields.length) * 100);
+    const filledFields = fieldStatuses.filter(status => status.hasValue);
+    const totalFields = this.fields.length;
+    
+    // Calculate percentage
+    const progressPercentage = totalFields > 0 
+      ? Math.round((filledFields.length / totalFields) * 100) 
+      : 0;
+    
+    // Log detailed progress info for debugging
+    console.log(`[FORM DEBUG] Progress calculation: ${filledFields.length}/${totalFields} fields filled (${progressPercentage}%)`);
+    
+    return progressPercentage;
   }
   
   /**
