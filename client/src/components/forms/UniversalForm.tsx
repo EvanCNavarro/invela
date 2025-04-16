@@ -164,6 +164,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   
+  // State for accordion management
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  
   // We'll use React Hook Form for all form state management
   
   // Use our new form data manager hook to handle form data
@@ -409,6 +412,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Auto-navigate to review section for ready_for_submission tasks - ONLY ON INITIAL LOAD
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
+  // Initialize expanded accordion sections when component loads
+  useEffect(() => {
+    if (sections.length > 0) {
+      // Set all sections to be expanded by default
+      const sectionValues = sections.map((_, i) => `section-${i}`);
+      setExpandedSections(sectionValues);
+      console.log('[UniversalForm] Setting initial expanded sections:', sectionValues);
+    }
+  }, [sections]);
   
   useEffect(() => {
     // Don't run this effect until allSections is populated
@@ -764,7 +777,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 </div>
               </div>
               
-              <Accordion type="multiple" defaultValue={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)} className="w-full mb-6">
+              <Accordion 
+                type="multiple" 
+                value={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)}
+                defaultValue={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)} 
+                className="w-full mb-6"
+              >
                 {allSections.filter(section => section.id !== 'review-section').map((section, sectionIndex) => {
                   const sectionFields = fields.filter(field => field.section === section.id);
                   
@@ -916,7 +934,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             
                             {/* Review all sections and their answers */}
                             <div className="space-y-6 mt-6">
-                              <Accordion type="multiple" defaultValue={sections.map((_, i) => `section-${i}`)} className="w-full">
+                              <Accordion 
+                                type="multiple" 
+                                value={sections.map((_, i) => `section-${i}`)}
+                                defaultValue={sections.map((_, i) => `section-${i}`)} 
+                                className="w-full"
+                              >
                                 {sections.map((reviewSection, sectionIndex) => {
                                   const sectionFields = fields.filter(field => field.section === reviewSection.id);
                                   const filledFieldCount = sectionFields.filter(field => {
