@@ -38,9 +38,16 @@ interface Task {
   status: string;
   priority: string;
   progress: number;
+  company_id?: number; // Added company_id field
+  assigned_to?: number | null; 
+  created_by?: number;
+  created_at?: string;
+  updated_at?: string;
   metadata: {
     companyId?: number;
+    company_id?: number;
     companyName?: string;
+    company_name?: string;
     company?: {
       name: string;
       description?: string;
@@ -106,13 +113,24 @@ export default function TaskPage({ params }: TaskPageProps) {
     
     // Set display names based on available data
     if (taskData.metadata) {
-      // Display name is used for the UI elements like headers
-      const derivedName = taskData.metadata.companyName || 
-                           (taskData.metadata.company ? taskData.metadata.company.name : null) || 
-                           'Unknown Company';
+      // Get company name from different possible sources to avoid "Unknown Company"
+      let companyName = 'Unknown Company';
       
-      setDisplayName(derivedName);
-      setDerivedCompanyName(derivedName);
+      // Check all possible sources for company name
+      if (taskData.metadata.companyName) {
+        companyName = taskData.metadata.companyName;
+      } else if (taskData.metadata.company?.name) {
+        companyName = taskData.metadata.company.name;
+      } else if (taskData.metadata.company_name) {
+        companyName = taskData.metadata.company_name;
+      } else if (taskData.company_id) {
+        // If needed, could fetch company name from API using company_id
+        console.log(`[TaskPage] No company name found in metadata, but found company_id: ${taskData.company_id}`);
+      }
+      
+      console.log(`[TaskPage] Setting company name to: ${companyName}`);
+      setDisplayName(companyName);
+      setDerivedCompanyName(companyName);
       
       // Set fileId for direct downloads if present
       if (type === 'kyb' && taskData.metadata.kybFormFile) {
@@ -127,7 +145,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       }
     }
     
-    // Check if the task has been submitted
+    // Check various task statuses
     if (taskData.status === 'submitted' || taskData.status === 'completed') {
       setIsSubmitted(true);
     }

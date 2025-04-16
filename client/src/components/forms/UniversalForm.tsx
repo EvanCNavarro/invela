@@ -197,6 +197,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     onChange: onProgress
   });
   
+  // Check if we should automatically go to the review section based on task status
+  useEffect(() => {
+    if (
+      taskStatus === 'ready_for_submission' && 
+      allSections.length > 1 && 
+      activeSection !== allSections.length - 1 && 
+      overallProgress === 100
+    ) {
+      // If task is ready for submission, form is complete, and we're not on the review page,
+      // automatically navigate to the review page
+      console.log('[UniversalForm] Task is ready for submission, navigating to review section');
+      setTimeout(() => {
+        setActiveSection(allSections.length - 1);
+      }, 100);
+    }
+  }, [taskStatus, allSections.length, activeSection, overallProgress, setActiveSection]);
+  
   // Create and manage the Review & Submit section
   const [allSections, setAllSections] = useState<FormSection[]>([]);
   
@@ -827,9 +844,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       </Button>
                     )}
                     
+                    {/* Final Review button - only shown on the last section before Review & Submit */}
+                    {activeSection === allSections.length - 2 && overallProgress === 100 && (
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        className="flex items-center gap-1"
+                        onClick={() => {
+                          setActiveSection(allSections.length - 1); // Navigate to Review & Submit
+                        }}
+                      >
+                        Final Review <Eye className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
+                    
                     {/* Show different button based on current section and whether we're on review page */}
                     {(() => {
                       const isReviewPage = activeSection === allSections.length - 1;
+                      const isSecondToLastSection = activeSection === allSections.length - 2;
                       
                       if (isReviewPage) {
                         return (
@@ -838,13 +870,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             disabled={!form.getValues("agreement_confirmation") || overallProgress < 100}
                             className="bg-primary"
                           >
-                            <Check className="mr-2 h-4 w-4" />
-                            Submit Form
+                            Submit <Check className="ml-2 h-4 w-4" />
                           </Button>
                         );
                       }
                       
-                      if (activeSection < allSections.length - 1) {
+                      if (activeSection < allSections.length - 1 && !isSecondToLastSection) {
                         return (
                           <Button
                             type="button"
@@ -854,8 +885,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             }}
                             className="flex items-center gap-1"
                           >
-                            Next
-                            <ArrowRight className="h-4 w-4" />
+                            Next <ArrowRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        );
+                      }
+                      
+                      if (isSecondToLastSection && overallProgress < 100) {
+                        return (
+                          <Button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault(); // Prevent any form submission
+                              setActiveSection(activeSection + 1);
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            Next <ArrowRight className="ml-1 h-4 w-4" />
                           </Button>
                         );
                       }
