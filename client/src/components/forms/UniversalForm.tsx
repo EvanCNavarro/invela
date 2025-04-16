@@ -41,7 +41,8 @@ import {
   Calendar,
   ClipboardCheck,
   Building2,
-  UserCircle
+  UserCircle,
+  XCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
