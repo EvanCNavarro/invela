@@ -17,7 +17,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { toast } from '@/hooks/use-toast';
+import { toast, useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { componentFactory } from '@/services/componentFactory';
 import { FormServiceInterface, FormData, FormSection as ServiceFormSection } from '@/services/formService';
@@ -762,8 +762,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 taskStatus: "completed"
               });
               
-              // Dismiss the submitting toast
-              toast.dismiss(submissionToast);
+              // Dismiss the submitting toast using the returned object's dismiss method
+              if (submissionToast && typeof submissionToast.dismiss === 'function') {
+                submissionToast.dismiss();
+              }
               
               // Only log success; don't show toast since we'll show the modal
               logger.info('All post-submission actions completed successfully');
@@ -802,6 +804,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             throw new Error('Form submission completed but returned an invalid result.');
           }
         } catch (submitError) {
+          // If submission fails, dismiss the submitting toast using the returned object's dismiss method
+          if (submissionToast && typeof submissionToast.dismiss === 'function') {
+            submissionToast.dismiss();
+          }
+          
           // If submission fails, show error toast
           const errMessage = submitError instanceof Error ? submitError.message : 'Form submission failed';
           logger.error('Form submission error:', errMessage, submitError);
