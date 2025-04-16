@@ -560,7 +560,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
       
       // Dismiss the submitting toast
-      submittingToastId.dismiss();
+      if (submittingToastId) {
+        submittingToastId.dismiss();
+      }
       
       // Show success toast notification
       toast({
