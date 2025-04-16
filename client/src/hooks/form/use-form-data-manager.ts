@@ -89,6 +89,110 @@ export function useFormDataManager({
     mode: 'onChange',
   });
   
+  // Function to save form progress - we define this first to avoid circular references
+  const saveProgress = useCallback(async (): Promise<boolean> => {
+    if (!formService || !taskId) {
+      logger.warn('Cannot save progress - form service or taskId is not available');
+      return false;
+    }
+    
+    try {
+      logger.info(`Saving progress for task ID: ${taskId}`);
+      
+      // Get latest data from the form service
+      const currentData = formService.getFormData();
+      logger.debug(`Form data before save: ${Object.keys(currentData).length} fields`);
+      
+      // Save to the server
+      const result = await formService.save({
+        taskId,
+        includeMetadata: true
+      });
+      
+      logger.info(`Save result: ${result ? 'success' : 'failed'}`);
+      return !!result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save progress';
+      logger.error('Save progress error:', message);
+      setError(message);
+      return false;
+    }
+  }, [formService, taskId]);
+  
+  // Function to update a single field value
+  const updateField = useCallback((name: string, value: any) => {
+    if (!formService) {
+      logger.warn('Cannot update field - form service is not available');
+      return;
+    }
+    
+    try {
+      // Get current form data for comparison
+      const currentData = formService.getFormData();
+      const prevValue = currentData[name];
+      
+      // Log whether this is a field clearing operation or regular update
+      const isClearing = 
+        (prevValue !== undefined && prevValue !== null && prevValue !== '') && 
+        (value === '' || value === null || value === undefined);
+      
+      if (isClearing) {
+        logger.debug(`Clearing field ${name}: ${prevValue} → (empty)`);
+      } else {
+        logger.debug(`Updating field ${name}: ${prevValue} → ${value}`);
+      }
+      
+      // Normalize value consistently
+      const normalizedValue = (value === null || value === undefined) ? '' : value;
+      
+      // Always update in the form service, ensuring field clearing operations work
+      formService.updateFormData(name, normalizedValue);
+      
+      // Update in React Hook Form
+      form.setValue(name, normalizedValue, { 
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true
+      });
+      
+      // Update local state
+      setFormData(current => {
+        const updated = { ...current, [name]: normalizedValue };
+        
+        // Notify parent component if callback provided
+        if (onDataChange) {
+          onDataChange(updated);
+        }
+        
+        return updated;
+      });
+      
+      // Force an immediate save when clearing a field to ensure deletion is persisted
+      if (isClearing && taskId) {
+        logger.info(`Field ${name} was cleared, saving changes immediately`);
+        saveProgress().catch(err => {
+          logger.error('Auto-save after field clearing failed:', err);
+        });
+      }
+      // For regular updates, use the debounced auto-save
+      else if (taskId) {
+        // Clear previous timer
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+        }
+        
+        // Set new timer
+        saveTimerRef.current = setTimeout(() => {
+          saveProgress().catch(err => {
+            logger.error('Auto-save failed:', err);
+          });
+        }, 1500);
+      }
+    } catch (error) {
+      logger.error(`Error updating field ${name}:`, error);
+    }
+  }, [formService, form, onDataChange, taskId, saveProgress]);
+
   // Load saved data from the server once when fields and service are available
   useEffect(() => {
     // Skip if no fields, service, or taskId, or if we've already loaded data
@@ -144,94 +248,6 @@ export function useFormDataManager({
     
     loadSavedData();
   }, [fields, formService, taskId, defaultValues, form, onDataChange]);
-  
-  // Function to update a single field value
-  const updateField = useCallback((name: string, value: any) => {
-    if (!formService) {
-      logger.warn('Cannot update field - form service is not available');
-      return;
-    }
-    
-    try {
-      // Get current form data for comparison
-      const currentData = formService.getFormData();
-      const prevValue = currentData[name];
-      
-      logger.debug(`Updating field ${name}: ${prevValue} → ${value}`);
-      
-      // Normalize value consistently
-      const normalizedValue = (value === null || value === undefined) ? '' : value;
-      
-      // Update in the form service
-      formService.updateFormData(name, normalizedValue);
-      
-      // Update in React Hook Form
-      form.setValue(name, normalizedValue, { 
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: true
-      });
-      
-      // Update local state
-      setFormData(current => {
-        const updated = { ...current, [name]: normalizedValue };
-        
-        // Notify parent component if callback provided
-        if (onDataChange) {
-          onDataChange(updated);
-        }
-        
-        return updated;
-      });
-      
-      // Auto-save after a delay (debounced)
-      if (taskId) {
-        // Clear previous timer
-        if (saveTimerRef.current) {
-          clearTimeout(saveTimerRef.current);
-        }
-        
-        // Set new timer
-        saveTimerRef.current = setTimeout(() => {
-          saveProgress().catch(err => {
-            logger.error('Auto-save failed:', err);
-          });
-        }, 1500);
-      }
-    } catch (error) {
-      logger.error(`Error updating field ${name}:`, error);
-    }
-  }, [formService, form, onDataChange, taskId]);
-  
-  // Function to save form progress
-  const saveProgress = useCallback(async (): Promise<boolean> => {
-    if (!formService || !taskId) {
-      logger.warn('Cannot save progress - form service or taskId is not available');
-      return false;
-    }
-    
-    try {
-      logger.info(`Saving progress for task ID: ${taskId}`);
-      
-      // Get latest data from the form service
-      const currentData = formService.getFormData();
-      logger.debug(`Form data before save: ${Object.keys(currentData).length} fields`);
-      
-      // Save to the server
-      const result = await formService.save({
-        taskId,
-        includeMetadata: true
-      });
-      
-      logger.info(`Save result: ${result ? 'success' : 'failed'}`);
-      return !!result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save progress';
-      logger.error('Save progress error:', message);
-      setError(message);
-      return false;
-    }
-  }, [formService, taskId]);
   
   // Function to reset the form with new data
   const resetForm = useCallback((data?: FormData) => {
