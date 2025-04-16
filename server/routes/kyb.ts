@@ -409,9 +409,11 @@ router.post('/api/kyb/progress', async (req, res) => {
 
     for (const response of existingResponses) {
       if (!processedFields.has(response.field_key)) {
+        // Explicitly set value to empty string instead of null
+        // This resolves issues with form field deletion
         await db.update(kybResponses)
           .set({
-            response_value: null,
+            response_value: '',  // Use empty string instead of null
             status: 'EMPTY',
             version: 1,
             updated_at: timestamp
@@ -421,6 +423,7 @@ router.post('/api/kyb/progress', async (req, res) => {
         console.log('[KYB API Debug] Cleared missing field:', {
           fieldKey: response.field_key,
           oldValue: response.response_value,
+          newValue: '',  // Record empty string value for debugging
           timestamp: timestamp.toISOString()
         });
       }
