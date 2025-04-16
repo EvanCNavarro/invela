@@ -354,6 +354,13 @@ router.post('/api/kyb/progress', async (req, res) => {
     console.log(`[SERVER DEBUG] Task ID: ${taskId}, Field count: ${Object.keys(formData).length}`);
     console.log('===============================================');
 
+    // CRITICAL DEBUG - Dump the entire form data object
+    console.log('[SERVER DEBUG] COMPLETE FORM DATA DUMP:');
+    Object.entries(formData).forEach(([key, val]) => {
+      console.log(`[SERVER DEBUG] ${key}: "${val}" (${typeof val})`);
+    });
+    console.log('[SERVER DEBUG] END OF FORM DATA DUMP');
+
     for (const [fieldKey, value] of Object.entries(formData)) {
       const fieldId = fieldMap.get(fieldKey);
       
@@ -364,14 +371,30 @@ router.post('/api/kyb/progress', async (req, res) => {
 
       processedFields.add(fieldKey);
       
-      // Important change: Always store empty string values directly in the database
-      // Never convert empty strings to null - this prevents the form from handling them correctly
-      const originalValue = value;
-      const responseValue = value === null ? '' : String(value);
+      // CRITICAL FIX: Ensure we properly handle all types of input values
+      // Use more robust type conversion to ensure we process values correctly
+      let originalValue = value;
+      let responseValue;
+      
+      // Handle different value types properly
+      if (value === null || value === undefined) {
+        responseValue = ''; // Store empty string for null/undefined values
+      } else if (typeof value === 'string') {
+        responseValue = value; // Keep strings as-is
+      } else {
+        // Convert non-string values to strings
+        responseValue = String(value);
+      }
+      
       const status = responseValue === '' ? 'EMPTY' : 'COMPLETE';
       
       console.log(`[SERVER DEBUG] Processing field: "${fieldKey}" (ID: ${fieldId})`);
-      console.log(`[SERVER DEBUG] Original value: ${originalValue === '' ? '(empty string)' : originalValue === null ? '(null)' : originalValue}`);
+      console.log(`[SERVER DEBUG] Original value: ${
+        originalValue === '' ? '(empty string)' : 
+        originalValue === null ? '(null)' : 
+        originalValue === undefined ? '(undefined)' : 
+        originalValue
+      }`);
       console.log(`[SERVER DEBUG] Normalized value: "${responseValue}" (${typeof responseValue})`);
       console.log(`[SERVER DEBUG] Field status: ${status}`);
 
@@ -396,6 +419,12 @@ router.post('/api/kyb/progress', async (req, res) => {
             console.log(`[SERVER DEBUG] - New value: "${responseValue}" (${typeof responseValue})`);
             console.log(`[SERVER DEBUG] - Old status: ${existingResponse.status}, New status: ${status}`);
             
+            // CRITICAL: Verify the field update contains the correct value before executing
+            console.log(`[SERVER DEBUG] ABOUT TO UPDATE - DOUBLE CHECK VALUES:`);
+            console.log(`[SERVER DEBUG] - field_key: ${fieldKey}`);
+            console.log(`[SERVER DEBUG] - field_id: ${fieldId}`);
+            console.log(`[SERVER DEBUG] - response_value: "${responseValue}"`);
+            
             await db.update(kybResponses)
               .set({
                 response_value: responseValue,
@@ -405,7 +434,21 @@ router.post('/api/kyb/progress', async (req, res) => {
               })
               .where(eq(kybResponses.id, existingResponse.id));
 
-            console.log(`[SERVER DEBUG] ✅ UPDATE SUCCESSFUL for field "${fieldKey}" (ID: ${existingResponse.id})`);
+            // Verify the update with a select query
+            const [verifiedUpdate] = await db.select()
+              .from(kybResponses)
+              .where(eq(kybResponses.id, existingResponse.id));
+              
+            console.log(`[SERVER DEBUG] ✅ UPDATE VERIFICATION for field "${fieldKey}":`);
+            console.log(`[SERVER DEBUG] - Expected: "${responseValue}"`);
+            console.log(`[SERVER DEBUG] - Actual: "${verifiedUpdate?.response_value}"`);
+            console.log(`[SERVER DEBUG] - Match: ${verifiedUpdate?.response_value === responseValue ? 'YES' : 'NO'}`);
+            
+            if (verifiedUpdate?.response_value !== responseValue) {
+              console.error(`[SERVER DEBUG] ❌ UPDATE VERIFICATION FAILED - values don't match!`);
+            } else {
+              console.log(`[SERVER DEBUG] ✅ UPDATE SUCCESSFUL for field "${fieldKey}" (ID: ${existingResponse.id})`);
+            }
           } catch (error) {
             console.error(`[SERVER DEBUG] ❌ DATABASE ERROR updating response for field "${fieldKey}":`);
             console.error(error);
@@ -428,7 +471,26 @@ router.post('/api/kyb/progress', async (req, res) => {
                 updated_at: timestamp
               });
 
-            console.log(`[SERVER DEBUG] ✅ INSERT SUCCESSFUL for field "${fieldKey}"`);
+            // Verify the insert with a select query
+            const [verifiedInsert] = await db.select()
+              .from(kybResponses)
+              .where(
+                and(
+                  eq(kybResponses.task_id, taskId),
+                  eq(kybResponses.field_id, fieldId)
+                )
+              );
+              
+            console.log(`[SERVER DEBUG] ✅ INSERT VERIFICATION for field "${fieldKey}":`);
+            console.log(`[SERVER DEBUG] - Expected: "${responseValue}"`);
+            console.log(`[SERVER DEBUG] - Actual: "${verifiedInsert?.response_value}"`);
+            console.log(`[SERVER DEBUG] - Match: ${verifiedInsert?.response_value === responseValue ? 'YES' : 'NO'}`);
+            
+            if (verifiedInsert?.response_value !== responseValue) {
+              console.error(`[SERVER DEBUG] ❌ INSERT VERIFICATION FAILED - values don't match!`);
+            } else {
+              console.log(`[SERVER DEBUG] ✅ INSERT SUCCESSFUL for field "${fieldKey}"`);
+            }
           } catch (error) {
             console.error(`[SERVER DEBUG] ❌ DATABASE ERROR inserting response for field "${fieldKey}":`);
             console.error(error);
