@@ -56,6 +56,10 @@ export function useFormDataManager({
   // Ref to track the latest form data for unmount saves
   const latestFormDataRef = useRef<FormData>(initialData || {});
   
+  // Keep track of any in-progress save operation
+  const saveInProgressRef = useRef<boolean>(false);
+  const pendingSaveDataRef = useRef<FormData | null>(null);
+  
   // Create default values for all fields
   const createDefaultValues = useCallback((fieldList: FormField[]): FormData => {
     const defaults: FormData = {};
@@ -99,6 +103,16 @@ export function useFormDataManager({
       return false;
     }
     
+    // If there's already a save in progress, store the current data for later
+    if (saveInProgressRef.current) {
+      logger.info('[SAVE DEBUG] Save in progress, storing current data for later save');
+      pendingSaveDataRef.current = { ...latestFormDataRef.current };
+      return false;
+    }
+    
+    // Mark that a save is in progress
+    saveInProgressRef.current = true;
+    
     try {
       logger.info(`[SAVE DEBUG] Saving progress for task ID: ${taskId}`);
       
@@ -138,11 +152,37 @@ export function useFormDataManager({
         logger.info(`[SAVE DEBUG] - ${key}: "${afterSaveData[key] || '(empty)'}" (${typeof afterSaveData[key]})`);
       });
       
+      // Mark that we've completed the save
+      saveInProgressRef.current = false;
+      
+      // Check if there's pending data that needs to be saved
+      if (pendingSaveDataRef.current) {
+        const pendingData = pendingSaveDataRef.current;
+        pendingSaveDataRef.current = null;
+        
+        logger.info('[SAVE DEBUG] Processing pending data from previous save');
+        
+        // Update form service with latest pending data
+        Object.entries(pendingData).forEach(([key, value]) => {
+          formService.updateFormData(key, value);
+        });
+        
+        // Trigger another save (reusing this same function)
+        setTimeout(() => {
+          saveProgress().catch(err => {
+            logger.error('[SAVE DEBUG] Pending data save failed:', err);
+          });
+        }, 0);
+      }
+      
       return !!result;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save progress';
       logger.error('[SAVE DEBUG] Save progress error:', message);
       setError(message);
+      
+      // Even on failure, mark that we're no longer saving
+      saveInProgressRef.current = false;
       return false;
     }
   }, [formService, taskId]);
@@ -232,7 +272,7 @@ export function useFormDataManager({
       logger.error(`[SAVE DEBUG] Error updating field ${name}:`, error);
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
-  
+
   // Effect to ensure data is saved when component unmounts
   useEffect(() => {
     // Skip if no service or taskId
@@ -253,21 +293,66 @@ export function useFormDataManager({
       // Get the latest form data from our ref (which should be up-to-date)
       const latestData = latestFormDataRef.current;
       
-      // If we have a formService and taskId, save the data immediately
-      if (formService && taskId && Object.keys(latestData).length > 0) {
-        // Update the form service data with latest values
-        Object.entries(latestData).forEach(([key, value]) => {
-          formService.updateFormData(key, value);
-        });
+      // Check if we have a valid form service, task ID, and data to save
+      if (!formService || !taskId || Object.keys(latestData).length === 0) {
+        logger.info('[SAVE DEBUG] No data to save on unmount');
+        return;
+      }
+      
+      // Check if there's a save operation in progress
+      if (saveInProgressRef.current) {
+        logger.info('[SAVE DEBUG] Save operation already in progress, storing latest data for save');
+        // Store the pending data to be saved after the current operation completes
+        pendingSaveDataRef.current = { ...latestData };
+        return;
+      }
         
-        // Perform an immediate save
+      // Mark that we're starting a save operation
+      saveInProgressRef.current = true;
+      
+      // Update the form service data with latest values
+      Object.entries(latestData).forEach(([key, value]) => {
+        formService.updateFormData(key, value);
+      });
+      
+      // Perform an immediate save using a unique timestamp to help with debugging
+      const saveTimestamp = Date.now();
+      logger.info(`[SAVE DEBUG] Starting unmount save #${saveTimestamp}`);
+    
+      try {
+        // Perform a synchronous save if possible to ensure it completes before unmount
         formService.save({ taskId, includeMetadata: true })
           .then(result => {
-            logger.info(`[SAVE DEBUG] Unmount save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+            logger.info(`[SAVE DEBUG] Unmount save #${saveTimestamp} completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+            saveInProgressRef.current = false;
+            
+            // Check if there's pending data that needs to be saved
+            if (pendingSaveDataRef.current) {
+              const pendingData = pendingSaveDataRef.current;
+              pendingSaveDataRef.current = null;
+              
+              // Update form service with latest pending data
+              Object.entries(pendingData).forEach(([key, value]) => {
+                formService.updateFormData(key, value);
+              });
+              
+              // Save the pending data
+              formService.save({ taskId, includeMetadata: true })
+                .then(pendingResult => {
+                  logger.info(`[SAVE DEBUG] Pending data save completed with result: ${pendingResult ? 'SUCCESS' : 'FAILED'}`);
+                })
+                .catch(pendingErr => {
+                  logger.error('[SAVE DEBUG] Pending data save failed with error:', pendingErr);
+                });
+            }
           })
           .catch(err => {
-            logger.error('[SAVE DEBUG] Unmount save failed with error:', err);
+            logger.error(`[SAVE DEBUG] Unmount save #${saveTimestamp} failed with error:`, err);
+            saveInProgressRef.current = false;
           });
+      } catch (error) {
+        logger.error(`[SAVE DEBUG] Unmount save #${saveTimestamp} threw exception:`, error);
+        saveInProgressRef.current = false;
       }
     };
   }, [formService, taskId]);
