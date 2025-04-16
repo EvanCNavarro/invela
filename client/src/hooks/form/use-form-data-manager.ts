@@ -101,7 +101,20 @@ export function useFormDataManager({
       
       // Get latest data from the form service
       const currentData = formService.getFormData();
+      
+      // Log detailed information about the form data
       logger.info(`[SAVE DEBUG] Form data before save: ${Object.keys(currentData).length} fields`);
+      
+      // Add more detailed logging for specific fields we care about
+      const keysToLog = ['businessType', 'registrationNumber', 'corporateRegistration', 'goodStanding'];
+      logger.info(`[SAVE DEBUG] Values for key fields before save:`);
+      keysToLog.forEach(key => {
+        logger.info(`[SAVE DEBUG] - ${key}: "${currentData[key] || '(empty)'}" (${typeof currentData[key]})`);
+      });
+      
+      // Get stack trace to understand who's calling save
+      const stack = new Error().stack;
+      logger.info(`[SAVE DEBUG] saveProgress called from: ${stack?.split('\n')[2] || 'unknown'}`);
       
       // Save to the server
       const result = await formService.save({
@@ -109,7 +122,19 @@ export function useFormDataManager({
         includeMetadata: true
       });
       
+      // Enhanced post-save logging 
       logger.info(`[SAVE DEBUG] Save result: ${result ? 'SUCCESS' : 'FAILED'}`);
+      
+      // Check if data actually persisted
+      const afterSaveData = formService.getFormData();
+      logger.info(`[SAVE DEBUG] Form data after save: ${Object.keys(afterSaveData).length} fields`);
+      
+      // Log the same fields as before to compare
+      logger.info(`[SAVE DEBUG] Values for key fields after save:`);
+      keysToLog.forEach(key => {
+        logger.info(`[SAVE DEBUG] - ${key}: "${afterSaveData[key] || '(empty)'}" (${typeof afterSaveData[key]})`);
+      });
+      
       return !!result;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save progress';
@@ -224,6 +249,14 @@ export function useFormDataManager({
         setError(null);
         
         logger.info(`[SAVE DEBUG] Loading data for task ID: ${taskId}`);
+        
+        // Log API call details
+        logger.info(`[SAVE DEBUG] Calling loadProgress for task ${taskId} with service: ${formService.constructor.name}`);
+        
+        // Get stack trace to understand who's calling load
+        const stack = new Error().stack;
+        logger.info(`[SAVE DEBUG] loadProgress called from: ${stack?.split('\n')[2] || 'unknown'}`);
+        
         const savedData = await formService.loadProgress(taskId);
         
         // Skip processing if another load operation has started
@@ -234,6 +267,13 @@ export function useFormDataManager({
         
         if (savedData && Object.keys(savedData).length > 0) {
           logger.info(`[SAVE DEBUG] Received saved data with ${Object.keys(savedData).length} fields`);
+          
+          // Log detailed information about the form data
+          const keysToLog = ['businessType', 'registrationNumber', 'corporateRegistration', 'goodStanding'];
+          logger.info(`[SAVE DEBUG] Values for key fields loaded from server:`);
+          keysToLog.forEach(key => {
+            logger.info(`[SAVE DEBUG] - ${key}: "${savedData[key] || '(empty)'}" (${typeof savedData[key]})`);
+          });
           
           // Normalize any null values to empty strings
           const normalizedData = Object.fromEntries(
@@ -247,6 +287,13 @@ export function useFormDataManager({
           };
           
           logger.info(`[SAVE DEBUG] Updating form with normalized data: ${Object.keys(completeData).length} fields`);
+          
+          // Log the same fields after normalization
+          logger.info(`[SAVE DEBUG] Values for key fields after normalization:`);
+          keysToLog.forEach(key => {
+            logger.info(`[SAVE DEBUG] - ${key}: "${completeData[key] || '(empty)'}" (${typeof completeData[key]})`);
+          });
+          
           setFormData(completeData);
           form.reset(completeData);
           
