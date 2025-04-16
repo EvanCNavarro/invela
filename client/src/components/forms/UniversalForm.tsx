@@ -779,12 +779,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 submissionToast.dismiss();
               }
               
-              // Show a success toast before showing the modal
+              // Show a success toast before showing the modal with the unified toast styling
               toast({
                 title: "Success!",
                 description: `${formTitle} completed successfully`,
-                variant: "default",
-                className: "bg-green-50 border-green-200 text-green-700",
+                variant: "success", // Use the predefined success variant for unified styling with icon
               });
               
               logger.info('All post-submission actions completed successfully');
@@ -920,8 +919,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             toast({
               title: 'Success!',
               description: 'Your form has been successfully submitted.',
-              variant: 'default',
-              className: 'bg-green-50 border-green-200 text-green-700'
+              variant: 'success' // Use the predefined success variant with icon
             });
           } catch (postSubmitError) {
             // If post-submission actions fail, show an error
