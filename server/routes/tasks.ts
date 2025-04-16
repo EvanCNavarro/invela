@@ -483,6 +483,7 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
+    // Get the task data
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
@@ -495,14 +496,60 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
     
+    // Now fetch the latest saved form data for KYB tasks
+    let savedFormData = {};
+    
+    if (task.task_type === 'kyb' || task.task_type === 'company_kyb') {
+      try {
+        // This is critical - fetch the most up-to-date form data from the database
+        console.log('[Tasks Routes] Fetching latest KYB form data for task:', taskId);
+        
+        // Get all KYB fields to ensure we have the field keys
+        const fields = await db.select().from(kybFields);
+        const fieldMap = new Map(fields.map(f => [f.id, f.field_key]));
+        
+        // Fetch the latest responses
+        const responses = await db.select({
+          field_id: kybResponses.field_id,
+          response_value: kybResponses.response_value
+        })
+        .from(kybResponses)
+        .where(eq(kybResponses.task_id, taskId));
+        
+        // Convert responses to form data format
+        if (responses.length > 0) {
+          console.log(`[Tasks Routes] Found ${responses.length} KYB responses for task ${taskId}`);
+          
+          for (const response of responses) {
+            const fieldKey = fieldMap.get(response.field_id);
+            if (fieldKey && response.response_value !== null) {
+              savedFormData[fieldKey] = response.response_value;
+            }
+          }
+          
+          console.log(`[Tasks Routes] Constructed form data with ${Object.keys(savedFormData).length} fields`);
+        } else {
+          console.log(`[Tasks Routes] No KYB responses found for task ${taskId}`);
+        }
+      } catch (error) {
+        console.error('[Tasks Routes] Error fetching KYB form data:', error);
+        // Don't fail the whole request if we can't get form data
+      }
+    }
+    
     console.log('[Tasks Routes] Task found by ID:', {
       taskId: task.id,
       title: task.title,
       type: task.task_type,
+      formDataFields: Object.keys(savedFormData).length,
       timestamp: new Date().toISOString()
     });
     
-    return res.status(200).json(task);
+    // Send task with the freshly loaded form data
+    return res.status(200).json({
+      ...task,
+      savedFormData
+    });
   } catch (error) {
     console.error('[Tasks Routes] Error fetching task by ID:', {
       error,
@@ -532,6 +579,7 @@ router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
+    // Get the task data
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
@@ -544,14 +592,58 @@ router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
     
+    // Now fetch the latest saved form data for KYB tasks
+    let savedFormData = {};
+    
+    if (task.task_type === 'kyb' || task.task_type === 'company_kyb') {
+      try {
+        // This is critical - fetch the most up-to-date form data from the database
+        console.log('[Tasks Routes] Fetching latest KYB form data for task (special .json endpoint):', taskId);
+        
+        // Get all KYB fields to ensure we have the field keys
+        const fields = await db.select().from(kybFields);
+        const fieldMap = new Map(fields.map(f => [f.id, f.field_key]));
+        
+        // Fetch the latest responses
+        const responses = await db.select({
+          field_id: kybResponses.field_id,
+          response_value: kybResponses.response_value
+        })
+        .from(kybResponses)
+        .where(eq(kybResponses.task_id, taskId));
+        
+        // Convert responses to form data format
+        if (responses.length > 0) {
+          console.log(`[Tasks Routes] Found ${responses.length} KYB responses for task ${taskId} (special .json endpoint)`);
+          
+          for (const response of responses) {
+            const fieldKey = fieldMap.get(response.field_id);
+            if (fieldKey && response.response_value !== null) {
+              savedFormData[fieldKey] = response.response_value;
+            }
+          }
+          
+          console.log(`[Tasks Routes] Constructed form data with ${Object.keys(savedFormData).length} fields (special .json endpoint)`);
+        }
+      } catch (error) {
+        console.error('[Tasks Routes] Error fetching KYB form data (special .json endpoint):', error);
+        // Don't fail the whole request if we can't get form data
+      }
+    }
+    
     console.log('[Tasks Routes] Task found by ID (special .json endpoint):', {
       taskId: task.id,
       title: task.title,
       type: task.task_type,
+      formDataFields: Object.keys(savedFormData).length,
       timestamp: new Date().toISOString()
     });
     
-    return res.status(200).json(task);
+    // Send task with the freshly loaded form data
+    return res.status(200).json({
+      ...task,
+      savedFormData
+    });
   } catch (error) {
     console.error('[Tasks Routes] Error fetching task by ID (special .json endpoint):', {
       error,
