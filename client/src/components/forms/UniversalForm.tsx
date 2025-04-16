@@ -496,6 +496,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // First save the current progress
       await saveProgress();
       
+      // Set successful submission result
+      setSubmissionResult({
+        success: true,
+        message: "Your form has been successfully submitted.",
+        timestamp: new Date().toISOString()
+      });
+      
+      // Show success modal
+      setShowSuccessModal(true);
+      
       // Then call the onSubmit callback if provided
       if (onSubmit) {
         onSubmit(data);
@@ -870,63 +880,64 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     )}
                     
                     {/* Show different button based on current section and whether we're on review page */}
-                    {(() => {
-                      const isReviewPage = activeSection === allSections.length - 1;
-                      const isSecondToLastSection = activeSection === allSections.length - 2;
-                      
-                      if (isReviewPage) {
-                        return (
+                    {/* Review button section */}
+                    {activeSection === allSections.length - 1 && (
+                      <>
+                        {form.getValues("agreement_confirmation") && overallProgress === 100 ? (
+                          <Button
+                            type="submit"
+                            className="bg-primary"
+                          >
+                            Submit <Check className="ml-2 h-4 w-4" />
+                          </Button>
+                        ) : (
                           <TooltipProvider delayDuration={0}>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  type="submit"
-                                  disabled={!form.getValues("agreement_confirmation") || overallProgress < 100}
-                                  className="bg-primary"
+                                  type="button"
+                                  disabled={true}
+                                  className="bg-primary/50"
                                 >
                                   Submit <Check className="ml-2 h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent side="top">
-                                <p>Submit your completed form</p>
+                                <p>{overallProgress < 100 ? "Please complete all required fields" : "Please confirm agreement"}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                        );
-                      }
-                      
-                      if (activeSection < allSections.length - 1 && !isSecondToLastSection) {
-                        return (
-                          <Button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault(); // Prevent any form submission
-                              setActiveSection(activeSection + 1);
-                            }}
-                            className="flex items-center gap-1"
-                          >
-                            Next <ArrowRight className="ml-1 h-4 w-4" />
-                          </Button>
-                        );
-                      }
-                      
-                      if (isSecondToLastSection && overallProgress < 100) {
-                        return (
-                          <Button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault(); // Prevent any form submission
-                              setActiveSection(activeSection + 1);
-                            }}
-                            className="flex items-center gap-1"
-                          >
-                            Next <ArrowRight className="ml-1 h-4 w-4" />
-                          </Button>
-                        );
-                      }
-                      
-                      return null;
-                    })()}
+                        )}
+                      </>
+                    )}
+                    
+                    {/* Next button for normal sections */}
+                    {activeSection < allSections.length - 1 && activeSection !== allSections.length - 2 && (
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent any form submission
+                          setActiveSection(activeSection + 1);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        Next <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    {/* Next button for second-to-last section */}
+                    {activeSection === allSections.length - 2 && overallProgress < 100 && (
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent any form submission
+                          setActiveSection(activeSection + 1);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        Next <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
