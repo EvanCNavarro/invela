@@ -90,8 +90,9 @@ export interface FormServiceInterface {
    * Update a specific field in the form data
    * @param fieldKey Field key to update
    * @param value New value for the field
+   * @param taskId Optional task ID for immediate saving
    */
-  updateFormData(fieldKey: string, value: any): void;
+  updateFormData(fieldKey: string, value: any, taskId?: number): void;
   
   /**
    * Get the current form data
