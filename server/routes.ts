@@ -18,6 +18,7 @@ import { getKybProgress } from './routes/kyb-update';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import filesRouter from './routes/files';
+import enhancedDebugRoutes from './enhanced-debug-routes';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
@@ -37,6 +38,9 @@ export function registerRoutes(app: Express): Express {
   const kybProgressRouter = Router();
   getKybProgress(kybProgressRouter);
   app.use(kybProgressRouter);
+  
+  // Register enhanced debugging routes
+  app.use(enhancedDebugRoutes);
   
   app.use(cardRouter);
   app.use(securityRouter);
