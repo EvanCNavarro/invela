@@ -778,9 +778,11 @@ export class KybFormService implements FormServiceInterface {
       
       this.isSaving = true;
       
+      let dataToSave: Record<string, any> = {};
+      
       try {
         // Use the data from our write buffer to ensure we save the most recent changes
-        const dataToSave = {...this.writeBuffer};
+        dataToSave = {...this.writeBuffer};
         
         // Calculate progress and status
         const progress = this.calculateProgress();
