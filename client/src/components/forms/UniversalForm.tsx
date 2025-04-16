@@ -684,9 +684,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           <div>
             <h2 className="text-xl font-semibold">{headerTitle}</h2>
             <p className="text-sm text-gray-500">{headerSubtitle}</p>
-            {isSubmitted && submissionDate && (
-              <p className="text-xs text-gray-500 mt-1">Submitted on {submissionDate}</p>
-            )}
           </div>
           
           {isSubmitted && (
@@ -748,7 +745,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 </div>
               </div>
               
-              <Accordion type="multiple" defaultValue={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)} className="w-full">
+              <Accordion type="multiple" defaultValue={allSections.filter(s => s.id !== 'review-section').map((_, i) => `section-${i}`)} className="w-full mb-6">
                 {allSections.filter(section => section.id !== 'review-section').map((section, sectionIndex) => {
                   const sectionFields = fields.filter(field => field.section === section.id);
                   
