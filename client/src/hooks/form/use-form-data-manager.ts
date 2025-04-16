@@ -5,9 +5,9 @@ import { FormServiceInterface, FormField, FormData } from '@/services/formServic
 import { createFormSchema } from '@/utils/formUtils';
 import getLogger from '@/utils/logger';
 
-// Logger instance for this module
+// Logger instance for this module with debug logs disabled for performance
 const logger = getLogger('FormDataManager', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+  levels: { debug: false, info: true, warn: true, error: true } 
 });
 
 // The properties required by our hook
