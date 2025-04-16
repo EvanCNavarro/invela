@@ -522,6 +522,15 @@ export class KybFormService implements FormServiceInterface {
   }
 
   /**
+   * Get the current task status
+   * This returns the stored status, which may have come from the server
+   * @returns The current task status
+   */
+  getTaskStatus(): string {
+    return this.taskStatus;
+  }
+
+  /**
    * Calculate appropriate task status based on current progress
    * @param isSubmitted Whether the form has been submitted
    * @returns The appropriate task status
@@ -529,8 +538,13 @@ export class KybFormService implements FormServiceInterface {
   calculateTaskStatus(isSubmitted: boolean = false): string {
     const progress = this.calculateProgress();
     
-    // Use the centralized utility function to ensure consistency across the application
-    return calculateTaskStatusUtil(progress, isSubmitted);
+    // Calculate the new status based on progress
+    const calculatedStatus = calculateTaskStatusUtil(progress, isSubmitted);
+    
+    // Store the calculated status for future reference
+    this.taskStatus = calculatedStatus;
+    
+    return calculatedStatus;
   }
 
   /**
@@ -883,7 +897,19 @@ export class KybFormService implements FormServiceInterface {
     }
     
     try {
-      return await this.submitKybForm(options.taskId, this.formData, options.fileName);
+      // Update task status to 'submitted' when form is being submitted
+      this.taskStatus = 'submitted';
+      
+      // Send the form submission to the server
+      const result = await this.submitKybForm(options.taskId, this.formData, options.fileName);
+      
+      // After successful submission, ensure status is set to 'submitted'
+      if (result && result.success) {
+        this.taskStatus = 'submitted';
+        console.log('[KybService] Form submitted successfully, status updated to "submitted"');
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error submitting form:', error);
       throw error;
@@ -914,7 +940,8 @@ export class KybFormService implements FormServiceInterface {
         body: JSON.stringify({
           taskId,       // Include taskId in the request
           formData,
-          fileName
+          fileName,
+          status: 'submitted' // Always include submitted status for form submissions
         })
       });
       
@@ -1053,3 +1080,4 @@ export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybF
 export const saveKybProgress = (taskId: number, progress: number, formData: Record<string, any>, status?: string) => kybService.saveKybProgress(taskId, progress, formData, status);
 export const getKybProgress = (taskId: number): Promise<KybProgressResponse> => kybService.getKybProgress(taskId);
 export const submitKybForm = (taskId: number, formData: Record<string, any>, fileName?: string) => kybService.submitKybForm(taskId, formData, fileName);
+export const getTaskStatus = (): string => kybService.getTaskStatus();
