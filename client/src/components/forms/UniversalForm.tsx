@@ -634,11 +634,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       logger.info('Form submitted');
       
-      // Show submission toast and save its ID to dismiss later
-      const submissionToast = toast({
-        title: `Submitting ${formTitle}`,
-        description: 'Please wait while we process your submission...',
-      });
+      // No loading toast - we'll just use a success toast after completion
+      // This prevents users from seeing multiple toasts
+      let submissionToast: any = null;
       
       // Generate a proper filename for the CSV export
       const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
@@ -785,7 +783,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               toast({
                 title: "Success!",
                 description: `${formTitle} completed successfully`,
-                variant: "success",
+                variant: "default",
+                className: "bg-green-50 border-green-200 text-green-700",
               });
               
               logger.info('All post-submission actions completed successfully');
@@ -919,9 +918,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             // Only show success toast after all actions are completed
             logger.info('All default post-submission actions completed successfully');
             toast({
-              title: 'Form submitted',
+              title: 'Success!',
               description: 'Your form has been successfully submitted.',
-              variant: 'success'
+              variant: 'default',
+              className: 'bg-green-50 border-green-200 text-green-700'
             });
           } catch (postSubmitError) {
             // If post-submission actions fail, show an error
