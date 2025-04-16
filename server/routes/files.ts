@@ -189,12 +189,33 @@ async function processDocument(
 }
 
 // Document category enum
+// Import DocumentCategory from schema, but also define a local enum for internal use
+import { DocumentCategory as DBDocumentCategory } from '@db/schema';
+
 enum DocumentCategory {
   SOC2_AUDIT = 'soc2_audit',
   ISO27001_CERT = 'iso27001_cert',
   PENTEST_REPORT = 'pentest_report',
   BUSINESS_CONTINUITY = 'business_continuity',
   OTHER = 'other'
+}
+
+// Function to convert local enum to DB type
+function toDBDocumentCategory(category: DocumentCategory): keyof typeof DBDocumentCategory {
+  // Safer conversion by value matching
+  switch(category) {
+    case DocumentCategory.SOC2_AUDIT:
+      return 'SOC2_AUDIT';
+    case DocumentCategory.ISO27001_CERT:
+      return 'ISO27001_CERT';  
+    case DocumentCategory.PENTEST_REPORT:
+      return 'PENTEST_REPORT';
+    case DocumentCategory.BUSINESS_CONTINUITY:
+      return 'BUSINESS_CONTINUITY';
+    case DocumentCategory.OTHER:
+    default:
+      return 'OTHER';
+  }
 }
 
 function detectDocumentCategory(filename: string): DocumentCategory {
@@ -287,7 +308,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         user_id: req.user.id,
         company_id: req.user.company_id,
         status: 'uploaded',
-        document_category: documentCategory,
+        document_category: toDBDocumentCategory(documentCategory),
         created_at: new Date(),
         updated_at: new Date(),
         upload_time: new Date(),
