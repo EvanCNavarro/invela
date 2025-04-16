@@ -32,6 +32,7 @@ import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilder
 import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import TestFormUpdate from "./test-form-update";
+import FormDbTestPage from "./form-db-test";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -277,6 +278,11 @@ function Router() {
         {/* Form Debug Page - For Troubleshooting Form Data Issues */}
         <Route path="/form-debug">
           <FormDebugPage />
+        </Route>
+        
+        {/* Form DB Test Page - For Testing Database Persistence */}
+        <Route path="/form-db-test">
+          <FormDbTestPage />
         </Route>
 
         <Route component={NotFound} />
