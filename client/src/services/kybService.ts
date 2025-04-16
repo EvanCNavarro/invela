@@ -553,40 +553,27 @@ export class KybFormService implements FormServiceInterface {
 
   /**
    * Calculate form completion progress
-   */
-  /**
-   * Calculate form completion progress
    * This ensures consistent progress calculation with the UI
    */
   calculateProgress(): number {
     // If no fields are defined, return 0
     if (this.fields.length === 0) {
-      console.log('[FORM DEBUG] No fields found during progress calculation');
       return 0;
     }
     
     // Count all fields regardless of required status to match UI behavior
-    const fieldStatuses = this.fields.map(field => {
+    const filledFields = this.fields.filter(field => {
       const value = this.formData[field.key];
       // Consistent with UI criteria for field completion
-      const hasValue = value !== undefined && value !== null && value !== '';
-      return {
-        key: field.key,
-        hasValue,
-        value: value
-      };
+      return value !== undefined && value !== null && value !== '';
     });
     
-    const filledFields = fieldStatuses.filter(status => status.hasValue);
     const totalFields = this.fields.length;
     
     // Calculate percentage
     const progressPercentage = totalFields > 0 
       ? Math.round((filledFields.length / totalFields) * 100) 
       : 0;
-    
-    // Log detailed progress info for debugging
-    console.log(`[FORM DEBUG] Progress calculation: ${filledFields.length}/${totalFields} fields filled (${progressPercentage}%)`);
     
     return progressPercentage;
   }
@@ -871,14 +858,7 @@ export class KybFormService implements FormServiceInterface {
       // Enhanced debug logging - log complete form data for debugging
       const formDataKeys = Object.keys(formData);
       
-      console.log(`[KybService] ===== SAVING PROGRESS =====`);
-      console.log(`[KybService] Task ID: ${taskId}, Progress: ${progress}, Total Fields: ${formDataKeys.length}`);
-      
-      // CRITICAL DEBUG - Log all form data values being sent to server
-      console.log(`[KybService] COMPLETE FORM DATA BEING SENT TO SERVER:`);
-      Object.entries(formData).forEach(([key, value]) => {
-        console.log(`[KybService] Field ${key}: "${value}" (${typeof value})`);
-      });
+      console.log(`[KybService] SAVING PROGRESS - Task ID: ${taskId}, Progress: ${progress}, Total Fields: ${formDataKeys.length}`);
       
       // Normalize form data before sending to server (remove null values)
       const normalizedFormData = Object.fromEntries(
