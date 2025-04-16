@@ -140,33 +140,57 @@ export function useFormStatus({
       relevantFields.forEach(field => {
         const value = formValues[field.key];
         
-        // Enhanced field value determination logic with more aggressive validation
+        // Enhanced field value determination logic with extremely aggressive validation
         let isFilled = false;
+        
+        // Convert to string for logging and debugging
+        const valueForLog = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        logger.debug(`Evaluating field ${field.key} with value: ${valueForLog} (${typeof value})`);
         
         // Special handling for different field types
         if (typeof value === 'boolean') {
           // Checkboxes and toggles are "filled" when they're true or false (explicitly set)
           isFilled = true;
+          logger.debug(`Boolean field ${field.key} is always considered filled: ${value}`);
         } else if (Array.isArray(value)) {
           // Arrays (multi-select, etc.) are filled if they have at least one non-empty item
-          isFilled = value.length > 0 && value.some(item => item !== null && item !== '');
+          const hasValidItem = value.length > 0 && value.some(item => {
+            if (item === null || item === undefined) return false;
+            if (typeof item === 'string') return item.trim() !== '' && item !== 'null' && item !== 'undefined';
+            return true; // Non-string items are considered valid
+          });
+          isFilled = hasValidItem;
+          logger.debug(`Array field ${field.key} filled status: ${isFilled} (length: ${value.length})`);
         } else if (typeof value === 'object' && value !== null) {
-          // Objects are filled if they have any properties
-          isFilled = Object.keys(value).length > 0;
+          // Objects are filled if they have any properties with non-empty values
+          const hasValidProps = Object.entries(value).some(([k, v]) => {
+            if (v === null || v === undefined) return false;
+            if (typeof v === 'string') return v.trim() !== '' && v !== 'null' && v !== 'undefined';
+            return true; // Non-string values are considered valid
+          });
+          isFilled = hasValidProps;
+          logger.debug(`Object field ${field.key} filled status: ${isFilled} (keys: ${Object.keys(value).length})`);
         } else {
-          // For strings and primitives, check if they're not empty
-          // Trim the value to handle spaces-only inputs
-          const stringValue = typeof value === 'string' ? value.trim() : String(value);
+          // For strings and primitives, perform most aggressive check possible
           
-          // More aggressive check for filled state - ensure we don't have empty strings
-          // or strings with just spaces
+          // First convert to string and trim to handle spaces
+          const stringValue = typeof value === 'string' ? value.trim() : String(value).trim();
+          
+          // Extensive validation against various "empty" patterns
+          const emptyPatterns = ['', 'undefined', 'null', 'NaN', '[]', '{}', '0', 'false'];
+          const isEmptyPattern = emptyPatterns.includes(stringValue.toLowerCase());
+          
+          // Ultra aggressive check for filled state
           isFilled = (
             value !== undefined && 
             value !== null && 
             stringValue !== '' &&
-            stringValue !== 'undefined' && 
-            stringValue !== 'null'
+            !isEmptyPattern &&
+            // Number check - 0 is considered filled
+            (typeof value === 'number' || stringValue.length > 0)
           );
+          
+          logger.debug(`String/primitive field ${field.key} filled status: ${isFilled}, value: "${stringValue}"`);
         }
         
         if (isFilled) {
