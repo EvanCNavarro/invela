@@ -360,6 +360,19 @@ router.post('/api/kyb/progress', async (req, res) => {
       console.log(`[SERVER DEBUG] ${key}: "${val}" (${typeof val})`);
     });
     console.log('[SERVER DEBUG] END OF FORM DATA DUMP');
+    
+    // CRITICAL ISSUE CHECK: Look for any fields with value "asdf" for debugging
+    const asdfFields = Object.entries(formData)
+      .filter(([key, val]) => val === 'asdf')
+      .map(([key]) => key);
+      
+    if (asdfFields.length > 0) {
+      console.log(`[SERVER DEBUG] ⚠️ WARNING: Found ${asdfFields.length} fields with value "asdf":`);
+      console.log(`[SERVER DEBUG] ${asdfFields.join(', ')}`);
+      console.log('[SERVER DEBUG] This may indicate a data issue in the client or database');
+    } else {
+      console.log('[SERVER DEBUG] No fields with value "asdf" found in incoming data');
+    }
 
     for (const [fieldKey, value] of Object.entries(formData)) {
       const fieldId = fieldMap.get(fieldKey);
