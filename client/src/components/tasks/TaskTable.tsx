@@ -124,11 +124,10 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       return; // Prevent navigation
     }
 
-    // Navigate to form pages for KYB, Security and CARD tasks if not in submitted status
-    if ((task.task_type === 'company_kyb' || 
-         task.task_type === 'company_card' ||
-         task.task_type === 'security_assessment') && 
-        task.status !== 'submitted') {
+    // Navigate to form pages for KYB, Security and CARD tasks (including submitted tasks)
+    if (task.task_type === 'company_kyb' || 
+        task.task_type === 'company_card' ||
+        task.task_type === 'security_assessment') {
       
       // Get task ID for direct navigation
       const taskId = task.id;
@@ -181,6 +180,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         constructedUrl: formUrl,
         status: task.status,
         isReadyForSubmission: task.status.toUpperCase() === 'READY_FOR_SUBMISSION',
+        isSubmitted: task.status.toLowerCase() === 'submitted',
         timestamp: new Date().toISOString()
       });
 
@@ -201,7 +201,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       
       // Small delay to ensure previous modal is fully closed
       setTimeout(() => {
-        // Show modal for other task types or submitted KYB/CARD tasks
+        // Show modal for other task types
         setSelectedTask(task);
         setDetailsModalOpen(true);
       }, 50);
