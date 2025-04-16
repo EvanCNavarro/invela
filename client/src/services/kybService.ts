@@ -1,6 +1,7 @@
 import { FormData, FormField, FormSection, FormServiceInterface, FormSubmitOptions } from './formService';
 import { getFieldComponentType } from '../utils/formUtils';
 import getLogger from '../utils/logger';
+import { calculateTaskStatus as calculateTaskStatusUtil } from '../utils/formStatusUtils';
 
 /**
  * Sort KYB fields by their group and then by order
@@ -528,7 +529,7 @@ export class KybFormService implements FormServiceInterface {
     const progress = this.calculateProgress();
     
     // Use the centralized utility function to ensure consistency across the application
-    return calculateTaskStatus(progress, isSubmitted);
+    return calculateTaskStatusUtil(progress, isSubmitted);
   }
 
   /**
