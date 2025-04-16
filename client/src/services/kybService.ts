@@ -559,6 +559,48 @@ export class KybFormService implements FormServiceInterface {
   getTaskStatus(): string {
     return this.taskStatus;
   }
+  
+  /**
+   * Update local form data from server response
+   * This ensures we're always in sync with the database
+   */
+  updateLocalFormDataFromServer(serverFormData: Record<string, any>): void {
+    if (!serverFormData || typeof serverFormData !== 'object') {
+      console.warn('[KybService] Invalid server form data received');
+      return;
+    }
+    
+    console.log(`[KybService] Updating local form data with ${Object.keys(serverFormData).length} fields from server`);
+    
+    // Normalize the data (convert nulls to empty strings)
+    const normalizedFormData = Object.fromEntries(
+      Object.entries(serverFormData).map(([key, value]) => [key, value === null ? '' : value])
+    );
+    
+    // Update the local form data
+    this.formData = { ...normalizedFormData };
+    
+    // Also update the values in the fields array and sections
+    this.fields = this.fields.map(field => 
+      normalizedFormData.hasOwnProperty(field.key) 
+        ? { ...field, value: normalizedFormData[field.key] } 
+        : field
+    );
+    
+    this.sections = this.sections.map(section => ({
+      ...section,
+      fields: section.fields.map(field => 
+        normalizedFormData.hasOwnProperty(field.key) 
+          ? { ...field, value: normalizedFormData[field.key] } 
+          : field
+      )
+    }));
+    
+    // Update the last saved data reference
+    this.lastSavedData = JSON.stringify(normalizedFormData);
+    
+    console.log('[KybService] Local form data updated from server');
+  }
 
   /**
    * Calculate appropriate task status based on current progress
@@ -893,16 +935,12 @@ export class KybFormService implements FormServiceInterface {
         return {};
       }
       
-      // Normalize form data to prevent null values (causing controlled/uncontrolled input warnings)
-      const normalizedFormData = Object.fromEntries(
-        Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
-      );
+      console.log(`[DEBUG KybService] For already initialized service - loaded saved data with ${Object.keys(formData).length} fields`);
       
-      console.log(`[DEBUG KybService] For already initialized service - loaded saved data:`, normalizedFormData);
+      // Use our new method for consistent handling of form data updates
+      this.updateLocalFormDataFromServer(formData);
       
-      // Load the normalized form data
-      this.loadFormData(normalizedFormData);
-      return normalizedFormData;
+      return this.formData;
     } catch (error) {
       console.error(`Error loading progress for task ${taskId}:`, error);
       
