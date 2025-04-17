@@ -282,14 +282,14 @@ export function useFormDataManager({
         logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
-      // Process values but preserve spaces in text fields
+      // Preserve all whitespace, including spaces at the start and end
       let normalizedValue;
       
       if (value === null || value === undefined) {
         normalizedValue = '';
       } else if (typeof value === 'string') {
-        // Only trim the ends but preserve internal spaces
-        normalizedValue = value.trim();
+        // Don't trim at all - preserve all whitespace exactly as typed
+        normalizedValue = value;
       } else {
         normalizedValue = value;
       }
