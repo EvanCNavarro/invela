@@ -287,7 +287,7 @@ class FormPerformanceMonitor {
  * multiple rapid updates are collected and then processed together after
  * a specified delay, significantly reducing unnecessary re-renders.
  */
-export class BatchUpdateManager<T = any> {
+class BatchUpdateManager<T = any> {
   private queue: Map<string, T> = new Map();
   private timeout: number | null = null;
   private _delay: number;
@@ -368,16 +368,24 @@ export class BatchUpdateManager<T = any> {
   
   /**
    * Alias for addUpdate - used for compatibility with different naming conventions
+   * @param key The key for the update (typically a field name)
+   * @param value The value to update
+   * @param options Optional settings or boolean flag for immediate processing
    */
-  queueUpdate(key: string, value: T, immediate = false): void {
-    this.addUpdate(key, value, immediate);
+  queueUpdate(key: string, value: T, options?: boolean | { sectionId?: string, immediate?: boolean }): void {
+    // Handle different parameter formats
+    if (typeof options === 'object') {
+      this.addUpdate(key, value, options.immediate || false);
+    } else {
+      this.addUpdate(key, value, options || false);
+    }
   }
   
   /**
    * Register a listener for update events
-   * @param listener Callback function that receives updates
+   * @param listener Callback function that receives updates and optional timestamps
    */
-  onUpdate(listener: (updates: Record<string, T>, timestamps: Record<string, number>) => void): void {
+  onUpdate(listener: (updates: Record<string, T>, timestamps?: Record<string, number>) => void): void {
     this.updateListeners.push(listener);
   }
   
@@ -429,7 +437,9 @@ export class BatchUpdateManager<T = any> {
     if (Object.keys(updates).length > 0) {
       this.updateListeners.forEach(listener => {
         try {
-          listener(updates, currentTimestamps);
+          // Check if timestamps object is empty before passing it
+          const hasTimestamps = Object.keys(currentTimestamps).length > 0;
+          listener(updates, hasTimestamps ? currentTimestamps : undefined);
         } catch (err) {
           console.error('[BatchUpdateManager] Error in update listener:', err);
         }
@@ -659,5 +669,8 @@ export const performanceMonitor = new FormPerformanceMonitor();
 // Create a singleton instance of the progressive section loader
 export const progressiveLoader = new ProgressiveSectionLoader();
 
-// Export the BatchUpdateManager class
-export { BatchUpdateManager as FormBatchUpdater };
+// Create a singleton instance of the batch update manager
+export const FormBatchUpdater = new BatchUpdateManager();
+
+// Also export the BatchUpdateManager class for custom instances
+export { BatchUpdateManager };
