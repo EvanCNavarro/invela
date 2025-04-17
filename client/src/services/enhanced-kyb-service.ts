@@ -1,0 +1,919 @@
+import { FormServiceInterface, FormSubmitOptions, FormSubmitResponse } from './form-service.interface';
+import { FormData, TimestampedFormData, createTimestampedFormData, updateField, mergeTimestampedFormData, extractValues, getNewerClientFields } from '../types/form-data';
+import { FormField, FormSection } from '../components/forms/types';
+import { calculateTaskStatusUtil } from '../utils/form-utils';
+
+/**
+ * Represents a KYB field from the database
+ */
+export interface KybField {
+  id: number;
+  field_key: string;
+  display_name: string;
+  field_type: string;
+  question: string;
+  group: string;
+  required: boolean;
+  order: number;
+  validation_rules: any;
+  help_text: string | null;
+}
+
+/**
+ * Response structure for KYB progress data
+ */
+export interface KybProgressResponse {
+  formData: Record<string, any>;
+  timestamps?: Record<string, number>;
+  progress: number;
+  status?: string;
+}
+
+/**
+ * Enhanced KYB Form Service with field-level timestamp tracking
+ * For reliable conflict resolution and data integrity
+ */
+export class EnhancedKybFormService implements FormServiceInterface {
+  private fields: FormField[] = [];
+  private sections: FormSection[] = [];
+  private timestampedFormData: TimestampedFormData = createTimestampedFormData();
+  private initialized = false;
+  private templateId: number | null = null;
+  private taskStatus: string = 'not_started';
+  
+  private saveProgressTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastSavedData: string = '';
+  
+  private static fieldsCache: Record<number, KybField[]> = {};
+  
+  constructor() {}
+  
+  /**
+   * Initialize the KYB form service
+   * @param templateId ID of the task template
+   */
+  async initialize(templateId: number): Promise<void> {
+    this.templateId = templateId;
+    
+    try {
+      // Fetch KYB fields for this template
+      const fields = await this.getKybFields();
+      
+      // Group the fields by section
+      const groupedFields = this.groupFieldsBySection(fields);
+      
+      // Convert to form fields and create sections
+      const allFormFields: FormField[] = [];
+      const sections: FormSection[] = [];
+      
+      // Keep track of section order
+      const sectionOrder: Record<string, number> = {};
+      let sectionIndex = 1;
+      
+      // Sort the sections
+      const sortedGroups = Object.keys(groupedFields).sort((a, b) => {
+        // Default section order based on predefined sequence
+        const defaultOrder: Record<string, number> = {
+          'Company Profile': 1,
+          'Governance & Leadership': 2,
+          'Financial Profile': 3,
+          'Operations & Compliance': 4,
+          'Risk & Security': 5
+        };
+        
+        return (defaultOrder[a] || 999) - (defaultOrder[b] || 999);
+      });
+      
+      // Create sections and form fields
+      sortedGroups.forEach(group => {
+        const sectionId = `section-${sectionIndex}`;
+        sectionOrder[group] = sectionIndex;
+        
+        // Convert KYB fields to form fields for this section
+        const sectionFields = groupedFields[group].map(field => 
+          this.convertToFormField(field, sectionId)
+        );
+        
+        // Add fields to master list
+        allFormFields.push(...sectionFields);
+        
+        // Create section
+        sections.push({
+          id: sectionId,
+          title: group,
+          description: '',
+          fields: sectionFields,
+          order: sectionIndex
+        });
+        
+        sectionIndex++;
+      });
+      
+      // Store fields and sections
+      this.fields = allFormFields;
+      this.sections = sections;
+      
+      // Create empty form data with timestamps
+      this.timestampedFormData = createTimestampedFormData();
+      
+      this.initialized = true;
+    } catch (error) {
+      console.error('Error initializing KYB form service:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Fetches KYB fields from the server or cache
+   */
+  async getKybFields(): Promise<KybField[]> {
+    if (this.templateId === null) {
+      throw new Error('Template ID is required');
+    }
+    
+    // Return from cache if available
+    if (EnhancedKybFormService.fieldsCache[this.templateId]) {
+      return EnhancedKybFormService.fieldsCache[this.templateId];
+    }
+    
+    try {
+      // Make request to get fields
+      const response = await fetch(`/api/kyb/fields?templateId=${this.templateId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch KYB fields: ${response.status}`);
+      }
+      
+      const fields = await response.json();
+      
+      // Cache fields for future use
+      EnhancedKybFormService.fieldsCache[this.templateId] = fields;
+      
+      return fields;
+    } catch (error) {
+      console.error('Error fetching KYB fields:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get KYB fields for a specific step/section
+   */
+  async getKybFieldsByStepIndex(stepIndex: number): Promise<KybField[]> {
+    const fields = await this.getKybFields();
+    return fields.filter(field => {
+      // Map section names to indices
+      const sectionMap: Record<string, number> = {
+        'Company Profile': 1,
+        'Governance & Leadership': 2, 
+        'Financial Profile': 3,
+        'Operations & Compliance': 4,
+        'Risk & Security': 5
+      };
+      
+      return sectionMap[field.group] === stepIndex;
+    });
+  }
+  
+  /**
+   * Group KYB fields by their section name
+   */
+  groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
+    const groups: Record<string, KybField[]> = {};
+    
+    fields.forEach(field => {
+      const group = field.group || 'Other';
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(field);
+    });
+    
+    // Sort fields within each group by their order
+    Object.keys(groups).forEach(group => {
+      groups[group].sort((a, b) => a.order - b.order);
+    });
+    
+    return groups;
+  }
+  
+  /**
+   * Convert KYB field to form field format
+   */
+  convertToFormField(field: KybField, sectionId?: string): FormField {
+    return {
+      key: field.field_key,
+      label: field.display_name,
+      type: field.field_type,
+      question: field.question,
+      required: field.required,
+      order: field.order,
+      sectionId: sectionId,
+      validation: field.validation_rules,
+      help: field.help_text || undefined
+    };
+  }
+  
+  /**
+   * Get all form fields
+   */
+  getFields(): FormField[] {
+    return this.fields;
+  }
+  
+  /**
+   * Get all form sections
+   */
+  getSections(): FormSection[] {
+    return this.sections;
+  }
+  
+  /**
+   * Load form data
+   */
+  loadFormData(data: Record<string, any>): void {
+    // Convert to timestamped form data
+    this.timestampedFormData = createTimestampedFormData(data);
+  }
+  
+  /**
+   * Update a field value with timestamp tracking
+   */
+  updateFormData(fieldKey: string, value: any, taskId?: number): void {
+    const oldValue = this.timestampedFormData.values[fieldKey];
+    
+    // Skip if value hasn't changed (prevents unnecessary updates)
+    if (oldValue === value) {
+      return;
+    }
+    
+    // Update the field with new timestamp
+    this.timestampedFormData = updateField(this.timestampedFormData, fieldKey, value);
+    
+    // Save progress if taskId provided and value has changed
+    if (taskId) {
+      this.saveProgress(taskId);
+    }
+  }
+  
+  /**
+   * Get current form data
+   */
+  getFormData(): FormData {
+    return extractValues(this.timestampedFormData);
+  }
+  
+  /**
+   * Get timestamped form data (for advanced conflict resolution)
+   */
+  getTimestampedFormData(): TimestampedFormData {
+    return { ...this.timestampedFormData };
+  }
+  
+  /**
+   * Calculate form completion progress
+   */
+  calculateProgress(): number {
+    // Check if we have fields and form data
+    if (this.fields.length === 0) {
+      return 0;
+    }
+    
+    const formData = this.getFormData();
+    const requiredFields = this.fields.filter(field => field.required);
+    
+    if (requiredFields.length === 0) {
+      return 100; // No required fields means form is complete
+    }
+    
+    // Count filled required fields
+    const filledRequiredFields = requiredFields.filter(field => {
+      const value = formData[field.key];
+      return value !== undefined && value !== null && value !== '';
+    });
+    
+    // Calculate progress as percentage
+    const progress = Math.round((filledRequiredFields.length / requiredFields.length) * 100);
+    
+    return progress;
+  }
+  
+  /**
+   * Get the current task status
+   */
+  getTaskStatus(): string {
+    return this.taskStatus;
+  }
+  
+  /**
+   * Compare two form data objects and return the differences
+   */
+  compareFormData(clientData: Record<string, any>, serverData: Record<string, any>): Array<{key: string, clientValue: any, serverValue: any}> {
+    const differences: Array<{key: string, clientValue: any, serverValue: any}> = [];
+    
+    // Check all client keys against server
+    Object.keys(clientData).forEach(key => {
+      const clientValue = clientData[key];
+      const serverValue = serverData[key];
+      
+      // Skip if values are equal
+      if (clientValue === serverValue) {
+        return;
+      }
+      
+      // Handle case where client has a value but server has null/undefined
+      if (clientValue && (serverValue === null || serverValue === undefined)) {
+        differences.push({ key, clientValue, serverValue });
+        return;
+      }
+      
+      // Handle case where values differ
+      if (String(clientValue) !== String(serverValue)) {
+        differences.push({ key, clientValue, serverValue });
+      }
+    });
+    
+    return differences;
+  }
+  
+  /**
+   * Process server data response for timestamp conflict resolution
+   */
+  processServerResponse(serverData: Record<string, any>, serverTimestamps?: Record<string, number>): void {
+    // If server includes timestamps, use timestamp-based conflict resolution
+    if (serverTimestamps) {
+      const serverTimestampedData: TimestampedFormData = {
+        values: serverData,
+        timestamps: serverTimestamps,
+        meta: { lastSaved: Date.now() }
+      };
+      
+      // Merge server and client data, keeping newer values
+      this.timestampedFormData = mergeTimestampedFormData(
+        this.timestampedFormData,
+        serverTimestampedData
+      );
+      
+      // Find fields where client data was preferred
+      const newerClientFields = getNewerClientFields(this.timestampedFormData, serverTimestampedData);
+      
+      if (newerClientFields.length > 0) {
+        console.log(`Preserved ${newerClientFields.length} client fields that were newer than server`);
+      }
+    } 
+    // Fallback to basic conflict resolution for backward compatibility
+    else {
+      const normalizedServerData = Object.fromEntries(
+        Object.entries(serverData).map(([key, value]) => [key, value === null ? '' : value])
+      );
+      
+      // Current client data
+      const clientData = this.getFormData();
+      
+      // Create result data - start with a copy of client data
+      const resultData: Record<string, any> = { ...clientData };
+      const timestamps: Record<string, number> = { ...this.timestampedFormData.timestamps };
+      const now = Date.now();
+      
+      // Apply server values, but only if they don't conflict with client changes
+      Object.keys(normalizedServerData).forEach(key => {
+        const serverValue = normalizedServerData[key];
+        const clientValue = clientData[key];
+        
+        // If client has a value and it differs from server, keep client value
+        if (clientValue !== undefined && String(serverValue) !== String(clientValue)) {
+          resultData[key] = clientValue;
+          timestamps[key] = now; // Update timestamp as if this was a new change
+        } else {
+          // Otherwise use server value
+          resultData[key] = serverValue;
+          timestamps[key] = now - 1000; // Make it slightly older than client changes
+        }
+      });
+      
+      // Update form data with merged result
+      this.timestampedFormData = {
+        values: resultData,
+        timestamps,
+        meta: {
+          ...this.timestampedFormData.meta,
+          lastSaved: now
+        }
+      };
+    }
+  }
+  
+  // Track pending save operations to prevent race conditions
+  private writeBuffer: TimestampedFormData | null = null;
+  private isSaving = false;
+  private saveDebounceMs = 500; // Delay saves by 500ms to allow for rapid typing
+  
+  /**
+   * Enhanced saving logic with timestamp-based conflict resolution
+   */
+  async saveProgress(taskId?: number): Promise<void> {
+    if (!taskId) {
+      console.error('Task ID is required to save progress');
+      return;
+    }
+    
+    // Always update the write buffer with the latest data
+    this.writeBuffer = { ...this.timestampedFormData };
+    
+    // Clear any existing timer to prevent multiple save operations
+    if (this.saveProgressTimer) {
+      clearTimeout(this.saveProgressTimer);
+      this.saveProgressTimer = null;
+    }
+    
+    // Schedule a new save operation after a short delay
+    this.saveProgressTimer = setTimeout(async () => {
+      // If already saving, the next save will pick up latest data from writeBuffer
+      if (this.isSaving) {
+        return;
+      }
+      
+      this.isSaving = true;
+      
+      let dataToSave: TimestampedFormData | null = null;
+      
+      try {
+        // Use the data from our write buffer to ensure we save the most recent changes
+        if (this.writeBuffer) {
+          dataToSave = { ...this.writeBuffer };
+          this.writeBuffer = null;
+        } else {
+          dataToSave = { ...this.timestampedFormData };
+        }
+        
+        // Calculate progress and status
+        const progress = this.calculateProgress();
+        const status = this.calculateTaskStatus();
+        
+        // Extract form values
+        const formValues = extractValues(dataToSave);
+        
+        // Save the data with timestamps
+        const result = await this.saveKybProgress(
+          taskId, 
+          progress, 
+          formValues, 
+          dataToSave.timestamps,
+          status
+        );
+        
+        if (result && result.success) {
+          // Store the last saved data for change detection
+          this.lastSavedData = JSON.stringify(formValues);
+          
+          // Process server response if it contains form data
+          if (result.savedData && result.savedData.formData) {
+            this.processServerResponse(
+              result.savedData.formData,
+              result.savedData.timestamps
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Exception during save:', error);
+      } finally {
+        this.isSaving = false;
+        
+        // Check if write buffer changed during save - if so, save again
+        if (this.writeBuffer) {
+          this.saveProgress(taskId);
+        }
+      }
+    }, this.saveDebounceMs);
+  }
+  
+  /**
+   * Save KYB progress to the server with timestamp information
+   */
+  async saveKybProgress(
+    taskId: number, 
+    progress: number, 
+    formData: Record<string, any>,
+    timestamps: Record<string, number>,
+    status?: string
+  ) {
+    try {
+      // Check if taskId is provided
+      if (!taskId) {
+        console.error('Missing taskId in saveKybProgress');
+        return {
+          success: false,
+          error: 'Task ID is required'
+        };
+      }
+      
+      // Normalize form data before sending
+      const normalizedFormData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
+      );
+      
+      // Send the request with timestamp data
+      const response = await fetch(`/api/kyb/progress`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          taskId,
+          progress,
+          status: status || undefined,
+          formData: normalizedFormData,
+          timestamps // Include field timestamps
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error saving form data: ${response.status} - ${errorText}`);
+        return {
+          success: false,
+          error: `Failed to save: ${response.status}`
+        };
+      }
+      
+      // Parse response and handle success
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        // Handle empty response
+        if (!responseText || responseText.trim() === '') {
+          responseData = { success: true };
+        } else {
+          try {
+            responseData = JSON.parse(responseText);
+          } catch (jsonError) {
+            // If the response isn't valid JSON but status was OK, assume success
+            if (response.status >= 200 && response.status < 300) {
+              responseData = { success: true };
+            } else {
+              throw jsonError;
+            }
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing save response:', parseError);
+        
+        // Still assume success if we received a 2xx OK status
+        if (response.status >= 200 && response.status < 300) {
+          responseData = { success: true }; 
+        } else {
+          responseData = { 
+            success: false,
+            error: `Error processing server response: ${response.status}` 
+          };
+        }
+      }
+      
+      return responseData;
+    } catch (error) {
+      console.error('Network error while saving form data:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error'
+      };
+    }
+  }
+  
+  /**
+   * Get KYB progress from the server
+   */
+  async getKybProgress(taskId: number): Promise<KybProgressResponse> {
+    try {
+      // Make a query to get progress data
+      const response = await fetch(`/api/kyb/progress/${taskId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`Error loading form data: ${response.status}`);
+        return { formData: {}, progress: 0 };
+      }
+      
+      // Check for empty response before parsing
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        return { formData: {}, progress: 0 };
+      }
+      
+      // Safely parse the JSON
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        // If we get an error parsing, return a default object
+        return { formData: {}, progress: 0 };
+      }
+      
+      // Save the loaded data as the "last saved" for change detection
+      if (data.formData) {
+        this.lastSavedData = JSON.stringify(data.formData);
+        
+        // Ensure all values are non-null (null can cause controlled/uncontrolled input warnings)
+        const normalizedFormData = Object.fromEntries(
+          Object.entries(data.formData).map(([key, value]) => [key, value === null ? '' : value])
+        );
+        
+        return {
+          formData: normalizedFormData,
+          timestamps: data.timestamps, // Include timestamps if available
+          progress: data.progress || 0,
+          status: data.status
+        };
+      }
+      
+      return {
+        formData: data.formData || {},
+        timestamps: data.timestamps,
+        progress: data.progress || 0,
+        status: data.status
+      };
+    } catch (error) {
+      console.error('Network error while loading form data:', error);
+      return { formData: {}, progress: 0 };
+    }
+  }
+  
+  /**
+   * Load saved progress for a task
+   */
+  async loadProgress(taskId: number): Promise<FormData> {
+    try {
+      // Get current form data before loading - we'll use this if the API call fails
+      const currentFormData = this.getFormData();
+      
+      // Get progress data from the server
+      const progressData = await this.getKybProgress(taskId);
+      const { formData, timestamps, status } = progressData;
+      
+      // Store the server-provided status if available
+      if (status) {
+        this.taskStatus = status;
+      }
+      
+      // If no data was returned but we have existing data, keep the current data
+      if (!formData || Object.keys(formData).length === 0) {
+        if (Object.keys(currentFormData).length > 0) {
+          return currentFormData;
+        }
+        
+        this.loadFormData({});
+        return {};
+      }
+
+      // Process server response with timestamps if available
+      this.processServerResponse(formData, timestamps);
+      
+      return this.getFormData();
+    } catch (error) {
+      console.error(`Error loading progress for task ${taskId}:`, error);
+      
+      // If we already have data, keep it
+      if (Object.keys(this.getFormData()).length > 0) {
+        return this.getFormData();
+      }
+      
+      // Fall back to empty object
+      this.loadFormData({});
+      return {};
+    }
+  }
+  
+  /**
+   * Save the form
+   */
+  async save(options: FormSubmitOptions): Promise<boolean> {
+    if (!options.taskId) {
+      throw new Error('Task ID is required to save the form');
+    }
+    
+    try {
+      // Save progress using the simple method
+      await this.saveProgress(options.taskId);
+      return true;
+    } catch (error) {
+      console.error('Error saving form:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Submit the completed form
+   */
+  async submit(options: FormSubmitOptions): Promise<FormSubmitResponse> {
+    if (!options.taskId) {
+      throw new Error('Task ID is required to submit the form');
+    }
+    
+    try {
+      // Update task status to 'submitted' when form is being submitted
+      this.taskStatus = 'submitted';
+      
+      // Get form values
+      const formValues = this.getFormData();
+      
+      // Send the form submission to the server
+      const result = await this.submitKybForm(
+        options.taskId, 
+        formValues,
+        options.fileName
+      );
+      
+      // After successful submission, ensure status is set to 'submitted'
+      if (result && result.success) {
+        this.taskStatus = 'submitted';
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+  
+  /**
+   * Submit the KYB form to the server
+   */
+  async submitKybForm(
+    taskId: number, 
+    formData: Record<string, any>, 
+    fileName?: string
+  ): Promise<FormSubmitResponse> {
+    try {
+      if (!taskId) {
+        throw new Error('Task ID is required to submit the form');
+      }
+      
+      // Get timestamps
+      const timestamps = this.timestampedFormData.timestamps;
+      
+      const response = await fetch(`/api/kyb/save`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          taskId,
+          formData,
+          timestamps, // Include timestamps for conflict resolution
+          fileName,
+          status: 'submitted'
+        })
+      });
+      
+      // Get response text first for proper error handling
+      const responseText = await response.text();
+      
+      // Check if response is empty
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('Server returned an empty response');
+      }
+      
+      // Parse response text to JSON
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error('Server returned an invalid response format. Please try again.');
+      }
+      
+      // Check if response indicates an error with 207 status (partial success)
+      if (response.status === 207) {
+        if (responseData.error) {
+          // Include both error and details in the message for better user feedback
+          const errorMessage = responseData.details 
+            ? `${responseData.error}: ${responseData.details}` 
+            : responseData.error;
+          throw new Error(errorMessage);
+        }
+      }
+      
+      // Check if response is not OK
+      if (!response.ok) {
+        throw new Error(responseData.details || responseData.error || `Failed to submit form: ${response.status}`);
+      }
+      
+      // Check if response contains explicit error field
+      if (responseData.error) {
+        throw new Error(responseData.details || responseData.error);
+      }
+      
+      // Make sure response has success flag
+      if (!responseData.success) {
+        throw new Error('Submission incomplete. Please check your form data and try again.');
+      }
+      
+      // Return validated response data
+      return responseData;
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Calculate appropriate task status based on current progress
+   */
+  calculateTaskStatus(isSubmitted: boolean = false): string {
+    const progress = this.calculateProgress();
+    
+    // Calculate the new status based on progress
+    const calculatedStatus = calculateTaskStatusUtil(progress, isSubmitted);
+    
+    // Store the calculated status for future reference
+    this.taskStatus = calculatedStatus;
+    
+    return calculatedStatus;
+  }
+  
+  /**
+   * Validate form data
+   */
+  validate(data: FormData): boolean | Record<string, string> {
+    const errors: Record<string, string> = {};
+    
+    for (const field of this.fields) {
+      const { key, validation, label } = field;
+      const value = data[key];
+      
+      // Skip fields without validation rules
+      if (!validation) continue;
+      
+      // Required validation
+      if (validation.required && (value === undefined || value === null || value === '')) {
+        errors[key] = `${label} is required`;
+        continue;
+      }
+      
+      // Skip further validation for empty optional fields
+      if (value === undefined || value === null || value === '') continue;
+      
+      // String validations
+      if (typeof value === 'string') {
+        // Min length validation
+        if (validation.minLength !== undefined && value.length < validation.minLength) {
+          errors[key] = `${label} must be at least ${validation.minLength} characters`;
+          continue;
+        }
+        
+        // Max length validation
+        if (validation.maxLength !== undefined && value.length > validation.maxLength) {
+          errors[key] = `${label} must be at most ${validation.maxLength} characters`;
+          continue;
+        }
+        
+        // Pattern validation
+        if (validation.pattern && !new RegExp(validation.pattern).test(value)) {
+          errors[key] = validation.message || `${label} has an invalid format`;
+          continue;
+        }
+      }
+      
+      // Number validations
+      if (typeof value === 'number') {
+        // Min value validation
+        if (validation.min !== undefined && value < validation.min) {
+          errors[key] = `${label} must be at least ${validation.min}`;
+          continue;
+        }
+        
+        // Max value validation
+        if (validation.max !== undefined && value > validation.max) {
+          errors[key] = `${label} must be at most ${validation.max}`;
+          continue;
+        }
+      }
+    }
+    
+    // Return true if no errors, otherwise return the errors object
+    return Object.keys(errors).length === 0 ? true : errors;
+  }
+}
+
+// Export a singleton instance of the Enhanced KYB form service
+export const enhancedKybService = new EnhancedKybFormService();
+
+// Export convenience functions
+export const getKybFields = (): Promise<KybField[]> => enhancedKybService.getKybFields();
+export const getKybFieldsByStepIndex = (stepIndex: number): Promise<KybField[]> => enhancedKybService.getKybFieldsByStepIndex(stepIndex);
+export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybField[]> => enhancedKybService.groupFieldsBySection(fields);
+export const getFormData = (): FormData => enhancedKybService.getFormData();
+export const getTimestampedFormData = (): TimestampedFormData => enhancedKybService.getTimestampedFormData();
+export const getTaskStatus = (): string => enhancedKybService.getTaskStatus();
