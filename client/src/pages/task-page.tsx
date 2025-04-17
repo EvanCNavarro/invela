@@ -500,7 +500,14 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                          fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                          // Use standardized filename format
+                          fileName: (() => {
+                            const now = new Date();
+                            const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
+                            const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+                            const cleanCompanyName = (derivedCompanyName || 'Company').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+                            return `CARDForm_${task.id}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v1.0`;
+                          })(),
                           formData,
                           taskId: task.id
                         })
