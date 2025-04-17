@@ -73,6 +73,30 @@ export class EnhancedKybFormService implements FormServiceInterface {
   }
   
   /**
+   * Set the active section for progressive loading
+   * @param sectionId ID of the active section
+   */
+  setActiveSection(sectionId: string): void {
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
+      return;
+    }
+    
+    // Start performance tracking
+    performanceMonitor.startTimer('setActiveSection');
+    
+    // Update the progressive loader with the new active section
+    if (progressiveLoader.getLoadingStats().length > 0) {
+      this.logger.info(`Setting active section to: ${sectionId}`);
+      progressiveLoader.setCurrentSection(sectionId);
+    } else {
+      this.logger.warn('Attempted to set active section before progressive loader was initialized');
+    }
+    
+    // End performance tracking
+    performanceMonitor.endTimer('setActiveSection');
+  }
+  
+  /**
    * Initialize the KYB form service
    * @param templateId ID of the task template
    */
@@ -365,16 +389,133 @@ export class EnhancedKybFormService implements FormServiceInterface {
   
   /**
    * Get all form fields
+   * With optional progressive loading optimization
    */
   getFields(): FormField[] {
-    return this.fields;
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
+      return this.fields;
+    }
+    
+    // Use the progressive loading optimization
+    return safelyRunOptimizedCode(
+      // Optimized implementation with progressive loading
+      () => {
+        performanceMonitor.startTimer('getFields_optimized');
+        
+        // Initialize the progressive loader with section information if not already done
+        if (progressiveLoader.getLoadingStats().length === 0) {
+          const sectionInfo = this.sections.map(section => ({
+            id: section.id,
+            title: section.title,
+            priority: section.order
+          }));
+          
+          this.logger.info('Initializing progressive loader with sections:', sectionInfo);
+          progressiveLoader.initialize(sectionInfo);
+          
+          // Start loading sections in background
+          progressiveLoader.startLoading(false);
+        }
+        
+        // Get the currently active section ID, if any
+        const activeSectionId = progressiveLoader.getLoadingStats()
+          .find(section => section.priority === 1)?.sectionId;
+        
+        if (activeSectionId) {
+          // Return only fields for the active section plus any already loaded sections
+          const loadedSectionIds = progressiveLoader.getLoadingStats()
+            .filter(section => section.loaded)
+            .map(section => section.sectionId);
+          
+          // Always include the active section, even if not fully loaded
+          loadedSectionIds.push(activeSectionId);
+          
+          // Get fields only for loaded sections
+          const visibleFields = this.fields.filter(field => 
+            field.sectionId && loadedSectionIds.includes(field.sectionId)
+          );
+          
+          performanceMonitor.endTimer('getFields_optimized');
+          this.logger.info(`Progressive loading: Returning ${visibleFields.length} fields from ${loadedSectionIds.length} sections`);
+          return visibleFields;
+        }
+        
+        // Default to returning all fields if no active section
+        performanceMonitor.endTimer('getFields_optimized');
+        return this.fields;
+      },
+      // Fallback implementation (original)
+      () => this.fields,
+      // Operation name for health check
+      'getFields',
+      // Feature flag key
+      'PROGRESSIVE_LOADING'
+    );
   }
   
   /**
    * Get all form sections
+   * With optional progressive loading optimization
    */
   getSections(): FormSection[] {
-    return this.sections;
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
+      return this.sections;
+    }
+    
+    // Use the progressive loading optimization
+    return safelyRunOptimizedCode(
+      // Optimized implementation with progressive loading
+      () => {
+        performanceMonitor.startTimer('getSections_optimized');
+        
+        // Initialize the progressive loader with section information if not already done
+        if (progressiveLoader.getLoadingStats().length === 0) {
+          const sectionInfo = this.sections.map(section => ({
+            id: section.id,
+            title: section.title,
+            priority: section.order
+          }));
+          
+          this.logger.info('Initializing progressive loader with sections:', sectionInfo);
+          progressiveLoader.initialize(sectionInfo);
+          
+          // Start loading sections in background
+          progressiveLoader.startLoading(false);
+        }
+        
+        // Get all the sections, but mark 'loading' status for unloaded sections
+        const sectionsWithLoadingStatus = this.sections.map(section => {
+          // Check if section is loaded in the progressive loader
+          const isLoaded = progressiveLoader.isSectionLoaded(section.id);
+          const stats = progressiveLoader.getLoadingStats().find(s => s.sectionId === section.id);
+          
+          // Add loading status to section
+          const priority = stats?.priority || section.order;
+          const isActive = priority === 1;
+          
+          // Return a copy of the section with loading info
+          return {
+            ...section,
+            meta: {
+              ...(section.meta || {}),
+              isLoaded: isLoaded,
+              isLoading: !isLoaded && isActive,
+              priority: priority
+            }
+          };
+        });
+        
+        performanceMonitor.endTimer('getSections_optimized');
+        
+        return sectionsWithLoadingStatus;
+      },
+      // Fallback implementation (original)
+      () => this.sections,
+      // Operation name for health check
+      'getSections',
+      // Feature flag key
+      'PROGRESSIVE_LOADING'
+    );
   }
   
   /**
@@ -1132,3 +1273,4 @@ export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybF
 export const getFormData = (): FormData => enhancedKybService.getFormData();
 export const getTimestampedFormData = (): TimestampedFormData => enhancedKybService.getTimestampedFormData();
 export const getTaskStatus = (): string => enhancedKybService.getTaskStatus();
+export const setActiveSection = (sectionId: string): void => enhancedKybService.setActiveSection(sectionId);
