@@ -198,7 +198,7 @@ export class EnhancedKybFormService implements FormServiceInterface {
       
       // CRITICAL FIX: Update the main fields array by extracting all fields from sections
       // This ensures all fields have the correct section ID assigned
-      this.fields = this.sections.reduce((allFields, section) => {
+      this.fields = this.sections.reduce<FormField[]>((allFields, section) => {
         return [...allFields, ...section.fields];
       }, []);
       

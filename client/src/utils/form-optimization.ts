@@ -815,6 +815,19 @@ class OptimizationHealthCheck {
   }
   
   /**
+   * Alias for getHealthStatus - for backward compatibility
+   */
+  public getStatus(): Record<string, {
+    lastSuccess: number;
+    lastFailure: number;
+    successCount: number;
+    failureCount: number;
+    enabled: boolean;
+  }> {
+    return this.getHealthStatus();
+  }
+  
+  /**
    * Reset health status (typically used in testing)
    */
   public reset(): void {
@@ -852,10 +865,101 @@ class ProgressiveLoaderManager {
   }
   
   /**
+   * Initialize the loader with section information
+   * @param sections Array of section info objects
+   * @param currentSectionId Optional ID of the current active section
+   */
+  public initialize(sections: Array<{ id: string; title: string; priority?: number }>, currentSectionId?: string): void {
+    // Start performance monitoring
+    performanceMonitor.startTimer('loaderInitialization');
+    
+    // Reset first to ensure clean state
+    this.reset();
+    
+    // Set current section if provided
+    if (currentSectionId) {
+      this.activeSectionId = currentSectionId;
+    }
+    
+    // Add sections to track
+    sections.forEach(section => {
+      this.trackSection(section.id, section.priority || 0);
+    });
+    
+    // If current section is set, give it highest priority
+    if (this.activeSectionId) {
+      const statIndex = this.sectionLoadStats.findIndex(s => s.id === this.activeSectionId);
+      if (statIndex >= 0) {
+        this.sectionLoadStats[statIndex].priority = 1;
+      }
+    }
+    
+    // End performance monitoring
+    performanceMonitor.endTimer('loaderInitialization');
+    
+    console.log('%c[PROGRESSIVE LOADING] Initialized with sections:', 'color: #4CAF50', 
+      { count: sections.length, activeSectionId: this.activeSectionId });
+  }
+  
+  /**
+   * Start loading sections based on priority
+   * @param parallel Whether to load all sections in parallel (faster but may impact performance)
+   */
+  public startLoading(parallel: boolean = false): void {
+    // Start performance monitoring
+    performanceMonitor.startTimer('startLoading');
+    
+    // Start loading the first unloaded section (or all in parallel)
+    const unloadedSections = this.sectionLoadStats.filter(s => !s.loaded);
+    if (unloadedSections.length === 0) {
+      performanceMonitor.endTimer('startLoading');
+      return; // All sections already loaded
+    }
+    
+    // Sort by priority (lower number = higher priority)
+    unloadedSections.sort((a, b) => a.priority - b.priority);
+    
+    // Load the highest priority section first
+    const nextSection = unloadedSections[0];
+    this.loadingSections.add(nextSection.id);
+    nextSection.loading = true;
+    
+    // Simulate loading completion after a delay (this would be a real fetch in production)
+    setTimeout(() => {
+      // Mark as loaded
+      this.loadedSections.add(nextSection.id);
+      this.loadingSections.delete(nextSection.id);
+      nextSection.loaded = true;
+      nextSection.loading = false;
+      
+      // If we're loading in parallel, load all remaining unloaded sections
+      if (parallel) {
+        unloadedSections.slice(1).forEach(section => {
+          this.loadingSections.add(section.id);
+          section.loading = true;
+          
+          // Simulate loading with varying delays based on priority
+          setTimeout(() => {
+            this.loadedSections.add(section.id);
+            this.loadingSections.delete(section.id);
+            section.loaded = true;
+            section.loading = false;
+          }, 100 + Math.random() * 500); // Random delay between 100-600ms
+        });
+      } else if (unloadedSections.length > 1) {
+        // If sequential, continue with the next section
+        this.startLoading(false);
+      }
+    }, 200 + Math.random() * 300); // Random delay for first section between 200-500ms
+    
+    performanceMonitor.endTimer('startLoading');
+  }
+  
+  /**
    * Set the active section that the user is currently viewing
    * This triggers the loading of that section and adjacent sections
    */
-  public setActiveSection(sectionId: string): void {
+  public setCurrentSection(sectionId: string): void {
     // Start performance monitoring
     performanceMonitor.startTimer('sectionActivation');
     
@@ -869,6 +973,7 @@ class ProgressiveLoaderManager {
       const statIndex = this.sectionLoadStats.findIndex(s => s.id === sectionId);
       if (statIndex >= 0) {
         this.sectionLoadStats[statIndex].loading = true;
+        this.sectionLoadStats[statIndex].priority = 1; // Give it highest priority
       }
     }
     
@@ -946,12 +1051,18 @@ class ProgressiveLoaderManager {
    */
   public getLoadingStats(): Array<{
     id: string;
+    sectionId: string; // Added for backward compatibility
     loaded: boolean;
     loading: boolean;
     loadTime?: number;
     priority: number;
   }> {
-    return [...this.sectionLoadStats];
+    // Transform the stats to include a sectionId property (which is the same as id)
+    // This makes it compatible with code that expects sectionId
+    return this.sectionLoadStats.map(stat => ({
+      ...stat,
+      sectionId: stat.id
+    }));
   }
   
   /**
