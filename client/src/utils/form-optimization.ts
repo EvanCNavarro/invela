@@ -1142,6 +1142,15 @@ class ProgressiveLoaderManager {
     priority: number;
   }> = [];
   
+  // Callbacks for section loading events
+  private callbacks: {
+    onSectionLoad: Array<(sectionId: string) => void>;
+    onAllSectionsLoad: Array<() => void>;
+  } = {
+    onSectionLoad: [],
+    onAllSectionsLoad: []
+  };
+  
   private constructor() {}
   
   public static getInstance(): ProgressiveLoaderManager {
@@ -1292,6 +1301,28 @@ class ProgressiveLoaderManager {
         priority: 0
       });
     }
+    
+    // Notify listeners that this section has loaded
+    this.callbacks.onSectionLoad.forEach(callback => {
+      try {
+        callback(sectionId);
+      } catch (error) {
+        console.error('[PROGRESSIVE LOADING] Error in section load callback:', error);
+      }
+    });
+    
+    // Check if all sections are loaded
+    const allLoaded = this.sectionLoadStats.every(s => s.loaded);
+    if (allLoaded && this.sectionLoadStats.length > 0) {
+      // Notify listeners that all sections have loaded
+      this.callbacks.onAllSectionsLoad.forEach(callback => {
+        try {
+          callback();
+        } catch (error) {
+          console.error('[PROGRESSIVE LOADING] Error in all sections load callback:', error);
+        }
+      });
+    }
   }
   
   /**
@@ -1390,6 +1421,20 @@ class ProgressiveLoaderManager {
   }
   
   /**
+   * Register a callback to be called when a section is loaded
+   */
+  public onSectionLoad(callback: (sectionId: string) => void): void {
+    this.callbacks.onSectionLoad.push(callback);
+  }
+
+  /**
+   * Register a callback to be called when all sections are loaded
+   */
+  public onAllSectionsLoad(callback: () => void): void {
+    this.callbacks.onAllSectionsLoad.push(callback);
+  }
+  
+  /**
    * Reset the loader state (typically used when navigating to a new form)
    */
   public reset(): void {
@@ -1397,6 +1442,7 @@ class ProgressiveLoaderManager {
     this.loadedSections.clear();
     this.loadingSections.clear();
     this.sectionLoadStats = [];
+    // Keep callbacks intact unless explicitly cleared
   }
 }
 
