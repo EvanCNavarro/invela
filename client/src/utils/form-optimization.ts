@@ -24,7 +24,7 @@ export const OptimizationFeatures = {
   VIRTUALIZED_RENDERING: false,
   
   // Controls batched updates instead of per-field updates
-  DEBOUNCED_UPDATES: false,
+  DEBOUNCED_UPDATES: true,
   
   // Controls timestamp optimization for conflict resolution
   OPTIMIZED_TIMESTAMPS: false
