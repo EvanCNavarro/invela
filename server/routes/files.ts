@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from "@db";
-import { files } from "@db/schema";
+import { files, companies } from "@db/schema";
 import { eq, sql } from "drizzle-orm";
 import path from 'path';
 import fs from 'fs';
@@ -679,7 +679,24 @@ router.get("/api/files/:id/download", async (req, res) => {
         
         // For CSV files, set more specific headers for better browser handling
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.name}"`);
+        
+        // Use standardized filename format for download
+        const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
+        const taskId = fileRecord.task_id || Number(req.query.taskId) || 0;
+        
+        // Get company name from file metadata or use a default
+        const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
+        
+        // Create standardized filename
+        const standardizedFilename = FileCreationService.generateStandardFileName(
+          taskType, 
+          taskId, 
+          companyName,
+          '1.0',
+          'csv'
+        );
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
         
         // Send the content directly from the database
         console.log('[Files] Sending CSV content directly from database');
