@@ -117,7 +117,7 @@ export function healthCheck(): Record<string, any> {
 
   // Check batch update manager
   try {
-    const batchManager = new BatchUpdateManager();
+    const batchManager = new BatchUpdateManagerImpl();
     batchManager.addUpdate('test', 'value');
     const size = batchManager.size;
     const updates = batchManager.processQueue();
@@ -287,7 +287,7 @@ class FormPerformanceMonitor {
  * multiple rapid updates are collected and then processed together after
  * a specified delay, significantly reducing unnecessary re-renders.
  */
-class BatchUpdateManager<T = any> {
+class BatchUpdateManagerImpl<T = any> {
   private queue: Map<string, T> = new Map();
   private timeout: number | null = null;
   private _delay: number;
@@ -670,7 +670,8 @@ export const performanceMonitor = new FormPerformanceMonitor();
 export const progressiveLoader = new ProgressiveSectionLoader();
 
 // Create a singleton instance of the batch update manager
-export const FormBatchUpdater = new BatchUpdateManager();
+export const FormBatchUpdater = new BatchUpdateManagerImpl();
 
-// Also export the BatchUpdateManager class for custom instances
-export { BatchUpdateManager };
+// Export the BatchUpdateManager type for compatibility with existing code
+export type BatchUpdateManager<T = any> = BatchUpdateManagerImpl<T>;
+export const BatchUpdateManager = BatchUpdateManagerImpl;
