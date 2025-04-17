@@ -17,6 +17,7 @@
 import React, { useState } from 'react';
 import VirtualizedRenderingDemo from '@/components/dev/VirtualizedRenderingDemo';
 import ProgressiveLoadingDemo from '@/components/dev/ProgressiveLoadingDemo';
+import BatchUpdateDebugger from '@/components/dev/BatchUpdateDebugger';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 enum DemoTabs {
@@ -69,13 +70,7 @@ const FormPerformancePage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value={DemoTabs.BATCHED} className="bg-white rounded-lg shadow p-4 border">
-          <div className="p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Batched Updates Demo</h2>
-            <p className="text-gray-600 mb-4">
-              This component is currently under development. It will demonstrate how batched updates
-              can improve form performance by reducing unnecessary re-renders and API calls.
-            </p>
-          </div>
+          <BatchUpdateDebugger initialDelay={500} maxQueueSize={25} autoFlushEnabled={true} />
         </TabsContent>
 
         <TabsContent value={DemoTabs.OPTIMIZATION} className="bg-white rounded-lg shadow p-4 border">
