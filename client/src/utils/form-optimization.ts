@@ -154,11 +154,7 @@ class FormPerformanceMonitor {
     this.metrics.loadDuration = this.metrics.initialLoadEndTime - this.metrics.initialLoadStartTime;
     this.metrics.fieldCount = fieldCount;
     this.metrics.sectionCount = sectionCount;
-    
-    // Calculate fields processed per second
-    if (this.metrics.loadDuration > 0) {
-      this.metrics.fieldsPerSecond = (fieldCount / this.metrics.loadDuration) * 1000;
-    }
+    this.metrics.fieldsPerSecond = fieldCount / (this.metrics.loadDuration / 1000);
     
     this.addEvent('initialLoadEnd', this.metrics.loadDuration, {
       fieldCount,
@@ -166,9 +162,7 @@ class FormPerformanceMonitor {
       fieldsPerSecond: this.metrics.fieldsPerSecond
     });
     
-    this.logInfo(`Initial load completed in ${this.metrics.loadDuration.toFixed(2)}ms`);
-    this.logInfo(`Processed ${fieldCount} fields across ${sectionCount} sections`);
-    this.logInfo(`Processing speed: ${this.metrics.fieldsPerSecond.toFixed(2)} fields/second`);
+    this.logInfo(`Finished initial load timing: ${this.metrics.loadDuration.toFixed(2)}ms, ${fieldCount} fields, ${sectionCount} sections`);
   }
   
   /**
@@ -188,7 +182,8 @@ class FormPerformanceMonitor {
     this.metrics.renderDuration = this.metrics.renderEndTime - this.metrics.renderStartTime;
     
     this.addEvent('renderEnd', this.metrics.renderDuration);
-    this.logInfo(`Render completed in ${this.metrics.renderDuration.toFixed(2)}ms`);
+    
+    this.logInfo(`Finished render timing: ${this.metrics.renderDuration.toFixed(2)}ms`);
   }
   
   /**
@@ -215,11 +210,10 @@ class FormPerformanceMonitor {
     
     this.addEvent('saveEnd', duration, {
       saveCount: this.metrics.saveCount,
-      averageDuration: this.metrics.averageSaveDuration
+      average: this.metrics.averageSaveDuration
     });
     
-    this.logInfo(`Save operation completed in ${duration.toFixed(2)}ms`);
-    this.logInfo(`Average save duration: ${this.metrics.averageSaveDuration.toFixed(2)}ms`);
+    this.logInfo(`Finished save timing: ${duration.toFixed(2)}ms, avg: ${this.metrics.averageSaveDuration.toFixed(2)}ms`);
   }
   
   /**
@@ -228,17 +222,16 @@ class FormPerformanceMonitor {
   public startTimer(name: string): void {
     if (!this.metrics.timers[name]) {
       this.metrics.timers[name] = {
-        startTime: performance.now(),
+        startTime: 0,
         endTime: 0,
         duration: 0,
         count: 0,
         average: 0
       };
-    } else {
-      this.metrics.timers[name].startTime = performance.now();
     }
     
-    this.addEvent(`timer:${name}:start`);
+    this.metrics.timers[name].startTime = performance.now();
+    this.addEvent(`timerStart_${name}`);
     this.logInfo(`Starting timer: ${name}`);
   }
   
@@ -255,28 +248,26 @@ class FormPerformanceMonitor {
     this.metrics.timers[name].duration = this.metrics.timers[name].endTime - this.metrics.timers[name].startTime;
     this.metrics.timers[name].count++;
     this.metrics.timers[name].average = 
-      (this.metrics.timers[name].average * (this.metrics.timers[name].count - 1) + 
-      this.metrics.timers[name].duration) / this.metrics.timers[name].count;
+      (this.metrics.timers[name].average * (this.metrics.timers[name].count - 1) + this.metrics.timers[name].duration) / 
+      this.metrics.timers[name].count;
     
-    const duration = this.metrics.timers[name].duration;
-    
-    this.addEvent(`timer:${name}:end`, duration, {
+    this.addEvent(`timerEnd_${name}`, this.metrics.timers[name].duration, {
       count: this.metrics.timers[name].count,
       average: this.metrics.timers[name].average
     });
     
-    this.logInfo(`Timer "${name}" completed in ${duration.toFixed(2)}ms`);
-    this.logInfo(`Average time for "${name}": ${this.metrics.timers[name].average.toFixed(2)}ms`);
+    this.logInfo(`Ended timer "${name}": ${this.metrics.timers[name].duration.toFixed(2)}ms, avg: ${this.metrics.timers[name].average.toFixed(2)}ms`);
     
-    return duration;
+    return this.metrics.timers[name].duration;
   }
   
   /**
    * Get the current performance metrics
    */
   public getMetrics(): PerformanceMetrics {
-    // Update memory usage before returning metrics
+    // Update memory metrics before returning
     this.updateMemoryMetrics();
+    
     return { ...this.metrics };
   }
   
@@ -296,11 +287,6 @@ class FormPerformanceMonitor {
    * Clear all metrics and events
    */
   public reset(): void {
-    this.events = [];
-    
-    // Reset metrics while preserving initial memory value
-    const initialMemory = this.metrics.initialMemoryUsage;
-    
     this.metrics = {
       initialLoadStartTime: 0,
       initialLoadEndTime: 0,
@@ -319,61 +305,57 @@ class FormPerformanceMonitor {
       totalSaveDuration: 0,
       averageSaveDuration: 0,
       
-      initialMemoryUsage: initialMemory,
+      initialMemoryUsage: this.getMemoryUsage(),
       peakMemoryUsage: this.getMemoryUsage(),
       currentMemoryUsage: this.getMemoryUsage(),
       
       timers: {}
     };
     
-    this.addEvent('metricsReset');
-    this.logInfo('Performance metrics have been reset');
+    this.events = [];
+    this.logInfo('Performance metrics reset');
   }
   
   /**
    * Create a performance report
    */
   public generateReport(): string {
-    const report = [
-      '## Form Performance Report',
-      '',
-      `Generated: ${new Date().toISOString()}`,
-      '',
-      '### Load Metrics',
-      `- Initial Load Time: ${this.metrics.loadDuration.toFixed(2)}ms`,
-      `- Fields: ${this.metrics.fieldCount}`,
-      `- Sections: ${this.metrics.sectionCount}`,
-      `- Processing Speed: ${this.metrics.fieldsPerSecond.toFixed(2)} fields/second`,
-      '',
-      '### Render Metrics',
-      `- Render Time: ${this.metrics.renderDuration.toFixed(2)}ms`,
-      '',
-      '### Save Operation Metrics',
-      `- Save Operations: ${this.metrics.saveCount}`,
-      `- Last Save Duration: ${this.metrics.lastSaveDuration.toFixed(2)}ms`,
-      `- Average Save Duration: ${this.metrics.averageSaveDuration.toFixed(2)}ms`,
-      '',
-      '### Memory Usage',
-      `- Initial: ${this.formatMemory(this.metrics.initialMemoryUsage)}`,
-      `- Peak: ${this.formatMemory(this.metrics.peakMemoryUsage)}`,
-      `- Current: ${this.formatMemory(this.metrics.currentMemoryUsage)}`,
-      '',
-      '### Custom Timers'
-    ];
+    // Update memory metrics before generating report
+    this.updateMemoryMetrics();
     
-    // Add custom timers to report
+    let report = `=== FORM PERFORMANCE REPORT ===\n`;
+    report += `Time: ${new Date().toISOString()}\n\n`;
+    
+    // Load metrics
+    report += `LOAD METRICS:\n`;
+    report += `- Load time: ${this.metrics.loadDuration.toFixed(2)}ms\n`;
+    report += `- Fields: ${this.metrics.fieldCount}\n`;
+    report += `- Sections: ${this.metrics.sectionCount}\n`;
+    report += `- Fields per second: ${this.metrics.fieldsPerSecond.toFixed(2)}\n\n`;
+    
+    // Render metrics
+    report += `RENDER METRICS:\n`;
+    report += `- Last render time: ${this.metrics.renderDuration.toFixed(2)}ms\n\n`;
+    
+    // Save metrics
+    report += `SAVE METRICS:\n`;
+    report += `- Save operations: ${this.metrics.saveCount}\n`;
+    report += `- Last save time: ${this.metrics.lastSaveDuration.toFixed(2)}ms\n`;
+    report += `- Average save time: ${this.metrics.averageSaveDuration.toFixed(2)}ms\n\n`;
+    
+    // Memory metrics
+    report += `MEMORY METRICS:\n`;
+    report += `- Initial: ${this.formatMemory(this.metrics.initialMemoryUsage)}\n`;
+    report += `- Peak: ${this.formatMemory(this.metrics.peakMemoryUsage)}\n`;
+    report += `- Current: ${this.formatMemory(this.metrics.currentMemoryUsage)}\n\n`;
+    
+    // Custom timers
+    report += `CUSTOM TIMERS:\n`;
     Object.entries(this.metrics.timers).forEach(([name, timer]) => {
-      report.push(`- ${name}: ${timer.average.toFixed(2)}ms (${timer.count} executions)`);
+      report += `- ${name}: ${timer.duration.toFixed(2)}ms (avg: ${timer.average.toFixed(2)}ms, count: ${timer.count})\n`;
     });
     
-    // Add optimization feature status
-    report.push('', '### Optimization Features');
-    Object.entries(OptimizationFeatures).forEach(([feature, enabled]) => {
-      report.push(`- ${feature}: ${enabled ? 'Enabled' : 'Disabled'}`);
-    });
-    
-    // Return formatted report
-    return report.join('\n');
+    return report;
   }
   
   /**
@@ -381,14 +363,14 @@ class FormPerformanceMonitor {
    */
   private addEvent(event: string, duration?: number, details?: any): void {
     this.events.push({
-      timestamp: Date.now(),
+      timestamp: performance.now(),
       event,
       duration,
       details
     });
     
-    // Keep only the last 100 events to prevent memory issues
-    if (this.events.length > 100) {
+    // Limit event log size to avoid memory issues
+    if (this.events.length > 1000) {
       this.events.shift();
     }
   }
@@ -397,22 +379,19 @@ class FormPerformanceMonitor {
    * Update memory usage metrics
    */
   private updateMemoryMetrics(): void {
-    // Only check memory every few seconds to avoid performance impact
-    const now = Date.now();
-    if (now - this.lastMemoryCheck < this.memoryCheckInterval) {
+    // Only check memory every few seconds to avoid performance issues
+    if (Date.now() - this.lastMemoryCheck < this.memoryCheckInterval) {
       return;
     }
     
-    this.lastMemoryCheck = now;
+    this.lastMemoryCheck = Date.now();
     const currentMemory = this.getMemoryUsage();
     
     this.metrics.currentMemoryUsage = currentMemory;
     
-    // Update peak memory if current is higher
+    // Update peak memory usage
     if (currentMemory > this.metrics.peakMemoryUsage) {
       this.metrics.peakMemoryUsage = currentMemory;
-      this.addEvent('newPeakMemory', undefined, { memory: this.formatMemory(currentMemory) });
-      this.logInfo(`New peak memory usage: ${this.formatMemory(currentMemory)}`);
     }
   }
   
@@ -421,18 +400,11 @@ class FormPerformanceMonitor {
    */
   private getMemoryUsage(): number {
     try {
-      // Chrome-specific memory API
-      if (typeof window !== 'undefined' && 
-          window.performance && 
-          (window.performance as any).memory && 
-          (window.performance as any).memory.usedJSHeapSize) {
-        return (window.performance as any).memory.usedJSHeapSize;
+      if (typeof performance !== 'undefined' && performance.memory) {
+        return (performance as any).memory.usedJSHeapSize;
       }
-      
-      // Fallback for environments where memory API is not available
       return 0;
     } catch (e) {
-      // Some browsers might throw security exceptions when accessing memory
       return 0;
     }
   }
@@ -441,11 +413,13 @@ class FormPerformanceMonitor {
    * Format memory size for display
    */
   private formatMemory(bytes: number): string {
-    if (bytes === 0) return 'N/A';
+    if (bytes === 0) return '0 Bytes';
     
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`;
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
   
   /**
@@ -462,171 +436,6 @@ class FormPerformanceMonitor {
    */
   private logError(message: string): void {
     console.error(`%c[Form Performance] ${message}`, 'color: #F44336');
-  }
-}
-
-/**
- * Health Check System for Form Optimizations
- */
-class OptimizationHealthCheck {
-  private static instance: OptimizationHealthCheck;
-  
-  // Health status tracking
-  private healthStatus = {
-    isHealthy: true,
-    failedChecks: 0,
-    lastError: null as Error | null,
-    errors: [] as Array<{
-      operation: string;
-      timestamp: string;
-      error: string;
-    }>,
-    disabledFeatures: [] as string[]
-  };
-  
-  // Check thresholds
-  private failureThreshold = 3; // Disable optimization after 3 failures
-  private autoResetInterval = 30 * 60 * 1000; // Try re-enabling after 30 minutes
-  
-  private constructor() {
-    // Setup reset timer
-    setInterval(() => this.resetFailureCounters(), this.autoResetInterval);
-  }
-  
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): OptimizationHealthCheck {
-    if (!OptimizationHealthCheck.instance) {
-      OptimizationHealthCheck.instance = new OptimizationHealthCheck();
-    }
-    return OptimizationHealthCheck.instance;
-  }
-  
-  /**
-   * Run a health check on an optimization operation
-   */
-  public check(operation: string, data: any): boolean {
-    try {
-      // Operation-specific validation
-      switch(operation) {
-        case 'formDataLoaded':
-          if (!data || !data.values || Object.keys(data.values).length === 0) {
-            throw new Error('Form data is empty after loading');
-          }
-          break;
-          
-        case 'sectionSaved':
-          if (!data || !data.success) {
-            throw new Error('Section save operation failed');
-          }
-          break;
-          
-        case 'fieldProcessing':
-          if (!data || !data.fields || !Array.isArray(data.fields) || data.fields.length === 0) {
-            throw new Error('Field processing failed to produce valid fields');
-          }
-          break;
-          
-        case 'stateUpdate':
-          if (!data || typeof data !== 'object') {
-            throw new Error('Invalid state update data');
-          }
-          break;
-          
-        // Add more validation cases as needed
-      }
-      
-      // Log success
-      console.log(`%c[HEALTH CHECK] ✅ Operation "${operation}" passed validation`, 'color: #4CAF50');
-      return true;
-      
-    } catch (error: any) {
-      // Update health status
-      this.healthStatus.isHealthy = false;
-      this.healthStatus.failedChecks++;
-      this.healthStatus.lastError = error;
-      this.healthStatus.errors.push({
-        operation,
-        timestamp: new Date().toISOString(),
-        error: error.message
-      });
-      
-      // Keep only last 10 errors
-      if (this.healthStatus.errors.length > 10) {
-        this.healthStatus.errors.shift();
-      }
-      
-      // Log failure
-      console.error(`%c[HEALTH CHECK] ❌ Operation "${operation}" failed validation:`, 'color: #F44336', error);
-      
-      // If too many failures, disable related optimizations
-      if (this.healthStatus.failedChecks >= this.failureThreshold) {
-        console.error('%c[HEALTH CHECK] ⛔ Too many failures, disabling related optimizations', 'color: #F44336; font-weight: bold');
-        
-        // Determine which feature to disable based on operation
-        const feature = this.mapOperationToFeature(operation);
-        if (feature && OptimizationFeatures[feature as keyof typeof OptimizationFeatures]) {
-          // Disable the feature
-          (OptimizationFeatures as any)[feature] = false;
-          
-          // Track disabled features
-          if (!this.healthStatus.disabledFeatures.includes(feature)) {
-            this.healthStatus.disabledFeatures.push(feature);
-          }
-          
-          console.error(`%c[HEALTH CHECK] Disabled optimization feature: ${feature}`, 'color: #F44336');
-        }
-      }
-      
-      return false;
-    }
-  }
-  
-  /**
-   * Get current health status
-   */
-  public getStatus(): typeof this.healthStatus {
-    return { ...this.healthStatus };
-  }
-  
-  /**
-   * Map an operation to a feature flag
-   */
-  private mapOperationToFeature(operation: string): string | null {
-    const mapping: Record<string, keyof typeof OptimizationFeatures> = {
-      'formDataLoaded': 'PROGRESSIVE_LOADING',
-      'sectionSaved': 'SECTION_BASED_SAVING',
-      'fieldProcessing': 'PROGRESSIVE_LOADING',
-      'stateUpdate': 'DEBOUNCED_UPDATES',
-      'virtualScroll': 'VIRTUALIZED_RENDERING',
-      'timestampMerge': 'OPTIMIZED_TIMESTAMPS'
-    };
-    
-    return mapping[operation] || null;
-  }
-  
-  /**
-   * Reset failure counters periodically to retry optimizations
-   */
-  private resetFailureCounters(): void {
-    if (this.healthStatus.failedChecks > 0) {
-      console.log('%c[HEALTH CHECK] Resetting failure counters and re-enabling optimizations', 'color: #2196F3');
-      
-      // Reset counters
-      this.healthStatus.failedChecks = 0;
-      
-      // Re-enable disabled features
-      this.healthStatus.disabledFeatures.forEach(feature => {
-        if (feature in OptimizationFeatures) {
-          (OptimizationFeatures as any)[feature] = true;
-          console.log(`%c[HEALTH CHECK] Re-enabled optimization feature: ${feature}`, 'color: #4CAF50');
-        }
-      });
-      
-      this.healthStatus.disabledFeatures = [];
-      this.healthStatus.isHealthy = true;
-    }
   }
 }
 
@@ -892,8 +701,300 @@ class ProgressiveLoader {
 }
 
 export const performanceMonitor = FormPerformanceMonitor.getInstance();
+
+/**
+ * Health Check Monitor for Optimization Features
+ * 
+ * Tracks the health of optimization features and ensures they're producing valid results.
+ * This allows for graceful fallbacks when optimizations fail or produce unexpected results.
+ */
+class OptimizationHealthCheck {
+  private static instance: OptimizationHealthCheck;
+  private healthStatus: Record<string, {
+    lastSuccess: number;
+    lastFailure: number;
+    successCount: number;
+    failureCount: number;
+    enabled: boolean;
+  }> = {};
+  
+  private constructor() {}
+  
+  public static getInstance(): OptimizationHealthCheck {
+    if (!OptimizationHealthCheck.instance) {
+      OptimizationHealthCheck.instance = new OptimizationHealthCheck();
+    }
+    return OptimizationHealthCheck.instance;
+  }
+  
+  /**
+   * Check if a result is valid and track health status
+   */
+  public check(operationName: string, result: any): boolean {
+    // Initialize health status for this operation if it doesn't exist
+    if (!this.healthStatus[operationName]) {
+      this.healthStatus[operationName] = {
+        lastSuccess: 0,
+        lastFailure: 0,
+        successCount: 0,
+        failureCount: 0,
+        enabled: true
+      };
+    }
+    
+    // Basic sanity checks
+    const isValid = this.validateResult(operationName, result);
+    
+    // Update health status
+    if (isValid) {
+      this.healthStatus[operationName].lastSuccess = Date.now();
+      this.healthStatus[operationName].successCount++;
+    } else {
+      this.healthStatus[operationName].lastFailure = Date.now();
+      this.healthStatus[operationName].failureCount++;
+      
+      // Disable the optimization if it fails too frequently
+      if (this.healthStatus[operationName].failureCount > 5 && 
+          this.healthStatus[operationName].failureCount > this.healthStatus[operationName].successCount) {
+        this.healthStatus[operationName].enabled = false;
+      }
+    }
+    
+    return isValid;
+  }
+  
+  /**
+   * Validate a result based on operation type
+   */
+  private validateResult(operationName: string, result: any): boolean {
+    // Handle errors
+    if (result && result.error) {
+      return false;
+    }
+    
+    // Different validations for different operations
+    switch (operationName) {
+      case 'getFields':
+        return Array.isArray(result) && result.length > 0;
+        
+      case 'getSections':
+        return Array.isArray(result) && result.length > 0;
+        
+      case 'getFormData':
+        return result && typeof result === 'object';
+        
+      case 'calculateProgress':
+        return typeof result === 'number' && result >= 0 && result <= 100;
+        
+      // Add more validations as needed
+        
+      default:
+        // For operations without specific validation, just check it's not null/undefined
+        return result !== null && result !== undefined;
+    }
+  }
+  
+  /**
+   * Check if an optimization is still enabled based on health status
+   */
+  public isEnabled(operationName: string): boolean {
+    return !this.healthStatus[operationName] || this.healthStatus[operationName].enabled;
+  }
+  
+  /**
+   * Get current health status for all operations
+   */
+  public getHealthStatus(): Record<string, {
+    lastSuccess: number;
+    lastFailure: number;
+    successCount: number;
+    failureCount: number;
+    enabled: boolean;
+  }> {
+    return { ...this.healthStatus };
+  }
+  
+  /**
+   * Reset health status (typically used in testing)
+   */
+  public reset(): void {
+    this.healthStatus = {};
+  }
+}
+
+/**
+ * Progressive Loader Manager
+ * 
+ * Manages section-based loading for large forms.
+ * This utility tracks which sections are loaded, which are currently loading,
+ * and which should be loaded next based on user navigation patterns.
+ */
+class ProgressiveLoaderManager {
+  private static instance: ProgressiveLoaderManager;
+  private activeSectionId: string | null = null;
+  private loadedSections: Set<string> = new Set();
+  private loadingSections: Set<string> = new Set();
+  private sectionLoadStats: Array<{
+    id: string;
+    loaded: boolean;
+    loading: boolean;
+    loadTime?: number;
+    priority: number;
+  }> = [];
+  
+  private constructor() {}
+  
+  public static getInstance(): ProgressiveLoaderManager {
+    if (!ProgressiveLoaderManager.instance) {
+      ProgressiveLoaderManager.instance = new ProgressiveLoaderManager();
+    }
+    return ProgressiveLoaderManager.instance;
+  }
+  
+  /**
+   * Set the active section that the user is currently viewing
+   * This triggers the loading of that section and adjacent sections
+   */
+  public setActiveSection(sectionId: string): void {
+    // Start performance monitoring
+    performanceMonitor.startTimer('sectionActivation');
+    
+    this.activeSectionId = sectionId;
+    
+    // Mark section as loading if not already loaded
+    if (!this.loadedSections.has(sectionId)) {
+      this.loadingSections.add(sectionId);
+      
+      // Update stats
+      const statIndex = this.sectionLoadStats.findIndex(s => s.id === sectionId);
+      if (statIndex >= 0) {
+        this.sectionLoadStats[statIndex].loading = true;
+      }
+    }
+    
+    // End performance monitoring
+    performanceMonitor.endTimer('sectionActivation');
+  }
+  
+  /**
+   * Mark a section as loaded
+   */
+  public markSectionLoaded(sectionId: string): void {
+    this.loadedSections.add(sectionId);
+    this.loadingSections.delete(sectionId);
+    
+    // Update stats
+    const loadTime = performanceMonitor.endTimer(`loadSection_${sectionId}`);
+    const statIndex = this.sectionLoadStats.findIndex(s => s.id === sectionId);
+    
+    if (statIndex >= 0) {
+      this.sectionLoadStats[statIndex].loaded = true;
+      this.sectionLoadStats[statIndex].loading = false;
+      this.sectionLoadStats[statIndex].loadTime = loadTime;
+    } else {
+      this.sectionLoadStats.push({
+        id: sectionId,
+        loaded: true,
+        loading: false,
+        loadTime,
+        priority: 0
+      });
+    }
+  }
+  
+  /**
+   * Check if a section is currently loaded
+   */
+  public isSectionLoaded(sectionId: string): boolean {
+    return this.loadedSections.has(sectionId);
+  }
+  
+  /**
+   * Check if a section is currently loading
+   */
+  public isSectionLoading(sectionId: string): boolean {
+    return this.loadingSections.has(sectionId);
+  }
+  
+  /**
+   * Add a section to track (typically called during initialization)
+   */
+  public trackSection(sectionId: string, priority: number = 0): void {
+    const existingStat = this.sectionLoadStats.find(s => s.id === sectionId);
+    
+    if (!existingStat) {
+      this.sectionLoadStats.push({
+        id: sectionId,
+        loaded: false,
+        loading: false,
+        priority
+      });
+    } else {
+      existingStat.priority = priority;
+    }
+  }
+  
+  /**
+   * Get the current active section ID
+   */
+  public getActiveSectionId(): string | null {
+    return this.activeSectionId;
+  }
+  
+  /**
+   * Get loading statistics for all tracked sections
+   */
+  public getLoadingStats(): Array<{
+    id: string;
+    loaded: boolean;
+    loading: boolean;
+    loadTime?: number;
+    priority: number;
+  }> {
+    return [...this.sectionLoadStats];
+  }
+  
+  /**
+   * Should a section be included in the current view based on loading state
+   * This is the core of the progressive loading algorithm
+   */
+  public shouldIncludeSection(sectionId: string): boolean {
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
+      return true; // Include all sections if progressive loading is disabled
+    }
+    
+    // Always include the active section
+    if (sectionId === this.activeSectionId) {
+      return true;
+    }
+    
+    // Include already loaded sections
+    if (this.loadedSections.has(sectionId)) {
+      return true;
+    }
+    
+    // Include sections currently being loaded
+    if (this.loadingSections.has(sectionId)) {
+      return true;
+    }
+    
+    // Otherwise, don't include the section yet
+    return false;
+  }
+  
+  /**
+   * Reset the loader state (typically used when navigating to a new form)
+   */
+  public reset(): void {
+    this.activeSectionId = null;
+    this.loadedSections.clear();
+    this.loadingSections.clear();
+    this.sectionLoadStats = [];
+  }
+}
+
+export const progressiveLoader = ProgressiveLoaderManager.getInstance();
 export const healthCheck = OptimizationHealthCheck.getInstance();
-export const progressiveLoader = ProgressiveLoader.getInstance();
 
 /**
  * Safely run an optimized implementation with fallback
