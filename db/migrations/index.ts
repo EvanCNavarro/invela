@@ -5,6 +5,7 @@ import { updateKybFields2025April } from "./update_kyb_fields_2025_04";
 import { up as addTaskTemplates } from "./add_task_templates";
 import addKybFieldHelpText from "./add_kyb_field_help_text";
 import { up as consolidateKybTemplates } from "./consolidate_kyb_templates";
+import { createTimestampsTable } from "../create-timestamps-table";
 
 // Simpler logging for standalone execution
 function log(message: string) {
@@ -45,6 +46,10 @@ export async function runMigrations() {
     // Consolidate KYB templates into a single template
     log('Consolidating KYB templates to use consistent naming');
     await consolidateKybTemplates();
+    
+    // Create timestamps table for field-level conflict resolution
+    log('Creating field timestamps table for conflict resolution');
+    await createTimestampsTable();
     
     log('All migrations completed successfully');
     return true;
