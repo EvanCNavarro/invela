@@ -187,7 +187,7 @@ export function useFormDataManager({
     }
   }, [formService, taskId]);
   
-  // Function to update a single field value with enhanced synchronization and validation
+  // Function to update a single field value with timestamp-based conflict resolution
   const updateField = useCallback((name: string, value: any) => {
     if (!formService) {
       logger.warn('Cannot update field - form service is not available');
@@ -200,13 +200,28 @@ export function useFormDataManager({
     }
     
     try {
-      // Add timestamp to track update time
+      // Generate a precise update timestamp for conflict resolution
       const updateTimestamp = Date.now();
-      logger.info(`[SAVE DEBUG] ${updateTimestamp}: Starting field update for ${name} with taskId ${taskId}`);
+      logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Starting field update for ${name} with taskId ${taskId}`);
       
       // Get current form data for comparison
       const currentData = formService.getFormData();
       const prevValue = currentData[name];
+      
+      // Get timestamped form data if available using the enhanced interface
+      let timestamp: number = updateTimestamp;
+      let hasTimestamping = false;
+      
+      if (typeof formService.getTimestampedFormData === 'function') {
+        hasTimestamping = true;
+        const timestampedData = formService.getTimestampedFormData();
+        logger.info(`[TIMESTAMP-SYNC] Using enhanced timestamp-based conflict resolution`);
+        
+        // Record existing timestamp information if available
+        if (timestampedData.timestamps && timestampedData.timestamps[name]) {
+          logger.info(`[TIMESTAMP-SYNC] Field ${name} has existing timestamp: ${timestampedData.timestamps[name]}`);
+        }
+      }
       
       // Log whether this is a field clearing operation or regular update
       const isClearing = 
@@ -214,9 +229,9 @@ export function useFormDataManager({
         (value === '' || value === null || value === undefined);
       
       if (isClearing) {
-        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Clearing field ${name}: "${prevValue}" → (empty)`);
+        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Clearing field ${name}: "${prevValue}" → (empty)`);
       } else {
-        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
+        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
       // Enhanced normalization for more consistent value handling
@@ -237,7 +252,7 @@ export function useFormDataManager({
       
       // Always update in the form service, ensuring field clearing operations work
       // Pass taskId to enable immediate saving on critical operations
-      logger.info(`[SAVE DEBUG] ${updateTimestamp}: Calling updateFormData with taskId: ${taskId}`);
+      logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Calling updateFormData with taskId: ${taskId}`);
       formService.updateFormData(name, normalizedValue, taskId);
       
       // Update in React Hook Form
@@ -259,13 +274,13 @@ export function useFormDataManager({
           onDataChange(updated);
         }
         
-        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Local state updated for field ${name}`);
+        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Local state updated for field ${name}`);
         
         // Add additional debug validation - ensure the value was actually set correctly
         const setVerification = updated[name] === normalizedValue;
         if (!setVerification) {
-          logger.error(`[SAVE DEBUG] ${updateTimestamp}: VALUE MISMATCH - State was not updated correctly for ${name}`);
-          logger.error(`[SAVE DEBUG] Expected: ${normalizedValue}, Actual: ${updated[name]}`);
+          logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: VALUE MISMATCH - State was not updated correctly for ${name}`);
+          logger.error(`[TIMESTAMP-SYNC] Expected: ${normalizedValue}, Actual: ${updated[name]}`);
         }
         
         return updated;
@@ -273,7 +288,7 @@ export function useFormDataManager({
       
       // Force always saving immediately for all field changes to ensure persistence
       if (taskId) {
-        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Initiating immediate save for field ${name} with taskId ${taskId}`);
+        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Initiating immediate save for field ${name} with taskId ${taskId}`);
         
         // Clear previous timer
         if (saveTimerRef.current) {
@@ -282,44 +297,100 @@ export function useFormDataManager({
         }
         
         // FORCE IMMEDIATE SAVE FOR ALL FIELDS - Don't debounce
-        logger.info(`[SAVE DEBUG] ${updateTimestamp}: Forcing immediate save without debounce`);
+        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Forcing immediate save with timestamp: ${updateTimestamp}`);
         saveProgress()
           .then(result => {
-            logger.info(`[SAVE DEBUG] ${updateTimestamp}: Immediate save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+            logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Immediate save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
             
-            // Verify data after save
-            const postSaveData = formService.getFormData();
-            const savedValue = postSaveData[name];
-            const savedValueMatch = savedValue === normalizedValue;
-            
-            if (!savedValueMatch) {
-              logger.error(`[SAVE DEBUG] ${updateTimestamp}: POST-SAVE VERIFICATION FAILED for field ${name}`);
-              logger.error(`[SAVE DEBUG] Expected: ${normalizedValue}, Saved: ${savedValue}`);
+            // Verify data after save using timestamp-aware approach
+            if (hasTimestamping && typeof formService.getTimestampedFormData === 'function') {
+              // Get the latest timestamped data from the form service
+              const timestampedData = formService.getTimestampedFormData();
+              const savedValue = timestampedData.values[name];
+              const savedTimestamp = timestampedData.timestamps[name];
               
-              // Attempt to fix the value by updating it again
-              logger.info(`[SAVE DEBUG] ${updateTimestamp}: Attempting to fix value by updating again`);
-              formService.updateFormData(name, normalizedValue, taskId);
+              const savedValueMatch = savedValue === normalizedValue;
               
-              // Force a second save to ensure persistence
-              setTimeout(() => {
-                saveProgress()
-                  .then(fixResult => {
-                    logger.info(`[SAVE DEBUG] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
-                  })
-                  .catch(fixErr => {
-                    logger.error(`[SAVE DEBUG] ${updateTimestamp}: Fix save failed with error:`, fixErr);
+              if (!savedValueMatch) {
+                // Log detailed information about the mismatch, including timestamps
+                logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: TIMESTAMP VERIFICATION for field ${name}`);
+                logger.error(`[TIMESTAMP-SYNC] Client value: "${normalizedValue}" (timestamp: ${updateTimestamp})`);
+                logger.error(`[TIMESTAMP-SYNC] Server value: "${savedValue}" (timestamp: ${savedTimestamp})`);
+                
+                // Check which timestamp is newer - this is the key to our conflict resolution
+                if (updateTimestamp > savedTimestamp) {
+                  logger.warn(`[TIMESTAMP-SYNC] Client timestamp is newer - server has stale data!`);
+                  logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Attempting to synchronize timestamps and fix value`);
+                  
+                  // Fix by explicitly updating the timestamp and value
+                  formService.updateFormData(name, normalizedValue, taskId);
+                  
+                  // Force a second save to ensure persistence
+                  setTimeout(() => {
+                    saveProgress()
+                      .then(fixResult => {
+                        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
+                      })
+                      .catch(fixErr => {
+                        logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save failed with error:`, fixErr);
+                      });
+                  }, 100);
+                } else {
+                  logger.warn(`[TIMESTAMP-SYNC] Server timestamp is newer - client value may be stale!`);
+                  logger.info(`[TIMESTAMP-SYNC] Using server value to resolve conflict`);
+                  
+                  // Update local value with server value
+                  form.setValue(name, savedValue, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true
                   });
-              }, 100);
+                  
+                  // Update form data with server value
+                  setFormData(current => {
+                    const updated = { ...current, [name]: savedValue };
+                    latestFormDataRef.current = updated;
+                    return updated;
+                  });
+                }
+              } else {
+                logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Timestamp-based verification passed for field ${name}`);
+              }
             } else {
-              logger.info(`[SAVE DEBUG] ${updateTimestamp}: Post-save verification passed for field ${name}`);
+              // Fallback to simple value verification for non-timestamped services
+              const postSaveData = formService.getFormData();
+              const savedValue = postSaveData[name];
+              const savedValueMatch = savedValue === normalizedValue;
+              
+              if (!savedValueMatch) {
+                logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: POST-SAVE VERIFICATION FAILED for field ${name}`);
+                logger.error(`[TIMESTAMP-SYNC] Expected: ${normalizedValue}, Saved: ${savedValue}`);
+                
+                // Fix by updating value again
+                logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Attempting to fix value by updating again`);
+                formService.updateFormData(name, normalizedValue, taskId);
+                
+                // Force a second save to ensure persistence
+                setTimeout(() => {
+                  saveProgress()
+                    .then(fixResult => {
+                      logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
+                    })
+                    .catch(fixErr => {
+                      logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save failed with error:`, fixErr);
+                    });
+                }, 100);
+              } else {
+                logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Post-save verification passed for field ${name}`);
+              }
             }
           })
           .catch(err => {
-            logger.error(`[SAVE DEBUG] ${updateTimestamp}: Immediate save failed with error:`, err);
+            logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Immediate save failed with error:`, err);
           });
       }
     } catch (error) {
-      logger.error(`[SAVE DEBUG] Error updating field ${name}:`, error);
+      logger.error(`[TIMESTAMP-SYNC] Error updating field ${name}:`, error);
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
 
@@ -428,37 +499,67 @@ export function useFormDataManager({
         }
         setError(null);
         
-        logger.info(`[SAVE DEBUG] Loading data for task ID: ${taskId}`);
+        logger.info(`[TIMESTAMP-SYNC] Loading data for task ID: ${taskId}`);
         
         // Log API call details
-        logger.info(`[SAVE DEBUG] Calling loadProgress for task ${taskId} with service: ${formService.constructor.name}`);
+        logger.info(`[TIMESTAMP-SYNC] Calling loadProgress for task ${taskId} with service: ${formService.constructor.name}`);
         
         // Get stack trace to understand who's calling load
         const stack = new Error().stack;
-        logger.info(`[SAVE DEBUG] loadProgress called from: ${stack?.split('\n')[2] || 'unknown'}`);
+        logger.info(`[TIMESTAMP-SYNC] loadProgress called from: ${stack?.split('\n')[2] || 'unknown'}`);
+        
+        // Check if service supports timestamped data
+        const supportsTimestamps = typeof formService.getTimestampedFormData === 'function';
+        
+        if (supportsTimestamps) {
+          logger.info(`[TIMESTAMP-SYNC] Using enhanced timestamp-based loading for reliable conflict resolution`);
+        }
         
         const savedData = await formService.loadProgress(taskId);
         
         // Skip processing if another load operation has started
         if (thisLoadingKey !== loadingKey) {
-          logger.debug('[SAVE DEBUG] Ignoring outdated load request');
+          logger.debug('[TIMESTAMP-SYNC] Ignoring outdated load request');
           return;
         }
         
         if (savedData && Object.keys(savedData).length > 0) {
-          logger.info(`[SAVE DEBUG] Received saved data with ${Object.keys(savedData).length} fields`);
+          logger.info(`[TIMESTAMP-SYNC] Received saved data with ${Object.keys(savedData).length} fields`);
           
           // Log detailed information about the form data
           const keysToLog = ['businessType', 'registrationNumber', 'corporateRegistration', 'goodStanding'];
-          logger.info(`[SAVE DEBUG] Values for key fields loaded from server:`);
+          logger.info(`[TIMESTAMP-SYNC] Values for key fields loaded from server:`);
           keysToLog.forEach(key => {
-            logger.info(`[SAVE DEBUG] - ${key}: "${savedData[key] || '(empty)'}" (${typeof savedData[key]})`);
+            logger.info(`[TIMESTAMP-SYNC] - ${key}: "${savedData[key] || '(empty)'}" (${typeof savedData[key]})`);
           });
           
           // Normalize any null values to empty strings
           const normalizedData = Object.fromEntries(
             Object.entries(savedData).map(([key, value]) => [key, value === null ? '' : value])
           );
+          
+          // Log timestamp information if available
+          if (supportsTimestamps) {
+            const timestampedData = formService.getTimestampedFormData();
+            logger.info(`[TIMESTAMP-SYNC] Loaded with ${Object.keys(timestampedData.timestamps).length} field timestamps`);
+            
+            // Check for any fields with exceptionally old timestamps that might need attention
+            const now = Date.now();
+            const ONE_DAY = 24 * 60 * 60 * 1000; // milliseconds in a day
+            const oldTimestamps = Object.entries(timestampedData.timestamps)
+              .filter(([_, timestamp]) => (now - timestamp) > ONE_DAY)
+              .map(([key, timestamp]) => ({ 
+                key, 
+                age: Math.round((now - timestamp) / (60 * 60 * 1000)) + 'h' 
+              }));
+            
+            if (oldTimestamps.length > 0) {
+              logger.warn(`[TIMESTAMP-SYNC] Found ${oldTimestamps.length} fields with timestamps older than 24h`);
+              oldTimestamps.forEach(item => {
+                logger.warn(`[TIMESTAMP-SYNC] Field ${item.key} has ${item.age} old timestamp`);
+              });
+            }
+          }
           
           // Update both state and form with complete data
           const completeData = {
