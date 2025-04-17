@@ -97,21 +97,10 @@ export function useFormDataManager({
     mode: 'onChange',
   });
   
-  // Reference to the updateField function that will be defined later
-  // This helps us avoid circular reference issues
-  const updateFieldRef = useRef<(name: string, value: any, isSaving?: boolean) => void>(
-    // Initial implementation - will be replaced after the real function is defined
-    (name, value, isSaving = false) => {
-      if (!formService || !taskId) return;
-      
-      // Basic implementation for the ref initialization
-      // The real implementation will replace this
-      const normalizedValue = typeof value === 'string' && isSaving ? value.trim() : value;
-      formService.updateFormData(name, normalizedValue, taskId);
-    }
-  );
+  // Using a ref to avoid circular dependencies between updateField and saveProgress
+  const updateFieldRef = useRef<(name: string, value: any, isSaving?: boolean) => void>();
   
-  // Function to save form progress - we define this first to avoid circular references
+  // Function to save form progress - uses updateFieldRef to avoid circular dependencies
   const saveProgress = useCallback(async (): Promise<boolean> => {
     if (!formService || !taskId) {
       logger.warn('Cannot save progress - form service or taskId is not available');
@@ -491,6 +480,12 @@ export function useFormDataManager({
       logger.error(`[TIMESTAMP-SYNC] Error updating field ${name}:`, error);
     }
   }, [formService, form, onDataChange, taskId, saveProgress]);
+  
+  // Update the reference to the updateField function after it's defined
+  // This is critical for proper circular dependency handling
+  useEffect(() => {
+    updateFieldRef.current = updateField;
+  }, [updateField]);
 
   // Effect to ensure data is saved when component unmounts
   useEffect(() => {
