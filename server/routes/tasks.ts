@@ -803,6 +803,8 @@ router.post("/__special_non_vite_route__/unique_task_lookup_system", requireAuth
 });
 
 // API endpoint to update task progress on form unmount (added for task center consistency)
+import { reconcileTaskProgress } from '../utils/task-reconciliation';
+
 router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) => {
   try {
     const taskId = Number(req.params.taskId);
@@ -810,24 +812,18 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
       return res.status(400).json({ error: 'Invalid task ID' });
     }
     
-    // Extract progress and other parameters from the request
-    const { progress: clientProgress, forceStatusUpdate } = req.body;
-    
-    // Validate the progress value
-    if (typeof clientProgress !== 'number' || clientProgress < 0 || clientProgress > 100) {
-      console.warn('[Tasks Routes] Invalid progress value:', clientProgress);
-      return res.status(400).json({ error: 'Invalid progress value. Must be a number between 0 and 100.' });
-    }
-    
     // Log the update request
     console.log('[Tasks Routes] Updating task progress:', {
       taskId,
-      clientProgress,
-      forceStatusUpdate,
       timestamp: new Date().toISOString()
     });
     
-    // Fetch the task
+    // Instead of accepting client progress at face value,
+    // use our reconciliation function to calculate the actual progress
+    // This ensures consistency between form view and task center
+    await reconcileTaskProgress(taskId, { forceUpdate: true, debug: true });
+    
+    // Get the now-reconciled task
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
@@ -836,49 +832,17 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    // Determine appropriate status based on progress using our utility function
-    let status = task.status as TaskStatus; // Start with current status
-    
-    // If force update is enabled, recalculate the status based on progress
-    if (forceStatusUpdate) {
-      status = determineStatusFromProgress(clientProgress, status);
-    }
-    
-    console.log('[Tasks Routes] Updating task with client-provided progress:', {
+    console.log('[Tasks Routes] Task progress reconciled:', {
       taskId,
-      currentProgress: task.progress,
-      newProgress: clientProgress,
-      currentStatus: task.status,
-      newStatus: status,
+      progress: task.progress,
+      status: task.status,
       timestamp: new Date().toISOString()
     });
     
-    // Update the task with the client-provided progress and calculated status
-    const [updatedTask] = await db.update(tasks)
-      .set({
-        progress: clientProgress,
-        status,
-        updated_at: new Date(),
-        metadata: {
-          ...task.metadata,
-          lastProgressUpdate: new Date().toISOString()
-        }
-      })
-      .where(eq(tasks.id, taskId))
-      .returning();
-    
-    // Broadcast the update to all connected clients using our utility function
-    broadcastProgressUpdate(
-      taskId,
-      clientProgress,
-      status,
-      updatedTask.metadata || {}
-    );
-    
     return res.json({
       success: true,
-      progress: clientProgress,
-      status,
+      progress: task.progress,
+      status: task.status,
       taskId
     });
   } catch (error) {
