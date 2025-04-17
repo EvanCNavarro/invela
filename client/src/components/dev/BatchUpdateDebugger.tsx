@@ -6,14 +6,16 @@
  * production data or workflows.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FormBatchUpdater, OptimizationFeatures } from '@/utils/form-optimization';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { FormBatchUpdater, OptimizationFeatures, performanceMonitor } from '../../utils/form-optimization';
 
 interface TestField {
   name: string;
@@ -22,269 +24,463 @@ interface TestField {
 }
 
 export function BatchUpdateDebugger() {
-  const [fields, setFields] = useState<TestField[]>([
-    { name: 'field1', value: 'test value 1', section: 'section1' },
-    { name: 'field2', value: 'test value 2', section: 'section1' },
-    { name: 'field3', value: 'test value 3', section: 'section2' },
-  ]);
-  
-  const [batchResults, setBatchResults] = useState<{
-    batchedFields: Record<string, any>;
-    timestamps: Record<string, number>;
-    processingTime: number;
-    success: boolean;
-    error?: any;
-  } | null>(null);
-  
-  const [newField, setNewField] = useState<TestField>({ 
-    name: '', value: '', section: 'section1' 
-  });
-  
-  const [debounceDelay, setDebounceDelay] = useState(500);
+  const [activeTab, setActiveTab] = useState('queue');
   const [featureEnabled, setFeatureEnabled] = useState(OptimizationFeatures.DEBOUNCED_UPDATES);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [newField, setNewField] = useState<TestField>({ name: '', value: '', section: 'test-section' });
+  const [queuedFields, setQueuedFields] = useState<TestField[]>([]);
+  const [processedFields, setProcessedFields] = useState<Record<string, any>>({});
+  const [queueStats, setQueueStats] = useState({
+    totalQueued: 0,
+    totalProcessed: 0,
+    lastProcessTime: 0,
+    averageProcessTime: 0,
+  });
+  const [updateDelay, setUpdateDelay] = useState(500);
   
-  // Configure the batch updater
+  // Initialize BatchUpdater with test configuration
   useEffect(() => {
-    FormBatchUpdater.configure({ updateDelayMs: debounceDelay });
-    console.log('[DEBUG] BatchUpdater configured with delay:', debounceDelay);
-    
-    // Set up a batch update listener just for testing
-    FormBatchUpdater.onUpdate((batchedFields, timestamps) => {
-      console.log('[DEBUG] Batch update received:', batchedFields, timestamps);
-      
-      const startTime = performance.now();
-      
-      // Simulate some processing time
-      setTimeout(() => {
-        const endTime = performance.now();
-        
-        setBatchResults({
-          batchedFields,
-          timestamps,
-          processingTime: endTime - startTime,
-          success: true
-        });
-      }, 100);
+    // Configure batch updater with test settings
+    FormBatchUpdater.configure({
+      updateDelayMs: updateDelay,
     });
+    
+    // Register callbacks to monitor activity
+    FormBatchUpdater.onUpdate((fields, timestamps) => {
+      addLog(`Processing batch update with ${Object.keys(fields).length} fields`);
+      setProcessedFields(prev => ({ ...prev, ...fields }));
+      setQueueStats(prev => ({
+        ...prev,
+        totalProcessed: prev.totalProcessed + Object.keys(fields).length,
+        lastProcessTime: Date.now(),
+      }));
+    });
+    
+    FormBatchUpdater.onComplete(() => {
+      addLog('Batch update completed');
+      // Clear the queue in our UI
+      setQueuedFields([]);
+    });
+    
+    // Log initial state
+    addLog('BatchUpdateDebugger initialized');
     
     return () => {
-      // Reset the batch updater when component unmounts
+      // Clean up when component unmounts
       FormBatchUpdater.reset();
     };
-  }, [debounceDelay]);
+  }, [updateDelay]);
   
-  const handleAddField = useCallback(() => {
-    if (!newField.name.trim() || !newField.value.trim()) return;
-    
-    setFields(prev => [...prev, { ...newField }]);
-    setNewField({ name: '', value: '', section: newField.section });
-  }, [newField]);
-  
-  const handleUpdateField = useCallback((index: number, value: string) => {
-    setFields(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], value };
-      return updated;
-    });
+  // Add log message
+  const addLog = useCallback((message: string) => {
+    setDebugLog(prev => [
+      `[${new Date().toLocaleTimeString()}] ${message}`,
+      ...prev.slice(0, 49), // Keep last 50 messages
+    ]);
   }, []);
   
-  const handleQueueUpdates = useCallback(() => {
-    // Reset batch results
-    setBatchResults(null);
+  // Queue a field update
+  const queueUpdate = useCallback(() => {
+    if (!newField.name || !newField.value) {
+      addLog('Error: Field name and value are required');
+      return;
+    }
     
-    // Queue updates for all fields
-    fields.forEach(field => {
-      FormBatchUpdater.queueUpdate(field.name, field.value, {
-        sectionId: field.section
-      });
+    // Add to our visual queue
+    setQueuedFields(prev => [...prev, { ...newField }]);
+    
+    // Queue the actual update
+    FormBatchUpdater.queueUpdate(newField.name, newField.value, {
+      sectionId: newField.section,
     });
     
-    console.log('[DEBUG] Queued', fields.length, 'field updates');
-  }, [fields]);
+    addLog(`Queued field "${newField.name}" with value "${newField.value}"`);
+    
+    setQueueStats(prev => ({
+      ...prev,
+      totalQueued: prev.totalQueued + 1,
+    }));
+    
+    // Reset the form
+    setNewField(prev => ({ ...prev, name: '', value: '' }));
+  }, [newField, addLog]);
   
-  const handleFlushUpdates = useCallback(() => {
+  // Process the queue immediately
+  const processQueue = useCallback(() => {
+    addLog('Manually processing queue');
     FormBatchUpdater.flush();
-    console.log('[DEBUG] Manually flushed batch queue');
-  }, []);
+  }, [addLog]);
   
+  // Clear the queue without processing
+  const clearQueue = useCallback(() => {
+    addLog('Clearing queue without processing');
+    FormBatchUpdater.clear();
+    setQueuedFields([]);
+  }, [addLog]);
+  
+  // Reset all state
+  const resetDebugger = useCallback(() => {
+    addLog('Resetting debugger state');
+    FormBatchUpdater.reset();
+    setQueuedFields([]);
+    setProcessedFields({});
+    setQueueStats({
+      totalQueued: 0,
+      totalProcessed: 0,
+      lastProcessTime: 0,
+      averageProcessTime: 0,
+    });
+  }, [addLog]);
+  
+  // Toggle feature flag
   const toggleFeature = useCallback(() => {
-    // For testing only - in real code, you would use a global configuration system
     OptimizationFeatures.DEBOUNCED_UPDATES = !featureEnabled;
     setFeatureEnabled(!featureEnabled);
-    console.log('[DEBUG] DEBOUNCED_UPDATES feature flag set to:', !featureEnabled);
-  }, [featureEnabled]);
+    addLog(`Feature flag set to: ${!featureEnabled}`);
+  }, [featureEnabled, addLog]);
+  
+  // Update delay setting
+  const updateDelayValue = useCallback((newDelay: number) => {
+    setUpdateDelay(newDelay);
+    FormBatchUpdater.configure({ updateDelayMs: newDelay });
+    addLog(`Update delay set to: ${newDelay}ms`);
+  }, [addLog]);
+  
+  // Run performance test with multiple fields
+  const runPerformanceTest = useCallback(() => {
+    addLog('Starting performance test');
+    performanceMonitor.startTimer('batchUpdateTest');
+    
+    // Generate test data - 50 fields
+    for (let i = 0; i < 50; i++) {
+      const fieldName = `test_field_${i}`;
+      const fieldValue = `value_${i}_${Date.now()}`;
+      
+      // Queue the update
+      FormBatchUpdater.queueUpdate(fieldName, fieldValue, {
+        sectionId: `section_${Math.floor(i / 10)}`,
+      });
+      
+      // Add to our visual queue
+      setQueuedFields(prev => [
+        ...prev,
+        {
+          name: fieldName,
+          value: fieldValue,
+          section: `section_${Math.floor(i / 10)}`,
+        },
+      ]);
+    }
+    
+    setQueueStats(prev => ({
+      ...prev,
+      totalQueued: prev.totalQueued + 50,
+    }));
+    
+    addLog('Queued 50 test fields');
+  }, [addLog]);
   
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>BatchUpdater Debug Panel</CardTitle>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Batch Updater Debugger</CardTitle>
+            <CardDescription>
+              Test and monitor the BatchUpdater utility for field updates
+            </CardDescription>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="feature-toggle" className="text-sm">
+              Feature Enabled
+            </Label>
+            <Switch 
+              id="feature-toggle"
+              checked={featureEnabled}
+              onCheckedChange={toggleFeature}
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="fields">
-          <TabsList>
-            <TabsTrigger value="fields">Test Fields</TabsTrigger>
-            <TabsTrigger value="config">Configuration</TabsTrigger>
-            <TabsTrigger value="results">Results</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="queue">Queue Manager</TabsTrigger>
+            <TabsTrigger value="logs">Debug Logs</TabsTrigger>
+            <TabsTrigger value="metrics">Performance Metrics</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="fields" className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Test Fields</h3>
-              <p className="text-sm text-gray-500">
-                These fields will be used to test the BatchUpdater functionality
-              </p>
-              
-              {fields.map((field, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div className="w-1/4">
-                    <span className="text-sm font-medium">{field.name}</span>
-                    <span className="text-xs text-gray-500 block">{field.section}</span>
-                  </div>
-                  <Input 
-                    value={field.value} 
-                    onChange={e => handleUpdateField(index, e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-              ))}
-              
-              <div className="pt-4 border-t">
-                <h4 className="text-sm font-medium">Add New Test Field</h4>
-                <div className="flex items-end space-x-2 mt-2">
-                  <div className="space-y-1 flex-1">
-                    <Label htmlFor="fieldName">Field Name</Label>
+          <TabsContent value="queue" className="pt-4">
+            <div className="grid grid-cols-3 gap-6">
+              {/* Left: Add Field Form */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Add Test Field</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="field-name">Field Name</Label>
                     <Input 
-                      id="fieldName"
+                      id="field-name"
                       value={newField.name}
                       onChange={e => setNewField(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="e.g., companyName"
                     />
                   </div>
-                  <div className="space-y-1 flex-1">
-                    <Label htmlFor="fieldValue">Field Value</Label>
+                  
+                  <div>
+                    <Label htmlFor="field-value">Field Value</Label>
                     <Input 
-                      id="fieldValue"
+                      id="field-value"
                       value={newField.value}
                       onChange={e => setNewField(prev => ({ ...prev, value: e.target.value }))}
                       placeholder="e.g., Acme Corp"
                     />
                   </div>
-                  <div className="space-y-1 flex-1">
-                    <Label htmlFor="fieldSection">Section</Label>
+                  
+                  <div>
+                    <Label htmlFor="field-section">Section ID</Label>
                     <Input 
-                      id="fieldSection"
+                      id="field-section"
                       value={newField.section}
                       onChange={e => setNewField(prev => ({ ...prev, section: e.target.value }))}
-                      placeholder="e.g., section1"
+                      placeholder="e.g., company-profile"
                     />
                   </div>
-                  <Button onClick={handleAddField}>Add</Button>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2 mt-4">
-                <Button 
-                  onClick={handleQueueUpdates} 
-                  variant="default"
-                >
-                  Queue Updates
-                </Button>
-                <Button 
-                  onClick={handleFlushUpdates}
-                  variant="outline"
-                >
-                  Flush Queue
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="config" className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Configuration</h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="feature-toggle">DEBOUNCED_UPDATES Feature Flag</Label>
-                    <p className="text-sm text-gray-500">Enable or disable the feature for testing</p>
-                  </div>
-                  <Switch 
-                    id="feature-toggle"
-                    checked={featureEnabled}
-                    onCheckedChange={toggleFeature}
-                  />
+                  
+                  <Button 
+                    onClick={queueUpdate}
+                    className="w-full"
+                    disabled={!newField.name || !newField.value || !featureEnabled}
+                  >
+                    Queue Update
+                  </Button>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="debounce-delay">Debounce Delay (ms)</Label>
-                  <div className="flex items-center space-x-2">
-                    <Input 
-                      id="debounce-delay"
-                      type="number"
-                      value={debounceDelay}
-                      onChange={e => setDebounceDelay(Number(e.target.value))}
-                      min={0}
-                      max={5000}
-                    />
+                <div className="pt-4 space-y-3">
+                  <h3 className="text-lg font-medium">Configuration</h3>
+                  <div>
+                    <Label htmlFor="update-delay">Update Delay (ms)</Label>
+                    <div className="flex items-center space-x-2">
+                      <Input 
+                        id="update-delay"
+                        type="number"
+                        value={updateDelay}
+                        onChange={e => updateDelayValue(parseInt(e.target.value) || 500)}
+                        min={0}
+                        max={5000}
+                        className="flex-1"
+                      />
+                      <Button 
+                        variant="outline"
+                        onClick={() => updateDelayValue(500)}
+                        size="sm"
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
                     <Button 
-                      onClick={() => FormBatchUpdater.configure({ updateDelayMs: debounceDelay })}
+                      onClick={runPerformanceTest}
                       variant="outline"
+                      className="w-full"
+                      disabled={!featureEnabled}
                     >
-                      Apply
+                      Run Performance Test
+                    </Button>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        onClick={processQueue}
+                        disabled={queuedFields.length === 0 || !featureEnabled}
+                        variant="secondary"
+                      >
+                        Process Now
+                      </Button>
+                      <Button 
+                        onClick={clearQueue}
+                        disabled={queuedFields.length === 0}
+                        variant="destructive"
+                      >
+                        Clear Queue
+                      </Button>
+                    </div>
+                    
+                    <Button 
+                      onClick={resetDebugger}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Reset All
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Default: 500ms. Lower values increase responsiveness but may cause more frequent batch processing.
-                  </p>
+                </div>
+              </div>
+              
+              {/* Middle: Queue Status */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">Queue Status</h3>
+                <div className="border rounded-md p-4 mb-4">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-gray-500">Queue Size:</div>
+                    <div className="font-medium">{queuedFields.length}</div>
+                    
+                    <div className="text-gray-500">Total Queued:</div>
+                    <div className="font-medium">{queueStats.totalQueued}</div>
+                    
+                    <div className="text-gray-500">Total Processed:</div>
+                    <div className="font-medium">{queueStats.totalProcessed}</div>
+                    
+                    <div className="text-gray-500">Update Delay:</div>
+                    <div className="font-medium">{updateDelay}ms</div>
+                  </div>
+                </div>
+                
+                <div className="h-80 overflow-y-auto border rounded-md">
+                  {queuedFields.length > 0 ? (
+                    <div className="divide-y">
+                      {queuedFields.map((field, index) => (
+                        <div key={`${field.name}-${index}`} className="p-3 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{field.name}</span>
+                            <Badge>{field.section}</Badge>
+                          </div>
+                          <div className="mt-1 text-gray-600 truncate">
+                            {field.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      Queue is empty
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Right: Processed Fields */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">Processed Fields</h3>
+                <div className="h-96 overflow-y-auto border rounded-md">
+                  {Object.keys(processedFields).length > 0 ? (
+                    <div className="divide-y">
+                      {Object.entries(processedFields).map(([fieldName, value]) => (
+                        <div key={fieldName} className="p-3 text-sm">
+                          <div className="font-medium">{fieldName}</div>
+                          <div className="mt-1 text-gray-600 break-all">
+                            {String(value)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      No processed fields yet
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </TabsContent>
           
-          <TabsContent value="results" className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Batch Processing Results</h3>
+          <TabsContent value="logs" className="pt-4">
+            <div className="border rounded-md h-96 overflow-y-auto p-4 font-mono text-sm">
+              {debugLog.length > 0 ? (
+                <div className="space-y-1">
+                  {debugLog.map((log, index) => (
+                    <div key={index} className="pb-1">
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  No logs yet
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setDebugLog([])}
+              >
+                Clear Logs
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="metrics" className="pt-4">
+            <div className="grid grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Batch Update Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-gray-500">Total Queued:</div>
+                      <div className="font-medium">{queueStats.totalQueued}</div>
+                      
+                      <div className="text-gray-500">Total Processed:</div>
+                      <div className="font-medium">{queueStats.totalProcessed}</div>
+                      
+                      <div className="text-gray-500">Current Queue Size:</div>
+                      <div className="font-medium">{queuedFields.length}</div>
+                      
+                      <div className="text-gray-500">Update Delay:</div>
+                      <div className="font-medium">{updateDelay}ms</div>
+                      
+                      <div className="text-gray-500">Feature Enabled:</div>
+                      <div className="font-medium">{featureEnabled ? 'Yes' : 'No'}</div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Performance Test</h4>
+                      <Button 
+                        onClick={runPerformanceTest} 
+                        className="w-full"
+                        disabled={!featureEnabled}
+                      >
+                        Run 50-Field Test
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               
-              {batchResults ? (
-                <div className="space-y-4">
-                  <div className="bg-gray-50 p-3 rounded-md">
-                    <h4 className="text-sm font-medium mb-2">Processing Stats</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>Fields Processed:</div>
-                      <div>{Object.keys(batchResults.batchedFields).length}</div>
-                      <div>Processing Time:</div>
-                      <div>{batchResults.processingTime.toFixed(2)}ms</div>
-                      <div>Status:</div>
-                      <div className={batchResults.success ? "text-green-600" : "text-red-600"}>
-                        {batchResults.success ? "Success" : "Failed"}
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-gray-500">Browser:</div>
+                      <div className="font-medium">{navigator.userAgent.split(' ')[0]}</div>
+                      
+                      <div className="text-gray-500">Platform:</div>
+                      <div className="font-medium">{navigator.platform}</div>
+                      
+                      <div className="text-gray-500">Window Size:</div>
+                      <div className="font-medium">{window.innerWidth} x {window.innerHeight}</div>
+                      
+                      <div className="text-gray-500">Feature Flags:</div>
+                      <div className="font-medium">
+                        <Badge variant={OptimizationFeatures.DEBOUNCED_UPDATES ? "default" : "outline"} className="mr-1">
+                          DEBOUNCED_UPDATES
+                        </Badge>
+                        <Badge variant={OptimizationFeatures.PROGRESSIVE_LOADING ? "default" : "outline"}>
+                          PROGRESSIVE_LOADING
+                        </Badge>
                       </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Field Values</h4>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <pre className="text-xs overflow-auto max-h-40">
-                        {JSON.stringify(batchResults.batchedFields, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Timestamps</h4>
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <pre className="text-xs overflow-auto max-h-40">
-                        {JSON.stringify(batchResults.timestamps, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center p-6 text-gray-500">
-                  No batch processing results yet. Queue some updates and wait for processing to complete.
-                </div>
-              )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
