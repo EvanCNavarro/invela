@@ -278,9 +278,17 @@ export function useFormDataManager({
         logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
-      // No special handling - preserve the exact value as-is
-      // This ensures all characters including spaces are preserved exactly as typed
-      const normalizedValue = value === null || value === undefined ? '' : value;
+      // Normalize whitespace in string values to prevent unintentional differences
+      let normalizedValue;
+      
+      if (value === null || value === undefined) {
+        normalizedValue = '';
+      } else if (typeof value === 'string') {
+        // Replace all sequences of whitespace with a single space and trim ends
+        normalizedValue = value.replace(/\s+/g, ' ').trim();
+      } else {
+        normalizedValue = value;
+      }
       
       // Always update in the form service, ensuring field clearing operations work
       // Pass taskId to enable immediate saving on critical operations
