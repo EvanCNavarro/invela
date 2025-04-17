@@ -15,6 +15,7 @@ import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
 import { getKybProgress } from './routes/kyb-update';
+import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import filesRouter from './routes/files';
@@ -38,6 +39,9 @@ export function registerRoutes(app: Express): Express {
   const kybProgressRouter = Router();
   getKybProgress(kybProgressRouter);
   app.use(kybProgressRouter);
+
+  // Register KYB timestamps route for field-level timestamp support
+  app.use('/api/kyb/timestamps', kybTimestampRouter);
   
   // Register enhanced debugging routes
   app.use('/api/debug', enhancedDebugRoutes);
