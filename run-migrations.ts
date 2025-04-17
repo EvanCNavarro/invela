@@ -7,6 +7,7 @@ import { updateKybFields2025April } from "./db/migrations/update_kyb_fields_2025
 import { up as addTaskTemplates } from "./db/migrations/add_task_templates";
 import addKybFieldHelpText from "./db/migrations/add_kyb_field_help_text";
 import { up as consolidateKybTemplates } from "./db/migrations/consolidate_kyb_templates";
+import { createTimestampsTable } from "./db/create-timestamps-table";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
@@ -18,6 +19,7 @@ const migrations = {
   'add_task_templates': addTaskTemplates,
   'add_kyb_field_help_text': addKybFieldHelpText,
   'consolidate_kyb_templates': consolidateKybTemplates,
+  'create_timestamps_table': createTimestampsTable,
   'all': runMigrations
 };
 
