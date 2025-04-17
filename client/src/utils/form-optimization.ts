@@ -15,7 +15,7 @@
 // Configuration for enabling/disabling optimization features
 export const OptimizationFeatures = {
   // Controls section-based progressive loading
-  PROGRESSIVE_LOADING: false,
+  PROGRESSIVE_LOADING: true,
   
   // Controls section-based saving instead of whole-form saving
   SECTION_BASED_SAVING: false,
@@ -631,8 +631,269 @@ class OptimizationHealthCheck {
 }
 
 // Export singleton instances
+/**
+ * Progressive Loading Utility for Form Sections
+ * 
+ * This utility implements progressive loading strategies for large forms,
+ * prioritizing visible sections first and then loading additional sections
+ * in the background to improve perceived performance.
+ */
+class ProgressiveLoader {
+  private static instance: ProgressiveLoader;
+  private loadQueue: Array<{
+    sectionId: string;
+    priority: number;
+    loaded: boolean;
+    startTime?: number;
+    endTime?: number;
+  }> = [];
+  private loading: boolean = false;
+  private currentSection: string | null = null;
+  private loadedSections: Set<string> = new Set();
+  private callbacks: {
+    onSectionLoad: Array<(sectionId: string) => void>;
+    onAllSectionsLoad: Array<() => void>;
+  } = {
+    onSectionLoad: [],
+    onAllSectionsLoad: []
+  };
+  
+  private constructor() {}
+  
+  /**
+   * Get the singleton instance
+   */
+  public static getInstance(): ProgressiveLoader {
+    if (!ProgressiveLoader.instance) {
+      ProgressiveLoader.instance = new ProgressiveLoader();
+    }
+    return ProgressiveLoader.instance;
+  }
+  
+  /**
+   * Initialize the progressive loader with section information
+   */
+  public initialize(sections: Array<{ id: string; title: string; priority?: number }>, currentSectionId?: string): void {
+    this.reset();
+    
+    // Set current section if provided
+    if (currentSectionId) {
+      this.currentSection = currentSectionId;
+    }
+    
+    // Add sections to load queue
+    this.loadQueue = sections.map(section => ({
+      sectionId: section.id,
+      // Priority: 1 = highest, 10 = lowest
+      // Current section gets priority 1, rest are ordered based on provided priority or default to 5
+      priority: section.id === this.currentSection ? 1 : (section.priority || 5),
+      loaded: false
+    }));
+    
+    // Sort by priority (lower number = higher priority)
+    this.sortQueue();
+    
+    console.log('%c[PROGRESSIVE LOADING] Initialized with', 'color: #4CAF50', 
+      { sections: this.loadQueue.length, currentSection: this.currentSection });
+  }
+  
+  /**
+   * Mark the current visible section (updates priorities)
+   */
+  public setCurrentSection(sectionId: string): void {
+    if (this.currentSection === sectionId) return;
+    
+    this.currentSection = sectionId;
+    
+    // Update priorities: current section gets highest priority
+    this.loadQueue.forEach(item => {
+      if (item.sectionId === sectionId && !item.loaded) {
+        item.priority = 1;
+      }
+    });
+    
+    this.sortQueue();
+    
+    console.log('%c[PROGRESSIVE LOADING] Current section set to', 'color: #4CAF50', sectionId);
+  }
+  
+  /**
+   * Start the loading process for all sections based on priority
+   */
+  public startLoading(parallel: boolean = false): void {
+    if (this.loading) return;
+    
+    this.loading = true;
+    
+    if (parallel) {
+      // Load all sections in parallel
+      this.loadAllSectionsParallel();
+    } else {
+      // Load sections sequentially based on priority
+      this.loadNextSection();
+    }
+  }
+  
+  /**
+   * Load all sections in parallel (faster but may impact performance)
+   */
+  private loadAllSectionsParallel(): void {
+    const unloadedSections = this.loadQueue.filter(item => !item.loaded);
+    
+    if (unloadedSections.length === 0) {
+      this.finishLoading();
+      return;
+    }
+    
+    // Load all remaining sections at once
+    Promise.all(unloadedSections.map(item => this.simulateLoadSection(item.sectionId)))
+      .then(() => {
+        console.log('%c[PROGRESSIVE LOADING] All sections loaded in parallel', 'color: #4CAF50');
+        this.finishLoading();
+      });
+  }
+  
+  /**
+   * Load the next section in the queue
+   */
+  private loadNextSection(): void {
+    // Find the next unloaded section with highest priority
+    const nextSection = this.loadQueue.find(item => !item.loaded);
+    
+    if (!nextSection) {
+      this.finishLoading();
+      return;
+    }
+    
+    nextSection.startTime = performance.now();
+    
+    // Simulate loading the section data
+    this.simulateLoadSection(nextSection.sectionId)
+      .then(() => {
+        nextSection.loaded = true;
+        nextSection.endTime = performance.now();
+        this.loadedSections.add(nextSection.sectionId);
+        
+        // Notify listeners
+        this.notifySectionLoaded(nextSection.sectionId);
+        
+        // Continue loading the next section
+        setTimeout(() => this.loadNextSection(), 0);
+      });
+  }
+  
+  /**
+   * Simulate loading a section (in a real app, this would fetch actual data)
+   */
+  private simulateLoadSection(sectionId: string): Promise<void> {
+    return new Promise((resolve) => {
+      console.log('%c[PROGRESSIVE LOADING] Loading section', 'color: #4CAF50', sectionId);
+      
+      // Log start for metrics
+      performanceMonitor.startTimer(`loadSection_${sectionId}`);
+      
+      // Simulate network delay based on priority
+      // Higher priority sections load faster
+      const section = this.loadQueue.find(s => s.sectionId === sectionId);
+      const delay = section ? Math.max(50, 100 * section.priority) : 500;
+      
+      setTimeout(() => {
+        // Log completion for metrics
+        performanceMonitor.endTimer(`loadSection_${sectionId}`);
+        console.log('%c[PROGRESSIVE LOADING] Section loaded', 'color: #4CAF50', sectionId);
+        resolve();
+      }, delay);
+    });
+  }
+  
+  /**
+   * Finish the loading process
+   */
+  private finishLoading(): void {
+    this.loading = false;
+    
+    // Check if all sections are loaded
+    const allLoaded = this.loadQueue.every(item => item.loaded);
+    
+    if (allLoaded) {
+      console.log('%c[PROGRESSIVE LOADING] All sections loaded', 'color: #4CAF50');
+      this.notifyAllSectionsLoaded();
+    }
+  }
+  
+  /**
+   * Sort the loading queue by priority
+   */
+  private sortQueue(): void {
+    this.loadQueue.sort((a, b) => a.priority - b.priority);
+  }
+  
+  /**
+   * Check if a section is loaded
+   */
+  public isSectionLoaded(sectionId: string): boolean {
+    return this.loadedSections.has(sectionId);
+  }
+  
+  /**
+   * Get loading stats for all sections
+   */
+  public getLoadingStats(): Array<{
+    sectionId: string;
+    priority: number;
+    loaded: boolean;
+    loadTime?: number;
+  }> {
+    return this.loadQueue.map(item => ({
+      sectionId: item.sectionId,
+      priority: item.priority,
+      loaded: item.loaded,
+      loadTime: item.startTime && item.endTime ? item.endTime - item.startTime : undefined
+    }));
+  }
+  
+  /**
+   * Register a callback for when a section is loaded
+   */
+  public onSectionLoad(callback: (sectionId: string) => void): void {
+    this.callbacks.onSectionLoad.push(callback);
+  }
+  
+  /**
+   * Register a callback for when all sections are loaded
+   */
+  public onAllSectionsLoad(callback: () => void): void {
+    this.callbacks.onAllSectionsLoad.push(callback);
+  }
+  
+  /**
+   * Notify listeners that a section has loaded
+   */
+  private notifySectionLoaded(sectionId: string): void {
+    this.callbacks.onSectionLoad.forEach(callback => callback(sectionId));
+  }
+  
+  /**
+   * Notify listeners that all sections have loaded
+   */
+  private notifyAllSectionsLoaded(): void {
+    this.callbacks.onAllSectionsLoad.forEach(callback => callback());
+  }
+  
+  /**
+   * Reset the loader state
+   */
+  public reset(): void {
+    this.loadQueue = [];
+    this.loading = false;
+    this.currentSection = null;
+    this.loadedSections.clear();
+  }
+}
+
 export const performanceMonitor = FormPerformanceMonitor.getInstance();
 export const healthCheck = OptimizationHealthCheck.getInstance();
+export const progressiveLoader = ProgressiveLoader.getInstance();
 
 /**
  * Safely run an optimized implementation with fallback

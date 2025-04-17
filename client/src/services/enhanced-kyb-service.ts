@@ -3,6 +3,7 @@ import { FormData, TimestampedFormData, createTimestampedFormData, updateField, 
 import { FormField, FormSection } from '../components/forms/types';
 import { calculateTaskStatusUtil } from '../utils/form-utils';
 import getLogger from '../utils/logger';
+import { OptimizationFeatures, progressiveLoader, performanceMonitor, safelyRunOptimizedCode } from '../utils/form-optimization';
 
 // Import a function to convert database field types to component types
 function getFieldComponentType(fieldType: string): string {
