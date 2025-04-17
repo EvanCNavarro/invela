@@ -19,8 +19,8 @@ function convertResponsesToCSV(fields: any[], formData: any) {
   const totalQuestions = fields.length;
   
   for (const field of fields) {
-    // Format as "1/30", "2/30", etc.
-    const formattedNumber = `${questionNumber}/${totalQuestions}`;
+    // Just use the number itself (1, 2, 3, etc.) instead of fraction format
+    const formattedNumber = `${questionNumber}`;
     
     rows.push([
       formattedNumber,
@@ -1456,8 +1456,8 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
           let questionNumber = 1;
           Object.entries(jsonData.responses || {}).forEach(([group, fields]: [string, any]) => {
             Object.entries(fields).forEach(([key, data]: [string, any]) => {
-              // Format as "1/30", "2/30", etc.
-              const formattedNumber = `${questionNumber}/${totalQuestions}`;
+              // Just use the number itself (1, 2, 3, etc.) instead of fraction format
+              const formattedNumber = `${questionNumber}`;
               
               csvRows.push([
                 formattedNumber,
@@ -1558,8 +1558,8 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
           const textContent = Object.entries(data.responses || {}).map(([group, fields]: [string, any]) => {
             const sectionContent = `\n${group}:\n${'='.repeat(group.length)}\n` +
               Object.entries(fields).map(([key, data]: [string, any]) => {
-                // Format as "Question 1/30: "
-                const formattedNumber = `Question ${questionNumber}/${totalQuestions}: `;
+                // Format as "Question 1: "
+                const formattedNumber = `Question ${questionNumber}: `;
                 const output = `${formattedNumber}${data.question}\nAnswer: ${data.answer || 'Not provided'}\n`;
                 questionNumber++;
                 return output;
