@@ -836,18 +836,12 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    // Determine appropriate status based on progress
-    let status: TaskStatus = task.status as TaskStatus; // Start with current status
+    // Determine appropriate status based on progress using our utility function
+    let status = task.status as TaskStatus; // Start with current status
     
     // If force update is enabled, recalculate the status based on progress
     if (forceStatusUpdate) {
-      if (clientProgress === 0) {
-        status = 'not_started';
-      } else if (clientProgress < 100) {
-        status = 'in_progress';
-      } else {
-        status = 'ready_for_submission';
-      }
+      status = determineStatusFromProgress(clientProgress, status);
     }
     
     console.log('[Tasks Routes] Updating task with client-provided progress:', {
@@ -873,13 +867,13 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
       .where(eq(tasks.id, taskId))
       .returning();
     
-    // Broadcast the update to all connected clients
-    broadcastTaskUpdate({
-      id: taskId,
+    // Broadcast the update to all connected clients using our utility function
+    broadcastProgressUpdate(
+      taskId,
+      clientProgress,
       status,
-      progress: clientProgress,
-      metadata: updatedTask.metadata || {}
-    });
+      updatedTask.metadata || {}
+    );
     
     return res.json({
       success: true,
