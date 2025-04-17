@@ -3,13 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormServiceInterface, FormField, FormData } from '@/services/formService';
 import { createFormSchema } from '@/utils/formUtils';
-import getLogger from '@/utils/logger';
+import createEnhancedLogger from '@/utils/enhanced-logger';
 import { OptimizationFeatures, FormBatchUpdater } from '@/utils/form-optimization';
 
-// Logger instance for this module with debug logs disabled for performance
-const logger = getLogger('FormDataManager', { 
-  levels: { debug: false, info: true, warn: true, error: true } 
-});
+// Enhanced logger instance with category-based filtering for reduced noise
+const logger = createEnhancedLogger('FormDataManager', 'formDataManager');
 
 // The properties required by our hook
 export interface UseFormDataManagerProps {
