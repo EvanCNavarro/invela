@@ -379,11 +379,11 @@ export class EnhancedKybFormService implements FormServiceInterface {
       question: field.question,
       order: field.order,
       validation: field.validation_rules,
-      helpText: field.help_text,
+      helpText: field.help_text || undefined, // Convert null to undefined
       placeholder: '',
       value: this.timestampedFormData.values[field.field_key] || '',
-      section: sectionId, // Assign the section ID to the field
-      sectionId: sectionId // Also keep this for compatibility
+      section: sectionId || undefined, // Assign the section ID to the field (ensuring null -> undefined)
+      sectionId: sectionId || undefined // Also keep this for compatibility
     };
   }
   
