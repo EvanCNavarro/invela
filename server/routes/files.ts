@@ -673,13 +673,33 @@ router.get("/api/files/:id/download", async (req, res) => {
     if (isKybCsvFile) {
       console.log('[Files] Handling KYB CSV file download');
       
-      // Determine the path: KYB CSVs are always in the uploads directory with a specific pattern
+      // For inline content (stored in the path field directly), use that as content
+      if (fileRecord.path && fileRecord.path.includes(',')) {
+        console.log('[Files] KYB CSV file content found in database path field');
+        
+        // For CSV files, set more specific headers for better browser handling
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.name}"`);
+        
+        // Send the content directly from the database
+        console.log('[Files] Sending CSV content directly from database');
+        return res.send(fileRecord.path);
+      }
+      
+      // Fall back to file lookup if path doesn't look like CSV content
       const kybFileName = path.basename(fileRecord.path);
       const filePath = path.join('./uploads', kybFileName);
       
       if (!fs.existsSync(filePath)) {
         console.error('[Files] KYB CSV file missing from disk:', filePath);
-        return res.status(404).json({ error: "CSV file not found on disk" });
+        console.log('[Files] Trying to use content from path field directly...');
+        
+        // For CSV files, set more specific headers for better browser handling
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.name}"`);
+        
+        // Send database content as fallback
+        return res.send(fileRecord.path);
       }
       
       // For CSV files, set more specific headers for better browser handling
