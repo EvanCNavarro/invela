@@ -1,472 +1,257 @@
 /**
  * VirtualizedRenderingDemo Component
  * 
- * This component provides a testing interface for the VirtualizedFormSection component.
- * It allows developers to see performance benefits of virtualized rendering with different
- * numbers of fields and test configurations.
+ * This component provides a way to test and demonstrate the virtualized rendering
+ * capabilities of our form components. It renders a form with a large number of fields
+ * and allows toggling between standard and virtualized rendering to compare performance.
+ * 
+ * Features:
+ * - Dynamic field generation with configurable field count
+ * - Performance metrics display (render time, memory usage)
+ * - Toggle between virtualized and standard rendering
+ * - Visual indicators for rendered vs. virtual fields
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
-  OptimizationFeatures, 
-  performanceMonitor 
-} from '@/utils/form-optimization';
+import React, { useState, useEffect, useCallback } from 'react';
 import VirtualizedFormSection from '../forms/VirtualizedFormSection';
 import { FormField } from '../forms/types';
+import { performanceMonitor } from '@/utils/form-optimization';
 
-// Field types available for testing
-const FIELD_TYPES = [
-  'text',
-  'textarea',
-  'number',
-  'select',
-  'radio',
-  'checkbox',
-  'date',
-];
+// Configuration for test form generation
+const FIELD_COUNT_OPTIONS = [20, 50, 100, 200, 500];
+const SECTION_COUNT_OPTIONS = [1, 2, 4, 8];
 
-export default function VirtualizedRenderingDemo() {
-  // Feature flag state
-  const [virtualizationEnabled, setVirtualizationEnabled] = useState(
-    OptimizationFeatures.VIRTUALIZED_RENDERING
-  );
-  
-  // Test configuration
-  const [fieldCount, setFieldCount] = useState(50);
-  const [sectionId, setSectionId] = useState('test-section');
-  const [sectionTitle, setSectionTitle] = useState('Performance Test Section');
-  
-  // Form state
+interface VirtualizedRenderingDemoProps {
+  initialFieldCount?: number;
+  initialSectionCount?: number;
+}
+
+const VirtualizedRenderingDemo: React.FC<VirtualizedRenderingDemoProps> = ({
+  initialFieldCount = 100,
+  initialSectionCount = 4
+}) => {
+  // State for controlling test parameters
+  const [fieldCount, setFieldCount] = useState(initialFieldCount);
+  const [sectionCount, setSectionCount] = useState(initialSectionCount);
+  const [virtualizationEnabled, setVirtualizationEnabled] = useState(true);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
-  
-  // Performance metrics
-  const [metrics, setMetrics] = useState<Record<string, number>>({
-    renderTime: 0,
-    scrollUpdateTime: 0,
+  const [performanceStats, setPerformanceStats] = useState<{
+    initialRenderTime: number;
+    updateRenderTime: number;
+    memoryUsage: number;
+    visibleFieldCount: number;
+  }>({
+    initialRenderTime: 0,
+    updateRenderTime: 0,
     memoryUsage: 0,
+    visibleFieldCount: 0
   });
   
-  // Generate test fields
-  const testFields = useMemo(() => {
-    const fields: FormField[] = [];
+  // Generate test form sections and fields
+  const generateTestData = useCallback(() => {
+    const sections: { id: string; title: string; fields: FormField[] }[] = [];
     
-    for (let i = 0; i < fieldCount; i++) {
-      // Determine field type - cycle through available types
-      const fieldType = FIELD_TYPES[i % FIELD_TYPES.length];
+    // Standard section names that should be used in the form
+    const sectionNames = [
+      "Company Profile",
+      "Governance & Leadership",
+      "Financial Profile",
+      "Operations & Compliance"
+    ];
+    
+    // Distribute fields across sections
+    const fieldsPerSection = Math.floor(fieldCount / sectionCount);
+    
+    for (let i = 0; i < sectionCount; i++) {
+      const sectionId = `section-${i + 1}`;
+      const sectionTitle = i < sectionNames.length 
+        ? sectionNames[i] 
+        : `Section ${i + 1}`;
       
-      const field: FormField = {
-        name: `field_${i}`,
-        label: `Test Field ${i}`,
-        type: fieldType,
-        section: sectionId,
-        required: i % 3 === 0, // Make every third field required for variety
-      };
+      const fields: FormField[] = [];
       
-      // Add options for select and radio fields
-      if (fieldType === 'select' || fieldType === 'radio') {
-        field.options = [
-          { label: 'Option A', value: 'a' },
-          { label: 'Option B', value: 'b' },
-          { label: 'Option C', value: 'c' },
-        ];
+      // Generate fields for this section
+      for (let j = 0; j < fieldsPerSection; j++) {
+        const fieldId = `field-${i}-${j}`;
+        const fieldType = getRandomFieldType();
+        
+        fields.push({
+          name: fieldId,
+          label: `Field ${i}.${j} (${fieldType})`,
+          type: fieldType,
+          section: sectionId,
+          required: j % 3 === 0, // Make every third field required
+          placeholder: `Enter value for field ${i}.${j}`,
+          description: j % 4 === 0 ? `Description for field ${i}.${j}` : undefined,
+          // Add options for select/radio fields
+          options: fieldType === 'select' || fieldType === 'radio' 
+            ? [
+                { label: 'Option 1', value: 'option1' },
+                { label: 'Option 2', value: 'option2' },
+                { label: 'Option 3', value: 'option3' }
+              ] 
+            : undefined
+        });
       }
       
-      fields.push(field);
+      sections.push({
+        id: sectionId,
+        title: sectionTitle,
+        fields
+      });
     }
     
-    return fields;
-  }, [fieldCount, sectionId]);
+    return sections;
+  }, [fieldCount, sectionCount]);
   
-  // Toggle virtualization feature
-  const toggleVirtualization = useCallback(() => {
-    const newValue = !virtualizationEnabled;
-    OptimizationFeatures.VIRTUALIZED_RENDERING = newValue;
-    setVirtualizationEnabled(newValue);
-    
-    // Reset metrics when switching modes
-    setMetrics({
-      renderTime: 0,
-      scrollUpdateTime: 0,
-      memoryUsage: 0,
-    });
-  }, [virtualizationEnabled]);
+  // Generate random field type for variety
+  const getRandomFieldType = () => {
+    const types = ['text', 'textarea', 'select', 'checkbox', 'radio', 'number'];
+    const randomIndex = Math.floor(Math.random() * types.length);
+    return types[randomIndex];
+  };
   
   // Handle field value changes
   const handleFieldChange = useCallback((name: string, value: any) => {
-    setFormValues((prev) => ({
+    // Start timer to measure update performance
+    performanceMonitor.startTimer('fieldUpdate');
+    
+    setFormValues(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
+    }));
+    
+    // End timer and update stats
+    performanceMonitor.endTimer('fieldUpdate');
+    const updateTime = performanceMonitor.getLastMeasurement('fieldUpdate');
+    
+    setPerformanceStats(prev => ({
+      ...prev,
+      updateRenderTime: updateTime || prev.updateRenderTime
     }));
   }, []);
   
-  // Run performance test
-  const runPerformanceTest = useCallback(() => {
-    // Start performance monitoring
-    performanceMonitor.startTimer('virtualizedRendering');
+  // Measure initial render performance
+  useEffect(() => {
+    performanceMonitor.startTimer('initialRender');
     
-    // Force re-render by updating state
-    setFieldCount((prev) => prev);
-    
-    // Collect metrics after render completes
-    setTimeout(() => {
-      const renderTime = performanceMonitor.endTimer('virtualizedRendering');
-      const scrollUpdateTime = performanceMonitor.getAverageTime('updateVisibleRange') || 0;
+    // Cleanup function will capture the performance when component unmounts/re-renders
+    return () => {
+      performanceMonitor.endTimer('initialRender');
+      const renderTime = performanceMonitor.getLastMeasurement('initialRender');
       
-      // Update metrics display
-      setMetrics({
-        renderTime,
-        scrollUpdateTime,
-        memoryUsage: (window.performance as any)?.memory?.usedJSHeapSize || 0,
-      });
-    }, 100);
-  }, []);
+      if (renderTime) {
+        setPerformanceStats(prev => ({
+          ...prev,
+          initialRenderTime: renderTime
+        }));
+      }
+      
+      // Try to get memory usage if available
+      if (window.performance && (window.performance as any).memory) {
+        const memoryInfo = (window.performance as any).memory;
+        setPerformanceStats(prev => ({
+          ...prev,
+          memoryUsage: Math.round(memoryInfo.usedJSHeapSize / (1024 * 1024))
+        }));
+      }
+    };
+  }, [fieldCount, sectionCount, virtualizationEnabled]);
   
-  // Reset form state
-  const resetDemo = useCallback(() => {
-    setFormValues({});
-    setMetrics({
-      renderTime: 0,
-      scrollUpdateTime: 0,
-      memoryUsage: 0,
-    });
-  }, []);
+  // Generate test sections
+  const testSections = generateTestData();
   
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <div className="virtualized-rendering-demo p-4">
+      <h1 className="text-2xl font-bold mb-4">Virtualized Rendering Test</h1>
+      
+      <div className="controls bg-gray-100 p-4 rounded-lg mb-4">
+        <div className="flex flex-wrap gap-4 mb-4">
           <div>
-            <CardTitle>Virtualized Rendering Demo</CardTitle>
-            <CardDescription>
-              Test performance benefits of virtualized scrolling for large form sections
-            </CardDescription>
+            <label className="block text-sm font-medium mb-1">Fields per Form:</label>
+            <select 
+              value={fieldCount} 
+              onChange={(e) => setFieldCount(Number(e.target.value))}
+              className="border rounded p-2"
+            >
+              {FIELD_COUNT_OPTIONS.map(count => (
+                <option key={count} value={count}>{count} fields</option>
+              ))}
+            </select>
           </div>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="virtualization-toggle" className="text-sm">
-              Virtualization Enabled
-            </Label>
-            <Switch 
-              id="virtualization-toggle"
-              checked={virtualizationEnabled}
-              onCheckedChange={toggleVirtualization}
-            />
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Section Count:</label>
+            <select 
+              value={sectionCount} 
+              onChange={(e) => setSectionCount(Number(e.target.value))}
+              className="border rounded p-2"
+            >
+              {SECTION_COUNT_OPTIONS.map(count => (
+                <option key={count} value={count}>{count} sections</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Virtualization:</label>
+            <div className="flex items-center">
+              <input 
+                type="checkbox"
+                checked={virtualizationEnabled}
+                onChange={(e) => setVirtualizationEnabled(e.target.checked)}
+                className="mr-2 h-4 w-4"
+              />
+              <span>{virtualizationEnabled ? 'Enabled' : 'Disabled'}</span>
+            </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="demo" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="demo">Demo</TabsTrigger>
-            <TabsTrigger value="metrics">Performance Metrics</TabsTrigger>
-          </TabsList>
+        
+        <div className="performance-stats grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="stat bg-white p-3 rounded">
+            <div className="text-sm text-gray-600">Initial Render Time</div>
+            <div className="text-lg font-semibold">{performanceStats.initialRenderTime.toFixed(2)} ms</div>
+          </div>
           
-          <TabsContent value="demo" className="space-y-6 pt-4">
-            <div className="grid grid-cols-3 gap-6">
-              {/* Configuration Panel */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Configuration</h3>
-                
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="field-count">Field Count</Label>
-                    <div className="flex space-x-2">
-                      <Input 
-                        id="field-count"
-                        type="number"
-                        min={10}
-                        max={500}
-                        value={fieldCount}
-                        onChange={(e) => setFieldCount(Math.min(500, Math.max(10, parseInt(e.target.value) || 10)))}
-                      />
-                      <div className="flex space-x-1">
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setFieldCount(50)}
-                        >
-                          50
-                        </Button>
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setFieldCount(120)}
-                        >
-                          120
-                        </Button>
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setFieldCount(250)}
-                        >
-                          250
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="section-title">Section Title</Label>
-                    <Input 
-                      id="section-title"
-                      value={sectionTitle}
-                      onChange={(e) => setSectionTitle(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="section-id">Section ID</Label>
-                    <Input 
-                      id="section-id"
-                      value={sectionId}
-                      onChange={(e) => setSectionId(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="pt-2 space-y-2">
-                    <Button 
-                      onClick={runPerformanceTest}
-                      className="w-full"
-                    >
-                      Run Performance Test
-                    </Button>
-                    
-                    <Button 
-                      onClick={resetDemo}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Reset Form
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="pt-4 space-y-3">
-                  <h3 className="text-lg font-medium">Performance Report</h3>
-                  
-                  <div className="bg-muted p-3 rounded-md text-sm">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-gray-500">Render Time:</div>
-                      <div className="font-medium">
-                        {metrics.renderTime ? `${metrics.renderTime.toFixed(2)}ms` : 'N/A'}
-                      </div>
-                      
-                      <div className="text-gray-500">Scroll Update:</div>
-                      <div className="font-medium">
-                        {metrics.scrollUpdateTime ? `${metrics.scrollUpdateTime.toFixed(2)}ms` : 'N/A'}
-                      </div>
-                      
-                      <div className="text-gray-500">Fields Rendered:</div>
-                      <div className="font-medium">
-                        {virtualizationEnabled ? '~15-25 (visible only)' : fieldCount}
-                      </div>
-                      
-                      <div className="text-gray-500">Virtualization:</div>
-                      <div className="font-medium">
-                        <Badge variant={virtualizationEnabled ? "default" : "outline"}>
-                          {virtualizationEnabled ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2 pt-2 border-t">
-                      <p className="text-xs text-gray-500">
-                        Try toggling virtualization and comparing render times with different field counts.
-                        For best results, use 120+ fields.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Form Section Preview */}
-              <div className="col-span-2 border rounded-md p-4">
-                <h3 className="text-lg font-medium mb-4">Virtualized Form Preview</h3>
-                
-                <div className="h-[650px] overflow-hidden">
-                  <VirtualizedFormSection
-                    sectionId={sectionId}
-                    sectionTitle={sectionTitle}
-                    fields={testFields}
-                    values={formValues}
-                    onChange={handleFieldChange}
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
+          <div className="stat bg-white p-3 rounded">
+            <div className="text-sm text-gray-600">Update Render Time</div>
+            <div className="text-lg font-semibold">{performanceStats.updateRenderTime.toFixed(2)} ms</div>
+          </div>
           
-          <TabsContent value="metrics" className="pt-4">
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Standard vs. Virtualized Rendering</CardTitle>
-                    <CardDescription>
-                      Performance comparison between rendering approaches
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="p-3 bg-muted rounded-md">
-                          <div className="text-3xl font-bold">
-                            {fieldCount}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Total Fields
-                          </div>
-                        </div>
-                        
-                        <div className="p-3 bg-muted rounded-md">
-                          <div className="text-3xl font-bold">
-                            ~20
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Visible Fields
-                          </div>
-                        </div>
-                        
-                        <div className="p-3 bg-muted rounded-md">
-                          <div className="text-3xl font-bold text-green-600">
-                            {fieldCount > 0 ? Math.round((fieldCount - 20) / fieldCount * 100) : 0}%
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Reduction
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Expected Benefits</h4>
-                        <ul className="text-sm space-y-1">
-                          <li className="flex items-start space-x-2">
-                            <div className="text-green-500 mt-0.5">✓</div>
-                            <div>Faster initial rendering (up to 90% faster with 120+ fields)</div>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <div className="text-green-500 mt-0.5">✓</div>
-                            <div>Reduced memory usage</div>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <div className="text-green-500 mt-0.5">✓</div>
-                            <div>Smoother scrolling experience</div>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <div className="text-green-500 mt-0.5">✓</div>
-                            <div>Lower CPU/GPU utilization</div>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Testing Instructions</CardTitle>
-                    <CardDescription>
-                      How to verify virtualized rendering performance
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <ol className="text-sm space-y-2 list-decimal pl-4">
-                        <li>
-                          <span className="font-medium">Disable virtualization</span> using the toggle at the top
-                        </li>
-                        <li>
-                          Set the field count to <span className="font-medium">120+ fields</span> (higher values show more benefit)
-                        </li>
-                        <li>
-                          Click <span className="font-medium">Run Performance Test</span> and note the render time
-                        </li>
-                        <li>
-                          <span className="font-medium">Enable virtualization</span> using the toggle
-                        </li>
-                        <li>
-                          Run the test again and compare the timing results
-                        </li>
-                        <li>
-                          Try scrolling through the form and observe the smoothness
-                        </li>
-                      </ol>
-                      
-                      <Separator />
-                      
-                      <div className="text-sm text-gray-500">
-                        <p className="font-medium">Expected Results:</p>
-                        <p>
-                          With 120 fields, virtualized rendering should be at least 60-70% faster.
-                          With 250+ fields, improvements can be 80-90% or more.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Implementation Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Key Components</h4>
-                        <ul className="text-sm space-y-1">
-                          <li className="flex items-start space-x-2">
-                            <div className="text-blue-500 mt-0.5">•</div>
-                            <div><code>VirtualizedFormSection</code> - Main component that implements virtualization</div>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <div className="text-blue-500 mt-0.5">•</div>
-                            <div><code>OptimizationFeatures.VIRTUALIZED_RENDERING</code> - Feature flag</div>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <div className="text-blue-500 mt-0.5">•</div>
-                            <div>React's <code>useEffect</code> for scroll measurement</div>
-                          </li>
-                          <li className="flex items-start space-x-2">
-                            <div className="text-blue-500 mt-0.5">•</div>
-                            <div>CSS spacers for maintaining scroll dimensions</div>
-                          </li>
-                        </ul>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">How Virtualization Works</h4>
-                        <ol className="text-sm space-y-1 list-decimal pl-4">
-                          <li>Measure the visible viewport</li>
-                          <li>Calculate which fields would be visible</li>
-                          <li>Render only visible fields plus a small buffer</li>
-                          <li>Add spacers to maintain scroll dimensions</li>
-                          <li>Recalculate on scroll events</li>
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="stat bg-white p-3 rounded">
+            <div className="text-sm text-gray-600">Memory Usage</div>
+            <div className="text-lg font-semibold">
+              {performanceStats.memoryUsage > 0 
+                ? `${performanceStats.memoryUsage} MB` 
+                : 'Not available'}
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </div>
+          
+          <div className="stat bg-white p-3 rounded">
+            <div className="text-sm text-gray-600">Total Fields</div>
+            <div className="text-lg font-semibold">{fieldCount}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="test-content bg-white border rounded-lg" style={{ height: '600px', overflow: 'auto' }}>
+        <div className="p-4">
+          {testSections.map((section) => (
+            <div key={section.id} className="mb-8">
+              <VirtualizedFormSection
+                sectionId={section.id}
+                sectionTitle={section.title}
+                fields={section.fields}
+                values={formValues}
+                onChange={handleFieldChange}
+                disabled={false}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default VirtualizedRenderingDemo;
