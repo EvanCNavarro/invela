@@ -1,19 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import TestRunner from '../utils/tests/TestRunner';
 import { initializeOptimizationMonitoring } from '../utils/form-optimization';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BatchUpdateDebugger } from '../components/dev/BatchUpdateDebugger';
+import ProgressiveLoadingDemo from '../components/dev/ProgressiveLoadingDemo';
 
 /**
  * Form Performance Testing Page
  * 
- * This page hosts the performance test runner component,
+ * This page hosts the performance test runner component and debugging interfaces,
  * allowing developers to run various performance tests on forms
- * with different field counts and optimization settings.
+ * with different field counts and optimization settings, and to debug
+ * optimization features like BatchUpdater.
  */
 export default function FormPerformancePage() {
+  const [activeTab, setActiveTab] = useState('performance-tests');
+  
   // Initialize performance monitoring when the page loads
   React.useEffect(() => {
     // Enable debug mode in development
     initializeOptimizationMonitoring(true);
+    
+    console.log('[FormPerformancePage] Initialized optimization monitoring in debug mode');
     
     return () => {
       // Clean up if needed when navigating away
@@ -30,9 +38,31 @@ export default function FormPerformancePage() {
         </p>
       </header>
       
-      <div className="bg-white rounded-lg shadow-md">
-        <TestRunner />
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="performance-tests">Performance Tests</TabsTrigger>
+          <TabsTrigger value="batch-updater">BatchUpdater Debug</TabsTrigger>
+          <TabsTrigger value="progressive-loading">Progressive Loading</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="performance-tests" className="mt-4">
+          <div className="bg-white rounded-lg shadow-md">
+            <TestRunner />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="batch-updater" className="mt-4">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <BatchUpdateDebugger />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="progressive-loading" className="mt-4">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {activeTab === 'progressive-loading' && <ProgressiveLoadingDemo />}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
