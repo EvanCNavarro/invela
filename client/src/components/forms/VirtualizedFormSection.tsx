@@ -11,6 +11,25 @@
  * - Smooth scrolling behavior
  * - Optimized re-rendering via React.memo
  * - Fallback to standard rendering when optimization is disabled
+ * - Dynamic measurement of field heights for accuracy
+ * - Buffer rendering for smooth scrolling experience
+ * - Throttled calculations to prevent performance issues
+ * 
+ * Performance considerations:
+ * - Only enabled for sections with more than 20 fields
+ * - Uses spacers instead of absolute positioning for better accessibility
+ * - Memoizes expensive calculations and rendering functions
+ * - Monitors rendering performance via the performance monitoring system
+ * 
+ * Usage:
+ * <VirtualizedFormSection
+ *   sectionId="section-1"
+ *   sectionTitle="Company Information"
+ *   fields={sectionFields}
+ *   values={formValues}
+ *   onChange={handleFieldChange}
+ *   errors={formErrors}
+ * />
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
