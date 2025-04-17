@@ -581,6 +581,23 @@ export function useFormDataManager({
         pendingSaveDataRef.current = { ...latestData };
         return;
       }
+      
+      // Update the task progress via API to ensure it's reflected in task center
+      try {
+        // This API call will update both progress and status in the tasks table
+        fetch(`/api/tasks/${taskId}/update-progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            calculateFromForm: true,
+            forceStatusUpdate: true
+          })
+        }).catch(err => {
+          console.error('Failed to update task progress on unmount:', err);
+        });
+      } catch (e) {
+        console.error('Error updating task progress on unmount:', e);
+      }
         
       // Mark that we're starting a save operation
       saveInProgressRef.current = true;
