@@ -15,7 +15,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   BatchUpdateManager,
-  performanceMonitor
+  performanceMonitor,
+  FormBatchUpdater
 } from '@/utils/form-optimization';
 
 // Styles for the visualization
@@ -49,9 +50,10 @@ const BatchUpdateDebugger: React.FC<BatchUpdateDebuggerProps> = ({
   maxQueueSize = 20,
   autoFlushEnabled = true
 }) => {
-  // Create batch manager instance
+  // Use singleton instance for demos or create a separate instance for the debugger
   const batchManager = useRef<BatchUpdateManager<string>>(
-    new BatchUpdateManager<string>(initialDelay)
+    // For debugging, we create a separate instance to avoid affecting the main form
+    FormBatchUpdater
   ).current;
   
   // State for UI controls and visualization
