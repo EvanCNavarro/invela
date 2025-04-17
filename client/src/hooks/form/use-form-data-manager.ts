@@ -278,35 +278,9 @@ export function useFormDataManager({
         logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
-      // Enhanced normalization for more consistent value handling
-      let normalizedValue: any;
-      if (value === null || value === undefined) {
-        normalizedValue = '';
-      } else if (typeof value === 'string') {
-        // IMPORTANT: Always preserve spaces within the text during typing
-        // This prevents spaces from being removed when typing quickly
-        normalizedValue = value;
-        
-        // For validation purposes, check if the string is effectively empty (only whitespace)
-        const isEffectivelyEmpty = value.trim() === '';
-        
-        // If it's effectively empty, we'll treat it as empty for validation
-        if (isEffectivelyEmpty) {
-          normalizedValue = '';
-        }
-        
-        // Preserve spaces - no whitespace trimming
-        // This ensures all spaces are preserved during typing and saving
-        normalizedValue = value;
-        
-        // Convert "null" and "undefined" strings to empty strings
-        if (normalizedValue === 'null' || normalizedValue === 'undefined') {
-          normalizedValue = '';
-        }
-      } else {
-        // Keep non-string values as-is (arrays, objects, booleans, etc.)
-        normalizedValue = value;
-      }
+      // No special handling - preserve the exact value as-is
+      // This ensures all characters including spaces are preserved exactly as typed
+      const normalizedValue = value === null || value === undefined ? '' : value;
       
       // Always update in the form service, ensuring field clearing operations work
       // Pass taskId to enable immediate saving on critical operations

@@ -3,7 +3,7 @@ import { db } from "@db";
 import { tasks, TaskStatus, companies, kybFields, kybResponses } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastMessage } from "../services/websocket"; // Use the correct import path
+import { broadcastTaskUpdate } from "../services/websocket"; // Use the correct import path
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
 
@@ -330,13 +330,9 @@ router.post("/api/tasks", requireAuth, async (req, res) => {
 
     // Get updated counts and broadcast task creation with progress
     const taskCount = await getTaskCount();
-    broadcastMessage('task_created', {
-      task: {
-        ...newTask,
-        progress: newTask.progress || 0
-      },
-      count: taskCount,
-      timestamp: new Date().toISOString()
+    broadcastTaskUpdate({
+      ...newTask,
+      progress: newTask.progress || 0
     });
 
     res.status(201).json({ 
@@ -368,10 +364,9 @@ router.delete("/api/tasks/:id", requireAuth, async (req, res) => {
 
     // Get updated counts and broadcast task deletion
     const taskCount = await getTaskCount();
-    broadcastMessage('task_deleted', {
-      taskId: deletedTask.id,
-      count: taskCount,
-      timestamp: new Date().toISOString()
+    broadcastTaskUpdate({
+      id: deletedTask.id,
+      deleted: true
     });
 
     res.json({ message: "Task deleted successfully", count: taskCount });
@@ -873,9 +868,10 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
           .where(eq(tasks.id, taskId))
           .returning();
         
-        // Broadcast the update to any listening clients
-        broadcastMessage('task-update', {
-          taskId, 
+        // Broadcast the update using the broadcastTaskUpdate function
+        const { broadcastTaskUpdate } = require('../services/websocket');
+        broadcastTaskUpdate({
+          id: taskId,
           progress,
           status
         });
