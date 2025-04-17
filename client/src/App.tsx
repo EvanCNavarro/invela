@@ -34,6 +34,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import TestFormUpdate from "./test-form-update";
 import FormDbTestPage from "./form-db-test";
 import FormPerformancePage from "@/pages/FormPerformancePage";
+import ProgressiveLoadingDemo from "@/components/dev/ProgressiveLoadingDemo";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -289,6 +290,11 @@ function Router() {
         {/* Form Performance Testing Page - For Optimizing Large Forms */}
         <Route path="/form-performance">
           <FormPerformancePage />
+        </Route>
+        
+        {/* Progressive Loading Demo - For Testing Section-Based Loading */}
+        <Route path="/progressive-loading-demo">
+          <ProgressiveLoadingDemo />
         </Route>
 
         <Route component={NotFound} />
