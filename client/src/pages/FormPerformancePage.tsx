@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import VirtualizedRenderingDemo from '@/components/dev/VirtualizedRenderingDemo';
 import ProgressiveLoadingDemo from '@/components/dev/ProgressiveLoadingDemo';
 import BatchUpdateDebugger from '@/components/dev/BatchUpdateDebugger';
+import OptimizationToolsDemo from '@/components/dev/OptimizationToolsDemo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 enum DemoTabs {
@@ -74,13 +75,7 @@ const FormPerformancePage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value={DemoTabs.OPTIMIZATION} className="bg-white rounded-lg shadow p-4 border">
-          <div className="p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Optimization Tools</h2>
-            <p className="text-gray-600 mb-4">
-              Advanced tooling for measuring and analyzing form optimization techniques. This feature
-              will be available soon.
-            </p>
-          </div>
+          <OptimizationToolsDemo />
         </TabsContent>
       </Tabs>
 
