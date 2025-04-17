@@ -24,11 +24,12 @@ export function registerServices(): void {
     console.log(`[Service Registration] Found ${existingKeys.length} existing services: [${existingKeys.join(', ')}]`);
     
     // Register KYB form service with both its client-side name and database name
-    console.log('[Service Registration] Registering KYB service for type: kyb');
-    componentFactory.registerFormService('kyb', kybService);
+    // We're using the enhanced KYB service which adds timestamp-based conflict resolution
+    console.log('[Service Registration] Registering Enhanced KYB service for type: kyb');
+    componentFactory.registerFormService('kyb', enhancedKybService);
     
-    console.log('[Service Registration] Registering KYB service for type: company_kyb');
-    componentFactory.registerFormService('company_kyb', kybService);
+    console.log('[Service Registration] Registering Enhanced KYB service for type: company_kyb');
+    componentFactory.registerFormService('company_kyb', enhancedKybService);
     
     // Verify registrations
     const servicesAfter = componentFactory.getRegisteredFormServices();
@@ -53,7 +54,8 @@ export function registerServices(): void {
       kybRegistered: !!kybRegistered,
       companyKybRegistered: !!companyKybRegistered,
       kybServiceType: kybRegistered?.constructor?.name || 'null',
-      companyKybServiceType: companyKybRegistered?.constructor?.name || 'null'
+      companyKybServiceType: companyKybRegistered?.constructor?.name || 'null',
+      isEnhanced: kybRegistered?.constructor?.name === 'EnhancedKybFormService'
     });
     
     console.log('[Service Registration] Services registered successfully');
