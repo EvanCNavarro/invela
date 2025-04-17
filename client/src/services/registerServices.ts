@@ -3,6 +3,7 @@
 
 import { componentFactory } from './componentFactory';
 import { kybService } from './kybService';
+import { enhancedKybService } from './enhanced-kyb-service';
 
 /**
  * Register all form services with ComponentFactory
