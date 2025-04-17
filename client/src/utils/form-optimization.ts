@@ -345,7 +345,11 @@ class BatchUpdateManagerImpl<T = any> {
   addUpdate(key: string, value: T, immediate = false): void {
     performanceMonitor.startTimer('batchUpdate_add');
     
-    // Add to queue
+    // IMPORTANT: For string values, preserve spaces exactly as they are
+    // This prevents spaces from being removed when typing quickly
+    // Do NOT modify string values here as it can cause issues with whitespace
+    
+    // Add to queue - store the exact value without modification
     this.queue.set(key, value);
     this.timestamps[key] = Date.now();
     
