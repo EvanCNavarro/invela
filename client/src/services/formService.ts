@@ -54,6 +54,14 @@ export interface FormSection {
 export type FormData = Record<string, any>;
 
 /**
+ * Interface for timestamped form data
+ */
+export interface TimestampedFormData {
+  values: FormData;
+  timestamps: Record<string, number>;
+}
+
+/**
  * Interface for form submission options
  */
 export interface FormSubmitOptions {
@@ -105,6 +113,12 @@ export interface FormServiceInterface {
    * @returns Current form data
    */
   getFormData(): FormData;
+  
+  /**
+   * Get the timestamped form data (for enhanced services)
+   * @returns Timestamped form data with values and timestamps
+   */
+  getTimestampedFormData?(): TimestampedFormData;
   
   /**
    * Calculate form completion progress

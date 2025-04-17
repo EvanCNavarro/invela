@@ -598,25 +598,27 @@ export function useFormDataManager({
           );
           
           // Log timestamp information if available
-          if (supportsTimestamps) {
+          if (supportsTimestamps && typeof formService.getTimestampedFormData === 'function') {
             const timestampedData = formService.getTimestampedFormData();
-            logger.info(`[TIMESTAMP-SYNC] Loaded with ${Object.keys(timestampedData.timestamps).length} field timestamps`);
+            if (timestampedData && timestampedData.timestamps) {
+              logger.info(`[TIMESTAMP-SYNC] Loaded with ${Object.keys(timestampedData.timestamps).length} field timestamps`);
             
-            // Check for any fields with exceptionally old timestamps that might need attention
-            const now = Date.now();
-            const ONE_DAY = 24 * 60 * 60 * 1000; // milliseconds in a day
-            const oldTimestamps = Object.entries(timestampedData.timestamps)
-              .filter(([_, timestamp]: [string, number]) => (now - timestamp) > ONE_DAY)
-              .map(([key, timestamp]: [string, number]) => ({ 
-                key, 
-                age: Math.round((now - timestamp) / (60 * 60 * 1000)) + 'h' 
-              }));
-            
-            if (oldTimestamps.length > 0) {
-              logger.warn(`[TIMESTAMP-SYNC] Found ${oldTimestamps.length} fields with timestamps older than 24h`);
-              oldTimestamps.forEach(item => {
-                logger.warn(`[TIMESTAMP-SYNC] Field ${item.key} has ${item.age} old timestamp`);
-              });
+              // Check for any fields with exceptionally old timestamps that might need attention
+              const now = Date.now();
+              const ONE_DAY = 24 * 60 * 60 * 1000; // milliseconds in a day
+              const oldTimestamps = Object.entries(timestampedData.timestamps)
+                .filter(([_, timestamp]) => typeof timestamp === 'number' && (now - timestamp) > ONE_DAY)
+                .map(([key, timestamp]) => ({ 
+                  key, 
+                  age: Math.round((now - (timestamp as number)) / (60 * 60 * 1000)) + 'h' 
+                }));
+              
+              if (oldTimestamps.length > 0) {
+                logger.warn(`[TIMESTAMP-SYNC] Found ${oldTimestamps.length} fields with timestamps older than 24h`);
+                oldTimestamps.forEach(item => {
+                  logger.warn(`[TIMESTAMP-SYNC] Field ${item.key} has ${item.age} old timestamp`);
+                });
+              }
             }
           }
           
