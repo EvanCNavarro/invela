@@ -547,8 +547,8 @@ export function useFormDataManager({
             const now = Date.now();
             const ONE_DAY = 24 * 60 * 60 * 1000; // milliseconds in a day
             const oldTimestamps = Object.entries(timestampedData.timestamps)
-              .filter(([_, timestamp]) => (now - timestamp) > ONE_DAY)
-              .map(([key, timestamp]) => ({ 
+              .filter(([_, timestamp]: [string, number]) => (now - timestamp) > ONE_DAY)
+              .map(([key, timestamp]: [string, number]) => ({ 
                 key, 
                 age: Math.round((now - timestamp) / (60 * 60 * 1000)) + 'h' 
               }));
