@@ -699,7 +699,10 @@ router.get("/api/files/:id/download", async (req, res) => {
         
         // Use standardized filename format for download
         const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
-        const taskId = fileRecord.task_id || Number(req.query.taskId) || 0;
+        
+        // Get task ID from query params, metadata, or default to 0
+        const taskId = Number(req.query.taskId) || 
+                      (fileRecord.metadata && fileRecord.metadata.taskId ? Number(fileRecord.metadata.taskId) : 0);
         
         // Get company name from file metadata or use a default
         const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
@@ -733,7 +736,10 @@ router.get("/api/files/:id/download", async (req, res) => {
         
         // Use standardized filename format for download
         const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
-        const taskId = Number(req.query.taskId) || 0;
+        
+        // Get task ID from query params, metadata, or default to 0
+        const taskId = Number(req.query.taskId) || 
+                      (fileRecord.metadata && fileRecord.metadata.taskId ? Number(fileRecord.metadata.taskId) : 0);
         
         // Get company name from file metadata or use a default
         const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
@@ -758,7 +764,10 @@ router.get("/api/files/:id/download", async (req, res) => {
       
       // Use standardized filename format for download
       const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
-      const taskId = Number(req.query.taskId) || 0;
+      
+      // Get task ID from query params, metadata, or default to 0
+      const taskId = Number(req.query.taskId) || 
+                    (fileRecord.metadata && fileRecord.metadata.taskId ? Number(fileRecord.metadata.taskId) : 0);
       
       // Get company name from file metadata or use a default
       const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
@@ -795,7 +804,10 @@ router.get("/api/files/:id/download", async (req, res) => {
 
       // Use standardized filename format for download
       const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'DOC';
-      const taskId = Number(req.query.taskId) || 0;
+      
+      // Get task ID from query params, metadata, or default to 0
+      const taskId = Number(req.query.taskId) || 
+                    (fileRecord.metadata && fileRecord.metadata.taskId ? Number(fileRecord.metadata.taskId) : 0);
       
       // Get company name from file metadata or use a default
       const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';

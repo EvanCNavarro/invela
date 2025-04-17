@@ -1384,7 +1384,40 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
     switch (format) {
       case 'csv':
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=${file.name || 'kyb_form.csv'}`);
+        
+        // Use standardized filename format for download
+        const taskId = (file.metadata && file.metadata.taskId) 
+          ? Number(file.metadata.taskId) 
+          : Number(req.query.taskId) || 0;
+        
+        // Get company name from file metadata or database
+        let companyName = 'Company';
+        if (file.company_id) {
+          try {
+            const [company] = await db.select({
+              name: companies.name
+            })
+            .from(companies)
+            .where(eq(companies.id, file.company_id));
+            
+            if (company?.name) {
+              companyName = company.name;
+            }
+          } catch (error) {
+            logger.error('Error getting company name', {error});
+          }
+        }
+        
+        // Create standardized filename
+        const standardizedFilename = FileCreationService.generateStandardFileName(
+          'KYB', 
+          taskId, 
+          companyName,
+          '1.0',
+          'csv'
+        );
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
         
         // If file is already CSV, send its content directly
         if (file.type === 'text/csv') {
@@ -1414,7 +1447,22 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
 
       case 'json':
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename=${file.name || 'kyb_form.json'}`);
+        
+        // Use standardized filename format for download
+        const jsonTaskId = (file.metadata && file.metadata.taskId) 
+          ? Number(file.metadata.taskId) 
+          : Number(req.query.taskId) || 0;
+        
+        // Create standardized filename with json extension
+        const jsonFilename = FileCreationService.generateStandardFileName(
+          'KYB', 
+          jsonTaskId, 
+          companyName,
+          '1.0',
+          'json'
+        );
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${jsonFilename}"`);
         
         // If already JSON, send directly; otherwise format it
         try {
@@ -1429,7 +1477,22 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
 
       case 'txt':
         res.setHeader('Content-Type', 'text/plain');
-        res.setHeader('Content-Disposition', `attachment; filename=${file.name || 'kyb_form.txt'}`);
+        
+        // Use standardized filename format for download
+        const txtTaskId = (file.metadata && file.metadata.taskId) 
+          ? Number(file.metadata.taskId) 
+          : Number(req.query.taskId) || 0;
+        
+        // Create standardized filename with txt extension
+        const txtFilename = FileCreationService.generateStandardFileName(
+          'KYB', 
+          txtTaskId, 
+          companyName,
+          '1.0',
+          'txt'
+        );
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${txtFilename}"`);
         
         try {
           // Handle different data formats
