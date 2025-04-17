@@ -282,7 +282,8 @@ export default function ProgressiveLoadingDemo() {
                     </div>
                     <div>
                       <Badge 
-                        variant={stat.loaded ? "success" : "outline"}
+                        variant={stat.loaded ? "secondary" : "outline"}
+                        className={stat.loaded ? "bg-green-500 hover:bg-green-600" : ""}
                       >
                         {stat.loaded ? 'Loaded' : 'Pending'}
                       </Badge>
