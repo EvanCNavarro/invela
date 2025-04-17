@@ -9,6 +9,23 @@ import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
 import { broadcastDocumentCountUpdate } from '../services/websocket';
 import { aggregateAnswers } from '../services/answerAggregation';
+import { FileCreationService } from '../services/file-creation';
+
+// Helper function to get company name from ID
+async function getCompanyName(companyId: number): Promise<string> {
+  try {
+    const [company] = await db.select({
+      name: companies.name
+    })
+    .from(companies)
+    .where(eq(companies.id, companyId));
+    
+    return company?.name || 'Company';
+  } catch (error) {
+    console.error('[Files] Error getting company name:', error);
+    return 'Company';
+  }
+}
 
 // Define interfaces for type safety
 interface Field {
@@ -713,7 +730,24 @@ router.get("/api/files/:id/download", async (req, res) => {
         
         // For CSV files, set more specific headers for better browser handling
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.name}"`);
+        
+        // Use standardized filename format for download
+        const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
+        const taskId = Number(req.query.taskId) || 0;
+        
+        // Get company name from file metadata or use a default
+        const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
+        
+        // Create standardized filename
+        const standardizedFilename = FileCreationService.generateStandardFileName(
+          taskType, 
+          taskId, 
+          companyName,
+          '1.0',
+          'csv'
+        );
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
         
         // Send database content as fallback
         return res.send(fileRecord.path);
@@ -721,7 +755,24 @@ router.get("/api/files/:id/download", async (req, res) => {
       
       // For CSV files, set more specific headers for better browser handling
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.name}"`);
+      
+      // Use standardized filename format for download
+      const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
+      const taskId = Number(req.query.taskId) || 0;
+      
+      // Get company name from file metadata or use a default
+      const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
+      
+      // Create standardized filename
+      const standardizedFilename = FileCreationService.generateStandardFileName(
+        taskType, 
+        taskId, 
+        companyName,
+        '1.0',
+        'csv'
+      );
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
       
       // Read and send the file content
       try {
@@ -742,8 +793,29 @@ router.get("/api/files/:id/download", async (req, res) => {
         return res.status(404).json({ error: "File not found on disk" });
       }
 
+      // Use standardized filename format for download
+      const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'DOC';
+      const taskId = Number(req.query.taskId) || 0;
+      
+      // Get company name from file metadata or use a default
+      const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
+      
+      // Get file extension
+      const fileExt = path.extname(fileRecord.name).replace('.', '') || 'pdf';
+      
+      // Create standardized filename
+      const standardizedFilename = FileCreationService.generateStandardFileName(
+        taskType, 
+        taskId, 
+        companyName,
+        '1.0',
+        fileExt
+      );
+      
+      console.log('[Files] Using standardized filename for download:', standardizedFilename);
+      
       // Use res.download for regular files
-      res.download(filePath, fileRecord.name, (err) => {
+      res.download(filePath, standardizedFilename, (err) => {
         if (err) {
           console.error("[Files] Error downloading file:", {
             error: err,
