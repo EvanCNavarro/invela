@@ -283,7 +283,8 @@ export function useFormDataManager({
       if (value === null || value === undefined) {
         normalizedValue = '';
       } else if (typeof value === 'string') {
-        // Always preserve spaces within the text
+        // IMPORTANT: Always preserve spaces within the text during typing
+        // This prevents spaces from being removed when typing quickly
         normalizedValue = value;
         
         // For validation purposes, check if the string is effectively empty (only whitespace)
@@ -294,7 +295,8 @@ export function useFormDataManager({
           normalizedValue = '';
         }
         
-        // Trim on save, but never during typing to preserve spaces
+        // Only trim on explicit save operations, never during typing
+        // This ensures spaces are preserved in the middle of quick typing
         if (isSaving && !isEffectivelyEmpty) {
           normalizedValue = value.trim();
         }
