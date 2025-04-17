@@ -1,490 +1,520 @@
 /**
  * BatchUpdateDebugger Component
  * 
- * This component provides a debugging interface for the BatchUpdater utility.
- * It allows developers to test and verify batch update functionality without affecting
- * production data or workflows.
+ * This component provides a visualization and debugging tool for the BatchUpdateManager,
+ * which optimizes form performance by batching field updates together to reduce
+ * unnecessary re-renders and API calls.
+ * 
+ * Features:
+ * - Real-time visualization of batch queue
+ * - Configurable delay and batch processing
+ * - Performance metrics for batch operations
+ * - Manual testing capabilities for batched vs. unbatched updates
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { FormBatchUpdater, OptimizationFeatures, performanceMonitor } from '../../utils/form-optimization';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { 
+  BatchUpdateManager,
+  performanceMonitor
+} from '@/utils/form-optimization';
 
-interface TestField {
-  name: string;
-  value: string;
-  section: string;
+// Styles for the visualization
+const getBatchItemStyle = (age: number, maxAge: number) => {
+  // Color transitions from blue (new) to red (old)
+  const ageRatio = Math.min(age / maxAge, 1);
+  return {
+    backgroundColor: `rgba(${Math.round(ageRatio * 255)}, ${Math.round((1 - ageRatio) * 100)}, ${Math.round((1 - ageRatio) * 255)}, 0.8)`,
+    padding: '0.5rem',
+    margin: '0.25rem',
+    borderRadius: '0.25rem',
+    fontSize: '0.875rem',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+    flex: '1 1 auto',
+    maxWidth: '150px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  };
+};
+
+interface BatchUpdateDebuggerProps {
+  initialDelay?: number;
+  maxQueueSize?: number;
+  autoFlushEnabled?: boolean;
 }
 
-export function BatchUpdateDebugger() {
-  const [activeTab, setActiveTab] = useState('queue');
-  const [featureEnabled, setFeatureEnabled] = useState(OptimizationFeatures.DEBOUNCED_UPDATES);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-  const [newField, setNewField] = useState<TestField>({ name: '', value: '', section: 'test-section' });
-  const [queuedFields, setQueuedFields] = useState<TestField[]>([]);
-  const [processedFields, setProcessedFields] = useState<Record<string, any>>({});
-  const [queueStats, setQueueStats] = useState({
-    totalQueued: 0,
-    totalProcessed: 0,
-    lastProcessTime: 0,
-    averageProcessTime: 0,
-  });
-  const [updateDelay, setUpdateDelay] = useState(500);
+const BatchUpdateDebugger: React.FC<BatchUpdateDebuggerProps> = ({
+  initialDelay = 500,
+  maxQueueSize = 20,
+  autoFlushEnabled = true
+}) => {
+  // Create batch manager instance
+  const batchManager = useRef<BatchUpdateManager<string>>(
+    new BatchUpdateManager<string>(initialDelay)
+  ).current;
   
-  // Initialize BatchUpdater with test configuration
+  // State for UI controls and visualization
+  const [delay, setDelay] = useState(initialDelay);
+  const [inputValue, setInputValue] = useState('');
+  const [batchedValues, setBatchedValues] = useState<Record<string, { value: string, timestamp: number }>>({});
+  const [processedBatches, setProcessedBatches] = useState<Array<{
+    timestamp: number;
+    count: number;
+    processingTime: number;
+  }>>([]);
+  const [autoFlush, setAutoFlush] = useState(autoFlushEnabled);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Performance stats
+  const [stats, setStats] = useState({
+    totalUpdates: 0,
+    totalBatches: 0,
+    averageBatchSize: 0,
+    averageProcessingTime: 0,
+    lastProcessingTime: 0
+  });
+  
+  // Setup batch manager and callbacks
   useEffect(() => {
-    // Configure batch updater with test settings
-    FormBatchUpdater.configure({
-      updateDelayMs: updateDelay,
-    });
+    // Update the batch manager delay when the delay setting changes
+    batchManager.delay = delay;
     
-    // Register callbacks to monitor activity
-    FormBatchUpdater.onUpdate((fields, timestamps) => {
-      addLog(`Processing batch update with ${Object.keys(fields).length} fields`);
-      setProcessedFields(prev => ({ ...prev, ...fields }));
-      setQueueStats(prev => ({
-        ...prev,
-        totalProcessed: prev.totalProcessed + Object.keys(fields).length,
-        lastProcessTime: Date.now(),
-      }));
-    });
+    // Define callbacks for batch processing events
+    const handleBatchUpdate = (updates: Record<string, string>) => {
+      // Process the batch
+      performanceMonitor.startTimer('batchProcessing');
+      
+      // Simulate processing time (proportional to batch size)
+      setTimeout(() => {
+        const processingTime = performanceMonitor.endTimer('batchProcessing') || 0;
+        
+        // Update processed batches history
+        setProcessedBatches(prev => {
+          const newBatches = [...prev, {
+            timestamp: Date.now(),
+            count: Object.keys(updates).length,
+            processingTime
+          }];
+          
+          // Keep only the last 10 batches
+          if (newBatches.length > 10) {
+            return newBatches.slice(newBatches.length - 10);
+          }
+          return newBatches;
+        });
+        
+        // Update stats
+        setStats(prev => {
+          const totalBatches = prev.totalBatches + 1;
+          const totalUpdates = prev.totalUpdates + Object.keys(updates).length;
+          
+          return {
+            totalUpdates,
+            totalBatches,
+            averageBatchSize: totalUpdates / totalBatches,
+            averageProcessingTime: 
+              (prev.averageProcessingTime * (totalBatches - 1) + processingTime) / totalBatches,
+            lastProcessingTime: processingTime
+          };
+        });
+        
+        // Clear processed items from the batch visualization
+        setBatchedValues(prev => {
+          const newValues = { ...prev };
+          Object.keys(updates).forEach(key => {
+            delete newValues[key];
+          });
+          return newValues;
+        });
+        
+        setIsProcessing(false);
+      }, Object.keys(updates).length * 5); // Simulate processing time
+    };
     
-    FormBatchUpdater.onComplete(() => {
-      addLog('Batch update completed');
-      // Clear the queue in our UI
-      setQueuedFields([]);
-    });
-    
-    // Log initial state
-    addLog('BatchUpdateDebugger initialized');
+    // Setup automatic batch processing if enabled
+    let interval: number | null = null;
+    if (autoFlush) {
+      interval = window.setInterval(() => {
+        if (Object.keys(batchedValues).length > 0 && !isProcessing) {
+          setIsProcessing(true);
+          const updates = batchManager.processQueue();
+          handleBatchUpdate(updates);
+        }
+      }, delay + 100);
+    }
     
     return () => {
-      // Clean up when component unmounts
-      FormBatchUpdater.reset();
+      if (interval !== null) {
+        clearInterval(interval);
+      }
     };
-  }, [updateDelay]);
+  }, [batchManager, delay, autoFlush, batchedValues, isProcessing]);
   
-  // Add log message
-  const addLog = useCallback((message: string) => {
-    setDebugLog(prev => [
-      `[${new Date().toLocaleTimeString()}] ${message}`,
-      ...prev.slice(0, 49), // Keep last 50 messages
-    ]);
-  }, []);
-  
-  // Queue a field update
-  const queueUpdate = useCallback(() => {
-    if (!newField.name || !newField.value) {
-      addLog('Error: Field name and value are required');
-      return;
-    }
+  // Add a field update to the batch
+  const handleAddUpdate = useCallback(() => {
+    if (!inputValue.trim()) return;
     
-    // Add to our visual queue
-    setQueuedFields(prev => [...prev, { ...newField }]);
+    // Create a unique key
+    const key = `field_${Date.now()}`;
     
-    // Queue the actual update
-    FormBatchUpdater.queueUpdate(newField.name, newField.value, {
-      sectionId: newField.section,
-    });
+    // Add to batch manager
+    batchManager.addUpdate(key, inputValue);
     
-    addLog(`Queued field "${newField.name}" with value "${newField.value}"`);
-    
-    setQueueStats(prev => ({
+    // Add to visual representation
+    setBatchedValues(prev => ({
       ...prev,
-      totalQueued: prev.totalQueued + 1,
+      [key]: {
+        value: inputValue,
+        timestamp: Date.now()
+      }
     }));
     
-    // Reset the form
-    setNewField(prev => ({ ...prev, name: '', value: '' }));
-  }, [newField, addLog]);
+    // Clear input
+    setInputValue('');
+  }, [inputValue, batchManager]);
   
-  // Process the queue immediately
-  const processQueue = useCallback(() => {
-    addLog('Manually processing queue');
-    FormBatchUpdater.flush();
-  }, [addLog]);
-  
-  // Clear the queue without processing
-  const clearQueue = useCallback(() => {
-    addLog('Clearing queue without processing');
-    FormBatchUpdater.clear();
-    setQueuedFields([]);
-  }, [addLog]);
-  
-  // Reset all state
-  const resetDebugger = useCallback(() => {
-    addLog('Resetting debugger state');
-    FormBatchUpdater.reset();
-    setQueuedFields([]);
-    setProcessedFields({});
-    setQueueStats({
-      totalQueued: 0,
-      totalProcessed: 0,
-      lastProcessTime: 0,
-      averageProcessTime: 0,
-    });
-  }, [addLog]);
-  
-  // Toggle feature flag
-  const toggleFeature = useCallback(() => {
-    OptimizationFeatures.DEBOUNCED_UPDATES = !featureEnabled;
-    setFeatureEnabled(!featureEnabled);
-    addLog(`Feature flag set to: ${!featureEnabled}`);
-  }, [featureEnabled, addLog]);
-  
-  // Update delay setting
-  const updateDelayValue = useCallback((newDelay: number) => {
-    setUpdateDelay(newDelay);
-    FormBatchUpdater.configure({ updateDelayMs: newDelay });
-    addLog(`Update delay set to: ${newDelay}ms`);
-  }, [addLog]);
-  
-  // Run performance test with multiple fields
-  const runPerformanceTest = useCallback(() => {
-    addLog('Starting performance test');
-    performanceMonitor.startTimer('batchUpdateTest');
-    
-    // Generate test data - 50 fields
-    for (let i = 0; i < 50; i++) {
-      const fieldName = `test_field_${i}`;
-      const fieldValue = `value_${i}_${Date.now()}`;
+  // Add multiple updates at once (simulation)
+  const handleAddBulk = useCallback((count: number) => {
+    for (let i = 0; i < count; i++) {
+      const key = `field_bulk_${Date.now()}_${i}`;
+      const value = `Value ${i+1}`;
       
-      // Queue the update
-      FormBatchUpdater.queueUpdate(fieldName, fieldValue, {
-        sectionId: `section_${Math.floor(i / 10)}`,
+      // Add to batch manager
+      batchManager.addUpdate(key, value);
+      
+      // Add to visual representation with slight delay between items
+      setTimeout(() => {
+        setBatchedValues(prev => ({
+          ...prev,
+          [key]: {
+            value,
+            timestamp: Date.now()
+          }
+        }));
+      }, i * 50);
+    }
+  }, [batchManager]);
+  
+  // Manually process the batch
+  const handleProcessBatch = useCallback(() => {
+    if (Object.keys(batchedValues).length === 0 || isProcessing) return;
+    
+    setIsProcessing(true);
+    const updates = batchManager.processQueue();
+    
+    // Process the batch (using the same handler from useEffect)
+    performanceMonitor.startTimer('batchProcessing');
+    
+    // Simulate processing time (proportional to batch size)
+    setTimeout(() => {
+      const processingTime = performanceMonitor.endTimer('batchProcessing') || 0;
+      
+      // Update processed batches history
+      setProcessedBatches(prev => {
+        const newBatches = [...prev, {
+          timestamp: Date.now(),
+          count: Object.keys(updates).length,
+          processingTime
+        }];
+        
+        // Keep only the last 10 batches
+        if (newBatches.length > 10) {
+          return newBatches.slice(newBatches.length - 10);
+        }
+        return newBatches;
       });
       
-      // Add to our visual queue
-      setQueuedFields(prev => [
-        ...prev,
-        {
-          name: fieldName,
-          value: fieldValue,
-          section: `section_${Math.floor(i / 10)}`,
-        },
-      ]);
-    }
-    
-    setQueueStats(prev => ({
-      ...prev,
-      totalQueued: prev.totalQueued + 50,
-    }));
-    
-    addLog('Queued 50 test fields');
-  }, [addLog]);
+      // Update stats
+      setStats(prev => {
+        const totalBatches = prev.totalBatches + 1;
+        const totalUpdates = prev.totalUpdates + Object.keys(updates).length;
+        
+        return {
+          totalUpdates,
+          totalBatches,
+          averageBatchSize: totalUpdates / totalBatches,
+          averageProcessingTime: 
+            (prev.averageProcessingTime * (totalBatches - 1) + processingTime) / totalBatches,
+          lastProcessingTime: processingTime
+        };
+      });
+      
+      // Clear processed items from the batch visualization
+      setBatchedValues({});
+      
+      setIsProcessing(false);
+    }, Object.keys(updates).length * 5); // Simulate processing time
+  }, [batchManager, batchedValues, isProcessing]);
+  
+  // Clear the batch without processing
+  const handleClearBatch = useCallback(() => {
+    batchManager.cancelUpdates();
+    setBatchedValues({});
+  }, [batchManager]);
+  
+  // Reset everything
+  const handleReset = useCallback(() => {
+    batchManager.cancelUpdates();
+    setBatchedValues({});
+    setProcessedBatches([]);
+    setStats({
+      totalUpdates: 0,
+      totalBatches: 0,
+      averageBatchSize: 0,
+      averageProcessingTime: 0,
+      lastProcessingTime: 0
+    });
+  }, [batchManager]);
   
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <div className="batch-update-debugger">
+      <h1 className="text-2xl font-bold mb-4">Batch Update Debugger</h1>
+      
+      <div className="mb-6 bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h2 className="text-lg font-semibold mb-2">Configuration</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <CardTitle>Batch Updater Debugger</CardTitle>
-            <CardDescription>
-              Test and monitor the BatchUpdater utility for field updates
-            </CardDescription>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="feature-toggle" className="text-sm">
-              Feature Enabled
-            </Label>
-            <Switch 
-              id="feature-toggle"
-              checked={featureEnabled}
-              onCheckedChange={toggleFeature}
+            <label className="block text-sm font-medium mb-1">
+              Batch Delay (ms):
+            </label>
+            <input 
+              type="number" 
+              value={delay}
+              onChange={(e) => setDelay(Number(e.target.value))}
+              min="0"
+              max="2000"
+              step="100"
+              className="border rounded p-2 w-full"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Time to wait before processing updates
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Auto-Process Batches:
+            </label>
+            <div className="flex items-center mt-3">
+              <input 
+                type="checkbox" 
+                checked={autoFlush}
+                onChange={() => setAutoFlush(!autoFlush)}
+                className="h-4 w-4 text-blue-600"
+              />
+              <span className="ml-2 text-sm">Enabled</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Automatically process batches after delay
+            </p>
+          </div>
+          
+          <div className="flex flex-col justify-end">
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 mt-auto"
+            >
+              Reset All Data
+            </button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="queue">Queue Manager</TabsTrigger>
-            <TabsTrigger value="logs">Debug Logs</TabsTrigger>
-            <TabsTrigger value="metrics">Performance Metrics</TabsTrigger>
-          </TabsList>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="batch-input">
+          <h2 className="text-lg font-semibold mb-2">Add Updates</h2>
+          <div className="flex mb-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Enter a value to add to batch"
+              className="border rounded-l p-2 flex-grow"
+              onKeyPress={(e) => e.key === 'Enter' && handleAddUpdate()}
+            />
+            <button
+              onClick={handleAddUpdate}
+              className="px-4 py-2 bg-blue-500 text-white rounded-r hover:bg-blue-600"
+              disabled={!inputValue.trim()}
+            >
+              Add
+            </button>
+          </div>
           
-          <TabsContent value="queue" className="pt-4">
-            <div className="grid grid-cols-3 gap-6">
-              {/* Left: Add Field Form */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Add Test Field</h3>
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="field-name">Field Name</Label>
-                    <Input 
-                      id="field-name"
-                      value={newField.name}
-                      onChange={e => setNewField(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., companyName"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="field-value">Field Value</Label>
-                    <Input 
-                      id="field-value"
-                      value={newField.value}
-                      onChange={e => setNewField(prev => ({ ...prev, value: e.target.value }))}
-                      placeholder="e.g., Acme Corp"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="field-section">Section ID</Label>
-                    <Input 
-                      id="field-section"
-                      value={newField.section}
-                      onChange={e => setNewField(prev => ({ ...prev, section: e.target.value }))}
-                      placeholder="e.g., company-profile"
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={queueUpdate}
-                    className="w-full"
-                    disabled={!newField.name || !newField.value || !featureEnabled}
-                  >
-                    Queue Update
-                  </Button>
-                </div>
-                
-                <div className="pt-4 space-y-3">
-                  <h3 className="text-lg font-medium">Configuration</h3>
-                  <div>
-                    <Label htmlFor="update-delay">Update Delay (ms)</Label>
-                    <div className="flex items-center space-x-2">
-                      <Input 
-                        id="update-delay"
-                        type="number"
-                        value={updateDelay}
-                        onChange={e => updateDelayValue(parseInt(e.target.value) || 500)}
-                        min={0}
-                        max={5000}
-                        className="flex-1"
-                      />
-                      <Button 
-                        variant="outline"
-                        onClick={() => updateDelayValue(500)}
-                        size="sm"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={runPerformanceTest}
-                      variant="outline"
-                      className="w-full"
-                      disabled={!featureEnabled}
-                    >
-                      Run Performance Test
-                    </Button>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        onClick={processQueue}
-                        disabled={queuedFields.length === 0 || !featureEnabled}
-                        variant="secondary"
-                      >
-                        Process Now
-                      </Button>
-                      <Button 
-                        onClick={clearQueue}
-                        disabled={queuedFields.length === 0}
-                        variant="destructive"
-                      >
-                        Clear Queue
-                      </Button>
-                    </div>
-                    
-                    <Button 
-                      onClick={resetDebugger}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Reset All
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Middle: Queue Status */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Queue Status</h3>
-                <div className="border rounded-md p-4 mb-4">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-gray-500">Queue Size:</div>
-                    <div className="font-medium">{queuedFields.length}</div>
-                    
-                    <div className="text-gray-500">Total Queued:</div>
-                    <div className="font-medium">{queueStats.totalQueued}</div>
-                    
-                    <div className="text-gray-500">Total Processed:</div>
-                    <div className="font-medium">{queueStats.totalProcessed}</div>
-                    
-                    <div className="text-gray-500">Update Delay:</div>
-                    <div className="font-medium">{updateDelay}ms</div>
-                  </div>
-                </div>
-                
-                <div className="h-80 overflow-y-auto border rounded-md">
-                  {queuedFields.length > 0 ? (
-                    <div className="divide-y">
-                      {queuedFields.map((field, index) => (
-                        <div key={`${field.name}-${index}`} className="p-3 text-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{field.name}</span>
-                            <Badge>{field.section}</Badge>
-                          </div>
-                          <div className="mt-1 text-gray-600 truncate">
-                            {field.value}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      Queue is empty
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Right: Processed Fields */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Processed Fields</h3>
-                <div className="h-96 overflow-y-auto border rounded-md">
-                  {Object.keys(processedFields).length > 0 ? (
-                    <div className="divide-y">
-                      {Object.entries(processedFields).map(([fieldName, value]) => (
-                        <div key={fieldName} className="p-3 text-sm">
-                          <div className="font-medium">{fieldName}</div>
-                          <div className="mt-1 text-gray-600 break-all">
-                            {String(value)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      No processed fields yet
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleAddBulk(5)}
+              className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+            >
+              + 5 Items
+            </button>
+            <button
+              onClick={() => handleAddBulk(10)}
+              className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+            >
+              + 10 Items
+            </button>
+            <button
+              onClick={() => handleAddBulk(20)}
+              className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+            >
+              + 20 Items
+            </button>
+          </div>
+        </div>
+        
+        <div className="batch-controls">
+          <h2 className="text-lg font-semibold mb-2">Batch Controls</h2>
+          <div className="flex gap-2">
+            <button
+              onClick={handleProcessBatch}
+              disabled={Object.keys(batchedValues).length === 0 || isProcessing}
+              className={`px-4 py-2 rounded ${
+                Object.keys(batchedValues).length === 0 || isProcessing
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-green-500 text-white hover:bg-green-600'
+              }`}
+            >
+              Process Batch Now
+            </button>
+            
+            <button
+              onClick={handleClearBatch}
+              disabled={Object.keys(batchedValues).length === 0 || isProcessing}
+              className={`px-4 py-2 rounded ${
+                Object.keys(batchedValues).length === 0 || isProcessing
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+              }`}
+            >
+              Clear Batch
+            </button>
+          </div>
           
-          <TabsContent value="logs" className="pt-4">
-            <div className="border rounded-md h-96 overflow-y-auto p-4 font-mono text-sm">
-              {debugLog.length > 0 ? (
-                <div className="space-y-1">
-                  {debugLog.map((log, index) => (
-                    <div key={index} className="pb-1">
-                      {log}
-                    </div>
-                  ))}
-                </div>
+          <div className="mt-2">
+            <p className="text-sm">
+              {isProcessing ? (
+                <span className="text-yellow-600">Processing batch...</span>
+              ) : Object.keys(batchedValues).length > 0 ? (
+                <span className="text-blue-600">
+                  {Object.keys(batchedValues).length} items in queue
+                  {autoFlush && ` (processing in ${delay}ms)`}
+                </span>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  No logs yet
-                </div>
+                <span className="text-gray-500">Queue is empty</span>
               )}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setDebugLog([])}
-              >
-                Clear Logs
-              </Button>
-            </div>
-          </TabsContent>
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="batch-visualization">
+          <h2 className="text-lg font-semibold mb-2">Current Batch Queue</h2>
+          <div className="border rounded-lg p-3 bg-white min-h-[200px] max-h-[400px] overflow-y-auto">
+            {Object.keys(batchedValues).length === 0 ? (
+              <div className="text-gray-500 text-center p-6">
+                Queue is empty. Add some updates to see them here.
+              </div>
+            ) : (
+              <div className="flex flex-wrap">
+                {Object.entries(batchedValues).map(([key, { value, timestamp }]) => {
+                  const age = Date.now() - timestamp;
+                  return (
+                    <div 
+                      key={key}
+                      style={getBatchItemStyle(age, delay)}
+                      title={`Key: ${key}, Value: ${value}`}
+                    >
+                      {value}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="batch-history">
+          <h2 className="text-lg font-semibold mb-2">Processed Batches</h2>
+          <div className="border rounded-lg p-3 bg-white min-h-[200px] max-h-[400px] overflow-y-auto">
+            {processedBatches.length === 0 ? (
+              <div className="text-gray-500 text-center p-6">
+                No batches processed yet.
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 px-1 text-left">Time</th>
+                    <th className="py-2 px-1 text-right">Items</th>
+                    <th className="py-2 px-1 text-right">Processing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {processedBatches.map((batch, index) => (
+                    <tr key={index} className="border-b border-gray-100">
+                      <td className="py-2 px-1 text-sm">
+                        {new Date(batch.timestamp).toLocaleTimeString()}
+                      </td>
+                      <td className="py-2 px-1 text-right text-sm">
+                        {batch.count} items
+                      </td>
+                      <td className="py-2 px-1 text-right text-sm">
+                        {batch.processingTime.toFixed(2)} ms
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <div className="performance-stats bg-blue-50 p-4 rounded-lg">
+        <h2 className="text-lg font-semibold mb-2">Performance Statistics</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="stat-card bg-white p-3 rounded shadow-sm">
+            <div className="text-sm text-gray-600">Total Updates</div>
+            <div className="text-2xl font-bold">{stats.totalUpdates}</div>
+          </div>
           
-          <TabsContent value="metrics" className="pt-4">
-            <div className="grid grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Batch Update Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-gray-500">Total Queued:</div>
-                      <div className="font-medium">{queueStats.totalQueued}</div>
-                      
-                      <div className="text-gray-500">Total Processed:</div>
-                      <div className="font-medium">{queueStats.totalProcessed}</div>
-                      
-                      <div className="text-gray-500">Current Queue Size:</div>
-                      <div className="font-medium">{queuedFields.length}</div>
-                      
-                      <div className="text-gray-500">Update Delay:</div>
-                      <div className="font-medium">{updateDelay}ms</div>
-                      
-                      <div className="text-gray-500">Feature Enabled:</div>
-                      <div className="font-medium">{featureEnabled ? 'Yes' : 'No'}</div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Performance Test</h4>
-                      <Button 
-                        onClick={runPerformanceTest} 
-                        className="w-full"
-                        disabled={!featureEnabled}
-                      >
-                        Run 50-Field Test
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-gray-500">Browser:</div>
-                      <div className="font-medium">{navigator.userAgent.split(' ')[0]}</div>
-                      
-                      <div className="text-gray-500">Platform:</div>
-                      <div className="font-medium">{navigator.platform}</div>
-                      
-                      <div className="text-gray-500">Window Size:</div>
-                      <div className="font-medium">{window.innerWidth} x {window.innerHeight}</div>
-                      
-                      <div className="text-gray-500">Feature Flags:</div>
-                      <div className="font-medium">
-                        <Badge variant={OptimizationFeatures.DEBOUNCED_UPDATES ? "default" : "outline"} className="mr-1">
-                          DEBOUNCED_UPDATES
-                        </Badge>
-                        <Badge variant={OptimizationFeatures.PROGRESSIVE_LOADING ? "default" : "outline"}>
-                          PROGRESSIVE_LOADING
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="stat-card bg-white p-3 rounded shadow-sm">
+            <div className="text-sm text-gray-600">Total Batches</div>
+            <div className="text-2xl font-bold">{stats.totalBatches}</div>
+          </div>
+          
+          <div className="stat-card bg-white p-3 rounded shadow-sm">
+            <div className="text-sm text-gray-600">Avg Batch Size</div>
+            <div className="text-2xl font-bold">
+              {stats.averageBatchSize.toFixed(1)}
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </div>
+          
+          <div className="stat-card bg-white p-3 rounded shadow-sm">
+            <div className="text-sm text-gray-600">Avg Processing Time</div>
+            <div className="text-2xl font-bold">
+              {stats.averageProcessingTime.toFixed(2)} ms
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 text-sm text-gray-700">
+          <p>
+            <strong>Without batching:</strong> Each update would trigger its own processing cycle, 
+            requiring {stats.totalUpdates} separate operations.
+          </p>
+          <p className="mt-1">
+            <strong>With batching:</strong> Updates are grouped into {stats.totalBatches} batches, 
+            reducing processing overhead by {stats.totalBatches > 0 ? 
+            ((1 - (stats.totalBatches / stats.totalUpdates)) * 100).toFixed(1) : 0}%.
+          </p>
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default BatchUpdateDebugger;
