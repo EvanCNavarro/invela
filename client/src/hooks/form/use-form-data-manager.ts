@@ -27,7 +27,7 @@ export interface FormDataManagerState {
   isLoading: boolean;
   hasLoaded: boolean;
   error: string | null;
-  updateField: (name: string, value: any) => void;
+  updateField: (name: string, value: any, isSaving?: boolean) => void;
   saveProgress: () => Promise<boolean>;
   resetForm: (data?: FormData) => void;
 }
@@ -97,12 +97,37 @@ export function useFormDataManager({
     mode: 'onChange',
   });
   
+  // Reference to the updateField function that will be defined later
+  // This helps us avoid circular reference issues
+  const updateFieldRef = useRef<(name: string, value: any, isSaving?: boolean) => void>(
+    // Initial implementation - will be replaced after the real function is defined
+    (name, value, isSaving = false) => {
+      if (!formService || !taskId) return;
+      
+      // Basic implementation for the ref initialization
+      // The real implementation will replace this
+      const normalizedValue = typeof value === 'string' && isSaving ? value.trim() : value;
+      formService.updateFormData(name, normalizedValue, taskId);
+    }
+  );
+  
   // Function to save form progress - we define this first to avoid circular references
   const saveProgress = useCallback(async (): Promise<boolean> => {
     if (!formService || !taskId) {
       logger.warn('Cannot save progress - form service or taskId is not available');
       return false;
     }
+    
+    // Normalize all field values with trimming for saving
+    // We use the service directly since we're in the middle of saving
+    Object.entries(latestFormDataRef.current).forEach(([key, value]) => {
+      if (typeof value === 'string' && value.trim() !== '') {
+        // Normalize strings by trimming
+        const trimmedValue = value.trim();
+        // Update directly in the form service
+        formService.updateFormData(key, trimmedValue, taskId);
+      }
+    });
     
     // If there's already a save in progress, store the current data for later
     if (saveInProgressRef.current) {
@@ -189,7 +214,7 @@ export function useFormDataManager({
   }, [formService, taskId]);
   
   // Function to update a single field value with timestamp-based conflict resolution
-  const updateField = useCallback((name: string, value: any) => {
+  const updateField = useCallback((name: string, value: any, isSaving: boolean = false) => {
     if (!formService) {
       logger.warn('Cannot update field - form service is not available');
       return;
@@ -240,12 +265,20 @@ export function useFormDataManager({
       if (value === null || value === undefined) {
         normalizedValue = '';
       } else if (typeof value === 'string') {
-        // Normalize string values - preserve spaces within the text, only trim leading/trailing spaces
-        // when the field is being submitted/saved, not during typing
-        if (isSaving) {
+        // Always preserve spaces within the text
+        normalizedValue = value;
+        
+        // For validation purposes, check if the string is effectively empty (only whitespace)
+        const isEffectivelyEmpty = value.trim() === '';
+        
+        // If it's effectively empty, we'll treat it as empty for validation
+        if (isEffectivelyEmpty) {
+          normalizedValue = '';
+        }
+        
+        // Trim on save, but never during typing to preserve spaces
+        if (isSaving && !isEffectivelyEmpty) {
           normalizedValue = value.trim();
-        } else {
-          normalizedValue = value;
         }
         
         // Convert "null" and "undefined" strings to empty strings
