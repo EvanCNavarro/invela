@@ -6,6 +6,7 @@ import { z } from "zod";
 import { broadcastTaskUpdate, broadcastMessage } from "../services/websocket"; // Use the correct import path
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
+import { determineStatusFromProgress, broadcastProgressUpdate } from '../utils/progress';
 
 const router = Router();
 

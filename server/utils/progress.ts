@@ -13,17 +13,17 @@ export function determineStatusFromProgress(
   currentStatus: TaskStatus
 ): TaskStatus {
   // Skip status update if task is already completed/submitted
-  if (['submitted', 'completed', 'approved'].includes(currentStatus)) {
-    return currentStatus as TaskStatus;
+  if ([TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED].includes(currentStatus)) {
+    return currentStatus;
   }
   
   // Determine appropriate status based on progress
   if (progress === 0) {
-    return 'not_started';
+    return TaskStatus.NOT_STARTED;
   } else if (progress < 100) {
-    return 'in_progress';
+    return TaskStatus.IN_PROGRESS;
   } else {
-    return 'ready_for_submission';
+    return TaskStatus.READY_FOR_SUBMISSION;
   }
 }
 
@@ -55,7 +55,7 @@ export function broadcastProgressUpdate(
   // Broadcast the update to all connected clients
   broadcastTaskUpdate({
     id: taskId,
-    status: status || 'in_progress',
+    status: status || TaskStatus.IN_PROGRESS,
     progress: validatedProgress,
     metadata: metadata || {}
   });
