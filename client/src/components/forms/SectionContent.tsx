@@ -1,14 +1,15 @@
 import React, { useContext } from 'react';
 import { useFormContext } from 'react-hook-form';
-import getLogger from '@/utils/logger';
+import { createEnhancedLogger } from '@/utils/enhanced-logger';
 import { FormField } from '@/services/formService';
 import { FormSection } from './SectionNavigation';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { TaskTemplateWithConfigs } from '@/services/taskTemplateService';
 
-// Logger instance for this component
-const logger = getLogger('SectionContent', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+// Create a silent logger for this component - disable all logs
+const logger = createEnhancedLogger('SectionContent', 'uiComponents', {
+  disableAllLogs: true,
+  preserveErrors: true  // Keep only critical errors
 });
 
 // Create a default empty template for use when no template is available
