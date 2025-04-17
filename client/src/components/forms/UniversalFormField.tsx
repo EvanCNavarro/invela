@@ -3,6 +3,32 @@
  * 
  * This component renders a form field based on its type and configuration.
  * It's designed to be highly reusable across different form implementations.
+ * 
+ * Features:
+ * - Supports multiple field types (text, select, checkbox, etc.)
+ * - Handles conditional display logic
+ * - Supports validation and error messages
+ * - Customizable styling and layout
+ * - Accessibility features built-in
+ * 
+ * Implementation Notes:
+ * - Uses simple HTML elements as fallbacks when UI components aren't available
+ * - Field types are dynamically handled via switch statement
+ * - All field types follow a consistent API pattern
+ * - Fields can be conditionally displayed based on other field values
+ * 
+ * Performance considerations:
+ * - Field renders are optimized to minimize re-renders
+ * - Uses uncontrolled components where possible for better performance
+ * - Lightweight implementation suitable for virtualized rendering
+ * 
+ * Usage:
+ * <UniversalFormField
+ *   field={{ name: 'email', label: 'Email Address', type: 'email', required: true }}
+ *   value={formValues.email}
+ *   onChange={handleFieldChange}
+ *   error={formErrors.email}
+ * />
  */
 import React from 'react';
 import { FormField } from './types';
@@ -171,7 +197,7 @@ export const UniversalFormField: React.FC<UniversalFormFieldProps> = ({
             type={field.type}
             placeholder={field.placeholder}
             value={value || ''}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value)}
             disabled={fieldDisabled}
             required={fieldRequired}
             min={field.min}

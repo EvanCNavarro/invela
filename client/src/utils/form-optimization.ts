@@ -1,1525 +1,547 @@
 /**
- * Form Optimization Toolkit
+ * Form Optimization Utilities
  * 
- * This module provides utilities for measuring, monitoring, and optimizing form performance
- * with a focus on large forms (120+ fields). It includes:
- * 
- * - Feature flags for enabling/disabling optimizations
- * - Performance metrics collection and reporting
- * - Verification systems for ensuring optimization safety
- * - Fallback mechanisms to maintain stability
- * 
- * IMPORTANT: All optimizations must be feature-flagged and have fallback mechanisms
+ * This module provides utilities and configuration for optimizing form performance.
+ * It includes feature flags, performance monitoring, and helper functions for
+ * implementing optimization strategies.
  */
 
-// Configuration for enabling/disabling optimization features
+// Feature flags for controlling optimization strategies
 export const OptimizationFeatures = {
-  // Controls section-based progressive loading
-  PROGRESSIVE_LOADING: true,
-  
-  // Controls section-based saving instead of whole-form saving
-  SECTION_BASED_SAVING: false,
-  
-  // Controls virtual scrolling for large sections
+  // When enabled, virtualized rendering will only render fields that are visible
+  // in the viewport, significantly improving performance for large forms
   VIRTUALIZED_RENDERING: true,
   
-  // Controls batched updates instead of per-field updates
+  // When enabled, form sections will be loaded progressively rather than all at once,
+  // improving initial render time and perceived performance
+  PROGRESSIVE_LOADING: true,
+  
+  // When enabled, field updates will be batched and debounced to reduce
+  // unnecessary re-renders and API calls
   DEBOUNCED_UPDATES: true,
   
-  // Controls timestamp optimization for conflict resolution
-  OPTIMIZED_TIMESTAMPS: false
+  // Debug mode enables additional logging and performance metrics
+  DEBUG_MODE: true
 };
 
-// Performance metrics tracking
-interface PerformanceMetrics {
-  // Load time metrics
-  initialLoadStartTime: number;
-  initialLoadEndTime: number;
-  loadDuration: number;
-  
-  // Field processing metrics
-  fieldCount: number;
-  sectionCount: number;
-  fieldsPerSecond: number;
-  
-  // UI metrics
-  renderStartTime: number;
-  renderEndTime: number;
-  renderDuration: number;
-  
-  // Save operation metrics
-  saveCount: number;
-  lastSaveDuration: number;
-  totalSaveDuration: number;
-  averageSaveDuration: number;
-  
-  // Memory metrics
-  initialMemoryUsage: number;
-  peakMemoryUsage: number;
-  currentMemoryUsage: number;
-  
-  // Custom timers for specific operations
-  timers: Record<string, {
-    startTime: number;
-    endTime: number;
-    duration: number;
-    count: number;
-    average: number;
-  }>;
-}
-
 /**
- * Performance Monitoring Utility
- */
-class FormPerformanceMonitor {
-  private static instance: FormPerformanceMonitor;
-  private metrics: PerformanceMetrics;
-  private debugMode: boolean = false;
-  private lastMemoryCheck: number = 0;
-  private memoryCheckInterval: number = 5000; // 5 seconds
-  
-  // Event tracking for operations
-  private events: Array<{
-    timestamp: number;
-    event: string;
-    duration?: number;
-    details?: any;
-  }> = [];
-  
-  private constructor() {
-    // Initialize performance metrics
-    this.metrics = {
-      initialLoadStartTime: 0,
-      initialLoadEndTime: 0,
-      loadDuration: 0,
-      
-      fieldCount: 0,
-      sectionCount: 0,
-      fieldsPerSecond: 0,
-      
-      renderStartTime: 0,
-      renderEndTime: 0,
-      renderDuration: 0,
-      
-      saveCount: 0,
-      lastSaveDuration: 0,
-      totalSaveDuration: 0,
-      averageSaveDuration: 0,
-      
-      initialMemoryUsage: this.getMemoryUsage(),
-      peakMemoryUsage: this.getMemoryUsage(),
-      currentMemoryUsage: this.getMemoryUsage(),
-      
-      timers: {}
-    };
-    
-    this.lastMemoryCheck = Date.now();
-    
-    // Setup interval to check memory usage periodically
-    setInterval(() => this.updateMemoryMetrics(), this.memoryCheckInterval);
-  }
-  
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): FormPerformanceMonitor {
-    if (!FormPerformanceMonitor.instance) {
-      FormPerformanceMonitor.instance = new FormPerformanceMonitor();
-    }
-    return FormPerformanceMonitor.instance;
-  }
-  
-  /**
-   * Enable or disable debug mode
-   */
-  public setDebugMode(enabled: boolean): void {
-    this.debugMode = enabled;
-    this.logInfo(`Performance monitoring debug mode ${enabled ? 'enabled' : 'disabled'}`);
-  }
-  
-  /**
-   * Start tracking initial form load
-   */
-  public startInitialLoad(): void {
-    this.metrics.initialLoadStartTime = performance.now();
-    this.addEvent('initialLoadStart');
-    this.logInfo('Starting initial load timing');
-  }
-  
-  /**
-   * End tracking initial form load
-   */
-  public endInitialLoad(fieldCount: number, sectionCount: number): void {
-    this.metrics.initialLoadEndTime = performance.now();
-    this.metrics.loadDuration = this.metrics.initialLoadEndTime - this.metrics.initialLoadStartTime;
-    this.metrics.fieldCount = fieldCount;
-    this.metrics.sectionCount = sectionCount;
-    this.metrics.fieldsPerSecond = fieldCount / (this.metrics.loadDuration / 1000);
-    
-    this.addEvent('initialLoadEnd', this.metrics.loadDuration, {
-      fieldCount,
-      sectionCount,
-      fieldsPerSecond: this.metrics.fieldsPerSecond
-    });
-    
-    this.logInfo(`Finished initial load timing: ${this.metrics.loadDuration.toFixed(2)}ms, ${fieldCount} fields, ${sectionCount} sections`);
-  }
-  
-  /**
-   * Start tracking render time
-   */
-  public startRender(): void {
-    this.metrics.renderStartTime = performance.now();
-    this.addEvent('renderStart');
-    this.logInfo('Starting render timing');
-  }
-  
-  /**
-   * End tracking render time
-   */
-  public endRender(): void {
-    this.metrics.renderEndTime = performance.now();
-    this.metrics.renderDuration = this.metrics.renderEndTime - this.metrics.renderStartTime;
-    
-    this.addEvent('renderEnd', this.metrics.renderDuration);
-    
-    this.logInfo(`Finished render timing: ${this.metrics.renderDuration.toFixed(2)}ms`);
-  }
-  
-  /**
-   * Start tracking a save operation
-   */
-  public startSaveOperation(): number {
-    const startTime = performance.now();
-    this.addEvent('saveStart');
-    this.logInfo('Starting save operation timing');
-    return startTime;
-  }
-  
-  /**
-   * End tracking a save operation
-   */
-  public endSaveOperation(startTime: number): void {
-    const endTime = performance.now();
-    const duration = endTime - startTime;
-    
-    this.metrics.saveCount++;
-    this.metrics.lastSaveDuration = duration;
-    this.metrics.totalSaveDuration += duration;
-    this.metrics.averageSaveDuration = this.metrics.totalSaveDuration / this.metrics.saveCount;
-    
-    this.addEvent('saveEnd', duration, {
-      saveCount: this.metrics.saveCount,
-      average: this.metrics.averageSaveDuration
-    });
-    
-    this.logInfo(`Finished save timing: ${duration.toFixed(2)}ms, avg: ${this.metrics.averageSaveDuration.toFixed(2)}ms`);
-  }
-  
-  /**
-   * Start a custom timer
-   */
-  public startTimer(name: string): void {
-    if (!this.metrics.timers[name]) {
-      this.metrics.timers[name] = {
-        startTime: 0,
-        endTime: 0,
-        duration: 0,
-        count: 0,
-        average: 0
-      };
-    }
-    
-    this.metrics.timers[name].startTime = performance.now();
-    this.addEvent(`timerStart_${name}`);
-    this.logInfo(`Starting timer: ${name}`);
-  }
-  
-  /**
-   * End a custom timer
-   */
-  public endTimer(name: string): number {
-    if (!this.metrics.timers[name]) {
-      this.logError(`Timer "${name}" was never started`);
-      return 0;
-    }
-    
-    this.metrics.timers[name].endTime = performance.now();
-    this.metrics.timers[name].duration = this.metrics.timers[name].endTime - this.metrics.timers[name].startTime;
-    this.metrics.timers[name].count++;
-    this.metrics.timers[name].average = 
-      (this.metrics.timers[name].average * (this.metrics.timers[name].count - 1) + this.metrics.timers[name].duration) / 
-      this.metrics.timers[name].count;
-    
-    this.addEvent(`timerEnd_${name}`, this.metrics.timers[name].duration, {
-      count: this.metrics.timers[name].count,
-      average: this.metrics.timers[name].average
-    });
-    
-    this.logInfo(`Ended timer "${name}": ${this.metrics.timers[name].duration.toFixed(2)}ms, avg: ${this.metrics.timers[name].average.toFixed(2)}ms`);
-    
-    return this.metrics.timers[name].duration;
-  }
-  
-  /**
-   * Get the current performance metrics
-   */
-  public getMetrics(): PerformanceMetrics {
-    // Update memory metrics before returning
-    this.updateMemoryMetrics();
-    
-    return { ...this.metrics };
-  }
-  
-  /**
-   * Get average time for a specific timer
-   */
-  public getAverageTime(timerName: string): number | null {
-    const timer = this.metrics.timers[timerName];
-    if (!timer || timer.count === 0) {
-      return null;
-    }
-    
-    return timer.average;
-  }
-  
-  /**
-   * Get performance events
-   */
-  public getEvents(): Array<{
-    timestamp: number;
-    event: string;
-    duration?: number;
-    details?: any;
-  }> {
-    return [...this.events];
-  }
-  
-  /**
-   * Clear all metrics and events
-   */
-  public reset(): void {
-    this.metrics = {
-      initialLoadStartTime: 0,
-      initialLoadEndTime: 0,
-      loadDuration: 0,
-      
-      fieldCount: 0,
-      sectionCount: 0,
-      fieldsPerSecond: 0,
-      
-      renderStartTime: 0,
-      renderEndTime: 0,
-      renderDuration: 0,
-      
-      saveCount: 0,
-      lastSaveDuration: 0,
-      totalSaveDuration: 0,
-      averageSaveDuration: 0,
-      
-      initialMemoryUsage: this.getMemoryUsage(),
-      peakMemoryUsage: this.getMemoryUsage(),
-      currentMemoryUsage: this.getMemoryUsage(),
-      
-      timers: {}
-    };
-    
-    this.events = [];
-    this.logInfo('Performance metrics reset');
-  }
-  
-  /**
-   * Create a performance report
-   */
-  public generateReport(): string {
-    // Update memory metrics before generating report
-    this.updateMemoryMetrics();
-    
-    let report = `=== FORM PERFORMANCE REPORT ===\n`;
-    report += `Time: ${new Date().toISOString()}\n\n`;
-    
-    // Load metrics
-    report += `LOAD METRICS:\n`;
-    report += `- Load time: ${this.metrics.loadDuration.toFixed(2)}ms\n`;
-    report += `- Fields: ${this.metrics.fieldCount}\n`;
-    report += `- Sections: ${this.metrics.sectionCount}\n`;
-    report += `- Fields per second: ${this.metrics.fieldsPerSecond.toFixed(2)}\n\n`;
-    
-    // Render metrics
-    report += `RENDER METRICS:\n`;
-    report += `- Last render time: ${this.metrics.renderDuration.toFixed(2)}ms\n\n`;
-    
-    // Save metrics
-    report += `SAVE METRICS:\n`;
-    report += `- Save operations: ${this.metrics.saveCount}\n`;
-    report += `- Last save time: ${this.metrics.lastSaveDuration.toFixed(2)}ms\n`;
-    report += `- Average save time: ${this.metrics.averageSaveDuration.toFixed(2)}ms\n\n`;
-    
-    // Memory metrics
-    report += `MEMORY METRICS:\n`;
-    report += `- Initial: ${this.formatMemory(this.metrics.initialMemoryUsage)}\n`;
-    report += `- Peak: ${this.formatMemory(this.metrics.peakMemoryUsage)}\n`;
-    report += `- Current: ${this.formatMemory(this.metrics.currentMemoryUsage)}\n\n`;
-    
-    // Custom timers
-    report += `CUSTOM TIMERS:\n`;
-    Object.entries(this.metrics.timers).forEach(([name, timer]) => {
-      report += `- ${name}: ${timer.duration.toFixed(2)}ms (avg: ${timer.average.toFixed(2)}ms, count: ${timer.count})\n`;
-    });
-    
-    return report;
-  }
-  
-  /**
-   * Add an event to the event log
-   */
-  private addEvent(event: string, duration?: number, details?: any): void {
-    this.events.push({
-      timestamp: performance.now(),
-      event,
-      duration,
-      details
-    });
-    
-    // Limit event log size to avoid memory issues
-    if (this.events.length > 1000) {
-      this.events.shift();
-    }
-  }
-  
-  /**
-   * Update memory usage metrics
-   */
-  private updateMemoryMetrics(): void {
-    // Only check memory every few seconds to avoid performance issues
-    if (Date.now() - this.lastMemoryCheck < this.memoryCheckInterval) {
-      return;
-    }
-    
-    this.lastMemoryCheck = Date.now();
-    const currentMemory = this.getMemoryUsage();
-    
-    this.metrics.currentMemoryUsage = currentMemory;
-    
-    // Update peak memory usage
-    if (currentMemory > this.metrics.peakMemoryUsage) {
-      this.metrics.peakMemoryUsage = currentMemory;
-    }
-  }
-  
-  /**
-   * Get current memory usage if available
-   */
-  private getMemoryUsage(): number {
-    try {
-      // Use type assertion since the memory property is non-standard and only in Chrome
-      if (typeof performance !== 'undefined' && (performance as any).memory) {
-        return (performance as any).memory.usedJSHeapSize;
-      }
-      return 0;
-    } catch (e) {
-      return 0;
-    }
-  }
-  
-  /**
-   * Format memory size for display
-   */
-  private formatMemory(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-  
-  /**
-   * Log information message if debug mode is enabled
-   */
-  private logInfo(message: string): void {
-    if (this.debugMode) {
-      console.log(`%c[Form Performance] ${message}`, 'color: #2196F3');
-    }
-  }
-  
-  /**
-   * Log error message
-   */
-  private logError(message: string): void {
-    console.error(`%c[Form Performance] ${message}`, 'color: #F44336');
-  }
-}
-
-/**
- * BatchUpdater - Utility for debounced/batched field updates
+ * Safely run optimized code with fallback
  * 
- * This class manages form field updates to optimize performance by:
- * 1. Grouping updates that occur close together in time
- * 2. Reducing the number of save operations and re-renders
- * 3. Preserving data integrity with timestamp-aware updates
+ * This utility function runs optimized code with a fallback in case of errors.
+ * It's useful for running experimental optimizations without breaking the application.
  * 
- * Debug Notes:
- * - BatchUpdater works with both standard and enhanced form services
- * - It maintains a queue of field updates with timestamps
- * - The feature can be toggled with OptimizationFeatures.DEBOUNCED_UPDATES
- * - If problems occur, check console logs with "[BATCH UPDATER]" prefix
- * - Safety fallback: When errors occur in update callbacks, the individual field
- *   is updated directly via formService.updateFormData without interrupting the batch
- */
-class BatchUpdater {
-  private static instance: BatchUpdater;
-  private updateQueue: Map<string, {
-    value: any;
-    timestamp: number;
-    sectionId?: string;
-  }> = new Map();
-  private updateTimer: NodeJS.Timeout | null = null;
-  private updating: boolean = false;
-  private updateDelayMs: number = 500; // Default 500ms debounce delay
-  
-  // Callbacks for batch processing
-  private callbacks: {
-    onUpdate: Array<(fields: Record<string, any>, timestamps: Record<string, number>) => void>;
-    onComplete: Array<() => void>;
-  } = {
-    onUpdate: [],
-    onComplete: []
-  };
-  
-  private constructor() {}
-  
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): BatchUpdater {
-    if (!BatchUpdater.instance) {
-      BatchUpdater.instance = new BatchUpdater();
-    }
-    return BatchUpdater.instance;
-  }
-  
-  /**
-   * Configure the batch updater
-   */
-  public configure(options: { 
-    updateDelayMs?: number,
-    immediateFields?: string[]
-  } = {}): void {
-    if (options.updateDelayMs !== undefined) {
-      this.updateDelayMs = options.updateDelayMs;
-    }
-    
-    console.log('%c[BATCH UPDATER] Configured with', 'color: #9C27B0', { 
-      delayMs: this.updateDelayMs
-    });
-  }
-  
-  /**
-   * Add a field update to the queue
-   * 
-   * @param fieldName Name of the field to update
-   * @param value New value for the field
-   * @param options Additional options
-   * @param options.sectionId Section ID to which this field belongs
-   * @param options.immediate If true, process the queue immediately
-   */
-  public queueUpdate(
-    fieldName: string, 
-    value: any, 
-    options: {
-      sectionId?: string,
-      immediate?: boolean
-    } = {}
-  ): void {
-    // Validate inputs
-    if (!fieldName || typeof fieldName !== 'string') {
-      console.error('[BATCH UPDATER] Invalid field name:', fieldName);
-      return;
-    }
-    
-    const timestamp = Date.now();
-    
-    // Remember previous value for debug logging
-    const previousValue = this.updateQueue.has(fieldName) 
-      ? this.updateQueue.get(fieldName)?.value 
-      : undefined;
-    
-    // Add to queue
-    this.updateQueue.set(fieldName, {
-      value,
-      timestamp,
-      sectionId: options.sectionId
-    });
-    
-    // Enhanced debug logging 
-    console.log('%c[BATCH UPDATER] Queued update for', 'color: #9C27B0', fieldName, {
-      queueSize: this.updateQueue.size,
-      immediate: options.immediate || false,
-      previousValue: previousValue,
-      newValue: value,
-      sectionId: options.sectionId || 'unknown',
-      timestamp
-    });
-    
-    // Handle immediate updates
-    if (options.immediate) {
-      console.log('[BATCH UPDATER] Immediate update requested for field:', fieldName);
-      this.processQueue();
-      return;
-    }
-    
-    // Clear previous timer
-    if (this.updateTimer) {
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
-    }
-    
-    // Set new timer to process queue
-    this.updateTimer = setTimeout(() => {
-      console.log('[BATCH UPDATER] Debounce timer expired, processing queue');
-      this.processQueue();
-    }, this.updateDelayMs);
-  }
-  
-  /**
-   * Process the update queue
-   * 
-   * This is the core method that processes all batched field updates.
-   * It handles extracting the queued updates, notifying listeners,
-   * and executing the completion callbacks.
-   */
-  private processQueue(): void {
-    // Safety check: Don't process if already updating or queue is empty
-    if (this.updating || this.updateQueue.size === 0) {
-      return;
-    }
-    
-    // Mark as updating to prevent concurrent processing
-    this.updating = true;
-    
-    // Start performance measurement
-    const startTime = performance.now();
-    console.log('%c[BATCH UPDATER] Processing queue with', 'color: #9C27B0', this.updateQueue.size, 'updates');
-    
-    try {
-      // Create field value and timestamp objects
-      const fields: Record<string, any> = {};
-      const timestamps: Record<string, number> = {};
-      
-      // Group fields by section for potential section-based optimizations
-      const sectionGroups: Record<string, string[]> = {};
-      
-      // Extract all updates
-      this.updateQueue.forEach((update, fieldName) => {
-        // Validate field name and value
-        if (!fieldName) {
-          console.warn('[BATCH UPDATER] Skipping update with invalid field name');
-          return;
-        }
-        
-        fields[fieldName] = update.value;
-        timestamps[fieldName] = update.timestamp;
-        
-        // Group by section if available
-        const sectionId = update.sectionId || 'unknown';
-        if (!sectionGroups[sectionId]) {
-          sectionGroups[sectionId] = [];
-        }
-        sectionGroups[sectionId].push(fieldName);
-      });
-      
-      // Log section groups for debugging
-      console.log('[BATCH UPDATER] Fields grouped by section:', sectionGroups);
-      
-      // Safety copy before clearing the queue
-      const queueSize = this.updateQueue.size;
-      
-      // Clear queue before processing to allow new updates to be queued during processing
-      this.updateQueue.clear();
-      
-      // Notify listeners
-      const callbackPromises = this.callbacks.onUpdate.map(async (callback) => {
-        try {
-          return await Promise.resolve(callback(fields, timestamps));
-        } catch (error) {
-          console.error('[BATCH UPDATER] Error in update callback:', error);
-          // Log affected fields for debugging
-          console.error('[BATCH UPDATER] Failed update affected fields:', Object.keys(fields));
-          return { error, fields }; 
-        }
-      });
-      
-      // Wait for all callbacks to complete
-      Promise.all(callbackPromises)
-        .then(() => {
-          // Measure processing time
-          const endTime = performance.now();
-          const duration = endTime - startTime;
-          
-          console.log(
-            '%c[BATCH UPDATER] Queue processed successfully', 
-            'color: #9C27B0',
-            `${queueSize} updates in ${duration.toFixed(2)}ms (${(duration / queueSize).toFixed(2)}ms per field)`
-          );
-          
-          // Notify completion
-          this.callbacks.onComplete.forEach(callback => {
-            try {
-              callback();
-            } catch (error) {
-              console.error('[BATCH UPDATER] Error in completion callback:', error);
-            }
-          });
-        })
-        .catch(error => {
-          console.error('[BATCH UPDATER] Unexpected error processing batch:', error);
-        })
-        .finally(() => {
-          // Always mark as not updating when done, even if errors occurred
-          this.updating = false;
-        });
-    } catch (error) {
-      // Catastrophic error handling
-      console.error('[BATCH UPDATER] Critical error in batch processing:', error);
-      this.updating = false;
-      this.updateQueue.clear(); // Clear queue to prevent retrying with bad data
-    }
-  }
-  
-  /**
-   * Force immediate processing of the queue
-   */
-  public flush(): void {
-    if (this.updateTimer) {
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
-    }
-    
-    this.processQueue();
-  }
-  
-  /**
-   * Clear the update queue without processing
-   */
-  public clear(): void {
-    if (this.updateTimer) {
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
-    }
-    
-    this.updateQueue.clear();
-    this.updating = false;
-  }
-  
-  /**
-   * Register update callback
-   */
-  public onUpdate(callback: (fields: Record<string, any>, timestamps: Record<string, number>) => void): void {
-    this.callbacks.onUpdate.push(callback);
-  }
-  
-  /**
-   * Register completion callback
-   */
-  public onComplete(callback: () => void): void {
-    this.callbacks.onComplete.push(callback);
-  }
-  
-  /**
-   * Reset the updater
-   */
-  public reset(): void {
-    this.clear();
-    this.callbacks.onUpdate = [];
-    this.callbacks.onComplete = [];
-  }
-}
-
-// Export singleton instances 
-export const FormBatchUpdater = BatchUpdater.getInstance();
-
-/**
- * Progressive Loading Utility for Form Sections
- * 
- * This utility implements progressive loading strategies for large forms,
- * prioritizing visible sections first and then loading additional sections
- * in the background to improve perceived performance.
- */
-class ProgressiveLoader {
-  private static instance: ProgressiveLoader;
-  private loadQueue: Array<{
-    sectionId: string;
-    priority: number;
-    loaded: boolean;
-    startTime?: number;
-    endTime?: number;
-  }> = [];
-  private loading: boolean = false;
-  private currentSection: string | null = null;
-  private loadedSections: Set<string> = new Set();
-  private callbacks: {
-    onSectionLoad: Array<(sectionId: string) => void>;
-    onAllSectionsLoad: Array<() => void>;
-  } = {
-    onSectionLoad: [],
-    onAllSectionsLoad: []
-  };
-  
-  private constructor() {}
-  
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): ProgressiveLoader {
-    if (!ProgressiveLoader.instance) {
-      ProgressiveLoader.instance = new ProgressiveLoader();
-    }
-    return ProgressiveLoader.instance;
-  }
-  
-  /**
-   * Initialize the progressive loader with section information
-   */
-  public initialize(sections: Array<{ id: string; title: string; priority?: number }>, currentSectionId?: string): void {
-    this.reset();
-    
-    // Set current section if provided
-    if (currentSectionId) {
-      this.currentSection = currentSectionId;
-    }
-    
-    // Add sections to load queue
-    this.loadQueue = sections.map(section => ({
-      sectionId: section.id,
-      // Priority: 1 = highest, 10 = lowest
-      // Current section gets priority 1, rest are ordered based on provided priority or default to 5
-      priority: section.id === this.currentSection ? 1 : (section.priority || 5),
-      loaded: false
-    }));
-    
-    // Sort by priority (lower number = higher priority)
-    this.sortQueue();
-    
-    console.log('%c[PROGRESSIVE LOADING] Initialized with', 'color: #4CAF50', 
-      { sections: this.loadQueue.length, currentSection: this.currentSection });
-  }
-  
-  /**
-   * Mark the current visible section (updates priorities)
-   */
-  public setCurrentSection(sectionId: string): void {
-    if (this.currentSection === sectionId) return;
-    
-    this.currentSection = sectionId;
-    
-    // Update priorities: current section gets highest priority
-    this.loadQueue.forEach(item => {
-      if (item.sectionId === sectionId && !item.loaded) {
-        item.priority = 1;
-      }
-    });
-    
-    this.sortQueue();
-    
-    console.log('%c[PROGRESSIVE LOADING] Current section set to', 'color: #4CAF50', sectionId);
-  }
-  
-  /**
-   * Start the loading process for all sections based on priority
-   */
-  public startLoading(parallel: boolean = false): void {
-    if (this.loading) return;
-    
-    this.loading = true;
-    
-    if (parallel) {
-      // Load all sections in parallel
-      this.loadAllSectionsParallel();
-    } else {
-      // Load sections sequentially based on priority
-      this.loadNextSection();
-    }
-  }
-  
-  /**
-   * Load all sections in parallel (faster but may impact performance)
-   */
-  private loadAllSectionsParallel(): void {
-    const unloadedSections = this.loadQueue.filter(item => !item.loaded);
-    
-    if (unloadedSections.length === 0) {
-      this.finishLoading();
-      return;
-    }
-    
-    // Load all remaining sections at once
-    Promise.all(unloadedSections.map(item => this.simulateLoadSection(item.sectionId)))
-      .then(() => {
-        console.log('%c[PROGRESSIVE LOADING] All sections loaded in parallel', 'color: #4CAF50');
-        this.finishLoading();
-      });
-  }
-  
-  /**
-   * Load the next section in the queue
-   */
-  private loadNextSection(): void {
-    // Find the next unloaded section with highest priority
-    const nextSection = this.loadQueue.find(item => !item.loaded);
-    
-    if (!nextSection) {
-      this.finishLoading();
-      return;
-    }
-    
-    nextSection.startTime = performance.now();
-    
-    // Simulate loading the section data
-    this.simulateLoadSection(nextSection.sectionId)
-      .then(() => {
-        nextSection.loaded = true;
-        nextSection.endTime = performance.now();
-        this.loadedSections.add(nextSection.sectionId);
-        
-        // Notify listeners
-        this.notifySectionLoaded(nextSection.sectionId);
-        
-        // Continue loading the next section
-        setTimeout(() => this.loadNextSection(), 0);
-      });
-  }
-  
-  /**
-   * Simulate loading a section (in a real app, this would fetch actual data)
-   */
-  private simulateLoadSection(sectionId: string): Promise<void> {
-    return new Promise((resolve) => {
-      console.log('%c[PROGRESSIVE LOADING] Loading section', 'color: #4CAF50', sectionId);
-      
-      // Log start for metrics
-      performanceMonitor.startTimer(`loadSection_${sectionId}`);
-      
-      // Simulate network delay based on priority
-      // Higher priority sections load faster
-      const section = this.loadQueue.find(s => s.sectionId === sectionId);
-      const delay = section ? Math.max(50, 100 * section.priority) : 500;
-      
-      setTimeout(() => {
-        // Log completion for metrics
-        performanceMonitor.endTimer(`loadSection_${sectionId}`);
-        console.log('%c[PROGRESSIVE LOADING] Section loaded', 'color: #4CAF50', sectionId);
-        resolve();
-      }, delay);
-    });
-  }
-  
-  /**
-   * Finish the loading process
-   */
-  private finishLoading(): void {
-    this.loading = false;
-    
-    // Check if all sections are loaded
-    const allLoaded = this.loadQueue.every(item => item.loaded);
-    
-    if (allLoaded) {
-      console.log('%c[PROGRESSIVE LOADING] All sections loaded', 'color: #4CAF50');
-      this.notifyAllSectionsLoaded();
-    }
-  }
-  
-  /**
-   * Sort the loading queue by priority
-   */
-  private sortQueue(): void {
-    this.loadQueue.sort((a, b) => a.priority - b.priority);
-  }
-  
-  /**
-   * Check if a section is loaded
-   */
-  public isSectionLoaded(sectionId: string): boolean {
-    return this.loadedSections.has(sectionId);
-  }
-  
-  /**
-   * Get loading stats for all sections
-   */
-  public getLoadingStats(): Array<{
-    sectionId: string;
-    priority: number;
-    loaded: boolean;
-    loadTime?: number;
-  }> {
-    return this.loadQueue.map(item => ({
-      sectionId: item.sectionId,
-      priority: item.priority,
-      loaded: item.loaded,
-      loadTime: item.startTime && item.endTime ? item.endTime - item.startTime : undefined
-    }));
-  }
-  
-  /**
-   * Register a callback for when a section is loaded
-   */
-  public onSectionLoad(callback: (sectionId: string) => void): void {
-    this.callbacks.onSectionLoad.push(callback);
-  }
-  
-  /**
-   * Register a callback for when all sections are loaded
-   */
-  public onAllSectionsLoad(callback: () => void): void {
-    this.callbacks.onAllSectionsLoad.push(callback);
-  }
-  
-  /**
-   * Notify listeners that a section has loaded
-   */
-  private notifySectionLoaded(sectionId: string): void {
-    this.callbacks.onSectionLoad.forEach(callback => callback(sectionId));
-  }
-  
-  /**
-   * Notify listeners that all sections have loaded
-   */
-  private notifyAllSectionsLoaded(): void {
-    this.callbacks.onAllSectionsLoad.forEach(callback => callback());
-  }
-  
-  /**
-   * Reset the loader state
-   */
-  public reset(): void {
-    this.loadQueue = [];
-    this.loading = false;
-    this.currentSection = null;
-    this.loadedSections.clear();
-  }
-}
-
-export const performanceMonitor = FormPerformanceMonitor.getInstance();
-
-/**
- * Health Check Monitor for Optimization Features
- * 
- * Tracks the health of optimization features and ensures they're producing valid results.
- * This allows for graceful fallbacks when optimizations fail or produce unexpected results.
- */
-class OptimizationHealthCheck {
-  private static instance: OptimizationHealthCheck;
-  private healthStatus: Record<string, {
-    lastSuccess: number;
-    lastFailure: number;
-    successCount: number;
-    failureCount: number;
-    enabled: boolean;
-  }> = {};
-  
-  private constructor() {}
-  
-  public static getInstance(): OptimizationHealthCheck {
-    if (!OptimizationHealthCheck.instance) {
-      OptimizationHealthCheck.instance = new OptimizationHealthCheck();
-    }
-    return OptimizationHealthCheck.instance;
-  }
-  
-  /**
-   * Check if a result is valid and track health status
-   */
-  public check(operationName: string, result: any): boolean {
-    // Initialize health status for this operation if it doesn't exist
-    if (!this.healthStatus[operationName]) {
-      this.healthStatus[operationName] = {
-        lastSuccess: 0,
-        lastFailure: 0,
-        successCount: 0,
-        failureCount: 0,
-        enabled: true
-      };
-    }
-    
-    // Basic sanity checks
-    const isValid = this.validateResult(operationName, result);
-    
-    // Update health status
-    if (isValid) {
-      this.healthStatus[operationName].lastSuccess = Date.now();
-      this.healthStatus[operationName].successCount++;
-    } else {
-      this.healthStatus[operationName].lastFailure = Date.now();
-      this.healthStatus[operationName].failureCount++;
-      
-      // Disable the optimization if it fails too frequently
-      if (this.healthStatus[operationName].failureCount > 5 && 
-          this.healthStatus[operationName].failureCount > this.healthStatus[operationName].successCount) {
-        this.healthStatus[operationName].enabled = false;
-      }
-    }
-    
-    return isValid;
-  }
-  
-  /**
-   * Validate a result based on operation type
-   */
-  private validateResult(operationName: string, result: any): boolean {
-    // Handle errors
-    if (result && result.error) {
-      return false;
-    }
-    
-    // Different validations for different operations
-    switch (operationName) {
-      case 'getFields':
-        return Array.isArray(result) && result.length > 0;
-        
-      case 'getSections':
-        return Array.isArray(result) && result.length > 0;
-        
-      case 'getFormData':
-        return result && typeof result === 'object';
-        
-      case 'calculateProgress':
-        return typeof result === 'number' && result >= 0 && result <= 100;
-        
-      // Add more validations as needed
-        
-      default:
-        // For operations without specific validation, just check it's not null/undefined
-        return result !== null && result !== undefined;
-    }
-  }
-  
-  /**
-   * Check if an optimization is still enabled based on health status
-   */
-  public isEnabled(operationName: string): boolean {
-    return !this.healthStatus[operationName] || this.healthStatus[operationName].enabled;
-  }
-  
-  /**
-   * Get current health status for all operations
-   */
-  public getHealthStatus(): Record<string, {
-    lastSuccess: number;
-    lastFailure: number;
-    successCount: number;
-    failureCount: number;
-    enabled: boolean;
-  }> {
-    return { ...this.healthStatus };
-  }
-  
-  /**
-   * Alias for getHealthStatus - for backward compatibility
-   */
-  public getStatus(): Record<string, {
-    lastSuccess: number;
-    lastFailure: number;
-    successCount: number;
-    failureCount: number;
-    enabled: boolean;
-  }> {
-    return this.getHealthStatus();
-  }
-  
-  /**
-   * Reset health status (typically used in testing)
-   */
-  public reset(): void {
-    this.healthStatus = {};
-  }
-}
-
-/**
- * Progressive Loader Manager
- * 
- * Manages section-based loading for large forms.
- * This utility tracks which sections are loaded, which are currently loading,
- * and which should be loaded next based on user navigation patterns.
- */
-class ProgressiveLoaderManager {
-  private static instance: ProgressiveLoaderManager;
-  private activeSectionId: string | null = null;
-  private loadedSections: Set<string> = new Set();
-  private loadingSections: Set<string> = new Set();
-  private sectionLoadStats: Array<{
-    id: string;
-    loaded: boolean;
-    loading: boolean;
-    loadTime?: number;
-    priority: number;
-  }> = [];
-  
-  // Callbacks for section loading events
-  private callbacks: {
-    onSectionLoad: Array<(sectionId: string) => void>;
-    onAllSectionsLoad: Array<() => void>;
-  } = {
-    onSectionLoad: [],
-    onAllSectionsLoad: []
-  };
-  
-  private constructor() {}
-  
-  public static getInstance(): ProgressiveLoaderManager {
-    if (!ProgressiveLoaderManager.instance) {
-      ProgressiveLoaderManager.instance = new ProgressiveLoaderManager();
-    }
-    return ProgressiveLoaderManager.instance;
-  }
-  
-  /**
-   * Initialize the loader with section information
-   * @param sections Array of section info objects
-   * @param currentSectionId Optional ID of the current active section
-   */
-  public initialize(sections: Array<{ id: string; title: string; priority?: number }>, currentSectionId?: string): void {
-    // Start performance monitoring
-    performanceMonitor.startTimer('loaderInitialization');
-    
-    // Reset first to ensure clean state
-    this.reset();
-    
-    // Set current section if provided
-    if (currentSectionId) {
-      this.activeSectionId = currentSectionId;
-    }
-    
-    // Add sections to track
-    sections.forEach(section => {
-      this.trackSection(section.id, section.priority || 0);
-    });
-    
-    // If current section is set, give it highest priority
-    if (this.activeSectionId) {
-      const statIndex = this.sectionLoadStats.findIndex(s => s.id === this.activeSectionId);
-      if (statIndex >= 0) {
-        this.sectionLoadStats[statIndex].priority = 1;
-      }
-    }
-    
-    // End performance monitoring
-    performanceMonitor.endTimer('loaderInitialization');
-    
-    console.log('%c[PROGRESSIVE LOADING] Initialized with sections:', 'color: #4CAF50', 
-      { count: sections.length, activeSectionId: this.activeSectionId });
-  }
-  
-  /**
-   * Start loading sections based on priority
-   * @param parallel Whether to load all sections in parallel (faster but may impact performance)
-   */
-  public startLoading(parallel: boolean = false): void {
-    // Start performance monitoring
-    performanceMonitor.startTimer('startLoading');
-    
-    // Start loading the first unloaded section (or all in parallel)
-    const unloadedSections = this.sectionLoadStats.filter(s => !s.loaded);
-    if (unloadedSections.length === 0) {
-      performanceMonitor.endTimer('startLoading');
-      return; // All sections already loaded
-    }
-    
-    // Sort by priority (lower number = higher priority)
-    unloadedSections.sort((a, b) => a.priority - b.priority);
-    
-    // Load the highest priority section first
-    const nextSection = unloadedSections[0];
-    this.loadingSections.add(nextSection.id);
-    nextSection.loading = true;
-    
-    // Simulate loading completion after a delay (this would be a real fetch in production)
-    setTimeout(() => {
-      // Mark as loaded
-      this.loadedSections.add(nextSection.id);
-      this.loadingSections.delete(nextSection.id);
-      nextSection.loaded = true;
-      nextSection.loading = false;
-      
-      // If we're loading in parallel, load all remaining unloaded sections
-      if (parallel) {
-        unloadedSections.slice(1).forEach(section => {
-          this.loadingSections.add(section.id);
-          section.loading = true;
-          
-          // Simulate loading with varying delays based on priority
-          setTimeout(() => {
-            this.loadedSections.add(section.id);
-            this.loadingSections.delete(section.id);
-            section.loaded = true;
-            section.loading = false;
-          }, 100 + Math.random() * 500); // Random delay between 100-600ms
-        });
-      } else if (unloadedSections.length > 1) {
-        // If sequential, continue with the next section
-        this.startLoading(false);
-      }
-    }, 200 + Math.random() * 300); // Random delay for first section between 200-500ms
-    
-    performanceMonitor.endTimer('startLoading');
-  }
-  
-  /**
-   * Set the active section that the user is currently viewing
-   * This triggers the loading of that section and adjacent sections
-   */
-  public setCurrentSection(sectionId: string): void {
-    // Start performance monitoring
-    performanceMonitor.startTimer('sectionActivation');
-    
-    this.activeSectionId = sectionId;
-    
-    // Mark section as loading if not already loaded
-    if (!this.loadedSections.has(sectionId)) {
-      this.loadingSections.add(sectionId);
-      
-      // Update stats
-      const statIndex = this.sectionLoadStats.findIndex(s => s.id === sectionId);
-      if (statIndex >= 0) {
-        this.sectionLoadStats[statIndex].loading = true;
-        this.sectionLoadStats[statIndex].priority = 1; // Give it highest priority
-      }
-    }
-    
-    // End performance monitoring
-    performanceMonitor.endTimer('sectionActivation');
-  }
-  
-  /**
-   * Mark a section as loaded
-   */
-  public markSectionLoaded(sectionId: string): void {
-    this.loadedSections.add(sectionId);
-    this.loadingSections.delete(sectionId);
-    
-    // Update stats
-    const loadTime = performanceMonitor.endTimer(`loadSection_${sectionId}`);
-    const statIndex = this.sectionLoadStats.findIndex(s => s.id === sectionId);
-    
-    if (statIndex >= 0) {
-      this.sectionLoadStats[statIndex].loaded = true;
-      this.sectionLoadStats[statIndex].loading = false;
-      this.sectionLoadStats[statIndex].loadTime = loadTime;
-    } else {
-      this.sectionLoadStats.push({
-        id: sectionId,
-        loaded: true,
-        loading: false,
-        loadTime,
-        priority: 0
-      });
-    }
-    
-    // Notify listeners that this section has loaded
-    this.callbacks.onSectionLoad.forEach(callback => {
-      try {
-        callback(sectionId);
-      } catch (error) {
-        console.error('[PROGRESSIVE LOADING] Error in section load callback:', error);
-      }
-    });
-    
-    // Check if all sections are loaded
-    const allLoaded = this.sectionLoadStats.every(s => s.loaded);
-    if (allLoaded && this.sectionLoadStats.length > 0) {
-      // Notify listeners that all sections have loaded
-      this.callbacks.onAllSectionsLoad.forEach(callback => {
-        try {
-          callback();
-        } catch (error) {
-          console.error('[PROGRESSIVE LOADING] Error in all sections load callback:', error);
-        }
-      });
-    }
-  }
-  
-  /**
-   * Check if a section is currently loaded
-   */
-  public isSectionLoaded(sectionId: string): boolean {
-    return this.loadedSections.has(sectionId);
-  }
-  
-  /**
-   * Check if a section is currently loading
-   */
-  public isSectionLoading(sectionId: string): boolean {
-    return this.loadingSections.has(sectionId);
-  }
-  
-  /**
-   * Add a section to track (typically called during initialization)
-   */
-  public trackSection(sectionId: string, priority: number = 0): void {
-    const existingStat = this.sectionLoadStats.find(s => s.id === sectionId);
-    
-    if (!existingStat) {
-      this.sectionLoadStats.push({
-        id: sectionId,
-        loaded: false,
-        loading: false,
-        priority
-      });
-    } else {
-      existingStat.priority = priority;
-    }
-  }
-  
-  /**
-   * Get the current active section ID
-   */
-  public getActiveSectionId(): string | null {
-    return this.activeSectionId;
-  }
-  
-  /**
-   * Get loading statistics for all tracked sections
-   */
-  public getLoadingStats(): Array<{
-    id: string;
-    sectionId: string; // Added for backward compatibility
-    loaded: boolean;
-    loading: boolean;
-    loadTime?: number;
-    priority: number;
-  }> {
-    // Transform the stats to include a sectionId property (which is the same as id)
-    // This makes it compatible with code that expects sectionId
-    return this.sectionLoadStats.map(stat => ({
-      ...stat,
-      sectionId: stat.id
-    }));
-  }
-  
-  /**
-   * Should a section be included in the current view based on loading state
-   * This is the core of the progressive loading algorithm
-   */
-  public shouldIncludeSection(sectionId: string): boolean {
-    // CRITICAL FIX: Temporarily disable progressive section filtering on live forms
-    // to avoid "No fields found in this section" errors
-    // Only use progressive loading in the testing environment
-    if (!OptimizationFeatures.PROGRESSIVE_LOADING || window.location.pathname.includes('/task/')) {
-      return true; // Include all sections if disabled or on actual form pages
-    }
-    
-    // Always include the active section
-    if (sectionId === this.activeSectionId) {
-      return true;
-    }
-    
-    // Include already loaded sections
-    if (this.loadedSections.has(sectionId)) {
-      return true;
-    }
-    
-    // Include sections currently being loaded
-    if (this.loadingSections.has(sectionId)) {
-      return true;
-    }
-    
-    // For Financial Profile section, temporarily always include it
-    // This ensures backward compatibility until we fully implement progressive loading
-    if (sectionId && sectionId.includes('Financial')) {
-      return true;
-    }
-    
-    // Otherwise, don't include the section yet
-    return false;
-  }
-  
-  /**
-   * Register a callback to be called when a section is loaded
-   */
-  public onSectionLoad(callback: (sectionId: string) => void): void {
-    this.callbacks.onSectionLoad.push(callback);
-  }
-
-  /**
-   * Register a callback to be called when all sections are loaded
-   */
-  public onAllSectionsLoad(callback: () => void): void {
-    this.callbacks.onAllSectionsLoad.push(callback);
-  }
-  
-  /**
-   * Reset the loader state (typically used when navigating to a new form)
-   */
-  public reset(): void {
-    this.activeSectionId = null;
-    this.loadedSections.clear();
-    this.loadingSections.clear();
-    this.sectionLoadStats = [];
-    // Keep callbacks intact unless explicitly cleared
-  }
-}
-
-export const progressiveLoader = ProgressiveLoaderManager.getInstance();
-export const healthCheck = OptimizationHealthCheck.getInstance();
-
-/**
- * Safely run an optimized implementation with fallback
+ * @param optimizedFn The optimized function to run
+ * @param fallbackFn The fallback function to run if the optimized function fails
+ * @param errorHandler Optional handler for errors
+ * @returns The result of the optimized function, or the fallback if it fails
  */
 export function safelyRunOptimizedCode<T>(
   optimizedFn: () => T,
   fallbackFn: () => T,
-  operationName: string,
-  featureFlag: keyof typeof OptimizationFeatures
+  errorHandler?: (error: Error) => void
 ): T {
-  // Check if the optimization is enabled
-  if (!OptimizationFeatures[featureFlag]) {
-    return fallbackFn();
-  }
-  
-  // Start timing the operation
-  performanceMonitor.startTimer(`${operationName}`);
-  
-  try {
-    // Run the optimized implementation
-    const result = optimizedFn();
-    
-    // Verify that the result is valid
-    const isValid = healthCheck.check(operationName, result);
-    
-    // End timing
-    performanceMonitor.endTimer(`${operationName}`);
-    
-    if (!isValid) {
-      console.warn(`%c[OPTIMIZATION] ${operationName} produced invalid result, using fallback`, 'color: #FF9800');
+  if (!OptimizationFeatures.DEBUG_MODE) {
+    try {
+      return optimizedFn();
+    } catch (error) {
+      if (errorHandler && error instanceof Error) {
+        errorHandler(error);
+      } else {
+        console.error('[Optimization] Error in optimized code:', error);
+      }
       return fallbackFn();
     }
-    
-    return result;
-  } catch (error) {
-    // Log the error
-    console.error(`%c[OPTIMIZATION] Error in ${operationName}:`, 'color: #F44336', error);
-    
-    // End timing (even though it failed)
-    performanceMonitor.endTimer(`${operationName}`);
-    
-    // Record the failure in health check
-    healthCheck.check(operationName, { error });
-    
-    // Fall back to original implementation
-    return fallbackFn();
+  } else {
+    // In debug mode, let errors bubble up for better debugging
+    return optimizedFn();
   }
 }
 
 /**
- * Initialize optimization monitoring
- * Call this early in the application lifecycle
+ * Check the health of the optimization system
+ * 
+ * This function performs a series of checks to ensure that the optimization
+ * system is working correctly. It returns a report of the checks performed.
+ * 
+ * @returns A report of the health checks performed
  */
-export function initializeOptimizationMonitoring(debugMode: boolean = false): void {
-  performanceMonitor.setDebugMode(debugMode);
-  console.log('%c[OPTIMIZATION] Monitoring initialized', 'color: #2196F3');
+export function healthCheck(): Record<string, any> {
+  const report: Record<string, any> = {
+    timestamp: new Date().toISOString(),
+    features: { ...OptimizationFeatures },
+    status: 'healthy',
+    checks: {}
+  };
+
+  // Check performance monitoring
+  try {
+    performanceMonitor.startTimer('healthCheck');
+    const timer = performanceMonitor.endTimer('healthCheck');
+    report.checks.performanceMonitor = {
+      status: timer !== undefined ? 'ok' : 'failed',
+      timerWorks: timer !== undefined
+    };
+  } catch (error) {
+    report.checks.performanceMonitor = {
+      status: 'error',
+      error: String(error)
+    };
+    report.status = 'degraded';
+  }
+
+  // Check progressive loader
+  try {
+    const initialCount = progressiveLoader.loadedCount;
+    const dummyCallback = () => {};
+    progressiveLoader.loadSectionImmediately('test-section', dummyCallback);
+    const afterCount = progressiveLoader.loadedCount;
+    progressiveLoader.reset();
+    
+    report.checks.progressiveLoader = {
+      status: afterCount > initialCount ? 'ok' : 'failed',
+      loaderWorks: afterCount > initialCount
+    };
+  } catch (error) {
+    report.checks.progressiveLoader = {
+      status: 'error',
+      error: String(error)
+    };
+    report.status = 'degraded';
+  }
+
+  // Check batch update manager
+  try {
+    const batchManager = new BatchUpdateManager();
+    batchManager.addUpdate('test', 'value');
+    const size = batchManager.size;
+    const updates = batchManager.processQueue();
+    
+    report.checks.batchUpdateManager = {
+      status: size === 1 && Object.keys(updates).length === 1 ? 'ok' : 'failed',
+      managerWorks: size === 1 && Object.keys(updates).length === 1
+    };
+  } catch (error) {
+    report.checks.batchUpdateManager = {
+      status: 'error',
+      error: String(error)
+    };
+    report.status = 'degraded';
+  }
+
+  return report;
+}
+
+/**
+ * Form Performance Monitor
+ * 
+ * This class provides methods for measuring and tracking form performance.
+ * It can be used to measure render times, update times, and other performance metrics.
+ */
+class FormPerformanceMonitor {
+  private timers: Record<string, { start: number; end?: number }> = {};
+  private measurements: Record<string, number[]> = {};
+  private memorySnapshots: number[] = [];
   
-  // Enable debug mode in non-production environments
-  if (process.env.NODE_ENV !== 'production') {
-    performanceMonitor.setDebugMode(true);
+  /**
+   * Start a timer for a specific operation
+   * @param operationName The name of the operation to time
+   */
+  startTimer(operationName: string): void {
+    if (OptimizationFeatures.DEBUG_MODE) {
+      this.timers[operationName] = { start: performance.now() };
+      console.debug(`[Performance] Starting timer for ${operationName}`);
+    }
+  }
+  
+  /**
+   * End a timer and record the measurement
+   * @param operationName The name of the operation to end timing for
+   * @returns The measured time in milliseconds, or undefined if timing is disabled
+   */
+  endTimer(operationName: string): number | undefined {
+    if (OptimizationFeatures.DEBUG_MODE && this.timers[operationName]) {
+      const start = this.timers[operationName].start;
+      const end = performance.now();
+      const duration = end - start;
+      
+      this.timers[operationName].end = end;
+      
+      // Store the measurement
+      if (!this.measurements[operationName]) {
+        this.measurements[operationName] = [];
+      }
+      this.measurements[operationName].push(duration);
+      
+      console.debug(`[Performance] ${operationName}: ${duration.toFixed(2)}ms`);
+      return duration;
+    }
+    return undefined;
+  }
+  
+  /**
+   * Record memory usage at the current point
+   * This is useful for tracking memory usage over time
+   */
+  recordMemoryUsage(): void {
+    if (OptimizationFeatures.DEBUG_MODE && window.performance && (window.performance as any).memory) {
+      const memoryInfo = (window.performance as any).memory;
+      const usedHeapSize = memoryInfo.usedJSHeapSize / (1024 * 1024); // Convert to MB
+      this.memorySnapshots.push(usedHeapSize);
+      console.debug(`[Performance] Memory usage: ${usedHeapSize.toFixed(2)} MB`);
+    }
+  }
+  
+  /**
+   * Get all measurements for a specific operation
+   * @param operationName The operation to get measurements for
+   * @returns An array of timing measurements in milliseconds
+   */
+  getMeasurements(operationName: string): number[] {
+    return this.measurements[operationName] || [];
+  }
+  
+  /**
+   * Get the last measurement for a specific operation
+   * @param operationName The operation to get the last measurement for
+   * @returns The last measurement in milliseconds, or undefined if no measurements exist
+   */
+  getLastMeasurement(operationName: string): number | undefined {
+    const measurements = this.getMeasurements(operationName);
+    return measurements.length > 0 ? measurements[measurements.length - 1] : undefined;
+  }
+  
+  /**
+   * Get the average measurement for a specific operation
+   * @param operationName The operation to get the average for
+   * @returns The average measurement in milliseconds, or undefined if no measurements exist
+   */
+  getAverageMeasurement(operationName: string): number | undefined {
+    const measurements = this.getMeasurements(operationName);
+    if (measurements.length === 0) return undefined;
+    
+    const sum = measurements.reduce((acc, val) => acc + val, 0);
+    return sum / measurements.length;
+  }
+  
+  /**
+   * Get all performance data as a summary object
+   * @returns An object containing all performance data
+   */
+  getSummary(): Record<string, any> {
+    const summary: Record<string, any> = {
+      operations: {},
+      memory: {
+        snapshots: this.memorySnapshots,
+        current: undefined,
+        peak: undefined
+      }
+    };
+    
+    // Add operation measurements
+    Object.keys(this.measurements).forEach(operation => {
+      const measurements = this.measurements[operation];
+      summary.operations[operation] = {
+        count: measurements.length,
+        total: measurements.reduce((acc, val) => acc + val, 0),
+        average: this.getAverageMeasurement(operation),
+        min: Math.min(...measurements),
+        max: Math.max(...measurements),
+        last: this.getLastMeasurement(operation)
+      };
+    });
+    
+    // Add memory information
+    if (this.memorySnapshots.length > 0) {
+      summary.memory.current = this.memorySnapshots[this.memorySnapshots.length - 1];
+      summary.memory.peak = Math.max(...this.memorySnapshots);
+    }
+    
+    return summary;
+  }
+  
+  /**
+   * Reset all timers and measurements
+   */
+  reset(): void {
+    this.timers = {};
+    this.measurements = {};
+    this.memorySnapshots = [];
+    console.debug('[Performance] All measurements have been reset');
   }
 }
+
+/**
+ * Batch Update Manager
+ * 
+ * This utility helps to batch multiple field updates together to reduce
+ * unnecessary re-renders and API calls. It's especially useful for forms
+ * with many fields or frequent updates.
+ */
+export class BatchUpdateManager<T = any> {
+  private queue: Map<string, T> = new Map();
+  private timeout: number | null = null;
+  private readonly delay: number;
+  
+  /**
+   * Create a new BatchUpdateManager
+   * @param delay The delay in milliseconds before processing the batch (default: 300ms)
+   * @param initialValues Optional initial values to populate the queue with
+   */
+  constructor(delay = 300, initialValues?: Record<string, T>) {
+    this.delay = delay;
+    
+    // Initialize with any provided values
+    if (initialValues) {
+      Object.entries(initialValues).forEach(([key, value]) => {
+        this.queue.set(key, value);
+      });
+    }
+  }
+  
+  /**
+   * Add an update to the batch queue
+   * @param key The key for the update (typically a field name)
+   * @param value The value to update
+   * @param immediate If true, process the batch immediately instead of waiting
+   */
+  addUpdate(key: string, value: T, immediate = false): void {
+    performanceMonitor.startTimer('batchUpdate_add');
+    
+    // Add to queue
+    this.queue.set(key, value);
+    
+    // Reset timeout
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    
+    // Process immediately if requested
+    if (immediate) {
+      this.processQueue();
+    } else {
+      // Otherwise, set a timeout to process after the delay
+      this.timeout = window.setTimeout(() => this.processQueue(), this.delay);
+    }
+    
+    performanceMonitor.endTimer('batchUpdate_add');
+  }
+  
+  /**
+   * Process the current batch queue
+   * @param callback Optional callback to execute with the processed updates
+   * @returns A record of all updates in the queue
+   */
+  processQueue(callback?: (updates: Record<string, T>) => void): Record<string, T> {
+    performanceMonitor.startTimer('batchUpdate_process');
+    
+    // Convert queue to a regular object
+    const updates: Record<string, T> = {};
+    this.queue.forEach((value, key) => {
+      updates[key] = value;
+    });
+    
+    // Clear the queue
+    this.queue.clear();
+    
+    // Clear any pending timeout
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    
+    // Execute callback if provided
+    if (callback && Object.keys(updates).length > 0) {
+      callback(updates);
+    }
+    
+    performanceMonitor.endTimer('batchUpdate_process');
+    return updates;
+  }
+  
+  /**
+   * Cancel any pending updates and clear the queue
+   */
+  cancelUpdates(): void {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    this.queue.clear();
+  }
+  
+  /**
+   * Get the current size of the batch queue
+   * @returns The number of pending updates
+   */
+  get size(): number {
+    return this.queue.size;
+  }
+  
+  /**
+   * Check if the batch queue is empty
+   * @returns True if the queue is empty, false otherwise
+   */
+  get isEmpty(): boolean {
+    return this.queue.size === 0;
+  }
+}
+
+/**
+ * Section Loader for Progressive Loading
+ * 
+ * This utility helps implement progressive loading of form sections.
+ * It loads sections incrementally based on priority, visibility, or other criteria.
+ */
+export class ProgressiveSectionLoader {
+  private loadedSections: Set<string> = new Set();
+  private initialBatchSize: number;
+  private loadBatchSize: number;
+  private loadDelay: number;
+  private timeout: number | null = null;
+  
+  /**
+   * Create a new ProgressiveSectionLoader
+   * @param initialBatchSize Number of sections to load initially (default: 2)
+   * @param loadBatchSize Number of sections to load in each subsequent batch (default: 1)
+   * @param loadDelay Delay in ms between loading batches (default: 300)
+   */
+  constructor(initialBatchSize = 2, loadBatchSize = 1, loadDelay = 300) {
+    this.initialBatchSize = initialBatchSize;
+    this.loadBatchSize = loadBatchSize;
+    this.loadDelay = loadDelay;
+  }
+  
+  /**
+   * Initialize the loader with sections to load
+   * @param sectionIds Array of all section IDs that will be loaded
+   * @param initialSections Optional array of section IDs to load immediately
+   * @param onSectionLoaded Callback called when a section is loaded
+   */
+  initialize(
+    sectionIds: string[],
+    initialSections: string[] | null = null,
+    onSectionLoaded: (sectionId: string) => void
+  ): void {
+    performanceMonitor.startTimer('progressiveLoader_init');
+    
+    // If initial sections are specified, load them directly
+    if (initialSections && initialSections.length > 0) {
+      initialSections.forEach(sectionId => {
+        this.loadedSections.add(sectionId);
+        onSectionLoaded(sectionId);
+      });
+    } else {
+      // Otherwise, load the initial batch based on the order
+      const initialBatch = sectionIds.slice(0, this.initialBatchSize);
+      initialBatch.forEach(sectionId => {
+        this.loadedSections.add(sectionId);
+        onSectionLoaded(sectionId);
+      });
+    }
+    
+    // Schedule loading the remaining sections
+    this.scheduleNextBatch(sectionIds, onSectionLoaded);
+    
+    performanceMonitor.endTimer('progressiveLoader_init');
+  }
+  
+  /**
+   * Schedule loading the next batch of sections
+   * @param allSections Array of all section IDs
+   * @param onSectionLoaded Callback called when a section is loaded
+   */
+  private scheduleNextBatch(
+    allSections: string[],
+    onSectionLoaded: (sectionId: string) => void
+  ): void {
+    // Filter out already loaded sections
+    const remainingSections = allSections.filter(id => !this.loadedSections.has(id));
+    
+    // If there are no remaining sections, we're done
+    if (remainingSections.length === 0) {
+      return;
+    }
+    
+    // Get the next batch of sections to load
+    const nextBatch = remainingSections.slice(0, this.loadBatchSize);
+    
+    // Schedule loading the next batch
+    this.timeout = window.setTimeout(() => {
+      performanceMonitor.startTimer('progressiveLoader_batch');
+      
+      // Load each section in the batch
+      nextBatch.forEach(sectionId => {
+        this.loadedSections.add(sectionId);
+        onSectionLoaded(sectionId);
+      });
+      
+      performanceMonitor.endTimer('progressiveLoader_batch');
+      
+      // Schedule the next batch
+      this.scheduleNextBatch(allSections, onSectionLoaded);
+    }, this.loadDelay);
+  }
+  
+  /**
+   * Check if a section has been loaded
+   * @param sectionId The ID of the section to check
+   * @returns True if the section has been loaded, false otherwise
+   */
+  isSectionLoaded(sectionId: string): boolean {
+    return this.loadedSections.has(sectionId);
+  }
+  
+  /**
+   * Load a specific section immediately
+   * @param sectionId The ID of the section to load
+   * @param onSectionLoaded Callback called when the section is loaded
+   * @returns True if the section was newly loaded, false if already loaded
+   */
+  loadSectionImmediately(
+    sectionId: string,
+    onSectionLoaded: (sectionId: string) => void
+  ): boolean {
+    if (!this.loadedSections.has(sectionId)) {
+      this.loadedSections.add(sectionId);
+      onSectionLoaded(sectionId);
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * Cancel any pending section loads
+   */
+  cancelLoading(): void {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+  }
+  
+  /**
+   * Get the number of loaded sections
+   * @returns The number of loaded sections
+   */
+  get loadedCount(): number {
+    return this.loadedSections.size;
+  }
+  
+  /**
+   * Reset the loader and clear all loaded sections
+   */
+  reset(): void {
+    this.cancelLoading();
+    this.loadedSections.clear();
+  }
+}
+
+// Create a singleton instance of the performance monitor
+export const performanceMonitor = new FormPerformanceMonitor();
+
+// Create a singleton instance of the progressive section loader
+export const progressiveLoader = new ProgressiveSectionLoader();
+
+// Export the BatchUpdateManager class
+export { BatchUpdateManager as FormBatchUpdater };
