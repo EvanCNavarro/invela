@@ -510,7 +510,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `compliance_data_${taskType}_${new Date().toISOString().split('T')[0]}.${format}`;
+          // Use standardized filename format: TaskType_TaskID_CompanyName_Date_Time_Version.format
+          const now = new Date();
+          const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
+          const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+          const cleanCompanyName = (displayCompanyName || 'Company').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+          a.download = `${taskType.toUpperCase()}Form_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v1.0.${format}`;
           document.body.appendChild(a);
           a.click();
           window.URL.revokeObjectURL(url);
