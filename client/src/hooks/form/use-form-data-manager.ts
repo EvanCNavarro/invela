@@ -485,31 +485,42 @@ export function useFormDataManager({
                 logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Error verifying timestamp data:`, verifyError);
               }
             } else {
-              // Fallback to simple value verification for non-timestamped services
-              const postSaveData = formService.getFormData();
-              const savedValue = postSaveData[name];
-              const savedValueMatch = savedValue === normalizedValue;
-              
-              if (!savedValueMatch) {
-                logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: POST-SAVE VERIFICATION FAILED for field ${name}`);
-                logger.error(`[TIMESTAMP-SYNC] Expected: ${normalizedValue}, Saved: ${savedValue}`);
+              try {
+                // Fallback to simple value verification for non-timestamped services
+                const postSaveData = formService.getFormData();
                 
-                // Fix by updating value again
-                logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Attempting to fix value by updating again`);
-                formService.updateFormData(name, normalizedValue, taskId);
+                // Make sure we have valid data
+                if (!postSaveData) {
+                  logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Invalid form data returned for field ${name}`);
+                  return;
+                }
                 
-                // Force a second save to ensure persistence
-                setTimeout(() => {
-                  saveProgress()
-                    .then(fixResult => {
-                      logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
-                    })
-                    .catch(fixErr => {
-                      logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save failed with error:`, fixErr);
-                    });
-                }, 100);
-              } else {
-                logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Post-save verification passed for field ${name}`);
+                const savedValue = postSaveData[name];
+                const savedValueMatch = savedValue === normalizedValue;
+                
+                if (!savedValueMatch) {
+                  logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: POST-SAVE VERIFICATION FAILED for field ${name}`);
+                  logger.error(`[TIMESTAMP-SYNC] Expected: ${normalizedValue}, Saved: ${savedValue}`);
+                  
+                  // Fix by updating value again
+                  logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Attempting to fix value by updating again`);
+                  formService.updateFormData(name, normalizedValue, taskId);
+                  
+                  // Force a second save to ensure persistence
+                  setTimeout(() => {
+                    saveProgress()
+                      .then(fixResult => {
+                        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
+                      })
+                      .catch(fixErr => {
+                        logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save failed with error:`, fixErr);
+                      });
+                  }, 100);
+                } else {
+                  logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Post-save verification passed for field ${name}`);
+                }
+              } catch (fallbackError) {
+                logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Error in non-timestamped verification:`, fallbackError);
               }
             }
           })
