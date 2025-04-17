@@ -420,10 +420,21 @@ class FormPerformanceMonitor {
    * Get current memory usage if available
    */
   private getMemoryUsage(): number {
-    if (typeof window !== 'undefined' && window.performance && window.performance.memory) {
-      return (window.performance as any).memory.usedJSHeapSize;
+    try {
+      // Chrome-specific memory API
+      if (typeof window !== 'undefined' && 
+          window.performance && 
+          (window.performance as any).memory && 
+          (window.performance as any).memory.usedJSHeapSize) {
+        return (window.performance as any).memory.usedJSHeapSize;
+      }
+      
+      // Fallback for environments where memory API is not available
+      return 0;
+    } catch (e) {
+      // Some browsers might throw security exceptions when accessing memory
+      return 0;
     }
-    return 0;
   }
   
   /**
