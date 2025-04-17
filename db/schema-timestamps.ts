@@ -5,7 +5,7 @@
  * by tracking when each field was last modified
  */
 
-import { pgTable, serial, integer, text, timestamp, bigint } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, timestamp, primaryKey } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
@@ -14,48 +14,53 @@ import { z } from 'zod';
  */
 export const kybFieldTimestamps = pgTable('kyb_field_timestamps', {
   id: serial('id').primaryKey(),
-  task_id: integer('task_id').notNull(),
-  field_key: text('field_key').notNull(),
-  timestamp: bigint('timestamp', { mode: 'number' }).notNull(),
-  created_at: timestamp('created_at').defaultNow(),
-  updated_at: timestamp('updated_at').defaultNow()
+  taskId: integer('task_id').notNull(),
+  fieldKey: text('field_key').notNull(),
+  timestamp: timestamp('timestamp').notNull(),
+}, (table) => {
+  return {
+    // Composite unique constraint to ensure only one timestamp per task+field combination
+    taskFieldKey: primaryKey({ columns: [table.taskId, table.fieldKey] })
+  };
 });
 
-// Create a composite index on task_id and field_key
+// Index definition for quick lookups
 export const kybFieldTimestampsIndex = {
-  taskField: 'kyb_field_timestamps_task_id_field_key_idx'
+  taskIdIdx: 'idx_kyb_field_timestamps_task_id',
+  fieldKeyIdx: 'idx_kyb_field_timestamps_field_key'
 };
 
-// Define types for TypeScript
+// Type definitions for TypeScript
 export type KybFieldTimestamp = typeof kybFieldTimestamps.$inferSelect;
 export type NewKybFieldTimestamp = typeof kybFieldTimestamps.$inferInsert;
 
-// Create Zod schemas for validation
+// Zod schemas for validation
 export const insertKybFieldTimestampSchema = createInsertSchema(kybFieldTimestamps).extend({
-  timestamp: z.number()
+  // Any additional validation can be added here
+  timestamp: z.date().or(z.string().transform(val => new Date(val)))
 });
 
 export const selectKybFieldTimestampSchema = createSelectSchema(kybFieldTimestamps).extend({
-  timestamp: z.number()
+  // Any additional transformations can be added here
+  timestamp: z.date()
 });
 
-// Export a migration function to create the table
+// SQL definition for creating the table
 export const createKybFieldTimestampsTable = `
 CREATE TABLE IF NOT EXISTS kyb_field_timestamps (
   id SERIAL PRIMARY KEY,
   task_id INTEGER NOT NULL,
   field_key TEXT NOT NULL,
-  timestamp BIGINT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  timestamp TIMESTAMP NOT NULL,
+  CONSTRAINT task_field_key UNIQUE (task_id, field_key)
 );
 
-CREATE INDEX IF NOT EXISTS kyb_field_timestamps_task_id_field_key_idx 
-ON kyb_field_timestamps(task_id, field_key);
+CREATE INDEX IF NOT EXISTS idx_kyb_field_timestamps_task_id ON kyb_field_timestamps(task_id);
+CREATE INDEX IF NOT EXISTS idx_kyb_field_timestamps_field_key ON kyb_field_timestamps(field_key);
 `;
 
-// Add this to your migrations object
+// Migration helper
 export const kybFieldTimestampsMigration = {
-  name: 'create_kyb_field_timestamps_table',
-  sql: createKybFieldTimestampsTable
+  up: createKybFieldTimestampsTable,
+  down: `DROP TABLE IF EXISTS kyb_field_timestamps;`
 };

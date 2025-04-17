@@ -4,39 +4,47 @@
  * These routes handle field-level timestamps for reliable conflict resolution
  */
 
-import express from 'express';
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
 import { 
-  getKybTimestamps, 
-  saveKybTimestamps, 
-  deleteKybTimestamps,
+  getTaskTimestamps, 
+  saveTaskTimestamps, 
+  deleteTaskTimestamps,
   getFieldTimestamp
 } from './kyb-timestamp-handler';
 
-const timestampRouter = express.Router();
+const router = Router();
 
 /**
  * GET /api/kyb/timestamps/:taskId
  * Get all timestamps for a specific task
  */
-timestampRouter.get('/timestamps/:taskId', async (req, res) => {
+router.get('/:taskId', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-
-    const taskId = parseInt(req.params.taskId, 10);
+    const taskId = parseInt(req.params.taskId);
+    
     if (isNaN(taskId)) {
-      return res.status(400).json({ success: false, error: 'Invalid task ID' });
+      return res.status(400).json({
+        message: 'Invalid task ID',
+        code: 'INVALID_TASK_ID'
+      });
     }
-
-    const timestamps = await getKybTimestamps(taskId, req.user.id);
-    return res.json({ success: true, timestamps });
+    
+    const timestamps = await getTaskTimestamps(taskId);
+    
+    // Convert timestamp objects to a more client-friendly format
+    const result: Record<string, number> = {};
+    timestamps.forEach(entry => {
+      result[entry.fieldKey] = entry.timestamp.getTime();
+    });
+    
+    res.json(result);
   } catch (error) {
-    console.error('[Timestamp API] Error getting timestamps:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to retrieve timestamps',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    console.error('[TimestampRoutes] Error fetching timestamps:', error);
+    res.status(500).json({
+      message: 'Failed to fetch timestamps',
+      code: 'TIMESTAMP_FETCH_ERROR',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -45,30 +53,38 @@ timestampRouter.get('/timestamps/:taskId', async (req, res) => {
  * POST /api/kyb/timestamps/:taskId
  * Save timestamps for a specific task
  */
-timestampRouter.post('/timestamps/:taskId', async (req, res) => {
+router.post('/:taskId', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-
-    const taskId = parseInt(req.params.taskId, 10);
+    const taskId = parseInt(req.params.taskId);
+    
     if (isNaN(taskId)) {
-      return res.status(400).json({ success: false, error: 'Invalid task ID' });
+      return res.status(400).json({
+        message: 'Invalid task ID',
+        code: 'INVALID_TASK_ID'
+      });
     }
-
-    const { timestamps } = req.body;
-    if (!timestamps || typeof timestamps !== 'object') {
-      return res.status(400).json({ success: false, error: 'Invalid timestamps object' });
+    
+    const timestamps = req.body;
+    
+    if (!timestamps || typeof timestamps !== 'object' || Object.keys(timestamps).length === 0) {
+      return res.status(400).json({
+        message: 'Invalid timestamp data',
+        code: 'INVALID_TIMESTAMP_DATA'
+      });
     }
-
-    const savedTimestamps = await saveKybTimestamps(taskId, req.user.id, timestamps);
-    return res.json({ success: true, timestamps: savedTimestamps });
+    
+    await saveTaskTimestamps(taskId, timestamps);
+    
+    res.json({
+      message: 'Timestamps saved successfully',
+      count: Object.keys(timestamps).length
+    });
   } catch (error) {
-    console.error('[Timestamp API] Error saving timestamps:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to save timestamps',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    console.error('[TimestampRoutes] Error saving timestamps:', error);
+    res.status(500).json({
+      message: 'Failed to save timestamps',
+      code: 'TIMESTAMP_SAVE_ERROR',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -77,25 +93,28 @@ timestampRouter.post('/timestamps/:taskId', async (req, res) => {
  * DELETE /api/kyb/timestamps/:taskId
  * Delete all timestamps for a specific task
  */
-timestampRouter.delete('/timestamps/:taskId', async (req, res) => {
+router.delete('/:taskId', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-
-    const taskId = parseInt(req.params.taskId, 10);
+    const taskId = parseInt(req.params.taskId);
+    
     if (isNaN(taskId)) {
-      return res.status(400).json({ success: false, error: 'Invalid task ID' });
+      return res.status(400).json({
+        message: 'Invalid task ID',
+        code: 'INVALID_TASK_ID'
+      });
     }
-
-    const success = await deleteKybTimestamps(taskId, req.user.id);
-    return res.json({ success });
+    
+    await deleteTaskTimestamps(taskId);
+    
+    res.json({
+      message: 'Timestamps deleted successfully'
+    });
   } catch (error) {
-    console.error('[Timestamp API] Error deleting timestamps:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to delete timestamps',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    console.error('[TimestampRoutes] Error deleting timestamps:', error);
+    res.status(500).json({
+      message: 'Failed to delete timestamps',
+      code: 'TIMESTAMP_DELETE_ERROR',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -104,37 +123,46 @@ timestampRouter.delete('/timestamps/:taskId', async (req, res) => {
  * GET /api/kyb/timestamps/:taskId/:fieldKey
  * Get a specific field's timestamp
  */
-timestampRouter.get('/timestamps/:taskId/:fieldKey', async (req, res) => {
+router.get('/:taskId/:fieldKey', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-
-    const taskId = parseInt(req.params.taskId, 10);
-    if (isNaN(taskId)) {
-      return res.status(400).json({ success: false, error: 'Invalid task ID' });
-    }
-
+    const taskId = parseInt(req.params.taskId);
     const fieldKey = req.params.fieldKey;
-    if (!fieldKey) {
-      return res.status(400).json({ success: false, error: 'Field key is required' });
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({
+        message: 'Invalid task ID',
+        code: 'INVALID_TASK_ID'
+      });
     }
-
+    
+    if (!fieldKey) {
+      return res.status(400).json({
+        message: 'Missing field key',
+        code: 'MISSING_FIELD_KEY'
+      });
+    }
+    
     const timestamp = await getFieldTimestamp(taskId, fieldKey);
-    return res.json({ 
-      success: true, 
-      fieldKey,
-      timestamp,
-      hasTimestamp: timestamp !== null
+    
+    if (!timestamp) {
+      return res.status(404).json({
+        message: 'Timestamp not found',
+        code: 'TIMESTAMP_NOT_FOUND'
+      });
+    }
+    
+    res.json({
+      fieldKey: timestamp.fieldKey,
+      timestamp: timestamp.timestamp.getTime()
     });
   } catch (error) {
-    console.error('[Timestamp API] Error getting field timestamp:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Failed to retrieve field timestamp',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    console.error('[TimestampRoutes] Error fetching field timestamp:', error);
+    res.status(500).json({
+      message: 'Failed to fetch field timestamp',
+      code: 'TIMESTAMP_FETCH_ERROR',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-export default timestampRouter;
+export default router;

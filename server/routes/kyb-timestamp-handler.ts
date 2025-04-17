@@ -1,198 +1,119 @@
 /**
- * KYB Form Timestamp Handler
+ * KYB Timestamp Handler
  * 
- * This module manages field-level timestamps for reliable conflict resolution
- * and data integrity with timestamp-based synchronization between client and server.
+ * Provides the database functions for working with field-level timestamps
+ * Core component of the timestamp-based conflict resolution system
  */
 
-import { db } from '../../db';
-import { eq, and } from 'drizzle-orm';
-import { kybResponses, tasks } from '../../db/schema';
-import { kybFieldTimestamps } from '../../db/schema-timestamps';
+import { db } from '@db';
+import { kybFieldTimestamps, NewKybFieldTimestamp, KybFieldTimestamp } from '../../db/schema-timestamps';
+import { eq, and, sql } from 'drizzle-orm';
 
 /**
- * Get timestamps for a specific task
- * @param taskId - The task ID to fetch timestamps for
- * @param userId - The user ID making the request
- * @returns - Record of field keys to timestamps (milliseconds since epoch)
+ * Get all timestamps for a specific task
+ * @param taskId Task ID to fetch timestamps for
+ * @returns Promise with all field timestamps for the task
  */
-export async function getKybTimestamps(taskId: number, userId: number): Promise<Record<string, number>> {
+export async function getTaskTimestamps(taskId: number): Promise<KybFieldTimestamp[]> {
   try {
-    console.log(`[Timestamp Handler] Fetching timestamps for task ${taskId}`);
+    const timestamps = await db.select()
+      .from(kybFieldTimestamps)
+      .where(eq(kybFieldTimestamps.taskId, taskId));
     
-    // First verify that the task exists and the user has access to it
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.id, taskId),
-        eq(tasks.assigned_to, userId)
-      )
-    });
-    
-    if (!task) {
-      console.error(`[Timestamp Handler] Task ${taskId} not found or user ${userId} does not have access`);
-      throw new Error('Task not found or unauthorized');
-    }
-    
-    // Fetch all timestamps for this task
-    const timestamps = await db.query.kybFieldTimestamps.findMany({
-      where: eq(kybFieldTimestamps.task_id, taskId)
-    });
-    
-    if (!timestamps || timestamps.length === 0) {
-      console.log(`[Timestamp Handler] No timestamps found for task ${taskId}, returning empty object`);
-      return {};
-    }
-    
-    // Convert to key-value record expected by client
-    const result: Record<string, number> = {};
-    timestamps.forEach(timestamp => {
-      result[timestamp.field_key] = timestamp.timestamp;
-    });
-    
-    console.log(`[Timestamp Handler] Retrieved ${timestamps.length} timestamps for task ${taskId}`);
-    return result;
-  } catch (error) {
-    console.error('[Timestamp Handler] Error fetching timestamps:', error);
-    throw error;
+    console.log(`[TimestampHandler] Retrieved ${timestamps.length} timestamps for task ${taskId}`);
+    return timestamps;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[TimestampHandler] Error fetching task timestamps:', error);
+    throw new Error(`Failed to fetch timestamps for task ${taskId}: ${errorMessage}`);
   }
 }
 
 /**
- * Save timestamps for a specific task
- * @param taskId - The task ID to save timestamps for
- * @param userId - The user ID making the request
- * @param timestamps - Record of field keys to timestamps
- * @returns - Updated timestamp record
+ * Get a specific field timestamp for a task
+ * @param taskId Task ID to fetch timestamp for
+ * @param fieldKey Field key to fetch timestamp for
+ * @returns Promise with the field timestamp or null if not found
  */
-export async function saveKybTimestamps(
-  taskId: number, 
-  userId: number, 
+export async function getFieldTimestamp(
+  taskId: number,
+  fieldKey: string
+): Promise<KybFieldTimestamp | null> {
+  try {
+    const [timestamp] = await db.select()
+      .from(kybFieldTimestamps)
+      .where(
+        and(
+          eq(kybFieldTimestamps.taskId, taskId),
+          eq(kybFieldTimestamps.fieldKey, fieldKey)
+        )
+      );
+    
+    return timestamp || null;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[TimestampHandler] Error fetching field timestamp:', error);
+    throw new Error(`Failed to fetch timestamp for field ${fieldKey} in task ${taskId}: ${errorMessage}`);
+  }
+}
+
+/**
+ * Save a batch of field timestamps for a task
+ * Uses upsert to update existing timestamps or insert new ones
+ * @param taskId Task ID to save timestamps for
+ * @param timestamps Object mapping field keys to timestamp values
+ * @returns Promise that resolves when all timestamps are saved
+ */
+export async function saveTaskTimestamps(
+  taskId: number,
   timestamps: Record<string, number>
-): Promise<Record<string, number>> {
+): Promise<void> {
   try {
-    console.log(`[Timestamp Handler] Saving ${Object.keys(timestamps).length} timestamps for task ${taskId}`);
+    console.log(`[TimestampHandler] Saving ${Object.keys(timestamps).length} timestamps for task ${taskId}`);
     
-    // First verify that the task exists and the user has access to it
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.id, taskId),
-        eq(tasks.assigned_to, userId)
-      )
-    });
+    // Process timestamps in batches to prevent large transactions
+    const batchSize = 50;
+    const fieldKeys = Object.keys(timestamps);
     
-    if (!task) {
-      console.error(`[Timestamp Handler] Task ${taskId} not found or user ${userId} does not have access`);
-      throw new Error('Task not found or unauthorized');
+    for (let i = 0; i < fieldKeys.length; i += batchSize) {
+      const batch = fieldKeys.slice(i, i + batchSize);
+      const values: NewKybFieldTimestamp[] = batch.map(fieldKey => ({
+        taskId,
+        fieldKey,
+        timestamp: new Date(timestamps[fieldKey])
+      }));
+      
+      await db.insert(kybFieldTimestamps)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [kybFieldTimestamps.taskId, kybFieldTimestamps.fieldKey],
+          set: { timestamp: sql`excluded.timestamp` }
+        });
     }
     
-    // Fetch existing timestamps to determine what to update vs. insert
-    const existingTimestamps = await db.query.kybFieldTimestamps.findMany({
-      where: eq(kybFieldTimestamps.task_id, taskId)
-    });
-    
-    const existingMap = new Map(existingTimestamps.map(t => [t.field_key, t]));
-    const updatedTimestamps: Record<string, number> = {};
-    
-    // Process each timestamp
-    for (const [fieldKey, timestamp] of Object.entries(timestamps)) {
-      try {
-        if (existingMap.has(fieldKey)) {
-          // Get existing timestamp record
-          const existing = existingMap.get(fieldKey)!;
-          
-          // Only update if the new timestamp is newer
-          if (timestamp > existing.timestamp) {
-            await db.update(kybFieldTimestamps)
-              .set({ timestamp })
-              .where(and(
-                eq(kybFieldTimestamps.task_id, taskId),
-                eq(kybFieldTimestamps.field_key, fieldKey)
-              ));
-            
-            updatedTimestamps[fieldKey] = timestamp;
-          } else {
-            // Keep existing timestamp
-            updatedTimestamps[fieldKey] = existing.timestamp;
-          }
-        } else {
-          // Insert new timestamp
-          await db.insert(kybFieldTimestamps).values({
-            task_id: taskId,
-            field_key: fieldKey,
-            timestamp,
-            created_at: new Date(),
-            updated_at: new Date()
-          });
-          
-          updatedTimestamps[fieldKey] = timestamp;
-        }
-      } catch (fieldError) {
-        console.error(`[Timestamp Handler] Error processing timestamp for field ${fieldKey}:`, fieldError);
-        // Continue with other fields even if one fails
-      }
-    }
-    
-    console.log(`[Timestamp Handler] Successfully saved/updated timestamps for task ${taskId}`);
-    return updatedTimestamps;
-  } catch (error) {
-    console.error('[Timestamp Handler] Error saving timestamps:', error);
-    throw error;
+    console.log(`[TimestampHandler] Successfully saved timestamps for task ${taskId}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[TimestampHandler] Error saving task timestamps:', error);
+    throw new Error(`Failed to save timestamps for task ${taskId}: ${errorMessage}`);
   }
 }
 
 /**
- * Delete timestamps for a specific task
- * @param taskId - The task ID to delete timestamps for
- * @param userId - The user ID making the request
- * @returns - Success status
+ * Delete all timestamps for a specific task
+ * Used when deleting a task or resetting its state
+ * @param taskId Task ID to delete timestamps for
+ * @returns Promise that resolves when all timestamps are deleted
  */
-export async function deleteKybTimestamps(taskId: number, userId: number): Promise<boolean> {
+export async function deleteTaskTimestamps(taskId: number): Promise<void> {
   try {
-    console.log(`[Timestamp Handler] Deleting timestamps for task ${taskId}`);
-    
-    // First verify that the task exists and the user has access to it
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.id, taskId),
-        eq(tasks.assigned_to, userId)
-      )
-    });
-    
-    if (!task) {
-      console.error(`[Timestamp Handler] Task ${taskId} not found or user ${userId} does not have access`);
-      throw new Error('Task not found or unauthorized');
-    }
-    
-    // Delete all timestamps for this task
     await db.delete(kybFieldTimestamps)
-      .where(eq(kybFieldTimestamps.task_id, taskId));
+      .where(eq(kybFieldTimestamps.taskId, taskId));
     
-    console.log(`[Timestamp Handler] Successfully deleted timestamps for task ${taskId}`);
-    return true;
-  } catch (error) {
-    console.error('[Timestamp Handler] Error deleting timestamps:', error);
-    throw error;
-  }
-}
-
-/**
- * Get the latest timestamp for a specific field in a task
- * @param taskId - The task ID
- * @param fieldKey - The field key
- * @returns - Timestamp (milliseconds since epoch) or null if not found
- */
-export async function getFieldTimestamp(taskId: number, fieldKey: string): Promise<number | null> {
-  try {
-    const timestamp = await db.query.kybFieldTimestamps.findFirst({
-      where: and(
-        eq(kybFieldTimestamps.task_id, taskId),
-        eq(kybFieldTimestamps.field_key, fieldKey)
-      )
-    });
-    
-    return timestamp ? timestamp.timestamp : null;
-  } catch (error) {
-    console.error(`[Timestamp Handler] Error fetching timestamp for field ${fieldKey}:`, error);
-    return null;
+    console.log(`[TimestampHandler] Deleted all timestamps for task ${taskId}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[TimestampHandler] Error deleting task timestamps:', error);
+    throw new Error(`Failed to delete timestamps for task ${taskId}: ${errorMessage}`);
   }
 }
