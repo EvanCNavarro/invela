@@ -11,17 +11,26 @@ const logger = new Logger('KYBRoutes');
 // Add CSV conversion helper function at the top of the file
 function convertResponsesToCSV(fields: any[], formData: any) {
   // CSV headers
-  const headers = ['Group', 'Question', 'Answer', 'Type'];
+  const headers = ['Question Number', 'Group', 'Question', 'Answer', 'Type'];
   const rows = [headers];
 
   // Add data rows
+  let questionNumber = 1;
+  const totalQuestions = fields.length;
+  
   for (const field of fields) {
+    // Format as "1/30", "2/30", etc.
+    const formattedNumber = `${questionNumber}/${totalQuestions}`;
+    
     rows.push([
+      formattedNumber,
       field.group || 'Uncategorized',
       field.display_name,
       formData[field.field_key] || '',
       field.field_type
     ]);
+    
+    questionNumber++;
   }
 
   // Convert to CSV string
@@ -1434,15 +1443,31 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         try {
           const jsonData = JSON.parse(fileContent);
           // Convert JSON to CSV format
-          const csvRows = [['Group', 'Question', 'Answer', 'Type']];
+          // CSV headers with question number
+          const csvRows = [['Question Number', 'Group', 'Question', 'Answer', 'Type']];
+          
+          // Calculate total number of questions
+          let totalQuestions = 0;
+          Object.values(jsonData.responses || {}).forEach((fields: any) => {
+            totalQuestions += Object.keys(fields).length;
+          });
+          
+          // Add data rows with question numbers
+          let questionNumber = 1;
           Object.entries(jsonData.responses || {}).forEach(([group, fields]: [string, any]) => {
             Object.entries(fields).forEach(([key, data]: [string, any]) => {
+              // Format as "1/30", "2/30", etc.
+              const formattedNumber = `${questionNumber}/${totalQuestions}`;
+              
               csvRows.push([
+                formattedNumber,
                 group,
                 data.question,
                 data.answer || '',
                 data.type || 'text'
               ]);
+              
+              questionNumber++;
             });
           });
           return res.send(csvRows.map(row => row.join(',')).join('\n'));
@@ -1522,11 +1547,24 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
             return res.send(fileContent);
           }
           
+          // Calculate total number of questions for numbering
+          let totalQuestions = 0;
+          Object.values(data.responses || {}).forEach((fields: any) => {
+            totalQuestions += Object.keys(fields).length;
+          });
+          
+          // Add question numbers to text output
+          let questionNumber = 1;
           const textContent = Object.entries(data.responses || {}).map(([group, fields]: [string, any]) => {
-            return `\n${group}:\n${'='.repeat(group.length)}\n` +
-              Object.entries(fields).map(([key, data]: [string, any]) =>
-                `${data.question}\nAnswer: ${data.answer || 'Not provided'}\n`
-              ).join('\n');
+            const sectionContent = `\n${group}:\n${'='.repeat(group.length)}\n` +
+              Object.entries(fields).map(([key, data]: [string, any]) => {
+                // Format as "Question 1/30: "
+                const formattedNumber = `Question ${questionNumber}/${totalQuestions}: `;
+                const output = `${formattedNumber}${data.question}\nAnswer: ${data.answer || 'Not provided'}\n`;
+                questionNumber++;
+                return output;
+              }).join('\n');
+            return sectionContent;
           }).join('\n');
           
           return res.send(textContent || fileContent);
