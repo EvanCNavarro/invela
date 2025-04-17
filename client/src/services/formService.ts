@@ -20,14 +20,20 @@ export interface FormField {
   label: string;
   type: string;
   section: string;
+  sectionId?: string;    // Alternative to section for compatibility
   placeholder?: string;
   helpText?: string;
+  help_text?: string;    // Alternative to helpText for compatibility
   question?: string;
   default?: any;
   options?: { label: string; value: any }[];
   validation?: FormFieldValidation;
   order: number;
   metadata?: Record<string, any>;
+  
+  // Optimization properties
+  saveImmediately?: boolean;  // Whether field should be saved immediately
+  batchUpdaterInitialized?: boolean;  // Whether the batch updater has been initialized for this field
 }
 
 /**

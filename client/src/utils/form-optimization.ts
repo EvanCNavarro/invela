@@ -439,7 +439,202 @@ class FormPerformanceMonitor {
   }
 }
 
-// Export singleton instances
+/**
+ * BatchUpdater - Utility for debounced/batched field updates
+ * 
+ * This class manages form field updates to optimize performance by:
+ * 1. Grouping updates that occur close together in time
+ * 2. Reducing the number of save operations and re-renders
+ * 3. Preserving data integrity with timestamp-aware updates
+ */
+class BatchUpdater {
+  private static instance: BatchUpdater;
+  private updateQueue: Map<string, {
+    value: any;
+    timestamp: number;
+    sectionId?: string;
+  }> = new Map();
+  private updateTimer: NodeJS.Timeout | null = null;
+  private updating: boolean = false;
+  private updateDelayMs: number = 500; // Default 500ms debounce delay
+  
+  // Callbacks for batch processing
+  private callbacks: {
+    onUpdate: Array<(fields: Record<string, any>, timestamps: Record<string, number>) => void>;
+    onComplete: Array<() => void>;
+  } = {
+    onUpdate: [],
+    onComplete: []
+  };
+  
+  private constructor() {}
+  
+  /**
+   * Get the singleton instance
+   */
+  public static getInstance(): BatchUpdater {
+    if (!BatchUpdater.instance) {
+      BatchUpdater.instance = new BatchUpdater();
+    }
+    return BatchUpdater.instance;
+  }
+  
+  /**
+   * Configure the batch updater
+   */
+  public configure(options: { 
+    updateDelayMs?: number,
+    immediateFields?: string[]
+  } = {}): void {
+    if (options.updateDelayMs !== undefined) {
+      this.updateDelayMs = options.updateDelayMs;
+    }
+    
+    console.log('%c[BATCH UPDATER] Configured with', 'color: #9C27B0', { 
+      delayMs: this.updateDelayMs
+    });
+  }
+  
+  /**
+   * Add a field update to the queue
+   */
+  public queueUpdate(
+    fieldName: string, 
+    value: any, 
+    options: {
+      sectionId?: string,
+      immediate?: boolean
+    } = {}
+  ): void {
+    const timestamp = Date.now();
+    
+    // Add to queue
+    this.updateQueue.set(fieldName, {
+      value,
+      timestamp,
+      sectionId: options.sectionId
+    });
+    
+    console.log('%c[BATCH UPDATER] Queued update for', 'color: #9C27B0', fieldName, {
+      queueSize: this.updateQueue.size,
+      immediate: options.immediate || false
+    });
+    
+    // Handle immediate updates
+    if (options.immediate) {
+      this.processQueue();
+      return;
+    }
+    
+    // Clear previous timer
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+      this.updateTimer = null;
+    }
+    
+    // Set new timer to process queue
+    this.updateTimer = setTimeout(() => {
+      this.processQueue();
+    }, this.updateDelayMs);
+  }
+  
+  /**
+   * Process the update queue
+   */
+  private processQueue(): void {
+    if (this.updating || this.updateQueue.size === 0) {
+      return;
+    }
+    
+    this.updating = true;
+    console.log('%c[BATCH UPDATER] Processing queue with', 'color: #9C27B0', this.updateQueue.size, 'updates');
+    
+    // Create field value and timestamp objects
+    const fields: Record<string, any> = {};
+    const timestamps: Record<string, number> = {};
+    
+    // Extract all updates
+    this.updateQueue.forEach((update, fieldName) => {
+      fields[fieldName] = update.value;
+      timestamps[fieldName] = update.timestamp;
+    });
+    
+    // Clear queue
+    this.updateQueue.clear();
+    
+    // Notify listeners
+    this.callbacks.onUpdate.forEach(callback => {
+      try {
+        callback(fields, timestamps);
+      } catch (error) {
+        console.error('[BATCH UPDATER] Error in update callback', error);
+      }
+    });
+    
+    this.updating = false;
+    
+    // Notify completion
+    this.callbacks.onComplete.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('[BATCH UPDATER] Error in completion callback', error);
+      }
+    });
+  }
+  
+  /**
+   * Force immediate processing of the queue
+   */
+  public flush(): void {
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+      this.updateTimer = null;
+    }
+    
+    this.processQueue();
+  }
+  
+  /**
+   * Clear the update queue without processing
+   */
+  public clear(): void {
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+      this.updateTimer = null;
+    }
+    
+    this.updateQueue.clear();
+    this.updating = false;
+  }
+  
+  /**
+   * Register update callback
+   */
+  public onUpdate(callback: (fields: Record<string, any>, timestamps: Record<string, number>) => void): void {
+    this.callbacks.onUpdate.push(callback);
+  }
+  
+  /**
+   * Register completion callback
+   */
+  public onComplete(callback: () => void): void {
+    this.callbacks.onComplete.push(callback);
+  }
+  
+  /**
+   * Reset the updater
+   */
+  public reset(): void {
+    this.clear();
+    this.callbacks.onUpdate = [];
+    this.callbacks.onComplete = [];
+  }
+}
+
+// Export singleton instances 
+export const FormBatchUpdater = BatchUpdater.getInstance();
+
 /**
  * Progressive Loading Utility for Form Sections
  * 
