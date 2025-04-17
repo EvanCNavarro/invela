@@ -1,6 +1,8 @@
 import { FormData, TimestampedFormData } from '../types/form-data';
 import { FormField, FormSection } from '../components/forms/types';
 
+// Ensure we have proper imports for FormField and FormSection
+
 /**
  * Options for submitting a form
  */
