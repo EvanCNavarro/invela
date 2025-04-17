@@ -384,6 +384,26 @@ export default function TaskPage({ params }: TaskPageProps) {
                 onProgress={(progress) => {
                   // Update progress in the task if needed
                   console.log('[TaskPage] Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => response.json())
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                  });
                 }}
                 onSubmit={(formData) => {
                   toast({
@@ -500,6 +520,26 @@ export default function TaskPage({ params }: TaskPageProps) {
                 onProgress={(progress) => {
                   // Update progress in the task if needed
                   console.log('[TaskPage] Security Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => response.json())
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                  });
                 }}
                 onSubmit={(formData) => {
                   toast({
@@ -628,6 +668,26 @@ export default function TaskPage({ params }: TaskPageProps) {
                 onProgress={(progress) => {
                   // Update progress in the task if needed
                   console.log('[TaskPage] Card Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => response.json())
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                  });
                 }}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
