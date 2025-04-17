@@ -28,6 +28,26 @@ export interface FileCreationResult {
 
 export class FileCreationService {
   /**
+   * Generate a standardized filename with format: TaskType_TaskID_CompanyName_Date_Time_Version
+   */
+  static generateStandardFileName(
+    taskType: string, 
+    taskId: number, 
+    companyName: string = 'Company',
+    version: string = '1.0',
+    extension: string = 'csv'
+  ): string {
+    const now = new Date();
+    const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+    
+    // Clean company name (remove spaces, special characters)
+    const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+    
+    return `${taskType}_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v${version}.${extension}`;
+  }
+  
+  /**
    * Creates a file record with standardized error handling and logging
    */
   static async createFile(options: FileCreationOptions): Promise<FileCreationResult> {
@@ -65,7 +85,7 @@ export class FileCreationService {
       let storagePath: string;
       
       // Store KYB CSV files directly in the database for immediate access
-      if (type === 'text/csv' && name.toLowerCase().includes('kyb_form')) {
+      if (type === 'text/csv' && (name.toLowerCase().includes('kyb_form') || name.toLowerCase().includes('kybform'))) {
         logger.debug('Storing KYB CSV content directly in database');
         storagePath = content.toString();
       } else {

@@ -777,7 +777,7 @@ router.post('/api/kyb/save', async (req, res) => {
 
     // Create file using FileCreationService
     const fileCreationResult = await FileCreationService.createFile({
-      name: fileName || `kyb_form_${taskId}_${new Date().toISOString()}.csv`,
+      name: fileName || FileCreationService.generateStandardFileName("KYBForm", taskId, task.metadata?.company_name, task.metadata?.formVersion || "1.0", "csv"),
       content: csvData,
       type: 'text/csv',
       userId: task.created_by,
@@ -1156,7 +1156,7 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
 
     // Create file using FileCreationService
     const fileCreationResult = await FileCreationService.createFile({
-      name: fileName || `kyb_form_${taskId}_${new Date().toISOString()}.csv`,
+      name: fileName || FileCreationService.generateStandardFileName("KYBForm", taskId, task.metadata?.company_name, task.metadata?.formVersion || "1.0", "csv"),
       content: csvData,
       type: 'text/csv',
       userId: task.created_by,
