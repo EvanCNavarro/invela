@@ -350,6 +350,13 @@ export function useFormDataManager({
       if (taskId) {
         // Get field information to determine if this field requires immediate saving
         const fieldInfo = fields.find(f => f.key === name);
+        
+        // Handle potential undefined fields more safely
+        if (!fieldInfo) {
+          logger.warn(`[TIMESTAMP-SYNC] ${updateTimestamp}: Field ${name} not found in form definition, using defaults`);
+        }
+        
+        // Use optional chaining and fallbacks for all field properties
         const fieldSection = fieldInfo?.section || fieldInfo?.sectionId || '';
         
         // Some fields always require immediate saving (critical fields like status indicators)
