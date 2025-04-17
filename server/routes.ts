@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
 import { db } from '@db';
+import timestampRouter from './routes/kyb-timestamp-routes';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';

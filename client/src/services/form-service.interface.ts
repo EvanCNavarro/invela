@@ -63,8 +63,9 @@ export interface FormServiceInterface {
   
   /**
    * Get timestamped form data (for advanced conflict resolution)
+   * Returns form values with their corresponding timestamps for conflict resolution
    */
-  getTimestampedFormData?(): TimestampedFormData;
+  getTimestampedFormData(): TimestampedFormData;
   
   /**
    * Calculate current form completion progress (0-100)
