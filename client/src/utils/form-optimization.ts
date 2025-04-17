@@ -21,7 +21,7 @@ export const OptimizationFeatures = {
   SECTION_BASED_SAVING: false,
   
   // Controls virtual scrolling for large sections
-  VIRTUALIZED_RENDERING: false,
+  VIRTUALIZED_RENDERING: true,
   
   // Controls batched updates instead of per-field updates
   DEBOUNCED_UPDATES: true,
