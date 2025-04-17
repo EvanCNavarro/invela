@@ -118,58 +118,60 @@ const ProgressiveLoadingDemo: React.FC = () => {
         </div>
       </div>
       
-      <style jsx>{`
-        .progressive-loading-demo {
-          padding: 1rem;
-        }
-        
-        .demo-layout {
-          display: flex;
-          gap: 2rem;
-          margin-top: 1rem;
-        }
-        
-        .demo-navigation {
-          width: 300px;
-          flex-shrink: 0;
-        }
-        
-        .demo-content {
-          flex: 1;
-        }
-        
-        .metrics-panel {
-          margin-top: 1rem;
-          padding: 1rem;
-          background-color: #f5f5f5;
-          border-radius: 0.5rem;
-        }
-        
-        .field-list {
-          border: 1px solid #e0e0e0;
-          border-radius: 0.5rem;
-          max-height: 600px;
-          overflow-y: auto;
-          padding: 0.5rem;
-        }
-        
-        .field-item {
-          padding: 0.5rem;
-          border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .field-meta {
-          margin-left: 0.5rem;
-          color: #666;
-          font-size: 0.8rem;
-        }
-        
-        .no-fields {
-          padding: 2rem;
-          text-align: center;
-          color: #999;
-        }
-      `}</style>
+      <div className="style-container">
+        <style dangerouslySetInnerHTML={{ __html: `
+          .progressive-loading-demo {
+            padding: 1rem;
+          }
+          
+          .demo-layout {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+          }
+          
+          .demo-navigation {
+            width: 300px;
+            flex-shrink: 0;
+          }
+          
+          .demo-content {
+            flex: 1;
+          }
+          
+          .metrics-panel {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f5f5f5;
+            border-radius: 0.5rem;
+          }
+          
+          .field-list {
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 0.5rem;
+          }
+          
+          .field-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #f0f0f0;
+          }
+          
+          .field-meta {
+            margin-left: 0.5rem;
+            color: #666;
+            font-size: 0.8rem;
+          }
+          
+          .no-fields {
+            padding: 2rem;
+            text-align: center;
+            color: #999;
+          }
+        `}} />
+      </div>
     </div>
   );
 };
