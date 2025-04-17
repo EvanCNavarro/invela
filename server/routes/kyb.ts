@@ -957,12 +957,17 @@ router.post('/api/kyb/save', async (req, res) => {
 });
 
 // Get saved progress for KYB form
+import { reconcileTaskProgress } from '../utils/task-reconciliation';
+
 router.get('/api/kyb/progress/:taskId', async (req, res) => {
   try {
     const { taskId } = req.params;
     console.log('[KYB API Debug] Loading progress for task:', taskId);
 
-    // Get task data
+    // First, reconcile the task progress to ensure consistency
+    await reconcileTaskProgress(parseInt(taskId), { debug: true });
+    
+    // Get task data (now with reconciled progress values)
     const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, parseInt(taskId)));

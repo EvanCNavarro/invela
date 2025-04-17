@@ -1,23 +1,37 @@
 import { TaskStatus } from '../types';
 import { broadcastTaskUpdate } from '../services/websocket';
 
+import { hasAllRequiredFields } from './kyb-progress';
+
 /**
  * Determine the appropriate task status based on progress value
  * 
  * @param progress Current progress value (0-100)
  * @param currentStatus Current task status
+ * @param formResponses Optional form responses to check for required fields
  * @returns Updated task status
  */
 export function determineStatusFromProgress(
   progress: number, 
-  currentStatus: TaskStatus
+  currentStatus: TaskStatus,
+  formResponses?: Array<{ status: string; hasValue: boolean; required?: boolean; field?: string }>
 ): TaskStatus {
   // Skip status update if task is already completed/submitted
   if ([TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED].includes(currentStatus)) {
     return currentStatus;
   }
   
-  // Determine appropriate status based on progress
+  // If form responses are provided, check if ANY required fields are empty
+  if (formResponses && formResponses.length > 0) {
+    const hasCompletedRequiredFields = hasAllRequiredFields(formResponses);
+    
+    // Always use in_progress if required fields are empty, regardless of % completion
+    if (!hasCompletedRequiredFields) {
+      return TaskStatus.IN_PROGRESS;
+    }
+  }
+  
+  // Standard logic based on progress percentage
   if (progress === 0) {
     return TaskStatus.NOT_STARTED;
   } else if (progress < 100) {
