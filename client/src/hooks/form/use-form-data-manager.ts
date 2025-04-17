@@ -108,13 +108,20 @@ export function useFormDataManager({
     }
     
     // Normalize all field values with trimming for saving
-    // We use the service directly since we're in the middle of saving
+    // Use updateFieldRef if available, otherwise use direct method
     Object.entries(latestFormDataRef.current).forEach(([key, value]) => {
       if (typeof value === 'string' && value.trim() !== '') {
         // Normalize strings by trimming
         const trimmedValue = value.trim();
-        // Update directly in the form service
-        formService.updateFormData(key, trimmedValue, taskId);
+        
+        // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
+        if (updateFieldRef.current) {
+          // Use the update field function with isSaving flag
+          updateFieldRef.current(key, trimmedValue, true);
+        } else {
+          // Fallback to direct update if reference isn't set yet
+          formService.updateFormData(key, trimmedValue, taskId);
+        }
       }
     });
     
@@ -179,7 +186,14 @@ export function useFormDataManager({
         
         // Update form service with latest pending data
         Object.entries(pendingData).forEach(([key, value]) => {
-          formService.updateFormData(key, value);
+          // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
+          if (updateFieldRef.current) {
+            // Use the update field function with isSaving flag
+            updateFieldRef.current(key, value, true);
+          } else {
+            // Fallback to direct update if reference isn't set yet
+            formService.updateFormData(key, value);
+          }
         });
         
         // Trigger another save (reusing this same function)
@@ -744,8 +758,14 @@ export function useFormDataManager({
     // Update form service if available
     if (formService) {
       Object.entries(resetData).forEach(([key, value]) => {
-        // Pass taskId to enable immediate saving when needed
-        formService.updateFormData(key, value, taskId);
+        // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
+        if (updateFieldRef.current) {
+          // Use the update field function with isSaving flag since this is during a form reset
+          updateFieldRef.current(key, value, true);
+        } else {
+          // Fallback to direct update if reference isn't set yet
+          formService.updateFormData(key, value, taskId);
+        }
       });
     }
     
