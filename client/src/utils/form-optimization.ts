@@ -27,7 +27,7 @@ export const OptimizationFeatures = {
   OPTIMIZED_TIMESTAMPS: true,
   
   // Debug mode enables additional logging and performance metrics
-  DEBUG_MODE: true
+  DEBUG_MODE: false
 };
 
 /**
@@ -155,7 +155,7 @@ class FormPerformanceMonitor {
   startTimer(operationName: string): void {
     if (OptimizationFeatures.DEBUG_MODE) {
       this.timers[operationName] = { start: performance.now() };
-      console.debug(`[Performance] Starting timer for ${operationName}`);
+      // Removed debug console logging
     }
   }
   
@@ -178,7 +178,7 @@ class FormPerformanceMonitor {
       }
       this.measurements[operationName].push(duration);
       
-      console.debug(`[Performance] ${operationName}: ${duration.toFixed(2)}ms`);
+      // Removed console logging
       return duration;
     }
     return undefined;
@@ -193,7 +193,7 @@ class FormPerformanceMonitor {
       const memoryInfo = (window.performance as any).memory;
       const usedHeapSize = memoryInfo.usedJSHeapSize / (1024 * 1024); // Convert to MB
       this.memorySnapshots.push(usedHeapSize);
-      console.debug(`[Performance] Memory usage: ${usedHeapSize.toFixed(2)} MB`);
+      // Removed console logging
     }
   }
   
@@ -272,7 +272,7 @@ class FormPerformanceMonitor {
     this.timers = {};
     this.measurements = {};
     this.memorySnapshots = [];
-    console.debug('[Performance] All measurements have been reset');
+    // Removed console logging
   }
 }
 
