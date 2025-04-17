@@ -3,7 +3,7 @@ import { db } from "@db";
 import { tasks, TaskStatus, companies, kybFields, kybResponses } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastTaskUpdate } from "../services/websocket"; // Use the correct import path
+import { broadcastTaskUpdate, broadcastMessage } from "../services/websocket"; // Use the correct import path
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
 
@@ -331,8 +331,10 @@ router.post("/api/tasks", requireAuth, async (req, res) => {
     // Get updated counts and broadcast task creation with progress
     const taskCount = await getTaskCount();
     broadcastTaskUpdate({
-      ...newTask,
-      progress: newTask.progress || 0
+      id: newTask.id,
+      status: newTask.status as TaskStatus,
+      progress: newTask.progress || 0,
+      metadata: newTask.metadata || {}
     });
 
     res.status(201).json({ 
@@ -364,9 +366,11 @@ router.delete("/api/tasks/:id", requireAuth, async (req, res) => {
 
     // Get updated counts and broadcast task deletion
     const taskCount = await getTaskCount();
-    broadcastTaskUpdate({
-      id: deletedTask.id,
-      deleted: true
+    // For deleted tasks, use the broadcast message function directly
+    broadcastMessage('task_deleted', {
+      taskId: deletedTask.id,
+      count: taskCount,
+      timestamp: new Date().toISOString()
     });
 
     res.json({ message: "Task deleted successfully", count: taskCount });
@@ -420,13 +424,11 @@ router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTran
 
     // Get updated counts and broadcast task update with progress
     const taskCount = await getTaskCount();
-    broadcastMessage('task_updated', {
-      taskId: updatedTask.id,
-      status: updatedTask.status,
+    broadcastTaskUpdate({
+      id: updatedTask.id,
+      status: updatedTask.status as TaskStatus,
       progress: updatedTask.progress || 0,
-      metadata: updatedTask.metadata,
-      count: taskCount,
-      timestamp: new Date().toISOString()
+      metadata: updatedTask.metadata || {}
     });
 
     res.json({ 
@@ -868,12 +870,12 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
           .where(eq(tasks.id, taskId))
           .returning();
         
-        // Broadcast the update using the broadcastTaskUpdate function
-        const { broadcastTaskUpdate } = require('../services/websocket');
+        // Broadcast the update using the broadcastTaskUpdate function that's already imported
         broadcastTaskUpdate({
           id: taskId,
+          status: status as TaskStatus,
           progress,
-          status
+          metadata: {}
         });
         
         return res.json({
