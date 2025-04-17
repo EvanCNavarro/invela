@@ -2,6 +2,8 @@ import { db } from '@db';
 import { files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { Logger } from '../utils/logger';
+import fs from 'fs';
+import path from 'path';
 
 const logger = new Logger('FileCreationService');
 
@@ -59,12 +61,42 @@ export class FileCreationService {
       // Create timestamp
       const timestamp = new Date();
 
+      // Check if we need to write the file to disk or store in DB directly
+      let storagePath: string;
+      
+      // Store KYB CSV files directly in the database for immediate access
+      if (type === 'text/csv' && name.toLowerCase().includes('kyb_form')) {
+        logger.debug('Storing KYB CSV content directly in database');
+        storagePath = content.toString();
+      } else {
+        // For other files, create a unique path and write to disk
+        const uniqueFileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}_${name}`;
+        storagePath = uniqueFileName;
+        
+        // Ensure we have an uploads directory
+        const uploadDir = path.join(process.cwd(), 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        // Write the file to disk
+        try {
+          fs.writeFileSync(path.join(uploadDir, uniqueFileName), content);
+          logger.debug('Wrote file to disk', { path: uniqueFileName });
+        } catch (writeError) {
+          logger.error('Failed to write file to disk', { 
+            error: writeError instanceof Error ? writeError.message : 'Unknown error'
+          });
+          storagePath = content.toString().substring(0, 500) + '...(truncated)';
+        }
+      }
+      
       // Insert file record
       const [fileRecord] = await db.insert(files).values({
         name: name,
         size: fileSize,
         type: type,
-        path: content.toString(),
+        path: storagePath,
         status: status,
         user_id: userId,
         company_id: companyId,
