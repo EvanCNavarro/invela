@@ -1197,19 +1197,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       </Button>
                     )}
                     
-                    {/* Final Review button - only shown on the last section before Review & Submit */}
-                    {activeSection === allSections.length - 2 && overallProgress === 100 && (
-                      <Button 
-                        type="button"
-                        variant="default" // Changed to primary button instead of outline
-                        className="flex items-center gap-1"
-                        onClick={() => {
-                          setActiveSection(allSections.length - 1); // Navigate to Review & Submit
-                        }}
-                      >
-                        Final Review <Eye className="ml-2 h-4 w-4" />
-                      </Button>
-                    )}
+                    {/* Final Review button moved and combined with the Next button logic above */}
                     
                     {/* Show different button based on current section and whether we're on review page */}
                     {/* Review button section */}
@@ -1257,8 +1245,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       </Button>
                     )}
                     
-                    {/* Next button for second-to-last section */}
-                    {activeSection === allSections.length - 2 && overallProgress < 100 && (
+                    {/* Final Review button for second-to-last section */}
+                    {activeSection === allSections.length - 2 && (
                       <Button
                         type="button"
                         onClick={(e) => {
@@ -1266,8 +1254,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           setActiveSection(activeSection + 1);
                         }}
                         className="flex items-center gap-1"
+                        disabled={overallProgress < 100}
                       >
-                        Next <ArrowRight className="ml-1 h-4 w-4" />
+                        Final Review <Eye className="ml-1 h-4 w-4" />
                       </Button>
                     )}
                   </div>
