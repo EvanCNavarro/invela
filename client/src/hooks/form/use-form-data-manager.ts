@@ -6,8 +6,12 @@ import { createFormSchema } from '@/utils/formUtils';
 import createEnhancedLogger from '@/utils/enhanced-logger';
 import { OptimizationFeatures, FormBatchUpdater } from '@/utils/form-optimization';
 
-// Enhanced logger instance with category-based filtering for reduced noise
-const logger = createEnhancedLogger('FormDataManager', 'formDataManager');
+// Enhanced logger instance with category-based filtering with all messages disabled
+// We completely disable the sync logs which are causing console spam
+const logger = createEnhancedLogger('FormDataManager', 'formDataManager', { 
+  disableAllLogs: true,
+  preserveErrors: true 
+});
 
 // The properties required by our hook
 export interface UseFormDataManagerProps {
@@ -278,14 +282,14 @@ export function useFormDataManager({
         logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Updating field ${name}: "${prevValue || '(empty)'}" → "${value}"`);
       }
       
-      // Normalize whitespace in string values to prevent unintentional differences
+      // Process values but preserve spaces in text fields
       let normalizedValue;
       
       if (value === null || value === undefined) {
         normalizedValue = '';
       } else if (typeof value === 'string') {
-        // Replace all sequences of whitespace with a single space and trim ends
-        normalizedValue = value.replace(/\s+/g, ' ').trim();
+        // Only trim the ends but preserve internal spaces
+        normalizedValue = value.trim();
       } else {
         normalizedValue = value;
       }
