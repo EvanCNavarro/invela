@@ -28,16 +28,29 @@ export type LogSubcategory =
   | 'timeouts';
 
 // Enhanced logger that respects category configuration
+export interface EnhancedLoggerConfig extends LoggerConfig {
+  disableAllLogs?: boolean;
+  preserveErrors?: boolean;
+}
+
 export class EnhancedLogger extends Logger {
   private category: LogCategory;
+  private disableAllLogs: boolean;
+  private preserveErrors: boolean;
   
-  constructor(module: string, category: LogCategory = 'general', config: LoggerConfig = {}) {
+  constructor(module: string, category: LogCategory = 'general', config: EnhancedLoggerConfig = {}) {
     super(module, config);
     this.category = category;
+    this.disableAllLogs = config.disableAllLogs || false;
+    this.preserveErrors = config.preserveErrors || false;
   }
   
   // Check if a log should be shown based on its category and subcategory
   private shouldShowLog(subcategory?: LogSubcategory): boolean {
+    // If all logs are disabled, return false
+    if (this.disableAllLogs) {
+      return false;
+    }
     return shouldLog(this.category, subcategory as string);
   }
   
@@ -64,7 +77,8 @@ export class EnhancedLogger extends Logger {
   
   // Override error method with category filtering - but respect the global error setting
   error(message: string, ...data: any[]): void {
-    if (shouldLogError()) {
+    // If errors should be preserved or regular error checking passes
+    if ((this.disableAllLogs && this.preserveErrors) || shouldLogError()) {
       super.error(message, ...data);
     }
   }
@@ -74,7 +88,7 @@ export class EnhancedLogger extends Logger {
 export function createEnhancedLogger(
   module: string, 
   category: LogCategory = 'general', 
-  config: LoggerConfig = {}
+  config: EnhancedLoggerConfig = {}
 ): EnhancedLogger {
   return new EnhancedLogger(module, category, config);
 }
