@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormServiceInterface, FormField, FormData } from '@/services/formService';
 import { createFormSchema } from '@/utils/formUtils';
 import getLogger from '@/utils/logger';
+import { OptimizationFeatures, FormBatchUpdater } from '@/utils/form-optimization';
 
 // Logger instance for this module with debug logs disabled for performance
 const logger = getLogger('FormDataManager', { 
@@ -286,19 +287,76 @@ export function useFormDataManager({
         return updated;
       });
       
-      // Force always saving immediately for all field changes to ensure persistence
+      // Determine whether to use debounced updates or immediate saves
       if (taskId) {
-        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Initiating immediate save for field ${name} with taskId ${taskId}`);
+        // Get field information to determine if this field requires immediate saving
+        const fieldInfo = fields.find(f => f.key === name);
+        const fieldSection = fieldInfo?.section || fieldInfo?.sectionId || '';
         
-        // Clear previous timer
-        if (saveTimerRef.current) {
-          clearTimeout(saveTimerRef.current);
-          saveTimerRef.current = null;
-        }
+        // Some fields always require immediate saving (critical fields like status indicators)
+        const requiresImmediateSave = fieldInfo?.saveImmediately === true;
         
-        // FORCE IMMEDIATE SAVE FOR ALL FIELDS - Don't debounce
-        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Forcing immediate save with timestamp: ${updateTimestamp}`);
-        saveProgress()
+        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Field update for ${name} in section ${fieldSection}`);
+        
+        // If debounced updates are enabled and this field doesn't require immediate saving
+        if (OptimizationFeatures.DEBOUNCED_UPDATES && !requiresImmediateSave) {
+          logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Using debounced updates for field ${name}`);
+          
+          // Clear previous timer
+          if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = null;
+          }
+          
+          // Queue the update in the batch updater
+          FormBatchUpdater.queueUpdate(name, normalizedValue, {
+            sectionId: fieldSection,
+            immediate: requiresImmediateSave
+          });
+          
+          // Setup batch updater callback if not already configured
+          if (!fieldInfo?.batchUpdaterInitialized) {
+            // Mark that we've initialized the batch updater for this field
+            if (fieldInfo) fieldInfo.batchUpdaterInitialized = true;
+            
+            // Set up the batch updater to process updates
+            FormBatchUpdater.onUpdate((fields, timestamps) => {
+              logger.info(`[BATCH UPDATER] Processing batch with ${Object.keys(fields).length} fields`);
+              
+              // Update form service with all fields in the batch
+              Object.entries(fields).forEach(([key, value]) => {
+                formService.updateFormData(key, value, taskId);
+              });
+              
+              // Save all changes at once
+              saveProgress()
+                .then(result => {
+                  logger.info(`[BATCH UPDATER] Batch save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+                })
+                .catch(err => {
+                  logger.error(`[BATCH UPDATER] Batch save failed:`, err);
+                });
+            });
+          }
+          
+          // Set timer to save after debounce period (if no more updates occur)
+          saveTimerRef.current = setTimeout(() => {
+            logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Debounce timer expired, flushing batch updates`);
+            FormBatchUpdater.flush();
+          }, 500); // 500ms debounce for good responsiveness
+        } else {
+          // Use immediate saves for critical fields or when debounced updates are disabled
+          logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Using immediate save for field ${name}`);
+          
+          // Clear previous timer
+          if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = null;
+          }
+          
+          // FORCE IMMEDIATE SAVE
+          logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Forcing immediate save with timestamp: ${updateTimestamp}`);
+          saveProgress()
           .then(result => {
             logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Immediate save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
             
@@ -388,6 +446,7 @@ export function useFormDataManager({
           .catch(err => {
             logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Immediate save failed with error:`, err);
           });
+        }
       }
     } catch (error) {
       logger.error(`[TIMESTAMP-SYNC] Error updating field ${name}:`, error);
