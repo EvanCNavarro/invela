@@ -1,11 +1,12 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { StatusIcon } from './StatusIcon';
-import getLogger from '@/utils/logger';
+import { createEnhancedLogger } from '@/utils/enhanced-logger';
 
-// Logger instance for this component
-const logger = getLogger('SectionNavigation', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+// Create a silent logger for this component - disable all logging
+const logger = createEnhancedLogger('SectionNavigation', 'uiComponents', {
+  disableAllLogs: true,
+  preserveErrors: true  // Keep only critical errors
 });
 
 // Section model for the navigation component
@@ -103,15 +104,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             }
           }
           
-          // Log section status for debugging
-          logger.debug(`Section ${section.title} status:`, { 
-            isActive, 
-            isCompleted, 
-            status: status.status,
-            remaining: status.remainingFields,
-            isReviewSection,
-            reviewStatus
-          });
+          // Removed section status logging to eliminate console spam
           
           return (
             <div
