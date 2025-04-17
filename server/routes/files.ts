@@ -718,9 +718,42 @@ router.get("/api/files/:id/download", async (req, res) => {
         
         res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
         
-        // Send the content directly from the database
-        console.log('[Files] Sending CSV content directly from database');
-        return res.send(fileRecord.path);
+        // Parse and format the CSV content to include question numbers
+        console.log('[Files] Processing CSV content from database');
+        try {
+          // Get original CSV content
+          let fileContent = fileRecord.path;
+          
+          // Parse the existing CSV content
+          const rows = fileContent.split('\n').map(line => line.split(','));
+          const headers = rows[0];
+          const dataRows = rows.slice(1);
+          
+          // Check if Question Number column already exists
+          const hasQuestionNumberColumn = headers.includes('Question Number');
+          
+          if (!hasQuestionNumberColumn) {
+            console.log('[Files] Adding Question Number column to CSV');
+            
+            // Add Question Number to headers
+            headers.unshift('Question Number');
+            
+            // Add question numbers to each data row
+            dataRows.forEach((row, index) => {
+              row.unshift(`${index + 1}`);
+            });
+            
+            // Rebuild the CSV content
+            fileContent = [headers, ...dataRows].map(row => row.join(',')).join('\n');
+          }
+          
+          console.log('[Files] Successfully processed CSV with question numbers');
+          return res.send(fileContent);
+        } catch (processError) {
+          console.error('[Files] Error processing CSV file:', processError);
+          // If there's an error in processing, send the original content
+          return res.send(fileRecord.path);
+        }
       }
       
       // Fall back to file lookup if path doesn't look like CSV content
