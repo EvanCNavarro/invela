@@ -38,6 +38,8 @@ router.get('/:taskId', requireAuth, async (req, res) => {
       result[entry.fieldKey] = entry.timestamp.getTime();
     });
     
+    console.log(`[TimestampAPI] Returning ${timestamps.length} timestamps for task ${taskId}`);
+    
     res.json(result);
   } catch (error) {
     console.error('[TimestampRoutes] Error fetching timestamps:', error);
@@ -74,6 +76,8 @@ router.post('/:taskId', requireAuth, async (req, res) => {
     }
     
     await saveTaskTimestamps(taskId, timestamps);
+    
+    console.log(`[TimestampAPI] Saved ${Object.keys(timestamps).length} timestamps for task ${taskId}`);
     
     res.json({
       message: 'Timestamps saved successfully',
