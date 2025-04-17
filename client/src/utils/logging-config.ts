@@ -34,6 +34,8 @@ export interface LoggingConfig {
   };
   // Enable all error messages regardless of other settings
   alwaysShowErrors: boolean;
+  // NEW: Completely disable all console logs when true
+  disableAllLogs: boolean;
 }
 
 // Default configuration for production builds - disable most logging
@@ -60,7 +62,8 @@ const PRODUCTION_CONFIG: LoggingConfig = {
     info: false,
     warn: true  // Keep warnings visible
   },
-  alwaysShowErrors: true  // Always show errors
+  alwaysShowErrors: true,  // Always show errors
+  disableAllLogs: true     // Disable all console output except errors
 };
 
 // Minimal logging for development to maximize performance
@@ -87,9 +90,8 @@ const DEVELOPMENT_CONFIG: LoggingConfig = {
     info: false,
     warn: true  // Only keep warnings
   },
-  // Export the DEVELOPMENT_CONFIG with alwaysShowErrors enabled
-  // This ensures that errors are still visible
-  alwaysShowErrors: true  // Keep errors enabled for troubleshooting
+  alwaysShowErrors: true,  // Keep errors enabled for troubleshooting
+  disableAllLogs: true     // Completely disable all logs except errors
 };
 
 // Export the appropriate configuration based on environment
@@ -100,6 +102,11 @@ export const loggingConfig =
 
 // Function to check if a particular log should be shown
 export function shouldLog(category: keyof LoggingConfig, subcategory?: string): boolean {
+  // First check if all logs are disabled
+  if (loggingConfig.disableAllLogs === true) {
+    return false; // Skip all logging when disableAllLogs is true
+  }
+  
   if (!loggingConfig[category]) {
     return false;
   }
@@ -113,5 +120,6 @@ export function shouldLog(category: keyof LoggingConfig, subcategory?: string): 
 
 // Special case for errors which can have their own override
 export function shouldLogError(): boolean {
+  // Even if disableAllLogs is true, we still show errors if alwaysShowErrors is true
   return loggingConfig.alwaysShowErrors;
 }

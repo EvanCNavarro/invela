@@ -47,10 +47,17 @@ export class EnhancedLogger extends Logger {
   
   // Check if a log should be shown based on its category and subcategory
   private shouldShowLog(subcategory?: LogSubcategory): boolean {
-    // If all logs are disabled, return false
+    // First check global disableAllLogs config
+    if (loggingConfig.disableAllLogs) {
+      return false;
+    }
+    
+    // Then check instance-level disableAllLogs setting
     if (this.disableAllLogs) {
       return false;
     }
+    
+    // Finally check category/subcategory settings
     return shouldLog(this.category, subcategory as string);
   }
   
@@ -77,8 +84,21 @@ export class EnhancedLogger extends Logger {
   
   // Override error method with category filtering - but respect the global error setting
   error(message: string, ...data: any[]): void {
-    // If errors should be preserved or regular error checking passes
-    if ((this.disableAllLogs && this.preserveErrors) || shouldLogError()) {
+    // Check if errors should be preserved even when all logs are disabled
+    if (loggingConfig.disableAllLogs) {
+      // Only show errors if they should be preserved with disableAllLogs
+      if ((this.preserveErrors && shouldLogError())) {
+        super.error(message, ...data);
+      }
+    }
+    // Instance-level handling
+    else if (this.disableAllLogs) {
+      if (this.preserveErrors) {
+        super.error(message, ...data);
+      }
+    }
+    // Standard error handling
+    else if (shouldLogError()) {
       super.error(message, ...data);
     }
   }
