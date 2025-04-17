@@ -2,6 +2,7 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "./schema";
+import * as timestampSchema from "./schema-timestamps";
 
 neonConfig.webSocketConstructor = ws;
 
@@ -89,7 +90,13 @@ if (process.env.NODE_ENV === 'development' && process.env.DEBUG_POOL === 'true')
 }
 
 // Create the drizzle db instance with the configured pool
-export const db = drizzle({ client: pool, schema });
+// Combine schema objects to include timestamp-related tables
+const combinedSchema = {
+  ...schema,
+  ...timestampSchema
+};
+
+export const db = drizzle({ client: pool, schema: combinedSchema });
 
 // Migrations removed - database schema already established
 
