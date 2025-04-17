@@ -240,8 +240,14 @@ export function useFormDataManager({
       if (value === null || value === undefined) {
         normalizedValue = '';
       } else if (typeof value === 'string') {
-        // Normalize string values - trim and handle special cases
-        normalizedValue = value.trim();
+        // Normalize string values - preserve spaces within the text, only trim leading/trailing spaces
+        // when the field is being submitted/saved, not during typing
+        if (isSaving) {
+          normalizedValue = value.trim();
+        } else {
+          normalizedValue = value;
+        }
+        
         // Convert "null" and "undefined" strings to empty strings
         if (normalizedValue === 'null' || normalizedValue === 'undefined') {
           normalizedValue = '';
