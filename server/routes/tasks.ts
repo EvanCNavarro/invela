@@ -804,4 +804,111 @@ router.post("/__special_non_vite_route__/unique_task_lookup_system", requireAuth
   }
 });
 
+// API endpoint to update task progress on form unmount (added for task center consistency)
+router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    console.log('[Tasks Routes] Updating task progress on unmount:', {
+      taskId,
+      calculateFromForm: req.body.calculateFromForm,
+      forceStatusUpdate: req.body.forceStatusUpdate,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Fetch the task
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // If taskType is KYB, use the kyb-update logic
+    if (task.task_type === 'company_kyb') {
+      // Calculate progress based on KYB responses
+      const result = await calculateTaskProgress(taskId);
+      
+      if (!result) {
+        return res.status(500).json({ error: 'Failed to calculate KYB progress' });
+      }
+      
+      // Update the task with the calculated progress
+      await db.update(tasks)
+        .set({
+          progress: result.progress,
+          status: result.status as TaskStatus
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // Broadcast the update
+      broadcastMessage({
+        type: 'task-update',
+        payload: {
+          taskId,
+          progress: result.progress,
+          status: result.status
+        }
+      });
+      
+      return res.json({
+        success: true,
+        progress: result.progress,
+        status: result.status
+      });
+    }
+    
+    // Default for other task types - just return current progress
+    return res.json({
+      success: true,
+      progress: task.progress,
+      status: task.status
+    });
+  } catch (error) {
+    console.error('[Tasks Routes] Error updating task progress:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Helper function to calculate KYB progress
+async function calculateTaskProgress(taskId: number) {
+  try {
+    // Get all KYB fields
+    const allFields = await db.query.kybFields.findMany();
+    
+    // Get responses for this task
+    const responses = await db.query.kybResponses.findMany({
+      where: eq(kybResponses.task_id, taskId)
+    });
+    
+    // Calculate progress based on responses
+    const totalFields = allFields.length;
+    const completedFields = responses.filter(r => r.status === 'COMPLETE').length;
+    const progress = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+    
+    // Determine status based on progress
+    let status: string = 'not_started';
+    
+    if (progress === 0) {
+      status = 'not_started';
+    } else if (progress < 100) {
+      status = 'in_progress';
+    } else {
+      status = 'ready_for_submission';
+    }
+    
+    return {
+      progress,
+      status
+    };
+  } catch (error) {
+    console.error('[Tasks Routes] Error calculating task progress:', error);
+    return null;
+  }
+}
+
 export default router;
