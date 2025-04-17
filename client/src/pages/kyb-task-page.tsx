@@ -100,8 +100,14 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 timestamp: new Date().toISOString()
               });
               
+              // Use standardized filename format
+              const now = new Date();
+              const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
+              const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+              const cleanCompanyName = (companyName || 'Company').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+              
               const requestData = {
-                fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                fileName: `KYBForm_${task.id}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v1.0`,
                 formData,
                 taskId: task.id
               };
