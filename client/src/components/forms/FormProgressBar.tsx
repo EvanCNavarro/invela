@@ -1,10 +1,11 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import getLogger from '@/utils/logger';
+import { createEnhancedLogger } from '@/utils/enhanced-logger';
 
-// Logger instance for this component
-const logger = getLogger('FormProgressBar', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+// Create a silent logger for this component - disable all logs
+const logger = createEnhancedLogger('FormProgressBar', 'uiComponents', {
+  disableAllLogs: true,
+  preserveErrors: true  // Keep only critical errors
 });
 
 // Props for the progress bar component
