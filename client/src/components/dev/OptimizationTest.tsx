@@ -95,9 +95,15 @@ const OptimizationTest: React.FC = () => {
     
     // Get results after a slight delay to ensure all measurements are complete
     setTimeout(() => {
-      const initialRender = performanceMonitor.getLastMeasurement('initialRender');
-      const memoryUsage = performanceMonitor.takeMemorySnapshot();
-      const fieldUpdateTime = performanceMonitor.getAverageMeasurement('fieldUpdate');
+      // Get performance measurements with fallbacks to null
+      const initialRender = performanceMonitor.getLastMeasurement('initialRender') || null;
+      
+      // Get memory usage if available in the browser
+      const memoryUsage = typeof performance !== 'undefined' && 
+                          typeof performance.memory !== 'undefined' ? 
+                          performance.memory?.usedJSHeapSize / (1024 * 1024) : null;
+                          
+      const fieldUpdateTime = performanceMonitor.getAverageMeasurement('fieldUpdate') || null;
       
       // Save test result
       const newResult: TestResult = {
@@ -193,15 +199,11 @@ const OptimizationTest: React.FC = () => {
           <div className="test-content border rounded-lg p-4 h-[300px] overflow-auto">
             {/* Simple test form with many fields */}
             <VirtualizedFormSection
-              section={{ 
-                id: 'test-section', 
-                title: 'Test Section', 
-                order: 0, 
-                fields: testFields 
-              }}
+              sectionId="test-section"
+              sectionTitle="Test Section"
+              fields={testFields}
+              values={{}}
               onChange={() => {}}
-              visibleRange={[0, 1000]}
-              currentValues={{}}
             />
           </div>
         </CardContent>
