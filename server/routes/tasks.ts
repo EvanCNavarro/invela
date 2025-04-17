@@ -809,10 +809,20 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
       return res.status(400).json({ error: 'Invalid task ID' });
     }
     
-    console.log('[Tasks Routes] Updating task progress on unmount:', {
+    // Extract progress and other parameters from the request
+    const { progress: clientProgress, forceStatusUpdate } = req.body;
+    
+    // Validate the progress value
+    if (typeof clientProgress !== 'number' || clientProgress < 0 || clientProgress > 100) {
+      console.warn('[Tasks Routes] Invalid progress value:', clientProgress);
+      return res.status(400).json({ error: 'Invalid progress value. Must be a number between 0 and 100.' });
+    }
+    
+    // Log the update request
+    console.log('[Tasks Routes] Updating task progress:', {
       taskId,
-      calculateFromForm: req.body.calculateFromForm,
-      forceStatusUpdate: req.body.forceStatusUpdate,
+      clientProgress,
+      forceStatusUpdate,
       timestamp: new Date().toISOString()
     });
     
@@ -825,76 +835,56 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    // If taskType is KYB, use the kyb-update logic
-    if (task.task_type === 'company_kyb') {
-      try {
-        // Get all KYB fields
-        const allFields = await db.query.kybFields.findMany();
-        
-        // Get responses for this task
-        const responses = await db.query.kybResponses.findMany({
-          where: eq(kybResponses.task_id, taskId)
-        });
-        
-        // Calculate progress based on responses
-        const totalFields = allFields.length;
-        const completedFields = responses.filter(r => r.status === 'COMPLETE').length;
-        const progress = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
-        
-        // Determine status based on progress
-        let status: TaskStatus = 'not_started';
-        
-        if (progress === 0) {
-          status = 'not_started';
-        } else if (progress < 100) {
-          status = 'in_progress';
-        } else {
-          status = 'ready_for_submission';
-        }
-        
-        console.log('[Tasks Routes] Calculated progress:', {
-          taskId,
-          totalFields,
-          completedFields,
-          progress,
-          status,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Update the task directly with the calculated progress
-        const [updatedTask] = await db.update(tasks)
-          .set({
-            progress,
-            status
-          })
-          .where(eq(tasks.id, taskId))
-          .returning();
-        
-        // Broadcast the update using the broadcastTaskUpdate function that's already imported
-        broadcastTaskUpdate({
-          id: taskId,
-          status: status as TaskStatus,
-          progress,
-          metadata: {}
-        });
-        
-        return res.json({
-          success: true,
-          progress,
-          status,
-          taskId
-        });
-      } catch (kybError) {
-        console.error('[Tasks Routes] Error updating KYB task progress:', kybError);
-        return res.status(500).json({ error: 'Failed to update KYB task progress' });
+    // Determine appropriate status based on progress
+    let status: TaskStatus = task.status as TaskStatus; // Start with current status
+    
+    // If force update is enabled, recalculate the status based on progress
+    if (forceStatusUpdate) {
+      if (clientProgress === 0) {
+        status = 'not_started';
+      } else if (clientProgress < 100) {
+        status = 'in_progress';
+      } else {
+        status = 'ready_for_submission';
       }
     }
     
-    // Default for other task types - just return current progress
+    console.log('[Tasks Routes] Updating task with client-provided progress:', {
+      taskId,
+      currentProgress: task.progress,
+      newProgress: clientProgress,
+      currentStatus: task.status,
+      newStatus: status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Update the task with the client-provided progress and calculated status
+    const [updatedTask] = await db.update(tasks)
+      .set({
+        progress: clientProgress,
+        status,
+        updated_at: new Date(),
+        metadata: {
+          ...task.metadata,
+          lastProgressUpdate: new Date().toISOString()
+        }
+      })
+      .where(eq(tasks.id, taskId))
+      .returning();
+    
+    // Broadcast the update to all connected clients
+    broadcastTaskUpdate({
+      id: taskId,
+      status,
+      progress: clientProgress,
+      metadata: updatedTask.metadata || {}
+    });
+    
     return res.json({
       success: true,
-      progress: task.progress,
-      status: task.status
+      progress: clientProgress,
+      status,
+      taskId
     });
   } catch (error) {
     console.error('[Tasks Routes] Error updating task progress:', error);
