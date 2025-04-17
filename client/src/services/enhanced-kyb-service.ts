@@ -489,6 +489,8 @@ export class EnhancedKybFormService implements FormServiceInterface {
   
   /**
    * Save KYB progress to the server with timestamp information
+   * Uses a dual-save approach that sends both form data and timestamps
+   * for deterministic conflict resolution
    */
   async saveKybProgress(
     taskId: number, 
@@ -512,7 +514,32 @@ export class EnhancedKybFormService implements FormServiceInterface {
         Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
       );
       
-      // Send the request with timestamp data
+      // First, synchronize the timestamps with the server
+      // This establishes a baseline for conflict resolution
+      console.log(`[KYB Timestamp Sync] Saving timestamps for task ${taskId} - ${Object.keys(timestamps).length} fields`);
+      
+      try {
+        const timestampResponse = await fetch(`/api/kyb/timestamps/${taskId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(timestamps)
+        });
+        
+        if (!timestampResponse.ok) {
+          console.warn(`[KYB Timestamp Sync] Warning: Failed to save timestamps - ${timestampResponse.status}`);
+        } else {
+          console.log(`[KYB Timestamp Sync] Successfully synchronized timestamps with server`);
+        }
+      } catch (timestampError) {
+        // Log but continue - we'll still try to save the form data
+        console.warn(`[KYB Timestamp Sync] Error syncing timestamps:`, timestampError);
+      }
+      
+      // Then send the main form data with timestamp data
       const response = await fetch(`/api/kyb/progress`, {
         method: 'POST',
         credentials: 'include',
@@ -647,7 +674,13 @@ export class EnhancedKybFormService implements FormServiceInterface {
   }
   
   /**
-   * Load saved progress for a task
+   * Load saved progress for a task with enhanced timestamp-based conflict resolution
+   * 
+   * This implementation includes:
+   * 1. Initial form data load from /api/kyb/progress
+   * 2. Dedicated timestamp fetch from /api/kyb/timestamps
+   * 3. Intelligent conflict resolution between client and server state
+   * 4. Graceful fallback mechanisms if any part of the process fails
    */
   async loadProgress(taskId: number): Promise<FormData> {
     try {
@@ -656,7 +689,7 @@ export class EnhancedKybFormService implements FormServiceInterface {
       
       // Get progress data from the server
       const progressData = await this.getKybProgress(taskId);
-      const { formData, timestamps, status } = progressData;
+      const { formData, timestamps: initialTimestamps, status } = progressData;
       
       // Store the server-provided status if available
       if (status) {
@@ -673,8 +706,41 @@ export class EnhancedKybFormService implements FormServiceInterface {
         return {};
       }
 
-      // Process server response with timestamps if available
-      this.processServerResponse(formData, timestamps);
+      // Step 2: Get dedicated timestamps from dedicated timestamp API
+      // This provides a more complete and authoritative timestamp source
+      let enhancedTimestamps = initialTimestamps || {};
+      
+      try {
+        console.log(`[KYB Timestamp Sync] Loading field timestamps for task ${taskId}...`);
+        const timestampResponse = await fetch(`/api/kyb/timestamps/${taskId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (timestampResponse.ok) {
+          const timestampData = await timestampResponse.json();
+          
+          // If we got back valid timestamp data, use it for enhanced conflict resolution
+          if (timestampData && typeof timestampData === 'object') {
+            console.log(`[KYB Timestamp Sync] Loaded ${Object.keys(timestampData).length} field timestamps`);
+            enhancedTimestamps = timestampData;
+          }
+        } else {
+          console.warn(`[KYB Timestamp Sync] Failed to load timestamps: ${timestampResponse.status}`);
+        }
+      } catch (timestampError) {
+        // Log but continue with the timestamps we already have
+        console.warn(`[KYB Timestamp Sync] Error loading timestamps:`, timestampError);
+      }
+      
+      // Process server response using the best available timestamps
+      this.processServerResponse(formData, enhancedTimestamps);
+      
+      // Log a summary of the data loaded
+      console.log(`[KYB Form Data] Loaded ${Object.keys(formData).length} fields with ${Object.keys(enhancedTimestamps).length} timestamps for task ${taskId}`);
       
       return this.getFormData();
     } catch (error) {
