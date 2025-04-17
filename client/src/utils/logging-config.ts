@@ -36,14 +36,14 @@ export interface LoggingConfig {
   alwaysShowErrors: boolean;
 }
 
-// Default configuration for production builds
+// Default configuration for production builds - disable most logging
 const PRODUCTION_CONFIG: LoggingConfig = {
   formDataManager: {
     debug: false,
     fieldUpdates: false,
     dataSaving: false,
     serverSync: false,
-    validationErrors: true
+    validationErrors: true  // Only keep validation errors
   },
   uiComponents: {
     navigation: false,
@@ -58,9 +58,9 @@ const PRODUCTION_CONFIG: LoggingConfig = {
   general: {
     debug: false,
     info: false,
-    warn: true
+    warn: true  // Keep warnings visible
   },
-  alwaysShowErrors: true
+  alwaysShowErrors: true  // Always show errors
 };
 
 // Minimal logging for development to maximize performance
@@ -70,7 +70,7 @@ const DEVELOPMENT_CONFIG: LoggingConfig = {
     fieldUpdates: false,
     dataSaving: false,
     serverSync: false,
-    validationErrors: false // Only enable when debugging validation issues
+    validationErrors: false  // Completely silent for form data operations
   },
   uiComponents: {
     navigation: false,
@@ -78,16 +78,18 @@ const DEVELOPMENT_CONFIG: LoggingConfig = {
     progressTracking: false
   },
   performance: {
-    metrics: false, // Performance metrics can be noisy too
+    metrics: false,  // Disable performance logs
     timeouts: false,
     rendering: false
   },
   general: {
     debug: false,
     info: false,
-    warn: true
+    warn: true  // Only keep warnings
   },
-  alwaysShowErrors: true // Keep errors enabled for troubleshooting
+  // Export the DEVELOPMENT_CONFIG with alwaysShowErrors enabled
+  // This ensures that errors are still visible
+  alwaysShowErrors: true  // Keep errors enabled for troubleshooting
 };
 
 // Export the appropriate configuration based on environment
