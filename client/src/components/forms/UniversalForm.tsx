@@ -804,38 +804,60 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     Submission Details
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4 text-sm text-blue-700">
-                    {/* First row - Ordered as requested */}
-                    <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Form Type: </span>
-                      <span className="ml-1">{formTitle || taskType}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Total Questions: </span>
-                      <span className="ml-1">{fields.filter(f => f.section !== 'review-section').length}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <ClipboardCheck className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Status: </span>
-                      <span className="ml-1">{taskStatus || 'Submitted'}</span>
+                    {/* First row - Ordered with proper spacing and overflow handling */}
+                    <div className="flex items-start">
+                      <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Form Type</span>
+                        <span className="break-words truncate max-w-[200px]" title={formTitle || taskType}>
+                          {formTitle || taskType}
+                        </span>
+                      </div>
                     </div>
                     
-                    {/* Second row - Ordered as requested */}
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Submitted: </span>
-                      <span className="ml-1">{submissionDate || 'N/A'}</span>
+                    <div className="flex items-start">
+                      <FileText className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Total Questions</span>
+                        <span>{fields.filter(f => f.section !== 'review-section').length}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <UserCircle className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Submitted by: </span>
-                      <span className="ml-1">{user?.name || user?.email || 'N/A'}</span>
+                    
+                    <div className="flex items-start">
+                      <ClipboardCheck className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Status</span>
+                        <span className="capitalize">{taskStatus || 'Submitted'}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <Building2 className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0" />
-                      <span className="font-medium">Company: </span>
-                      <span className="ml-1">{displayCompanyName || 'N/A'}</span>
+                    
+                    {/* Second row - With improved layout for better spacing */}
+                    <div className="flex items-start">
+                      <Calendar className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Submitted</span>
+                        <span className="break-words">{submissionDate || 'N/A'}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <UserCircle className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Submitted by</span>
+                        <span className="break-words truncate max-w-[200px]" title={user?.name || user?.email || 'N/A'}>
+                          {user?.name || user?.email || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <Building2 className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Company</span>
+                        <span className="break-words truncate max-w-[200px]" title={displayCompanyName || 'N/A'}>
+                          {displayCompanyName || 'N/A'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
