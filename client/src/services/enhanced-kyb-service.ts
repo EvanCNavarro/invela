@@ -2,6 +2,7 @@ import { FormServiceInterface, FormSubmitOptions, FormSubmitResponse } from './f
 import { FormData, TimestampedFormData, createTimestampedFormData, updateField, mergeTimestampedFormData, extractValues, getNewerClientFields } from '../types/form-data';
 import { FormField, FormSection } from '../components/forms/types';
 import { calculateTaskStatusUtil } from '../utils/form-utils';
+import getLogger from '../utils/logger';
 
 /**
  * Represents a KYB field from the database
