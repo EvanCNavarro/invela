@@ -109,20 +109,19 @@ export function useFormDataManager({
       return false;
     }
     
-    // Normalize all field values with trimming for saving
+    // Pass values directly without trimming to preserve whitespace
     // Use updateFieldRef if available, otherwise use direct method
     Object.entries(latestFormDataRef.current).forEach(([key, value]) => {
-      if (typeof value === 'string' && value.trim() !== '') {
-        // Normalize strings by trimming
-        const trimmedValue = value.trim();
+      if (typeof value === 'string') {
+        // Preserve whitespace by using the value directly without trimming
         
         // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
         if (updateFieldRef.current) {
           // Use the update field function with isSaving flag
-          updateFieldRef.current(key, trimmedValue, true);
+          updateFieldRef.current(key, value, true);
         } else {
           // Fallback to direct update if reference isn't set yet
-          formService.updateFormData(key, trimmedValue, taskId);
+          formService.updateFormData(key, value, taskId);
         }
       }
     });
