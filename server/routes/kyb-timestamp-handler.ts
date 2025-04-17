@@ -5,8 +5,9 @@
  * It provides functions for storing and retrieving timestamps alongside form data.
  */
 
-import { db } from '../db';
-import { kyb_timestamps } from '../db/schema';
+import { db } from '@db';
+// Import the timestamps schema directly from the schema-timestamps file
+import { kyb_timestamps } from '../../db/schema-timestamps';
 import { eq, and } from 'drizzle-orm';
 
 /**
