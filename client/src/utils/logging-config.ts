@@ -41,7 +41,7 @@ const PRODUCTION_CONFIG: LoggingConfig = {
   formDataManager: {
     debug: false,
     fieldUpdates: false,
-    dataSaving: false,  // Disabled to reduce console noise
+    dataSaving: false,
     serverSync: false,
     validationErrors: true
   },
@@ -51,13 +51,13 @@ const PRODUCTION_CONFIG: LoggingConfig = {
     progressTracking: false
   },
   performance: {
-    metrics: false,    // Disabled to reduce console noise
+    metrics: false,
     timeouts: false,
     rendering: false
   },
   general: {
     debug: false,
-    info: false,       // Disabled to reduce console noise
+    info: false,
     warn: true
   },
   alwaysShowErrors: true
