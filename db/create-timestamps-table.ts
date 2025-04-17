@@ -3,7 +3,7 @@
  * Part of the field-level timestamp synchronization system
  */
 
-import { db } from './index';
+import { db } from '@db';
 import { sql } from 'drizzle-orm';
 import { createKybFieldTimestampsTable } from './schema-timestamps';
 
@@ -13,33 +13,11 @@ import { createKybFieldTimestampsTable } from './schema-timestamps';
  */
 export async function createTimestampsTable(): Promise<void> {
   try {
-    console.log('[DB Migration] Creating kyb_field_timestamps table...');
-    
-    // Execute the migration SQL
+    console.log('[DB Migration] Creating KYB field timestamps table...');
     await db.execute(sql.raw(createKybFieldTimestampsTable));
-    
-    console.log('[DB Migration] kyb_field_timestamps table created successfully');
-    
-    return Promise.resolve();
+    console.log('[DB Migration] Successfully created KYB field timestamps table');
   } catch (error) {
-    console.error('[DB Migration] Failed to create timestamps table:', error);
-    if (error instanceof Error && error.message.includes('already exists')) {
-      console.log('[DB Migration] Timestamps table already exists, skipping creation');
-      return Promise.resolve();
-    }
-    return Promise.reject(error);
+    console.error('[DB Migration] Error creating timestamps table:', error);
+    throw new Error(`Failed to create timestamps table: ${error.message}`);
   }
-}
-
-// For direct execution (e.g., via node)
-if (require.main === module) {
-  createTimestampsTable()
-    .then(() => {
-      console.log('[DB Migration] Timestamps table migration completed successfully');
-      process.exit(0);
-    })
-    .catch(error => {
-      console.error('[DB Migration] Migration failed:', error);
-      process.exit(1);
-    });
 }
