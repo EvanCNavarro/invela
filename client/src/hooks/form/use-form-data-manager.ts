@@ -229,26 +229,43 @@ export function useFormDataManager({
     }
     
     try {
+      // Safety check for invalid field names
+      if (!name || typeof name !== 'string') {
+        logger.error(`[TIMESTAMP-SYNC] Invalid field name: ${name}`);
+        return;
+      }
+      
       // Generate a precise update timestamp for conflict resolution
       const updateTimestamp = Date.now();
       logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Starting field update for ${name} with taskId ${taskId}`);
       
-      // Get current form data for comparison
-      const currentData = formService.getFormData();
-      const prevValue = currentData[name];
+      // Get current form data for comparison with error handling
+      let currentData;
+      try {
+        currentData = formService.getFormData();
+      } catch (err) {
+        logger.error(`[TIMESTAMP-SYNC] Error getting form data: ${err}`);
+        currentData = {};
+      }
+      const prevValue = currentData?.[name];
       
       // Get timestamped form data if available using the enhanced interface
       let timestamp: number = updateTimestamp;
       let hasTimestamping = false;
       
       if (typeof formService.getTimestampedFormData === 'function') {
-        hasTimestamping = true;
-        const timestampedData = formService.getTimestampedFormData();
-        logger.info(`[TIMESTAMP-SYNC] Using enhanced timestamp-based conflict resolution`);
-        
-        // Record existing timestamp information if available
-        if (timestampedData.timestamps && timestampedData.timestamps[name]) {
-          logger.info(`[TIMESTAMP-SYNC] Field ${name} has existing timestamp: ${timestampedData.timestamps[name]}`);
+        try {
+          hasTimestamping = true;
+          const timestampedData = formService.getTimestampedFormData();
+          logger.info(`[TIMESTAMP-SYNC] Using enhanced timestamp-based conflict resolution`);
+          
+          // Record existing timestamp information if available
+          if (timestampedData && timestampedData.timestamps && timestampedData.timestamps[name]) {
+            logger.info(`[TIMESTAMP-SYNC] Field ${name} has existing timestamp: ${timestampedData.timestamps[name]}`);
+          }
+        } catch (err) {
+          logger.error(`[TIMESTAMP-SYNC] Error getting timestamped data: ${err}`);
+          hasTimestamping = false;
         }
       }
       
@@ -404,57 +421,68 @@ export function useFormDataManager({
             
             // Verify data after save using timestamp-aware approach
             if (hasTimestamping && typeof formService.getTimestampedFormData === 'function') {
-              // Get the latest timestamped data from the form service
-              const timestampedData = formService.getTimestampedFormData();
-              const savedValue = timestampedData.values[name];
-              const savedTimestamp = timestampedData.timestamps[name];
-              
-              const savedValueMatch = savedValue === normalizedValue;
-              
-              if (!savedValueMatch) {
-                // Log detailed information about the mismatch, including timestamps
-                logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: TIMESTAMP VERIFICATION for field ${name}`);
-                logger.error(`[TIMESTAMP-SYNC] Client value: "${normalizedValue}" (timestamp: ${updateTimestamp})`);
-                logger.error(`[TIMESTAMP-SYNC] Server value: "${savedValue}" (timestamp: ${savedTimestamp})`);
+              try {
+                // Get the latest timestamped data from the form service
+                const timestampedData = formService.getTimestampedFormData();
                 
-                // Check which timestamp is newer - this is the key to our conflict resolution
-                if (updateTimestamp > savedTimestamp) {
-                  logger.warn(`[TIMESTAMP-SYNC] Client timestamp is newer - server has stale data!`);
-                  logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Attempting to synchronize timestamps and fix value`);
-                  
-                  // Fix by explicitly updating the timestamp and value
-                  formService.updateFormData(name, normalizedValue, taskId);
-                  
-                  // Force a second save to ensure persistence
-                  setTimeout(() => {
-                    saveProgress()
-                      .then(fixResult => {
-                        logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
-                      })
-                      .catch(fixErr => {
-                        logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save failed with error:`, fixErr);
-                      });
-                  }, 100);
-                } else {
-                  logger.warn(`[TIMESTAMP-SYNC] Server timestamp is newer - client value may be stale!`);
-                  logger.info(`[TIMESTAMP-SYNC] Using server value to resolve conflict`);
-                  
-                  // Update local value with server value
-                  form.setValue(name, savedValue, {
-                    shouldDirty: true,
-                    shouldTouch: true,
-                    shouldValidate: true
-                  });
-                  
-                  // Update form data with server value
-                  setFormData(current => {
-                    const updated = { ...current, [name]: savedValue };
-                    latestFormDataRef.current = updated;
-                    return updated;
-                  });
+                // Check if we have valid data structure
+                if (!timestampedData || !timestampedData.values || !timestampedData.timestamps) {
+                  logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Invalid timestamped data format for field ${name}`);
+                  return;
                 }
-              } else {
-                logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Timestamp-based verification passed for field ${name}`);
+                
+                const savedValue = timestampedData.values[name];
+                const savedTimestamp = timestampedData.timestamps[name];
+                
+                const savedValueMatch = savedValue === normalizedValue;
+                
+                if (!savedValueMatch) {
+                  // Log detailed information about the mismatch, including timestamps
+                  logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: TIMESTAMP VERIFICATION for field ${name}`);
+                  logger.error(`[TIMESTAMP-SYNC] Client value: "${normalizedValue}" (timestamp: ${updateTimestamp})`);
+                  logger.error(`[TIMESTAMP-SYNC] Server value: "${savedValue}" (timestamp: ${savedTimestamp})`);
+                  
+                  // Check which timestamp is newer - this is the key to our conflict resolution
+                  if (updateTimestamp > savedTimestamp) {
+                    logger.warn(`[TIMESTAMP-SYNC] Client timestamp is newer - server has stale data!`);
+                    logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Attempting to synchronize timestamps and fix value`);
+                    
+                    // Fix by explicitly updating the timestamp and value
+                    formService.updateFormData(name, normalizedValue, taskId);
+                    
+                    // Force a second save to ensure persistence
+                    setTimeout(() => {
+                      saveProgress()
+                        .then(fixResult => {
+                          logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save completed with result: ${fixResult ? 'SUCCESS' : 'FAILED'}`);
+                        })
+                        .catch(fixErr => {
+                          logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Fix save failed with error:`, fixErr);
+                        });
+                    }, 100);
+                  } else {
+                    logger.warn(`[TIMESTAMP-SYNC] Server timestamp is newer - client value may be stale!`);
+                    logger.info(`[TIMESTAMP-SYNC] Using server value to resolve conflict`);
+                    
+                    // Update local value with server value
+                    form.setValue(name, savedValue, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true
+                    });
+                    
+                    // Update form data with server value
+                    setFormData(current => {
+                      const updated = { ...current, [name]: savedValue };
+                      latestFormDataRef.current = updated;
+                      return updated;
+                    });
+                  }
+                } else {
+                  logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Timestamp-based verification passed for field ${name}`);
+                }
+              } catch (verifyError) {
+                logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Error verifying timestamp data:`, verifyError);
               }
             } else {
               // Fallback to simple value verification for non-timestamped services
