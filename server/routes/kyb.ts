@@ -1408,13 +1408,19 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
           ? Number(file.metadata.taskId) 
           : Number(req.query.taskId) || 0;
         
+        // Extract question number from the file metadata if available
+        const questionNumber = (file.metadata && file.metadata.questionNumber) 
+          ? Number(file.metadata.questionNumber) 
+          : undefined;
+          
         // Create standardized filename
         const standardizedFilename = FileCreationService.generateStandardFileName(
           'KYB', 
           taskId, 
           companyName,
           '1.0',
-          'csv'
+          'csv',
+          questionNumber
         );
         
         res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
@@ -1453,13 +1459,19 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
           ? Number(file.metadata.taskId) 
           : Number(req.query.taskId) || 0;
         
+        // Extract question number from the file metadata if available
+        const jsonQuestionNumber = (file.metadata && file.metadata.questionNumber) 
+          ? Number(file.metadata.questionNumber) 
+          : undefined;
+          
         // Create standardized filename with json extension
         const jsonFilename = FileCreationService.generateStandardFileName(
           'KYB', 
           jsonTaskId, 
           companyName, // Using the companyName variable defined at the top of function
           '1.0',
-          'json'
+          'json',
+          jsonQuestionNumber
         );
         
         res.setHeader('Content-Disposition', `attachment; filename="${jsonFilename}"`);
@@ -1483,13 +1495,19 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
           ? Number(file.metadata.taskId) 
           : Number(req.query.taskId) || 0;
         
+        // Extract question number from the file metadata if available
+        const txtQuestionNumber = (file.metadata && file.metadata.questionNumber) 
+          ? Number(file.metadata.questionNumber) 
+          : undefined;
+          
         // Create standardized filename with txt extension
         const txtFilename = FileCreationService.generateStandardFileName(
           'KYB', 
           txtTaskId, 
           companyName, // Using the companyName variable defined at the top of function
           '1.0',
-          'txt'
+          'txt',
+          txtQuestionNumber
         );
         
         res.setHeader('Content-Disposition', `attachment; filename="${txtFilename}"`);
