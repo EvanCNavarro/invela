@@ -392,11 +392,14 @@ export class EnhancedKybFormService implements FormServiceInterface {
    * With optional progressive loading optimization
    */
   getFields(): FormField[] {
-    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
+    // CRITICAL FIX: Disable progressive loading on actual form pages and in production
+    // This ensures all fields are always shown on the KYB form
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING || window.location.pathname.includes('/task/')) {
+      this.logger.info('Progressive loading disabled for this page. Returning all fields.');
       return this.fields;
     }
     
-    // Use the progressive loading optimization
+    // Use the progressive loading optimization (only for performance testing page)
     return safelyRunOptimizedCode(
       // Optimized implementation with progressive loading
       () => {
@@ -415,6 +418,12 @@ export class EnhancedKybFormService implements FormServiceInterface {
           
           // Start loading sections in background
           progressiveLoader.startLoading(false);
+        }
+        
+        // Don't filter by section on task pages to avoid "No fields found" issue
+        if (window.location.pathname.includes('/task/')) {
+          this.logger.info('Task page detected: Returning all fields for compatibility');
+          return this.fields;
         }
         
         // Get the currently active section ID, if any
@@ -458,11 +467,23 @@ export class EnhancedKybFormService implements FormServiceInterface {
    * With optional progressive loading optimization
    */
   getSections(): FormSection[] {
-    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
-      return this.sections;
+    // CRITICAL FIX: Disable progressive loading on actual form pages and in production
+    // This ensures all sections are always shown on the KYB form
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING || window.location.pathname.includes('/task/')) {
+      this.logger.info('Progressive loading disabled for this page. Returning all sections as fully loaded.');
+      // Mark all sections as fully loaded for actual form pages
+      return this.sections.map(section => ({
+        ...section,
+        meta: {
+          ...(section.meta || {}),
+          isLoaded: true,
+          isLoading: false,
+          priority: section.order
+        }
+      }));
     }
     
-    // Use the progressive loading optimization
+    // Use the progressive loading optimization (only for performance testing page)
     return safelyRunOptimizedCode(
       // Optimized implementation with progressive loading
       () => {
@@ -481,6 +502,20 @@ export class EnhancedKybFormService implements FormServiceInterface {
           
           // Start loading sections in background
           progressiveLoader.startLoading(false);
+        }
+        
+        // Don't filter by loading status on task pages to avoid "No fields found" issue
+        if (window.location.pathname.includes('/task/')) {
+          this.logger.info('Task page detected: Marking all sections as loaded');
+          return this.sections.map(section => ({
+            ...section,
+            meta: {
+              ...(section.meta || {}),
+              isLoaded: true,
+              isLoading: false,
+              priority: section.order
+            }
+          }));
         }
         
         // Get all the sections, but mark 'loading' status for unloaded sections
