@@ -1377,6 +1377,24 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
       fileSize: file.size
     });
 
+    // Get company name from file metadata or database 
+    let companyName = 'Company';
+    if (file.company_id) {
+      try {
+        const [company] = await db.select({
+          name: companies.name
+        })
+        .from(companies)
+        .where(eq(companies.id, file.company_id));
+        
+        if (company?.name) {
+          companyName = company.name;
+        }
+      } catch (error) {
+        logger.error('Error getting company name', {error});
+      }
+    }
+
     // Process the file content directly from the path field (which contains the actual content)
     const fileContent = file.path;
 
@@ -1389,24 +1407,6 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         const taskId = (file.metadata && file.metadata.taskId) 
           ? Number(file.metadata.taskId) 
           : Number(req.query.taskId) || 0;
-        
-        // Get company name from file metadata or database
-        let companyName = 'Company';
-        if (file.company_id) {
-          try {
-            const [company] = await db.select({
-              name: companies.name
-            })
-            .from(companies)
-            .where(eq(companies.id, file.company_id));
-            
-            if (company?.name) {
-              companyName = company.name;
-            }
-          } catch (error) {
-            logger.error('Error getting company name', {error});
-          }
-        }
         
         // Create standardized filename
         const standardizedFilename = FileCreationService.generateStandardFileName(
@@ -1457,7 +1457,7 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         const jsonFilename = FileCreationService.generateStandardFileName(
           'KYB', 
           jsonTaskId, 
-          companyName,
+          companyName, // Using the companyName variable defined at the top of function
           '1.0',
           'json'
         );
@@ -1487,7 +1487,7 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         const txtFilename = FileCreationService.generateStandardFileName(
           'KYB', 
           txtTaskId, 
-          companyName,
+          companyName, // Using the companyName variable defined at the top of function
           '1.0',
           'txt'
         );
