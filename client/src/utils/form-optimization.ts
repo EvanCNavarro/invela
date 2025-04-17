@@ -276,11 +276,18 @@ class FormPerformanceMonitor {
  * This utility helps to batch multiple field updates together to reduce
  * unnecessary re-renders and API calls. It's especially useful for forms
  * with many fields or frequent updates.
+ * 
+ * The manager implements batching through a debounced update mechanism - 
+ * multiple rapid updates are collected and then processed together after
+ * a specified delay, significantly reducing unnecessary re-renders.
  */
 export class BatchUpdateManager<T = any> {
   private queue: Map<string, T> = new Map();
   private timeout: number | null = null;
-  private readonly delay: number;
+  private _delay: number;
+  private updateListeners: Array<(updates: Record<string, T>, timestamps?: Record<string, number>) => void> = [];
+  private completionListeners: Array<(updates: Record<string, T>) => void> = [];
+  private timestamps: Record<string, number> = {};
   
   /**
    * Create a new BatchUpdateManager
@@ -288,14 +295,39 @@ export class BatchUpdateManager<T = any> {
    * @param initialValues Optional initial values to populate the queue with
    */
   constructor(delay = 300, initialValues?: Record<string, T>) {
-    this.delay = delay;
+    this._delay = delay;
     
     // Initialize with any provided values
     if (initialValues) {
       Object.entries(initialValues).forEach(([key, value]) => {
         this.queue.set(key, value);
+        this.timestamps[key] = Date.now();
       });
     }
+  }
+  
+  /**
+   * Configure the batch manager settings
+   * @param options Configuration options
+   */
+  configure(options: { delay?: number }) {
+    if (options.delay !== undefined) {
+      this._delay = options.delay;
+    }
+  }
+  
+  /**
+   * Get the current delay setting
+   */
+  get delay(): number {
+    return this._delay;
+  }
+  
+  /**
+   * Set the delay between batch processing
+   */
+  set delay(value: number) {
+    this._delay = value;
   }
   
   /**
@@ -309,6 +341,7 @@ export class BatchUpdateManager<T = any> {
     
     // Add to queue
     this.queue.set(key, value);
+    this.timestamps[key] = Date.now();
     
     // Reset timeout
     if (this.timeout !== null) {
@@ -321,10 +354,33 @@ export class BatchUpdateManager<T = any> {
       this.processQueue();
     } else {
       // Otherwise, set a timeout to process after the delay
-      this.timeout = window.setTimeout(() => this.processQueue(), this.delay);
+      this.timeout = window.setTimeout(() => this.processQueue(), this._delay);
     }
     
     performanceMonitor.endTimer('batchUpdate_add');
+  }
+  
+  /**
+   * Alias for addUpdate - used for compatibility with different naming conventions
+   */
+  queueUpdate(key: string, value: T, immediate = false): void {
+    this.addUpdate(key, value, immediate);
+  }
+  
+  /**
+   * Register a listener for update events
+   * @param listener Callback function that receives updates
+   */
+  onUpdate(listener: (updates: Record<string, T>, timestamps: Record<string, number>) => void): void {
+    this.updateListeners.push(listener);
+  }
+  
+  /**
+   * Register a listener for batch completion events
+   * @param listener Callback function called when a batch is processed
+   */
+  onComplete(listener: (updates: Record<string, T>) => void): void {
+    this.completionListeners.push(listener);
   }
   
   /**
@@ -341,6 +397,14 @@ export class BatchUpdateManager<T = any> {
       updates[key] = value;
     });
     
+    // Create a copy of the timestamps for this batch
+    const currentTimestamps: Record<string, number> = {};
+    Object.keys(updates).forEach(key => {
+      if (this.timestamps[key]) {
+        currentTimestamps[key] = this.timestamps[key];
+      }
+    });
+    
     // Clear the queue
     this.queue.clear();
     
@@ -355,8 +419,35 @@ export class BatchUpdateManager<T = any> {
       callback(updates);
     }
     
+    // Notify update listeners
+    if (Object.keys(updates).length > 0) {
+      this.updateListeners.forEach(listener => {
+        try {
+          listener(updates, currentTimestamps);
+        } catch (err) {
+          console.error('[BatchUpdateManager] Error in update listener:', err);
+        }
+      });
+      
+      // Notify completion listeners
+      this.completionListeners.forEach(listener => {
+        try {
+          listener(updates);
+        } catch (err) {
+          console.error('[BatchUpdateManager] Error in completion listener:', err);
+        }
+      });
+    }
+    
     performanceMonitor.endTimer('batchUpdate_process');
     return updates;
+  }
+  
+  /**
+   * Alias for processQueue - used for compatibility with different naming conventions
+   */
+  flush(callback?: (updates: Record<string, T>) => void): Record<string, T> {
+    return this.processQueue(callback);
   }
   
   /**
@@ -368,6 +459,23 @@ export class BatchUpdateManager<T = any> {
       this.timeout = null;
     }
     this.queue.clear();
+  }
+  
+  /**
+   * Alias for cancelUpdates - used for compatibility with different naming conventions
+   */
+  clear(): void {
+    this.cancelUpdates();
+  }
+  
+  /**
+   * Reset the batch manager to its initial state
+   */
+  reset(): void {
+    this.cancelUpdates();
+    this.updateListeners = [];
+    this.completionListeners = [];
+    this.timestamps = {};
   }
   
   /**
