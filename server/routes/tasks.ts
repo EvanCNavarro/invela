@@ -494,7 +494,7 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
     }
     
     // Now fetch the latest saved form data for KYB tasks
-    let savedFormData = {};
+    let savedFormData: Record<string, any> = {};
     
     if (task.task_type === 'kyb' || task.task_type === 'company_kyb') {
       try {
@@ -590,7 +590,7 @@ router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
     }
     
     // Now fetch the latest saved form data for KYB tasks
-    let savedFormData = {};
+    let savedFormData: Record<string, any> = {};
     
     if (task.task_type === 'kyb' || task.task_type === 'company_kyb') {
       try {
