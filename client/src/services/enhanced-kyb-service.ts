@@ -57,72 +57,132 @@ export class EnhancedKybFormService implements FormServiceInterface {
    * @param templateId ID of the task template
    */
   async initialize(templateId: number): Promise<void> {
-    this.templateId = templateId;
-    
+    if (this.initialized && this.templateId === templateId) {
+      this.logger.info('EnhancedKybService already initialized with template:', templateId);
+      return; // Already initialized with this template
+    }
+
     try {
-      // Fetch KYB fields for this template
+      this.templateId = templateId;
+      this.logger.info(`EnhancedKybService initializing with template ID: ${templateId}`);
+      
+      // CLEAR PREVIOUS STATE to ensure fresh initialization
+      this.fields = [];
+      this.sections = [];
+      this.initialized = false;
+      
+      // Fetch KYB fields from the server or cache
       const fields = await this.getKybFields();
+      this.logger.info(`Retrieved KYB fields from API: ${fields.length}`);
       
-      // Group the fields by section
+      if (fields.length === 0) {
+        this.logger.error('No KYB fields retrieved from API - form will be empty');
+        this.initialized = true; // Mark as initialized even though it's empty
+        return;
+      }
+      
+      // Log the first field to help diagnose format issues
+      this.logger.info('Sample first field:', {
+        id: fields[0].id,
+        key: fields[0].field_key,
+        type: fields[0].field_type,
+        group: fields[0].group
+      });
+      
+      // Group fields by section name
       const groupedFields = this.groupFieldsBySection(fields);
+      this.logger.info(`Field grouping result: ${Object.keys(groupedFields).length} groups found`);
       
-      // Convert to form fields and create sections
-      const allFormFields: FormField[] = [];
-      const sections: FormSection[] = [];
+      // Log the sections we found versus what we expect
+      this.logger.info(`Grouped field sections: ${Object.keys(groupedFields).join(', ')}`);
       
-      // Keep track of section order
-      const sectionOrder: Record<string, number> = {};
-      let sectionIndex = 1;
+      // Standard expected section names in the correct order
+      const expectedSections = [
+        'Company Profile',
+        'Governance & Leadership',
+        'Financial Profile',
+        'Operations & Compliance'
+      ];
       
-      // Sort the sections
-      const sortedGroups = Object.keys(groupedFields).sort((a, b) => {
-        // Default section order based on predefined sequence
-        const defaultOrder: Record<string, number> = {
-          'Company Profile': 1,
-          'Governance & Leadership': 2,
-          'Financial Profile': 3,
-          'Operations & Compliance': 4,
-          'Risk & Security': 5
+      this.logger.info(`Expected section names: ${expectedSections.join(', ')}`);
+      
+      // Ensure we have all standard sections, even if empty
+      const normalizedSections: Record<string, KybField[]> = {};
+      
+      // First, populate with expected sections (empty arrays if no fields)
+      expectedSections.forEach(section => {
+        normalizedSections[section] = groupedFields[section] || [];
+        this.logger.info(`Section ${section} has ${normalizedSections[section].length} fields`);
+      });
+      
+      // Then add any additional sections from groupedFields that aren't standard
+      Object.entries(groupedFields).forEach(([sectionName, sectionFields]) => {
+        if (!expectedSections.includes(sectionName)) {
+          normalizedSections[sectionName] = sectionFields;
+          this.logger.info(`Additional section ${sectionName} has ${sectionFields.length} fields`);
+        }
+      });
+      
+      this.logger.info('Creating sections from fields. Sections found:', Object.keys(normalizedSections).join(', '));
+      
+      // Create sections from normalized grouped fields with proper interface implementation
+      // Use the expected order for standard sections
+      this.sections = Object.entries(normalizedSections).map(([sectionName, sectionFields], index) => {
+        // Find index in expectedSections to determine proper order
+        const expectedIndex = expectedSections.indexOf(sectionName);
+        const order = expectedIndex >= 0 ? expectedIndex + 1 : expectedSections.length + index + 1;
+        const sectionId = `section-${order - 1}`; // Adjust to match the original logic (0-based)
+        
+        this.logger.info(`Creating section "${sectionName}" with ID "${sectionId}" (${sectionFields.length} fields)`);
+        
+        // Create the section with the properly assigned fields
+        const section = {
+          id: sectionId,      // FormSection requires string ID
+          title: sectionName, // Use title instead of name
+          description: '',
+          order: order,
+          collapsed: false,
+          // Convert each field and assign the proper section ID
+          fields: sectionFields.map(field => this.convertToFormField(field, sectionId))
         };
         
-        return (defaultOrder[a] || 999) - (defaultOrder[b] || 999);
+        return section;
       });
       
-      // Create sections and form fields
-      sortedGroups.forEach(group => {
-        const sectionId = `section-${sectionIndex}`;
-        sectionOrder[group] = sectionIndex;
-        
-        // Convert KYB fields to form fields for this section
-        const sectionFields = groupedFields[group].map(field => 
-          this.convertToFormField(field, sectionId)
-        );
-        
-        // Add fields to master list
-        allFormFields.push(...sectionFields);
-        
-        // Create section
-        sections.push({
-          id: sectionId,
-          title: group,
-          description: '',
-          fields: sectionFields,
-          order: sectionIndex
+      // Sort sections by order
+      this.sections.sort((a, b) => a.order - b.order);
+      
+      // CRITICAL FIX: Update the main fields array by extracting all fields from sections
+      // This ensures all fields have the correct section ID assigned
+      this.fields = this.sections.reduce((allFields, section) => {
+        return [...allFields, ...section.fields];
+      }, []);
+      
+      // Log the created sections and field counts
+      this.logger.info('Created sections:');
+      this.sections.forEach(section => {
+        this.logger.info(`- Section "${section.title}" with ${section.fields.length} fields (order: ${section.order})`);
+      });
+      
+      // Verify all fields have section IDs
+      const fieldsWithoutSection = this.fields.filter(field => !field.sectionId);
+      if (fieldsWithoutSection.length > 0) {
+        this.logger.warn(`WARNING: ${fieldsWithoutSection.length} fields don't have section IDs assigned`);
+        fieldsWithoutSection.forEach(field => {
+          this.logger.warn(`- Field without section: ${field.key}`);
         });
-        
-        sectionIndex++;
-      });
-      
-      // Store fields and sections
-      this.fields = allFormFields;
-      this.sections = sections;
+      } else {
+        this.logger.info(`Success: All ${this.fields.length} fields have section IDs correctly assigned`);
+      }
       
       // Create empty form data with timestamps
       this.timestampedFormData = createTimestampedFormData();
       
       this.initialized = true;
+      this.logger.info('EnhancedKybFormService initialization complete.');
+      
     } catch (error) {
-      console.error('Error initializing KYB form service:', error);
+      this.logger.error('Error initializing EnhancedKybFormService:', error);
       throw error;
     }
   }
