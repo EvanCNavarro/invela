@@ -129,7 +129,7 @@ export default function VirtualizedRenderingDemo() {
       setMetrics({
         renderTime,
         scrollUpdateTime,
-        memoryUsage: window.performance?.memory?.usedJSHeapSize || 0,
+        memoryUsage: (window.performance as any)?.memory?.usedJSHeapSize || 0,
       });
     }, 100);
   }, []);

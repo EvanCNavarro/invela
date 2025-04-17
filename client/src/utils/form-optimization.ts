@@ -272,6 +272,18 @@ class FormPerformanceMonitor {
   }
   
   /**
+   * Get average time for a specific timer
+   */
+  public getAverageTime(timerName: string): number | null {
+    const timer = this.metrics.timers[timerName];
+    if (!timer || timer.count === 0) {
+      return null;
+    }
+    
+    return timer.average;
+  }
+  
+  /**
    * Get performance events
    */
   public getEvents(): Array<{
@@ -400,7 +412,8 @@ class FormPerformanceMonitor {
    */
   private getMemoryUsage(): number {
     try {
-      if (typeof performance !== 'undefined' && performance.memory) {
+      // Use type assertion since the memory property is non-standard and only in Chrome
+      if (typeof performance !== 'undefined' && (performance as any).memory) {
         return (performance as any).memory.usedJSHeapSize;
       }
       return 0;
