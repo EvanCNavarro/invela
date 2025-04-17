@@ -254,6 +254,15 @@ export default function TaskPage({ params }: TaskPageProps) {
     };
   }, [extractCompanyNameFromTitle]);
   
+  // Function to safely update task progress
+  const updateTaskProgress = useCallback((progress: number, task: Task | null) => {
+    if (!task) return;
+    setTask({
+      ...task,
+      progress
+    });
+  }, []);
+
   // Set task state from taskData when it changes
   useEffect(() => {
     if (taskData) {
@@ -391,10 +400,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 initialData={task.savedFormData}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
-                  setTask(prevTask => ({
-                    ...prevTask,
-                    progress: progress
-                  }));
+                  updateTaskProgress(progress, task);
                   
                   console.log('[TaskPage] Form progress updated:', progress);
                   
@@ -427,11 +433,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                   .catch(error => {
                     console.error('[TaskPage] Failed to update task progress:', error);
                     
-                    // Revert local state on error
-                    setTask(prevTask => ({
-                      ...prevTask,
-                      progress: task.progress // Revert to original progress
-                    }));
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
                   });
                 }}
                 onSubmit={(formData) => {
@@ -548,10 +553,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 taskStatus={task.status}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
-                  setTask(prevTask => ({
-                    ...prevTask,
-                    progress: progress
-                  }));
+                  updateTaskProgress(progress, task);
                   
                   console.log('[TaskPage] Security Form progress updated:', progress);
                   
@@ -584,11 +586,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                   .catch(error => {
                     console.error('[TaskPage] Failed to update task progress:', error);
                     
-                    // Revert local state on error
-                    setTask(prevTask => ({
-                      ...prevTask,
-                      progress: task.progress // Revert to original progress
-                    }));
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
                   });
                 }}
                 onSubmit={(formData) => {
@@ -717,10 +718,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
-                  setTask(prevTask => ({
-                    ...prevTask,
-                    progress: progress
-                  }));
+                  updateTaskProgress(progress, task);
                   
                   console.log('[TaskPage] Card Form progress updated:', progress);
                   
@@ -753,11 +751,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                   .catch(error => {
                     console.error('[TaskPage] Failed to update task progress:', error);
                     
-                    // Revert local state on error
-                    setTask(prevTask => ({
-                      ...prevTask,
-                      progress: task.progress // Revert to original progress
-                    }));
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
                   });
                 }}
                 onSubmit={(formData) => {
