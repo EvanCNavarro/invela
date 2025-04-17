@@ -41,7 +41,7 @@ const PRODUCTION_CONFIG: LoggingConfig = {
   formDataManager: {
     debug: false,
     fieldUpdates: false,
-    dataSaving: true,
+    dataSaving: false,  // Disabled to reduce console noise
     serverSync: false,
     validationErrors: true
   },
@@ -51,40 +51,40 @@ const PRODUCTION_CONFIG: LoggingConfig = {
     progressTracking: false
   },
   performance: {
-    metrics: true,
+    metrics: false,    // Disabled to reduce console noise
     timeouts: false,
     rendering: false
   },
   general: {
     debug: false,
-    info: true,
+    info: false,       // Disabled to reduce console noise
     warn: true
   },
   alwaysShowErrors: true
 };
 
-// Enhanced logging for development
+// Reduced logging for development to improve performance
 const DEVELOPMENT_CONFIG: LoggingConfig = {
   formDataManager: {
-    debug: true,
-    fieldUpdates: true,
-    dataSaving: true,
-    serverSync: true,
+    debug: false,      // Disabled to reduce console noise
+    fieldUpdates: false, // Disabled to reduce console noise
+    dataSaving: false,  // Disabled to reduce console noise
+    serverSync: false,  // Disabled to reduce console noise
     validationErrors: true
   },
   uiComponents: {
-    navigation: true,
-    rendering: false, // Set to false to reduce noise from render operations
-    progressTracking: true
+    navigation: false,  // Disabled to reduce console noise
+    rendering: false,   // Disabled to reduce console noise
+    progressTracking: false // Disabled to reduce console noise
   },
   performance: {
-    metrics: true,
-    timeouts: true,
-    rendering: true
+    metrics: true,      // Keep this enabled to monitor performance
+    timeouts: false,    // Disabled to reduce console noise
+    rendering: false    // Disabled to reduce console noise
   },
   general: {
-    debug: true,
-    info: true,
+    debug: false,      // Disabled to reduce console noise
+    info: false,       // Disabled to reduce console noise
     warn: true
   },
   alwaysShowErrors: true
