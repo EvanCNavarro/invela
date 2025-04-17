@@ -772,13 +772,19 @@ router.get("/api/files/:id/download", async (req, res) => {
       // Get company name from file metadata or use a default
       const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
       
+      // Extract question number from file metadata if available
+      const questionNumber = (fileRecord.metadata && fileRecord.metadata.questionNumber) 
+        ? Number(fileRecord.metadata.questionNumber) 
+        : undefined;
+        
       // Create standardized filename
       const standardizedFilename = FileCreationService.generateStandardFileName(
         taskType, 
         taskId, 
         companyName,
         '1.0',
-        'csv'
+        'csv',
+        questionNumber
       );
       
       res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
@@ -815,13 +821,19 @@ router.get("/api/files/:id/download", async (req, res) => {
       // Get file extension
       const fileExt = path.extname(fileRecord.name).replace('.', '') || 'pdf';
       
+      // Extract question number from file metadata if available
+      const docQuestionNumber = (fileRecord.metadata && fileRecord.metadata.questionNumber) 
+        ? Number(fileRecord.metadata.questionNumber) 
+        : undefined;
+      
       // Create standardized filename
       const standardizedFilename = FileCreationService.generateStandardFileName(
         taskType, 
         taskId, 
         companyName,
         '1.0',
-        fileExt
+        fileExt,
+        docQuestionNumber
       );
       
       console.log('[Files] Using standardized filename for download:', standardizedFilename);

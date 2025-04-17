@@ -28,14 +28,15 @@ export interface FileCreationResult {
 
 export class FileCreationService {
   /**
-   * Generate a standardized filename with format: TaskType_TaskID_CompanyName_Date_Time_Version
+   * Generate a standardized filename with format: TaskType_TaskID_QuestionNumber_CompanyName_Date_Time_Version
    */
   static generateStandardFileName(
     taskType: string, 
     taskId: number, 
     companyName: string = 'Company',
     version: string = '1.0',
-    extension: string = 'csv'
+    extension: string = 'csv',
+    questionNumber?: number
   ): string {
     const now = new Date();
     const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -44,7 +45,10 @@ export class FileCreationService {
     // Clean company name (remove spaces, special characters)
     const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
     
-    return `${taskType}_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v${version}.${extension}`;
+    // Include question number if provided
+    const questionPart = questionNumber ? `_Q${questionNumber}` : '';
+    
+    return `${taskType}_${taskId}${questionPart}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v${version}.${extension}`;
   }
   
   /**
