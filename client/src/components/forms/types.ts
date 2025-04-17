@@ -101,4 +101,20 @@ export interface FormSection {
    * Additional section metadata
    */
   metadata?: Record<string, any>;
+  
+  /**
+   * UI state and optimization metadata
+   * Used for progressive loading and optimized rendering
+   */
+  meta?: {
+    isLoaded?: boolean;
+    isLoading?: boolean;
+    priority?: number;
+    [key: string]: any;
+  };
+  
+  /**
+   * Whether the section is collapsed in the UI
+   */
+  collapsed?: boolean;
 }
