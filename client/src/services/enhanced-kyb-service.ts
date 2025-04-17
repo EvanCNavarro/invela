@@ -44,10 +44,13 @@ export class EnhancedKybFormService implements FormServiceInterface {
   
   private saveProgressTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSavedData: string = '';
+  private logger = getLogger('Enhanced KYB Service');
   
   private static fieldsCache: Record<number, KybField[]> = {};
   
-  constructor() {}
+  constructor() {
+    this.logger.info('Enhanced KYB Form Service initialized with timestamp tracking');
+  }
   
   /**
    * Initialize the KYB form service
