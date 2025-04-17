@@ -19,13 +19,15 @@ import VirtualizedRenderingDemo from '@/components/dev/VirtualizedRenderingDemo'
 import ProgressiveLoadingDemo from '@/components/dev/ProgressiveLoadingDemo';
 import BatchUpdateDebugger from '@/components/dev/BatchUpdateDebugger';
 import OptimizationToolsDemo from '@/components/dev/OptimizationToolsDemo';
+import OptimizationTest from '@/components/dev/OptimizationTest';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 enum DemoTabs {
   VIRTUALIZED = 'virtualized',
   PROGRESSIVE = 'progressive',
   BATCHED = 'batched',
-  OPTIMIZATION = 'optimization'
+  OPTIMIZATION = 'optimization',
+  TEST = 'test'
 }
 
 const FormPerformancePage: React.FC = () => {
@@ -47,7 +49,7 @@ const FormPerformancePage: React.FC = () => {
         onValueChange={(value) => setActiveTab(value as DemoTabs)}
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-4 gap-2">
+        <TabsList className="grid grid-cols-5 gap-2">
           <TabsTrigger value={DemoTabs.VIRTUALIZED}>
             Virtualized Rendering
           </TabsTrigger>
@@ -59,6 +61,9 @@ const FormPerformancePage: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value={DemoTabs.OPTIMIZATION}>
             Optimization Tools
+          </TabsTrigger>
+          <TabsTrigger value={DemoTabs.TEST}>
+            Performance Test
           </TabsTrigger>
         </TabsList>
 
@@ -76,6 +81,10 @@ const FormPerformancePage: React.FC = () => {
 
         <TabsContent value={DemoTabs.OPTIMIZATION} className="bg-white rounded-lg shadow p-4 border">
           <OptimizationToolsDemo />
+        </TabsContent>
+        
+        <TabsContent value={DemoTabs.TEST} className="bg-white rounded-lg shadow p-4 border">
+          <OptimizationTest />
         </TabsContent>
       </Tabs>
 
