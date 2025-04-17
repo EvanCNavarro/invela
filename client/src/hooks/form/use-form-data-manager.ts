@@ -366,48 +366,20 @@ export function useFormDataManager({
         if (OptimizationFeatures.DEBOUNCED_UPDATES && !requiresImmediateSave) {
           logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Using debounced updates for field ${name}`);
           
-          // Clear previous timer
-          if (saveTimerRef.current) {
-            clearTimeout(saveTimerRef.current);
-            saveTimerRef.current = null;
-          }
-          
           // Queue the update in the batch updater
           FormBatchUpdater.queueUpdate(name, normalizedValue, {
             sectionId: fieldSection,
             immediate: requiresImmediateSave
           });
           
-          // Setup batch updater callback if not already configured
-          if (!fieldInfo?.batchUpdaterInitialized) {
-            // Mark that we've initialized the batch updater for this field
-            if (fieldInfo) fieldInfo.batchUpdaterInitialized = true;
-            
-            // Set up the batch updater to process updates
-            FormBatchUpdater.onUpdate((fields, timestamps) => {
-              logger.info(`[BATCH UPDATER] Processing batch with ${Object.keys(fields).length} fields`);
-              
-              // Update form service with all fields in the batch
-              Object.entries(fields).forEach(([key, value]) => {
-                formService.updateFormData(key, value, taskId);
-              });
-              
-              // Save all changes at once
-              saveProgress()
-                .then(result => {
-                  logger.info(`[BATCH UPDATER] Batch save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
-                })
-                .catch(err => {
-                  logger.error(`[BATCH UPDATER] Batch save failed:`, err);
-                });
-            });
-          }
+          // No need to manage our own setTimeout - BatchUpdateManager handles this internally
+          // The batch will be automatically processed after the configured delay
           
-          // Set timer to save after debounce period (if no more updates occur)
-          saveTimerRef.current = setTimeout(() => {
-            logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Debounce timer expired, flushing batch updates`);
-            FormBatchUpdater.flush();
-          }, 500); // 500ms debounce for good responsiveness
+          // Log that we're using the batch updater's built-in debouncing
+          logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Field ${name} queued in batch, will process after ${FormBatchUpdater.delay}ms if no more updates`);
+          
+          // We don't need to register the batch updater listener for each field
+          // We'll do that once in useEffect to avoid multiple registrations
         } else {
           // Use immediate saves for critical fields or when debounced updates are disabled
           logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Using immediate save for field ${name}`);
@@ -543,7 +515,36 @@ export function useFormDataManager({
   // This is critical for proper circular dependency handling
   useEffect(() => {
     updateFieldRef.current = updateField;
-  }, [updateField]);
+    
+    // Set up the batch updater listener once at component initialization
+    if (formService && taskId) {
+      // Set up the batch updater to process updates - only register this once
+      const unsubscribe = FormBatchUpdater.onUpdate((fields, timestamps) => {
+        logger.info(`[BATCH UPDATER] Processing batch with ${Object.keys(fields).length} fields`);
+        
+        // Update form service with all fields in the batch
+        Object.entries(fields).forEach(([key, value]) => {
+          formService.updateFormData(key, value, taskId);
+        });
+        
+        // Save all changes at once
+        saveProgress()
+          .then(result => {
+            logger.info(`[BATCH UPDATER] Batch save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+          })
+          .catch(err => {
+            logger.error(`[BATCH UPDATER] Batch save failed:`, err);
+          });
+      });
+      
+      // Return cleanup function that removes the listener
+      return () => {
+        if (unsubscribe && typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      };
+    }
+  }, [updateField, formService, taskId, saveProgress]);
 
   // Effect to ensure data is saved when component unmounts
   useEffect(() => {
