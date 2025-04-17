@@ -33,16 +33,49 @@ export async function reconcileTaskProgress(
       return;
     }
 
-    // 2. Skip reconciliation for terminal states unless forced
+    // 2. Skip reconciliation for terminal states, NEVER allow recalculation for submitted forms
     const terminalStates = [TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED];
-    if (!forceUpdate && terminalStates.includes(task.status as TaskStatus)) {
+    
+    // Check metadata for submission date - if it exists, this form has been submitted
+    const hasBeenSubmitted = task.metadata?.submissionDate !== undefined;
+    
+    if (terminalStates.includes(task.status as TaskStatus) || hasBeenSubmitted) {
       if (debug) {
-        console.log(`${logPrefix} Skipping task in terminal state:`, {
+        console.log(`${logPrefix} Skipping task in terminal/submitted state:`, {
           taskId,
           status: task.status,
-          terminalState: true
+          hasSubmissionDate: hasBeenSubmitted,
+          submissionDate: task.metadata?.submissionDate,
+          terminalState: terminalStates.includes(task.status as TaskStatus)
         });
       }
+      
+      // If task is submitted but status doesn't reflect that, fix it
+      if (hasBeenSubmitted && !terminalStates.includes(task.status as TaskStatus)) {
+        console.log(`${logPrefix} Task has been submitted but status is incorrect. Fixing:`, {
+          taskId,
+          currentStatus: task.status,
+          correctStatus: TaskStatus.SUBMITTED
+        });
+        
+        // Force task to submitted status with 100% progress
+        await db.update(tasks)
+          .set({
+            status: TaskStatus.SUBMITTED,
+            progress: 100,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+          
+        // Broadcast the corrected status
+        broadcastProgressUpdate(
+          taskId,
+          100,
+          TaskStatus.SUBMITTED,
+          task.metadata || {}
+        );
+      }
+      
       return;
     }
     
