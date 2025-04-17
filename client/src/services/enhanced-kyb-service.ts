@@ -262,10 +262,63 @@ export class EnhancedKybFormService implements FormServiceInterface {
    * Group KYB fields by their section name
    */
   groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
+    // Standard section names we want to use - use a comprehensive approach
+    const sectionMap: Record<string, string> = {
+      // Company Profile variations - IMPORTANT: Match the exact DB value!
+      'companyprofile': 'Company Profile',
+      'company_profile': 'Company Profile',
+      'company profile': 'Company Profile',
+      'companyProfile': 'Company Profile',
+      
+      // Governance & Leadership variations
+      'governanceleadership': 'Governance & Leadership',
+      'governance_leadership': 'Governance & Leadership',
+      'governance leadership': 'Governance & Leadership',
+      'governanceLeadership': 'Governance & Leadership',
+      'governance': 'Governance & Leadership',
+      'leadership': 'Governance & Leadership',
+      
+      // Financial Profile variations
+      'financialprofile': 'Financial Profile',
+      'financial_profile': 'Financial Profile',
+      'financial profile': 'Financial Profile',
+      'financialProfile': 'Financial Profile',
+      'financial': 'Financial Profile',
+      
+      // Operations & Compliance variations
+      'operationscompliance': 'Operations & Compliance',
+      'operations_compliance': 'Operations & Compliance',
+      'operations compliance': 'Operations & Compliance',
+      'operationsCompliance': 'Operations & Compliance',
+      'operations': 'Operations & Compliance',
+      'compliance': 'Operations & Compliance'
+    };
+    
     const groups: Record<string, KybField[]> = {};
     
+    // Helper function to normalize section name
+    const normalizeSection = (section: string): string => {
+      // Try exact match first
+      if (sectionMap[section]) {
+        return sectionMap[section];
+      }
+      
+      // Try case-insensitive match
+      const lowerSection = section.toLowerCase();
+      if (sectionMap[lowerSection]) {
+        return sectionMap[lowerSection];
+      }
+      
+      // Return the original if no mapping exists
+      return section;
+    };
+    
     fields.forEach(field => {
-      const group = field.group || 'Other';
+      const rawGroup = field.group || 'Other';
+      const group = normalizeSection(rawGroup);
+      
+      this.logger.debug(`Normalized section name: "${rawGroup}" → "${group}"`);
+      
       if (!groups[group]) {
         groups[group] = [];
       }
@@ -275,6 +328,12 @@ export class EnhancedKybFormService implements FormServiceInterface {
     // Sort fields within each group by their order
     Object.keys(groups).forEach(group => {
       groups[group].sort((a, b) => a.order - b.order);
+    });
+    
+    // Debug: show what sections we found
+    this.logger.info(`Normalized sections (${Object.keys(groups).length}): ${Object.keys(groups).join(', ')}`);
+    Object.entries(groups).forEach(([section, sectionFields]) => {
+      this.logger.info(`  - ${section}: ${sectionFields.length} fields`);
     });
     
     return groups;
