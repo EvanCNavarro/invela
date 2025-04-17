@@ -4,6 +4,25 @@ import { FormField, FormSection } from '../components/forms/types';
 import { calculateTaskStatusUtil } from '../utils/form-utils';
 import getLogger from '../utils/logger';
 
+// Import a function to convert database field types to component types
+function getFieldComponentType(fieldType: string): string {
+  const typeMap: Record<string, string> = {
+    'text': 'text',
+    'textarea': 'textarea',
+    'date': 'date',
+    'select': 'select',
+    'radio': 'radio',
+    'checkbox': 'checkbox',
+    'email': 'email',
+    'tel': 'tel',
+    'number': 'number',
+    'file': 'file',
+    'boolean': 'boolean'
+  };
+  
+  return typeMap[fieldType] || fieldType || 'text'; // Default to text if type not found
+}
+
 /**
  * Represents a KYB field from the database
  */
@@ -265,16 +284,22 @@ export class EnhancedKybFormService implements FormServiceInterface {
    * Convert KYB field to form field format
    */
   convertToFormField(field: KybField, sectionId?: string): FormField {
+    this.logger.debug(`Converting field "${field.field_key}" to form field format. Section: ${sectionId || 'unknown'}`);
+    
     return {
+      id: field.id,
       key: field.field_key,
       label: field.display_name,
-      type: field.field_type,
-      question: field.question,
+      type: getFieldComponentType(field.field_type),
       required: field.required,
+      question: field.question,
       order: field.order,
-      sectionId: sectionId,
       validation: field.validation_rules,
-      help: field.help_text || undefined
+      helpText: field.help_text,
+      placeholder: '',
+      value: this.timestampedFormData.values[field.field_key] || '',
+      section: sectionId, // Assign the section ID to the field
+      sectionId: sectionId // Also keep this for compatibility
     };
   }
   
