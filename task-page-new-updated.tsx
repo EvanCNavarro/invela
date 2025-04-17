@@ -71,6 +71,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [displayName, setDisplayName] = useState('');
   const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [task, setTask] = useState<Task | null>(null);
   
   // Parse taskSlug into a numeric ID if possible
   const parsedId = parseInt(params.taskSlug);
@@ -134,8 +135,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
   }, [fileId, taskContentType, toast]);
   
-  // Fetch task data
-  const { data: task, isLoading, error } = useQuery<Task>({
+  // Fetch task data and keep local state to allow updates
+  const { data: taskData, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, taskId, params.taskSlug],
     queryFn: async () => {
       try {
@@ -253,6 +254,13 @@ export default function TaskPage({ params }: TaskPageProps) {
     };
   }, [extractCompanyNameFromTitle]);
   
+  // Set task state from taskData when it changes
+  useEffect(() => {
+    if (taskData) {
+      setTask(taskData);
+    }
+  }, [taskData]);
+
   // Process task data once loaded - using useEffect properly
   useEffect(() => {
     if (!task) return;
@@ -382,7 +390,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                 taskType="kyb"
                 initialData={task.savedFormData}
                 onProgress={(progress) => {
-                  // Update progress in the task if needed
+                  // Update local state immediately for responsive UI
+                  setTask(prevTask => ({
+                    ...prevTask,
+                    progress: progress
+                  }));
+                  
                   console.log('[TaskPage] Form progress updated:', progress);
                   
                   // Send the progress to the server to update the task
@@ -397,12 +410,28 @@ export default function TaskPage({ params }: TaskPageProps) {
                       forceStatusUpdate: true // Force the task status to update
                     })
                   })
-                  .then(response => response.json())
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
                   .then(result => {
                     console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
                   })
                   .catch(error => {
                     console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error
+                    setTask(prevTask => ({
+                      ...prevTask,
+                      progress: task.progress // Revert to original progress
+                    }));
                   });
                 }}
                 onSubmit={(formData) => {
@@ -518,7 +547,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                 savedFormData={task.savedFormData}
                 taskStatus={task.status}
                 onProgress={(progress) => {
-                  // Update progress in the task if needed
+                  // Update local state immediately for responsive UI
+                  setTask(prevTask => ({
+                    ...prevTask,
+                    progress: progress
+                  }));
+                  
                   console.log('[TaskPage] Security Form progress updated:', progress);
                   
                   // Send the progress to the server to update the task
@@ -533,12 +567,28 @@ export default function TaskPage({ params }: TaskPageProps) {
                       forceStatusUpdate: true // Force the task status to update
                     })
                   })
-                  .then(response => response.json())
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
                   .then(result => {
                     console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
                   })
                   .catch(error => {
                     console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error
+                    setTask(prevTask => ({
+                      ...prevTask,
+                      progress: task.progress // Revert to original progress
+                    }));
                   });
                 }}
                 onSubmit={(formData) => {
@@ -666,7 +716,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                   description: task.metadata?.company?.description || undefined
                 }}
                 onProgress={(progress) => {
-                  // Update progress in the task if needed
+                  // Update local state immediately for responsive UI
+                  setTask(prevTask => ({
+                    ...prevTask,
+                    progress: progress
+                  }));
+                  
                   console.log('[TaskPage] Card Form progress updated:', progress);
                   
                   // Send the progress to the server to update the task
@@ -681,12 +736,28 @@ export default function TaskPage({ params }: TaskPageProps) {
                       forceStatusUpdate: true // Force the task status to update
                     })
                   })
-                  .then(response => response.json())
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
                   .then(result => {
                     console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
                   })
                   .catch(error => {
                     console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error
+                    setTask(prevTask => ({
+                      ...prevTask,
+                      progress: task.progress // Revert to original progress
+                    }));
                   });
                 }}
                 onSubmit={(formData) => {
