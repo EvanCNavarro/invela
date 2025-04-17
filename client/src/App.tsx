@@ -33,6 +33,7 @@ import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import TestFormUpdate from "./test-form-update";
 import FormDbTestPage from "./form-db-test";
+import FormPerformancePage from "@/pages/FormPerformancePage";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -283,6 +284,11 @@ function Router() {
         {/* Form DB Test Page - For Testing Database Persistence */}
         <Route path="/form-db-test">
           <FormDbTestPage />
+        </Route>
+        
+        {/* Form Performance Testing Page - For Optimizing Large Forms */}
+        <Route path="/form-performance">
+          <FormPerformancePage />
         </Route>
 
         <Route component={NotFound} />
