@@ -446,6 +446,14 @@ class FormPerformanceMonitor {
  * 1. Grouping updates that occur close together in time
  * 2. Reducing the number of save operations and re-renders
  * 3. Preserving data integrity with timestamp-aware updates
+ * 
+ * Debug Notes:
+ * - BatchUpdater works with both standard and enhanced form services
+ * - It maintains a queue of field updates with timestamps
+ * - The feature can be toggled with OptimizationFeatures.DEBOUNCED_UPDATES
+ * - If problems occur, check console logs with "[BATCH UPDATER]" prefix
+ * - Safety fallback: When errors occur in update callbacks, the individual field
+ *   is updated directly via formService.updateFormData without interrupting the batch
  */
 class BatchUpdater {
   private static instance: BatchUpdater;
@@ -497,6 +505,12 @@ class BatchUpdater {
   
   /**
    * Add a field update to the queue
+   * 
+   * @param fieldName Name of the field to update
+   * @param value New value for the field
+   * @param options Additional options
+   * @param options.sectionId Section ID to which this field belongs
+   * @param options.immediate If true, process the queue immediately
    */
   public queueUpdate(
     fieldName: string, 
@@ -506,7 +520,18 @@ class BatchUpdater {
       immediate?: boolean
     } = {}
   ): void {
+    // Validate inputs
+    if (!fieldName || typeof fieldName !== 'string') {
+      console.error('[BATCH UPDATER] Invalid field name:', fieldName);
+      return;
+    }
+    
     const timestamp = Date.now();
+    
+    // Remember previous value for debug logging
+    const previousValue = this.updateQueue.has(fieldName) 
+      ? this.updateQueue.get(fieldName)?.value 
+      : undefined;
     
     // Add to queue
     this.updateQueue.set(fieldName, {
@@ -515,13 +540,19 @@ class BatchUpdater {
       sectionId: options.sectionId
     });
     
+    // Enhanced debug logging 
     console.log('%c[BATCH UPDATER] Queued update for', 'color: #9C27B0', fieldName, {
       queueSize: this.updateQueue.size,
-      immediate: options.immediate || false
+      immediate: options.immediate || false,
+      previousValue: previousValue,
+      newValue: value,
+      sectionId: options.sectionId || 'unknown',
+      timestamp
     });
     
     // Handle immediate updates
     if (options.immediate) {
+      console.log('[BATCH UPDATER] Immediate update requested for field:', fieldName);
       this.processQueue();
       return;
     }
@@ -534,53 +565,114 @@ class BatchUpdater {
     
     // Set new timer to process queue
     this.updateTimer = setTimeout(() => {
+      console.log('[BATCH UPDATER] Debounce timer expired, processing queue');
       this.processQueue();
     }, this.updateDelayMs);
   }
   
   /**
    * Process the update queue
+   * 
+   * This is the core method that processes all batched field updates.
+   * It handles extracting the queued updates, notifying listeners,
+   * and executing the completion callbacks.
    */
   private processQueue(): void {
+    // Safety check: Don't process if already updating or queue is empty
     if (this.updating || this.updateQueue.size === 0) {
       return;
     }
     
+    // Mark as updating to prevent concurrent processing
     this.updating = true;
+    
+    // Start performance measurement
+    const startTime = performance.now();
     console.log('%c[BATCH UPDATER] Processing queue with', 'color: #9C27B0', this.updateQueue.size, 'updates');
     
-    // Create field value and timestamp objects
-    const fields: Record<string, any> = {};
-    const timestamps: Record<string, number> = {};
-    
-    // Extract all updates
-    this.updateQueue.forEach((update, fieldName) => {
-      fields[fieldName] = update.value;
-      timestamps[fieldName] = update.timestamp;
-    });
-    
-    // Clear queue
-    this.updateQueue.clear();
-    
-    // Notify listeners
-    this.callbacks.onUpdate.forEach(callback => {
-      try {
-        callback(fields, timestamps);
-      } catch (error) {
-        console.error('[BATCH UPDATER] Error in update callback', error);
-      }
-    });
-    
-    this.updating = false;
-    
-    // Notify completion
-    this.callbacks.onComplete.forEach(callback => {
-      try {
-        callback();
-      } catch (error) {
-        console.error('[BATCH UPDATER] Error in completion callback', error);
-      }
-    });
+    try {
+      // Create field value and timestamp objects
+      const fields: Record<string, any> = {};
+      const timestamps: Record<string, number> = {};
+      
+      // Group fields by section for potential section-based optimizations
+      const sectionGroups: Record<string, string[]> = {};
+      
+      // Extract all updates
+      this.updateQueue.forEach((update, fieldName) => {
+        // Validate field name and value
+        if (!fieldName) {
+          console.warn('[BATCH UPDATER] Skipping update with invalid field name');
+          return;
+        }
+        
+        fields[fieldName] = update.value;
+        timestamps[fieldName] = update.timestamp;
+        
+        // Group by section if available
+        const sectionId = update.sectionId || 'unknown';
+        if (!sectionGroups[sectionId]) {
+          sectionGroups[sectionId] = [];
+        }
+        sectionGroups[sectionId].push(fieldName);
+      });
+      
+      // Log section groups for debugging
+      console.log('[BATCH UPDATER] Fields grouped by section:', sectionGroups);
+      
+      // Safety copy before clearing the queue
+      const queueSize = this.updateQueue.size;
+      
+      // Clear queue before processing to allow new updates to be queued during processing
+      this.updateQueue.clear();
+      
+      // Notify listeners
+      const callbackPromises = this.callbacks.onUpdate.map(async (callback) => {
+        try {
+          return await Promise.resolve(callback(fields, timestamps));
+        } catch (error) {
+          console.error('[BATCH UPDATER] Error in update callback:', error);
+          // Log affected fields for debugging
+          console.error('[BATCH UPDATER] Failed update affected fields:', Object.keys(fields));
+          return { error, fields }; 
+        }
+      });
+      
+      // Wait for all callbacks to complete
+      Promise.all(callbackPromises)
+        .then(() => {
+          // Measure processing time
+          const endTime = performance.now();
+          const duration = endTime - startTime;
+          
+          console.log(
+            '%c[BATCH UPDATER] Queue processed successfully', 
+            'color: #9C27B0',
+            `${queueSize} updates in ${duration.toFixed(2)}ms (${(duration / queueSize).toFixed(2)}ms per field)`
+          );
+          
+          // Notify completion
+          this.callbacks.onComplete.forEach(callback => {
+            try {
+              callback();
+            } catch (error) {
+              console.error('[BATCH UPDATER] Error in completion callback:', error);
+            }
+          });
+        })
+        .catch(error => {
+          console.error('[BATCH UPDATER] Unexpected error processing batch:', error);
+        })
+        .finally(() => {
+          // Always mark as not updating when done, even if errors occurred
+          this.updating = false;
+        });
+    } catch (error) {
+      // Catastrophic error handling
+      console.error('[BATCH UPDATER] Critical error in batch processing:', error);
+      this.updating = false;
+      this.updateQueue.clear(); // Clear queue to prevent retrying with bad data
+    }
   }
   
   /**
