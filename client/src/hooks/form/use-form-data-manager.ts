@@ -295,11 +295,9 @@ export function useFormDataManager({
           normalizedValue = '';
         }
         
-        // Only trim on explicit save operations, never during typing
-        // This ensures spaces are preserved in the middle of quick typing
-        if (isSaving && !isEffectivelyEmpty) {
-          normalizedValue = value.trim();
-        }
+        // Preserve spaces - no whitespace trimming
+        // This ensures all spaces are preserved during typing and saving
+        normalizedValue = value;
         
         // Convert "null" and "undefined" strings to empty strings
         if (normalizedValue === 'null' || normalizedValue === 'undefined') {
