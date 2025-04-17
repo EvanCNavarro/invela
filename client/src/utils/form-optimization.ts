@@ -1070,8 +1070,11 @@ class ProgressiveLoaderManager {
    * This is the core of the progressive loading algorithm
    */
   public shouldIncludeSection(sectionId: string): boolean {
-    if (!OptimizationFeatures.PROGRESSIVE_LOADING) {
-      return true; // Include all sections if progressive loading is disabled
+    // CRITICAL FIX: Temporarily disable progressive section filtering on live forms
+    // to avoid "No fields found in this section" errors
+    // Only use progressive loading in the testing environment
+    if (!OptimizationFeatures.PROGRESSIVE_LOADING || window.location.pathname.includes('/task/')) {
+      return true; // Include all sections if disabled or on actual form pages
     }
     
     // Always include the active section
@@ -1086,6 +1089,12 @@ class ProgressiveLoaderManager {
     
     // Include sections currently being loaded
     if (this.loadingSections.has(sectionId)) {
+      return true;
+    }
+    
+    // For Financial Profile section, temporarily always include it
+    // This ensures backward compatibility until we fully implement progressive loading
+    if (sectionId && sectionId.includes('Financial')) {
       return true;
     }
     
