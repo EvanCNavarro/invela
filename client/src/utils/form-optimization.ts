@@ -349,18 +349,19 @@ class BatchUpdateManagerImpl<T = any> {
     this.queue.set(key, value);
     this.timestamps[key] = Date.now();
     
-    // Reset timeout
-    if (this.timeout !== null) {
-      clearTimeout(this.timeout);
-      this.timeout = null;
-    }
-    
     // Process immediately if requested
     if (immediate) {
       this.processQueue();
     } else {
-      // Otherwise, set a timeout to process after the delay
-      this.timeout = window.setTimeout(() => this.processQueue(), this._delay);
+      // Only set a new timeout if one doesn't exist
+      // This ensures we accumulate as many updates as possible
+      // before processing, which is more efficient
+      if (this.timeout === null) {
+        this.timeout = window.setTimeout(() => this.processQueue(), this._delay);
+      }
+      
+      // Don't reset timeout for each update - let it accumulate updates
+      // until the timeout fires
     }
     
     performanceMonitor.endTimer('batchUpdate_add');
@@ -384,9 +385,18 @@ class BatchUpdateManagerImpl<T = any> {
   /**
    * Register a listener for update events
    * @param listener Callback function that receives updates and optional timestamps
+   * @returns A function that unsubscribes the listener when called
    */
-  onUpdate(listener: (updates: Record<string, T>, timestamps?: Record<string, number>) => void): void {
+  onUpdate(listener: (updates: Record<string, T>, timestamps?: Record<string, number>) => void): () => void {
     this.updateListeners.push(listener);
+    
+    // Return an unsubscribe function
+    return () => {
+      const index = this.updateListeners.indexOf(listener);
+      if (index !== -1) {
+        this.updateListeners.splice(index, 1);
+      }
+    };
   }
   
   /**
