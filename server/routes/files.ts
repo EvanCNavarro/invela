@@ -721,13 +721,42 @@ router.get("/api/files/:id/download", async (req, res) => {
         // Parse and format the CSV content to include question numbers
         console.log('[Files] Processing CSV content from database');
         try {
-          // Get original CSV content
-          let fileContent = fileRecord.path;
+          // Get original CSV content from database field
+          let fileContent = fileRecord.path.replace('database:', '');
           
-          // Parse the existing CSV content
-          const rows = fileContent.split('\n').map(line => line.split(','));
-          const headers = rows[0];
-          const dataRows = rows.slice(1);
+          console.log('[Files] CSV file content length:', fileContent.length);
+          console.log('[Files] CSV first 50 chars:', fileContent.substring(0, 50));
+          
+          // Parse the existing CSV content - handles quotes and commas properly
+          const parseCsvRow = (row) => {
+            const result = [];
+            let inQuotes = false;
+            let currentValue = '';
+            
+            for (let i = 0; i < row.length; i++) {
+              const char = row[i];
+              
+              if (char === '"') {
+                inQuotes = !inQuotes;
+              } else if (char === ',' && !inQuotes) {
+                result.push(currentValue);
+                currentValue = '';
+              } else {
+                currentValue += char;
+              }
+            }
+            
+            // Add the last value
+            result.push(currentValue);
+            return result;
+          };
+          
+          const rows = fileContent.split('\n');
+          const headers = parseCsvRow(rows[0]);
+          const dataRows = rows.slice(1).map(row => parseCsvRow(row)).filter(row => row.length > 1);
+          
+          console.log('[Files] Found headers:', headers);
+          console.log('[Files] Found data rows:', dataRows.length);
           
           // Check if Question Number column already exists
           const hasQuestionNumberColumn = headers.includes('Question Number');
@@ -743,16 +772,27 @@ router.get("/api/files/:id/download", async (req, res) => {
               row.unshift(`${index + 1}`);
             });
             
-            // Rebuild the CSV content
-            fileContent = [headers, ...dataRows].map(row => row.join(',')).join('\n');
+            // Rebuild the CSV content with proper CSV escaping
+            const escapeCell = (cell) => {
+              if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+                return `"${cell.replace(/"/g, '""')}"`;
+              }
+              return cell;
+            };
+            
+            fileContent = [
+              headers.map(h => escapeCell(h)).join(','),
+              ...dataRows.map(row => row.map(cell => escapeCell(cell)).join(','))
+            ].join('\n');
           }
           
           console.log('[Files] Successfully processed CSV with question numbers');
           return res.send(fileContent);
         } catch (processError) {
           console.error('[Files] Error processing CSV file:', processError);
+          console.error(processError.stack);
           // If there's an error in processing, send the original content
-          return res.send(fileRecord.path);
+          return res.send(fileRecord.path.replace('database:', ''));
         }
       }
       
