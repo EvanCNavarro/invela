@@ -1,16 +1,15 @@
 /**
- * Form Types
+ * Form component types
  * 
- * This file contains types and interfaces used across form components
+ * This file defines the shared types used across form components in the application,
+ * providing a consistent type system for form field definitions, values, and state.
  */
 
-// Form field option (for select, radio, checkbox groups)
 export interface FormFieldOption {
   label: string;
   value: string;
 }
 
-// Base form field definition
 export interface FormField {
   name: string;
   label: string;
@@ -49,7 +48,6 @@ export interface FormField {
   category?: string;
 }
 
-// Form section definition
 export interface FormSection {
   id: string;
   title: string;
@@ -58,12 +56,10 @@ export interface FormSection {
   fields: FormField[];
 }
 
-// Form validation errors
 export interface FormErrors {
   [fieldName: string]: string;
 }
 
-// Form state
 export interface FormState {
   values: Record<string, any>;
   errors: FormErrors;
@@ -73,7 +69,6 @@ export interface FormState {
   isDirty: boolean;
 }
 
-// Form submission result
 export interface FormSubmitResult {
   success: boolean;
   message?: string;
@@ -81,7 +76,6 @@ export interface FormSubmitResult {
   data?: any;
 }
 
-// Form field change event
 export interface FormFieldChangeEvent {
   name: string;
   value: any;

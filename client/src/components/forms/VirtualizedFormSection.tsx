@@ -13,9 +13,9 @@
  * - Fallback to standard rendering when optimization is disabled
  */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FormField } from '@/components/forms/types';
-import { UniversalFormField } from '@/components/forms/UniversalFormField';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { FormField } from './types';
+import UniversalFormField from './UniversalFormField';
 import { OptimizationFeatures, performanceMonitor } from '@/utils/form-optimization';
 
 interface VirtualizedFormSectionProps {
@@ -25,11 +25,13 @@ interface VirtualizedFormSectionProps {
   values: Record<string, any>;
   onChange: (name: string, value: any) => void;
   errors?: Record<string, string>;
+  disabled?: boolean;
 }
 
-// Constants for virtualization
-const DEFAULT_FIELD_HEIGHT = 65; // Average height of a form field in pixels
-const BUFFER_SIZE = 5; // Number of extra fields to render above and below visible area
+// Configuration for virtualization
+const ITEM_HEIGHT_ESTIMATE = 80; // Estimated average height of a field in pixels
+const BUFFER_SIZE = 5; // Number of items to render above and below the visible area
+const RECALCULATE_THRESHOLD = 100; // Milliseconds to throttle scroll event handling
 
 const VirtualizedFormSection: React.FC<VirtualizedFormSectionProps> = React.memo(({
   sectionId,
@@ -37,122 +39,241 @@ const VirtualizedFormSection: React.FC<VirtualizedFormSectionProps> = React.memo
   fields,
   values,
   onChange,
-  errors = {}
+  errors = {},
+  disabled = false,
 }) => {
-  // Container ref to measure the visible area
+  // Container ref to track the scroll position
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // State to track which fields are visible
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 10 });
+  // State to track the visible range of fields
+  const [visibleRange, setVisibleRange] = useState<{ start: number; end: number }>({
+    start: 0,
+    end: 10, // Initial estimate
+  });
   
-  // Total height of all fields (for scrollbar sizing)
-  const totalHeight = fields.length * DEFAULT_FIELD_HEIGHT;
+  // Store field heights for more accurate virtualization
+  const [fieldHeights, setFieldHeights] = useState<Record<string, number>>({});
+  const [estimatedTotalHeight, setEstimatedTotalHeight] = useState(0);
   
-  // Effect to measure and update visible range when scrolling
+  // Track when we last calculated the visible range to avoid excessive recalculation
+  const lastCalculation = useRef(0);
+  
+  // Fallback to standard rendering if virtualization is disabled
+  const virtualizationEnabled = OptimizationFeatures.VIRTUALIZED_RENDERING && fields.length > 20;
+
+  // Calculate the total height of all fields based on measured or estimated heights
   useEffect(() => {
-    // Skip virtualization if feature is disabled
-    if (!OptimizationFeatures.VIRTUALIZED_RENDERING) return;
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    // Function to update which fields are visible
-    const updateVisibleRange = () => {
-      performanceMonitor.startTimer('updateVisibleRange');
+    if (virtualizationEnabled) {
+      let totalHeight = 0;
       
-      const scrollTop = container.scrollTop;
-      const viewportHeight = container.clientHeight;
+      fields.forEach((field) => {
+        // Use the measured height if available, otherwise use the estimate
+        const fieldHeight = fieldHeights[field.name] || ITEM_HEIGHT_ESTIMATE;
+        totalHeight += fieldHeight;
+      });
       
-      // Calculate which fields should be visible
-      const startIndex = Math.max(0, Math.floor(scrollTop / DEFAULT_FIELD_HEIGHT) - BUFFER_SIZE);
-      const endIndex = Math.min(
-        fields.length - 1,
-        Math.ceil((scrollTop + viewportHeight) / DEFAULT_FIELD_HEIGHT) + BUFFER_SIZE
-      );
-      
-      setVisibleRange({ start: startIndex, end: endIndex });
-      
-      performanceMonitor.endTimer('updateVisibleRange');
-    };
-    
-    // Initial calculation of visible fields
-    updateVisibleRange();
-    
-    // Add scroll event listener
-    container.addEventListener('scroll', updateVisibleRange);
-    
-    // Clean up
-    return () => {
-      container.removeEventListener('scroll', updateVisibleRange);
-    };
-  }, [fields.length]);
+      setEstimatedTotalHeight(totalHeight);
+    }
+  }, [fields, fieldHeights, virtualizationEnabled]);
   
-  // Determine which fields to render
-  const visibleFields = useMemo(() => {
-    // If virtualization is disabled, render all fields
-    if (!OptimizationFeatures.VIRTUALIZED_RENDERING) {
-      return fields;
+  // Calculate the visible range of fields based on scroll position
+  const calculateVisibleRange = useCallback(() => {
+    if (!containerRef.current || !virtualizationEnabled) return;
+    
+    const now = Date.now();
+    
+    // Throttle calculations to avoid performance issues
+    if (now - lastCalculation.current < RECALCULATE_THRESHOLD) {
+      return;
     }
     
-    performanceMonitor.startTimer('filterVisibleFields');
+    // Start performance measurement
+    performanceMonitor.startTimer('updateVisibleRange');
+    
+    lastCalculation.current = now;
+    
+    const container = containerRef.current;
+    const scrollTop = container.scrollTop;
+    const clientHeight = container.clientHeight;
+    
+    let currentHeight = 0;
+    let startIndex = 0;
+    let endIndex = fields.length - 1;
+    
+    // Find the first visible field
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      const fieldHeight = fieldHeights[field.name] || ITEM_HEIGHT_ESTIMATE;
+      
+      if (currentHeight + fieldHeight > scrollTop) {
+        startIndex = Math.max(0, i - BUFFER_SIZE);
+        break;
+      }
+      
+      currentHeight += fieldHeight;
+    }
+    
+    // Find the last visible field
+    currentHeight = 0;
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      const fieldHeight = fieldHeights[field.name] || ITEM_HEIGHT_ESTIMATE;
+      
+      if (currentHeight > scrollTop + clientHeight) {
+        endIndex = Math.min(fields.length - 1, i + BUFFER_SIZE);
+        break;
+      }
+      
+      currentHeight += fieldHeight;
+    }
+    
+    // Update the visible range
+    setVisibleRange({
+      start: startIndex,
+      end: Math.min(fields.length - 1, endIndex + BUFFER_SIZE),
+    });
+    
+    // End performance measurement
+    performanceMonitor.endTimer('updateVisibleRange');
+  }, [fields, fieldHeights, virtualizationEnabled]);
+  
+  // Calculate top and bottom spacer heights
+  const spacers = useMemo(() => {
+    if (!virtualizationEnabled) {
+      return { top: 0, bottom: 0 };
+    }
+    
+    let topHeight = 0;
+    let bottomHeight = 0;
+    
+    // Calculate height of fields before the visible range
+    for (let i = 0; i < visibleRange.start; i++) {
+      if (i < fields.length) {
+        const field = fields[i];
+        topHeight += fieldHeights[field.name] || ITEM_HEIGHT_ESTIMATE;
+      }
+    }
+    
+    // Calculate height of fields after the visible range
+    for (let i = visibleRange.end + 1; i < fields.length; i++) {
+      const field = fields[i];
+      bottomHeight += fieldHeights[field.name] || ITEM_HEIGHT_ESTIMATE;
+    }
+    
+    return { top: topHeight, bottom: bottomHeight };
+  }, [fields, visibleRange, fieldHeights, virtualizationEnabled]);
+  
+  // Handle scroll events to update the visible range
+  const handleScroll = useCallback(() => {
+    if (virtualizationEnabled) {
+      calculateVisibleRange();
+    }
+  }, [calculateVisibleRange, virtualizationEnabled]);
+  
+  // Measure field heights after initial render
+  const measureFieldHeight = useCallback((fieldName: string, height: number) => {
+    setFieldHeights((prev) => {
+      // Only update if the height has changed
+      if (prev[fieldName] !== height) {
+        return { ...prev, [fieldName]: height };
+      }
+      return prev;
+    });
+  }, []);
+  
+  // Set up scroll event listener
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !virtualizationEnabled) return;
+    
+    calculateVisibleRange();
+    container.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [calculateVisibleRange, handleScroll, virtualizationEnabled]);
+  
+  // Update visible range if fields change
+  useEffect(() => {
+    if (virtualizationEnabled) {
+      calculateVisibleRange();
+    }
+  }, [calculateVisibleRange, fields, virtualizationEnabled]);
+  
+  // Field reference callback to measure heights
+  const fieldRef = useCallback(
+    (fieldName: string) => (node: HTMLElement | null) => {
+      if (node && virtualizationEnabled) {
+        measureFieldHeight(fieldName, node.getBoundingClientRect().height);
+      }
+    },
+    [measureFieldHeight, virtualizationEnabled]
+  );
+  
+  // Render field with ref for height measurement
+  const renderField = useCallback(
+    (field: FormField, index: number) => {
+      const fieldError = errors[field.name];
+      const fieldValue = values[field.name];
+      
+      return (
+        <div
+          key={field.name}
+          ref={fieldRef(field.name)}
+          className="mb-6"
+        >
+          <UniversalFormField
+            field={field}
+            value={fieldValue}
+            onChange={onChange}
+            error={fieldError}
+            disabled={disabled}
+          />
+        </div>
+      );
+    },
+    [onChange, values, errors, disabled, fieldRef]
+  );
+  
+  // Render fields or fallback to non-virtualized rendering
+  const renderFields = () => {
+    if (!virtualizationEnabled) {
+      // Fallback to standard rendering when virtualization is disabled
+      return fields.map(renderField);
+    }
     
     // Only render fields in the visible range
-    const result = fields.slice(visibleRange.start, visibleRange.end + 1);
+    const visibleFields = fields.slice(visibleRange.start, visibleRange.end + 1);
     
-    performanceMonitor.endTimer('filterVisibleFields');
-    return result;
-  }, [fields, visibleRange, OptimizationFeatures.VIRTUALIZED_RENDERING]);
-  
-  // Calculate spacer heights to maintain scroll position
-  const topSpacerHeight = visibleRange.start * DEFAULT_FIELD_HEIGHT;
-  const bottomSpacerHeight = (fields.length - visibleRange.end - 1) * DEFAULT_FIELD_HEIGHT;
-  
-  return (
-    <div className="mb-8">
-      <h3 className="text-lg font-medium mb-4">{sectionTitle}</h3>
-      
-      <div 
-        ref={containerRef}
-        className="overflow-y-auto"
-        style={{ 
-          height: '500px', // Fixed height container for scrolling
-          position: 'relative'
-        }}
-      >
-        {/* Top spacer div to maintain scroll position */}
-        {OptimizationFeatures.VIRTUALIZED_RENDERING && (
-          <div style={{ height: `${topSpacerHeight}px` }} />
+    return (
+      <>
+        {/* Top spacer to maintain scroll position */}
+        {spacers.top > 0 && (
+          <div style={{ height: spacers.top }} className="virtualizer-spacer top-spacer" />
         )}
         
         {/* Visible fields */}
-        <div className="space-y-4">
-          {visibleFields.map((field) => (
-            <div key={field.name} data-field-index={fields.indexOf(field)}>
-              <UniversalFormField
-                field={field}
-                value={values[field.name]}
-                onChange={onChange}
-                error={errors[field.name]}
-              />
-            </div>
-          ))}
-        </div>
+        {visibleFields.map(renderField)}
         
-        {/* Bottom spacer div to maintain scroll position */}
-        {OptimizationFeatures.VIRTUALIZED_RENDERING && (
-          <div style={{ height: `${bottomSpacerHeight}px` }} />
+        {/* Bottom spacer to maintain scroll dimensions */}
+        {spacers.bottom > 0 && (
+          <div style={{ height: spacers.bottom }} className="virtualizer-spacer bottom-spacer" />
         )}
+      </>
+    );
+  };
+  
+  return (
+    <div className="form-section">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900">{sectionTitle}</h2>
+      <div
+        ref={containerRef}
+        className={`form-section-fields overflow-y-auto ${virtualizationEnabled ? 'virtualized' : ''}`}
+        style={{ height: '100%' }}
+      >
+        {renderFields()}
       </div>
-      
-      {/* Debug information - only shown in development */}
-      {process.env.NODE_ENV !== 'production' && OptimizationFeatures.VIRTUALIZED_RENDERING && (
-        <div className="mt-2 text-xs text-gray-500 border-t pt-2">
-          <p>
-            Virtualized Rendering: {fields.length} total fields, 
-            showing {visibleFields.length} fields ({visibleRange.start} to {visibleRange.end})
-          </p>
-        </div>
-      )}
     </div>
   );
 });
