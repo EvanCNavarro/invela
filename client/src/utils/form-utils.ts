@@ -1,5 +1,9 @@
 /**
- * Utility functions for form handling and status calculation
+ * Utility functions for form handling, status calculation, and 
+ * timestamp-based conflict resolution
+ * 
+ * The timestamp system ensures reliable data integrity across concurrent edits
+ * by tracking when each field was last modified.
  */
 
 /**
@@ -143,4 +147,83 @@ export function toCamelCase(str: string): string {
  */
 export function generateFieldKey(displayName: string): string {
   return toCamelCase(displayName.trim());
+}
+
+/**
+ * Timestamp utility functions for field-level conflict resolution
+ */
+
+/**
+ * Create a timestamped field value 
+ * @param value - The field value
+ * @returns Object with field value and current timestamp
+ */
+export function createTimestampedValue(value: any): { value: any, timestamp: number } {
+  return {
+    value,
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Compare field values with timestamps
+ * @param clientData - Client-side field data with timestamp
+ * @param serverData - Server-side field data with timestamp
+ * @returns The most recent value based on timestamp
+ */
+export function resolveFieldConflict<T>(
+  clientData: { value: T, timestamp: number },
+  serverData: { value: T, timestamp: number }
+): T {
+  // Use the value with the most recent timestamp
+  return clientData.timestamp >= serverData.timestamp
+    ? clientData.value
+    : serverData.value;
+}
+
+/**
+ * Create a timestamp map for multiple fields
+ * @param data - Object containing field key-value pairs
+ * @returns Object containing field keys mapped to timestamps
+ */
+export function createTimestampMap(data: Record<string, any>): Record<string, number> {
+  const now = Date.now();
+  const result: Record<string, number> = {};
+  
+  // Create timestamp for each field key
+  Object.keys(data).forEach(key => {
+    result[key] = now;
+  });
+  
+  return result;
+}
+
+/**
+ * Update a timestamp for a specific field
+ * @param timestamps - Existing timestamp map
+ * @param key - Field key to update
+ * @returns Updated timestamp map with new timestamp for the field
+ */
+export function updateTimestamp(
+  timestamps: Record<string, number>,
+  key: string
+): Record<string, number> {
+  return {
+    ...timestamps,
+    [key]: Date.now()
+  };
+}
+
+/**
+ * Format a timestamp for human-readable display
+ * @param timestamp - Milliseconds since epoch
+ * @returns Formatted timestamp string
+ */
+export function formatTimestamp(timestamp: number): string {
+  try {
+    const date = new Date(timestamp);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  } catch (error) {
+    return 'Invalid timestamp';
+  }
 }
