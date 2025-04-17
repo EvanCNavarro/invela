@@ -830,36 +830,66 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
     
     // If taskType is KYB, use the kyb-update logic
     if (task.task_type === 'company_kyb') {
-      // Calculate progress based on KYB responses
-      const result = await calculateTaskProgress(taskId);
-      
-      if (!result) {
-        return res.status(500).json({ error: 'Failed to calculate KYB progress' });
-      }
-      
-      // Update the task with the calculated progress
-      await db.update(tasks)
-        .set({
-          progress: result.progress,
-          status: result.status as TaskStatus
-        })
-        .where(eq(tasks.id, taskId));
-      
-      // Broadcast the update
-      broadcastMessage({
-        type: 'task-update',
-        payload: {
-          taskId,
-          progress: result.progress,
-          status: result.status
+      try {
+        // Get all KYB fields
+        const allFields = await db.query.kybFields.findMany();
+        
+        // Get responses for this task
+        const responses = await db.query.kybResponses.findMany({
+          where: eq(kybResponses.task_id, taskId)
+        });
+        
+        // Calculate progress based on responses
+        const totalFields = allFields.length;
+        const completedFields = responses.filter(r => r.status === 'COMPLETE').length;
+        const progress = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+        
+        // Determine status based on progress
+        let status: TaskStatus = 'not_started';
+        
+        if (progress === 0) {
+          status = 'not_started';
+        } else if (progress < 100) {
+          status = 'in_progress';
+        } else {
+          status = 'ready_for_submission';
         }
-      });
-      
-      return res.json({
-        success: true,
-        progress: result.progress,
-        status: result.status
-      });
+        
+        console.log('[Tasks Routes] Calculated progress:', {
+          taskId,
+          totalFields,
+          completedFields,
+          progress,
+          status,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Update the task directly with the calculated progress
+        const [updatedTask] = await db.update(tasks)
+          .set({
+            progress,
+            status
+          })
+          .where(eq(tasks.id, taskId))
+          .returning();
+        
+        // Broadcast the update to any listening clients
+        broadcastMessage('task-update', {
+          taskId, 
+          progress,
+          status
+        });
+        
+        return res.json({
+          success: true,
+          progress,
+          status,
+          taskId
+        });
+      } catch (kybError) {
+        console.error('[Tasks Routes] Error updating KYB task progress:', kybError);
+        return res.status(500).json({ error: 'Failed to update KYB task progress' });
+      }
     }
     
     // Default for other task types - just return current progress
@@ -874,41 +904,6 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
   }
 });
 
-// Helper function to calculate KYB progress
-async function calculateTaskProgress(taskId: number) {
-  try {
-    // Get all KYB fields
-    const allFields = await db.query.kybFields.findMany();
-    
-    // Get responses for this task
-    const responses = await db.query.kybResponses.findMany({
-      where: eq(kybResponses.task_id, taskId)
-    });
-    
-    // Calculate progress based on responses
-    const totalFields = allFields.length;
-    const completedFields = responses.filter(r => r.status === 'COMPLETE').length;
-    const progress = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
-    
-    // Determine status based on progress
-    let status: string = 'not_started';
-    
-    if (progress === 0) {
-      status = 'not_started';
-    } else if (progress < 100) {
-      status = 'in_progress';
-    } else {
-      status = 'ready_for_submission';
-    }
-    
-    return {
-      progress,
-      status
-    };
-  } catch (error) {
-    console.error('[Tasks Routes] Error calculating task progress:', error);
-    return null;
-  }
-}
+
 
 export default router;
