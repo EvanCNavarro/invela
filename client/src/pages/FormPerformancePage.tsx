@@ -4,6 +4,7 @@ import { initializeOptimizationMonitoring } from '../utils/form-optimization';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BatchUpdateDebugger } from '../components/dev/BatchUpdateDebugger';
 import ProgressiveLoadingDemo from '../components/dev/ProgressiveLoadingDemo';
+import VirtualizedRenderingDemo from '../components/dev/VirtualizedRenderingDemo';
 
 /**
  * Form Performance Testing Page
@@ -12,6 +13,12 @@ import ProgressiveLoadingDemo from '../components/dev/ProgressiveLoadingDemo';
  * allowing developers to run various performance tests on forms
  * with different field counts and optimization settings, and to debug
  * optimization features like BatchUpdater.
+ * 
+ * Tabs:
+ * 1. Performance Tests - General form performance benchmarks
+ * 2. BatchUpdater Debug - Testing the batch update functionality
+ * 3. Progressive Loading - Testing section-based loading system
+ * 4. Virtualized Rendering - Testing optimized rendering for large forms
  */
 export default function FormPerformancePage() {
   const [activeTab, setActiveTab] = useState('performance-tests');
@@ -39,10 +46,11 @@ export default function FormPerformancePage() {
       </header>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="performance-tests">Performance Tests</TabsTrigger>
           <TabsTrigger value="batch-updater">BatchUpdater Debug</TabsTrigger>
           <TabsTrigger value="progressive-loading">Progressive Loading</TabsTrigger>
+          <TabsTrigger value="virtualized-rendering">Virtualized Rendering</TabsTrigger>
         </TabsList>
         
         <TabsContent value="performance-tests" className="mt-4">
@@ -60,6 +68,12 @@ export default function FormPerformancePage() {
         <TabsContent value="progressive-loading" className="mt-4">
           <div className="bg-white rounded-lg shadow-md p-6">
             {activeTab === 'progressive-loading' && <ProgressiveLoadingDemo />}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="virtualized-rendering" className="mt-4">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {activeTab === 'virtualized-rendering' && <VirtualizedRenderingDemo />}
           </div>
         </TabsContent>
       </Tabs>

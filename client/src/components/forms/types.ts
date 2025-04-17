@@ -1,145 +1,90 @@
 /**
- * Common form component types
+ * Form Types
+ * 
+ * This file contains types and interfaces used across form components
  */
 
-export interface FormField {
-  /**
-   * Database identifier for the field (optional)
-   */
-  id?: number;
-  
-  /**
-   * Unique identifier for the field (used as form data key)
-   */
-  key: string;
-  
-  /**
-   * Display label for the field
-   */
+// Form field option (for select, radio, checkbox groups)
+export interface FormFieldOption {
   label: string;
-  
-  /**
-   * Field input type
-   */
-  type: string;
-  
-  /**
-   * The full question text
-   */
-  question: string;
-  
-  /**
-   * Whether the field is required
-   */
-  required: boolean;
-  
-  /**
-   * Display order for the field
-   */
-  order: number;
-  
-  /**
-   * The ID of the section this field belongs to
-   */
-  sectionId?: string;
-  
-  /**
-   * Alternative reference to section (for backward compatibility)
-   */
-  section?: string;
-  
-  /**
-   * Validation rules for the field
-   */
-  validation?: {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    min?: number;
-    max?: number;
-    pattern?: string;
-    message?: string;
-    [key: string]: any;
-  };
-  
-  /**
-   * Help text/instructions for the field
-   */
-  help?: string;
-  
-  /**
-   * Help text (alternative property)
-   */
-  helpText?: string;
-  
-  /**
-   * Placeholder text for input fields
-   */
-  placeholder?: string;
-  
-  /**
-   * Current value of the field
-   */
-  value?: any;
-  
-  /**
-   * For select/multiple choice fields, the available options
-   */
-  options?: Array<{
-    value: string;
-    label: string;
-  }>;
-  
-  /**
-   * Additional field metadata
-   */
-  metadata?: Record<string, any>;
+  value: string;
 }
 
+// Base form field definition
+export interface FormField {
+  name: string;
+  label: string;
+  type: string;
+  section?: string;
+  required?: boolean;
+  placeholder?: string;
+  description?: string;
+  defaultValue?: any;
+  
+  // Validation
+  min?: number;
+  max?: number;
+  step?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  
+  // Options for select, radio, checkbox groups
+  options?: FormFieldOption[];
+  
+  // Conditional display
+  dependsOn?: string;
+  showWhen?: string;
+  
+  // UI customization
+  width?: 'full' | 'half' | 'third';
+  className?: string;
+  disabled?: boolean;
+  hidden?: boolean;
+  
+  // Metadata
+  fieldId?: string;
+  order?: number;
+  priority?: number;
+  category?: string;
+}
+
+// Form section definition
 export interface FormSection {
-  /**
-   * Unique identifier for the section
-   */
   id: string;
-  
-  /**
-   * Display title for the section
-   */
   title: string;
-  
-  /**
-   * Section description
-   */
-  description: string;
-  
-  /**
-   * Fields in this section
-   */
-  fields: FormField[];
-  
-  /**
-   * Display order for the section
-   */
+  description?: string;
   order: number;
-  
-  /**
-   * Additional section metadata
-   */
-  metadata?: Record<string, any>;
-  
-  /**
-   * UI state and optimization metadata
-   * Used for progressive loading and optimized rendering
-   */
-  meta?: {
-    isLoaded?: boolean;
-    isLoading?: boolean;
-    priority?: number;
-    [key: string]: any;
-  };
-  
-  /**
-   * Whether the section is collapsed in the UI
-   */
-  collapsed?: boolean;
+  fields: FormField[];
+}
+
+// Form validation errors
+export interface FormErrors {
+  [fieldName: string]: string;
+}
+
+// Form state
+export interface FormState {
+  values: Record<string, any>;
+  errors: FormErrors;
+  touched: Record<string, boolean>;
+  isSubmitting: boolean;
+  isValid: boolean;
+  isDirty: boolean;
+}
+
+// Form submission result
+export interface FormSubmitResult {
+  success: boolean;
+  message?: string;
+  errors?: FormErrors;
+  data?: any;
+}
+
+// Form field change event
+export interface FormFieldChangeEvent {
+  name: string;
+  value: any;
+  field: FormField;
+  timestamp: number;
 }
