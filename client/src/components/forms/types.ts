@@ -4,7 +4,12 @@
 
 export interface FormField {
   /**
-   * Unique identifier for the field
+   * Database identifier for the field (optional)
+   */
+  id?: number;
+  
+  /**
+   * Unique identifier for the field (used as form data key)
    */
   key: string;
   
@@ -39,6 +44,11 @@ export interface FormField {
   sectionId?: string;
   
   /**
+   * Alternative reference to section (for backward compatibility)
+   */
+  section?: string;
+  
+  /**
    * Validation rules for the field
    */
   validation?: {
@@ -56,6 +66,21 @@ export interface FormField {
    * Help text/instructions for the field
    */
   help?: string;
+  
+  /**
+   * Help text (alternative property)
+   */
+  helpText?: string;
+  
+  /**
+   * Placeholder text for input fields
+   */
+  placeholder?: string;
+  
+  /**
+   * Current value of the field
+   */
+  value?: any;
   
   /**
    * For select/multiple choice fields, the available options
