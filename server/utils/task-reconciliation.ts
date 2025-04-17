@@ -46,27 +46,34 @@ export async function reconcileTaskProgress(
       return;
     }
     
-    // 3. Fetch all form responses for this task
-    const responses = await db.query.formResponses.findMany({
-      where: eq(formResponses.task_id, taskId)
-    });
+    // 3. Fetch all KYB responses for this task with their field information
+    const responses = await db.select({
+      response_value: kybResponses.response_value,
+      field_key: kybFields.field_key,
+      status: kybResponses.status,
+      field_id: kybResponses.field_id,
+      required: kybFields.required
+    })
+    .from(kybResponses)
+    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+    .where(eq(kybResponses.task_id, taskId));
     
     if (debug) {
       console.log(`${logPrefix} Found ${responses.length} responses for task ${taskId}`);
     }
     
     // 4. Build the response array in the format expected by our utilities
-    const formattedResponses = responses.map((response: any) => ({
+    const formattedResponses = responses.map((response) => ({
       field: response.field_key,
-      status: response.value ? 'COMPLETE' : 'EMPTY',
-      hasValue: !!response.value,
-      required: response.required
+      status: response.response_value ? 'COMPLETE' : 'EMPTY',
+      hasValue: !!response.response_value,
+      required: !!response.required
     }));
     
-    // 5. Calculate accurate progress
+    // 5. Calculate accurate progress - percentage of completed fields
     const calculatedProgress = calculateKybFormProgress(formattedResponses, formattedResponses);
     
-    // 6. Determine correct status
+    // 6. Determine correct status based on progress and required fields
     const calculatedStatus = determineStatusFromProgress(
       calculatedProgress, 
       task.status as TaskStatus,
@@ -81,7 +88,7 @@ export async function reconcileTaskProgress(
         currentStatus: task.status,
         calculatedStatus,
         responseCount: responses.length,
-        completeCount: formattedResponses.filter((r: any) => r.status === 'COMPLETE' && r.hasValue).length
+        completeCount: formattedResponses.filter(r => r.status === 'COMPLETE' && r.hasValue).length
       });
     }
     
@@ -114,7 +121,7 @@ export async function reconcileTaskProgress(
         taskId,
         calculatedProgress,
         calculatedStatus as TaskStatus,
-        updatedTask.metadata
+        updatedTask.metadata || {}
       );
       
       return;
