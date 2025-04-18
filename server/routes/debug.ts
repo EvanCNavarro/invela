@@ -1,106 +1,110 @@
 /**
- * Debug routes to help inspect the current state of the system
- * These are development-only endpoints used for troubleshooting
+ * Debug Routes
+ * 
+ * This module contains routes for debugging and fixing issues with tasks,
+ * particularly related to status and submission state management.
  */
-import { Router } from 'express';
+
+import { Request, Response, Router } from 'express';
 import { db } from '@db';
-import { eq } from 'drizzle-orm';
 import { tasks } from '@db/schema';
-import { broadcastProgressUpdate } from '../utils/progress';
-import { TaskStatus } from '../types';
+import { eq } from 'drizzle-orm';
+import { fixTaskSubmittedStatus } from '../middleware/task-status';
 
 const router = Router();
 
-// Get detailed task info for debugging
-router.get('/task/:taskId', async (req, res) => {
+/**
+ * Get detailed task information for debugging
+ */
+router.get('/task/:taskId', async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.taskId);
-    
     if (isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
     }
     
-    // Get the task
+    // Get basic task info
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
     
     if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found'
+      });
     }
     
-    return res.json({
+    // Check if task has submission date
+    const hasSubmissionDate = task.metadata && 
+      'submissionDate' in task.metadata && 
+      task.metadata.submissionDate !== null;
+    
+    // Check for submitted flag
+    const hasSubmittedFlag = task.metadata && 
+      'submitted' in task.metadata && 
+      task.metadata.submitted === true;
+    
+    // Check if task is in a terminal state
+    const isTerminalState = ['submitted', 'completed', 'approved', 'rejected'].includes(task.status);
+    
+    return res.status(200).json({
+      success: true,
       task,
-      metadata: task.metadata || {},
-      hasSubmissionDate: !!task.metadata?.submissionDate,
-      hasSubmittedFlag: task.metadata?.status === 'submitted',
-      isTerminalState: [TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED].includes(task.status as TaskStatus),
+      metadata: task.metadata,
       statusInfo: {
         current: task.status,
-        progress: task.progress
-      }
+        isTerminal: isTerminalState
+      },
+      hasSubmissionDate,
+      hasSubmittedFlag,
+      isTerminalState
     });
   } catch (error) {
-    console.error('Debug route error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error getting task debug info:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error fetching task debug info'
+    });
   }
 });
 
-// Force a task to SUBMITTED status for testing
-router.post('/force-submit/:taskId', async (req, res) => {
+/**
+ * Fix a task that should be in submitted status
+ */
+router.post('/force-submit/:taskId', async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.taskId);
-    
     if (isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
     }
     
-    // Get the task
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
+    // Use the middleware utility function to fix the task status
+    const result = await fixTaskSubmittedStatus(taskId);
     
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
+    if (result) {
+      return res.status(200).json({
+        success: true,
+        message: 'Task status fixed successfully'
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Task status not fixed - task may not have a submission date'
+      });
     }
-    
-    // Force set to submitted status
-    const submissionTime = new Date().toISOString();
-    
-    // Update task in database
-    await db.update(tasks)
-      .set({
-        status: TaskStatus.SUBMITTED,
-        progress: 100,
-        updated_at: new Date(),
-        metadata: {
-          ...task.metadata,
-          submissionDate: submissionTime,
-          status: 'submitted' // Explicit marker for submission
-        }
-      })
-      .where(eq(tasks.id, taskId));
-    
-    // Broadcast the update
-    broadcastProgressUpdate(
-      taskId,
-      100,
-      TaskStatus.SUBMITTED,
-      {
-        ...task.metadata,
-        submissionDate: submissionTime,
-        status: 'submitted'
-      }
-    );
-    
-    return res.json({
-      message: 'Task forcibly set to SUBMITTED status',
-      taskId,
-      submissionTime
-    });
   } catch (error) {
-    console.error('Debug route error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fixing task submitted status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error fixing task status'
+    });
   }
 });
 
