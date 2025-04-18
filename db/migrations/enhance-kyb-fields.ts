@@ -6,7 +6,8 @@
  * normalized structure.
  */
 
-import { Pool } from 'pg';
+import pg from 'pg';
+const { Pool } = pg;
 
 // Create a more compatible and simpler version of the migration
 export async function migrate() {

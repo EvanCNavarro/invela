@@ -8,7 +8,7 @@ import { up as addTaskTemplates } from "./db/migrations/add_task_templates";
 import addKybFieldHelpText from "./db/migrations/add_kyb_field_help_text";
 import { up as consolidateKybTemplates } from "./db/migrations/consolidate_kyb_templates";
 import { createTimestampsTable } from "./db/create-timestamps-table";
-import { migrate as enhanceKybFields } from "./db/migrations/kyb_fields_enhancement";
+import { migrate as enhanceKybFields } from "./db/migrations/enhance-kyb-fields";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
