@@ -675,15 +675,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         submittingToastId.dismiss();
       }
       
-      // Show success toast notification
-      toast({
-        title: "Form Submitted Successfully",
-        description: "Your form has been submitted successfully.",
-        variant: "success",
+      // Fire confetti animation FIRST (before showing modal)
+      import('@/utils/confetti').then(({ fireSuperConfetti }) => {
+        fireSuperConfetti();
+        
+        // Show success toast notification
+        toast({
+          title: "Form Submitted Successfully",
+          description: "Your form has been submitted successfully.",
+          variant: "success",
+        });
+        
+        // Show success modal AFTER confetti has been fired
+        setShowSuccessModal(true);
       });
-      
-      // Show success modal after all backend processes are complete
-      setShowSuccessModal(true);
       
       // Then call the onSubmit callback if provided
       if (onSubmit) {
