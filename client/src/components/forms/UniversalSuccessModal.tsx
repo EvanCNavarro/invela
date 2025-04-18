@@ -50,28 +50,28 @@ export function UniversalSuccessModal({
   const [, navigate] = useLocation();
   const [titleText, setTitleText] = useState("Form Submitted Successfully");
   
-  // Play a single subtle confetti animation when modal opens
+  // Play a single celebratory confetti animation when modal opens
   useEffect(() => {
     if (open) {
       // Add a small delay to ensure modal is visible first
       const animationTimeout = setTimeout(() => {
         // Import and use confetti dynamically
         import('canvas-confetti').then(confetti => {
-          // Create a single subtle celebration effect
+          // Create a single celebration effect behind the modal
           confetti.default({
-            particleCount: 75,
-            spread: 70,
+            particleCount: 100,
+            spread: 80,
             origin: { y: 0.6 },
-            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4', '#ffffff'],
-            startVelocity: 25,
+            colors: ['#26a69a', '#00838f', '#00acc1', '#00bcd4', '#4965EC', '#0068FF'],
+            startVelocity: 30,
             gravity: 1.2,
-            ticks: 50,
+            ticks: 60,
             shapes: ['circle', 'square'],
-            scalar: 0.7,
-            zIndex: 1 // Set z-index to ensure confetti appears behind the modal
+            scalar: 0.8,
+            zIndex: -1 // Ensure confetti appears behind the modal
           });
         });
-      }, 300); // Small delay to ensure modal has appeared
+      }, 100); // Quick delay to ensure modal has started appearing
 
       // Clean up timeout if modal is closed
       return () => clearTimeout(animationTimeout);
@@ -231,7 +231,7 @@ export function UniversalSuccessModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
+      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti relative z-50">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
             <div className="rounded-full bg-green-50 p-3">
