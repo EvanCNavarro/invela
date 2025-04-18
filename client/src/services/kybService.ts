@@ -44,6 +44,9 @@ export interface KybField {
   order: number;
   validation_rules: any;
   help_text: string | null;
+  answer_expectation: string | null;
+  demo_autofill: string | null; 
+  validation_type: string | null;
 }
 
 /**
