@@ -6,6 +6,7 @@ import { up as addTaskTemplates } from "./add_task_templates";
 import addKybFieldHelpText from "./add_kyb_field_help_text";
 import { up as consolidateKybTemplates } from "./consolidate_kyb_templates";
 import { createTimestampsTable } from "../create-timestamps-table";
+import { migrate as enhanceKybFields } from "./enhance-kyb-fields";
 
 // Simpler logging for standalone execution
 function log(message: string) {
@@ -50,6 +51,10 @@ export async function runMigrations() {
     // Create timestamps table for field-level conflict resolution
     log('Creating field timestamps table for conflict resolution');
     await createTimestampsTable();
+    
+    // Enhance KYB fields with additional metadata
+    log('Enhancing KYB fields with metadata columns and updating field ordering');
+    await enhanceKybFields();
     
     log('All migrations completed successfully');
     return true;
