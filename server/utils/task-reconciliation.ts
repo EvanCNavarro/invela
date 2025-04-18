@@ -4,6 +4,7 @@ import { tasks, kybResponses, kybFields } from "@db/schema";
 import { TaskStatus } from '../types';
 import { calculateKybFormProgress } from './kyb-progress';
 import { determineStatusFromProgress, broadcastProgressUpdate } from './progress';
+import { fixTaskSubmittedStatus } from '../middleware/task-status';
 
 /**
  * Reconcile task progress across the system to ensure consistency
@@ -58,22 +59,40 @@ export async function reconcileTaskProgress(
           correctStatus: TaskStatus.SUBMITTED
         });
         
-        // Force task to submitted status with 100% progress
-        await db.update(tasks)
-          .set({
-            status: TaskStatus.SUBMITTED,
-            progress: 100,
-            updated_at: new Date()
-          })
-          .where(eq(tasks.id, taskId));
+        // Use our dedicated function to fix task submission status
+        const fixed = await fixTaskSubmittedStatus(taskId);
+        
+        if (fixed) {
+          console.log(`${logPrefix} Task ${taskId} fixed to SUBMITTED status`);
+        } else {
+          console.log(`${logPrefix} Unable to fix task ${taskId} status, using fallback method`);
           
-        // Broadcast the corrected status
-        broadcastProgressUpdate(
-          taskId,
-          100,
-          TaskStatus.SUBMITTED,
-          task.metadata || {}
-        );
+          // Fallback method - directly set the status
+          await db.update(tasks)
+            .set({
+              status: TaskStatus.SUBMITTED,
+              progress: 100,
+              updated_at: new Date(),
+              metadata: {
+                ...task.metadata,
+                status: 'submitted', // Add explicit status flag
+                lastStatusUpdate: new Date().toISOString()
+              }
+            })
+            .where(eq(tasks.id, taskId));
+            
+          // Broadcast the corrected status
+          broadcastProgressUpdate(
+            taskId,
+            100,
+            TaskStatus.SUBMITTED,
+            {
+              ...task.metadata,
+              submissionDate: task.metadata?.submissionDate,
+              status: 'submitted'
+            }
+          );
+        }
       }
       
       return;

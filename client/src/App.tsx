@@ -1,3 +1,4 @@
+import React, { useEffect, Suspense } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -9,8 +10,8 @@ import { WebSocketProvider } from "@/providers/websocket-provider";
 import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 import { registerServices } from "./services/registerServices";
+import TaskStatusDebugger from "@/pages/debug/status-fixer";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -295,6 +296,17 @@ function Router() {
         {/* Progressive Loading Demo - For Testing Section-Based Loading */}
         <Route path="/progressive-loading-demo">
           <ProgressiveLoadingDemo />
+        </Route>
+        
+        {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
+        <Route path="/debug/status-fixer">
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <Suspense fallback={<div>Loading status debugger...</div>}>
+                <TaskStatusDebugger />
+              </Suspense>
+            </OnboardingWrapper>
+          </ProtectedLayout>
         </Route>
 
         <Route component={NotFound} />
