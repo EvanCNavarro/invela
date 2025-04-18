@@ -44,6 +44,12 @@ export function determineStatusFromProgress(
     return TaskStatus.NOT_STARTED;
   } else if (progress < 100) {
     return TaskStatus.IN_PROGRESS;
+  } else if (currentStatus === TaskStatus.SUBMITTED) {
+    // Maintain SUBMITTED status if already submitted
+    return TaskStatus.SUBMITTED;
+  } else if (currentStatus === TaskStatus.READY_FOR_SUBMISSION && metadata?.status === 'submitted') {
+    // Allow explicit submission status transition when requested in metadata
+    return TaskStatus.SUBMITTED;
   } else {
     return TaskStatus.READY_FOR_SUBMISSION;
   }
