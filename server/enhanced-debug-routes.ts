@@ -1,189 +1,93 @@
 /**
- * Enhanced debugging routes for KYB form data
- * These routes expose detailed debugging information
+ * Enhanced Debug Routes
+ * 
+ * This file contains additional debug routes for advanced system diagnostics
+ * and troubleshooting, particularly for development and admin purposes.
  */
-import { Router, Request, Response } from 'express';
-import { db } from '@db';
-import { eq, desc, sql, and } from 'drizzle-orm';
-import { tasks, kybFields, kybResponses } from '@db/schema';
-import { LoggingService } from '../server/services/logging-service';
 
-const logger = new LoggingService('DebugAPI');
+import { Router } from 'express';
+import { db } from '@db';
+import { tasks } from '@db/schema';
+import { eq, and, desc, sql } from 'drizzle-orm';
+
 const router = Router();
 
-// Helper to check if a field contains "asdf" test value
-const isTestValue = (value: string | null): boolean => {
-  if (!value) return false;
-  
-  // "asdf" is a common test value pattern that can cause issues
-  return value.toLowerCase() === 'asdf';
-};
-
 /**
- * Enhanced debugging endpoint for form data
- * This provides detailed information about response data for a given task
+ * Get tasks with status/progress inconsistencies
  */
-router.get('/form/:taskId', async (req: Request, res: Response) => {
+router.get('/tasks/status-inconsistencies', async (req, res) => {
   try {
-    const taskId = parseInt(req.params.taskId);
+    console.log('[EnhancedDebug] Checking for tasks with status inconsistencies');
     
-    if (isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
-    }
-    
-    // Get task information
-    const taskInfo = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+    // Get all tasks
+    const allTasks = await db.query.tasks.findMany({
+      orderBy: [desc(tasks.updated_at)]
     });
     
-    if (!taskInfo) {
-      return res.status(404).json({ error: `Task with ID ${taskId} not found` });
-    }
-    
-    // Get all form fields - KYB fields are global, not per task
-    const formFields = await db.query.kybFields.findMany();
-    
-    // Get all form responses for the task
-    const formResponses = await db.query.kybResponses.findMany({
-      where: eq(kybResponses.task_id, taskId),
-      orderBy: [desc(kybResponses.version)]
-    });
-    
-    // Track important fields (fields that might have test data)
-    const keysOfInterest = {
-      corporateRegistration: null as string | null,
-      goodStanding: null as string | null,
-      regulatoryActions: null as string | null,
-      investigationsIncidents: null as string | null
-    };
-    
-    // Group responses by field_id to get the latest response for each field
-    const latestResponses = formResponses.reduce((latest, response) => {
-      // Find the field key for this response
-      const fieldInfo = formFields.find(f => f.id === response.field_id);
+    // Filter tasks with potential inconsistencies
+    const inconsistentTasks = allTasks.filter(task => {
+      // Case 1: Task has submission date but is not in submitted status
+      const hasSubmissionDate = task.metadata && 
+        task.metadata.submissionDate && 
+        task.metadata.submissionDate !== null;
       
-      if (!fieldInfo) return latest;
+      const isSubmitted = task.status === 'submitted';
       
-      const fieldKey = fieldInfo.field_key;
-      
-      // Check if we've already seen this field, and if the current response is newer
-      if (!latest[fieldKey] || response.version > latest[fieldKey].version) {
-        latest[fieldKey] = {
-          field_key: fieldKey,
-          value: response.response_value,
-          status: response.status,
-          version: response.version,
-          updated_at: response.updated_at?.toISOString() || 'unknown'
-        };
-        
-        // Track fields of interest
-        if (fieldKey === 'corporateRegistration') {
-          keysOfInterest.corporateRegistration = response.response_value;
-        } else if (fieldKey === 'goodStanding') {
-          keysOfInterest.goodStanding = response.response_value;
-        } else if (fieldKey === 'regulatoryActions') {
-          keysOfInterest.regulatoryActions = response.response_value;
-        } else if (fieldKey === 'investigationsIncidents') {
-          keysOfInterest.investigationsIncidents = response.response_value;
-        }
-      }
-      
-      return latest;
-    }, {} as Record<string, any>);
-    
-    // Convert to array for the frontend
-    const responseArray = Object.values(latestResponses);
-    
-    // Convert to a simple form data object for debugging
-    const formData = responseArray.reduce((data, field: any) => {
-      data[field.field_key] = field.value;
-      return data;
-    }, {} as Record<string, string>);
-    
-    // Check for "asdf" test values
-    const asdfFields = responseArray
-      .filter((field: any) => isTestValue(field.value))
-      .map((field: any) => field.field_key);
-    
-    logger.info(`Debug endpoint accessed for task ${taskId}`, {
-      asdfFieldCount: asdfFields.length,
-      responseCount: responseArray.length
+      return hasSubmissionDate && !isSubmitted;
     });
     
     return res.json({
-      task: taskInfo,
-      formDataFields: formFields.length, 
-      responseCount: formResponses.length,
-      asdfFields,
-      keysOfInterest,
-      formData,
-      responses: responseArray
+      success: true,
+      count: inconsistentTasks.length,
+      tasks: inconsistentTasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        progress: task.progress,
+        submissionDate: task.metadata?.submissionDate,
+        updated_at: task.updated_at
+      }))
     });
   } catch (error) {
-    logger.error('Error in form debug endpoint', { error });
-    return res.status(500).json({ 
-      error: 'Error retrieving debug information',
-      details: error instanceof Error ? error.message : String(error)
+    console.error('[EnhancedDebug] Error checking task inconsistencies:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error checking task inconsistencies',
+      error: String(error)
     });
   }
 });
 
 /**
- * List all tasks with form issues (test values, etc.)
+ * Get overall system statistics
  */
-router.get('/tasks-with-issues', async (req: Request, res: Response) => {
+router.get('/system-stats', async (req, res) => {
   try {
-    // Get all form responses containing "asdf"
-    const result = await db.execute(sql`
-      SELECT 
-        kr.task_id, 
-        kf.field_key,
-        kr.response_value,
-        t.title
-      FROM kyb_responses kr
-      JOIN kyb_fields kf ON kr.field_id = kf.id
-      JOIN tasks t ON kr.task_id = t.id
-      WHERE LOWER(kr.response_value) = 'asdf'
-      ORDER BY kr.task_id
-    `);
+    console.log('[EnhancedDebug] Collecting system statistics');
     
-    // The result from db.execute doesn't have a reduce method, so we need to convert it
-    const problematicResponses = result.rows || [];
-    
-    // Group by task ID to create a summary
-    const taskSummary: Record<string, any> = {};
-    
-    for (const row of problematicResponses) {
-      const taskId = row.task_id;
-      if (!taskId) continue; // Skip if no task_id
-      
-      if (!taskSummary[taskId]) {
-        taskSummary[taskId] = {
-          taskId: taskId,
-          title: row.title || `Task #${taskId}`,
-          testFields: []
-        };
-      }
-      
-      taskSummary[taskId].testFields.push({
-        fieldKey: row.field_key,
-        value: row.response_value
-      });
-    }
-    
-    logger.info('Found tasks with test data', { 
-      count: Object.keys(taskSummary).length,
-      taskIds: Object.keys(taskSummary) 
-    });
+    // Task statistics
+    const taskStats = await db
+      .select({
+        total: sql`COUNT(*)`,
+        submitted: sql`SUM(CASE WHEN ${tasks.status} = 'submitted' THEN 1 ELSE 0 END)`,
+        completed: sql`SUM(CASE WHEN ${tasks.status} = 'completed' THEN 1 ELSE 0 END)`,
+        in_progress: sql`SUM(CASE WHEN ${tasks.status} IN ('in_progress', 'ready_for_submission') THEN 1 ELSE 0 END)`,
+        other: sql`SUM(CASE WHEN ${tasks.status} NOT IN ('submitted', 'completed', 'in_progress', 'ready_for_submission') THEN 1 ELSE 0 END)`
+      })
+      .from(tasks);
     
     return res.json({
-      tasksWithIssues: Object.values(taskSummary)
+      success: true,
+      stats: {
+        tasks: taskStats[0]
+      }
     });
   } catch (error) {
-    logger.error('Error checking for tasks with issues', { error });
-    return res.status(500).json({ 
-      error: 'Error checking for tasks with issues',
-      details: error instanceof Error ? error.message : String(error)
+    console.error('[EnhancedDebug] Error getting system stats:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error getting system statistics',
+      error: String(error)
     });
   }
 });
