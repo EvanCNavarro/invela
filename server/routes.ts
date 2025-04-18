@@ -21,6 +21,7 @@ import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import filesRouter from './routes/files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
+import debugRouter from './routes/debug';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
@@ -46,6 +47,7 @@ export function registerRoutes(app: Express): Express {
   
   // Register enhanced debugging routes
   app.use('/api/debug', enhancedDebugRoutes);
+  app.use('/api/debug', debugRouter);
   
   app.use(cardRouter);
   app.use(securityRouter);
