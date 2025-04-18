@@ -383,7 +383,12 @@ export class EnhancedKybFormService implements FormServiceInterface {
       placeholder: '',
       value: this.timestampedFormData.values[field.field_key] || '',
       section: sectionId || undefined, // Assign the section ID to the field (ensuring null -> undefined)
-      sectionId: sectionId || undefined // Also keep this for compatibility
+      sectionId: sectionId || undefined, // Also keep this for compatibility
+      
+      // Enhanced field guidance properties
+      answerExpectation: field.answer_expectation || undefined,
+      demoAutofill: field.demo_autofill || undefined,
+      validationType: field.validation_type || undefined
     };
   }
   
