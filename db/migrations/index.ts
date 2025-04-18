@@ -7,6 +7,7 @@ import addKybFieldHelpText from "./add_kyb_field_help_text";
 import { up as consolidateKybTemplates } from "./consolidate_kyb_templates";
 import { createTimestampsTable } from "../create-timestamps-table";
 import { migrate as enhanceKybFields } from "./enhance-kyb-fields";
+import { migrate as updateKybFieldOrder } from "./update-kyb-field-order";
 
 // Simpler logging for standalone execution
 function log(message: string) {
