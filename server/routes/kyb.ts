@@ -564,8 +564,21 @@ router.post('/api/kyb/progress', async (req, res) => {
     // Determine appropriate status based on explicit status provided or progress
     let newStatus = existingTask.status;
     
-    // If client provided an explicit status, use that
-    if (req.body.status) {
+    // Check if the task has been submitted (has submission date in metadata)
+    // This is our source of truth for submission status
+    const hasSubmissionDate = existingTask.metadata?.submissionDate !== undefined;
+    
+    if (hasSubmissionDate) {
+      // If the task has been submitted, ALWAYS use SUBMITTED status
+      // This prevents status regressions from overwriting submission state
+      console.log('[KYB API Debug] Task has submission date, enforcing SUBMITTED status', {
+        submissionDate: existingTask.metadata?.submissionDate,
+        clientProvidedStatus: req.body.status || 'none'
+      });
+      newStatus = TaskStatus.SUBMITTED;
+    }
+    // If client provided an explicit status and task is not submitted, use that
+    else if (req.body.status) {
       console.log('[KYB API Debug] Using client-provided status:', req.body.status);
       newStatus = req.body.status;
     } 
