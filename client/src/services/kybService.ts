@@ -388,7 +388,12 @@ export class KybFormService implements FormServiceInterface {
       helpText: field.help_text,
       placeholder: '',
       value: this.formData[field.field_key] || '',
-      section: sectionId // Assign the section ID to the field
+      section: sectionId, // Assign the section ID to the field
+      
+      // Enhanced field guidance properties
+      answerExpectation: field.answer_expectation,
+      demoAutofill: field.demo_autofill,
+      validationType: field.validation_type
     };
   }
 

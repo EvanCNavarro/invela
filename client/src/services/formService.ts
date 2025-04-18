@@ -31,8 +31,13 @@ export interface FormField {
   order: number;
   metadata?: Record<string, any>;
   
+  // Enhanced field guidance properties
+  answerExpectation?: string;   // Guidance text for what type of answer is expected
+  demoAutofill?: string;        // Sample values for demonstration purposes
+  validationType?: string;      // Type of validation/documentation required
+  
   // Optimization properties
-  saveImmediately?: boolean;  // Whether field should be saved immediately
+  saveImmediately?: boolean;    // Whether field should be saved immediately
   batchUpdaterInitialized?: boolean;  // Whether the batch updater has been initialized for this field
 }
 
