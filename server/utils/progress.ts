@@ -9,14 +9,22 @@ import { hasAllRequiredFields } from './kyb-progress';
  * @param progress Current progress value (0-100)
  * @param currentStatus Current task status
  * @param formResponses Optional form responses to check for required fields
+ * @param metadata Optional task metadata to check for submission date
  * @returns Updated task status
  */
 export function determineStatusFromProgress(
   progress: number, 
   currentStatus: TaskStatus,
-  formResponses?: Array<{ status: string; hasValue: boolean; required?: boolean; field?: string }>
+  formResponses?: Array<{ status: string; hasValue: boolean; required?: boolean; field?: string }>,
+  metadata?: Record<string, any>
 ): TaskStatus {
-  // Skip status update if task is already completed/submitted
+  // CRITICAL: Always respect submission state
+  // If the task has a submissionDate in metadata, it should always be in SUBMITTED status
+  if (metadata?.submissionDate) {
+    return TaskStatus.SUBMITTED;
+  }
+  
+  // Skip status update if task is already in a terminal state
   if ([TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED].includes(currentStatus)) {
     return currentStatus;
   }

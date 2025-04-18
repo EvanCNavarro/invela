@@ -106,11 +106,12 @@ export async function reconcileTaskProgress(
     // 5. Calculate accurate progress - percentage of completed fields
     const calculatedProgress = calculateKybFormProgress(formattedResponses, formattedResponses);
     
-    // 6. Determine correct status based on progress and required fields
+    // 6. Determine correct status based on progress, required fields, and metadata
     const calculatedStatus = determineStatusFromProgress(
       calculatedProgress, 
       task.status as TaskStatus,
-      formattedResponses
+      formattedResponses,
+      task.metadata || undefined // Pass the task metadata to check for submissionDate
     );
     
     if (debug) {

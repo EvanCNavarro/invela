@@ -741,13 +741,18 @@ router.post('/api/kyb/save', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const { fileName, formData, taskId } = req.body;
+    const { fileName, formData, taskId, status } = req.body;
+    
+    // Check if this is a submission (client indicates "submitted" status)
+    const isSubmission = status === 'submitted';
 
     logger.debug('Save request received', {
       taskId,
       formDataKeys: Object.keys(formData),
       fileName,
-      userId: req.user.id
+      userId: req.user.id,
+      isSubmission,
+      requestedStatus: status
     });
 
     // Get task details with full task data
