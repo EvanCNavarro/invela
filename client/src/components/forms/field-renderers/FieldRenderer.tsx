@@ -81,6 +81,11 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         <div className="text-xs text-gray-400 mt-1">
           Field type: {field.type || 'text'}, Key: {field.key}, Section: {field.section || 'none'}
         </div>
+        {field.answerExpectation && (
+          <div className="text-xs text-blue-600 mt-1 border-t border-blue-200 pt-1">
+            <strong>Expected Answer:</strong> {field.answerExpectation}
+          </div>
+        )}
       </div>
     );
   }
@@ -138,7 +143,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
               {field.label}
             </Label>
             
-            {field.helpText && (
+            {(field.helpText || field.answerExpectation) && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -147,7 +152,15 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                    {field.helpText}
+                    {field.answerExpectation ? (
+                      <div>
+                        {field.helpText && <div className="mb-2">{field.helpText}</div>}
+                        <div className="font-semibold">Expected Answer:</div>
+                        <div>{field.answerExpectation}</div>
+                      </div>
+                    ) : (
+                      field.helpText
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -400,7 +413,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                     {field.label}
                   </FormLabel>
                   
-                  {field.helpText && (
+                  {(field.helpText || field.answerExpectation) && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -409,7 +422,15 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                          {field.helpText}
+                          {field.answerExpectation ? (
+                            <div>
+                              {field.helpText && <div className="mb-2">{field.helpText}</div>}
+                              <div className="font-semibold">Expected Answer:</div>
+                              <div>{field.answerExpectation}</div>
+                            </div>
+                          ) : (
+                            field.helpText
+                          )}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
