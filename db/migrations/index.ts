@@ -57,6 +57,10 @@ export async function runMigrations() {
     log('Enhancing KYB fields with metadata columns and updating field ordering');
     await enhanceKybFields();
     
+    // Update field order from the normalized CSV file
+    log('Updating KYB field order according to normalized CSV');
+    await updateKybFieldOrder();
+    
     log('All migrations completed successfully');
     return true;
   } catch (error) {
