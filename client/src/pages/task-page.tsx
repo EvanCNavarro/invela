@@ -315,8 +315,8 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                 .then((result) => {
                   // Only show success UI if we have a valid result
                   if (result && result.success && result.fileId) {
-                    // Show confetti animation for success
-                    fireEnhancedConfetti();
+                    // No need for separate confetti animation here - 
+                    // the UniversalSuccessModal will handle confetti
                     
                     // Update state for success modal
                     setFileId(result.fileId);
@@ -426,8 +426,8 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                   .then((result) => {
                     // Only show success UI if we have a valid result
                     if (result && result.success) {
-                      // Show confetti animation for success
-                      fireSuperConfetti();
+                      // No need for separate confetti animation here - 
+                      // the UniversalSuccessModal will handle confetti
                       
                       // Update state for success modal
                       setIsSubmitted(true);
@@ -541,8 +541,8 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                         .then((result) => {
                           // Only show success UI if we have a valid result
                           if (result && result.success && result.fileId) {
-                            // Show confetti animation for success
-                            fireSuperConfetti();
+                            // No need for separate confetti animation here - 
+                            // the UniversalSuccessModal will handle confetti
                             
                             // Update state for success modal
                             setFileId(result.fileId);
