@@ -18,14 +18,32 @@ export function determineStatusFromProgress(
   formResponses?: Array<{ status: string; hasValue: boolean; required?: boolean; field?: string }>,
   metadata?: Record<string, any>
 ): TaskStatus {
+  // Add extra debugging for status transitions
+  console.log(`[STATUS DETERMINATION] Calculating status for task with:`, {
+    progress,
+    currentStatus,
+    hasSubmissionDate: !!metadata?.submissionDate,
+    hasSubmittedFlag: metadata?.status === 'submitted',
+    hasResponses: !!(formResponses && formResponses.length > 0),
+    timestamp: new Date().toISOString()
+  });
+  
   // CRITICAL: Always respect submission state
   // If the task has a submissionDate in metadata, it should always be in SUBMITTED status
   if (metadata?.submissionDate) {
+    console.log(`[STATUS DETERMINATION] Task has submissionDate (${metadata.submissionDate}), setting to SUBMITTED`);
+    return TaskStatus.SUBMITTED;
+  }
+  
+  // Handle explicit submission request via metadata
+  if (metadata?.status === 'submitted') {
+    console.log(`[STATUS DETERMINATION] Task has explicit 'submitted' status in metadata, setting to SUBMITTED`);
     return TaskStatus.SUBMITTED;
   }
   
   // Skip status update if task is already in a terminal state
   if ([TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED].includes(currentStatus)) {
+    console.log(`[STATUS DETERMINATION] Task is in terminal state (${currentStatus}), preserving status`);
     return currentStatus;
   }
   
@@ -35,23 +53,31 @@ export function determineStatusFromProgress(
     
     // Always use in_progress if required fields are empty, regardless of % completion
     if (!hasCompletedRequiredFields) {
+      console.log(`[STATUS DETERMINATION] Task has incomplete required fields, setting to IN_PROGRESS`);
       return TaskStatus.IN_PROGRESS;
     }
   }
   
   // Standard logic based on progress percentage
   if (progress === 0) {
+    console.log(`[STATUS DETERMINATION] Task has 0% progress, setting to NOT_STARTED`);
     return TaskStatus.NOT_STARTED;
   } else if (progress < 100) {
+    console.log(`[STATUS DETERMINATION] Task has ${progress}% progress (< 100%), setting to IN_PROGRESS`);
     return TaskStatus.IN_PROGRESS;
-  } else if (currentStatus === TaskStatus.SUBMITTED) {
-    // Maintain SUBMITTED status if already submitted
-    return TaskStatus.SUBMITTED;
-  } else if (currentStatus === TaskStatus.READY_FOR_SUBMISSION && metadata?.status === 'submitted') {
-    // Allow explicit submission status transition when requested in metadata
-    return TaskStatus.SUBMITTED;
+  } else if (progress === 100) {
+    // When we've reached 100% complete, check if this is a new completion or existing status
+    if (currentStatus === TaskStatus.SUBMITTED) {
+      console.log(`[STATUS DETERMINATION] Task already in SUBMITTED status, preserving status`);
+      return TaskStatus.SUBMITTED;
+    } else {
+      console.log(`[STATUS DETERMINATION] Task has 100% progress, setting to READY_FOR_SUBMISSION`);
+      return TaskStatus.READY_FOR_SUBMISSION;
+    }
   } else {
-    return TaskStatus.READY_FOR_SUBMISSION;
+    // Fallback case, should never happen with validated progress
+    console.log(`[STATUS DETERMINATION] Unexpected progress value (${progress}), defaulting to IN_PROGRESS`);
+    return TaskStatus.IN_PROGRESS;
   }
 }
 
@@ -72,18 +98,31 @@ export function broadcastProgressUpdate(
   // Validate the progress value
   const validatedProgress = Math.max(0, Math.min(100, progress));
   
-  // Log the broadcast action
+  // If metadata has submissionDate, always use SUBMITTED status
+  let finalStatus = status;
+  if (metadata?.submissionDate) {
+    finalStatus = TaskStatus.SUBMITTED;
+    console.log(`[Progress Utils] Task has submissionDate, overriding status to SUBMITTED`);
+  } else if (metadata?.status === 'submitted') {
+    finalStatus = TaskStatus.SUBMITTED;
+    console.log(`[Progress Utils] Task has 'submitted' flag in metadata, overriding status to SUBMITTED`);
+  }
+  
+  // Log the broadcast action with detailed information
   console.log('[Progress Utils] Broadcasting task progress update:', {
     taskId,
     progress: validatedProgress,
-    status,
+    requestedStatus: status,
+    finalStatus,
+    hasSubmissionDate: !!metadata?.submissionDate,
+    hasSubmittedFlag: metadata?.status === 'submitted',
     timestamp: new Date().toISOString()
   });
   
-  // Broadcast the update to all connected clients
+  // Broadcast the update to all connected clients with the appropriate status
   broadcastTaskUpdate({
     id: taskId,
-    status: status || TaskStatus.IN_PROGRESS,
+    status: finalStatus || status || TaskStatus.IN_PROGRESS,
     progress: validatedProgress,
     metadata: metadata || {}
   });
