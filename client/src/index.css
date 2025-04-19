@@ -126,7 +126,7 @@
   
   /* Canvas confetti z-index adjustment - ensure confetti is behind everything */
   .confetti-canvas {
-    z-index: 1 !important;
+    z-index: 40 !important; /* Lower than dialog overlay (49) but higher than page content */
     position: fixed;
     pointer-events: none;
   }
@@ -134,8 +134,20 @@
   /* Ensure dialog content is on top of confetti */
   .dialog-content-above-confetti {
     z-index: 50 !important;
-    position: relative;
+    position: relative; 
     background-color: var(--background);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Ensure the dialog overlay is properly positioned */
+  [data-radix-dialog-overlay] {
+    z-index: 49 !important; /* Higher than confetti canvas but lower than dialog content */
+  }
+  
+  /* Ensure entire dialog portal is above all content */
+  [data-radix-dialog-portal] {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
   }
 }
