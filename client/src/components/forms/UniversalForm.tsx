@@ -1064,13 +1064,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : isCompanyDemo && (
-            <div className="rounded-lg border border-purple-200 bg-purple-50/70 p-1">
-              <div className="flex flex-col sm:flex-row gap-1">
+            <div className="rounded-lg border border-purple-100 bg-purple-50/30 p-2 shadow-sm">
+              <div className="flex flex-col gap-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={handleDemoAutoFill}
-                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 w-full justify-center"
                 >
                   <Code className="mr-2 h-4 w-4" />
                   Demo Auto-Fill
@@ -1079,7 +1079,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   variant="outline" 
                   size="sm" 
                   onClick={handleClearFields}
-                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 w-full justify-center"
                 >
                   <Eraser className="mr-2 h-4 w-4" />
                   Clear Fields
