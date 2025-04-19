@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
@@ -72,12 +72,27 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Use a ref to track and update timestamps without triggering re-renders
+  const taskTimestampRef = useRef<Record<number, number>>({});
+  
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     staleTime: 5000,
     // Only poll when WebSocket isn't connected - rely on WebSocket for real-time updates
     // This eliminates the competing data sources that cause flickering
     refetchInterval: wsConnected ? false : 15000,
+    // Intercept and process the response to store the last updated timestamp
+    select: (data) => {
+      // Store the server response timestamp for each task
+      const now = Date.now();
+      
+      // Update our ref with timestamps (doesn't trigger re-renders)
+      data.forEach(task => {
+        taskTimestampRef.current[task.id] = now;
+      });
+      
+      return data;
+    }
   });
 
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
@@ -118,40 +133,69 @@ export default function TaskCenterPage() {
           // The data should now come directly without requiring payload extraction
           const taskData = data || {};
           const taskId = taskData.id;
+          
+          // Get current timestamp for this update
+          const now = Date.now();
 
           console.log('[TaskCenter] WebSocket task_update received:', {
             taskId,
             status: taskData.status,
             progress: taskData.progress,
             metadata: taskData.metadata,
-            timestamp: new Date().toISOString()
+            timestamp: new Date(now).toISOString()
           });
 
           if (!taskId) {
             console.warn('[TaskCenter] Missing task ID in WebSocket update');
             return;
           }
-
-          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            const updatedTasks = oldTasks.map(task =>
-              task.id === taskId
-                ? { 
-                    ...task, 
-                    status: taskData.status || task.status, 
-                    progress: taskData.progress !== undefined ? taskData.progress : task.progress
-                  }
-                : task
-            );
-
-            console.log('[TaskCenter] Updated task state via WebSocket:', {
-              taskId,
-              progress: taskData.progress,
-              status: taskData.status,
-              updatedTask: updatedTasks.find(t => t.id === taskId)
+          
+          // Get the server timestamp from the metadata if available, or use current timestamp
+          const serverTimestamp = taskData.metadata?.lastUpdated 
+            ? new Date(taskData.metadata.lastUpdated).getTime()
+            : now;
+            
+          // Check if this update is more recent than what we already have using our ref
+          // If we have no recorded timestamp or the server timestamp is newer, apply the update
+          const prevTimestamp = taskTimestampRef.current[taskId];
+          
+          if (!prevTimestamp || serverTimestamp > prevTimestamp) {
+            console.log(`[TaskCenter] Update for task ${taskId} is newer, applying`, {
+              prevTimestamp: prevTimestamp ? new Date(prevTimestamp).toISOString() : 'none',
+              newTimestamp: new Date(serverTimestamp).toISOString()
             });
-
-            return updatedTasks;
-          });
+            
+            // Update our list of tasks with the new data
+            queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+              const updatedTasks = oldTasks.map(task =>
+                task.id === taskId
+                  ? { 
+                      ...task, 
+                      status: taskData.status || task.status, 
+                      progress: taskData.progress !== undefined ? taskData.progress : task.progress
+                    }
+                  : task
+              );
+  
+              console.log('[TaskCenter] Updated task state via WebSocket:', {
+                taskId,
+                progress: taskData.progress,
+                status: taskData.status,
+                updatedTask: updatedTasks.find(t => t.id === taskId)
+              });
+  
+              return updatedTasks;
+            });
+            
+            // Store the new timestamp in our ref
+            taskTimestampRef.current[taskId] = serverTimestamp;
+          } else {
+            // Otherwise log that we're ignoring an outdated update
+            console.log(`[TaskCenter] Ignoring outdated update for task ${taskId}`, {
+              currentTimestamp: new Date(prevTimestamp).toISOString(),
+              updateTimestamp: new Date(serverTimestamp).toISOString()
+            });
+          }
 
           // Don't invalidate - this would trigger another fetch and defeat real-time purpose
           // Only invalidate if we need to force a refresh of additional data not in the update
@@ -168,11 +212,15 @@ export default function TaskCenterPage() {
           const taskData = data || {};
           const taskId = taskData.id;
           
+          // Get current timestamp for this update
+          const now = Date.now();
+          
           console.log('[TaskCenter] WebSocket test notification received:', {
             taskId,
             status: taskData.status,
             progress: taskData.progress,
-            metadata: taskData.metadata
+            metadata: taskData.metadata,
+            timestamp: new Date(now).toISOString()
           });
           
           if (!taskId) {
@@ -180,18 +228,37 @@ export default function TaskCenterPage() {
             return;
           }
           
-          // Update local task data
-          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            return oldTasks.map(task =>
-              task.id === taskId
-                ? {
-                    ...task,
-                    status: taskData.status || task.status,
-                    progress: taskData.progress !== undefined ? taskData.progress : task.progress
-                  }
-                : task
-            );
-          });
+          // Get the server timestamp from the metadata if available, or use current timestamp
+          const serverTimestamp = taskData.metadata?.lastUpdated 
+            ? new Date(taskData.metadata.lastUpdated).getTime()
+            : now;
+          
+          // Check if this update is more recent than what we already have using our ref
+          const prevTimestamp = taskTimestampRef.current[taskId];
+          
+          // Only update if this is a newer timestamp
+          if (!prevTimestamp || serverTimestamp > prevTimestamp) {
+            // Update our list of tasks with the new data
+            queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+              return oldTasks.map(task =>
+                task.id === taskId
+                  ? {
+                      ...task,
+                      status: taskData.status || task.status,
+                      progress: taskData.progress !== undefined ? taskData.progress : task.progress
+                    }
+                  : task
+              );
+            });
+            
+            // Record the timestamp of this update
+            taskTimestampRef.current[taskId] = serverTimestamp;
+          } else {
+            console.log(`[TaskCenter] Ignoring outdated test notification for task ${taskId}`, {
+              currentTimestamp: new Date(prevTimestamp).toISOString(),
+              updateTimestamp: new Date(serverTimestamp).toISOString()
+            });
+          }
         });
         
         subscriptions.push(unsubTaskTestNotification);
