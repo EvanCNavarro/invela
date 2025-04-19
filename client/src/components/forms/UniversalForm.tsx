@@ -589,11 +589,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       toast({
         title: "Auto-Fill Complete",
         description: "Demo data has been loaded successfully.",
-        variant: "default",
+        variant: "success",
       });
       
-      // Refresh form status
+      // Refresh form status and unlock the review step
       refreshStatus();
+      
+      // Set progress to a high enough value to unlock the review step
+      // Typically 80% is enough to make the review step available
+      if (onProgress) {
+        onProgress(80);
+      }
       
     } catch (err) {
       logger.error('[UniversalForm] Auto-fill error:', err);
@@ -603,7 +609,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error loading demo data",
       });
     }
-  }, [taskId, form, updateField, saveProgress, refreshStatus, toast]);
+  }, [taskId, form, updateField, saveProgress, refreshStatus, toast, onProgress]);
   
   // Helper function to check for completely empty values in form data
   const checkForEmptyValues = useCallback((data: FormData): string[] => {
