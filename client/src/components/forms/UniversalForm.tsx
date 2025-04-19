@@ -929,7 +929,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : company?.isDemo === true && (
+          ) : isCompanyDemo === true && (
             <Button 
               variant="outline" 
               size="sm" 
