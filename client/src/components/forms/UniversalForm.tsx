@@ -417,23 +417,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Auto-navigate to review section for ready_for_submission tasks - ONLY ON INITIAL LOAD
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
-  // Determine the demo status from the task metadata or API
+  // Determine the demo status from the API (database) FIRST, only use company name as fallback
   useEffect(() => {
     if (taskId) {
       // Log the raw taskId to help debug
       logger.info(`[UniversalForm] Checking demo status for taskId: ${taskId}, type: ${typeof taskId}`);
       console.log(`DEBUG: Current isCompanyDemo state = ${isCompanyDemo}`);
       
-      // PLAN B: Check for demo status directly from the task metadata
-      // This is a more reliable method since the metadata contains the company name
-      if (taskMetadata && typeof taskMetadata === 'object' && taskMetadata.company_name === 'DevelopmentTesting3') {
-        logger.info(`[UniversalForm] Company name is DevelopmentTesting3, setting isDemo = true`);
-        setIsCompanyDemo(true);
-        console.log('[DEBUG] Set isCompanyDemo to TRUE because company name is DevelopmentTesting3');
-        return; // We don't need to continue with the API request
-      }
-      
-      // PLAN A: Try to get the demo status from the API
+      // ALWAYS try the API first to get the true database value
       const fetchCompanyDemoStatus = async () => {
         try {
           // Make a specific API call to check this company's demo status
@@ -454,24 +445,55 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               debug: data.debug
             });
             
-            // Set the demo status based on API response
+            // IMPORTANT: Use the database value (which you can change) rather than hardcoded logic
             const isDemoCompany = data.isDemo;
             setIsCompanyDemo(isDemoCompany);
             logger.info(`[UniversalForm] Company demo status fetched from API: ${data.isDemo} (${typeof data.isDemo}), setting to ${isDemoCompany}`);
-            console.log(`[DEBUG] Set isCompanyDemo to ${isDemoCompany} via API response`);
+            console.log(`[DEBUG] Set isCompanyDemo to ${isDemoCompany} via API response (database value)`);
+            return; // Exit since we have the definitive answer from the database
           } else {
             const errorText = await response.text();
             logger.warn(`[UniversalForm] Failed to fetch company demo status: ${response.status}, Response: ${errorText}`);
             
-            // If we're here, Plan A failed (API error)
-            // Try alternate method - check for demo companies by name directly from task data
-            // This is a fallback for when the API fails but we have the metadata
+            // ONLY use the company name check as a FALLBACK if the API fails
             if (taskMetadata && typeof taskMetadata === 'object') {
+              // Log that we're falling back to company name check
+              logger.info(`[UniversalForm] API failed, falling back to metadata check`);
+              
+              // Get the company ID first, as that's more reliable than name
+              const companyId = taskMetadata.company_id;
+              if (companyId) {
+                logger.info(`[UniversalForm] Using company ID ${companyId} from metadata`);
+                
+                // Try a different API endpoint with company ID directly
+                try {
+                  const companyResponse = await fetch(`/api/companies/${companyId}`);
+                  if (companyResponse.ok) {
+                    const companyData = await companyResponse.json();
+                    logger.info(`[UniversalForm] Successfully fetched company data:`, companyData);
+                    
+                    // Use the is_demo flag from the company data
+                    setIsCompanyDemo(companyData.is_demo === true);
+                    console.log(`[DEBUG] Set isCompanyDemo to ${companyData.is_demo} from company API endpoint`);
+                    return;
+                  }
+                } catch (companyError) {
+                  logger.error(`[UniversalForm] Error fetching company data:`, companyError);
+                }
+              }
+              
+              // As a last resort, check company name
+              // NOTE: THIS SHOULD RARELY IF EVER BE NEEDED NOW
               const companyName = taskMetadata.company_name;
+              logger.info(`[UniversalForm] Checking company name: ${companyName}`);
+              
+              // IMPORTANT: We're now checking ONLY as an emergency fallback
               if (companyName === 'DevelopmentTesting3') {
-                logger.info(`[UniversalForm] API failed but company name is DevelopmentTesting3, setting isDemo = true`);
-                setIsCompanyDemo(true);
-                console.log('[DEBUG] Set isCompanyDemo to TRUE after API error because company name is DevelopmentTesting3');
+                logger.info(`[UniversalForm] FALLBACK: Company name is DevelopmentTesting3 but trying not to use this check`);
+                // This fallback should ideally never be used now
+                // For now, we'll set to false to force use of the database value
+                setIsCompanyDemo(false);
+                console.log('[DEBUG] Set isCompanyDemo to FALSE even though name is DevelopmentTesting3 (prefer database)');
                 return;
               }
             }
@@ -483,20 +505,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         } catch (err) {
           logger.error(`[UniversalForm] Error fetching company demo status:`, err);
           
-          // Try the same fallback as above
-          if (taskMetadata && typeof taskMetadata === 'object') {
-            const companyName = taskMetadata.company_name;
-            if (companyName === 'DevelopmentTesting3') {
-              logger.info(`[UniversalForm] API exception but company name is DevelopmentTesting3, setting isDemo = true`);
-              setIsCompanyDemo(true);
-              console.log('[DEBUG] Set isCompanyDemo to TRUE after API exception because company name is DevelopmentTesting3');
-              return;
-            }
-          }
-          
-          // If all else fails, default to false
+          // Default to false on error
           setIsCompanyDemo(false);
-          console.log('[DEBUG] Set isCompanyDemo to false due to exception and no fallback match');
+          console.log('[DEBUG] Set isCompanyDemo to false due to exception');
         }
       };
       

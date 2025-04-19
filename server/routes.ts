@@ -299,7 +299,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
   
-  // Check if a company is a demo company
+  // Check if a company is a demo company by checking task metadata instead of company database
   app.get("/api/companies/is-demo", requireAuth, async (req, res) => {
     try {
       console.log(`[IsDemo Check] Received request with params:`, {
@@ -335,7 +335,7 @@ export function registerRoutes(app: Express): Express {
       
       console.log(`[IsDemo Check] Parsed valid taskId: ${parsedTaskId}`);
       
-      // Get the task to find the company ID
+      // Get the task with metadata to find the company info directly
       console.log(`[IsDemo Check] Fetching task with ID: ${parsedTaskId}`);
       
       const taskResults = await db.select()
@@ -353,15 +353,26 @@ export function registerRoutes(app: Express): Express {
       }
       
       const task = taskResults[0];
-      console.log(`[IsDemo Check] Found task:`, { 
+      console.log(`[IsDemo Check] Found task with metadata:`, { 
         taskId: task.id, 
         companyId: task.company_id,
-        taskType: task.task_type
+        taskType: task.task_type,
+        hasMetadata: task.metadata !== null,
+        metadataKeys: task.metadata ? Object.keys(task.metadata) : []
       });
       
-      // Make sure we have a valid company_id before proceeding
-      if (!task.company_id) {
-        console.log(`[IsDemo Check] Task ${parsedTaskId} has no company_id`);
+      // If the task has metadata with company_name, use that instead of looking up the company
+      const companyName = task.metadata?.company_name;
+      const companyId = task.company_id || task.metadata?.company_id;
+      
+      console.log(`[IsDemo Check] Company info from task metadata:`, { 
+        companyId, 
+        companyName
+      });
+      
+      // If we don't have a company ID from anywhere, we can't continue
+      if (!companyId) {
+        console.log(`[IsDemo Check] Task ${parsedTaskId} has no company_id in task or metadata`);
         return res.status(400).json({ 
           message: "Task has no associated company",
           code: "INVALID_ID",
@@ -369,7 +380,81 @@ export function registerRoutes(app: Express): Express {
         });
       }
       
-      console.log(`[IsDemo Check] Fetching company with ID: ${task.company_id}`);
+      // If we have a company name in the metadata and it's one of our known demo companies
+      if (companyName && companyName === 'DevelopmentTesting3') {
+        console.log(`[IsDemo Check] Company name "${companyName}" from metadata matches known demo company`);
+        
+        // First check the database anyway
+        try {
+          console.log(`[IsDemo Check] Fetching company details from database as double-check`);
+          
+          // Get the company
+          const companyResults = await db.select({
+            id: companies.id,
+            name: companies.name,
+            isDemo: companies.is_demo
+          })
+          .from(companies)
+          .where(eq(companies.id, companyId));
+          
+          console.log(`[IsDemo Check] Company query results: ${companyResults?.length || 0} rows found`);
+          
+          if (companyResults && companyResults.length > 0) {
+            const company = companyResults[0];
+            
+            // Log the raw company data to help debug
+            console.log(`[IsDemo Check] Company data from database for task ${taskId}:`, {
+              id: company.id,
+              name: company.name,
+              isDemo: company.isDemo,
+              isDemoType: typeof company.isDemo,
+              rawValue: company.isDemo
+            });
+            
+            // Use the database value if available
+            const isCompanyDemo = company.isDemo === true;
+            
+            // Return the demo status with debug information
+            return res.json({
+              isDemo: isCompanyDemo, 
+              companyId: company.id,
+              companyName: company.name,
+              taskId: parsedTaskId,
+              source: 'database',
+              debug: {
+                isDemo: company.isDemo,
+                isDemoType: typeof company.isDemo,
+                companyName: company.name,
+                dbValueUsed: true
+              }
+            });
+          }
+        } catch (dbError) {
+          console.error('[IsDemo Check] Error looking up company in database:', dbError);
+          // Continue to fallback below
+        }
+        
+        // Fallback to using the name-based check if database lookup fails
+        console.log(`[IsDemo Check] Using name-based check for demo company "${companyName}"`);
+        
+        // Return using name-based check
+        return res.json({
+          isDemo: false, // Always return false now if database didn't have the value
+          companyId,
+          companyName,
+          taskId: parsedTaskId,
+          source: 'metadata',
+          debug: {
+            isDemo: false,
+            isDemoType: 'boolean',
+            companyName,
+            metadataValueUsed: true
+          }
+        });
+      }
+      
+      // If we get here, we need to check the database for the company
+      console.log(`[IsDemo Check] Fetching company with ID: ${companyId}`);
       
       // Get the company
       const companyResults = await db.select({
@@ -378,12 +463,12 @@ export function registerRoutes(app: Express): Express {
         isDemo: companies.is_demo
       })
       .from(companies)
-      .where(eq(companies.id, task.company_id));
+      .where(eq(companies.id, companyId));
       
       console.log(`[IsDemo Check] Company query results: ${companyResults?.length || 0} rows found`);
       
       if (!companyResults || companyResults.length === 0) {
-        console.log(`[IsDemo Check] Company not found for task ${taskId} with company_id ${task.company_id}`);
+        console.log(`[IsDemo Check] Company not found for task ${taskId} with company_id ${companyId}`);
         return res.status(404).json({ 
           error: 'Company not found',
           isDemo: false 
@@ -407,6 +492,7 @@ export function registerRoutes(app: Express): Express {
         companyId: company.id,
         companyName: company.name,
         taskId: parsedTaskId,
+        source: 'database',
         debug: {
           isDemo: company.isDemo,
           isDemoType: typeof company.isDemo,
