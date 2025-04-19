@@ -1064,8 +1064,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : isCompanyDemo && (
-            <div className="rounded-lg border border-purple-100 bg-purple-50/30 p-2 shadow-sm">
-              <div className="flex flex-row flex-wrap gap-2 max-w-[400px]">
+            <div className="rounded-lg border border-purple-100 bg-purple-50/30 p-4 shadow-sm">
+              <div className="flex flex-row flex-wrap gap-4">
                 <Button 
                   variant="outline" 
                   size="sm" 
