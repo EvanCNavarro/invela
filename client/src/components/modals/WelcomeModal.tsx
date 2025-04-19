@@ -99,6 +99,25 @@ export function WelcomeModal() {
   const isLastSlide = currentSlide === carouselContent.length - 1;
   const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
 
+  // Enhanced localStorage handler - directly completes onboarding if localStorage has a record
+  const completeOnboardingFromLocalStorage = () => {
+    if (!user) return false;
+    
+    try {
+      const onboardingCompleted = localStorage.getItem('onboarding_completed') === 'true';
+      const savedUserId = localStorage.getItem('onboarding_user_id');
+      
+      if (onboardingCompleted && savedUserId === user.id.toString()) {
+        console.log('[ONBOARDING DEBUG] Found onboarding completion in localStorage, applying to user');
+        user.onboarding_user_completed = true;
+        return true;
+      }
+    } catch (err) {
+      console.error('[ONBOARDING DEBUG] Error checking localStorage:', err);
+    }
+    return false;
+  };
+  
   // Only set modal visibility once when user data is fully available
   useEffect(() => {
     if (!user) return;
@@ -120,6 +139,21 @@ export function WelcomeModal() {
         }));
       }
     });
+    
+    // First, check localStorage as a fail-safe
+    try {
+      const onboardingCompletedInStorage = localStorage.getItem('onboarding_completed') === 'true';
+      const savedUserId = localStorage.getItem('onboarding_user_id');
+      
+      // If we have a record that this user completed onboarding, honor it
+      if (onboardingCompletedInStorage && savedUserId === user.id.toString()) {
+        console.log('[ONBOARDING DEBUG] Found localStorage record of completed onboarding, skipping modal');
+        user.onboarding_user_completed = true;
+        return; // Skip showing modal
+      }
+    } catch (error) {
+      console.error('[ONBOARDING DEBUG] Error checking localStorage:', error);
+    }
     
     // A small delay to ensure all auth processes are complete
     const timer = setTimeout(() => {
@@ -245,7 +279,27 @@ export function WelcomeModal() {
     if (currentSlide < carouselContent.length - 1) {
       setCurrentSlide(prev => prev + 1);
     } else {
+      console.log('[ONBOARDING DEBUG] Final slide reached, completing onboarding');
+      
+      // Set a local flag immediately to prevent modal from showing again
+      if (user) {
+        user.onboarding_user_completed = true;
+      }
+      
+      // Store completion in localStorage as a fail-safe backup
+      try {
+        localStorage.setItem('onboarding_completed', 'true');
+        localStorage.setItem('onboarding_user_id', user?.id?.toString() || '');
+        console.log('[ONBOARDING DEBUG] Stored onboarding completion in localStorage');
+      } catch (err) {
+        console.error('[ONBOARDING DEBUG] Failed to store in localStorage:', err);
+      }
+      
+      // Make the API call to update the server
       completeOnboardingMutation.mutate();
+      
+      // Close the modal immediately
+      setShowModal(false);
     }
   };
 
@@ -258,7 +312,14 @@ export function WelcomeModal() {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       // When modal is closed, complete onboarding
+      console.log('[ONBOARDING DEBUG] Modal closed by user, triggering completion');
       completeOnboardingMutation.mutate();
+      
+      // Force set the user's onboarding status to completed in the local state as well
+      // This is a fallback in case the API call fails
+      if (user) {
+        user.onboarding_user_completed = true;
+      }
     }
     setShowModal(open);
   };
