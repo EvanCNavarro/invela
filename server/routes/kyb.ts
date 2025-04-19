@@ -2106,4 +2106,62 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
   }
 });
 
+// Test WebSocket notification endpoint
+router.post('/api/kyb/test-notification', async (req, res) => {
+  try {
+    const { taskId } = req.body;
+    
+    if (!taskId) {
+      return res.status(400).json({
+        error: 'Missing taskId',
+        message: 'Task ID is required for sending test notifications'
+      });
+    }
+    
+    // Get task to ensure it exists
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (!task) {
+      return res.status(404).json({
+        error: 'Task not found',
+        message: `No task found with ID: ${taskId}`
+      });
+    }
+    
+    // Send a test notification via WebSocket
+    console.log(`[WebSocket] Sending test notification for task ${taskId}`);
+    broadcastTaskUpdate({
+      id: taskId,
+      status: task.status as TaskStatus,
+      progress: task.progress,
+      metadata: {
+        lastUpdated: new Date().toISOString(),
+        testNotification: true
+      }
+    });
+    
+    // Also broadcast a generic message
+    broadcastMessage('task_test_notification', {
+      taskId,
+      timestamp: new Date().toISOString(),
+      message: 'This is a test notification from the server'
+    });
+    
+    return res.json({
+      success: true,
+      message: `Test notification sent for task ${taskId}`,
+      taskStatus: task.status,
+      taskProgress: task.progress
+    });
+  } catch (error) {
+    console.error('[WebSocket Test] Error sending test notification:', error);
+    return res.status(500).json({
+      error: 'Failed to send test notification',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;
