@@ -68,15 +68,16 @@ export default function TaskCenterPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' }); // Sort by ID by default
+  const [wsConnected, setWsConnected] = useState(false); // Track WebSocket connection state
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     staleTime: 5000,
-    // Increase the refetch interval since we're now using WebSockets for real-time updates
-    // This is just a fallback in case WebSocket updates are missed
-    refetchInterval: 15000,
+    // Only poll when WebSocket isn't connected - rely on WebSocket for real-time updates
+    // This eliminates the competing data sources that cause flickering
+    refetchInterval: wsConnected ? false : 15000,
   });
 
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
@@ -93,6 +94,22 @@ export default function TaskCenterPage() {
 
     const setupSubscriptions = async () => {
       try {
+        // Subscribe to WebSocket connection status
+        const connectionSub = await wsService.subscribe('connection_established', () => {
+          console.log('[TaskCenter] WebSocket connection established');
+          setWsConnected(true);
+        });
+        
+        subscriptions.push(connectionSub);
+        
+        // Also subscribe to disconnection events to restart polling when WebSocket is down
+        const disconnectionSub = await wsService.subscribe('connection_closed', () => {
+          console.log('[TaskCenter] WebSocket connection closed, reverting to polling');
+          setWsConnected(false);
+        });
+        
+        subscriptions.push(disconnectionSub);
+        
         // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
           // Message data now comes directly from the WebSocket service
