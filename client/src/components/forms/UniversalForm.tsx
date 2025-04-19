@@ -683,31 +683,71 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       const demoData = await response.json();
       
+      // Log the demo data received from the server
+      console.log('[UniversalForm] Demo data received from server:', demoData);
+      console.log('[UniversalForm] Demo data keys:', Object.keys(demoData));
+      console.log('[UniversalForm] Demo data sample values:', 
+        Object.entries(demoData).slice(0, 3).map(([k, v]) => `${k}: ${v}`));
+        
+      // Check if we actually received any data
+      if (Object.keys(demoData).length === 0) {
+        throw new Error('Server returned empty demo data. Please try again later.');
+      }
+      
       // Create a data object with all fields 
       const completeData: Record<string, any> = {};
       
       // First ensure all fields have a value, even if empty
       fields.forEach(field => {
         completeData[field.key] = '';
+        console.log(`[UniversalForm] Setting base field ${field.key} to empty string`);
       });
       
       // Then apply any demo data that's available
       Object.entries(demoData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           completeData[key] = value;
+          console.log(`[UniversalForm] Setting field ${key} to demo value: ${value}`);
         }
       });
       
-      // Reset the entire form with these values
-      form.reset(completeData);
+      // Log the complete data object before resetting
+      console.log('[UniversalForm] Complete data object before form reset:', 
+        Object.keys(completeData).length, 'fields');
       
-      // For each field, manually update it in both React Hook Form and our backend
-      for (const [fieldName, fieldValue] of Object.entries(completeData)) {
-        // Update React Hook Form field
-        form.setValue(fieldName, fieldValue);
+      try {
+        // Reset the entire form with these values
+        console.log('[UniversalForm] Resetting form with demo data...');
+        form.reset(completeData);
+        console.log('[UniversalForm] Form reset completed');
         
-        // Update backend via our field update mechanism
-        updateField(fieldName, fieldValue);
+        // For each field, manually update it in both React Hook Form and our backend
+        console.log('[UniversalForm] Setting individual field values...');
+        let fieldsUpdated = 0;
+        
+        for (const [fieldName, fieldValue] of Object.entries(completeData)) {
+          try {
+            // Update React Hook Form field
+            console.log(`[UniversalForm] Setting form value for ${fieldName}...`);
+            form.setValue(fieldName, fieldValue);
+            
+            // Update backend via our field update mechanism
+            console.log(`[UniversalForm] Updating backend for ${fieldName}...`);
+            if (typeof updateField === 'function') {
+              updateField(fieldName, fieldValue);
+              fieldsUpdated++;
+            } else {
+              console.error(`[UniversalForm] updateField is not a function! Type: ${typeof updateField}`);
+            }
+          } catch (fieldError) {
+            console.error(`[UniversalForm] Error updating field ${fieldName}:`, fieldError);
+          }
+        }
+        
+        console.log(`[UniversalForm] Updated ${fieldsUpdated} fields in backend`);
+      } catch (resetError) {
+        console.error('[UniversalForm] Error during form reset or field updates:', resetError);
+        throw resetError; // Re-throw to be caught by the outer try/catch
       }
       
       // Save progress to server
