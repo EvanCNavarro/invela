@@ -300,7 +300,7 @@ export function registerRoutes(app: Express): Express {
   });
   
   // Check if a company is a demo company
-  app.get("/api/companies/is-demo", async (req, res) => {
+  app.get("/api/companies/is-demo", requireAuth, async (req, res) => {
     try {
       const taskId = req.query.taskId;
       
