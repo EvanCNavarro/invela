@@ -302,22 +302,46 @@ export function registerRoutes(app: Express): Express {
   // Check if a company is a demo company
   app.get("/api/companies/is-demo", requireAuth, async (req, res) => {
     try {
+      console.log(`[IsDemo Check] Received request with params:`, {
+        taskId: req.query.taskId,
+        userId: req.user?.id,
+        userCompanyId: req.user?.company_id
+      });
+      
       const taskId = req.query.taskId;
       
       if (!taskId) {
+        console.log(`[IsDemo Check] Missing taskId parameter`);
         return res.status(400).json({ 
           error: 'Missing taskId parameter',
           isDemo: false 
         });
       }
       
+      // Parse taskId safely
+      let parsedTaskId;
+      try {
+        parsedTaskId = parseInt(taskId as string, 10);
+        if (isNaN(parsedTaskId)) {
+          throw new Error('Invalid taskId format');
+        }
+      } catch (err) {
+        console.log(`[IsDemo Check] Error parsing taskId: ${taskId}, error: ${err}`);
+        return res.status(400).json({ 
+          error: `Invalid taskId format: ${taskId}`,
+          isDemo: false 
+        });
+      }
+      
+      console.log(`[IsDemo Check] Parsed valid taskId: ${parsedTaskId}`);
+      
       // Get the task to find the company ID
       const [task] = await db.select()
         .from(tasks)
-        .where(eq(tasks.id, parseInt(taskId as string, 10)));
+        .where(eq(tasks.id, parsedTaskId));
         
       if (!task) {
-        console.log(`[IsDemo Check] Task not found: ${taskId}`);
+        console.log(`[IsDemo Check] Task not found: ${parsedTaskId}`);
         return res.status(404).json({ 
           error: 'Task not found',
           isDemo: false 
