@@ -12,6 +12,11 @@ export async function migrate() {
   console.log('Running restructure-kyb-fields migration...');
   
   try {
+    // Clean up any potential leftover tables from previous migration attempts
+    await db.execute(sql`
+      DROP TABLE IF EXISTS kyb_fields_id_mapping, kyb_fields_new, kyb_responses_temp
+    `);
+    
     // Step 1: Create a temporary mapping table to manage the ID changes
     await db.execute(sql`
       CREATE TABLE kyb_fields_id_mapping (
@@ -91,9 +96,11 @@ export async function migrate() {
         id,
         task_id,
         (SELECT new_id FROM kyb_fields_id_mapping WHERE old_id = field_id) AS field_id,
-        value,
+        response_value,
         created_at,
-        updated_at
+        updated_at,
+        version,
+        status
       FROM kyb_responses
     `);
     
