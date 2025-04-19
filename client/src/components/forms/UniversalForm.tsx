@@ -669,17 +669,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       const demoData = await response.json();
       
       // Update form with demo data
-      Object.entries(demoData).forEach(([fieldName, fieldValue]) => {
-        if (fieldName && fieldValue !== undefined) {
-          logger.debug(`Auto-filling field: ${fieldName}`);
-          updateField(fieldName, fieldValue);
-          
-          // Also update the form directly for immediate UI refresh
-          if (form) {
-            form.setValue(fieldName, fieldValue);
-          }
-        }
+      // Create complete demo data for all fields
+      const completeData: Record<string, any> = {};
+      
+      // First ensure all form fields are included
+      fields.forEach(field => {
+        // Use demo data if available, otherwise leave empty
+        completeData[field.key] = demoData[field.key] !== undefined ? demoData[field.key] : '';
       });
+      
+      // Apply the complete data to the form first (bulk update)
+      form.reset(completeData);
+      
+      // Then update each field through the field update mechanism for proper processing
+      Object.entries(completeData).forEach(([fieldName, fieldValue]) => {
+        logger.debug(`Auto-filling field: ${fieldName}`);
+        updateField(fieldName, fieldValue);
+      });
+      
+      // Navigate to first section if on review
+      if (activeTab === 'review') {
+        setActiveTab('section-0');
+      }
       
       // Save progress after auto-fill
       if (saveProgress) {
@@ -724,22 +735,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           description: "Removing all entered data...",
         });
         
-        // Get all field names in the form
-        const fieldNames = fields.map(field => field.key);
+        // Create an empty object with all fields set to empty strings
+        const emptyData: Record<string, string> = {};
         
-        // Clear each field one by one
-        fieldNames.forEach(fieldName => {
-          // Set field value to empty string or appropriate empty value based on field type
+        // Set all form fields to empty strings
+        fields.forEach(field => {
+          emptyData[field.key] = '';
+        });
+        
+        // First reset the entire form at once (bulk update)
+        form.reset(emptyData, { keepDefaultValues: false });
+        
+        // Then update each field through the field update mechanism for proper processing
+        Object.keys(emptyData).forEach(fieldName => {
+          // Set each field value to empty 
           updateField(fieldName, '');
           
-          // Also update the form directly for immediate UI refresh
-          if (form) {
-            form.setValue(fieldName, '');
-            
-            // Clear any errors for this field
-            form.clearErrors(fieldName);
-          }
+          // Clear any validation errors
+          form.clearErrors(fieldName);
         });
+        
+        // If on review tab, navigate to first section to see cleared fields
+        if (activeTab === 'review') {
+          setActiveTab('section-0');
+        }
         
         // Save progress after clearing
         if (saveProgress) {
