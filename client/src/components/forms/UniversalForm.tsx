@@ -666,11 +666,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     try {
       logger.info(`[UniversalForm] Starting demo auto-fill for task ${taskId}`);
       
-      // Show loading toast that will persist during the operation
-      const loadingToastId = toast({
+      // Show loading toast
+      toast({
         title: "Auto-Fill In Progress",
         description: "Loading demo data...",
-        duration: 5000, // Set longer duration
+        duration: 3000,
       });
       
       // Make API call to get demo data
@@ -681,50 +681,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
       
       const demoData = await response.json();
-      logger.debug('[UniversalForm] Received demo data for fields:', Object.keys(demoData).join(', '));
       
-      // Create a data object with all fields, ensuring complete overwrite
+      // Create a data object with all fields 
       const completeData: Record<string, any> = {};
       
-      // Set all fields to empty first to ensure we start with a clean slate
+      // First ensure all fields have a value, even if empty
       fields.forEach(field => {
         completeData[field.key] = '';
       });
       
-      // Then apply the demo data where available
+      // Then apply any demo data that's available
       Object.entries(demoData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           completeData[key] = value;
-          logger.debug(`[UniversalForm] Setting field ${key} to demo value: ${value}`);
         }
       });
       
-      // Perform a complete form reset with all values at once
-      form.reset(completeData, { keepDefaultValues: false });
+      // Reset the entire form with these values
+      form.reset(completeData);
       
-      // Force apply each field individually for proper UI update and validation
-      Object.entries(completeData).forEach(([fieldName, fieldValue]) => {
-        // Update form control directly
-        form.setValue(fieldName, fieldValue, { 
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true
-        });
+      // For each field, manually update it in both React Hook Form and our backend
+      for (const [fieldName, fieldValue] of Object.entries(completeData)) {
+        // Update React Hook Form field
+        form.setValue(fieldName, fieldValue);
         
-        // Also use the field update mechanism for proper backend sync
+        // Update backend via our field update mechanism
         updateField(fieldName, fieldValue);
-        
-        // Clear any validation errors
-        form.clearErrors(fieldName);
-      });
+      }
       
-      // Explicitly save progress to ensure server sync
+      // Save progress to server
       if (saveProgress) {
         await saveProgress();
       }
-      
-      // Clear the loading toast
-      toast.dismiss(loadingToastId);
       
       // Show success message
       toast({
@@ -733,10 +721,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: "success",
       });
       
-      // Refresh form status to reflect the latest data
+      // Refresh status and set progress to 100%
       refreshStatus();
-      
-      // Set progress to 100% to mark the form as complete
       if (onProgress) {
         onProgress(100);
       }
@@ -759,8 +745,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     try {
       logger.info(`[UniversalForm] Clearing all fields for task ${taskId}`);
       
-      // Show loading toast
-      const loadingToastId = toast({
+      // Show loading toast - don't save the reference
+      toast({
         title: "Clearing Fields",
         description: "Removing all entered data...",
         duration: 3000,
@@ -774,33 +760,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         emptyData[field.key] = '';
       });
       
-      // First reset the entire form at once (bulk update)
-      form.reset(emptyData, { keepDefaultValues: false });
+      // First reset the entire form at once
+      form.reset(emptyData);
       
-      // Then update each field through the field update mechanism for proper processing
-      Object.keys(emptyData).forEach(fieldName => {
-        // Set each field value to empty using setValue for immediate UI update
-        form.setValue(fieldName, '', {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true
-        });
+      // Then update each field individually to ensure both UI and backend are updated
+      for (const fieldName of Object.keys(emptyData)) {
+        // Update React Hook Form field
+        form.setValue(fieldName, '');
         
-        // Also use field update mechanism for backend sync
+        // Update backend via our field update mechanism
         updateField(fieldName, '');
         
         // Clear any validation errors
         form.clearErrors(fieldName);
-      });
+      }
       
       // Save progress after clearing
       if (saveProgress) {
         await saveProgress();
         logger.info('[UniversalForm] Saved progress after clearing fields');
       }
-      
-      // Dismiss loading toast
-      toast.dismiss(loadingToastId);
       
       // Show success message
       toast({
@@ -816,6 +795,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (onProgress) {
         onProgress(0);
       }
+      
+      // Close the dialog
+      setShowClearFieldsDialog(false);
+      
     } catch (err) {
       logger.error('[UniversalForm] Clear fields error:', err);
       toast({
@@ -824,7 +807,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error clearing the form fields",
       });
     }
-  }, [taskId, fields, form, updateField, saveProgress, refreshStatus, toast, onProgress]);
+  }, [taskId, fields, form, updateField, saveProgress, refreshStatus, toast, onProgress, setShowClearFieldsDialog]);
   
   // Handle clearing all fields in the form - shows confirmation dialog
   const handleClearFields = useCallback(() => {
@@ -850,9 +833,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Handle form submission
   const handleSubmit = useCallback(async (data: FormData) => {
-    // Create a variable to store the toast id, accessible in both try/catch blocks
-    let submittingToastId: { id: string; dismiss: () => void; update: (props: any) => void } | null = null;
-    
     try {
       // Verify form is complete before submitting
       if (overallProgress < 100) {
@@ -889,10 +869,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
       
       // Show immediate toast notification to indicate form is being processed
-      submittingToastId = toast({
+      toast({
         title: "Submitting Form...",
         description: "Please wait while we process your submission.",
         variant: "default",
+        duration: 5000,
       });
       
       // Set completion_date to the current timestamp
@@ -962,11 +943,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         taskStatus: 'completed'
       });
       
-      // Dismiss the submitting toast
-      if (submittingToastId) {
-        submittingToastId.dismiss();
-      }
-      
       // Only proceed with success flow if we haven't caught an error during form submission
       try {
         // Verify the task status has been successfully updated in the database
@@ -1015,11 +991,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     } catch (error) {
       logger.error('Form submission error:', error);
-      
-      // Dismiss the submitting toast if it exists
-      if (submittingToastId) {
-        submittingToastId.dismiss();
-      }
       
       // Show error toast
       toast({
