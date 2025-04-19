@@ -304,14 +304,16 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 // Save progress for KYB form
 router.post('/api/kyb/progress', async (req, res) => {
   try {
-    const { taskId, progress, formData, fieldUpdates, status } = req.body;
+    const { taskId, formData, fieldUpdates, status } = req.body;
+    // Extract progress as a mutable variable
+    let calculatedProgress = req.body.progress;
 
     // Even more detailed logging to debug form saving issues
     console.log('===============================================');
     console.log(`[SERVER DEBUG] KYB PROGRESS SAVE REQUEST RECEIVED at ${new Date().toISOString()}`);
     console.log('===============================================');
     console.log(`Task ID: ${taskId}`);
-    console.log(`Progress: ${progress}`);
+    console.log(`Progress: ${calculatedProgress}`);
     console.log(`Status: ${status || 'not provided'}`);
     console.log(`Field count: ${formData ? Object.keys(formData).length : 0}`);
     
@@ -574,10 +576,10 @@ router.post('/api/kyb/progress', async (req, res) => {
       console.log('[KYB API Debug] Task has submission date, enforcing SUBMITTED status and 100% progress', {
         submissionDate: existingTask.metadata?.submissionDate,
         clientProvidedStatus: req.body.status || 'none',
-        originalProgress: progress
+        originalProgress: calculatedProgress
       });
       newStatus = TaskStatus.SUBMITTED;
-      progress = 100; // Force progress to 100% for submitted tasks
+      calculatedProgress = 100; // Force progress to 100% for submitted tasks
     }
     // If client provided an explicit status and task is not submitted, use that
     else if (req.body.status) {
@@ -586,15 +588,15 @@ router.post('/api/kyb/progress', async (req, res) => {
     } 
     // Otherwise calculate based on progress
     else {
-      if (progress === 0) {
+      if (calculatedProgress === 0) {
         newStatus = TaskStatus.NOT_STARTED;
-      } else if (progress < 100) {
+      } else if (calculatedProgress < 100) {
         newStatus = TaskStatus.IN_PROGRESS;
-      } else if (progress === 100) {
+      } else if (calculatedProgress === 100) {
         newStatus = TaskStatus.READY_FOR_SUBMISSION;
       }
       console.log('[KYB API Debug] Calculated status from progress:', { 
-        progress, 
+        progress: calculatedProgress, 
         calculatedStatus: newStatus 
       });
     }
@@ -602,7 +604,7 @@ router.post('/api/kyb/progress', async (req, res) => {
     // Update task progress and metadata
     await db.update(tasks)
       .set({
-        progress: Math.min(progress, 100),
+        progress: Math.min(calculatedProgress, 100),
         status: newStatus,
         metadata: {
           ...existingTask.metadata,
