@@ -249,123 +249,123 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                 // Also consider the locked flag in metadata if it exists
                 (task.metadata?.locked === true);
 
+              // Get tooltip content based on task type
+              const tooltipContent = isLocked ? (
+                isSecurityTask ? 
+                  "Complete the KYB form to unlock this Security Assessment task" :
+                isCardTask ? 
+                  "Complete both KYB and Security Assessment tasks to unlock this CARD task" :
+                  "This task is locked due to dependencies"
+              ) : null;
+
               return (
-                <TooltipProvider key={task.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <TableRow 
-                        className={classNames(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
-                          task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
-                          task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
-                          isLocked && "opacity-50 cursor-not-allowed"
-                        )}
-                        onClick={() => !isLocked && handleTaskClick(task)}
-                      >
-                        <TableCell className="font-mono text-xs">
-                          {task.id}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <span className="flex items-center space-x-2">
-                            {task.searchMatches ? (
-                              <span 
-                                dangerouslySetInnerHTML={{ 
-                                  __html: highlightSearchMatch(
-                                    task.title, 
-                                    task.searchMatches.filter(match => match.key === 'title')
-                                  ) 
-                                }} 
-                              />
-                            ) : (
-                              <span>{task.title}</span>
-                            )}
-                            {isLocked && (
+                <TableRow 
+                  key={task.id}
+                  className={classNames(
+                    "cursor-pointer hover:bg-muted/50 transition-colors",
+                    task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                    task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
+                    isLocked && "opacity-50 cursor-not-allowed"
+                  )}
+                  onClick={() => !isLocked && handleTaskClick(task)}
+                >
+                  <TableCell className="font-mono text-xs">
+                    {task.id}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center space-x-2">
+                      {task.searchMatches ? (
+                        <span 
+                          dangerouslySetInnerHTML={{ 
+                            __html: highlightSearchMatch(
+                              task.title, 
+                              task.searchMatches.filter(match => match.key === 'title')
+                            ) 
+                          }} 
+                        />
+                      ) : (
+                        <span>{task.title}</span>
+                      )}
+                      {isLocked && tooltipContent ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
-                            )}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(task.status)}>
-                            {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="w-full block">
-                            <span className="block w-full bg-secondary h-2 rounded-full">
-                              <span
-                                className="block bg-primary h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${task.progress}%` }}
-                              />
-                            </span>
-                            <span className="block text-xs text-muted-foreground mt-1">
-                              {task.progress}%
-                            </span>
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
-                        </TableCell>
-                        <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
-                          {!isLocked && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 p-0 hover:bg-accent"
-                                >
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-[210px]">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    // Reset any lingering overlay issues first
-                                    document.body.style.overflow = '';
-                                    document.body.style.pointerEvents = '';
-                                    const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
-                                    overlays.forEach(overlay => {
-                                      if (overlay instanceof HTMLElement) {
-                                        overlay.style.display = 'none';
-                                      }
-                                    });
-                                    
-                                    // Make sure any existing modal is closed first
-                                    setDetailsModalOpen(false);
-                                    
-                                    // Small delay to ensure previous modal is fully closed
-                                    setTimeout(() => {
-                                      setSelectedTask(task);
-                                      setDetailsModalOpen(true);
-                                    }, 50);
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  View Details
-                                </DropdownMenuItem>
-                                {/* WebSocket tester removed - not needed in production */}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    </TooltipTrigger>
-                    {isLocked && (
-                      <TooltipContent>
-                        {isSecurityTask && (
-                          <p>Complete the KYB form to unlock this Security Assessment task</p>
-                        )}
-                        {isCardTask && (
-                          <p>Complete both KYB and Security Assessment tasks to unlock this CARD task</p>
-                        )}
-                        {!isCardTask && !isSecurityTask && task.metadata?.locked && (
-                          <p>This task is locked due to dependencies</p>
-                        )}
-                      </TooltipContent>
+                            </TooltipTrigger>
+                            <TooltipContent>{tooltipContent}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : isLocked ? (
+                        <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
+                      ) : null}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(task.status)}>
+                      {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="w-full block">
+                      <span className="block w-full bg-secondary h-2 rounded-full">
+                        <span
+                          className="block bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${task.progress}%` }}
+                        />
+                      </span>
+                      <span className="block text-xs text-muted-foreground mt-1">
+                        {task.progress}%
+                      </span>
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
+                  </TableCell>
+                  <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                    {!isLocked && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 p-0 hover:bg-accent"
+                          >
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[210px]">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // Reset any lingering overlay issues first
+                              document.body.style.overflow = '';
+                              document.body.style.pointerEvents = '';
+                              const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
+                              overlays.forEach(overlay => {
+                                if (overlay instanceof HTMLElement) {
+                                  overlay.style.display = 'none';
+                                }
+                              });
+                              
+                              // Make sure any existing modal is closed first
+                              setDetailsModalOpen(false);
+                              
+                              // Small delay to ensure previous modal is fully closed
+                              setTimeout(() => {
+                                setSelectedTask(task);
+                                setDetailsModalOpen(true);
+                              }, 50);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            View Details
+                          </DropdownMenuItem>
+                          {/* WebSocket tester removed - not needed in production */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                  </Tooltip>
-                </TooltipProvider>
+                  </TableCell>
+                </TableRow>
               );
             })}
           </TableBody>
