@@ -9,6 +9,7 @@ import { createTimestampsTable } from "../create-timestamps-table";
 import { migrate as enhanceKybFields } from "./enhance-kyb-fields";
 import { migrate as updateKybFieldOrder } from "./update-kyb-field-order";
 import { migrate as restructureKybFields } from "./restructure-kyb-fields";
+import { addCompanyIsDemo } from "./add_company_is_demo";
 
 // Simpler logging for standalone execution
 function log(message: string) {
@@ -65,6 +66,10 @@ export async function runMigrations() {
     // Restructure kyb_fields table so IDs match order values
     log('Restructuring kyb_fields table to align IDs with order values');
     await restructureKybFields();
+    
+    // Add is_demo column to companies table
+    log('Adding is_demo column to companies table for demo functionality');
+    await addCompanyIsDemo();
     
     log('All migrations completed successfully');
     return true;
