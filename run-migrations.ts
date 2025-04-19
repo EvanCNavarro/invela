@@ -10,6 +10,7 @@ import { up as consolidateKybTemplates } from "./db/migrations/consolidate_kyb_t
 import { createTimestampsTable } from "./db/create-timestamps-table";
 import { migrate as enhanceKybFields } from "./db/migrations/enhance-kyb-fields";
 import { migrate as updateKybFieldOrder } from "./db/migrations/update-kyb-field-order";
+import { migrate as restructureKybFields } from "./db/migrations/restructure-kyb-fields";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
@@ -24,6 +25,7 @@ const migrations = {
   'create_timestamps_table': createTimestampsTable,
   'enhance_kyb_fields': enhanceKybFields, // Add new metadata columns and update field ordering
   'update_kyb_field_order': updateKybFieldOrder, // Update field order according to normalized CSV
+  'restructure_kyb_fields': restructureKybFields, // Restructure kyb_fields table so IDs match order values
   'all': runMigrations
 };
 
