@@ -1196,12 +1196,17 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
       .from(companies)
       .where(eq(companies.id, task.company_id));
       
+    // Ensure we're explicitly checking for true, not just truthy values 
     if (!company || company.is_demo !== true) {
       logger.error('Company is not a demo company', { 
         taskId, 
         companyId: task.company_id,
-        isDemo: company?.is_demo
+        isDemo: company?.is_demo,
+        isDemoType: typeof company?.is_demo
       });
+      // Log the actual company object to debug
+      console.log('[KYB Demo Auto-Fill] Company object:', JSON.stringify(company));
+      
       return res.status(403).json({
         error: 'Not a demo company',
         message: 'Auto-fill is only available for demo companies'
