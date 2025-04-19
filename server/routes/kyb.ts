@@ -8,6 +8,137 @@ import { Logger } from '../utils/logger';
 
 const logger = new Logger('KYBRoutes');
 
+// Add CSV parsing and conversion helper functions at the top of the file
+async function loadFormDataFromCsv(fileId: number) {
+  try {
+    console.log(`[SERVER DEBUG] Attempting to load form data from CSV file ID: ${fileId}`);
+    
+    // Query the file content from the database
+    const [file] = await db.select()
+      .from(files)
+      .where(eq(files.id, fileId));
+      
+    if (!file || !file.content) {
+      console.log(`[SERVER DEBUG] No file or content found for file ID: ${fileId}`);
+      return null;
+    }
+    
+    // Parse the CSV content
+    const csvContent = file.content.toString();
+    const rows = csvContent.split('\n').map(row => {
+      // Handle properly escaped CSV values
+      const result = [];
+      let inQuotes = false;
+      let current = '';
+      
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        
+        if (char === '"') {
+          if (inQuotes && row[i + 1] === '"') {
+            // Handle escaped quotes
+            current += '"';
+            i++;
+          } else {
+            // Toggle quotes state
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          // End of cell
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      
+      // Add the last cell
+      result.push(current);
+      return result;
+    });
+    
+    // Extract headers and data
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    
+    console.log(`[SERVER DEBUG] CSV parsed: ${dataRows.length} rows, headers: ${headers.join(', ')}`);
+    
+    // Find the indices of important columns
+    const questionColIndex = headers.findIndex(h => h === 'Question' || h === 'Question Text');
+    const answerColIndex = headers.findIndex(h => h === 'Answer');
+    const fieldKeyColIndex = headers.findIndex(h => h === 'Field Key');
+    
+    if (answerColIndex === -1) {
+      console.log(`[SERVER DEBUG] CSV missing Answer column`);
+      return null;
+    }
+    
+    // Get all KYB fields for field_key mapping
+    const fields = await db.select()
+      .from(kybFields);
+      
+    const fieldKeyToDisplayName: Record<string, string> = {};
+    const displayNameToFieldKey: Record<string, string> = {};
+    
+    fields.forEach(field => {
+      fieldKeyToDisplayName[field.field_key] = field.display_name;
+      displayNameToFieldKey[field.display_name.toLowerCase()] = field.field_key;
+    });
+    
+    // Extract form data
+    const formData: Record<string, any> = {};
+    
+    for (const row of dataRows) {
+      if (row.length <= Math.max(questionColIndex, answerColIndex, fieldKeyColIndex)) {
+        // Skip incomplete rows
+        continue;
+      }
+      
+      let fieldKey: string | null = null;
+      
+      // First try to get the field_key directly if that column exists
+      if (fieldKeyColIndex !== -1 && row[fieldKeyColIndex]) {
+        fieldKey = row[fieldKeyColIndex];
+      } 
+      // Otherwise try to map from the question text to field_key
+      else if (questionColIndex !== -1 && row[questionColIndex]) {
+        const questionText = row[questionColIndex].trim();
+        fieldKey = displayNameToFieldKey[questionText.toLowerCase()];
+        
+        // If not found, try searching partial matches
+        if (!fieldKey) {
+          // Find the closest match by normalizing and comparing
+          const normalizedQuestion = questionText.toLowerCase();
+          for (const field of fields) {
+            if (normalizedQuestion.includes(field.display_name.toLowerCase()) || 
+                field.display_name.toLowerCase().includes(normalizedQuestion)) {
+              fieldKey = field.field_key;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (fieldKey && row[answerColIndex] !== undefined && row[answerColIndex] !== null) {
+        const answerValue = row[answerColIndex].trim();
+        if (answerValue && answerValue !== 'Not provided') {
+          formData[fieldKey] = answerValue;
+        }
+      }
+    }
+    
+    console.log(`[SERVER DEBUG] Extracted ${Object.keys(formData).length} field values from CSV`);
+    
+    return { 
+      formData,
+      success: Object.keys(formData).length > 0
+    };
+  } catch (error) {
+    console.error('[SERVER DEBUG] Error loading form data from CSV:', error);
+    return null;
+  }
+}
+
 // Add CSV conversion helper function at the top of the file
 function convertResponsesToCSV(fields: any[], formData: any) {
   // CSV headers
@@ -656,7 +787,7 @@ router.post('/api/kyb/progress', async (req, res) => {
       console.log('[SERVER DEBUG] No fields with value "asdf" found in response data');
     }
     
-    console.log(`[SERVER DEBUG] Sending response with ${Object.keys(updatedFormData).length} fields, status: ${newStatus}, progress: ${progress}%`);
+    console.log(`[SERVER DEBUG] Sending response with ${Object.keys(updatedFormData).length} fields, status: ${newStatus}, progress: ${calculatedProgress}%`);
     
     // CRITICAL FIX: Also update the savedFormData in the task table
     // This ensures data persistence across navigation
@@ -687,7 +818,7 @@ router.post('/api/kyb/progress', async (req, res) => {
     res.json({
       success: true,
       savedData: {
-        progress: Math.min(progress, 100),
+        progress: Math.min(calculatedProgress, 100),
         status: newStatus,
         formData: updatedFormData
       }
@@ -1043,6 +1174,128 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       });
     } else {
       console.log('[SERVER DEBUG] No savedFormData found in task table');
+    }
+    
+    // Check if the KYB form file ID is available in the task metadata
+    const kybFormFileId = task.metadata?.kybFormFile;
+    if (kybFormFileId) {
+      console.log(`[SERVER DEBUG] Found KYB form file ID ${kybFormFileId} in task metadata`);
+      
+      // If we have very few fields (likely a data issue) AND the task is submitted,
+      // try to recover the data from the CSV file
+      const shouldLoadFromCsv = Object.keys(formData).length < 5 && 
+                                (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate);
+                                
+      if (shouldLoadFromCsv) {
+        console.log(`[SERVER DEBUG] Only ${Object.keys(formData).length} fields found in database, attempting to load from CSV file`);
+        
+        try {
+          const fileData = await loadFormDataFromCsv(kybFormFileId);
+          
+          if (fileData && fileData.success) {
+            console.log(`[SERVER DEBUG] Successfully loaded ${Object.keys(fileData.formData).length} fields from CSV file`);
+            
+            // Merge the CSV data into our form data
+            Object.entries(fileData.formData).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) {
+                if (formData[key] !== undefined && formData[key] !== value) {
+                  console.log(`[SERVER DEBUG] Data mismatch for field ${key}:`);
+                  console.log(`[SERVER DEBUG] - database: "${formData[key]}"`);
+                  console.log(`[SERVER DEBUG] - CSV file: "${value}"`);
+                  console.log(`[SERVER DEBUG] Using CSV file value as it's likely more complete`);
+                }
+                formData[key] = value;
+              }
+            });
+            
+            // If we successfully loaded data from CSV, also update the database
+            // This ensures future requests won't need to rely on CSV recovery
+            if (Object.keys(fileData.formData).length > 5) {
+              console.log(`[SERVER DEBUG] Updating database with recovered form data from CSV file`);
+              
+              try {
+                // Get all KYB fields
+                const fields = await db.select().from(kybFields);
+                const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+                
+                // Update responses in the database
+                for (const [fieldKey, value] of Object.entries(fileData.formData)) {
+                  const fieldId = fieldMap.get(fieldKey);
+                  
+                  if (!fieldId) {
+                    console.log(`[SERVER DEBUG] Field not found in database: ${fieldKey}`);
+                    continue;
+                  }
+                  
+                  try {
+                    // First check if this response already exists
+                    const [existingResponse] = await db.select()
+                      .from(kybResponses)
+                      .where(
+                        and(
+                          eq(kybResponses.task_id, parseInt(taskId)),
+                          eq(kybResponses.field_id, fieldId)
+                        )
+                      );
+                      
+                    if (existingResponse) {
+                      if (existingResponse.response_value !== value) {
+                        // Update the existing response
+                        await db.update(kybResponses)
+                          .set({
+                            response_value: value as string,
+                            status: value ? 'COMPLETE' : 'EMPTY',
+                            version: existingResponse.version + 1,
+                            updated_at: new Date()
+                          })
+                          .where(eq(kybResponses.id, existingResponse.id));
+                          
+                        console.log(`[SERVER DEBUG] Updated response for field ${fieldKey} with recovered value from CSV`);
+                      }
+                    } else {
+                      // Insert a new response
+                      await db.insert(kybResponses)
+                        .values({
+                          task_id: parseInt(taskId),
+                          field_id: fieldId,
+                          response_value: value as string,
+                          status: value ? 'COMPLETE' : 'EMPTY',
+                          version: 1,
+                          created_at: new Date(),
+                          updated_at: new Date()
+                        });
+                        
+                      console.log(`[SERVER DEBUG] Inserted new response for field ${fieldKey} with recovered value from CSV`);
+                    }
+                  } catch (error) {
+                    console.error(`[SERVER DEBUG] Error updating/inserting response for field ${fieldKey}:`, error);
+                  }
+                }
+                
+                // Also update the task's savedFormData field
+                const taskUpdate: any = {
+                  savedFormData: fileData.formData,
+                  updated_at: new Date()
+                };
+                
+                await db.update(tasks)
+                  .set(taskUpdate)
+                  .where(eq(tasks.id, parseInt(taskId)));
+                  
+                console.log(`[SERVER DEBUG] Successfully updated task.savedFormData with recovered CSV data`);
+              } catch (dbUpdateError) {
+                console.error(`[SERVER DEBUG] Error updating database with recovered CSV data:`, dbUpdateError);
+              }
+            }
+          } else {
+            console.log(`[SERVER DEBUG] Failed to load data from CSV file`);
+          }
+        } catch (csvError) {
+          console.error(`[SERVER DEBUG] Error loading data from CSV file:`, csvError);
+        }
+      }
+    } else {
+      console.log('[SERVER DEBUG] No KYB form file ID found in task metadata');
     }
     
     // Then load (and override) with the most current data from kybResponses
