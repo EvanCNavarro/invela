@@ -702,10 +702,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Refresh form status and unlock the review step
       refreshStatus();
       
-      // Set progress to a high enough value to unlock the review step
-      // Typically 80% is enough to make the review step available
+      // Set progress to 100% to fully complete the form with demo data
       if (onProgress) {
-        onProgress(80);
+        onProgress(100);
       }
       
     } catch (err) {
