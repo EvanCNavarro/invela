@@ -1169,11 +1169,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
       
       // Show immediate toast notification to indicate form is being processed
-      toast({
+      const submittingToastId = toast({
         title: "Submitting Form...",
         description: "Please wait while we process your submission.",
         variant: "default",
-        duration: 5000,
+        duration: 10000, // Longer duration to ensure it stays visible
       });
       
       // Set completion_date to the current timestamp
@@ -1233,7 +1233,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Pause briefly to ensure all backend processes complete before showing success modal
       // This allows time for file generation, status updates, etc.
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Set submission result following the SubmissionResult interface
       setSubmissionResult({
@@ -1245,28 +1245,40 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Only proceed with success flow if we haven't caught an error during form submission
       try {
+        // Clear the submitting toast
+        toast.dismiss(submittingToastId);
+
         // Verify the task status has been successfully updated in the database
         const statusCheckResponse = await fetch(`/api/tasks/${taskId}`);
         const taskStatusData = await statusCheckResponse.json();
         
-        // Only show success UI if task status is updated in the database
+        logger.info('Task status check response:', taskStatusData);
+        
+        // Always trigger success flow for the demo if status is 'submitted' or high progress
         if (taskStatusData.status === 'submitted' || taskStatusData.progress >= 95) {
-          // Fire confetti animation FIRST (before showing modal)
-          const { fireSuperConfetti } = await import('@/utils/confetti');
-          fireSuperConfetti();
-          
-          // Brief delay to ensure modal displays correctly after confetti
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Show success toast notification
-          toast({
-            title: "Form Submitted Successfully",
-            description: "Your form has been submitted successfully.",
-            variant: "success",
-          });
-          
-          // Show success modal AFTER confetti has been fired
-          setShowSuccessModal(true);
+          try {
+            // Fire confetti animation FIRST (before showing modal)
+            const { fireSuperConfetti } = await import('@/utils/confetti');
+            fireSuperConfetti();
+            
+            // Show success toast notification
+            toast({
+              title: "Form Submitted Successfully",
+              description: "Your form has been submitted successfully.",
+              variant: "success",
+            });
+            
+            // Brief delay to ensure confetti displays before showing modal
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Force show success modal by setting state directly
+            console.log('Showing success modal');
+            setShowSuccessModal(true);
+          } catch (confettiError) {
+            // If there's any error in showing confetti, still show the success modal
+            logger.error('Error showing confetti:', confettiError);
+            setShowSuccessModal(true);
+          }
         } else {
           // Task status not properly updated, show warning
           toast({
@@ -1299,7 +1311,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [overallProgress, saveProgress, onSubmit, toast, checkForEmptyValues, fields]);
+  }, [overallProgress, saveProgress, onSubmit, toast, checkForEmptyValues, fields, taskType, fileId, taskId]);
   
   // Handle cancel button click
   const handleCancel = useCallback(() => {
