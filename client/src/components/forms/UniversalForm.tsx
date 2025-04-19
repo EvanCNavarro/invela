@@ -484,9 +484,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     const companyData = await companyResponse.json();
                     logger.info(`[UniversalForm] Successfully fetched company data:`, companyData);
                     
-                    // Use the is_demo flag from the company data
-                    setIsCompanyDemo(companyData.is_demo === true);
-                    console.log(`[DEBUG] Set isCompanyDemo to ${companyData.is_demo} from company API endpoint`);
+                    // Use the is_demo flag or isDemo flag from the company data
+                    // Handle both formats since API response might use either convention
+                    const isDemoFromApi = companyData.is_demo === true || companyData.isDemo === true;
+                    setIsCompanyDemo(isDemoFromApi);
+                    console.log(`[DEBUG] Set isCompanyDemo to ${isDemoFromApi} from company API endpoint (is_demo: ${companyData.is_demo}, isDemo: ${companyData.isDemo})`);
                     return;
                   }
                 } catch (companyError) {
@@ -501,11 +503,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               
               // IMPORTANT: We're now checking ONLY as an emergency fallback
               if (companyName === 'DevelopmentTesting3') {
-                logger.info(`[UniversalForm] FALLBACK: Company name is DevelopmentTesting3 but trying not to use this check`);
-                // This fallback should ideally never be used now
-                // For now, we'll set to false to force use of the database value
-                setIsCompanyDemo(false);
-                console.log('[DEBUG] Set isCompanyDemo to FALSE even though name is DevelopmentTesting3 (prefer database)');
+                logger.info(`[UniversalForm] FALLBACK: Using company name DevelopmentTesting3 as demo indicator`);
+                // Since we know this is a demo company, set it to true
+                setIsCompanyDemo(true);
+                console.log('[DEBUG] Set isCompanyDemo to TRUE based on company name DevelopmentTesting3');
                 return;
               }
             }
