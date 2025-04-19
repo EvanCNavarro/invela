@@ -1002,7 +1002,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Store current section before clearing fields
       const currentSectionBeforeClear = activeSection;
-      const isOnReviewSection = activeSection === 'review-section';
       
       // Show loading toast - don't save the reference
       toast({
@@ -1071,16 +1070,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // ALWAYS redirect to first section if we were on the review section
       // since after clearing fields, the review section will be locked
-      if (activeSection === 'review-section' && setActiveSection) {
+      // Review section is always the last section in allSections array
+      const isOnReviewSection = activeSection === allSections.length - 1;
+      
+      if (isOnReviewSection && setActiveSection) {
         console.log('[UniversalForm] Was on review section, redirecting to first section after clearing fields');
         
         // Redirect IMMEDIATELY without delay to ensure user sees the change
-        // Get the first available section (non-review section)
-        const firstSection = sections[0]?.id || 'section-0';
-        setActiveSection(firstSection);
+        // First section is always index 0
+        setActiveSection(0);
         
         // Log for debugging
-        console.log(`[UniversalForm] Redirected from review-section to ${firstSection}`);
+        console.log(`[UniversalForm] Redirected from review section (index ${activeSection}) to first section (index 0)`);
       }
       
       // Show success message
