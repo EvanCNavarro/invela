@@ -1034,14 +1034,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     <div className="w-full mx-auto">
       {/* Gray header box with title, subtitle, and download button */}
       <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-5 gap-4">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row sm:justify-between mb-5">
+          <div className="mb-4 sm:mb-0">
             <h2 className="text-xl font-semibold">{headerTitle}</h2>
             <p className="text-sm text-gray-500">{headerSubtitle}</p>
           </div>
           
-          <div className="flex justify-end">
-            {isSubmitted ? (
+          {isSubmitted ? (
+            <div className="self-start">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -1064,31 +1064,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : isCompanyDemo && (
-              <div className="rounded-lg border border-purple-100 bg-purple-50/30 p-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleDemoAutoFill}
-                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
-                  >
-                    <Code className="mr-2 h-4 w-4" />
-                    Demo Auto-Fill
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleClearFields}
-                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
-                  >
-                    <Eraser className="mr-2 h-4 w-4" />
-                    Clear Fields
-                  </Button>
-                </div>
+            </div>
+          ) : isCompanyDemo && (
+            <div className="self-start rounded-lg border border-purple-100 bg-purple-50/30 p-4 shadow-sm">
+              <div className="flex flex-row gap-4 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDemoAutoFill}
+                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
+                >
+                  <Code className="mr-2 h-4 w-4" />
+                  Demo Auto-Fill
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleClearFields}
+                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
+                >
+                  <Eraser className="mr-2 h-4 w-4" />
+                  Clear Fields
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
