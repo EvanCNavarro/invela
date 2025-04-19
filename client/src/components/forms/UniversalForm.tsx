@@ -43,7 +43,8 @@ import {
   Building2,
   UserCircle,
   XCircle,
-  Code
+  Code,
+  Eraser
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
