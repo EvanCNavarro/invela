@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect, forwardRef, useCallback } from "react";
 import { Dialog, DialogTitle, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
@@ -99,8 +99,8 @@ export function WelcomeModal() {
   const isLastSlide = currentSlide === carouselContent.length - 1;
   const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
 
-  // Enhanced localStorage handler - directly completes onboarding if localStorage has a record
-  const completeOnboardingFromLocalStorage = () => {
+  // Enhanced localStorage handler - directly completes onboarding if localStorage has a record and syncs with server
+  const completeOnboardingFromLocalStorage = useCallback(() => {
     if (!user) return false;
     
     try {
@@ -116,7 +116,7 @@ export function WelcomeModal() {
       console.error('[ONBOARDING DEBUG] Error checking localStorage:', err);
     }
     return false;
-  };
+  }, [user]);
   
   // Only set modal visibility once when user data is fully available
   useEffect(() => {
@@ -140,43 +140,39 @@ export function WelcomeModal() {
       }
     });
     
-    // First, check localStorage as a fail-safe
-    try {
-      const onboardingCompletedInStorage = localStorage.getItem('onboarding_completed') === 'true';
-      const savedUserId = localStorage.getItem('onboarding_user_id');
-      
-      // If we have a record that this user completed onboarding, honor it
-      if (onboardingCompletedInStorage && savedUserId === user.id.toString()) {
-        console.log('[ONBOARDING DEBUG] Found localStorage record of completed onboarding, skipping modal');
-        user.onboarding_user_completed = true;
-        return; // Skip showing modal
+    // First step: Check if user is already marked as onboarded
+    if (user.onboarding_user_completed === true) {
+      console.log('[ONBOARDING DEBUG] User is already marked as onboarded in user object');
+      // Double-verify in localStorage
+      try {
+        localStorage.setItem('onboarding_completed', 'true');
+        localStorage.setItem('onboarding_user_id', user.id.toString());
+      } catch (err) {
+        console.error('[ONBOARDING DEBUG] Failed to update localStorage:', err);
       }
-    } catch (error) {
-      console.error('[ONBOARDING DEBUG] Error checking localStorage:', error);
+      return; // Exit early, no need to show modal
     }
     
-    // A small delay to ensure all auth processes are complete
+    // Second step: Check localStorage using our helper function
+    if (completeOnboardingFromLocalStorage()) {
+      console.log('[ONBOARDING DEBUG] Successfully applied onboarding status from localStorage');
+      return; // Skip showing modal
+    }
+    
+    // If we reach here, we need to show the modal
+    // Use a small delay to ensure all auth processes are complete
     const timer = setTimeout(() => {
       console.log('[WelcomeModal] Setting modal state:', { 
         userId: user.id,
         onboardingCompleted: user.onboarding_user_completed,
-        showModal: user.onboarding_user_completed === false
+        showModal: true
       });
       
-      // Only show modal if onboarding is explicitly NOT completed (strict equality check)
-      const shouldShowModal = user.onboarding_user_completed === false;
-      console.log('[ONBOARDING DEBUG] Modal display decision:', {
-        shouldShow: shouldShowModal,
-        userOnboardingCompleted: user.onboarding_user_completed,
-        strictEqualityCheck: user.onboarding_user_completed === false,
-        typeOfOnboardingFlag: typeof user.onboarding_user_completed
-      });
-      
-      setShowModal(shouldShowModal);
+      setShowModal(true);
     }, 300);
     
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, completeOnboardingFromLocalStorage]);
 
   const { data: onboardingTask } = useQuery<{id: number}>({
     queryKey: ["/api/tasks", { type: "user_onboarding", email: user?.email }],
