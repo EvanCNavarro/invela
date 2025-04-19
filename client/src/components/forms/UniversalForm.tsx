@@ -1069,17 +1069,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         await refreshStatus();
       }
       
-      // Redirect to first section if we were on the review section
+      // ALWAYS redirect to first section if we were on the review section
       // since after clearing fields, the review section will be locked
-      if (isOnReviewSection && setActiveSection) {
+      if (activeSection === 'review-section' && setActiveSection) {
         console.log('[UniversalForm] Was on review section, redirecting to first section after clearing fields');
         
-        // Short delay to ensure status refresh is complete before changing section
-        setTimeout(() => {
-          // Get the first available section (non-review section)
-          const firstSection = sections[0]?.id || 'section-0';
-          setActiveSection(firstSection);
-        }, 100);
+        // Redirect IMMEDIATELY without delay to ensure user sees the change
+        // Get the first available section (non-review section)
+        const firstSection = sections[0]?.id || 'section-0';
+        setActiveSection(firstSection);
+        
+        // Log for debugging
+        console.log(`[UniversalForm] Redirected from review-section to ${firstSection}`);
       }
       
       // Show success message
