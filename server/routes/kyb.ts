@@ -18,13 +18,50 @@ async function loadFormDataFromCsv(fileId: number) {
       .from(files)
       .where(eq(files.id, fileId));
       
-    if (!file || !file.content) {
-      console.log(`[SERVER DEBUG] No file or content found for file ID: ${fileId}`);
+    if (!file) {
+      console.log(`[SERVER DEBUG] No file found for file ID: ${fileId}`);
       return null;
     }
     
-    // Parse the CSV content
-    const csvContent = file.content.toString();
+    // Check if we have the file path or direct content
+    let csvContent: string;
+    
+    if (file.path) {
+      console.log(`[SERVER DEBUG] File has path: ${file.path}`);
+      
+      // Try to read the file directly from the path field
+      try {
+        // For metadata-based CSV storage
+        if (file.metadata && file.metadata.csv_content) {
+          console.log(`[SERVER DEBUG] Found CSV content in file metadata`);
+          csvContent = file.metadata.csv_content.toString();
+        } 
+        // For path-based CSV storage
+        else {
+          // Check if the path is a base64 encoded content
+          if (file.path.startsWith('data:')) {
+            console.log(`[SERVER DEBUG] Path appears to be base64 encoded content`);
+            // Extract the content part from the data URL
+            const base64Content = file.path.split(',')[1];
+            if (base64Content) {
+              csvContent = Buffer.from(base64Content, 'base64').toString('utf-8');
+            } else {
+              throw new Error('Invalid data URL format');
+            }
+          } 
+          // Try to use path field directly as content
+          else {
+            csvContent = file.path;
+          }
+        }
+      } catch (error) {
+        console.error(`[SERVER DEBUG] Error reading file content from path:`, error);
+        return null;
+      }
+    } else {
+      console.log(`[SERVER DEBUG] No file path or content found for file ID: ${fileId}`);
+      return null;
+    }
     const rows = csvContent.split('\n').map(row => {
       // Handle properly escaped CSV values
       const result = [];
