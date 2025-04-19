@@ -210,6 +210,7 @@ export const kybFields = pgTable("kyb_fields", {
   step_index: integer("step_index").notNull().default(0),
   validation_rules: jsonb("validation_rules"),
   help_text: text("help_text"),
+  demo_autofill: text("demo_autofill"), // Add the demo_autofill column
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
