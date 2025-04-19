@@ -42,7 +42,8 @@ import {
   ClipboardCheck,
   Building2,
   UserCircle,
-  XCircle
+  XCircle,
+  Code
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
