@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
 import { WebSocketTester } from "./WebSocketTester";
@@ -213,12 +213,26 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
     return (
       <div className="text-center py-8 text-muted-foreground">
         No tasks found
+        <div className="mt-4">
+          <Link to="/debug/websocket" className="text-xs text-blue-500 hover:underline">
+            WebSocket Debugger
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <>
+      <div className="flex justify-between items-center mb-2">
+        <div className="text-xs text-muted-foreground">
+          {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} found
+        </div>
+        <Link to="/debug/websocket" className="text-xs text-blue-500 hover:underline flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          WebSocket Debugger
+        </Link>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
