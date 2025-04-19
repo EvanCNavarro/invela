@@ -5,6 +5,7 @@ import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@d
 import { eq, and, ilike, sql } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
+import { broadcastTaskUpdate, broadcastMessage } from '../services/websocket';
 
 const logger = new Logger('KYBRoutes');
 
@@ -770,9 +771,11 @@ router.post('/api/kyb/progress', async (req, res) => {
     }
 
     // Update task progress and metadata
+    const progress = Math.min(calculatedProgress, 100);
+    
     await db.update(tasks)
       .set({
-        progress: Math.min(calculatedProgress, 100),
+        progress: progress,
         status: newStatus,
         metadata: {
           ...existingTask.metadata,
@@ -783,6 +786,17 @@ router.post('/api/kyb/progress', async (req, res) => {
         updated_at: timestamp
       })
       .where(eq(tasks.id, taskId));
+      
+    // Broadcast task update via WebSocket for real-time progress updates
+    console.log(`[WebSocket] Broadcasting task update for task ${taskId}: progress=${progress}, status=${newStatus}`);
+    broadcastTaskUpdate({
+      id: taskId,
+      status: newStatus as TaskStatus,
+      progress: progress,
+      metadata: {
+        lastUpdated: timestamp.toISOString()
+      }
+    });
 
     // Get updated responses
     const updatedResponses = await db.select({
