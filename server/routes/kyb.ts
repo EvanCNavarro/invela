@@ -1267,6 +1267,7 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
         
         switch (field.field_type) {
           case 'TEXT':
+          case 'TEXTAREA':
             demoData[fieldKey] = `Demo ${field.display_name}`;
             break;
             
@@ -1286,11 +1287,12 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
             
           case 'SELECT':
           case 'MULTI_SELECT':
+          case 'MULTIPLE_CHOICE':
             demoData[fieldKey] = 'Option A';
             break;
             
-          case 'TEXTAREA':
-            demoData[fieldKey] = `Demo information for ${field.display_name}`;
+          case 'EMAIL':
+            demoData[fieldKey] = `demo@${field.display_name.toLowerCase().replace(/\s/g, '')}.com`;
             break;
             
           default:
