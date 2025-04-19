@@ -11,6 +11,7 @@ import { createTimestampsTable } from "./db/create-timestamps-table";
 import { migrate as enhanceKybFields } from "./db/migrations/enhance-kyb-fields";
 import { migrate as updateKybFieldOrder } from "./db/migrations/update-kyb-field-order";
 import { migrate as restructureKybFields } from "./db/migrations/restructure-kyb-fields";
+import { addCompanyIsDemo } from "./db/migrations/add_company_is_demo";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
@@ -26,6 +27,7 @@ const migrations = {
   'enhance_kyb_fields': enhanceKybFields, // Add new metadata columns and update field ordering
   'update_kyb_field_order': updateKybFieldOrder, // Update field order according to normalized CSV
   'restructure_kyb_fields': restructureKybFields, // Restructure kyb_fields table so IDs match order values
+  'add_company_is_demo': addCompanyIsDemo, // Add is_demo column to companies table for demo functionality
   'all': runMigrations
 };
 
