@@ -93,12 +93,11 @@ export default function TaskCenterPage() {
 
     const setupSubscriptions = async () => {
       try {
-        // Subscribe to both formats of task update events
-        // 1. Subscribe to standard task updates
+        // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
-          // Server sends updates with 'payload' wrapper
-          const taskData = data?.id ? data : (data?.payload || {});
-          const taskId = taskData.id || taskData.taskId;
+          // Server always sends updates with 'payload' wrapper for task_update events
+          const taskData = data?.payload || {};
+          const taskId = taskData.id;
 
           console.log('[TaskCenter] WebSocket task_update received:', {
             taskId,
@@ -145,9 +144,9 @@ export default function TaskCenterPage() {
         
         // 2. Subscribe to test task notifications as well
         const unsubTaskTestNotification = await wsService.subscribe('task_test_notification', (data: any) => {
-          // Handle test notifications similarly to regular updates
-          const taskData = data?.id ? data : (data?.payload || {});
-          const taskId = taskData.id || taskData.taskId;
+          // Server always uses a consistent format with payload wrapper
+          const taskData = data?.payload || {};
+          const taskId = taskData.id;
           
           console.log('[TaskCenter] WebSocket test notification received:', {
             taskId,

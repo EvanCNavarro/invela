@@ -188,19 +188,20 @@ export function broadcastMessage(type: string, payload: any) {
   console.log(`[WebSocket] Broadcasting message: ${type}`, payload);
   
   // Handle specific message types
-  if (type.includes('task')) {
-    // If it's a task-related message, also call the specific task update function
-    if (payload.task || payload.taskId) {
-      broadcastTaskUpdate({
-        id: payload.task?.id || payload.taskId,
-        status: payload.task?.status || payload.status || 'not_started',
-        progress: payload.task?.progress || payload.progress || 0,
-        metadata: payload.task?.metadata || payload.metadata
-      });
-    }
+  if (type.includes('task') && (payload.task || payload.taskId)) {
+    // If it's a task-related message, use the specific task update function
+    // to ensure consistent payload format
+    broadcastTaskUpdate({
+      id: payload.task?.id || payload.taskId,
+      status: payload.task?.status || payload.status || 'not_started',
+      progress: payload.task?.progress || payload.progress || 0,
+      metadata: payload.task?.metadata || payload.metadata
+    });
+    // Return early to avoid double broadcasting
+    return;
   }
   
-  // Broadcast generic message to all clients
+  // For non-task messages, broadcast generic message to all clients
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       try {
