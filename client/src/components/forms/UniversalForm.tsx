@@ -1063,15 +1063,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : isCompanyDemo && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleDemoAutoFill}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-            >
-              <Code className="mr-2 h-4 w-4" />
-              Demo Auto-Fill
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDemoAutoFill}
+                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+              >
+                <Code className="mr-2 h-4 w-4" />
+                Demo Auto-Fill
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleClearFields}
+                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+              >
+                <Eraser className="mr-2 h-4 w-4" />
+                Clear Fields
+              </Button>
+            </div>
           )}
         </div>
         
@@ -1288,37 +1299,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   </div>
                 )}
                 
-                {/* Demo buttons group - only shows for demo accounts */}
-                {isCompanyDemo && (
-                  <div className="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                    <div className="flex flex-col sm:flex-row items-center justify-between">
-                      <div className="mb-3 sm:mb-0">
-                        <h4 className="text-blue-700 font-medium text-sm">Demo Account Tools</h4>
-                        <p className="text-blue-600 text-xs">Special tools available for demo accounts only</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          onClick={handleDemoAutoFill}
-                          variant="outline"
-                          size="sm"
-                          className="text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800 flex items-center"
-                        >
-                          <span className="mr-1">📝</span> Demo Auto-Fill
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={handleClearFields}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800 flex items-center"
-                        >
-                          <span className="mr-1">🧹</span> Clear Fields
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* We'll handle the Demo buttons in the page header, not here */}
                 
                 {/* Section content */}
                 <div className="pt-2">
