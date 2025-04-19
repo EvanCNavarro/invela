@@ -760,46 +760,39 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         emptyData[field.key] = '';
       });
       
-      // Clear the React Hook Form state first
+      // First submit this empty data directly to the server
+      if (taskId) {
+        try {
+          const response = await fetch('/api/kyb/progress', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              taskId: taskId,
+              formData: emptyData,
+              progress: 0,
+              status: 'in_progress'
+            }),
+          });
+          
+          if (!response.ok) {
+            logger.warn(`Failed to clear fields on server: ${response.status}`);
+          } else {
+            logger.info('[UniversalForm] Successfully cleared fields on server');
+          }
+        } catch (serverError) {
+          logger.error('[UniversalForm] Server error when clearing fields:', serverError);
+        }
+      }
+      
+      // Clear the React Hook Form state
       form.reset(emptyData);
       
-      // Make sure formData is cleared in our internal state
-      if (formService) {
-        // If we have a form service, use it to clear form data
-        for (const key of Object.keys(formService.getFormData())) {
-          formService.updateField(key, '');
-        }
-      }
-      
-      // Manually update each field to ensure both UI and backend get the empty values
+      // Explicitly set each field to empty in the form
       for (const fieldName of Object.keys(emptyData)) {
-        // Set value in the form
         form.setValue(fieldName, '');
-        
-        // Make sure to update the backend via our update mechanism
-        updateField(fieldName, '');
-        
-        // Clear validation errors
         form.clearErrors(fieldName);
-      }
-      
-      // Force a synchronous save to the backend
-      if (saveProgress) {
-        await saveProgress();
-        logger.info('[UniversalForm] Saved progress after clearing fields');
-      }
-      
-      // Force a full form data reload from the server to clear any remaining data
-      try {
-        if (formService && taskId) {
-          const response = await fetch(`/api/kyb/progress/${taskId}`);
-          if (response.ok) {
-            // This will refresh the form with the latest server data
-            await refreshStatus();
-          }
-        }
-      } catch (reloadError) {
-        logger.error('[UniversalForm] Error reloading data after clearing:', reloadError);
       }
       
       // Show success message
@@ -809,22 +802,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: "success",
       });
       
-      // Force the UI to refresh
-      setTimeout(() => {
-        // Reset progress to 0%
-        if (onProgress) {
-          onProgress(0);
-        }
-        
-        // Force form to re-render with empty values
-        form.reset(emptyData);
-      }, 100);
+      // Reset progress to 0%
+      if (onProgress) {
+        onProgress(0);
+      }
       
       // Close the dialog
       setShowClearFieldsDialog(false);
       
       // Force browser to reload the page to ensure clean state
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
       
     } catch (err) {
       logger.error('[UniversalForm] Clear fields error:', err);
@@ -834,7 +823,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error clearing the form fields",
       });
     }
-  }, [taskId, fields, form, formService, updateField, saveProgress, refreshStatus, toast, onProgress, setShowClearFieldsDialog]);
+  }, [taskId, fields, form, toast, onProgress, setShowClearFieldsDialog]);
   
   // Handle clearing all fields in the form - shows confirmation dialog
   const handleClearFields = useCallback(() => {
