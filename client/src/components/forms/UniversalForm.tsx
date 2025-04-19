@@ -765,17 +765,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         console.log('[UniversalForm] Setting individual field values...');
         let fieldsUpdated = 0;
         
-        // First pass - make a special pass just for essential fields to ensure they're set first
-        const essentialFields = ['legalEntityName', 'registrationNumber', 'incorporationDate'];
+        // First pass - make a special pass for section-0 (Company Profile) fields 
+        // Add all fields from Company Profile section to ensure none are missed
+        // This directly addresses the missing field issue in the first section
         
-        for (const fieldName of essentialFields) {
+        // Get all fields belonging to section-0
+        const companyProfileFields = fields
+          .filter(field => field.section === 'section-0')
+          .map(field => field.key);
+          
+        console.log('[UniversalForm] Found Company Profile fields:', companyProfileFields);
+        
+        // Process them first with extra care
+        for (const fieldName of companyProfileFields) {
           if (fieldName in completeData) {
             const fieldValue = completeData[fieldName];
             try {
-              console.log(`[UniversalForm] Setting essential field ${fieldName}: "${fieldValue}"`);
+              console.log(`[UniversalForm] Setting Company Profile field ${fieldName}: "${fieldValue}"`);
               
               // Forcefully clear the field first
               form.setValue(fieldName, null);
+              await new Promise(resolve => setTimeout(resolve, 10));
               
               // Set with validation
               form.setValue(fieldName, fieldValue, {
@@ -784,24 +794,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 shouldTouch: true
               });
               
-              // Update backend
+              // Update backend - call twice to ensure persistence
               if (typeof updateField === 'function') {
+                updateField(fieldName, fieldValue);
+                
+                // Small delay then update again for redundancy
+                await new Promise(resolve => setTimeout(resolve, 20));
                 updateField(fieldName, fieldValue);
                 fieldsUpdated++;
               }
               
-              // Longer delay for essential fields
-              await new Promise(resolve => setTimeout(resolve, 30));
+              // Longer delay between Company Profile fields
+              await new Promise(resolve => setTimeout(resolve, 50));
             } catch (err) {
-              console.error(`[UniversalForm] Error setting essential field ${fieldName}:`, err);
+              console.error(`[UniversalForm] Error setting Company Profile field ${fieldName}:`, err);
             }
+          } else {
+            console.warn(`[UniversalForm] Field ${fieldName} not found in demo data!`);
           }
         }
         
         // Second pass - handle all other fields
         for (const [fieldName, fieldValue] of Object.entries(completeData)) {
-          // Skip essential fields that were already processed
-          if (essentialFields.includes(fieldName)) {
+          // Skip Company Profile fields that were already processed in first pass
+          const isCompanyProfileField = companyProfileFields.includes(fieldName);
+          if (isCompanyProfileField) {
             continue;
           }
           
@@ -914,6 +931,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             'Financial Profile': sectionFields['Financial Profile'].length,
             'Operations & Compliance': sectionFields['Operations & Compliance'].length
           });
+          
+          // Final field checking - find any missing field and set it directly
+          // This is our last fallback to ensure 100% completion
+          fields.forEach(field => {
+            const { key, section } = field;
+            const currentValue = formValues[key];
+            
+            if (!currentValue && completeData[key]) {
+              // Found a missing field, set it again
+              console.log(`[UniversalForm] Final pass - fixing missing field ${key} in section ${section}`);
+              form.setValue(key, completeData[key], {
+                shouldValidate: true,
+                shouldDirty: true,
+                shouldTouch: true
+              });
+              
+              // Update backend if needed
+              if (typeof updateField === 'function') {
+                updateField(key, completeData[key]);
+              }
+            }
+          });
+          
+          // One last force re-render after fixing any missing fields
+          setForceRerender(prev => !prev);
         }, 500);
         
         console.log(`[UniversalForm] Updated ${fieldsUpdated} fields in backend`);
@@ -957,6 +999,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const doClearFields = useCallback(async () => {
     try {
       logger.info(`[UniversalForm] Clearing all fields for task ${taskId}`);
+      
+      // Store current section before clearing fields
+      const currentSectionBeforeClear = activeSection;
+      const isOnReviewSection = activeSection === 'review-section';
       
       // Show loading toast - don't save the reference
       toast({
@@ -1023,6 +1069,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         await refreshStatus();
       }
       
+      // Redirect to first section if we were on the review section
+      // since after clearing fields, the review section will be locked
+      if (isOnReviewSection && setActiveSection) {
+        console.log('[UniversalForm] Was on review section, redirecting to first section after clearing fields');
+        
+        // Short delay to ensure status refresh is complete before changing section
+        setTimeout(() => {
+          // Get the first available section (non-review section)
+          const firstSection = sections[0]?.id || 'section-0';
+          setActiveSection(firstSection);
+        }, 100);
+      }
+      
       // Show success message
       toast({
         title: "Fields Cleared",
@@ -1046,7 +1105,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error clearing the form fields",
       });
     }
-  }, [taskId, fields, form, updateField, refreshStatus, toast, onProgress, setShowClearFieldsDialog]);
+  }, [taskId, fields, form, updateField, refreshStatus, toast, onProgress, setShowClearFieldsDialog, activeSection, setActiveSection, sections]);
   
   // Handle clearing all fields in the form - shows confirmation dialog
   const handleClearFields = useCallback(() => {
