@@ -870,7 +870,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             <p className="text-sm text-gray-500">{headerSubtitle}</p>
           </div>
           
-          {isSubmitted && (
+          {isSubmitted ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -893,6 +893,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : company?.isDemo && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDemoAutoFill}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            >
+              <Code className="mr-2 h-4 w-4" />
+              Demo Auto-Fill
+            </Button>
           )}
         </div>
         
