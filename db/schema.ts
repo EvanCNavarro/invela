@@ -184,11 +184,15 @@ export const openaiSearchAnalytics = pgTable("openai_search_analytics", {
 });
 
 export const KYBFieldType = {
-  TEXT: 'text',
-  DATE: 'date',
-  NUMBER: 'number',
-  BOOLEAN: 'boolean',
-  MULTIPLE_CHOICE: 'multiple_choice'
+  TEXT: 'TEXT',
+  DATE: 'DATE',
+  NUMBER: 'NUMBER',
+  BOOLEAN: 'BOOLEAN',
+  MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
+  SELECT: 'SELECT',
+  MULTI_SELECT: 'MULTI_SELECT',
+  TEXTAREA: 'TEXTAREA',
+  EMAIL: 'EMAIL'
 } as const;
 
 export const KYBFieldStatus = {

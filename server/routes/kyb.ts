@@ -1222,6 +1222,12 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
     // Create demo data for each field using predefined demo_autofill values from the database
     const demoData: Record<string, any> = {};
     
+    // Get current user information for personalized values
+    let userEmail = '';
+    if (req.user) {
+      userEmail = req.user.email;
+    }
+    
     // Log the first few fields to debug with explicit column check
     console.log('[KYB Demo Auto-Fill] First 5 fields from database:');
     
@@ -1243,10 +1249,16 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
     for (const field of fields) {
       const fieldKey = field.field_key;
       
-      // Special case for company name - always use the actual company name
+      // Special cases that should always use current user/company data regardless of database values
       if (fieldKey === 'legalEntityName') {
+        // Always use the actual company name
         demoData[fieldKey] = company.name;
         console.log(`[KYB Demo Auto-Fill] Using company name for legalEntityName: ${company.name}`);
+      }
+      else if (fieldKey === 'contactEmail') {
+        // Always use the current user's email
+        demoData[fieldKey] = userEmail;
+        console.log(`[KYB Demo Auto-Fill] Using current user email for contactEmail: ${userEmail}`);
       }
       // Use the demo_autofill value directly from the database for all other fields
       else if (field.demo_autofill !== null && field.demo_autofill !== undefined) {
