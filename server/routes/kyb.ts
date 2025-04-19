@@ -1194,8 +1194,23 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
       });
     }
     
-    // Get all KYB fields
-    const fields = await db.select()
+    // Get all KYB fields with explicit selection of the demo_autofill column
+    const fields = await db.select({
+      id: kybFields.id,
+      field_key: kybFields.field_key,
+      display_name: kybFields.display_name,
+      field_type: kybFields.field_type,
+      question: kybFields.question,
+      group: kybFields.group,
+      required: kybFields.required,
+      order: kybFields.order,
+      step_index: kybFields.step_index,
+      validation_rules: kybFields.validation_rules,
+      help_text: kybFields.help_text,
+      demo_autofill: kybFields.demo_autofill, // Explicitly select demo_autofill
+      created_at: kybFields.created_at,
+      updated_at: kybFields.updated_at
+    })
       .from(kybFields)
       .orderBy(sql`"group" ASC, "order" ASC`);
     
@@ -1204,34 +1219,55 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
       taskId
     });
     
-    // Create demo data for each field using predefined demo_autofill values
+    // Create demo data for each field using predefined demo_autofill values from the database
     const demoData: Record<string, any> = {};
+    
+    // Log the first few fields to debug with explicit column check
+    console.log('[KYB Demo Auto-Fill] First 5 fields from database:');
+    
+    // Inspect the raw database results to verify the structure
+    const rawFields = fields.slice(0, 5);
+    console.log('[KYB Demo Auto-Fill] Raw field objects:', rawFields);
+    
+    // Check if demo_autofill is directly accessible
+    rawFields.forEach(field => {
+      // Get all columns for debugging
+      const keys = Object.keys(field);
+      console.log(`[KYB Demo Auto-Fill] Field ${field.field_key} has these properties:`, keys);
+      
+      // Check the demo value specifically
+      const demoValue = field.demo_autofill;
+      console.log(`[KYB Demo Auto-Fill] Field ${field.field_key} demo_autofill = "${demoValue}"`);
+    });
     
     for (const field of fields) {
       const fieldKey = field.field_key;
       
-      if (field.demo_autofill !== null) {
-        // Special case for company name - always use the actual company name
-        if (fieldKey === 'legalEntityName') {
-          demoData[fieldKey] = company.name;
-        } 
+      // Special case for company name - always use the actual company name
+      if (fieldKey === 'legalEntityName') {
+        demoData[fieldKey] = company.name;
+        console.log(`[KYB Demo Auto-Fill] Using company name for legalEntityName: ${company.name}`);
+      }
+      // Use the demo_autofill value directly from the database for all other fields
+      else if (field.demo_autofill !== null && field.demo_autofill !== undefined) {
         // For fields that might contain company name references
-        else if (typeof field.demo_autofill === 'string' && field.demo_autofill.includes('{{COMPANY_NAME}}')) {
+        if (typeof field.demo_autofill === 'string' && field.demo_autofill.includes('{{COMPANY_NAME}}')) {
           demoData[fieldKey] = field.demo_autofill.replace('{{COMPANY_NAME}}', company.name);
-        }
-        // Use the demo_autofill value directly from the database
-        else {
+          console.log(`[KYB Demo Auto-Fill] Replaced template in ${fieldKey}: ${demoData[fieldKey]}`);
+        } else {
+          // Use the predefined value from the database
           demoData[fieldKey] = field.demo_autofill;
+          console.log(`[KYB Demo Auto-Fill] Used database value for ${fieldKey}: ${demoData[fieldKey]}`);
         }
       } 
-      // Fallback for any fields that might not have demo_autofill defined
+      // Fallback for any fields without defined demo values
       else {
-        // If no demo value defined, generate a basic one based on field type
+        // Generate a basic fallback value based on field type
+        console.log(`[KYB Demo Auto-Fill] No demo_autofill value found for ${fieldKey}`);
+        
         switch (field.field_type) {
           case 'TEXT':
-            demoData[fieldKey] = fieldKey === 'legalEntityName' 
-              ? company.name 
-              : `Demo value for ${field.display_name}`;
+            demoData[fieldKey] = `Demo ${field.display_name}`;
             break;
             
           case 'DATE':
@@ -1260,6 +1296,7 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
           default:
             demoData[fieldKey] = `Demo value for ${field.display_name}`;
         }
+        console.log(`[KYB Demo Auto-Fill] Generated fallback value for ${fieldKey}: ${demoData[fieldKey]}`);
       }
     }
     
