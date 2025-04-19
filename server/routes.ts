@@ -298,6 +298,72 @@ export function registerRoutes(app: Express): Express {
       });
     }
   });
+  
+  // Check if a company is a demo company
+  app.get("/api/companies/is-demo", async (req, res) => {
+    try {
+      const taskId = req.query.taskId;
+      
+      if (!taskId) {
+        return res.status(400).json({ 
+          error: 'Missing taskId parameter',
+          isDemo: false 
+        });
+      }
+      
+      // Get the task to find the company ID
+      const [task] = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, parseInt(taskId as string, 10)));
+        
+      if (!task) {
+        console.log(`[IsDemo Check] Task not found: ${taskId}`);
+        return res.status(404).json({ 
+          error: 'Task not found',
+          isDemo: false 
+        });
+      }
+      
+      // Get the company
+      const [company] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        isDemo: companies.is_demo
+      })
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+      
+      if (!company) {
+        console.log(`[IsDemo Check] Company not found for task ${taskId}`);
+        return res.status(404).json({ 
+          error: 'Company not found',
+          isDemo: false 
+        });
+      }
+      
+      // Log the raw company data to help debug
+      console.log(`[IsDemo Check] Company data for task ${taskId}:`, {
+        id: company.id,
+        name: company.name,
+        isDemo: company.isDemo,
+        isDemoType: typeof company.isDemo,
+        rawValue: company.isDemo
+      });
+      
+      // Return the demo status
+      res.json({
+        isDemo: company.isDemo === true,
+        companyId: company.id,
+        companyName: company.name
+      });
+    } catch (error) {
+      console.error('Error checking company demo status:', error);
+      res.status(500).json({ 
+        error: 'Failed to check company demo status',
+        isDemo: false 
+      });
+    }
+  });
 
 
   // Tasks cache
