@@ -60,7 +60,7 @@ export function registerRoutes(app: Express): Express {
   app.use(aiSuggestionsRouter);
   
   // Register WebSocket test routes
-  app.use('/api/ws', websocketRouter);
+  app.use('/api/websocket', websocketRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
