@@ -802,14 +802,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         }
       });
       
-      // Reset any state we need to clear
-      setFormState({
-        progress: 0,
-        status: 'in_progress',
-        sections: [],
-        formData: emptyData,
-        lastUpdated: new Date()
-      });
+      // No need to use setFormState since it's not available
+      // We're using form.reset and manually updating fields instead
       
       // Refresh status to reload form from server 
       if (refreshStatus) {
@@ -839,7 +833,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error clearing the form fields",
       });
     }
-  }, [taskId, fields, form, updateField, refreshStatus, setFormState, toast, onProgress, setShowClearFieldsDialog]);
+  }, [taskId, fields, form, updateField, refreshStatus, toast, onProgress, setShowClearFieldsDialog]);
   
   // Handle clearing all fields in the form - shows confirmation dialog
   const handleClearFields = useCallback(() => {
