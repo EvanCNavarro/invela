@@ -424,7 +424,8 @@ export function registerRoutes(app: Express): Express {
           category: companies.category,
           logoId: companies.logo_id,
           accreditationStatus: companies.accreditation_status,
-          riskScore: companies.risk_score
+          riskScore: companies.risk_score,
+          isDemo: companies.is_demo
         }
       })
         .from(relationships)
@@ -571,7 +572,8 @@ export function registerRoutes(app: Express): Express {
           riskBucket: getRiskBucket(rel.relatedCompany.riskScore || 0),
           accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
           revenueTier,
-          category: rel.relatedCompany.category || 'Other'
+          category: rel.relatedCompany.category || 'Other',
+          isDemo: rel.relatedCompany.isDemo
         };
       });
 
