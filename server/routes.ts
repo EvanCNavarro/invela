@@ -10,7 +10,7 @@ import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './ty
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import { broadcastTaskUpdate } from './services/websocket';
+import { broadcastTaskUpdate, broadcastMessage } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -27,6 +27,7 @@ import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
 import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
+import websocketRouter from './routes/websocket';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -57,6 +58,9 @@ export function registerRoutes(app: Express): Express {
   app.use(tasksRouter);
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);
+  
+  // Register WebSocket test routes
+  app.use('/api/ws', websocketRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
