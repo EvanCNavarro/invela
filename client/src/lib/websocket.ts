@@ -156,6 +156,13 @@ class WebSocketService {
           });
           clearTimeout(connectionTimeout);
           this.cleanup();
+          
+          // Notify subscribers that the connection is closed
+          this.handleMessage('connection_closed', {
+            code: event.code,
+            reason: event.reason,
+            timestamp: new Date().toISOString()
+          });
 
           // Only attempt reconnect for abnormal closures
           if (event.code !== 1000 && event.code !== 1001) {
@@ -169,6 +176,14 @@ class WebSocketService {
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
           });
+          
+          // We don't close the socket here, but do notify about the error
+          this.handleMessage('connection_error', {
+            error: 'WebSocket connection error',
+            timestamp: new Date().toISOString(),
+            connectionId: this.connectionId
+          });
+          
           // Don't close the socket here, let the onclose handler deal with reconnection
         };
 
@@ -228,6 +243,14 @@ class WebSocketService {
       logger.error('Max reconnection attempts reached', {
         connectionId: this.connectionId,
         timestamp: new Date().toISOString()
+      });
+      
+      // Notify subscribers that the connection is permanently closed
+      this.handleMessage('connection_closed', {
+        code: 'MAX_RECONNECT',
+        reason: 'Maximum reconnection attempts reached',
+        timestamp: new Date().toISOString(),
+        permanent: true
       });
     }
   }
