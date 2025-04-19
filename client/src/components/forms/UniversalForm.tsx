@@ -711,6 +711,69 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [taskId, form, updateField, saveProgress, refreshStatus, toast, onProgress]);
   
+  // Handle clearing all fields in the form
+  const handleClearFields = useCallback(() => {
+    try {
+      // Confirmation dialog before proceeding
+      if (window.confirm("Are you sure you want to clear all fields? This action cannot be undone.")) {
+        logger.info(`[UniversalForm] Clearing all fields for task ${taskId}`);
+        
+        toast({
+          title: "Clearing Fields",
+          description: "Removing all entered data...",
+        });
+        
+        // Get all field names in the form
+        const fieldNames = fields.map(field => field.key);
+        
+        // Clear each field one by one
+        fieldNames.forEach(fieldName => {
+          // Set field value to empty string or appropriate empty value based on field type
+          updateField(fieldName, '');
+          
+          // Also update the form directly for immediate UI refresh
+          if (form) {
+            form.setValue(fieldName, '');
+            
+            // Clear any errors for this field
+            form.clearErrors(fieldName);
+          }
+        });
+        
+        // Save progress after clearing
+        if (saveProgress) {
+          saveProgress().then(() => {
+            logger.info('[UniversalForm] Saved progress after clearing fields');
+          }).catch(err => {
+            logger.error('[UniversalForm] Error saving progress after clearing fields:', err);
+          });
+        }
+        
+        // Show success message
+        toast({
+          title: "Fields Cleared",
+          description: "All form fields have been cleared successfully.",
+          variant: "success",
+        });
+        
+        // Refresh status
+        refreshStatus();
+        
+        // Reset progress to 0%
+        if (onProgress) {
+          onProgress(0);
+        }
+      }
+    } catch (err) {
+      logger.error('[UniversalForm] Clear fields error:', err);
+      toast({
+        variant: "destructive",
+        title: "Clear Fields Failed",
+        description: err instanceof Error ? err.message : "There was an error clearing the form fields",
+      });
+    }
+  }, [taskId, fields, form, updateField, saveProgress, refreshStatus, toast, onProgress]);
+  
   // Helper function to check for completely empty values in form data
   const checkForEmptyValues = useCallback((data: FormData): string[] => {
     const emptyFields: string[] = [];
