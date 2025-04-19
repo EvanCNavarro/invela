@@ -1215,43 +1215,103 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
         case 'TEXT':
           if (fieldKey === 'legalEntityName') {
             demoData[fieldKey] = company.name;
+          } else if (fieldKey === 'registrationNumber') {
+            demoData[fieldKey] = `US${Math.floor(10000000 + Math.random() * 90000000)}`;
           } else if (fieldKey === 'companyPhone') {
             demoData[fieldKey] = '+1 (555) 123-4567';
           } else if (fieldKey === 'contactEmail') {
-            demoData[fieldKey] = 'contact@example.com';
-          } else if (fieldKey.toLowerCase().includes('address')) {
-            demoData[fieldKey] = '123 Demo Street, Suite 456, Demo City, CA 94107';
+            demoData[fieldKey] = 'finance@' + company.name.toLowerCase().replace(/\s+/g, '') + '.com';
+          } else if (fieldKey === 'businessType') {
+            demoData[fieldKey] = 'Corporation';
+          } else if (fieldKey === 'jurisdiction') {
+            demoData[fieldKey] = 'Delaware, USA';
+          } else if (fieldKey === 'registeredAddress') {
+            demoData[fieldKey] = '123 Financial District, Suite 456, San Francisco, CA 94107';
+          } else if (fieldKey === 'priorNames') {
+            demoData[fieldKey] = company.name + ' Technologies (2018-2021)';
+          } else if (fieldKey === 'licenses') {
+            demoData[fieldKey] = 'Money Services Business License #MSB-2023-75492, Financial Technology Service Provider #FTSP-CA-432190';
+          } else if (fieldKey === 'goodStanding') {
+            demoData[fieldKey] = 'Yes, Certificate of Good Standing issued on March 12, 2023';
+          } else if (fieldKey === 'corporateRegistration') {
+            demoData[fieldKey] = 'Current and active as verified on February 28, 2023';
+          } else if (fieldKey === 'externalAudit') {
+            demoData[fieldKey] = 'Annual audit completed by PwC on December 10, 2022';
+          } else if (fieldKey === 'controlEnvironment') {
+            demoData[fieldKey] = 'SOC 2 Type II compliance since 2021';
+          } else if (fieldKey === 'authorizedSigners') {
+            demoData[fieldKey] = 'John Smith (CEO), Sarah Johnson (CFO), Michael Wong (COO)';
+          } else if (fieldKey === 'governmentOwnership') {
+            demoData[fieldKey] = 'No government ownership or influence';
+          } else if (fieldKey === 'ultimateBeneficialOwners') {
+            demoData[fieldKey] = 'Venture Partners (15%), Founders (35%), Private Investors (50%)';
+          } else if (fieldKey === 'directorsAndOfficers') {
+            demoData[fieldKey] = 'Board: J. Smith (Chair), S. Johnson, M. Wong, L. Garcia, P. Patel | Officers: CEO, CFO, COO, CTO';
+          } else if (fieldKey === 'investigationsIncidents') {
+            demoData[fieldKey] = 'No investigations or material incidents in the past 5 years';
+          } else if (fieldKey === 'financialStatements') {
+            demoData[fieldKey] = 'Annual audited financial statements available';
+          } else if (fieldKey === 'operationalPolicies') {
+            demoData[fieldKey] = 'Data protection, AML, KYC, Risk Management, and Information Security policies implemented';
+          } else if (fieldKey === 'sanctionsCheck') {
+            demoData[fieldKey] = 'Regular screening against OFAC, UN, and EU sanctions lists';
+          } else if (fieldKey === 'dueDiligence') {
+            demoData[fieldKey] = 'Enhanced due diligence for high-risk relationships';
+          } else if (fieldKey === 'regulatoryActions') {
+            demoData[fieldKey] = 'No regulatory actions or penalties';
           } else {
-            demoData[fieldKey] = `Demo ${field.display_name}`;
+            demoData[fieldKey] = field.display_name + ' - Standard industry compliance level';
           }
           break;
           
         case 'DATE':
-          // Generate a random date in the past 1-10 years
-          const years = Math.floor(Math.random() * 9) + 1;
-          const date = new Date();
-          date.setFullYear(date.getFullYear() - years);
-          demoData[fieldKey] = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+          if (fieldKey === 'incorporationDate') {
+            // Set incorporation date 3-7 years ago
+            const incorpYears = Math.floor(Math.random() * 4) + 3;
+            const incorpDate = new Date();
+            incorpDate.setFullYear(incorpDate.getFullYear() - incorpYears);
+            demoData[fieldKey] = incorpDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+          } else {
+            // Generate a random date in the past 1-3 years for other dates
+            const years = Math.floor(Math.random() * 2) + 1;
+            const months = Math.floor(Math.random() * 11);
+            const date = new Date();
+            date.setFullYear(date.getFullYear() - years);
+            date.setMonth(date.getMonth() - months);
+            demoData[fieldKey] = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+          }
           break;
           
         case 'NUMBER':
           if (fieldKey === 'marketCapitalization') {
-            demoData[fieldKey] = '500000000';
+            // Format with commas for readability
+            const marketCap = (Math.floor(Math.random() * 900) + 100) * 1000000;
+            demoData[fieldKey] = marketCap.toString();
           } else if (fieldKey === 'annualRecurringRevenue') {
-            demoData[fieldKey] = '25000000';
+            const arr = (Math.floor(Math.random() * 90) + 10) * 1000000;
+            demoData[fieldKey] = arr.toString();
           } else if (fieldKey === 'monthlyRecurringRevenue') {
-            demoData[fieldKey] = '2083333';
+            const mrr = (Math.floor(Math.random() * 900) + 100) * 10000;
+            demoData[fieldKey] = mrr.toString();
           } else if (fieldKey === 'lifetimeCustomerValue') {
-            demoData[fieldKey] = '15000';
+            const ltv = (Math.floor(Math.random() * 90) + 10) * 100;
+            demoData[fieldKey] = ltv.toString();
           } else {
-            // Generate a random number between 100 and 10000
-            demoData[fieldKey] = Math.floor(Math.random() * 9900 + 100).toString();
+            // Generate a random number between 1,000 and 10,000,000
+            const baseValue = Math.floor(Math.random() * 9999000) + 1000;
+            demoData[fieldKey] = baseValue.toString();
           }
           break;
           
         case 'BOOLEAN':
-          // Alternate between true and false
-          demoData[fieldKey] = (field.id % 2 === 0).toString();
+          // Most compliance fields default to "true" (compliant)
+          if (fieldKey.includes('compliance') || fieldKey.includes('certified') || 
+              fieldKey.includes('verified') || fieldKey.includes('approved')) {
+            demoData[fieldKey] = 'true';
+          } else {
+            // Alternate between true and false for other fields
+            demoData[fieldKey] = (field.id % 2 === 0).toString();
+          }
           break;
           
         case 'SELECT':
@@ -1261,25 +1321,56 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
             demoData[fieldKey] = 'Delaware, USA';
           } else if (fieldKey === 'dataVolume') {
             demoData[fieldKey] = 'High (Over 1M records)';
+          } else if (fieldKey.includes('risk')) {
+            demoData[fieldKey] = 'Low';
+          } else if (fieldKey.includes('compliance')) {
+            demoData[fieldKey] = 'Fully Compliant';
+          } else if (fieldKey.includes('status')) {
+            demoData[fieldKey] = 'Active';
           } else {
-            demoData[fieldKey] = 'Option A';
+            const options = ['Option A', 'Option B', 'Option C'];
+            demoData[fieldKey] = options[Math.floor(Math.random() * options.length)];
           }
           break;
           
         case 'MULTI_SELECT':
           if (fieldKey === 'dataTypes') {
-            demoData[fieldKey] = 'Personal Information, Financial Data, Healthcare Data';
+            demoData[fieldKey] = 'Personal Information, Financial Data, Transaction Records';
+          } else if (fieldKey.includes('certification')) {
+            demoData[fieldKey] = 'ISO 27001, SOC 2 Type II, PCI DSS';
+          } else if (fieldKey.includes('compliance')) {
+            demoData[fieldKey] = 'GDPR, CCPA, HIPAA, PCI DSS';
           } else {
-            demoData[fieldKey] = 'Option A, Option B';
+            demoData[fieldKey] = 'Primary Option, Secondary Option, Tertiary Option';
           }
           break;
           
         case 'TEXTAREA':
-          demoData[fieldKey] = `This is a demo text for ${field.display_name}. It contains multiple sentences to demonstrate how longer text fields are displayed in the form. This is automatically generated for demonstration purposes.`;
+          if (fieldKey === 'operationalPolicies') {
+            demoData[fieldKey] = `${company.name} has implemented comprehensive operational policies including: 
+1. Anti-Money Laundering (AML) Policy
+2. Know Your Customer (KYC) Procedures
+3. Information Security Policy
+4. Data Protection and Privacy Policy
+5. Business Continuity Plan
+6. Risk Management Framework
+7. Compliance Monitoring Program
+
+These policies are reviewed annually and were last updated in Q1 2023.`;
+          } else if (fieldKey === 'controlEnvironment') {
+            demoData[fieldKey] = `Our control environment consists of a three-tiered approach:
+1. Front-line controls built into business processes
+2. Risk management and compliance oversight functions
+3. Independent internal audit verification
+
+We maintain SOC 2 Type II compliance and conduct quarterly internal control assessments. Our board risk committee provides governance oversight.`;
+          } else {
+            demoData[fieldKey] = `${company.name} maintains industry-standard compliance with all applicable regulations and best practices in this area. Documentation is regularly updated and verified by our internal compliance team, with annual third-party assessments to ensure continued adherence to evolving regulatory requirements.`;
+          }
           break;
           
         default:
-          demoData[fieldKey] = `Demo value for ${field.display_name}`;
+          demoData[fieldKey] = `Industry standard data for ${field.display_name}`;
       }
     }
     
