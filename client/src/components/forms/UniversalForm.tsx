@@ -423,6 +423,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Log the raw taskId to help debug
       logger.info(`[UniversalForm] Fetching company demo status for taskId: ${taskId}, type: ${typeof taskId}`);
       
+      // Add a debugging element
+      console.log(`DEBUG: Current isCompanyDemo state = ${isCompanyDemo}`);
+      
       const fetchCompanyDemoStatus = async () => {
         try {
           // Make a specific API call to check this company's demo status
@@ -433,20 +436,36 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           if (response.ok) {
             const data = await response.json();
+            
+            // Debug information
+            console.log('Is-Demo API Response:', {
+              data,
+              responseOk: response.ok,
+              isDemo: data.isDemo,
+              isDemoType: typeof data.isDemo,
+              debug: data.debug
+            });
+            
             // Set the demo status based on API response
-            const isDemoCompany = data.isDemo === true;
+            // Important: Use loose comparison here to handle boolean and string values
+            const isDemoCompany = data.isDemo;
             setIsCompanyDemo(isDemoCompany);
-            logger.info(`[UniversalForm] Company demo status fetched from API: ${data.isDemo}, setting to ${isDemoCompany}`);
+            logger.info(`[UniversalForm] Company demo status fetched from API: ${data.isDemo} (${typeof data.isDemo}), setting to ${isDemoCompany}`);
+            
+            // Immediately add a console log after setting the value (though state won't update immediately)
+            console.log(`[DEBUG] Set isCompanyDemo to ${isDemoCompany} (current state value will update after re-render)`);
           } else {
             const errorText = await response.text();
             logger.warn(`[UniversalForm] Failed to fetch company demo status: ${response.status}, Response: ${errorText}`);
             // Default to false to be safe
             setIsCompanyDemo(false);
+            console.log('[DEBUG] Set isCompanyDemo to false due to API error');
           }
         } catch (err) {
           logger.error(`[UniversalForm] Error fetching company demo status:`, err);
           // Default to false on error
           setIsCompanyDemo(false);
+          console.log('[DEBUG] Set isCompanyDemo to false due to exception');
         }
       };
       
@@ -938,7 +957,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : isCompanyDemo === true && (
+          ) : isCompanyDemo && (
             <Button 
               variant="outline" 
               size="sm" 

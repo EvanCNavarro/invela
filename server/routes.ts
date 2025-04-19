@@ -336,11 +336,15 @@ export function registerRoutes(app: Express): Express {
       console.log(`[IsDemo Check] Parsed valid taskId: ${parsedTaskId}`);
       
       // Get the task to find the company ID
-      const [task] = await db.select()
+      console.log(`[IsDemo Check] Fetching task with ID: ${parsedTaskId}`);
+      
+      const taskResults = await db.select()
         .from(tasks)
         .where(eq(tasks.id, parsedTaskId));
-        
-      if (!task) {
+      
+      console.log(`[IsDemo Check] Task query results: ${taskResults?.length || 0} rows found`);
+      
+      if (!taskResults || taskResults.length === 0) {
         console.log(`[IsDemo Check] Task not found: ${parsedTaskId}`);
         return res.status(404).json({ 
           error: 'Task not found',
@@ -348,8 +352,27 @@ export function registerRoutes(app: Express): Express {
         });
       }
       
+      const task = taskResults[0];
+      console.log(`[IsDemo Check] Found task:`, { 
+        taskId: task.id, 
+        companyId: task.company_id,
+        taskType: task.task_type
+      });
+      
+      // Make sure we have a valid company_id before proceeding
+      if (!task.company_id) {
+        console.log(`[IsDemo Check] Task ${parsedTaskId} has no company_id`);
+        return res.status(400).json({ 
+          message: "Task has no associated company",
+          code: "INVALID_ID",
+          isDemo: false 
+        });
+      }
+      
+      console.log(`[IsDemo Check] Fetching company with ID: ${task.company_id}`);
+      
       // Get the company
-      const [company] = await db.select({
+      const companyResults = await db.select({
         id: companies.id,
         name: companies.name,
         isDemo: companies.is_demo
@@ -357,13 +380,17 @@ export function registerRoutes(app: Express): Express {
       .from(companies)
       .where(eq(companies.id, task.company_id));
       
-      if (!company) {
-        console.log(`[IsDemo Check] Company not found for task ${taskId}`);
+      console.log(`[IsDemo Check] Company query results: ${companyResults?.length || 0} rows found`);
+      
+      if (!companyResults || companyResults.length === 0) {
+        console.log(`[IsDemo Check] Company not found for task ${taskId} with company_id ${task.company_id}`);
         return res.status(404).json({ 
           error: 'Company not found',
           isDemo: false 
         });
       }
+      
+      const company = companyResults[0];
       
       // Log the raw company data to help debug
       console.log(`[IsDemo Check] Company data for task ${taskId}:`, {
@@ -374,11 +401,17 @@ export function registerRoutes(app: Express): Express {
         rawValue: company.isDemo
       });
       
-      // Return the demo status
+      // Return the demo status with debug information
       res.json({
-        isDemo: company.isDemo === true,
+        isDemo: company.isDemo === true, // Ensure this is a boolean true/false
         companyId: company.id,
-        companyName: company.name
+        companyName: company.name,
+        taskId: parsedTaskId,
+        debug: {
+          isDemo: company.isDemo,
+          isDemoType: typeof company.isDemo,
+          companyName: company.name
+        }
       });
     } catch (error) {
       console.error('Error checking company demo status:', error);
