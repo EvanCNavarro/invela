@@ -204,19 +204,22 @@ export function registerRoutes(app: Express): Express {
         return res.status(404).json({ message: "Company not found" });
       }
 
-      // Make sure the company data includes risk score in the logged info
+      // Make sure the company data includes risk score and is_demo in the logged info
       console.log('[Current Company] Found company:', {
         id: company.id,
         name: company.name,
         onboardingCompleted: company.onboarding_company_completed,
-        riskScore: company.risk_score
+        riskScore: company.risk_score,
+        isDemo: company.is_demo
       });
 
       // Transform response to include both risk_score and riskScore consistently
+      // Also include isDemo for frontend usage (camelCase)
       const transformedCompany = {
         ...company,
         risk_score: company.risk_score, // Keep the original property
-        riskScore: company.risk_score   // Add the frontend expected property name
+        riskScore: company.risk_score,  // Add the frontend expected property name
+        isDemo: company.is_demo         // Add camelCase version for frontend
       };
       
       // Update the cache with the transformed data
@@ -271,13 +274,15 @@ export function registerRoutes(app: Express): Express {
 
       // Transform response to match frontend expectations
       // Ensure we transform the response to include both risk_score and riskScore consistently
+      // Also include isDemo field for frontend usage
       const transformedCompany = {
         ...company,
         websiteUrl: company.website_url,
         numEmployees: company.employee_count,
         incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
         risk_score: company.risk_score, // Keep the original property
-        riskScore: company.risk_score   // Add the frontend expected property name
+        riskScore: company.risk_score,  // Add the frontend expected property name
+        isDemo: company.is_demo         // Add camelCase version for frontend
       };
 
       res.json(transformedCompany);
@@ -488,7 +493,8 @@ export function registerRoutes(app: Express): Express {
         name: companies.name,
         category: sql<string>`COALESCE(${companies.category}, '')`,
         riskScore: companies.risk_score,
-        accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`
+        accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
+        isDemo: companies.is_demo
       })
       .from(companies)
       .where(eq(companies.id, req.user.company_id));
@@ -515,7 +521,8 @@ export function registerRoutes(app: Express): Express {
           name: companies.name,
           category: sql<string>`COALESCE(${companies.category}, '')`,
           accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
-          riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`
+          riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`,
+          isDemo: companies.is_demo
         }
       })
       .from(relationships)
@@ -577,7 +584,8 @@ export function registerRoutes(app: Express): Express {
           riskBucket: getRiskBucket(currentCompany.riskScore || 0),
           accreditationStatus: currentCompany.accreditationStatus || 'PENDING',
           revenueTier: 'Enterprise', // Default for the logged-in company
-          category: currentCompany.category || 'FinTech'
+          category: currentCompany.category || 'FinTech',
+          isDemo: currentCompany.isDemo
         },
         nodes
       };
