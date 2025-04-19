@@ -73,8 +73,10 @@ export default function TaskCenterPage() {
 
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 1000,
-    refetchInterval: 5000,
+    staleTime: 5000,
+    // Increase the refetch interval since we're now using WebSockets for real-time updates
+    // This is just a fallback in case WebSocket updates are missed
+    refetchInterval: 15000,
   });
 
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
@@ -91,38 +93,89 @@ export default function TaskCenterPage() {
 
     const setupSubscriptions = async () => {
       try {
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data: any) => {
-          console.log('[TaskCenter] WebSocket Update Received:', {
-            taskId: data.taskId,
-            newStatus: data.status,
-            newProgress: data.progress,
+        // Subscribe to both formats of task update events
+        // 1. Subscribe to standard task updates
+        const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
+          // Server sends updates with 'payload' wrapper
+          const taskData = data?.id ? data : (data?.payload || {});
+          const taskId = taskData.id || taskData.taskId;
+
+          console.log('[TaskCenter] WebSocket task_update received:', {
+            taskId,
+            status: taskData.status,
+            progress: taskData.progress,
+            metadata: taskData.metadata,
             timestamp: new Date().toISOString()
           });
 
+          if (!taskId) {
+            console.warn('[TaskCenter] Missing task ID in WebSocket update');
+            return;
+          }
+
           queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
             const updatedTasks = oldTasks.map(task =>
-              task.id === data.taskId
+              task.id === taskId
                 ? { 
                     ...task, 
-                    status: data.status, 
-                    progress: data.progress || 0 
+                    status: taskData.status || task.status, 
+                    progress: taskData.progress !== undefined ? taskData.progress : task.progress
                   }
                 : task
             );
 
-            console.log('[TaskCenter] Updated task state:', {
-              taskId: data.taskId,
-              progress: data.progress,
-              updatedTask: updatedTasks.find(t => t.id === data.taskId)
+            console.log('[TaskCenter] Updated task state via WebSocket:', {
+              taskId,
+              progress: taskData.progress,
+              status: taskData.status,
+              updatedTask: updatedTasks.find(t => t.id === taskId)
             });
 
             return updatedTasks;
           });
 
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          // Don't invalidate - this would trigger another fetch and defeat real-time purpose
+          // Only invalidate if we need to force a refresh of additional data not in the update
+          if (taskData.metadata?.forceRefresh) {
+            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          }
         });
 
         subscriptions.push(unsubTaskUpdate);
+        
+        // 2. Subscribe to test task notifications as well
+        const unsubTaskTestNotification = await wsService.subscribe('task_test_notification', (data: any) => {
+          // Handle test notifications similarly to regular updates
+          const taskData = data?.id ? data : (data?.payload || {});
+          const taskId = taskData.id || taskData.taskId;
+          
+          console.log('[TaskCenter] WebSocket test notification received:', {
+            taskId,
+            status: taskData.status,
+            progress: taskData.progress,
+            metadata: taskData.metadata
+          });
+          
+          if (!taskId) {
+            console.warn('[TaskCenter] Missing task ID in test notification');
+            return;
+          }
+          
+          // Update local task data
+          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+            return oldTasks.map(task =>
+              task.id === taskId
+                ? {
+                    ...task,
+                    status: taskData.status || task.status,
+                    progress: taskData.progress !== undefined ? taskData.progress : task.progress
+                  }
+                : task
+            );
+          });
+        });
+        
+        subscriptions.push(unsubTaskTestNotification);
       } catch (error) {
         console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
       }
