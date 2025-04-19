@@ -675,24 +675,51 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         submittingToastId.dismiss();
       }
       
-      // Fire confetti animation FIRST (before showing modal)
-      import('@/utils/confetti').then(({ fireSuperConfetti }) => {
-        fireSuperConfetti();
+      // Only proceed with success flow if we haven't caught an error during form submission
+      try {
+        // Verify the task status has been successfully updated in the database
+        const statusCheckResponse = await fetch(`/api/tasks/${taskId}`);
+        const taskStatusData = await statusCheckResponse.json();
         
-        // Show success toast notification
+        // Only show success UI if task status is updated in the database
+        if (taskStatusData.status === 'submitted' || taskStatusData.progress >= 95) {
+          // Fire confetti animation FIRST (before showing modal)
+          const { fireSuperConfetti } = await import('@/utils/confetti');
+          fireSuperConfetti();
+          
+          // Brief delay to ensure modal displays correctly after confetti
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Show success toast notification
+          toast({
+            title: "Form Submitted Successfully",
+            description: "Your form has been submitted successfully.",
+            variant: "success",
+          });
+          
+          // Show success modal AFTER confetti has been fired
+          setShowSuccessModal(true);
+        } else {
+          // Task status not properly updated, show warning
+          toast({
+            title: "Submission Status Pending",
+            description: "Your form data has been saved, but submission status is still updating.",
+            variant: "warning",
+          });
+        }
+        
+        // Then call the onSubmit callback if provided
+        if (onSubmit) {
+          onSubmit(data);
+        }
+      } catch (statusCheckError) {
+        logger.error('Status verification error:', statusCheckError);
+        
         toast({
-          title: "Form Submitted Successfully",
-          description: "Your form has been submitted successfully.",
-          variant: "success",
+          title: 'Submission Status Uncertain',
+          description: 'Your form data was saved, but we could not verify final submission status.',
+          variant: 'warning',
         });
-        
-        // Show success modal AFTER confetti has been fired
-        setShowSuccessModal(true);
-      });
-      
-      // Then call the onSubmit callback if provided
-      if (onSubmit) {
-        onSubmit(data);
       }
     } catch (error) {
       logger.error('Form submission error:', error);
