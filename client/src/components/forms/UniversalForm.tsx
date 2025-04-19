@@ -540,6 +540,71 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [onDownload, fileId, taskType, toast]);
   
+  // Handle demo auto-fill functionality
+  const handleDemoAutoFill = useCallback(async () => {
+    if (!taskId) {
+      toast({
+        variant: "destructive",
+        title: "Auto-Fill Failed",
+        description: "No task ID available for auto-fill",
+      });
+      return;
+    }
+    
+    try {
+      logger.info(`[UniversalForm] Starting demo auto-fill for task ${taskId}`);
+      toast({
+        title: "Auto-Fill In Progress",
+        description: "Loading demo data...",
+      });
+      
+      // Make API call to get demo data
+      const response = await fetch(`/api/kyb/demo-autofill/${taskId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const demoData = await response.json();
+      
+      // Update form with demo data
+      Object.entries(demoData).forEach(([fieldName, fieldValue]) => {
+        if (fieldName && fieldValue !== undefined) {
+          logger.debug(`Auto-filling field: ${fieldName}`);
+          updateField(fieldName, fieldValue);
+          
+          // Also update the form directly for immediate UI refresh
+          if (form) {
+            form.setValue(fieldName, fieldValue);
+          }
+        }
+      });
+      
+      // Save progress after auto-fill
+      if (saveProgress) {
+        await saveProgress();
+      }
+      
+      // Show success message
+      toast({
+        title: "Auto-Fill Complete",
+        description: "Demo data has been loaded successfully.",
+        variant: "default",
+      });
+      
+      // Refresh form status
+      refreshStatus();
+      
+    } catch (err) {
+      logger.error('[UniversalForm] Auto-fill error:', err);
+      toast({
+        variant: "destructive",
+        title: "Auto-Fill Failed",
+        description: err instanceof Error ? err.message : "There was an error loading demo data",
+      });
+    }
+  }, [taskId, form, updateField, saveProgress, refreshStatus, toast]);
+  
   // Helper function to check for completely empty values in form data
   const checkForEmptyValues = useCallback((data: FormData): string[] => {
     const emptyFields: string[] = [];
