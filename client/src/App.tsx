@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { registerServices } from "./services/registerServices";
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
+import WebSocketDebuggerPage from "@/pages/websocket-debugger-page";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -309,6 +310,17 @@ function Router() {
           </ProtectedLayout>
         </Route>
 
+        {/* WebSocket Debugger - For Testing Real-time Updates */}
+        <Route path="/debug/websocket">
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <Suspense fallback={<div>Loading WebSocket debugger...</div>}>
+                <WebSocketDebuggerPage />
+              </Suspense>
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        </Route>
+
         <Route component={NotFound} />
       </Switch>
     </div>
@@ -326,7 +338,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <WebSocketProvider showNotifications={false}>
+          <WebSocketProvider>
             <Router />
             <Toaster />
           </WebSocketProvider>

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import { useToast } from '@/hooks/use-toast';
 
 // Define message types that can be received from the server
 type WebSocketMessageType = 
@@ -51,7 +50,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [lastTaskUpdate, setLastTaskUpdate] = useState<TaskUpdatePayload | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
-  const toast = useToast();
   
   useEffect(() => {
     const connectWebSocket = () => {
@@ -132,7 +130,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     const cleanup = connectWebSocket();
     return cleanup;
-  }, [toast]);
+  }, []);
 
   const sendMessage = (type: string, payload?: any) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
