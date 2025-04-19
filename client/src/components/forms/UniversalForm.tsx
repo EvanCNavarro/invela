@@ -785,14 +785,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           logger.error('[UniversalForm] Server error when clearing fields:', serverError);
         }
       }
+
+      // Clear form state reactively without page refresh
       
-      // Clear the React Hook Form state
+      // Step 1: Reset the React Hook Form state
       form.reset(emptyData);
       
-      // Explicitly set each field to empty in the form
+      // Step 2: Explicitly set each field to empty in the form
       for (const fieldName of Object.keys(emptyData)) {
         form.setValue(fieldName, '');
         form.clearErrors(fieldName);
+      }
+      
+      // Step 3: Update internal state if needed
+      // No need to call setFormData since we don't have that function
+
+      // Step 4: Refresh any data from the server if necessary
+      try {
+        if (formService && refreshStatus) {
+          await refreshStatus();
+        }
+      } catch (refreshError) {
+        logger.warn('[UniversalForm] Error refreshing status after clearing fields:', refreshError);
       }
       
       // Show success message
@@ -809,12 +823,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Close the dialog
       setShowClearFieldsDialog(false);
-      
-      // Force browser to reload the page to ensure clean state
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-      
+            
     } catch (err) {
       logger.error('[UniversalForm] Clear fields error:', err);
       toast({
@@ -823,7 +832,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error clearing the form fields",
       });
     }
-  }, [taskId, fields, form, toast, onProgress, setShowClearFieldsDialog]);
+  }, [taskId, fields, form, formService, refreshStatus, toast, onProgress, setShowClearFieldsDialog]);
   
   // Handle clearing all fields in the form - shows confirmation dialog
   const handleClearFields = useCallback(() => {
