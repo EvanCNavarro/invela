@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { registerServices } from "./services/registerServices";
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
-import WebSocketDebuggerPage from "@/pages/websocket-debugger-page";
+import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";

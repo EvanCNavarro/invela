@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
+import { WebSocketTester } from "./WebSocketTester";
 import { highlightSearchMatch } from "@/components/ui/search-bar";
 import {
   Tooltip,
@@ -312,7 +313,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-[160px]">
+                              <DropdownMenuContent align="end" className="w-[210px]">
                                 <DropdownMenuItem
                                   onClick={() => {
                                     // Reset any lingering overlay issues first
@@ -338,6 +339,14 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                                 >
                                   View Details
                                 </DropdownMenuItem>
+                                
+                                {/* Add WebSocket Test Option */}
+                                <div className="px-2 py-2">
+                                  <WebSocketTester 
+                                    taskId={task.id} 
+                                    buttonLabel="Refresh Task via WebSocket" 
+                                  />
+                                </div>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           )}
