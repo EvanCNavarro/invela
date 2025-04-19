@@ -420,17 +420,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Fetch the current company's demo status directly from API
   useEffect(() => {
     if (taskId) {
+      // Log the raw taskId to help debug
+      logger.info(`[UniversalForm] Fetching company demo status for taskId: ${taskId}, type: ${typeof taskId}`);
+      
       const fetchCompanyDemoStatus = async () => {
         try {
           // Make a specific API call to check this company's demo status
-          const response = await fetch(`/api/companies/is-demo?taskId=${taskId}`);
+          const apiUrl = `/api/companies/is-demo?taskId=${taskId}`;
+          logger.info(`[UniversalForm] Making API request to: ${apiUrl}`);
+          
+          const response = await fetch(apiUrl);
+          
           if (response.ok) {
             const data = await response.json();
             // Set the demo status based on API response
-            setIsCompanyDemo(data.isDemo === true);
-            logger.info(`[UniversalForm] Company demo status fetched from API: ${data.isDemo}`);
+            const isDemoCompany = data.isDemo === true;
+            setIsCompanyDemo(isDemoCompany);
+            logger.info(`[UniversalForm] Company demo status fetched from API: ${data.isDemo}, setting to ${isDemoCompany}`);
           } else {
-            logger.warn(`[UniversalForm] Failed to fetch company demo status: ${response.status}`);
+            const errorText = await response.text();
+            logger.warn(`[UniversalForm] Failed to fetch company demo status: ${response.status}, Response: ${errorText}`);
             // Default to false to be safe
             setIsCompanyDemo(false);
           }
