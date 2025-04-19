@@ -165,6 +165,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [formService, setFormService] = useState<FormServiceInterface | null>(null);
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<ServiceFormField[]>([]);
+  // This state specifically tracks if this is a demo company - separate from company.isDemo
+  const [isCompanyDemo, setIsCompanyDemo] = useState<boolean | null>(null);
   
   // State for accordion management
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
@@ -414,6 +416,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Auto-navigate to review section for ready_for_submission tasks - ONLY ON INITIAL LOAD
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
+  // Fetch the current company's demo status directly from API
+  useEffect(() => {
+    if (taskId) {
+      const fetchCompanyDemoStatus = async () => {
+        try {
+          // Make a specific API call to check this company's demo status
+          const response = await fetch(`/api/companies/is-demo?taskId=${taskId}`);
+          if (response.ok) {
+            const data = await response.json();
+            // Set the demo status based on API response
+            setIsCompanyDemo(data.isDemo === true);
+            logger.info(`[UniversalForm] Company demo status fetched from API: ${data.isDemo}`);
+          } else {
+            logger.warn(`[UniversalForm] Failed to fetch company demo status: ${response.status}`);
+            // Default to false to be safe
+            setIsCompanyDemo(false);
+          }
+        } catch (err) {
+          logger.error(`[UniversalForm] Error fetching company demo status:`, err);
+          // Default to false on error
+          setIsCompanyDemo(false);
+        }
+      };
+      
+      fetchCompanyDemoStatus();
+    }
+  }, [taskId]);
   
   // Initialize expanded accordion sections when component loads or refreshes
   useEffect(() => {
@@ -899,7 +929,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : company?.isDemo && (
+          ) : company?.isDemo === true && (
             <Button 
               variant="outline" 
               size="sm" 
