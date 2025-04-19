@@ -8,6 +8,7 @@ import { up as consolidateKybTemplates } from "./consolidate_kyb_templates";
 import { createTimestampsTable } from "../create-timestamps-table";
 import { migrate as enhanceKybFields } from "./enhance-kyb-fields";
 import { migrate as updateKybFieldOrder } from "./update-kyb-field-order";
+import { migrate as restructureKybFields } from "./restructure-kyb-fields";
 
 // Simpler logging for standalone execution
 function log(message: string) {
@@ -60,6 +61,10 @@ export async function runMigrations() {
     // Update field order from the normalized CSV file
     log('Updating KYB field order according to normalized CSV');
     await updateKybFieldOrder();
+    
+    // Restructure kyb_fields table so IDs match order values
+    log('Restructuring kyb_fields table to align IDs with order values');
+    await restructureKybFields();
     
     log('All migrations completed successfully');
     return true;
