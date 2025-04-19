@@ -180,6 +180,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // This state specifically tracks if this is a demo company - separate from company.isDemo
   const [isCompanyDemo, setIsCompanyDemo] = useState<boolean | null>(null);
   
+  // Force re-render state for complex form updates
+  const [forceRerender, setForceRerender] = useState<boolean>(false);
+  
   // State for accordion management
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   
@@ -723,33 +726,54 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Wait for state updates to process
         await new Promise(resolve => setTimeout(resolve, 50));
         
-        // First set values on the form service directly
+        // Add a manual re-render component flag
+        setForceRerender(prev => !prev);
+        
+        // First update the form service directly
         if (formService) {
           console.log('[UniversalForm] Setting values directly on form service...');
           
-          Object.entries(completeData).forEach(([fieldName, fieldValue]) => {
-            // This bypasses the React state update and directly sets backend values
-            formService.updateFormData(fieldName, fieldValue);
-          });
+          // Process field by field to ensure updates are tracked properly
+          for (const [fieldName, fieldValue] of Object.entries(completeData)) {
+            try {
+              formService.updateFormData(fieldName, fieldValue, taskId);
+              console.log(`[UniversalForm] Updated form service for ${fieldName}: "${fieldValue}"`);
+            } catch (serviceError) {
+              console.error(`[UniversalForm] Error updating form service for ${fieldName}:`, serviceError);
+            }
+          }
           
           console.log('[UniversalForm] Successfully updated form service with demo data');
         } else {
           console.warn('[UniversalForm] No form service available to update!');
         }
         
-        // Force a full reset on the React Hook Form
+        // Force longer wait to ensure form service updates are complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Reset the form with all values at once
         console.log('[UniversalForm] Resetting form with complete demo data...');
-        form.reset(completeData);
+        form.reset(completeData, {
+          keepDefaultValues: false, // Don't keep defaults
+        });
         console.log('[UniversalForm] Form reset completed');
         
-        // Now set each field individually for good measure
+        // Wait again for the reset to fully process
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Now set each field individually with validation flags
         console.log('[UniversalForm] Setting individual field values...');
         let fieldsUpdated = 0;
         
         for (const [fieldName, fieldValue] of Object.entries(completeData)) {
           try {
-            // Update React Hook Form field with force validation
-            console.log(`[UniversalForm] Setting form value for ${fieldName}...`);
+            // Log the field being updated
+            console.log(`[UniversalForm] Setting form value for ${fieldName}: "${fieldValue}" (${typeof fieldValue})`);
+            
+            // Forcefully clear the field first
+            form.setValue(fieldName, null);
+            
+            // Then set the new value with validation flags
             form.setValue(fieldName, fieldValue, {
               shouldValidate: true,
               shouldDirty: true,
@@ -764,13 +788,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             } else {
               console.error(`[UniversalForm] updateField is not a function! Type: ${typeof updateField}`);
             }
+            
+            // Small delay between fields to prevent race conditions
+            await new Promise(resolve => setTimeout(resolve, 10));
           } catch (fieldError) {
             console.error(`[UniversalForm] Error updating field ${fieldName}:`, fieldError);
           }
         }
         
-        // Force a re-render by triggering form validation
-        form.trigger();
+        // Final validation and re-render
+        await form.trigger();
+        setForceRerender(prev => !prev);
         
         console.log(`[UniversalForm] Updated ${fieldsUpdated} fields in backend`);
       } catch (resetError) {
