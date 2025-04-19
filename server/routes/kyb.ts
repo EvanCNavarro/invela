@@ -1158,6 +1158,149 @@ router.post('/api/kyb/save', async (req, res) => {
 // Get saved progress for KYB form
 import { reconcileTaskProgress } from '../utils/task-reconciliation';
 
+// Endpoint to provide demo data for auto-filling KYB forms
+router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    logger.info('Demo auto-fill requested for task', { taskId });
+    
+    // Get the task to retrieve company information
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId, 10)));
+      
+    if (!task) {
+      logger.error('Task not found for demo auto-fill', { taskId });
+      return res.status(404).json({ 
+        error: 'Task not found',
+        message: 'Could not find the specified task for auto-filling'
+      });
+    }
+    
+    // Check if the company associated with this task is a demo company
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+      
+    if (!company || company.is_demo !== true) {
+      logger.error('Company is not a demo company', { 
+        taskId, 
+        companyId: task.company_id,
+        isDemo: company?.is_demo
+      });
+      return res.status(403).json({
+        error: 'Not a demo company',
+        message: 'Auto-fill is only available for demo companies'
+      });
+    }
+    
+    // Get all KYB fields
+    const fields = await db.select()
+      .from(kybFields)
+      .orderBy(sql`"group" ASC, "order" ASC`);
+    
+    logger.info('Fetched fields for demo auto-fill', {
+      fieldCount: fields.length,
+      taskId
+    });
+    
+    // Create demo data for each field based on field type
+    const demoData: Record<string, any> = {};
+    
+    for (const field of fields) {
+      const fieldKey = field.field_key;
+      
+      // Generate appropriate demo values based on field type and key
+      switch (field.field_type) {
+        case 'TEXT':
+          if (fieldKey === 'legalEntityName') {
+            demoData[fieldKey] = company.name;
+          } else if (fieldKey === 'companyPhone') {
+            demoData[fieldKey] = '+1 (555) 123-4567';
+          } else if (fieldKey === 'contactEmail') {
+            demoData[fieldKey] = 'contact@example.com';
+          } else if (fieldKey.toLowerCase().includes('address')) {
+            demoData[fieldKey] = '123 Demo Street, Suite 456, Demo City, CA 94107';
+          } else {
+            demoData[fieldKey] = `Demo ${field.display_name}`;
+          }
+          break;
+          
+        case 'DATE':
+          // Generate a random date in the past 1-10 years
+          const years = Math.floor(Math.random() * 9) + 1;
+          const date = new Date();
+          date.setFullYear(date.getFullYear() - years);
+          demoData[fieldKey] = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+          break;
+          
+        case 'NUMBER':
+          if (fieldKey === 'marketCapitalization') {
+            demoData[fieldKey] = '500000000';
+          } else if (fieldKey === 'annualRecurringRevenue') {
+            demoData[fieldKey] = '25000000';
+          } else if (fieldKey === 'monthlyRecurringRevenue') {
+            demoData[fieldKey] = '2083333';
+          } else if (fieldKey === 'lifetimeCustomerValue') {
+            demoData[fieldKey] = '15000';
+          } else {
+            // Generate a random number between 100 and 10000
+            demoData[fieldKey] = Math.floor(Math.random() * 9900 + 100).toString();
+          }
+          break;
+          
+        case 'BOOLEAN':
+          // Alternate between true and false
+          demoData[fieldKey] = (field.id % 2 === 0).toString();
+          break;
+          
+        case 'SELECT':
+          if (fieldKey === 'businessType') {
+            demoData[fieldKey] = 'Corporation';
+          } else if (fieldKey === 'jurisdiction') {
+            demoData[fieldKey] = 'Delaware, USA';
+          } else if (fieldKey === 'dataVolume') {
+            demoData[fieldKey] = 'High (Over 1M records)';
+          } else {
+            demoData[fieldKey] = 'Option A';
+          }
+          break;
+          
+        case 'MULTI_SELECT':
+          if (fieldKey === 'dataTypes') {
+            demoData[fieldKey] = 'Personal Information, Financial Data, Healthcare Data';
+          } else {
+            demoData[fieldKey] = 'Option A, Option B';
+          }
+          break;
+          
+        case 'TEXTAREA':
+          demoData[fieldKey] = `This is a demo text for ${field.display_name}. It contains multiple sentences to demonstrate how longer text fields are displayed in the form. This is automatically generated for demonstration purposes.`;
+          break;
+          
+        default:
+          demoData[fieldKey] = `Demo value for ${field.display_name}`;
+      }
+    }
+    
+    logger.info('Generated demo data for auto-fill', {
+      fieldCount: Object.keys(demoData).length,
+      taskId
+    });
+    
+    res.json(demoData);
+  } catch (error) {
+    logger.error('Error generating demo auto-fill data', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({
+      error: 'Failed to generate demo data',
+      message: error instanceof Error ? error.message : 'Unknown error occurred'
+    });
+  }
+});
+
 router.get('/api/kyb/progress/:taskId', async (req, res) => {
   try {
     const { taskId } = req.params;
