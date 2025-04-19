@@ -765,7 +765,46 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         console.log('[UniversalForm] Setting individual field values...');
         let fieldsUpdated = 0;
         
+        // First pass - make a special pass just for essential fields to ensure they're set first
+        const essentialFields = ['legalEntityName', 'registrationNumber', 'incorporationDate'];
+        
+        for (const fieldName of essentialFields) {
+          if (fieldName in completeData) {
+            const fieldValue = completeData[fieldName];
+            try {
+              console.log(`[UniversalForm] Setting essential field ${fieldName}: "${fieldValue}"`);
+              
+              // Forcefully clear the field first
+              form.setValue(fieldName, null);
+              
+              // Set with validation
+              form.setValue(fieldName, fieldValue, {
+                shouldValidate: true,
+                shouldDirty: true,
+                shouldTouch: true
+              });
+              
+              // Update backend
+              if (typeof updateField === 'function') {
+                updateField(fieldName, fieldValue);
+                fieldsUpdated++;
+              }
+              
+              // Longer delay for essential fields
+              await new Promise(resolve => setTimeout(resolve, 30));
+            } catch (err) {
+              console.error(`[UniversalForm] Error setting essential field ${fieldName}:`, err);
+            }
+          }
+        }
+        
+        // Second pass - handle all other fields
         for (const [fieldName, fieldValue] of Object.entries(completeData)) {
+          // Skip essential fields that were already processed
+          if (essentialFields.includes(fieldName)) {
+            continue;
+          }
+          
           try {
             // Log the field being updated
             console.log(`[UniversalForm] Setting form value for ${fieldName}: "${fieldValue}" (${typeof fieldValue})`);
@@ -796,9 +835,86 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           }
         }
         
-        // Final validation and re-render
+        // Special third pass just for Operations & Compliance fields
+        // This ensures the last section's fields get set properly
+        const operationsFields = fields.filter(field => field.section === 'section-3').map(field => field.key);
+        
+        if (operationsFields.length > 0) {
+          console.log('[UniversalForm] Making special pass for Operations & Compliance fields:', operationsFields);
+          
+          // Add a small delay before processing section-3 fields
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          for (const fieldName of operationsFields) {
+            if (fieldName in completeData) {
+              const fieldValue = completeData[fieldName];
+              try {
+                console.log(`[UniversalForm] Re-setting Operations field ${fieldName}: "${fieldValue}"`);
+                
+                // Set directly with validation
+                form.setValue(fieldName, fieldValue, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                  shouldTouch: true
+                });
+                
+                // Force longer delay for Operations fields
+                await new Promise(resolve => setTimeout(resolve, 30));
+              } catch (err) {
+                console.error(`[UniversalForm] Error in Operations fields pass for ${fieldName}:`, err);
+              }
+            }
+          }
+        }
+        
+        // Enhanced final re-rendering and validation with extra delay
+        // First trigger immediate validation
         await form.trigger();
+        
+        // Force re-render immediately
         setForceRerender(prev => !prev);
+        
+        // Add a secondary delayed validation for fields that might not have updated
+        setTimeout(async () => {
+          // Re-validate all fields again after a delay
+          await form.trigger();
+          // Force another re-render
+          setForceRerender(prev => !prev);
+          // Log the final state for debugging
+          console.log('[UniversalForm] Final re-render and validation completed');
+          
+          // Verify all fields have values in form state
+          const formValues = form.getValues();
+          console.log('[UniversalForm] Form values after final validation:', 
+            Object.keys(formValues).length, 'fields');
+          
+          // Check which section might have issues
+          const sectionFields = {
+            'Company Profile': Object.keys(formValues).filter(key => {
+              const field = fields.find(f => f.key === key);
+              return field && field.section === 'section-0';
+            }),
+            'Governance & Leadership': Object.keys(formValues).filter(key => {
+              const field = fields.find(f => f.key === key);
+              return field && field.section === 'section-1';
+            }),
+            'Financial Profile': Object.keys(formValues).filter(key => {
+              const field = fields.find(f => f.key === key);
+              return field && field.section === 'section-2';
+            }),
+            'Operations & Compliance': Object.keys(formValues).filter(key => {
+              const field = fields.find(f => f.key === key);
+              return field && field.section === 'section-3';
+            })
+          };
+          
+          console.log('[UniversalForm] Section field counts:', {
+            'Company Profile': sectionFields['Company Profile'].length,
+            'Governance & Leadership': sectionFields['Governance & Leadership'].length,
+            'Financial Profile': sectionFields['Financial Profile'].length,
+            'Operations & Compliance': sectionFields['Operations & Compliance'].length
+          });
+        }, 500);
         
         console.log(`[UniversalForm] Updated ${fieldsUpdated} fields in backend`);
       } catch (resetError) {
