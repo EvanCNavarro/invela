@@ -95,6 +95,9 @@ export default function TaskCenterPage() {
       try {
         // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
+          // Add detailed debugging to see the exact message structure
+          console.log('[TaskCenter] Raw WebSocket task_update data:', data);
+          
           // Server always sends updates with 'payload' wrapper for task_update events
           const taskData = data?.payload || {};
           const taskId = taskData.id;
