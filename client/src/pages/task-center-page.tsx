@@ -95,11 +95,11 @@ export default function TaskCenterPage() {
       try {
         // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
-          // Add detailed debugging to see the exact message structure
+          // Message data now comes directly from the WebSocket service
           console.log('[TaskCenter] Raw WebSocket task_update data:', data);
           
-          // Server always sends updates with 'payload' wrapper for task_update events
-          const taskData = data?.payload || {};
+          // The data should now come directly without requiring payload extraction
+          const taskData = data || {};
           const taskId = taskData.id;
 
           console.log('[TaskCenter] WebSocket task_update received:', {
@@ -147,8 +147,8 @@ export default function TaskCenterPage() {
         
         // 2. Subscribe to test task notifications as well
         const unsubTaskTestNotification = await wsService.subscribe('task_test_notification', (data: any) => {
-          // Server always uses a consistent format with payload wrapper
-          const taskData = data?.payload || {};
+          // Now gets payload directly from WebSocket service
+          const taskData = data || {};
           const taskId = taskData.id;
           
           console.log('[TaskCenter] WebSocket test notification received:', {

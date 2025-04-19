@@ -130,13 +130,14 @@ class WebSocketService {
             if (message.type === 'connection_established') {
               logger.info('Connection established:', {
                 connectionId: this.connectionId,
-                data: message.data,
+                data: message.data || message.payload,
                 timestamp: new Date().toISOString()
               });
               return;
             }
 
-            this.handleMessage(message.type, message.data);
+            // Fixed: Pass message.payload instead of message.data to properly handle the server message format
+            this.handleMessage(message.type, message.payload);
           } catch (error) {
             logger.error('Error parsing message:', {
               error,
