@@ -118,9 +118,12 @@ export function WelcomeModal() {
       console.log('[WelcomeModal] Setting modal state:', { 
         userId: user.id,
         onboardingCompleted: user.onboarding_user_completed,
-        showModal: !user.onboarding_user_completed
+        showModal: user.onboarding_user_completed === false
       });
-      setShowModal(!user.onboarding_user_completed);
+      
+      // Only show modal if onboarding is explicitly NOT completed (strict equality check)
+      const shouldShowModal = user.onboarding_user_completed === false;
+      setShowModal(shouldShowModal);
     }, 300);
     
     return () => clearTimeout(timer);
@@ -225,7 +228,12 @@ export function WelcomeModal() {
   };
 
   // Don't render anything if user has completed onboarding or modal isn't ready to show
-  if (!user || user.onboarding_user_completed || !showModal) {
+  if (!user || user.onboarding_user_completed === true || !showModal) {
+    console.log('[WelcomeModal] Not rendering modal because:', {
+      noUser: !user,
+      onboardingCompleted: user?.onboarding_user_completed === true,
+      modalHidden: !showModal
+    });
     return null;
   }
 
