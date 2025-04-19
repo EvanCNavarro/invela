@@ -569,13 +569,15 @@ router.post('/api/kyb/progress', async (req, res) => {
     const hasSubmissionDate = existingTask.metadata?.submissionDate !== undefined;
     
     if (hasSubmissionDate) {
-      // If the task has been submitted, ALWAYS use SUBMITTED status
+      // If the task has been submitted, ALWAYS use SUBMITTED status and 100% progress
       // This prevents status regressions from overwriting submission state
-      console.log('[KYB API Debug] Task has submission date, enforcing SUBMITTED status', {
+      console.log('[KYB API Debug] Task has submission date, enforcing SUBMITTED status and 100% progress', {
         submissionDate: existingTask.metadata?.submissionDate,
-        clientProvidedStatus: req.body.status || 'none'
+        clientProvidedStatus: req.body.status || 'none',
+        originalProgress: progress
       });
       newStatus = TaskStatus.SUBMITTED;
+      progress = 100; // Force progress to 100% for submitted tasks
     }
     // If client provided an explicit status and task is not submitted, use that
     else if (req.body.status) {
@@ -1058,10 +1060,30 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       }
     }
 
+    // Force progress to 100% for submitted tasks 
+    let effectiveProgress = task.progress;
+    
+    // If the task has a submission date, always show 100% progress
+    if (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate) {
+      console.log(`[KYB API Debug] Task is submitted, enforcing 100% progress (original was ${task.progress}%)`);
+      effectiveProgress = 100;
+      
+      // If the database value differs, update it for consistency
+      if (task.progress !== 100) {
+        console.log(`[KYB API Debug] Fixing progress value in database for submitted task ${taskId}`);
+        await db.update(tasks)
+          .set({ 
+            progress: 100,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, parseInt(taskId)));
+      }
+    }
+    
     console.log('[KYB API Debug] Retrieved task data:', {
       id: task.id,
       responseCount: responses.length,
-      progress: task.progress,
+      progress: effectiveProgress, // Use the effective progress
       status: task.status,
       formDataKeys: Object.keys(formData)
     });
@@ -1089,13 +1111,13 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       console.log('[SERVER DEBUG] No fields with value "asdf" found in GET response data');
     }
     
-    console.log(`[SERVER DEBUG] Sending GET response with ${Object.keys(formData).length} fields, status: ${task.status}, progress: ${task.progress}%`);
+    console.log(`[SERVER DEBUG] Sending GET response with ${Object.keys(formData).length} fields, status: ${task.status}, progress: ${effectiveProgress}%`);
     console.log('===============================================');
 
     // Return saved form data and progress with task status
     res.json({
       formData,
-      progress: Math.min(task.progress || 0, 100),
+      progress: Math.min(effectiveProgress || 0, 100),
       status: task.status // Include task status in the response
     });
   } catch (error) {
