@@ -687,11 +687,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         updateField(fieldName, fieldValue);
       });
       
-      // Navigate to first section if on review
-      if (activeTab === 'review') {
-        setActiveTab('section-0');
-      }
-      
       // Save progress after auto-fill
       if (saveProgress) {
         await saveProgress();
@@ -755,10 +750,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           form.clearErrors(fieldName);
         });
         
-        // If on review tab, navigate to first section to see cleared fields
-        if (activeTab === 'review') {
-          setActiveTab('section-0');
-        }
+
         
         // Save progress after clearing
         if (saveProgress) {
