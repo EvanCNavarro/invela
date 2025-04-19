@@ -1644,6 +1644,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         </div>
       </div>
       
+      {/* Clear Fields Confirmation Dialog */}
+      <AlertDialog open={showClearFieldsDialog} onOpenChange={setShowClearFieldsDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Fields</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear all fields? This action cannot be undone 
+              and all information entered in this form will be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={doClearFields}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, Clear Everything
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       {/* Universal Success Modal */}
       <UniversalSuccessModal
         open={showSuccessModal}
