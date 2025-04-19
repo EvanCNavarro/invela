@@ -1034,59 +1034,61 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     <div className="w-full mx-auto">
       {/* Gray header box with title, subtitle, and download button */}
       <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
-        <div className="flex justify-between items-start mb-5">
-          <div>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-5 gap-4">
+          <div className="flex-1">
             <h2 className="text-xl font-semibold">{headerTitle}</h2>
             <p className="text-sm text-gray-500">{headerSubtitle}</p>
           </div>
           
-          {isSubmitted ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleDownload('json')}>
-                  <FileJson className="mr-2 h-4 w-4" />
-                  Download as JSON
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Download as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Download as TXT
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : isCompanyDemo && (
-            <div className="rounded-lg border border-purple-100 bg-purple-50/30 p-4 shadow-sm inline-block">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleDemoAutoFill}
-                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
-                >
-                  <Code className="mr-2 h-4 w-4" />
-                  Demo Auto-Fill
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleClearFields}
-                  className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
-                >
-                  <Eraser className="mr-2 h-4 w-4" />
-                  Clear Fields
-                </Button>
+          <div className="flex justify-end">
+            {isSubmitted ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDownload('json')}>
+                    <FileJson className="mr-2 h-4 w-4" />
+                    Download as JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Download as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Download as TXT
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : isCompanyDemo && (
+              <div className="rounded-lg border border-purple-100 bg-purple-50/30 p-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleDemoAutoFill}
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
+                  >
+                    <Code className="mr-2 h-4 w-4" />
+                    Demo Auto-Fill
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleClearFields}
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
+                  >
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Clear Fields
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
