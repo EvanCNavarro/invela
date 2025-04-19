@@ -103,6 +103,14 @@ export function WelcomeModal() {
   useEffect(() => {
     if (!user) return;
     
+    // DEBUGGING: Add detailed info about the user object and onboarding status
+    console.log('[ONBOARDING DEBUG] WelcomeModal user data received:', { 
+      userId: user.id,
+      email: user.email,
+      onboardingCompleted: user.onboarding_user_completed,
+      userObject: JSON.stringify(user, null, 2).substring(0, 500) // Limit string length
+    });
+    
     // Preload all images immediately to ensure fast display when modal shows
     preloadImages((src, success) => {
       if (success) {
@@ -123,6 +131,13 @@ export function WelcomeModal() {
       
       // Only show modal if onboarding is explicitly NOT completed (strict equality check)
       const shouldShowModal = user.onboarding_user_completed === false;
+      console.log('[ONBOARDING DEBUG] Modal display decision:', {
+        shouldShow: shouldShowModal,
+        userOnboardingCompleted: user.onboarding_user_completed,
+        strictEqualityCheck: user.onboarding_user_completed === false,
+        typeOfOnboardingFlag: typeof user.onboarding_user_completed
+      });
+      
       setShowModal(shouldShowModal);
     }, 300);
     
@@ -140,23 +155,44 @@ export function WelcomeModal() {
         throw new Error("User email not found");
       }
 
-      console.log('[WelcomeModal] Sending onboarding completion request for user:', user.id);
+      console.log('[ONBOARDING DEBUG] Sending onboarding completion request for user:', {
+        userId: user.id,
+        email: user.email,
+        currentOnboardingStatus: user.onboarding_user_completed,
+        endpoint: '/api/user/complete-onboarding', // CORRECTED ENDPOINT
+        timestamp: new Date().toISOString()
+      });
       
-      const response = await fetch('/api/users/complete-onboarding', {
+      // Fixing the endpoint to match server definition (singular "user" not plural "users")
+      const response = await fetch('/api/user/complete-onboarding', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         }
       });
       
-      console.log('[WelcomeModal] Onboarding completion response status:', response.status);
+      console.log('[ONBOARDING DEBUG] Onboarding completion response:', {
+        status: response.status,
+        ok: response.ok,
+        url: response.url,
+        timestamp: new Date().toISOString()
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to complete onboarding");
+        // Let's try to get more detailed error information
+        try {
+          const errorData = await response.json();
+          console.error('[ONBOARDING DEBUG] Error response body:', errorData);
+          throw new Error(errorData.message || "Failed to complete onboarding");
+        } catch (parseError) {
+          console.error('[ONBOARDING DEBUG] Could not parse error response:', parseError);
+          throw new Error("Failed to complete onboarding: " + response.statusText);
+        }
       }
 
-      return response.json();
+      const responseData = await response.json();
+      console.log('[ONBOARDING DEBUG] Completion response data:', responseData);
+      return responseData;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
