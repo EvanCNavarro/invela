@@ -1043,29 +1043,9 @@ router.post('/api/kyb/save', async (req, res) => {
     }
 
     // Update available tabs for the company using our dedicated service
-    // This ensures the file vault tab is properly unlocked after submission
-    try {
-      console.log(`[SERVER DEBUG] Unlocking file vault access for company ${task.company_id}`);
-      const updatedCompany = await CompanyTabsService.unlockFileVault(task.company_id);
-      
-      if (updatedCompany) {
-        console.log(`[SERVER DEBUG] Successfully updated company tabs:`, {
-          companyId: task.company_id,
-          availableTabs: updatedCompany.available_tabs,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.error(`[SERVER ERROR] Failed to unlock file vault for company ${task.company_id}`);
-      }
-    } catch (tabError) {
-      // Log but don't fail the entire request if tab updating fails
-      console.error(`[SERVER ERROR] Error updating company tabs:`, {
-        error: tabError instanceof Error ? tabError.message : String(tabError),
-        companyId: task.company_id,
-        timestamp: new Date().toISOString()
-      });
-    }
-
+    // NOTE: File vault unlocking has been moved to the final critical section
+    // to ensure it always executes, even if other operations fail
+    console.log(`[SERVER DEBUG] File vault unlocking will be performed in the dedicated section below`);
     // Handle revenue tier update if present
     if (formData.annualRecurringRevenue) {
       const [revenueTierField] = await db.select()
@@ -1764,29 +1744,9 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
     }
 
     // Update available tabs for the company using our dedicated service
-    // This ensures the file vault tab is properly unlocked after submission
-    try {
-      console.log(`[SERVER DEBUG] Unlocking file vault access for company ${task.company_id}`);
-      const updatedCompany = await CompanyTabsService.unlockFileVault(task.company_id);
-      
-      if (updatedCompany) {
-        console.log(`[SERVER DEBUG] Successfully updated company tabs:`, {
-          companyId: task.company_id,
-          availableTabs: updatedCompany.available_tabs,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.error(`[SERVER ERROR] Failed to unlock file vault for company ${task.company_id}`);
-      }
-    } catch (tabError) {
-      // Log but don't fail the entire request if tab updating fails
-      console.error(`[SERVER ERROR] Error updating company tabs:`, {
-        error: tabError instanceof Error ? tabError.message : String(tabError),
-        companyId: task.company_id,
-        timestamp: new Date().toISOString()
-      });
-    }
-
+    // NOTE: File vault unlocking has been moved to the final critical section
+    // to ensure it always executes, even if other operations fail
+    console.log(`[SERVER DEBUG] File vault unlocking will be performed in the dedicated section below`);
     // Handle revenue tier update if present
     if (formData.annualRecurringRevenue) {
       const [revenueTierField] = await db.select()
