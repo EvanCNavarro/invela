@@ -58,22 +58,42 @@ export function Sidebar({
   useEffect(() => {
     // Log when tabs are updated for debugging
     console.log('[Sidebar] Available tabs updated:', availableTabs);
+    
+    // Check for file-vault route forcing
+    if (window.location.pathname.includes('file-vault') && !availableTabs.includes('file-vault')) {
+      console.log('[Sidebar] 🔴 EMERGENCY: We are on file-vault route but tab is still locked!');
+      // Force re-render to try and correct this critical issue
+      setTaskCount(prev => prev + 1);
+    }
   }, [availableTabs]);
   
-  // Add event listener for forced sidebar updates (for truly INSTANT updates)
+  // ULTRA-RESPONSIVE event listener for forced sidebar updates
   useEffect(() => {
+    // This function will immediately force a re-render
     const handleForcedUpdate = () => {
       console.log('[Sidebar] ⚡ INSTANT UPDATE triggered via force-sidebar-update event');
-      // Force a re-render by updating state
-      setTaskCount(prev => prev); // This triggers re-render without changing the actual count
+      // Force multiple consecutive re-renders for maximum responsiveness
+      requestAnimationFrame(() => setTaskCount(prev => prev + 1));
+      setTimeout(() => setTaskCount(prev => prev + 1), 0);
+      setTimeout(() => setTaskCount(prev => prev + 1), 50);
     };
     
-    // Add event listener
+    // Listen for both window and document events (belt and suspenders)
     window.addEventListener('force-sidebar-update', handleForcedUpdate);
+    document.addEventListener('file-vault-unlocked', handleForcedUpdate);
     
-    // Clean up
+    // This ensures we also check when the DOM is ready
+    if (document.readyState === 'complete') {
+      handleForcedUpdate();
+    } else {
+      window.addEventListener('load', handleForcedUpdate);
+    }
+    
+    // Clean up all event listeners
     return () => {
       window.removeEventListener('force-sidebar-update', handleForcedUpdate);
+      document.removeEventListener('file-vault-unlocked', handleForcedUpdate);
+      window.removeEventListener('load', handleForcedUpdate);
     };
   }, []);
   
