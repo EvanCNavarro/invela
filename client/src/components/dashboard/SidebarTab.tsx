@@ -34,6 +34,7 @@ export function SidebarTab({
     <div
       data-menu-item={href.replace('/', '')}
       data-locked={isDisabled ? 'true' : 'false'}
+      style={{ display: 'flex' }} // Always show, but let React control disabled state
       className={cn(
         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
         "transition-all duration-75 relative", // Faster transition for immediate visual feedback
