@@ -1150,6 +1150,24 @@ router.post('/api/kyb/save', async (req, res) => {
       warningCount: warnings.length
     });
 
+    // For SUBMITTED status, broadcast via WebSocket
+    if (task.status === TaskStatus.SUBMITTED || newStatus === TaskStatus.SUBMITTED) {
+      // Broadcast submission status via WebSocket
+      console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
+      broadcastSubmissionStatus(taskId, 'submitted');
+
+      // Also broadcast the task update for dashboard real-time updates
+      broadcastTaskUpdate({
+        id: taskId,
+        status: TaskStatus.SUBMITTED,
+        progress: 100,
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          submissionDate: new Date().toISOString()
+        }
+      });
+    }
+
     res.json({
       success: true,
       fileId: fileCreationResult.fileId,
@@ -1861,6 +1879,21 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       kybTaskId: taskId
     });
 
+    // Broadcast submission status via WebSocket
+    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
+    broadcastSubmissionStatus(taskId, 'submitted');
+
+    // Also broadcast the task update for dashboard real-time updates
+    broadcastTaskUpdate({
+      id: taskId,
+      status: TaskStatus.SUBMITTED,
+      progress: 100,
+      metadata: {
+        lastUpdated: new Date().toISOString(),
+        submissionDate: new Date().toISOString()
+      }
+    });
+
     res.json({
       success: true,
       fileId: fileCreationResult.fileId,
@@ -2161,6 +2194,12 @@ router.post('/api/kyb/test-notification', async (req, res) => {
     
     // Send a test notification via WebSocket
     console.log(`[WebSocket] Sending test notification for task ${taskId}`);
+    
+    // Test the submission status broadcast
+    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (TEST)`);
+    broadcastSubmissionStatus(taskId, 'submitted');
+    
+    // Send the regular task update
     broadcastTaskUpdate({
       id: taskId,
       status: task.status as TaskStatus,
