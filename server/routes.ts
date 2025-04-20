@@ -31,7 +31,7 @@ import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
-import { fileVaultRouter } from './routes/file-vault';
+import fileVaultRouter from './routes/file-vault';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 

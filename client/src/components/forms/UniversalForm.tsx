@@ -1649,16 +1649,41 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             timestamp: new Date().toISOString()
           });
           
-          // CRITICAL FIX: Invalidate company data to refresh permissions and available tabs
-          // This ensures the file vault access is immediately available after form submission
+          // CRITICAL FIX: Comprehensive approach to ensure file vault tab is enabled
           try {
-            console.log(`[SUBMIT FLOW] 10a. Invalidating company data to refresh permissions`);
+            console.log(`[SUBMIT FLOW] 10a. Using FileVaultService to enable file vault tab`);
             
-            // Import queryClient dynamically to avoid circular dependencies
+            // 1. First try with the dedicated FileVaultService which has built-in fallbacks
+            const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
+            
+            // 2. Try all available methods with careful error handling
+            try {
+              console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
+              await enableFileVault();
+            } catch (enableError) {
+              console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+              
+              try {
+                console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
+                directlyAddFileVaultTab();
+              } catch (directError) {
+                console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+              }
+            }
+            
+            // 3. Also refresh as a final safety measure
+            try {
+              console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
+              await refreshFileVaultStatus();
+            } catch (refreshError) {
+              console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+            }
+            
+            // 4. Finally, also use the original approach as backup
+            console.log(`[SUBMIT FLOW] Method 4: Original approach - invalidating company data`);
             const { queryClient } = await import('@/lib/queryClient');
             
             // Invalidate and FORCE an immediate refetch of company data 
-            // to ensure permissions are updated and file vault is unlocked in UI
             queryClient.invalidateQueries({
               queryKey: ['/api/companies/current'],
               exact: true,
@@ -1791,36 +1816,62 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Even with a verification error, we'll show success modal since we know data was saved
         logger.info(`SUBMISSION FLOW UI: Showing success modal despite verification warning`);
         
-        // Invalidate the company data query to refresh permissions regardless of the error
+        // Comprehensive approach to ensure file vault tab is enabled
         try {
-          console.log(`[SUBMIT FLOW] Completely purging and refetching company data to update UI`);
+          console.log(`[SUBMIT FLOW] Using FileVaultService to enable file vault tab`);
+          
+          // 1. First try with the dedicated FileVaultService which has built-in fallbacks
+          const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
+          
+          // 2. Try all available methods with careful error handling
+          try {
+            console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
+            await enableFileVault();
+          } catch (enableError) {
+            console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+            
+            try {
+              console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
+              directlyAddFileVaultTab();
+            } catch (directError) {
+              console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+            }
+          }
+          
+          // 3. Also refresh as a final safety measure
+          try {
+            console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
+            await refreshFileVaultStatus();
+          } catch (refreshError) {
+            console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+          }
+          
+          // 4. Manually force company data refresh as the most extreme fallback
+          console.log(`[SUBMIT FLOW] Method 4: Completely purging and refetching company data`);
           const { queryClient } = await import('@/lib/queryClient');
           
-          // First completely remove all company data from cache to force a fresh fetch
+          // Remove all company data from cache to force a fresh fetch
           queryClient.removeQueries({ 
             queryKey: ['/api/companies/current'],
             exact: true 
           });
           
-          // Then explicitly force a complete refetch
+          // Force a complete refetch
           queryClient.refetchQueries({
             queryKey: ['/api/companies/current'],
             exact: true,
             type: 'all', // Refetch all queries, not just active ones
           }, { throwOnError: false }); // Don't throw on error
           
-          // Also clear any related company queries
+          // Also clear related company queries
           queryClient.invalidateQueries({
             queryKey: ['/api/companies'],
             exact: false, // Invalidate all company-related queries
           });
-          queryClient.refetchQueries({
-            queryKey: ['/api/companies/current'],
-            exact: true,
-            type: 'active'
-          });
+          
+          console.log(`[SUBMIT FLOW] Company data cache cleared and refresh triggered`);
         } catch (refreshError) {
-          console.error(`Error refreshing company data:`, refreshError);
+          console.error(`[SUBMIT FLOW] Critical error refreshing company data:`, refreshError);
         }
         
         // Create submission result with warning status - include ALL actions as in the success case
