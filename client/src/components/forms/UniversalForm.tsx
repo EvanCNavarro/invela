@@ -259,17 +259,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Handle submission status updates (new handler)
     const handleSubmissionStatus = (data: any) => {
-      // Only process messages for the current task
-      if (data.taskId !== taskId) return;
+      console.log('[WebSocket Handler] Received submission_status event:', data);
       
-      logger.info(`Received submission status update for task ${data.taskId}: Status=${data.status}`);
+      // Only process messages for the current task
+      if (data.taskId !== taskId) {
+        console.log(`[WebSocket Handler] Ignoring event for task ${data.taskId} (current task is ${taskId})`);
+        return;
+      }
+      
+      logger.info(`[WebSocket Handler] Processing submission status update for task ${data.taskId}: Status=${data.status}`);
       
       // If we receive a successful submission status, show the success modal
       if (data.status === 'submitted' || data.status === 'completed') {
-        // Create a submission result object
+        console.log(`[WebSocket Handler] Showing success modal for task ${data.taskId}`);
+        
+        // Create a submission result object with proper SubmissionAction type
         const submissionResultData: SubmissionResult = {
           completedActions: [
-            { type: 'form_submitted', label: 'Form Submitted', timestamp: new Date() }
+            { 
+              type: 'task_completion',
+              description: 'Form Submitted Successfully',
+              data: { details: 'Your form has been successfully submitted and marked as complete.' }
+            }
           ],
           taskId: Number(taskId),
           taskStatus: data.status
@@ -282,6 +293,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         setShowSuccessModal(true);
         
         // Fire confetti animation
+        console.log(`[WebSocket Handler] Triggering confetti animation`);
         import('@/utils/confetti').then(({ fireSuperConfetti }) => {
           fireSuperConfetti();
         }).catch(error => {

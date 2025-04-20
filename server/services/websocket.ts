@@ -253,6 +253,8 @@ export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: st
 /**
  * Broadcast a submission status update to all connected clients
  * This ensures the success modal always shows, even when HTTP API calls fail
+ * 
+ * Enhanced with better logging, multiple attempts, and client counting
  */
 export function broadcastSubmissionStatus(taskId: number, status: string) {
   if (!wss) {
@@ -260,25 +262,73 @@ export function broadcastSubmissionStatus(taskId: number, status: string) {
     return;
   }
 
-  console.log(`[WebSocket] Broadcasting submission status for task ${taskId}:`, {
-    status,
-    timestamp: new Date().toISOString()
+  // Count active clients for debugging
+  let openClientCount = 0;
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      openClientCount++;
+    }
   });
 
+  console.log(`[WebSocket] Broadcasting submission status for task ${taskId}:`, {
+    status,
+    timestamp: new Date().toISOString(),
+    openClients: openClientCount
+  });
+
+  // If no clients are connected, log a warning
+  if (openClientCount === 0) {
+    console.warn('[WebSocket] No connected clients to receive submission status update');
+  }
+
+  // Message to send
+  const message = JSON.stringify({
+    type: 'submission_status',
+    payload: {
+      taskId,
+      status,
+      timestamp: Date.now(),
+      source: 'server-broadcast'
+    }
+  });
+
+  // Track successful sends
+  let successCount = 0;
+  
+  // Send to all clients
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       try {
-        client.send(JSON.stringify({
-          type: 'submission_status',
-          payload: {
-            taskId,
-            status,
-            timestamp: Date.now()
-          }
-        }));
+        client.send(message);
+        successCount++;
       } catch (error) {
         console.error('[WebSocket] Error broadcasting submission status:', error);
       }
     }
   });
+  
+  // Log success summary
+  console.log(`[WebSocket] Submission status broadcast summary for task ${taskId}:`, {
+    status,
+    successCount,
+    totalClients: openClientCount
+  });
+  
+  // Try once more after a short delay if any sends failed
+  if (successCount < openClientCount) {
+    setTimeout(() => {
+      let retryCount = 0;
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          try {
+            client.send(message);
+            retryCount++;
+          } catch (error) {
+            console.error('[WebSocket] Error on retry broadcast:', error);
+          }
+        }
+      });
+      console.log(`[WebSocket] Retry broadcast for task ${taskId} sent to ${retryCount} clients`);
+    }, 500);
+  }
 }
