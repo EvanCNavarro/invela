@@ -1507,6 +1507,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       } catch (statusCheckError) {
         logger.error('Status verification error:', statusCheckError);
         
+        // Emit status verification error via WebSocket
+        try {
+          wsService.emit('submission_status', {
+            taskId: Number(taskId),
+            status: 'warning',
+            error: 'Status verification failed, but form data was saved',
+            source: 'client-status-verification'
+          });
+        } catch (wsError) {
+          logger.error(`[WebSocket] Error emitting status verification warning:`, wsError);
+        }
+        
         toast({
           title: 'Submission Status Uncertain',
           description: 'Your form data was saved, but we could not verify final submission status.',
@@ -1515,6 +1527,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     } catch (error) {
       logger.error('Form submission error:', error);
+      
+      // Emit error status via WebSocket for monitoring
+      try {
+        wsService.emit('submission_status', {
+          taskId: Number(taskId),
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          source: 'client-submission-exception-handler'
+        });
+      } catch (wsError) {
+        logger.error(`[WebSocket] Error emitting submission failure event:`, wsError);
+      }
       
       // Show error toast
       toast({
