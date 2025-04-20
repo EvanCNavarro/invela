@@ -167,6 +167,37 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Override the groupFieldsBySection method to use 'section' instead of 'group'
+   * for KY3P fields
+   */
+  groupFieldsBySection(fields: any[]): Record<string, any[]> {
+    logger.info(`[KY3P Form Service] Grouping ${fields.length} fields by section`);
+    
+    const groups: Record<string, any[]> = {};
+    
+    // For KY3P, we use the 'section' property instead of 'group'
+    fields.forEach(field => {
+      // For KY3P fields, the section is in the 'section' property, not 'group'
+      const sectionName = field.section || 'Other';
+      
+      logger.debug(`[KY3P Form Service] Field ${field.field_key} has section "${sectionName}"`);
+      
+      if (!groups[sectionName]) {
+        groups[sectionName] = [];
+      }
+      
+      groups[sectionName].push(field);
+    });
+    
+    // Log the sections we've found
+    logger.info(`[KY3P Form Service] Found ${Object.keys(groups).length} sections:`, 
+      Object.keys(groups).map(section => `${section} (${groups[section].length} fields)`)
+    );
+    
+    return groups;
+  }
+  
+  /**
    * Get form sections from fields
    * Group fields by section
    */
@@ -188,7 +219,8 @@ export class KY3PFormService extends EnhancedKybFormService {
         id: `section-${index}`,
         title: sectionName,
         fields: sectionFields,
-        order: index
+        order: index,
+        collapsed: false
       }))
       .sort((a, b) => a.order - b.order);
   }
