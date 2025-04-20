@@ -32,6 +32,8 @@ export function SidebarTab({
 }: SidebarTabProps) {
   const content = (
     <div
+      data-menu-item={href.replace('/', '')}
+      data-locked={isDisabled ? 'true' : 'false'}
       className={cn(
         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
         "transition-all duration-200 relative",
