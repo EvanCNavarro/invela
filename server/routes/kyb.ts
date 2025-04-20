@@ -288,6 +288,128 @@ const unlockSecurityTasks = async (companyId: number, kybTaskId: number, userId?
   }
 };
 
+// Dynamic task unlocking check - used when accessing the Task Center
+export const checkAndUnlockSecurityTasks = async (companyId: number, userId?: number) => {
+  try {
+    logger.info('Performing dynamic task unlocking check for company', {
+      companyId,
+      userId
+    });
+    
+    // First, check if there's a completed KYB task for this company
+    const kybTasks = await db.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.company_id, companyId),
+          eq(tasks.task_type, 'company_kyb'),
+          or(
+            eq(tasks.status, 'submitted'),
+            eq(tasks.status, 'completed')
+          )
+        )
+      );
+    
+    if (kybTasks.length === 0) {
+      logger.info('No completed KYB tasks found, skipping security task unlock check', {
+        companyId
+      });
+      return { success: true, unlocked: false, message: 'No completed KYB tasks found' };
+    }
+    
+    logger.info('Found completed KYB tasks, checking security tasks to unlock', {
+      companyId,
+      kybTaskCount: kybTasks.length
+    });
+    
+    // Get the first completed KYB task (should usually be only one)
+    const kybTask = kybTasks[0];
+    
+    // Find security tasks for this company that might need unlocking
+    const securityTasks = await db.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.company_id, companyId),
+          or(
+            eq(tasks.task_type, 'security_assessment'),
+            eq(tasks.task_type, 'sp_ky3p_assessment')
+          )
+        )
+      );
+    
+    // Exit early if no security tasks found
+    if (securityTasks.length === 0) {
+      logger.info('No security tasks found for company', { companyId });
+      return { success: true, unlocked: false, message: 'No security tasks found' };
+    }
+    
+    // Count how many tasks need unlocking
+    const lockedTasks = securityTasks.filter(task => 
+      task.metadata?.locked === true || 
+      task.metadata?.prerequisite_completed !== true
+    );
+    
+    if (lockedTasks.length === 0) {
+      logger.info('All security tasks are already unlocked', { companyId });
+      return { success: true, unlocked: false, message: 'All security tasks already unlocked' };
+    }
+    
+    logger.info('Found locked security tasks that need unlocking', {
+      companyId,
+      lockedCount: lockedTasks.length,
+      taskIds: lockedTasks.map(t => t.id),
+      taskTypes: lockedTasks.map(t => t.task_type)
+    });
+    
+    // Unlock each security task
+    for (const securityTask of lockedTasks) {
+      logger.info('Dynamically unlocking security task during task center access', {
+        securityTaskId: securityTask.id,
+        securityTaskType: securityTask.task_type,
+        kybTaskId: kybTask.id
+      });
+      
+      // Update the security task to unlock it
+      await db.update(tasks)
+        .set({
+          metadata: {
+            ...securityTask.metadata,
+            locked: false,
+            prerequisite_completed: true,
+            prerequisite_completed_at: new Date().toISOString(),
+            prerequisite_completed_by: userId,
+            unlocked_by: 'dynamic_check' // Mark that this was unlocked by the dynamic check
+          },
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, securityTask.id));
+        
+      logger.info('Security task unlocked successfully', {
+        securityTaskId: securityTask.id
+      });
+    }
+    
+    return { 
+      success: true, 
+      unlocked: true, 
+      count: lockedTasks.length, 
+      message: `Unlocked ${lockedTasks.length} security tasks`
+    };
+  } catch (error) {
+    logger.error('Error in dynamic security task unlock check', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      companyId
+    });
+    return { 
+      success: false, 
+      unlocked: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+};
+
 const router = Router();
 
 // Debug utility for logging task data
