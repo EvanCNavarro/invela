@@ -19,6 +19,17 @@ import { z } from "zod";
 // Import timestamp schema
 import { kybFieldTimestamps } from './schema-timestamps';
 
+// Status type for form submissions
+export const SubmissionStatus = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  WARNING: 'warning'
+} as const;
+
+export type SubmissionStatus = typeof SubmissionStatus[keyof typeof SubmissionStatus];
+
 export const TaskStatus = {
   PENDING: 'pending',
   NOT_STARTED: 'not_started',
