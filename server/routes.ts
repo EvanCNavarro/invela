@@ -331,71 +331,105 @@ export function registerRoutes(app: Express): Express {
         });
       }
       
-      // Parse taskId safely
-      let parsedTaskId;
-      try {
-        parsedTaskId = parseInt(taskId as string, 10);
-        if (isNaN(parsedTaskId)) {
-          throw new Error('Invalid taskId format');
+      // Handle direct company ID lookup if provided
+      let directCompanyId: number | null = null;
+      let parsedTaskId: number | null = null;
+      let companyName: string | undefined;
+      
+      // Try company ID first if provided
+      if (companyIdParam) {
+        try {
+          directCompanyId = parseInt(companyIdParam as string, 10);
+          if (isNaN(directCompanyId)) {
+            throw new Error('Invalid companyId format');
+          }
+          console.log(`[IsDemo Check] Using directly provided companyId: ${directCompanyId}`);
+        } catch (err) {
+          console.log(`[IsDemo Check] Error parsing companyId: ${companyIdParam}, error: ${err}`);
+          return res.status(400).json({ 
+            message: 'Invalid company ID',
+            code: 'INVALID_ID',
+            isDemo: false 
+          });
         }
-      } catch (err) {
-        console.log(`[IsDemo Check] Error parsing taskId: ${taskId}, error: ${err}`);
-        return res.status(400).json({ 
-          error: `Invalid taskId format: ${taskId}`,
-          isDemo: false 
-        });
+      }
+      // If no companyId or invalid, try using taskId
+      else if (taskId) {
+        try {
+          parsedTaskId = parseInt(taskId as string, 10);
+          if (isNaN(parsedTaskId)) {
+            throw new Error('Invalid taskId format');
+          }
+          console.log(`[IsDemo Check] Parsed valid taskId: ${parsedTaskId}`);
+          
+          // Get the task with metadata to find the company info directly
+          console.log(`[IsDemo Check] Fetching task with ID: ${parsedTaskId}`);
+        } catch (err) {
+          console.log(`[IsDemo Check] Error parsing taskId: ${taskId}, error: ${err}`);
+          return res.status(400).json({ 
+            message: 'Invalid task ID',
+            code: 'INVALID_ID',
+            isDemo: false 
+          });
+        }
       }
       
-      console.log(`[IsDemo Check] Parsed valid taskId: ${parsedTaskId}`);
+      // If we have a direct company ID from the param, we can use it directly
+      let finalCompanyId: number | null = directCompanyId;
+      let taskCompanyName: string | undefined;
       
-      // Get the task with metadata to find the company info directly
-      console.log(`[IsDemo Check] Fetching task with ID: ${parsedTaskId}`);
-      
-      const taskResults = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, parsedTaskId));
-      
-      console.log(`[IsDemo Check] Task query results: ${taskResults?.length || 0} rows found`);
-      
-      if (!taskResults || taskResults.length === 0) {
-        console.log(`[IsDemo Check] Task not found: ${parsedTaskId}`);
-        return res.status(404).json({ 
-          error: 'Task not found',
-          isDemo: false 
+      // If we don't have a direct company ID but we have a task ID, look up the task
+      if (!finalCompanyId && parsedTaskId) {
+        // Only perform task lookup if we need to get the company ID from a task
+        const taskResults = await db.select()
+          .from(tasks)
+          .where(eq(tasks.id, parsedTaskId));
+        
+        console.log(`[IsDemo Check] Task query results: ${taskResults?.length || 0} rows found`);
+        
+        if (!taskResults || taskResults.length === 0) {
+          console.log(`[IsDemo Check] Task not found: ${parsedTaskId}`);
+          return res.status(404).json({ 
+            message: 'Task not found',
+            code: 'NOT_FOUND',
+            isDemo: false 
+          });
+        }
+        
+        const task = taskResults[0];
+        console.log(`[IsDemo Check] Found task with metadata:`, { 
+          taskId: task.id, 
+          companyId: task.company_id,
+          taskType: task.task_type,
+          hasMetadata: task.metadata !== null,
+          metadataKeys: task.metadata ? Object.keys(task.metadata) : []
         });
+        
+        // If the task has metadata with company_name, use that instead of looking up the company
+        taskCompanyName = task.metadata?.company_name;
+        
+        // Set the companyId from the task details
+        finalCompanyId = task.company_id || task.metadata?.company_id;
       }
       
-      const task = taskResults[0];
-      console.log(`[IsDemo Check] Found task with metadata:`, { 
-        taskId: task.id, 
-        companyId: task.company_id,
-        taskType: task.task_type,
-        hasMetadata: task.metadata !== null,
-        metadataKeys: task.metadata ? Object.keys(task.metadata) : []
-      });
-      
-      // If the task has metadata with company_name, use that instead of looking up the company
-      const companyName = task.metadata?.company_name;
-      const companyId = task.company_id || task.metadata?.company_id;
-      
-      console.log(`[IsDemo Check] Company info from task metadata:`, { 
-        companyId, 
-        companyName
+      console.log(`[IsDemo Check] Company info:`, { 
+        companyId: finalCompanyId, 
+        companyName: taskCompanyName
       });
       
       // If we don't have a company ID from anywhere, we can't continue
-      if (!companyId) {
-        console.log(`[IsDemo Check] Task ${parsedTaskId} has no company_id in task or metadata`);
+      if (!finalCompanyId) {
+        console.log(`[IsDemo Check] No company ID available - cannot proceed`);
         return res.status(400).json({ 
-          message: "Task has no associated company",
+          message: "Missing company ID",
           code: "INVALID_ID",
           isDemo: false 
         });
       }
       
       // If we have a company name in the metadata and it's one of our known demo companies
-      if (companyName && companyName === 'DevelopmentTesting3') {
-        console.log(`[IsDemo Check] Company name "${companyName}" from metadata matches known demo company`);
+      if (taskCompanyName && taskCompanyName === 'DevelopmentTesting3') {
+        console.log(`[IsDemo Check] Company name "${taskCompanyName}" from metadata matches known demo company`);
         
         // First check the database anyway
         try {
@@ -408,7 +442,7 @@ export function registerRoutes(app: Express): Express {
             isDemo: companies.is_demo
           })
           .from(companies)
-          .where(eq(companies.id, companyId));
+          .where(eq(companies.id, finalCompanyId));
           
           console.log(`[IsDemo Check] Company query results: ${companyResults?.length || 0} rows found`);
           
@@ -416,7 +450,7 @@ export function registerRoutes(app: Express): Express {
             const company = companyResults[0];
             
             // Log the raw company data to help debug
-            console.log(`[IsDemo Check] Company data from database for task ${taskId}:`, {
+            console.log(`[IsDemo Check] Company data from database:`, {
               id: company.id,
               name: company.name,
               isDemo: company.isDemo,
@@ -448,26 +482,26 @@ export function registerRoutes(app: Express): Express {
         }
         
         // Fallback to using the name-based check if database lookup fails
-        console.log(`[IsDemo Check] Using name-based check for demo company "${companyName}"`);
+        console.log(`[IsDemo Check] Using name-based check for demo company "${taskCompanyName}"`);
         
         // Return using name-based check
         return res.json({
           isDemo: false, // Always return false now if database didn't have the value
-          companyId,
-          companyName,
+          companyId: finalCompanyId,
+          companyName: taskCompanyName,
           taskId: parsedTaskId,
           source: 'metadata',
           debug: {
             isDemo: false,
             isDemoType: 'boolean',
-            companyName,
+            companyName: taskCompanyName,
             metadataValueUsed: true
           }
         });
       }
       
       // If we get here, we need to check the database for the company
-      console.log(`[IsDemo Check] Fetching company with ID: ${companyId}`);
+      console.log(`[IsDemo Check] Fetching company with ID: ${finalCompanyId}`);
       
       // Get the company
       const companyResults = await db.select({
@@ -476,14 +510,15 @@ export function registerRoutes(app: Express): Express {
         isDemo: companies.is_demo
       })
       .from(companies)
-      .where(eq(companies.id, companyId));
+      .where(eq(companies.id, finalCompanyId));
       
       console.log(`[IsDemo Check] Company query results: ${companyResults?.length || 0} rows found`);
       
       if (!companyResults || companyResults.length === 0) {
-        console.log(`[IsDemo Check] Company not found for task ${taskId} with company_id ${companyId}`);
+        console.log(`[IsDemo Check] Company not found for ID ${finalCompanyId}`);
         return res.status(404).json({ 
-          error: 'Company not found',
+          message: 'Company not found',
+          code: 'NOT_FOUND',
           isDemo: false 
         });
       }
@@ -491,7 +526,7 @@ export function registerRoutes(app: Express): Express {
       const company = companyResults[0];
       
       // Log the raw company data to help debug
-      console.log(`[IsDemo Check] Company data for task ${taskId}:`, {
+      console.log(`[IsDemo Check] Company data:`, {
         id: company.id,
         name: company.name,
         isDemo: company.isDemo,
