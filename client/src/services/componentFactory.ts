@@ -3,6 +3,7 @@ import { FormServiceInterface } from './formService';
 import { getFieldComponentType } from '@/utils/formUtils';
 import { TaskTemplateWithConfigs } from './taskTemplateService';
 import { enhancedKybServiceFactory } from './enhanced-kyb-service';
+import { ky3pFormServiceFactory } from './ky3p-form-service';
 import getLogger from '@/utils/logger';
 
 /**
@@ -88,10 +89,10 @@ export class ComponentFactory {
   }
   
   /**
-   * Gets a company/task-specific EnhancedKybFormService instance
+   * Gets a company/task-specific form service instance
    * This ensures proper data isolation between different companies and tasks
    * 
-   * @param taskType Type of task (e.g., 'kyb' or 'company_kyb')
+   * @param taskType Type of task (e.g., 'kyb', 'company_kyb', 'sp_ky3p_assessment')
    * @param companyId The company ID
    * @param taskId The task ID
    * @returns FormServiceInterface implementation
@@ -99,15 +100,20 @@ export class ComponentFactory {
   public getIsolatedFormService(taskType: string, companyId: number | string, taskId: number | string): FormServiceInterface | null {
     const logger = getLogger('ComponentFactory');
     
-    // Only support KYB task types for now
-    if (taskType !== 'kyb' && taskType !== 'company_kyb') {
-      logger.warn(`Isolated service requested for unsupported task type: ${taskType}`);
-      return this.getFormService(taskType);
+    // Get the appropriate factory based on task type
+    if (taskType === 'kyb' || taskType === 'company_kyb') {
+      // Get instance from Enhanced KYB factory
+      logger.info(`Getting isolated KYB service instance for company ${companyId}, task ${taskId}`);
+      return enhancedKybServiceFactory.getInstance(companyId, taskId);
+    } else if (taskType === 'sp_ky3p_assessment') {
+      // Get instance from KY3P factory
+      logger.info(`Getting isolated KY3P service instance for company ${companyId}, task ${taskId}`);
+      return ky3pFormServiceFactory.getServiceInstance(companyId, taskId);
     }
     
-    // Get instance from factory
-    logger.info(`Getting isolated KYB service instance for company ${companyId}, task ${taskId}`);
-    return enhancedKybServiceFactory.getInstance(companyId, taskId);
+    // Fall back to standard form service for other task types
+    logger.warn(`Isolated service requested for unsupported task type: ${taskType}`);
+    return this.getFormService(taskType);
   }
 
   /**

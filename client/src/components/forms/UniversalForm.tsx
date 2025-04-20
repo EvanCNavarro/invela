@@ -355,7 +355,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         const taskTypeMap: Record<string, string> = {
           'kyb': 'company_kyb',
           'card': 'company_card',
-          'security': 'security_assessment'
+          'security': 'security_assessment',
+          'ky3p': 'sp_ky3p_assessment'
         };
         
         // Use the mapped task type for API requests if available
@@ -375,8 +376,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         logger.debug(`Looking for form service for task type: ${taskType}`);
         let service = null;
         
-        // Check if this is a KYB form and we have task/company info
-        if ((taskType === 'kyb' || taskType === 'company_kyb') && taskId) {
+        // Check if this is a form type that supports isolation and we have task/company info
+        const isolationSupportedTypes = ['kyb', 'company_kyb', 'sp_ky3p_assessment'];
+        if (isolationSupportedTypes.includes(taskType) && taskId) {
           // Get the metadata from the task to find company ID
           try {
             const response = await fetch(`/api/tasks/${taskId}`);
@@ -385,7 +387,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               if (taskData && taskData.metadata && taskData.metadata.company_id) {
                 // We have the company ID, use isolated service instance
                 const companyId = taskData.metadata.company_id;
-                logger.info(`Using isolated service instance for company ${companyId}, task ${taskId}`);
+                logger.info(`Using isolated service instance for ${taskType} form, company ${companyId}, task ${taskId}`);
                 service = componentFactory.getIsolatedFormService(taskType, companyId, taskId);
               } else {
                 logger.warn(`Task ${taskId} has no company_id in metadata, using default service`);
@@ -542,7 +544,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       'card': 'Card application form for company payment methods',
       'company_card': 'Card application form for company payment methods',
       'security': 'Security assessment form for risk evaluation',
-      'security_assessment': 'Security assessment form for risk evaluation'
+      'security_assessment': 'Security assessment form for risk evaluation',
+      'sp_ky3p_assessment': 'S&P KY3P Security Assessment for third-party risk evaluation'
     };
     
     return descriptions[taskType] || 'Please complete all required information';
