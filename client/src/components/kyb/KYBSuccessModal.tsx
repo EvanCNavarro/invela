@@ -15,19 +15,25 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Force refresh company data when modal opens to ensure tabs are up-to-date
+  // Enhanced effect to ensure immediate file vault visibility when the modal opens
   useEffect(() => {
     if (open) {
-      console.log('[KYBSuccessModal] Modal opened, proactively updating company data');
+      console.log('[KYBSuccessModal] ⚡ CRITICAL: Modal opened, force unlocking file vault');
       
-      // PERFORMANCE OPTIMIZATION: Don't wait for server response
-      // Immediately add the file-vault tab to the current company data
-      // This ensures the tab is visible right away without waiting for server roundtrip
+      // APPROACH 1: Client-side cache update for immediate UI feedback
+      // This ensures the tab is visible right away without waiting for server response
       const currentCompanyData = queryClient.getQueryData(['/api/companies/current']);
+      
       if (currentCompanyData) {
         const company = currentCompanyData as any;
+        console.log('[KYBSuccessModal] Current company data:', {
+          id: company.id, 
+          tabs: company.available_tabs,
+          hasFileVault: company.available_tabs?.includes('file-vault') || false
+        });
+        
         if (!company.available_tabs?.includes('file-vault')) {
-          console.log('[KYBSuccessModal] Proactively adding file-vault tab to company data');
+          console.log('[KYBSuccessModal] 🔄 Proactively adding file-vault tab to cache');
           const updatedCompany = {
             ...company,
             available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault']
@@ -35,17 +41,60 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           
           // Update the cache immediately for instant UI update
           queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+          
+          // APPROACH 2: Direct API call to ensure server-side update
+          // This makes a direct API call to force unlock file vault on the server
+          const forcedUnlockFileVault = async () => {
+            try {
+              console.log('[KYBSuccessModal] 🔐 Making direct API call to force unlock file vault');
+              const response = await fetch(`/api/companies/${company.id}/unlock-file-vault`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                console.log('[KYBSuccessModal] ✅ Successfully forced file vault unlock:', result);
+              } else {
+                console.error('[KYBSuccessModal] ❌ Failed to force unlock file vault:', response.statusText);
+              }
+            } catch (error) {
+              console.error('[KYBSuccessModal] ❌ Error in direct file vault unlock:', error);
+            }
+          };
+          
+          // Execute the forced unlock immediately
+          forcedUnlockFileVault();
         }
       }
       
-      // Also invalidate and refetch to ensure we get the latest data from server
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      // APPROACH 3: Invalidate and refetch company data with high priority
+      console.log('[KYBSuccessModal] 🔄 Invalidating and refetching company data');
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/companies/current'],
+        refetchType: 'all' // Force all queries to refetch, including inactive ones
+      });
       
-      // Force immediate refetch in the background
+      // Force immediate refetch with high priority
       queryClient.refetchQueries({ 
         queryKey: ['/api/companies/current'],
-        // Use exact: true to avoid refetching queries with similar keys
-        exact: true
+        exact: true,
+        type: 'all' // Refetch all queries including inactive
+      });
+      
+      // APPROACH 4: Scheduled refetches to ensure data is eventually consistent
+      // Add delayed refetches to catch any updates that might have been missed
+      const delayTimes = [500, 1500, 3000]; // 0.5s, 1.5s, 3s delays
+      
+      delayTimes.forEach(delay => {
+        setTimeout(() => {
+          console.log(`[KYBSuccessModal] 🔄 Delayed refetch (${delay}ms) of company data`);
+          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+          queryClient.refetchQueries({ 
+            queryKey: ['/api/companies/current'],
+            exact: true
+          });
+        }, delay);
       });
     }
   }, [open, queryClient]);

@@ -97,6 +97,10 @@ export const CompanyTabsService = {
     }
 
     try {
+      // Enhanced logging to track exact execution timing
+      const operationStartTime = new Date();
+      console.log(`[CompanyTabsService] ⚡ CRITICAL TIMING: File vault unlock operation started for company ${companyId} at ${operationStartTime.toISOString()}`);
+      
       // OPTIMIZATION: Use a direct update instead of select-then-update
       // This reduces round-trips and transaction time
       
@@ -128,22 +132,62 @@ export const CompanyTabsService = {
         return null;
       }
         
+      // Log the completion time of the database update
+      const dbUpdateCompleteTime = new Date();
+      const dbUpdateTime = dbUpdateCompleteTime.getTime() - operationStartTime.getTime();
+      console.log(`[CompanyTabsService] ⚡ CRITICAL TIMING: Database update completed in ${dbUpdateTime}ms at ${dbUpdateCompleteTime.toISOString()}`);
       console.log(`[CompanyTabsService] Successfully unlocked file vault for company ${companyId}:`, {
         newTabs: updatedCompany.available_tabs,
         timestamp: timestamp.toISOString()
       });
       
-      // CRITICAL: Broadcast a WebSocket event to notify all clients of the tab update
-      // This needs to happen immediately to ensure real-time updates
+      // CRITICAL: Broadcast the WebSocket event immediately
+      let broadcastSuccess = false;
       try {
         // Import the WebSocket service and broadcast right away
-        const { broadcastCompanyTabsUpdate } = require('../services/websocket');
+        const { broadcastCompanyTabsUpdate, broadcastMessage } = require('../services/websocket');
+        
+        // Use both broadcast methods for redundancy
+        // 1. Use the specific company tabs update method 
         broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
         
-        console.log(`[CompanyTabsService] Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
+        // 2. Also use the generic broadcast method as backup
+        broadcastMessage('company_tabs_updated', {
+          companyId,
+          availableTabs: updatedCompany.available_tabs,
+          timestamp: new Date().toISOString(),
+          source: 'companyTabsService.unlockFileVault'
+        });
+        
+        broadcastSuccess = true;
+        console.log(`[CompanyTabsService] ✅ Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
+        
+        // 3. Schedule additional delayed broadcasts to ensure clients receive the update
+        // This helps with clients that might be reconnecting due to network issues
+        const delayTimes = [500, 1500, 3000]; // 0.5s, 1.5s, 3s delays
+        for (const delay of delayTimes) {
+          setTimeout(() => {
+            try {
+              console.log(`[CompanyTabsService] Sending delayed (${delay}ms) websocket broadcast for file vault unlock, company ${companyId}`);
+              broadcastMessage('company_tabs_updated', {
+                companyId,
+                availableTabs: updatedCompany.available_tabs,
+                timestamp: new Date().toISOString(),
+                source: 'companyTabsService.unlockFileVault.delayed',
+                delay
+              });
+            } catch (e) {
+              console.error(`[CompanyTabsService] Error in delayed WebSocket broadcast (${delay}ms):`, e);
+            }
+          }, delay);
+        }
       } catch (wsError) {
         console.error(`[CompanyTabsService] Failed to broadcast WebSocket event:`, wsError);
       }
+      
+      // Log total operation time
+      const totalTime = new Date().getTime() - operationStartTime.getTime();
+      console.log(`[CompanyTabsService] ⚡ CRITICAL TIMING: File vault unlock operation completed in ${totalTime}ms, broadcast success: ${broadcastSuccess}`);
       
       return updatedCompany;
     } catch (error) {
