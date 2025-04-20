@@ -141,6 +141,21 @@ export const CompanyTabsService = {
         timestamp: timestamp.toISOString()
       });
       
+      // CRITICAL: Invalidate the company cache
+      try {
+        // Access the company cache directly
+        const companyCache = global.companyCache || require('../routes').companyCache;
+        
+        if (companyCache && companyCache.has(companyId)) {
+          console.log(`[CompanyTabsService] ⚡ CRITICAL: Invalidating company ${companyId} cache to ensure fresh data`);
+          companyCache.delete(companyId);
+        } else {
+          console.log(`[CompanyTabsService] Company ${companyId} not found in cache, no invalidation needed`);
+        }
+      } catch (cacheError) {
+        console.error(`[CompanyTabsService] Error invalidating company cache:`, cacheError);
+      }
+      
       // CRITICAL: Broadcast the WebSocket event immediately
       let broadcastSuccess = false;
       try {
@@ -151,16 +166,18 @@ export const CompanyTabsService = {
         // 1. Use the specific company tabs update method 
         broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
         
-        // 2. Also use the generic broadcast method as backup
+        // 2. Also use the generic broadcast method as backup with cache_invalidation flag
         broadcastMessage('company_tabs_updated', {
           companyId,
           availableTabs: updatedCompany.available_tabs,
           timestamp: new Date().toISOString(),
-          source: 'companyTabsService.unlockFileVault'
+          source: 'companyTabsService.unlockFileVault',
+          cache_invalidation: true,  // Critical flag to force client cache refresh
+          operation: 'unlock_file_vault'
         });
         
         broadcastSuccess = true;
-        console.log(`[CompanyTabsService] ✅ Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
+        console.log(`[CompanyTabsService] ✅ Broadcasted company_tabs_updated event via WebSocket for company ${companyId} with cache_invalidation flag`);
         
         // 3. Schedule additional delayed broadcasts to ensure clients receive the update
         // This helps with clients that might be reconnecting due to network issues
@@ -174,7 +191,9 @@ export const CompanyTabsService = {
                 availableTabs: updatedCompany.available_tabs,
                 timestamp: new Date().toISOString(),
                 source: 'companyTabsService.unlockFileVault.delayed',
-                delay
+                delay,
+                cache_invalidation: true,  // Critical flag to force client cache refresh
+                operation: 'unlock_file_vault'
               });
             } catch (e) {
               console.error(`[CompanyTabsService] Error in delayed WebSocket broadcast (${delay}ms):`, e);

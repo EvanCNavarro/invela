@@ -244,13 +244,58 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", (req, res, next) => {
     console.log('[Auth] Processing logout request');
     const userId = req.user?.id;
+    const companyId = req.user?.company_id;
+    
+    // Clear user from cache before logout
+    if (userId && userCache.has(userId)) {
+      console.log(`[Auth] Clearing user ${userId} from cache during logout`);
+      userCache.delete(userId);
+    }
+    
+    // Clear company from cache
+    try {
+      // Try to get companyCache from routes module or the global scope
+      const clearCompanyCache = () => {
+        try {
+          // Attempt to import the routes module to get the cache reference
+          const routesModule = require('./routes');
+          if (routesModule && routesModule.companyCache && companyId) {
+            console.log(`[Auth] Clearing company ${companyId} from cache during logout via routes module`);
+            routesModule.companyCache.delete(companyId);
+            return true;
+          }
+          return false;
+        } catch (importError) {
+          console.warn('[Auth] Could not import routes module:', importError);
+          return false;
+        }
+      };
+      
+      // Try to clear the cache, log result
+      const cleared = clearCompanyCache();
+      if (!cleared) {
+        console.log(`[Auth] No company cache found to clear for company ${companyId}`);
+      }
+    } catch (e) {
+      console.warn('[Auth] Error during company cache clearing:', e);
+    }
+    
     req.logout((err) => {
       if (err) {
         console.error('[Auth] Logout error:', err);
         return next(err);
       }
       console.log('[Auth] Logout successful for user:', userId);
-      res.sendStatus(200);
+      
+      // Completely destroy the session to ensure clean state
+      req.session.destroy((sessionErr) => {
+        if (sessionErr) {
+          console.error('[Auth] Session destruction error:', sessionErr);
+        } else {
+          console.log('[Auth] Session successfully destroyed');
+        }
+        res.sendStatus(200);
+      });
     });
   });
 
