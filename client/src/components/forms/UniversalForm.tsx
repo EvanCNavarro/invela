@@ -82,7 +82,6 @@ import { useUser, User as UserFromHook } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { UniversalSuccessModal, SubmissionResult, SubmissionAction } from './UniversalSuccessModal';
 import confetti from 'canvas-confetti';
-import { wsService } from '@/lib/websocket';
 
 import SectionContent from './SectionContent';
 
