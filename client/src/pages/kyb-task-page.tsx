@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { enhancedKybServiceFactory } from "@/services/enhanced-kyb-service";
-import { directlyAddFileVaultTab, enableFileVault } from "@/services/fileVaultService";
+import { enableFileVault } from "@/services/fileVaultService";
 
 interface KYBTaskPageProps {
   params: {
@@ -196,68 +196,28 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 }
               })
               .then(() => {
-                // COMPREHENSIVE FIX: Add file-vault tab directly to the current company data in cache
-                // AND update the database through the API
+                // SIMPLIFIED APPROACH: Using our pre-emptive UI update + server-side integration
                 try {
-                  console.log('[KYB Form] KYB form submitted successfully, updating file vault tab');
+                  console.log('[KYB Form] KYB form submitted successfully, ensuring file vault is unlocked');
                   
-                  // First, immediately update the local cache for instant UI update
-                  const cacheResult = directlyAddFileVaultTab();
-                  console.log('[KYB Form] Direct cache update result:', cacheResult);
+                  // Since we already pre-emptively unlocked the File Vault in UniversalForm,
+                  // we just need to make sure the server-side update happened
                   
-                  // Next, make the API call to make the change persistent in the database
-                  // Use the directly imported function
-                  enableFileVault().then(apiResult => {
-                    console.log('[KYB Form] API file vault update result:', apiResult);
-                  }).catch(apiError => {
-                    console.error('[KYB Form] API file vault update failed:', apiError);
-                  });
+                  // Make the API call to ensure the change is persistent in the database
+                  // But with less aggressive retry logic
+                  if (task.metadata?.company_id) {
+                    const companyId = task.metadata.company_id;
+                    enableFileVault(companyId).then(apiResult => {
+                      console.log('[KYB Form] API file vault update result:', apiResult);
+                    }).catch(apiError => {
+                      console.warn('[KYB Form] API file vault update warning:', apiError);
+                      // Non-blocking - UI is already updated
+                    });
+                  }
                   
-                  // For extra redundancy, add a delay and try updating the cache again
-                  setTimeout(() => {
-                    try {
-                      console.log('[KYB Form] Running secondary file vault unlock attempt for reliability');
-                      const secondResult = directlyAddFileVaultTab();
-                      console.log('[KYB Form] Secondary cache update result:', secondResult);
-                      
-                      // Also make a fallback direct API call
-                      fetch('/api/file-vault/force-enable', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                      })
-                      .then(response => response.json())
-                      .then(data => {
-                        console.log('[KYB Form] Fallback API force-enable result:', data);
-                      })
-                      .catch(fetchError => {
-                        console.error('[KYB Form] Fallback API call failed:', fetchError);
-                      });
-                    } catch (secondaryError) {
-                      console.error('[KYB Form] Secondary cache update attempt failed:', secondaryError);
-                    }
-                  }, 1000);
-                  
-                } catch (cacheUpdateError) {
-                  console.error('[KYB Form] Error updating file vault tab in cache:', cacheUpdateError);
-                  
-                  // If direct update fails, try with emergency endpoint
-                  console.log('[KYB Form] Using emergency file vault update method for company ID:', task.metadata?.company_id);
-                  
-                  // Make sure we handle the case where we're submitting for company 206 (DevelopmentTestingZ)
-                  // as well as 205 (DevelopmentTestingY)
-                  fetch('/api/emergency/unlock-file-vault/' + task.metadata?.company_id, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                  })
-                  .then(response => response.json())
-                  .then(data => {
-                    console.log('[KYB Form] Emergency update result:', data);
-                  })
-                  .catch(emergencyError => {
-                    console.error('[KYB Form] Emergency update failed:', emergencyError);
-                  });
+                } catch (error) {
+                  console.warn('[KYB Form] File vault verification warning:', error);
+                  // Non-blocking - UI is already updated
                 }
                 
                 toast({
