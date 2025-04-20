@@ -1151,7 +1151,7 @@ router.post('/api/kyb/save', async (req, res) => {
     });
 
     // For SUBMITTED status, broadcast via WebSocket
-    if (task.status === TaskStatus.SUBMITTED || newStatus === TaskStatus.SUBMITTED) {
+    if (task.status === TaskStatus.SUBMITTED || isSubmission) {
       // Broadcast submission status via WebSocket
       console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
       broadcastSubmissionStatus(taskId, 'submitted');
