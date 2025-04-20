@@ -1853,9 +1853,22 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       kybTaskId: taskId
     });
 
-    // Broadcast submission status via WebSocket
-    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
+    // Broadcast submission status via WebSocket with enhanced logging
+    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (KYB submit endpoint)`);
+    
+    // First broadcast attempt
     broadcastSubmissionStatus(taskId, 'submitted');
+    
+    // Schedule additional broadcasts with increasing delays
+    // This ensures clients have multiple opportunities to receive the confirmation
+    // Even if they reconnect after a network interruption
+    const delayTimes = [1000, 2000, 5000]; // 1s, 2s, 5s delays
+    for (const delay of delayTimes) {
+      setTimeout(() => {
+        console.log(`[WebSocket] Sending delayed submission status broadcast (${delay}ms) for task ${taskId}`);
+        broadcastSubmissionStatus(taskId, 'submitted');
+      }, delay);
+    }
 
     // Also broadcast the task update for dashboard real-time updates
     broadcastTaskUpdate({
@@ -1864,8 +1877,17 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       progress: 100,
       metadata: {
         lastUpdated: new Date().toISOString(),
-        submissionDate: new Date().toISOString()
+        submissionDate: new Date().toISOString(),
+        broadcastSource: 'kyb-submit-endpoint'
       }
+    });
+    
+    // Also send a generic message as a fallback on a separate channel
+    broadcastMessage('form_submission_complete', {
+      taskId,
+      status: 'submitted',
+      timestamp: Date.now(),
+      source: 'kyb-submit-endpoint'
     });
 
     res.json({
