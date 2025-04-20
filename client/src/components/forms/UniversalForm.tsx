@@ -1808,6 +1808,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // BUGFIX: Ensure form shows as submitted after successful submission 
   // Check if form is submitted or completed either from props or local state
+  // Using formSubmittedLocally state from line 191
   const isSubmitted = formSubmittedLocally || taskStatus === 'submitted' || taskStatus === 'completed';
   
   // Format submission date if available in metadata
