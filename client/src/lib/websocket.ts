@@ -338,11 +338,20 @@ class WebSocketService {
         try {
           handler(data);
         } catch (error) {
-          logger.error(`Error in message handler for type "${type}":`, {
-            error,
+          // CRITICAL FIX: Improved error handling for TypeError and other errors
+          // This prevents unhandled exceptions when serializing error objects
+          const errorInfo = {
+            errorType: error instanceof Error ? error.constructor.name : typeof error,
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
-          });
+          };
+          
+          // Log with safe error formatting
+          console.error(`[WebSocket] Error in message handler for type "${type}":`, errorInfo);
+          
+          logger.error(`Error in message handler for type "${type}":`, errorInfo);
         }
       });
     }

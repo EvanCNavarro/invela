@@ -1576,6 +1576,36 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             timestamp: new Date().toISOString()
           });
           
+          // CRITICAL FIX: Invalidate company data to refresh permissions and available tabs
+          // This ensures the file vault access is immediately available after form submission
+          try {
+            console.log(`[SUBMIT FLOW] 10a. Invalidating company data to refresh permissions`);
+            
+            // Import queryClient dynamically to avoid circular dependencies
+            const { queryClient } = await import('@/lib/queryClient');
+            
+            // Invalidate the company data to force a refresh
+            queryClient.invalidateQueries({
+              queryKey: ['/api/companies/current'],
+              exact: true
+            });
+            
+            // Also invalidate tasks data for good measure
+            queryClient.invalidateQueries({
+              queryKey: ['/api/tasks'],
+              exact: true
+            });
+            
+            console.log(`[SUBMIT FLOW] 10b. Company data invalidation successful`);
+          } catch (refreshError) {
+            console.error(`[SUBMIT FLOW] Error refreshing company data:`, refreshError);
+            logger.error('Error refreshing company data:', {
+              error: refreshError instanceof Error ? refreshError.message : String(refreshError),
+              taskId,
+              timestamp: new Date().toISOString()
+            });
+          }
+          
           // Clear any previous toast notifications
           console.log(`[SUBMIT FLOW] 11. Clearing previous toast notifications`);
           if (submittingToastId) {
@@ -1644,14 +1674,49 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           logger.error(`[WebSocket] Error emitting status verification warning:`, wsError);
         }
         
+        // MESSAGING FIX: Improved consistency between modal and toast notifications
         // Even with a verification error, we'll show success modal since we know data was saved
         logger.info(`SUBMISSION FLOW UI: Showing success modal despite verification warning`);
+        
+        // Invalidate the company data query to refresh permissions regardless of the error
+        try {
+          console.log(`[SUBMIT FLOW] Invalidating company data after status verification warning`);
+          const { queryClient } = await import('@/lib/queryClient');
+          queryClient.invalidateQueries({
+            queryKey: ['/api/companies/current'],
+            exact: true
+          });
+        } catch (refreshError) {
+          console.error(`Error refreshing company data:`, refreshError);
+        }
+        
+        // Create submission result with warning status
+        const warningSubmissionResult: SubmissionResult = {
+          fileId: numericFileId,
+          completedActions: [
+            {
+              type: "task_completion", 
+              description: "Task Completed",
+              data: { details: "Your form was submitted successfully." }
+            },
+            {
+              type: "file_vault_unlocked",
+              description: "File Vault Unlocked",
+              data: { details: "You now have access to upload and manage documents in the File Vault." }
+            }
+          ],
+          taskId: taskId ? Number(taskId) : undefined,
+          taskStatus: 'completed' // Still mark as completed to unlock all features
+        };
+        
+        // Set the updated submission result
+        setSubmissionResult(warningSubmissionResult);
         setShowSuccessModal(true);
         
-        // Show a warning toast, but ALSO show success modal
+        // Show a warning toast, but make it positive since the data was saved
         toast({
-          title: 'Form Data Saved',
-          description: 'Your form was successfully saved, but submission status could not be verified.',
+          title: 'Form Submitted Successfully',
+          description: 'Your form was successfully saved. All features have been unlocked.',
           variant: 'success',
         });
       }

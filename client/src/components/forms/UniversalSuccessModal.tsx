@@ -231,7 +231,10 @@ export function UniversalSuccessModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
-      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 absolute">
+      {/* POSITIONING FIX: Fixed the modal positioning by removing conflicting styles.
+          The original classes were causing positioning conflicts with Dialog's built-in styling.
+          Using fixed positioning with proper z-index ensures the modal stays centered. */}
+      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti fixed z-50 top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] !m-0 !p-6">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
             <div className="rounded-full bg-green-50 p-3">
