@@ -1829,15 +1829,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           setFormSubmittedLocally(true);
           setShowSuccessModal(true);
           
-          // Show confetti effect (single trigger)
-          console.log(`[SUBMIT FLOW] 14. Triggering confetti effect`);
-          try {
-            const { fireSuperConfetti } = await import('@/utils/confetti');
-            fireSuperConfetti();
-          } catch (confettiError) {
-            console.log(`[SUBMIT FLOW] ERROR: Failed to trigger confetti:`, confettiError);
-            logger.error('Error showing confetti:', confettiError);
-          }
+          // REMOVED: Confetti effect was too distracting
+          console.log(`[SUBMIT FLOW] 14. Confetti effect disabled by request`);
+          // Confetti disabled as per user feedback
           
           // Submission flow complete
           console.log(`[SUBMIT FLOW] 15. COMPLETE: Form submission flow finished successfully for task ${taskId}`);
