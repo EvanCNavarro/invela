@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { join } from 'path';
 import { db } from '@db';
 import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
-import { eq, and, ilike, sql } from 'drizzle-orm';
+import { eq, and, or, ilike, sql } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
@@ -222,19 +222,23 @@ const unlockSecurityTasks = async (companyId: number, kybTaskId: number, userId?
       companyId
     });
     
-    // Find security tasks for this company
+    // Find both security_assessment and sp_ky3p_assessment tasks for this company
     const securityTasks = await db.select()
       .from(tasks)
       .where(
         and(
           eq(tasks.company_id, companyId),
-          eq(tasks.task_type, 'security_assessment')
+          or(
+            eq(tasks.task_type, 'security_assessment'),
+            eq(tasks.task_type, 'sp_ky3p_assessment')
+          )
         )
       );
       
     logger.info('Found potential security tasks to unlock', {
       count: securityTasks.length,
-      taskIds: securityTasks.map(t => t.id)
+      taskIds: securityTasks.map(t => t.id),
+      taskTypes: securityTasks.map(t => t.task_type)
     });
     
     // Unlock each security task that was dependent on this KYB task
