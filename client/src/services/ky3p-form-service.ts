@@ -18,6 +18,9 @@ export class KY3PFormService extends EnhancedKybFormService {
   // Override the form type to match the task type in the database
   protected readonly formType = 'sp_ky3p_assessment';
   
+  // Cache for KY3P fields by template ID
+  private static ky3pFieldsCache: Record<number, any[]> = {};
+  
   constructor(companyId?: number, taskId?: number) {
     super(companyId, taskId);
     
@@ -25,6 +28,59 @@ export class KY3PFormService extends EnhancedKybFormService {
       '[KY3P Form Service] Initializing KY3P Form Service',
       { companyId, taskId }
     );
+  }
+  
+  /**
+   * Override getKybFields to use KY3P fields instead
+   * This is the main method called by the EnhancedKybFormService
+   */
+  async getKybFields(): Promise<any[]> {
+    logger.info('[KY3P Form Service] getKybFields called - using KY3P fields instead of KYB fields');
+    
+    // Use cache if available
+    if (this.templateId && KY3PFormService.ky3pFieldsCache[this.templateId]) {
+      logger.info(`[KY3P Form Service] Using cached KY3P fields for template ${this.templateId}`);
+      return KY3PFormService.ky3pFieldsCache[this.templateId];
+    }
+    
+    try {
+      const response = await fetch('/api/ky3p-fields');
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('[KY3P Form Service] Failed to load KY3P fields:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Failed to load KY3P fields: ${response.status} - ${errorText}`);
+      }
+      
+      const fields = await response.json();
+      logger.info(`[KY3P Form Service] Successfully loaded ${fields.length} fields from API`);
+      
+      // Cache fields for future use
+      if (this.templateId) {
+        KY3PFormService.ky3pFieldsCache[this.templateId] = fields;
+      }
+      
+      // Log some sample fields for debugging
+      if (fields.length > 0) {
+        logger.info('[KY3P Form Service] Sample KY3P fields:', 
+          fields.slice(0, 3).map((f: any) => ({ 
+            id: f.id, 
+            key: f.field_key, 
+            label: f.label, 
+            section: f.section
+          }))
+        );
+      }
+      
+      return fields;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error loading KY3P fields:', error);
+      throw error;
+    }
   }
   
   /**
