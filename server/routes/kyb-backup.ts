@@ -6,6 +6,9 @@ import { eq, and, ilike, sql } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
+import { requireAuth } from '../middleware/auth';
+import { CompanyTabsService } from '../services/companyTabsService';
+import { unlockFileVault } from '../patches/updateCompanyTabs';
 
 const logger = new Logger('KYBRoutes');
 
@@ -1149,6 +1152,28 @@ router.post('/api/kyb/save', async (req, res) => {
       responseCount: fields.length,
       warningCount: warnings.length
     });
+    
+    // Define the submission status for response
+    // This status will be used for both WebSocket broadcasting and response
+    const newStatus = isSubmission ? TaskStatus.SUBMITTED : task.status;
+    
+    // For SUBMITTED status, broadcast via WebSocket
+    if (task.status === TaskStatus.SUBMITTED || isSubmission) {
+      // Broadcast submission status via WebSocket
+      console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
+      broadcastSubmissionStatus(taskId, 'submitted');
+
+      // Also broadcast the task update for dashboard real-time updates
+      broadcastTaskUpdate({
+        id: taskId,
+        status: TaskStatus.SUBMITTED,
+        progress: 100,
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          submissionDate: new Date().toISOString()
+        }
+      });
+    }
 
     res.json({
       success: true,
@@ -1199,8 +1224,17 @@ import { reconcileTaskProgress } from '../utils/task-reconciliation';
 // Endpoint to provide demo data for auto-filling KYB forms
 router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      logger.error('Unauthenticated user attempted to access demo auto-fill');
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to use this feature'
+      });
+    }
+    
     const { taskId } = req.params;
-    logger.info('Demo auto-fill requested for task', { taskId });
+    logger.info('Demo auto-fill requested for task', { taskId, userId: req.user.id });
     
     // Get the task to retrieve company information
     const [task] = await db.select()
@@ -1212,6 +1246,21 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
       return res.status(404).json({ 
         error: 'Task not found',
         message: 'Could not find the specified task for auto-filling'
+      });
+    }
+    
+    // CRITICAL SECURITY CHECK: Verify user belongs to company that owns the task
+    if (req.user.company_id !== task.company_id) {
+      logger.error('Security violation: User attempted to access task from another company', {
+        userId: req.user.id,
+        userCompanyId: req.user.company_id,
+        taskId: task.id,
+        taskCompanyId: task.company_id
+      });
+      
+      return res.status(403).json({
+        error: 'Access denied',
+        message: 'You do not have permission to access this task'
       });
     }
     
@@ -1375,30 +1424,45 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
   }
 });
 
-router.get('/api/kyb/progress/:taskId', async (req, res) => {
+router.get('/api/kyb/progress/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
     console.log('[KYB API Debug] Loading progress for task:', taskId);
 
+    if (!req.user?.company_id) {
+      console.error('[KYB API Debug] No company ID in user session');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     // First, reconcile the task progress to ensure consistency
     await reconcileTaskProgress(parseInt(taskId), { debug: true });
     
-    // Get task data (now with reconciled progress values)
+    // Get task data (now with reconciled progress values) with company verification
     const [task] = await db.select()
       .from(tasks)
-      .where(eq(tasks.id, parseInt(taskId)));
+      .where(
+        and(
+          eq(tasks.id, parseInt(taskId)),
+          eq(tasks.company_id, req.user.company_id) // Ensure the task belongs to user's company
+        )
+      );
 
     logTaskDebug('Retrieved task', task);
 
     if (!task) {
-      console.log('[KYB API Debug] Task not found:', taskId);
-      return res.status(404).json({ error: 'Task not found' });
+      console.log('[KYB API Debug] Task not found or access denied:', {
+        taskId,
+        userCompanyId: req.user.company_id,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ error: 'Task not found or access denied' });
     }
 
     // Get all KYB responses for this task with their field information
     const responses = await db.select({
       response_value: kybResponses.response_value,
       field_key: kybFields.field_key,
+      field_id: kybResponses.field_id,
       status: kybResponses.status
     })
       .from(kybResponses)
@@ -1435,118 +1499,72 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     if (kybFormFileId) {
       console.log(`[SERVER DEBUG] Found KYB form file ID ${kybFormFileId} in task metadata`);
       
-      // If we have very few fields (likely a data issue) AND the task is submitted,
-      // try to recover the data from the CSV file
-      const shouldLoadFromCsv = Object.keys(formData).length < 5 && 
-                                (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate);
-                                
-      if (shouldLoadFromCsv) {
-        console.log(`[SERVER DEBUG] Only ${Object.keys(formData).length} fields found in database, attempting to load from CSV file`);
+      // First, check if the file belongs to the same company as the task to prevent cross-company data leakage
+      try {
+        // Look up the file
+        const [file] = await db.select()
+          .from(files)
+          .where(eq(files.id, kybFormFileId));
         
-        try {
-          const fileData = await loadFormDataFromCsv(kybFormFileId);
+        // CRITICAL SECURITY CHECK: Verify file belongs to same company as task
+        if (!file) {
+          console.log(`[SERVER DEBUG] File with ID ${kybFormFileId} not found in database`);
+        } 
+        else if (file.company_id !== task.company_id) {
+          // This is a security issue - file belongs to different company than the task
+          console.error(`[SERVER SECURITY] POTENTIAL DATA LEAK PREVENTED: File ${kybFormFileId} belongs to company ${file.company_id} but task ${taskId} belongs to company ${task.company_id}`);
           
-          if (fileData && fileData.success) {
-            console.log(`[SERVER DEBUG] Successfully loaded ${Object.keys(fileData.formData).length} fields from CSV file`);
+          // Log security incident details to the console
+          console.error('[SERVER SECURITY] Security incident details:', {
+            event: 'cross_company_data_access_prevented',
+            fileId: kybFormFileId,
+            fileCompanyId: file.company_id,
+            taskId: taskId,
+            taskCompanyId: task.company_id,
+            userId: req.user?.id || null,
+            timestamp: new Date().toISOString()
+          });
+        }
+        else if (Object.keys(formData).length < 5 && 
+                (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate)) {
+          // Only proceed with file loading if security check passed
+          console.log(`[SERVER DEBUG] Only ${Object.keys(formData).length} fields found in database, attempting to load from CSV file`);
+          
+          try {
+            // Load data from CSV file
+            const csvData = await loadFormDataFromCsv(kybFormFileId);
             
-            // Merge the CSV data into our form data
-            Object.entries(fileData.formData).forEach(([key, value]) => {
-              if (value !== null && value !== undefined) {
-                if (formData[key] !== undefined && formData[key] !== value) {
-                  console.log(`[SERVER DEBUG] Data mismatch for field ${key}:`);
-                  console.log(`[SERVER DEBUG] - database: "${formData[key]}"`);
-                  console.log(`[SERVER DEBUG] - CSV file: "${value}"`);
-                  console.log(`[SERVER DEBUG] Using CSV file value as it's likely more complete`);
-                }
-                formData[key] = value;
-              }
-            });
-            
-            // If we successfully loaded data from CSV, also update the database
-            // This ensures future requests won't need to rely on CSV recovery
-            if (Object.keys(fileData.formData).length > 5) {
-              console.log(`[SERVER DEBUG] Updating database with recovered form data from CSV file`);
+            if (csvData && csvData.success) {
+              console.log(`[SERVER DEBUG] Successfully loaded ${Object.keys(csvData.formData).length} fields from CSV file`);
               
-              try {
-                // Get all KYB fields
-                const fields = await db.select().from(kybFields);
-                const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
-                
-                // Update responses in the database
-                for (const [fieldKey, value] of Object.entries(fileData.formData)) {
-                  const fieldId = fieldMap.get(fieldKey);
-                  
-                  if (!fieldId) {
-                    console.log(`[SERVER DEBUG] Field not found in database: ${fieldKey}`);
-                    continue;
-                  }
-                  
-                  try {
-                    // First check if this response already exists
-                    const [existingResponse] = await db.select()
-                      .from(kybResponses)
-                      .where(
-                        and(
-                          eq(kybResponses.task_id, parseInt(taskId)),
-                          eq(kybResponses.field_id, fieldId)
-                        )
-                      );
-                      
-                    if (existingResponse) {
-                      if (existingResponse.response_value !== value) {
-                        // Update the existing response
-                        await db.update(kybResponses)
-                          .set({
-                            response_value: value as string,
-                            status: value ? 'COMPLETE' : 'EMPTY',
-                            version: existingResponse.version + 1,
-                            updated_at: new Date()
-                          })
-                          .where(eq(kybResponses.id, existingResponse.id));
-                          
-                        console.log(`[SERVER DEBUG] Updated response for field ${fieldKey} with recovered value from CSV`);
-                      }
-                    } else {
-                      // Insert a new response
-                      await db.insert(kybResponses)
-                        .values({
-                          task_id: parseInt(taskId),
-                          field_id: fieldId,
-                          response_value: value as string,
-                          status: value ? 'COMPLETE' : 'EMPTY',
-                          version: 1,
-                          created_at: new Date(),
-                          updated_at: new Date()
-                        });
-                        
-                      console.log(`[SERVER DEBUG] Inserted new response for field ${fieldKey} with recovered value from CSV`);
-                    }
-                  } catch (error) {
-                    console.error(`[SERVER DEBUG] Error updating/inserting response for field ${fieldKey}:`, error);
-                  }
+              // Update form data with CSV values
+              Object.entries(csvData.formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  formData[key] = value;
                 }
+              });
+              
+              // Update database with recovered data
+              if (Object.keys(csvData.formData).length > 5) {
+                console.log(`[SERVER DEBUG] Updating database with recovered form data from CSV file`);
                 
-                // Also update the task's savedFormData field
-                const taskUpdate: any = {
-                  savedFormData: fileData.formData,
-                  updated_at: new Date()
-                };
-                
+                // Update the task's savedFormData field
                 await db.update(tasks)
-                  .set(taskUpdate)
+                  .set({ 
+                    savedFormData: csvData.formData,
+                    updated_at: new Date()
+                  })
                   .where(eq(tasks.id, parseInt(taskId)));
                   
                 console.log(`[SERVER DEBUG] Successfully updated task.savedFormData with recovered CSV data`);
-              } catch (dbUpdateError) {
-                console.error(`[SERVER DEBUG] Error updating database with recovered CSV data:`, dbUpdateError);
               }
             }
-          } else {
-            console.log(`[SERVER DEBUG] Failed to load data from CSV file`);
+          } catch (csvError) {
+            console.error(`[SERVER DEBUG] Error loading data from CSV file:`, csvError);
           }
-        } catch (csvError) {
-          console.error(`[SERVER DEBUG] Error loading data from CSV file:`, csvError);
         }
+      } catch (fileCheckError) {
+        console.error(`[SERVER DEBUG] Error checking file ownership:`, fileCheckError);
       }
     } else {
       console.log('[SERVER DEBUG] No KYB form file ID found in task metadata');
@@ -1861,6 +1879,43 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       kybTaskId: taskId
     });
 
+    // Broadcast submission status via WebSocket with enhanced logging
+    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (KYB submit endpoint)`);
+    
+    // First broadcast attempt
+    broadcastSubmissionStatus(taskId, 'submitted');
+    
+    // Schedule additional broadcasts with increasing delays
+    // This ensures clients have multiple opportunities to receive the confirmation
+    // Even if they reconnect after a network interruption
+    const delayTimes = [1000, 2000, 5000]; // 1s, 2s, 5s delays
+    for (const delay of delayTimes) {
+      setTimeout(() => {
+        console.log(`[WebSocket] Sending delayed submission status broadcast (${delay}ms) for task ${taskId}`);
+        broadcastSubmissionStatus(taskId, 'submitted');
+      }, delay);
+    }
+
+    // Also broadcast the task update for dashboard real-time updates
+    broadcastTaskUpdate({
+      id: taskId,
+      status: TaskStatus.SUBMITTED,
+      progress: 100,
+      metadata: {
+        lastUpdated: new Date().toISOString(),
+        submissionDate: new Date().toISOString(),
+        broadcastSource: 'kyb-submit-endpoint'
+      }
+    });
+    
+    // Also send a generic message as a fallback on a separate channel
+    broadcastMessage('form_submission_complete', {
+      taskId,
+      status: 'submitted',
+      timestamp: Date.now(),
+      source: 'kyb-submit-endpoint'
+    });
+
     res.json({
       success: true,
       fileId: fileCreationResult.fileId,
@@ -2161,6 +2216,12 @@ router.post('/api/kyb/test-notification', async (req, res) => {
     
     // Send a test notification via WebSocket
     console.log(`[WebSocket] Sending test notification for task ${taskId}`);
+    
+    // Test the submission status broadcast
+    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (TEST)`);
+    broadcastSubmissionStatus(taskId, 'submitted');
+    
+    // Send the regular task update
     broadcastTaskUpdate({
       id: taskId,
       status: task.status as TaskStatus,
