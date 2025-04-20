@@ -179,7 +179,7 @@ export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: str
   // Create message with the correct format expected by the client
   const message = JSON.stringify({
     type: 'company_tabs_updated',
-    data: {
+    payload: {  // Changed 'data' to 'payload' to match client expectations
       companyId,
       availableTabs,
       timestamp: new Date().toISOString()
