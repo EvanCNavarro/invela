@@ -373,12 +373,41 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Find the appropriate form service
         logger.debug(`Looking for form service for task type: ${taskType}`);
-        let service = componentFactory.getFormService(taskType);
+        let service = null;
         
+        // Check if this is a KYB form and we have task/company info
+        if ((taskType === 'kyb' || taskType === 'company_kyb') && taskId) {
+          // Get the metadata from the task to find company ID
+          try {
+            const response = await fetch(`/api/tasks/${taskId}`);
+            if (response.ok) {
+              const taskData = await response.json();
+              if (taskData && taskData.metadata && taskData.metadata.company_id) {
+                // We have the company ID, use isolated service instance
+                const companyId = taskData.metadata.company_id;
+                logger.info(`Using isolated service instance for company ${companyId}, task ${taskId}`);
+                service = componentFactory.getIsolatedFormService(taskType, companyId, taskId);
+              } else {
+                logger.warn(`Task ${taskId} has no company_id in metadata, using default service`);
+              }
+            } else {
+              logger.warn(`Failed to fetch task ${taskId} data: ${response.statusText}`);
+            }
+          } catch (err) {
+            logger.error(`Error fetching task data for isolation: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+        
+        // Fall back to standard service if isolated service couldn't be created
         if (!service) {
-          // Try with mapped DB task type
-          logger.debug(`No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
-          service = componentFactory.getFormService(dbTaskType);
+          logger.debug(`Using standard service registry for ${taskType}`);
+          service = componentFactory.getFormService(taskType);
+          
+          if (!service) {
+            // Try with mapped DB task type
+            logger.debug(`No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
+            service = componentFactory.getFormService(dbTaskType);
+          }
         }
         
         if (!service) {

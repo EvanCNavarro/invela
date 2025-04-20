@@ -3,7 +3,7 @@
 
 import { componentFactory } from './componentFactory';
 import { kybService } from './kybService';
-import { enhancedKybService } from './enhanced-kyb-service';
+import { enhancedKybService, enhancedKybServiceFactory } from './enhanced-kyb-service';
 
 /**
  * Register all form services with ComponentFactory
@@ -26,10 +26,16 @@ export function registerServices(): void {
     // Register KYB form service with both its client-side name and database name
     // We're using the enhanced KYB service which adds timestamp-based conflict resolution
     console.log('[Service Registration] Registering Enhanced KYB service for type: kyb');
+    
+    // Use the default instance for compatibility with existing code
+    // But this will be replaced with isolated instances at runtime for each task
     componentFactory.registerFormService('kyb', enhancedKybService);
     
     console.log('[Service Registration] Registering Enhanced KYB service for type: company_kyb');
     componentFactory.registerFormService('company_kyb', enhancedKybService);
+    
+    // Log factory initialization
+    console.log('[Service Registration] EnhancedKybServiceFactory initialized and ready for isolated service creation');
     
     // Verify registrations
     const servicesAfter = componentFactory.getRegisteredFormServices();

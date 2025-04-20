@@ -2,6 +2,8 @@ import { FormField, FormSection } from '@/services/formService';
 import { FormServiceInterface } from './formService';
 import { getFieldComponentType } from '@/utils/formUtils';
 import { TaskTemplateWithConfigs } from './taskTemplateService';
+import { enhancedKybServiceFactory } from './enhanced-kyb-service';
+import getLogger from '@/utils/logger';
 
 /**
  * Interface for component configuration
@@ -83,6 +85,29 @@ export class ComponentFactory {
     }
     
     return service;
+  }
+  
+  /**
+   * Gets a company/task-specific EnhancedKybFormService instance
+   * This ensures proper data isolation between different companies and tasks
+   * 
+   * @param taskType Type of task (e.g., 'kyb' or 'company_kyb')
+   * @param companyId The company ID
+   * @param taskId The task ID
+   * @returns FormServiceInterface implementation
+   */
+  public getIsolatedFormService(taskType: string, companyId: number | string, taskId: number | string): FormServiceInterface | null {
+    const logger = getLogger('ComponentFactory');
+    
+    // Only support KYB task types for now
+    if (taskType !== 'kyb' && taskType !== 'company_kyb') {
+      logger.warn(`Isolated service requested for unsupported task type: ${taskType}`);
+      return this.getFormService(taskType);
+    }
+    
+    // Get instance from factory
+    logger.info(`Getting isolated KYB service instance for company ${companyId}, task ${taskId}`);
+    return enhancedKybServiceFactory.getInstance(companyId, taskId);
   }
 
   /**
