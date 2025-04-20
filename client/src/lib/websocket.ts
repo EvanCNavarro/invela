@@ -331,6 +331,29 @@ class WebSocketService {
       this.updateConnectionStatus('error');
     }
     
+    // Special handling for company tab updates
+    if (type === 'company_tabs_updated') {
+      // Log the received data for debugging
+      console.log(`[WebSocket] 🔄 Received company tabs update:`, data);
+      
+      // Force invalidate any company-related API data in the query cache
+      try {
+        // Try using global queryClient if available
+        if (typeof window !== 'undefined' && (window as any).__REACT_QUERY_GLOBAL_CLIENT__) {
+          const queryClient = (window as any).__REACT_QUERY_GLOBAL_CLIENT__;
+          
+          console.log(`[WebSocket] 🧹 Invalidating company queries in cache`);
+          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+          console.log(`[WebSocket] ✅ Successfully invalidated company queries`);
+        } else {
+          console.warn(`[WebSocket] ⚠️ Query client not found for cache invalidation`);
+        }
+      } catch (error) {
+        console.error(`[WebSocket] ❌ Error invalidating cache:`, error);
+      }
+    }
+    
     // Process message handlers
     const handlers = this.messageHandlers.get(type);
     if (handlers) {
