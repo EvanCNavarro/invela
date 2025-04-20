@@ -8,7 +8,8 @@ import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { CompanyTabsService } from '../services/companyTabsService';
-import { unlockFileVault } from '../patches/updateCompanyTabs';
+// Import CompanyTabsService directly, we don't need the patch function anymore
+// since we're using the service directly
 
 const logger = new Logger('KYBRoutes');
 
