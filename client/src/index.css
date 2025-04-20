@@ -157,14 +157,11 @@
     animation-duration: 0ms !important;
   }
   
-  /* Hide locked items by default */
-  [data-locked="true"] {
-    display: none !important;
-  }
-  
-  /* Show unlocked items immediately */
+  /* Don't hide locked items by default - let React control this */
+  /* Instead, add styles that enhance visibility when unlocked */
   [data-locked="false"] {
-    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     animation: tab-appear 10ms forwards;
   }
   
