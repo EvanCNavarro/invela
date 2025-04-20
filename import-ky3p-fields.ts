@@ -8,9 +8,34 @@
 
 import { db } from './db';
 import { ky3pFields } from './db/schema';
+import { sql } from 'drizzle-orm';
 import fs from 'fs';
-import { parse } from 'csv-parse/sync';
 import path from 'path';
+
+// Workaround for the csv-parse package
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
+
+// Simple CSV parser function
+function parseCSV(csvData: string): Record<string, string>[] {
+  const lines = csvData.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  
+  const records: Record<string, string>[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',');
+    const record: Record<string, string> = {};
+    
+    for (let j = 0; j < headers.length; j++) {
+      record[headers[j]] = values[j] ? values[j].trim() : '';
+    }
+    
+    records.push(record);
+  }
+  
+  return records;
+}
 
 // Map column names from CSV to database field names
 const csvToDbFieldMap = {
@@ -40,46 +65,54 @@ async function importKy3pFields() {
     const csvFilePath = path.resolve('./attached_assets/S&P_KY3P_Security_Assessment_Field_Additions_Normalized.csv');
     const csvData = fs.readFileSync(csvFilePath, 'utf8');
     
-    // Parse the CSV file
-    const records = parse(csvData, { 
-      columns: true, 
-      skip_empty_lines: true,
-      trim: true
-    });
+    // Parse the CSV file using our custom parser
+    const records = parseCSV(csvData);
     
     console.log(`Found ${records.length} KY3P field definitions in CSV file`);
     
     // Transform CSV records to database field format
-    const fieldsToInsert = records.map(record => ({
-      id: parseInt(record['ID (id)']),
-      order: parseInt(record['Order (order)']),
-      field_key: record['Field Key (field_key)'],
-      label: record['Label (label)'],
-      description: record['Question (description)'],
-      help_text: record['Help Text (help_text)'],
-      demo_autofill: record['Demo Autofill Answer (demo_autofill)'],
-      section: record['Group (section)'],
-      field_type: record['Field Type (field_type)'],
-      is_required: record['Required (is_required)'] === 'TRUE',
-      answer_expectation: record['Answer Expectation'],
-      validation_type: record['Validation Type'],
-      phasing: record['Phasing'],
-      soc2_overlap: record['SOC2 Overlap'],
-      validation_rules: record['validation_rules'] || null,
-      step_index: record['step_index'] ? parseInt(record['step_index']) : 0,
-      created_at: new Date(),
-      updated_at: new Date()
-    }));
+    const fieldsToInsert = records.map((record, index) => {
+      // Safe parseInt that handles empty or invalid values
+      const safeParseInt = (value: string | undefined, defaultValue: number = 0): number => {
+        if (!value || value.trim() === '') return defaultValue;
+        const parsed = parseInt(value);
+        return isNaN(parsed) ? defaultValue : parsed;
+      };
+      
+      return {
+        id: safeParseInt(record['ID (id)'], index + 1),
+        order: safeParseInt(record['Order (order)'], index + 1),
+        field_key: record['Field Key (field_key)'] || `field_${index + 1}`,
+        label: record['Label (label)'] || `Field ${index + 1}`,
+        description: record['Question (description)'] || '',
+        help_text: record['Help Text (help_text)'] || null,
+        demo_autofill: record['Demo Autofill Answer (demo_autofill)'] || null,
+        section: record['Group (section)'] || 'General',
+        field_type: record['Field Type (field_type)'] || 'TEXT',
+        is_required: record['Required (is_required)'] === 'TRUE',
+        answer_expectation: record['Answer Expectation'] || null,
+        validation_type: record['Validation Type'] || null,
+        phasing: record['Phasing'] || null,
+        soc2_overlap: record['SOC2 Overlap'] || null,
+        validation_rules: record['validation_rules'] || null,
+        step_index: safeParseInt(record['step_index']),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+    });
     
     console.log('Transformed field data, preparing to insert into database...');
     
-    // First, check if we have any existing KY3P fields
-    const existingFields = await db.select({ count: { value: db.fn.count() } })
-      .from(ky3pFields);
+    // First, check if we have any existing KY3P fields using SQL directly
+    const existingFieldsCount = await db.execute(sql`
+      SELECT COUNT(*) as count FROM ky3p_fields;
+    `);
     
-    if (existingFields[0].count.value > 0) {
-      console.log(`Found ${existingFields[0].count.value} existing KY3P fields in database, truncating table first...`);
-      await db.delete(ky3pFields);
+    const count = parseInt(existingFieldsCount.rows[0]?.count || '0');
+    
+    if (count > 0) {
+      console.log(`Found ${count} existing KY3P fields in database, truncating table first...`);
+      await db.execute(sql`TRUNCATE TABLE ky3p_fields CASCADE;`);
     }
     
     // Insert the fields into the database
