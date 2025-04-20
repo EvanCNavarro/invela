@@ -1722,27 +1722,44 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           console.error(`Error refreshing company data:`, refreshError);
         }
         
-        // Create submission result with warning status - include all 3 actions as in the success case
+        // Create submission result with warning status - include ALL actions as in the success case
+        const warningCompletedActions = [
+          {
+            type: "task_completion", 
+            description: "Task Completed",
+            data: { details: "Your form was submitted successfully." }
+          }
+        ];
+        
+        // Add file generation action - critical for showing in the modal
+        if (numericFileId) {
+          warningCompletedActions.push({
+            type: "file_generation",
+            description: `${taskType.toUpperCase()} Form File Created`,
+            data: { 
+              details: `A copy of your ${taskType.toUpperCase()} form has been saved to the File Vault.`,
+              fileId: numericFileId
+            }
+          });
+        }
+        
+        // Add file vault unlocked action
+        warningCompletedActions.push({
+          type: "file_vault_unlocked",
+          description: "File Vault Unlocked",
+          data: { details: "You now have access to upload and manage documents in the File Vault." }
+        });
+        
+        // Add next task action
+        warningCompletedActions.push({
+          type: "next_task",
+          description: "Next Task Unlocked",
+          data: { details: "You can now proceed to the next step in your onboarding process." }
+        });
+        
         const warningSubmissionResult: SubmissionResult = {
           fileId: numericFileId,
-          completedActions: [
-            {
-              type: "task_completion", 
-              description: "Task Completed",
-              data: { details: "Your form was submitted successfully." }
-            },
-            {
-              type: "file_vault_unlocked",
-              description: "File Vault Unlocked",
-              data: { details: "You now have access to upload and manage documents in the File Vault." }
-            },
-            // Adding the third block that was missing - the next task action
-            {
-              type: "next_task",
-              description: "Next Task Unlocked",
-              data: { details: "You can now proceed to the next step in your onboarding process." }
-            }
-          ],
+          completedActions: warningCompletedActions,
           taskId: taskId ? Number(taskId) : undefined,
           taskStatus: 'completed' // Still mark as completed to unlock all features
         };
