@@ -172,7 +172,7 @@ export function Sidebar({
       icon: FileIcon,
       label: "File Vault",
       href: "/file-vault",
-      locked: !availableTabs.includes('file-vault')
+      locked: !availableTabs.includes('file-vault') && !location.includes('file-vault')
     },
     {
       icon: BarChartIcon,

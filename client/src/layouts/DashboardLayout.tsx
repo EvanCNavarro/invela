@@ -159,8 +159,33 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
   
-  // We don't need duplicate WebSocket event handling here
-  // The other useEffect already handles the 'company-tabs-updated' event
+  // Override tab visibility on route change to prevent any flickering issues
+  useEffect(() => {
+    const stopFlickering = () => {
+      const company = queryClient.getQueryData(['/api/companies/current']) as any;
+      if (company && location.includes('file-vault') && !company.available_tabs?.includes('file-vault')) {
+        console.log('[DashboardLayout] CRITICAL FIX: Correcting file-vault visibility in navigation');
+        
+        // If we're on the file-vault route but it's not in available tabs, add it
+        queryClient.setQueryData(['/api/companies/current'], {
+          ...company,
+          available_tabs: [...(company.available_tabs || []), 'file-vault']
+        });
+      }
+    };
+    
+    // Check multiple times with decreasing frequency
+    stopFlickering();
+    const timer1 = setTimeout(stopFlickering, 50);
+    const timer2 = setTimeout(stopFlickering, 200);
+    const timer3 = setTimeout(stopFlickering, 500);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [location, queryClient]);
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
