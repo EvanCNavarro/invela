@@ -249,3 +249,36 @@ export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: st
     }
   });
 }
+
+/**
+ * Broadcast a submission status update to all connected clients
+ * This ensures the success modal always shows, even when HTTP API calls fail
+ */
+export function broadcastSubmissionStatus(taskId: number, status: string) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized, cannot broadcast submission status');
+    return;
+  }
+
+  console.log(`[WebSocket] Broadcasting submission status for task ${taskId}:`, {
+    status,
+    timestamp: new Date().toISOString()
+  });
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify({
+          type: 'submission_status',
+          payload: {
+            taskId,
+            status,
+            timestamp: Date.now()
+          }
+        }));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting submission status:', error);
+      }
+    }
+  });
+}
