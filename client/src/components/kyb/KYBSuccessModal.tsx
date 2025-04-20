@@ -18,11 +18,35 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   // Force refresh company data when modal opens to ensure tabs are up-to-date
   useEffect(() => {
     if (open) {
-      console.log('[KYBSuccessModal] Modal opened, refreshing company data');
-      // Invalidate the company data query to force a refresh
+      console.log('[KYBSuccessModal] Modal opened, proactively updating company data');
+      
+      // PERFORMANCE OPTIMIZATION: Don't wait for server response
+      // Immediately add the file-vault tab to the current company data
+      // This ensures the tab is visible right away without waiting for server roundtrip
+      const currentCompanyData = queryClient.getQueryData(['/api/companies/current']);
+      if (currentCompanyData) {
+        const company = currentCompanyData as any;
+        if (!company.available_tabs?.includes('file-vault')) {
+          console.log('[KYBSuccessModal] Proactively adding file-vault tab to company data');
+          const updatedCompany = {
+            ...company,
+            available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault']
+          };
+          
+          // Update the cache immediately for instant UI update
+          queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+        }
+      }
+      
+      // Also invalidate and refetch to ensure we get the latest data from server
       queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-      // Force refetch
-      queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+      
+      // Force immediate refetch in the background
+      queryClient.refetchQueries({ 
+        queryKey: ['/api/companies/current'],
+        // Use exact: true to avoid refetching queries with similar keys
+        exact: true
+      });
     }
   }, [open, queryClient]);
 
