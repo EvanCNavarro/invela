@@ -1149,7 +1149,11 @@ router.post('/api/kyb/save', async (req, res) => {
       responseCount: fields.length,
       warningCount: warnings.length
     });
-
+    
+    // Define the submission status for response
+    // This status will be used for both WebSocket broadcasting and response
+    const newStatus = isSubmission ? TaskStatus.SUBMITTED : task.status;
+    
     // For SUBMITTED status, broadcast via WebSocket
     if (task.status === TaskStatus.SUBMITTED || isSubmission) {
       // Broadcast submission status via WebSocket
