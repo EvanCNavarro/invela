@@ -15,37 +15,23 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Truly instant file vault visibility the moment this modal appears
+  // Ultra-minimal implementation for instant tab visibility
   useEffect(() => {
     if (open) {
-      console.log('[KYBSuccessModal] ⚡ INSTANT: Adding file-vault tab immediately');
+      // Get current company data
+      const company = queryClient.getQueryData(['/api/companies/current']) as any;
       
-      // Get current company data from cache
-      const currentCompanyData = queryClient.getQueryData(['/api/companies/current']);
-      
-      if (currentCompanyData) {
-        const company = currentCompanyData as any;
-        
-        // No special case checks - just make it work for EVERY company
-        // The most direct and reliable approach for truly instant updates
-        console.log('[KYBSuccessModal] ⚡ INSTANT UPDATE: Force adding file-vault tab to company', company.id);
-        
-        // Create updated company data with file-vault tab
-        const updatedCompany = {
+      if (company) {
+        // Update company data with file-vault tab (no conditions or checks)
+        queryClient.setQueryData(['/api/companies/current'], {
           ...company,
           available_tabs: [...new Set([...(company.available_tabs || ['task-center']), 'file-vault'])]
-        };
+        });
         
-        // INSTANT UI UPDATE: Update the cache immediately to show tab right away
-        queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+        // Tell server (fire and forget)
+        fetch(`/api/companies/${company.id}/unlock-file-vault`, { method: 'POST' });
         
-        // Fire-and-forget the server update (don't wait for response)
-        fetch(`/api/companies/${company.id}/unlock-file-vault`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'}
-        }).catch(() => {/* Ignore errors - the UI is already updated */});
-        
-        // Force sidebar to update by dispatching a custom event
+        // Force sidebar update
         window.dispatchEvent(new CustomEvent('force-sidebar-update'));
       }
     }
