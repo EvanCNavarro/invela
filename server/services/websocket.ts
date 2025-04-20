@@ -215,3 +215,37 @@ export function broadcastMessage(type: string, payload: any) {
     }
   });
 }
+
+/**
+ * Broadcast a field update to all connected clients
+ * This ensures form fields like legalEntityName stay in sync across clients
+ */
+export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: string) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized, cannot broadcast field update');
+    return;
+  }
+
+  console.log(`[WebSocket] Broadcasting field update for task ${taskId}, field "${fieldKey}":`, {
+    value: value,
+    timestamp: new Date().toISOString()
+  });
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify({
+          type: 'field_update',
+          payload: {
+            taskId,
+            fieldKey,
+            value,
+            timestamp: Date.now()
+          }
+        }));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting field update:', error);
+      }
+    }
+  });
+}
