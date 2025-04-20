@@ -1894,12 +1894,9 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
     
     // CRITICAL FIX: Also unlock the file vault for this company
     try {
-      // Import the CompanyTabsService to unlock file vault
-      const { CompanyTabsService } = require('../services/companyTabsService');
-      const companyTabsService = new CompanyTabsService();
-      
+      // No need to require CompanyTabsService again, it's already imported at the top
       console.log(`[KYB API] ⚡ CRITICAL: Unlocking file vault for company ${task.company_id} after KYB submission`);
-      const fileVaultResult = await companyTabsService.unlockFileVault(task.company_id);
+      const fileVaultResult = await CompanyTabsService.unlockFileVault(task.company_id);
       
       if (fileVaultResult) {
         console.log(`[KYB API] ✅ Successfully unlocked file vault for company ${task.company_id}`, {
