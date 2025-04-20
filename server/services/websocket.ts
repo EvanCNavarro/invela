@@ -188,6 +188,57 @@ export function broadcastUploadProgress(update: UploadProgress) {
   });
 }
 
+/**
+ * Broadcast company tabs update to all connected clients
+ * This ensures the sidebar shows updated tabs immediately when they change
+ */
+export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: string[]) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized, cannot broadcast company tabs update');
+    return;
+  }
+
+  console.log(`[WebSocket] 🔄 Broadcasting company tabs update for company ${companyId}:`, {
+    availableTabs,
+    timestamp: new Date().toISOString()
+  });
+
+  // Count active clients for debugging
+  let openClientCount = 0;
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      openClientCount++;
+    }
+  });
+
+  // If no clients are connected, log a warning
+  if (openClientCount === 0) {
+    console.warn('[WebSocket] No connected clients to receive company tabs update');
+  } else {
+    console.log(`[WebSocket] Sending company tabs update to ${openClientCount} clients`);
+  }
+
+  const message = JSON.stringify({
+    type: 'company_tabs_updated',
+    data: {
+      companyId,
+      availableTabs,
+      timestamp: new Date().toISOString()
+    }
+  });
+
+  // Send to all clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(message);
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting company tabs update:', error);
+      }
+    }
+  });
+}
+
 // Generic broadcast function for task events
 export function broadcastMessage(type: string, payload: any) {
   if (!wss) {
@@ -207,6 +258,16 @@ export function broadcastMessage(type: string, payload: any) {
       progress: payload.task?.progress || payload.progress || 0,
       metadata: payload.task?.metadata || payload.metadata
     });
+    // Return early to avoid double broadcasting
+    return;
+  }
+  
+  // Handle company tabs update messages
+  if (type === 'company_tabs_updated' && payload.companyId) {
+    broadcastCompanyTabsUpdate(
+      payload.companyId,
+      payload.availableTabs || []
+    );
     // Return early to avoid double broadcasting
     return;
   }
