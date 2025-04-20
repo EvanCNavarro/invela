@@ -29,6 +29,7 @@ import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
+import submissionsRouter from './routes/submissions';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -65,6 +66,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register test endpoints for WebSocket functionality
   app.use('/api/ws-test', wsTestRouter);
+  
+  // Register submission status API - reliable form submission status checking
+  app.use('/api/submissions', submissionsRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
