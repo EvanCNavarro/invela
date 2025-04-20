@@ -2,6 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { CheckCircle, FileText, ArrowRight, Archive } from "lucide-react";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface KYBSuccessModalProps {
   open: boolean;
@@ -11,6 +13,18 @@ interface KYBSuccessModalProps {
 
 export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessModalProps) {
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  
+  // Force refresh company data when modal opens to ensure tabs are up-to-date
+  useEffect(() => {
+    if (open) {
+      console.log('[KYBSuccessModal] Modal opened, refreshing company data');
+      // Invalidate the company data query to force a refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      // Force refetch
+      queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+    }
+  }, [open, queryClient]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -67,8 +81,12 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           <Button
             variant="outline"
             onClick={() => {
-              navigate('/file-vault');
+              // First close modal, then navigate with a slight delay to ensure company data is refreshed
               onOpenChange(false);
+              // Small delay to ensure the company data is fully refreshed before navigation
+              setTimeout(() => {
+                navigate('/file-vault');
+              }, 100);
             }}
             className="flex-1"
           >
@@ -76,8 +94,11 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           </Button>
           <Button
             onClick={() => {
-              navigate('/task-center');
+              // First close modal, then navigate with a slight delay for better UX
               onOpenChange(false);
+              setTimeout(() => {
+                navigate('/task-center');
+              }, 100);
             }}
             className="flex-1"
           >
