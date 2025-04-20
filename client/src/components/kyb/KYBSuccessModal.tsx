@@ -42,24 +42,77 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           // Update the cache immediately for instant UI update
           queryClient.setQueryData(['/api/companies/current'], updatedCompany);
           
-          // APPROACH 2: Direct API call to ensure server-side update
+          // APPROACH 2: Enhanced direct API call with retry logic
           // This makes a direct API call to force unlock file vault on the server
           const forcedUnlockFileVault = async () => {
             try {
               console.log('[KYBSuccessModal] 🔐 Making direct API call to force unlock file vault');
+              
+              // Make the API call with timeout to prevent hanging
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+              
               const response = await fetch(`/api/companies/${company.id}/unlock-file-vault`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache'
+                },
+                signal: controller.signal
               });
+              
+              clearTimeout(timeoutId);
               
               if (response.ok) {
                 const result = await response.json();
                 console.log('[KYBSuccessModal] ✅ Successfully forced file vault unlock:', result);
+                
+                // CRITICAL FIX: After successful API call, we need to force ReactQuery to update the cache
+                // This ensures the sidebar will show the new tabs immediately
+                console.log('[KYBSuccessModal] 💥 CRITICAL: Forcefully updating client state with new tabs');
+                
+                // Update the cache with the new tabs from the API response
+                const updatedCompany = {
+                  ...company,
+                  available_tabs: result.availableTabs || [...(company.available_tabs || ['task-center']), 'file-vault']
+                };
+                
+                // Force the cache update to trigger UI refresh
+                queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+                
+                // Also forcefully invalidate and refetch immediately
+                queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+                queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
               } else {
                 console.error('[KYBSuccessModal] ❌ Failed to force unlock file vault:', response.statusText);
+                
+                // Fall back to optimistic update if API call fails
+                console.log('[KYBSuccessModal] 💥 API failed, falling back to optimistic update');
+                
+                // Update the cache with optimistic data
+                const updatedCompany = {
+                  ...company,
+                  available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault']
+                };
+                
+                // Set the optimistic data
+                queryClient.setQueryData(['/api/companies/current'], updatedCompany);
               }
             } catch (error) {
               console.error('[KYBSuccessModal] ❌ Error in direct file vault unlock:', error);
+              
+              // Fall back to optimistic update if API call fails
+              console.log('[KYBSuccessModal] 💥 API call error, falling back to optimistic update');
+              
+              // Update the cache with optimistic data
+              const updatedCompany = {
+                ...company,
+                available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault'] 
+              };
+              
+              // Set the optimistic data
+              queryClient.setQueryData(['/api/companies/current'], updatedCompany);
             }
           };
           
