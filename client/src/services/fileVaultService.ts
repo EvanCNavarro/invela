@@ -61,7 +61,8 @@ async function fallbackEnableFileVault(companyId: number) {
   try {
     console.log(`[FileVaultService] Using fallback method for company ${companyId}`);
     
-    const response = await fetch(`/api/refresh-file-vault`, {
+    // Use the emergency endpoint which is more reliable
+    const response = await fetch(`/api/emergency/unlock-file-vault/${companyId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -70,15 +71,34 @@ async function fallbackEnableFileVault(companyId: number) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[FileVaultService] Fallback method failed: ${errorText}`);
+      console.error(`[FileVaultService] Emergency endpoint failed: ${errorText}`);
       
-      // Last resort - directly modify cache
-      directlyAddFileVaultTab();
-      return { success: true, message: 'File vault enabled via cache', source: 'direct-cache' };
+      // Try the general refresh endpoint as a second fallback
+      const refreshResponse = await fetch(`/api/refresh-file-vault`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!refreshResponse.ok) {
+        console.error(`[FileVaultService] All API endpoints failed, using cache method`);
+        // Last resort - directly modify cache
+        directlyAddFileVaultTab(companyId);
+        return { success: true, message: 'File vault enabled via cache', source: 'direct-cache' };
+      }
+      
+      const refreshResult = await refreshResponse.json();
+      console.log(`[FileVaultService] Refresh endpoint succeeded:`, refreshResult);
+      
+      // Force invalidate the company cache
+      await refreshCompanyData();
+      
+      return refreshResult;
     }
     
     const result = await response.json();
-    console.log(`[FileVaultService] Fallback method succeeded:`, result);
+    console.log(`[FileVaultService] Emergency endpoint succeeded:`, result);
     
     // Force invalidate the company cache
     await refreshCompanyData();
@@ -117,15 +137,28 @@ async function getCurrentCompany() {
  * Directly add the file-vault tab to the company data in the cache
  * This bypasses server communication entirely
  */
-export function directlyAddFileVaultTab() {
+export function directlyAddFileVaultTab(companyId?: number) {
   try {
-    console.log('[FileVaultService] Directly adding file-vault tab to cache');
+    console.log(`[FileVaultService] Directly adding file-vault tab to cache${companyId ? ` for company ${companyId}` : ''}`);
     
     // Get the current company from the cache
     const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
     
     if (!companyData) {
       console.warn('[FileVaultService] No company data in cache to update');
+      return false;
+    }
+    
+    // Check if this is the right company ID if specified
+    if (companyId && companyData.id !== companyId) {
+      console.warn(`[FileVaultService] Cache company ID ${companyData.id} doesn't match target ${companyId}, trying emergency endpoint`);
+      
+      // Try emergency endpoint as fallback
+      fetch(`/api/emergency/unlock-file-vault/${companyId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      }).catch(e => console.error('[FileVaultService] Emergency endpoint error:', e));
+      
       return false;
     }
     

@@ -1847,7 +1847,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               
               try {
                 console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
-                directlyAddFileVaultTab();
+                directlyAddFileVaultTab(companyId);
               } catch (directError) {
                 console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
               }
