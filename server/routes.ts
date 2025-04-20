@@ -28,6 +28,7 @@ import tasksRouter from './routes/tasks';
 import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
+import { router as wsTestRouter, initializeWssReference } from './routes/websocket-test';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -61,6 +62,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register WebSocket test routes
   app.use('/api/websocket', websocketRouter);
+  
+  // Register test endpoints for WebSocket functionality
+  app.use('/api/ws-test', wsTestRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
