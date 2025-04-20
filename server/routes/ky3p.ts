@@ -61,10 +61,26 @@ async function hasTaskAccess(req, res, next) {
  */
 router.get('/api/ky3p-fields', requireAuth, async (req, res) => {
   try {
+    logger.info('[KY3P API] Fetching KY3P fields. User authenticated:', !!req.user);
+    
     const fields = await db
       .select()
       .from(ky3pFields)
       .orderBy(asc(ky3pFields.order));
+    
+    logger.info(`[KY3P API] Successfully retrieved ${fields.length} KY3P fields`);
+    
+    // Group fields by step_index for logging
+    const fieldsByStep = fields.reduce((acc, field) => {
+      const step = field.step_index || 0;
+      if (!acc[step]) acc[step] = [];
+      acc[step].push(field.field_key);
+      return acc;
+    }, {});
+    
+    logger.info('[KY3P API] Fields grouped by step:', Object.keys(fieldsByStep).map(step => 
+      `Step ${step}: ${fieldsByStep[step].length} fields`
+    ));
     
     res.json(fields);
   } catch (error) {
