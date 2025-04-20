@@ -47,6 +47,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0, // Consider data stale immediately to ensure fresh data
+    refetchInterval: 1000, // Automatically refetch every second to pick up tab changes
   });
 
   const relevantTasks = tasks.filter(task => {
