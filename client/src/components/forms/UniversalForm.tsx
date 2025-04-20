@@ -1288,14 +1288,44 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Clear the submitting toast
         toast.dismiss(submittingToastId);
 
-        // Verify the task status has been successfully updated in the database
-        const statusCheckResponse = await fetch(`/api/tasks/${taskId}`);
-        const taskStatusData = await statusCheckResponse.json();
+        // Verify the task status with multiple retries to account for potential database lag
+        // This handles cases where the database update might take some time to be visible
+        let taskStatusData;
+        let isSubmitted = false;
+        const maxRetries = 3;
         
-        logger.info('Task status check response:', taskStatusData);
+        // Try multiple times with increasing delays to check if the status has been updated
+        for (let retry = 0; retry < maxRetries; retry++) {
+          try {
+            // Add a small delay before each retry (increasing with each attempt)
+            if (retry > 0) {
+              await new Promise(resolve => setTimeout(resolve, retry * 500));
+              logger.info(`Retry ${retry}/${maxRetries} checking task status...`);
+            }
+            
+            const statusCheckResponse = await fetch(`/api/tasks/${taskId}`);
+            taskStatusData = await statusCheckResponse.json();
+            
+            logger.info(`Task status check response (attempt ${retry + 1}/${maxRetries}):`, taskStatusData);
+            
+            // Check if the status shows as submitted or if progress is very high (95%+)
+            if (taskStatusData.status === 'submitted' || 
+                (taskStatusData.metadata && taskStatusData.metadata.submissionDate) ||
+                taskStatusData.progress >= 95) {
+              isSubmitted = true;
+              break;
+            }
+          } catch (retryError) {
+            logger.error(`Error on status check retry ${retry + 1}/${maxRetries}:`, retryError);
+          }
+        }
         
-        // Always trigger success flow for the demo if status is 'submitted' or high progress
-        if (taskStatusData.status === 'submitted' || taskStatusData.progress >= 95) {
+        // Provide fallback behavior: if we have a submission result and high progress, consider it submitted
+        const hasHighProgress = taskStatusData && taskStatusData.progress >= 95;
+        const hasSubmissionFile = taskStatusData?.metadata?.kybFormFile || submissionResult?.fileId;
+        
+        // Always trigger success flow if status is 'submitted' or we have good indicators of submission
+        if (isSubmitted || (hasHighProgress && hasSubmissionFile)) {
           try {
             // Fire confetti animation FIRST (before showing modal)
             const { fireSuperConfetti } = await import('@/utils/confetti');
