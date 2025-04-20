@@ -102,26 +102,44 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         // Import WebSocket service
         const { wsService } = await import('@/lib/websocket');
         
-        // Subscribe to company tabs updates - handle ALL companies, not just the current one
-        // This ensures we don't miss updates when switching between companies or contexts
+        // Subscribe to company tabs updates with enhanced handler
         const unsubTabsUpdate = await wsService.subscribe('company_tabs_updated', (data: any) => {
-          console.log(`[DashboardLayout] Received company_tabs_updated event:`, data);
+          console.log(`[DashboardLayout] 🔄 Received company_tabs_updated event:`, data);
           
-          // Always refetch company data when we receive an update
-          // This ensures the sidebar reflects the latest tabs regardless of company context
-          console.log(`[DashboardLayout] Forcing company data refetch due to tab update`);
-          
-          // Check if we have any companies loaded to compare
-          if (currentCompany) {
-            console.log(`[DashboardLayout] Current company ID: ${currentCompany.id}, Update for company ID: ${data.companyId}`);
+          // If we don't have company data yet, force a refresh
+          if (!currentCompany) {
+            console.log(`[DashboardLayout] No current company loaded, forcing full refresh`);
+            refetchCompany();
+            return;
           }
           
-          // Force an immediate refetch regardless of company ID
-          // This ensures we always have the latest data even in multi-company contexts
+          // Log detailed information for debugging
+          console.log(`[DashboardLayout] Current company: ${currentCompany?.id} (${currentCompany?.available_tabs?.join(', ')})`);
+          console.log(`[DashboardLayout] Update for company: ${data.companyId} (${data.availableTabs?.join(', ')})`);
+          
+          // IMPORTANT: Always force a refetch to ensure the UI is up-to-date
+          // This ensures we catch updates even if company IDs don't match (multiple companies per user)
+          console.log(`[DashboardLayout] 🔄 Forcing company data refetch due to tab update`);
+          
+          // Critical: Invalidate the cache for the /api/companies/current endpoint
+          // This ensures the next refetch will get fresh data from the server
+          queryClient.invalidateQueries({ queryKey: ["/api/companies/current"] });
+          
+          // Force an immediate refetch to update the UI
           refetchCompany();
         });
         
         subscriptions.push(unsubTabsUpdate);
+        
+        // Also subscribe to connection status events to maintain reliable connection
+        const unsubConnStatus = await wsService.subscribe('connection_status', (data: any) => {
+          if (data.status === 'connected') {
+            console.log(`[DashboardLayout] WebSocket reconnected, refreshing company data`);
+            refetchCompany();
+          }
+        });
+        
+        subscriptions.push(unsubConnStatus);
       } catch (error) {
         console.error('[DashboardLayout] Error setting up WebSocket subscriptions:', error);
       }
@@ -141,7 +159,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         }
       });
     };
-  }, [refetchCompany]); // Only depend on refetchCompany, not on currentCompany.id
+  }, [refetchCompany, currentCompany?.id]); // Intentionally re-subscribing when company ID changes to ensure proper context
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
