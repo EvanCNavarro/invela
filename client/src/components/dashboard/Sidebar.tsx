@@ -172,7 +172,7 @@ export function Sidebar({
       icon: FileIcon,
       label: "File Vault",
       href: "/file-vault",
-      locked: !availableTabs.includes('file-vault')
+      locked: false // File vault is never locked since KYB always completes first
     },
     {
       icon: BarChartIcon,

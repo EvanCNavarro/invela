@@ -15,7 +15,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Simple, direct approach for reliable tab unlock
+  // Ensures that file-vault tab stays permanently unlocked
   useEffect(() => {
     if (!open) return;
     
@@ -24,19 +24,45 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
       const company = queryClient.getQueryData(['/api/companies/current']) as any;
       if (!company) return;
       
-      console.log('[KYBSuccessModal] Making file-vault tab visible');
+      console.log('[KYBSuccessModal] Making file-vault tab visible - permanent unlock');
       
-      // 1. Update React Query cache FIRST with file-vault tab
+      // Make sure we keep any existing tabs (like task-center) 
+      // but definitely add file-vault if it's not already there
+      const currentTabs = Array.isArray(company.available_tabs) ? company.available_tabs : ['task-center'];
+      const updatedTabs = currentTabs.includes('file-vault') 
+        ? currentTabs 
+        : [...currentTabs, 'file-vault'];
+      
+      console.log('[KYBSuccessModal] Updating available_tabs:', currentTabs, ' → ', updatedTabs);
+      
+      // 1. Update React Query cache with the updated tabs that include file-vault
       queryClient.setQueryData(['/api/companies/current'], {
         ...company,
-        available_tabs: ['task-center', 'file-vault'] // Always only these two tabs, no merging
+        available_tabs: updatedTabs
       });
       
       // 2. Notify server (async, doesn't affect UI)
       fetch(`/api/companies/${company.id}/unlock-file-vault`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
-      }).catch(err => console.error('Server notification error:', err));
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('[KYBSuccessModal] Server updated file-vault status:', data);
+        
+        // 3. After server confirms, do one more cache update just to be sure
+        setTimeout(() => {
+          const updatedCompany = queryClient.getQueryData(['/api/companies/current']) as any;
+          if (updatedCompany && !updatedCompany.available_tabs?.includes('file-vault')) {
+            console.log('[KYBSuccessModal] Ensuring file-vault is in tabs after server update');
+            queryClient.setQueryData(['/api/companies/current'], {
+              ...updatedCompany,
+              available_tabs: [...(updatedCompany.available_tabs || []), 'file-vault']
+            });
+          }
+        }, 500); // Short delay to ensure any concurrent updates are processed
+      })
+      .catch(err => console.error('[KYBSuccessModal] Server notification error:', err));
     } catch (error) {
       console.error('[KYBSuccessModal] Tab update error:', error);
     }

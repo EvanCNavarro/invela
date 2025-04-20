@@ -126,17 +126,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       isLoadingCompany
     });
 
-    // Check if the current tab is accessible based on available tabs
-    const isAccessible = currentTab === 'task-center' || availableTabs.includes(currentTab);
+    // File vault is ALWAYS accessible after KYB form submission
+    // Task center is also always accessible
+    const isAccessible = currentTab === 'task-center' || 
+                         currentTab === 'file-vault' || 
+                         availableTabs.includes(currentTab);
     
-    // If trying to access file-vault but it's not available, refresh company data
-    // This handles cases where the database was updated but the UI hasn't caught up
-    if (currentTab === 'file-vault' && !isAccessible) {
-      console.log('[DashboardLayout] User requested file-vault but not in available tabs, refreshing data');
-      
-      // Refresh company data to get latest tab permissions
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-    }
+    // Log current access state
+    console.log(`[DashboardLayout] Tab "${currentTab}" accessible: ${isAccessible}`);
     
     return isAccessible;
   };
