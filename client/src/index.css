@@ -150,4 +150,27 @@
     inset: 0;
     z-index: 50;
   }
+  
+  /* Fast transition for the file vault tab - zero delay appearance */
+  .fast-transition {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+  
+  /* Hide locked items by default */
+  [data-locked="true"] {
+    display: none !important;
+  }
+  
+  /* Show unlocked items immediately */
+  [data-locked="false"] {
+    display: flex !important;
+    animation: tab-appear 10ms forwards;
+  }
+  
+  /* Instant tab appearance animation */
+  @keyframes tab-appear {
+    0% { opacity: 0.95; }
+    100% { opacity: 1; }
+  }
 }
