@@ -561,9 +561,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // ALWAYS try the API first to get the true database value
       const fetchCompanyDemoStatus = async () => {
         try {
-          // Make a specific API call to check this company's demo status
-          const apiUrl = `/api/companies/is-demo?taskId=${taskId}`;
-          logger.info(`[UniversalForm] Making API request to: ${apiUrl}`);
+          // Try to extract the company ID from task metadata first
+          let companyId = null;
+          if (taskMetadata && typeof taskMetadata === 'object') {
+            companyId = taskMetadata.company_id || taskMetadata.companyId;
+            logger.info(`[UniversalForm] Got company ID ${companyId} from task metadata`);
+          }
+          
+          // Make specific API call based on available data
+          let apiUrl = '';
+          if (companyId) {
+            apiUrl = `/api/companies/is-demo?companyId=${companyId}`;
+            logger.info(`[UniversalForm] Making API request with companyId: ${apiUrl}`);
+          } else {
+            apiUrl = `/api/companies/is-demo?taskId=${taskId}`;
+            logger.info(`[UniversalForm] Making API request with taskId fallback: ${apiUrl}`);
+          }
           
           const response = await fetch(apiUrl);
           
