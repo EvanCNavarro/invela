@@ -3,62 +3,9 @@
  * 
  * This service provides methods to enable the file vault tab for companies
  * after a KYB form submission using proper API calls and caching strategies.
- * 
- * The service follows a UI-first approach:
- * 1. Immediately update the UI to show the File Vault tab
- * 2. Call API to make the change persistent
- * 3. Refresh data to ensure consistency
  */
 
 import { queryClient } from "@/lib/queryClient";
-
-/**
- * Pre-emptively unlock file vault tab in the UI
- * Call this before submitting the form to ensure the tab appears immediately
- */
-export function preEmptivelyUnlockFileVault() {
-  try {
-    console.log('[FileVaultService] Pre-emptively unlocking file vault in UI');
-    
-    // Get current company data from cache
-    const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
-    
-    if (!companyData) {
-      console.log('[FileVaultService] No company data in cache to update');
-      return false;
-    }
-    
-    // Check if file-vault tab is already in available_tabs
-    if (Array.isArray(companyData.available_tabs) && 
-        companyData.available_tabs.includes('file-vault')) {
-      console.log('[FileVaultService] File vault already unlocked in UI');
-      return true;
-    }
-    
-    // Create a stable array of tabs that always includes 'file-vault'
-    const currentTabs = Array.isArray(companyData.available_tabs) 
-      ? companyData.available_tabs 
-      : ['task-center'];
-    
-    const updatedTabs = [...currentTabs];
-    if (!updatedTabs.includes('file-vault')) {
-      updatedTabs.push('file-vault');
-    }
-    
-    // Update the cache immediately - this is what makes the UI update instantly
-    queryClient.setQueryData(['/api/companies/current'], {
-      ...companyData,
-      available_tabs: updatedTabs
-    });
-    
-    console.log('[FileVaultService] Pre-emptively unlocked file vault with tabs:', updatedTabs);
-    
-    return true;
-  } catch (error) {
-    console.error('[FileVaultService] Error pre-emptively unlocking file vault:', error);
-    return false;
-  }
-}
 
 /**
  * Enable file vault tab via API call
@@ -217,13 +164,4 @@ async function refreshCompanyData() {
     console.error('[FileVaultService] Error refreshing company data:', error);
     return false;
   }
-}
-
-/**
- * COMPATIBILITY FUNCTION: Directly add file-vault tab to company data cache
- * This function is for backward compatibility with existing code
- * New code should use preEmptivelyUnlockFileVault instead
- */
-export function directlyAddFileVaultTab() {
-  return preEmptivelyUnlockFileVault();
 }
