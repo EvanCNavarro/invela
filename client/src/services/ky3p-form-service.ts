@@ -33,13 +33,54 @@ export class KY3PFormService extends EnhancedKybFormService {
    */
   protected async loadFormFields(): Promise<FormField[]> {
     try {
+      logger.info('[KY3P Form Service] Loading fields from /api/ky3p-fields endpoint');
+      
       const response = await fetch('/api/ky3p-fields');
+      
       if (!response.ok) {
-        throw new Error(`Failed to load KY3P fields: ${response.status}`);
+        const errorText = await response.text();
+        logger.error('[KY3P Form Service] Failed to load KY3P fields:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Failed to load KY3P fields: ${response.status} - ${errorText}`);
       }
       
       const fields = await response.json();
-      return this.transformFieldsFromApi(fields);
+      logger.info(`[KY3P Form Service] Successfully loaded ${fields.length} fields from API`);
+      
+      const transformedFields = this.transformFieldsFromApi(fields);
+      logger.info(`[KY3P Form Service] Transformed ${transformedFields.length} fields for rendering`);
+      
+      // Log some sample fields for debugging
+      if (transformedFields.length > 0) {
+        logger.info('[KY3P Form Service] Sample fields:', 
+          transformedFields.slice(0, 3).map(f => ({ 
+            id: f.id, 
+            key: f.key, 
+            label: f.label, 
+            section: f.section,
+            stepIndex: f.stepIndex
+          }))
+        );
+        
+        // Group fields by step index for logging
+        const fieldsByStep = transformedFields.reduce((acc, field) => {
+          const step = field.stepIndex || 0;
+          if (!acc[step]) acc[step] = [];
+          acc[step].push(field.key);
+          return acc;
+        }, {} as Record<number, string[]>);
+        
+        logger.info('[KY3P Form Service] Fields grouped by step index:', 
+          Object.entries(fieldsByStep).map(([step, keys]) => 
+            `Step ${step}: ${keys.length} fields`
+          )
+        );
+      }
+      
+      return transformedFields;
     } catch (error) {
       logger.error('[KY3P Form Service] Error loading fields:', error);
       throw error;

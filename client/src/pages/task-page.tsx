@@ -722,6 +722,15 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
           </div>
           
           <div className="w-full">
+            {/* Debugging info */}
+            <div className="bg-blue-50 p-4 rounded-md mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Task Type:</strong> {task.task_type} | 
+                <strong> Detected Content Type:</strong> {taskContentType} | 
+                <strong> Form Task Type:</strong> sp_ky3p_assessment
+              </p>
+            </div>
+            
             <UniversalForm
               taskId={task.id}
               taskType="sp_ky3p_assessment"
