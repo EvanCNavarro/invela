@@ -1222,8 +1222,17 @@ import { reconcileTaskProgress } from '../utils/task-reconciliation';
 // Endpoint to provide demo data for auto-filling KYB forms
 router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      logger.error('Unauthenticated user attempted to access demo auto-fill');
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to use this feature'
+      });
+    }
+    
     const { taskId } = req.params;
-    logger.info('Demo auto-fill requested for task', { taskId });
+    logger.info('Demo auto-fill requested for task', { taskId, userId: req.user.id });
     
     // Get the task to retrieve company information
     const [task] = await db.select()
@@ -1235,6 +1244,21 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
       return res.status(404).json({ 
         error: 'Task not found',
         message: 'Could not find the specified task for auto-filling'
+      });
+    }
+    
+    // CRITICAL SECURITY CHECK: Verify user belongs to company that owns the task
+    if (req.user.company_id !== task.company_id) {
+      logger.error('Security violation: User attempted to access task from another company', {
+        userId: req.user.id,
+        userCompanyId: req.user.company_id,
+        taskId: task.id,
+        taskCompanyId: task.company_id
+      });
+      
+      return res.status(403).json({
+        error: 'Access denied',
+        message: 'You do not have permission to access this task'
       });
     }
     
