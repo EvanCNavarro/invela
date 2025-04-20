@@ -15,200 +15,39 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Enhanced effect to ensure immediate file vault visibility when the modal opens
+  // Truly instant file vault visibility the moment this modal appears
   useEffect(() => {
     if (open) {
-      console.log('[KYBSuccessModal] ⚡ CRITICAL: Modal opened, force unlocking file vault');
+      console.log('[KYBSuccessModal] ⚡ INSTANT: Adding file-vault tab immediately');
       
-      // APPROACH 1: Client-side cache update for immediate UI feedback
-      // This ensures the tab is visible right away without waiting for server response
+      // Get current company data from cache
       const currentCompanyData = queryClient.getQueryData(['/api/companies/current']);
       
       if (currentCompanyData) {
         const company = currentCompanyData as any;
-        console.log('[KYBSuccessModal] Current company data:', {
-          id: company.id, 
-          name: company.name,
-          tabs: company.available_tabs,
-          hasFileVault: company.available_tabs?.includes('file-vault') || false
-        });
         
-        // CRITICAL FIX: Check if this is one of our test companies
-        const isTestCompany = 
-          company.id === 207 || // Original DevTest company
-          company.id === 208 || // DevTest2 company (Important!)
-          (company.name && company.name.toLowerCase().includes('devtest')) ||
-          (company.name && company.name.toLowerCase().includes('test'));
-          
-        if (isTestCompany) {
-          console.log(`[KYBSuccessModal] ⚠️ TEST COMPANY DETECTED: ${company.id} (${company.name})`);
-        }
+        // No special case checks - just make it work for EVERY company
+        // The most direct and reliable approach for truly instant updates
+        console.log('[KYBSuccessModal] ⚡ INSTANT UPDATE: Force adding file-vault tab to company', company.id);
         
-        // Either the company doesn't have file-vault tab or it's a test company (force refresh for test companies)
-        if (!company.available_tabs?.includes('file-vault') || isTestCompany) {
-          console.log('[KYBSuccessModal] 🔄 Proactively adding file-vault tab to cache');
-          const updatedCompany = {
-            ...company,
-            available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault']
-          };
-          
-          // Update the cache immediately for instant UI update
-          queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-          
-          // APPROACH 2: Enhanced direct API call with retry logic
-          // This makes a direct API call to force unlock file vault on the server
-          const forcedUnlockFileVault = async () => {
-            try {
-              console.log('[KYBSuccessModal] 🔐 Making direct API call to force unlock file vault');
-              
-              // Make the API call with timeout to prevent hanging
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 5000);
-              
-              // CRITICAL FIX: For test companies, try both their common IDs to ensure we update both
-              // This handles cases where the company ID in the database is different from what's in the UI
-              const companyIdsToUnlock = [];
-              
-              // Always add the current company ID first
-              companyIdsToUnlock.push(company.id);
-              
-              // For test companies, also try their potential other IDs
-              if (isTestCompany) {
-                // If this is DevTest (ID 207), also try DevTest2 (ID 208)
-                if (company.id === 207) {
-                  companyIdsToUnlock.push(208);
-                  console.log(`[KYBSuccessModal] 🔄 Adding DevTest2 (208) for DevTest company (${company.id})`);
-                } 
-                // If this is DevTest2 (ID 208), also try DevTest (ID 207)
-                else if (company.id === 208) {
-                  companyIdsToUnlock.push(207);
-                  console.log(`[KYBSuccessModal] 🔄 Adding DevTest (207) for DevTest2 company (${company.id})`);
-                }
-              }
-              
-              console.log(`[KYBSuccessModal] 🔐 Will attempt to unlock company IDs: ${companyIdsToUnlock.join(', ')}`);
-              
-              // Call API for the main company ID
-              const response = await fetch(`/api/companies/${company.id}/unlock-file-vault`, {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Cache-Control': 'no-cache',
-                  'Pragma': 'no-cache'
-                },
-                signal: controller.signal
-              });
-              
-              clearTimeout(timeoutId);
-              
-              // If this is a test company with multiple IDs, call API for other IDs too
-              // but don't wait for the response to avoid blocking the UI
-              if (companyIdsToUnlock.length > 1) {
-                for (let i = 1; i < companyIdsToUnlock.length; i++) {
-                  const otherCompanyId = companyIdsToUnlock[i];
-                  console.log(`[KYBSuccessModal] 🔄 Also unlocking company ID ${otherCompanyId}`);
-                  
-                  // Fire and forget - don't await
-                  fetch(`/api/companies/${otherCompanyId}/unlock-file-vault`, {
-                    method: 'POST',
-                    headers: { 
-                      'Content-Type': 'application/json',
-                      'Cache-Control': 'no-cache',
-                      'Pragma': 'no-cache'
-                    }
-                  }).then(resp => {
-                    console.log(`[KYBSuccessModal] Additional unlock for company ${otherCompanyId}: ${resp.ok ? 'success' : 'failed'}`);
-                  }).catch(err => {
-                    console.error(`[KYBSuccessModal] Failed to unlock company ${otherCompanyId}:`, err);
-                  });
-                }
-              }
-              
-              if (response.ok) {
-                const result = await response.json();
-                console.log('[KYBSuccessModal] ✅ Successfully forced file vault unlock:', result);
-                
-                // CRITICAL FIX: After successful API call, we need to force ReactQuery to update the cache
-                // This ensures the sidebar will show the new tabs immediately
-                console.log('[KYBSuccessModal] 💥 CRITICAL: Forcefully updating client state with new tabs');
-                
-                // Update the cache with the new tabs from the API response
-                const updatedCompany = {
-                  ...company,
-                  available_tabs: result.availableTabs || [...(company.available_tabs || ['task-center']), 'file-vault']
-                };
-                
-                // Force the cache update to trigger UI refresh
-                queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-                
-                // Also forcefully invalidate and refetch immediately
-                queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-                queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-              } else {
-                console.error('[KYBSuccessModal] ❌ Failed to force unlock file vault:', response.statusText);
-                
-                // Fall back to optimistic update if API call fails
-                console.log('[KYBSuccessModal] 💥 API failed, falling back to optimistic update');
-                
-                // Update the cache with optimistic data
-                const updatedCompany = {
-                  ...company,
-                  available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault']
-                };
-                
-                // Set the optimistic data
-                queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-              }
-            } catch (error) {
-              console.error('[KYBSuccessModal] ❌ Error in direct file vault unlock:', error);
-              
-              // Fall back to optimistic update if API call fails
-              console.log('[KYBSuccessModal] 💥 API call error, falling back to optimistic update');
-              
-              // Update the cache with optimistic data
-              const updatedCompany = {
-                ...company,
-                available_tabs: [...(company.available_tabs || ['task-center']), 'file-vault'] 
-              };
-              
-              // Set the optimistic data
-              queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-            }
-          };
-          
-          // Execute the forced unlock immediately
-          forcedUnlockFileVault();
-        }
+        // Create updated company data with file-vault tab
+        const updatedCompany = {
+          ...company,
+          available_tabs: [...new Set([...(company.available_tabs || ['task-center']), 'file-vault'])]
+        };
+        
+        // INSTANT UI UPDATE: Update the cache immediately to show tab right away
+        queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+        
+        // Fire-and-forget the server update (don't wait for response)
+        fetch(`/api/companies/${company.id}/unlock-file-vault`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'}
+        }).catch(() => {/* Ignore errors - the UI is already updated */});
+        
+        // Force sidebar to update by dispatching a custom event
+        window.dispatchEvent(new CustomEvent('force-sidebar-update'));
       }
-      
-      // APPROACH 3: Invalidate and refetch company data with high priority
-      console.log('[KYBSuccessModal] 🔄 Invalidating and refetching company data');
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/companies/current'],
-        refetchType: 'all' // Force all queries to refetch, including inactive ones
-      });
-      
-      // Force immediate refetch with high priority
-      queryClient.refetchQueries({ 
-        queryKey: ['/api/companies/current'],
-        exact: true,
-        type: 'all' // Refetch all queries including inactive
-      });
-      
-      // APPROACH 4: Scheduled refetches to ensure data is eventually consistent
-      // Add delayed refetches to catch any updates that might have been missed
-      const delayTimes = [500, 1500, 3000]; // 0.5s, 1.5s, 3s delays
-      
-      delayTimes.forEach(delay => {
-        setTimeout(() => {
-          console.log(`[KYBSuccessModal] 🔄 Delayed refetch (${delay}ms) of company data`);
-          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-          queryClient.refetchQueries({ 
-            queryKey: ['/api/companies/current'],
-            exact: true
-          });
-        }, delay);
-      });
     }
   }, [open, queryClient]);
 
