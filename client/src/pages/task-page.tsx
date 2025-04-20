@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { UniversalForm } from "@/components/forms/UniversalForm";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
@@ -22,6 +22,8 @@ import { fireEnhancedConfetti, fireSuperConfetti } from '@/utils/confetti';
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
+import { wsService } from "@/lib/websocket";
+import getLogger from "@/utils/logger";
 
 interface TaskPageProps {
   params: {
@@ -65,6 +67,8 @@ type TaskContentType = 'kyb' | 'card' | 'security' | 'unknown';
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const logger = getLogger('TaskPage');
   
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -84,6 +88,64 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Fetch the specific task directly from the server to always get fresh data
   const taskId = Number(params.taskSlug);
+  
+  // Track WebSocket subscription
+  const wsUnsubscribeRef = useRef<(() => void) | null>(null);
+  
+  // Set up WebSocket listener for task updates
+  useEffect(() => {
+    if (taskId) {
+      logger.info(`Setting up WebSocket listeners for task ${taskId}`);
+
+      // Listen for submission status updates
+      wsService.subscribe('submission_status', (data: any) => {
+        // Only process updates for the current task
+        if (data.taskId === taskId) {
+          logger.info(`Received submission_status update for task ${taskId}:`, { status: data.status });
+          
+          if (data.status === 'submitted') {
+            // Force refresh the task data
+            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+            
+            // Also update local state
+            setIsSubmitted(true);
+            
+            // Log the cache invalidation
+            logger.info(`Invalidated task queries after submission for task ${taskId}`);
+          }
+        }
+      }).then(unsubscribe => {
+        wsUnsubscribeRef.current = unsubscribe;
+      });
+      
+      // Also listen for general task updates
+      wsService.subscribe('task_update', (data: any) => {
+        // Only process updates for the current task
+        if (data.id === taskId) {
+          logger.info(`Received task_update for task ${taskId}:`, { status: data.status });
+          
+          // Force refresh the task data
+          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+          
+          // Update local state when the status changes to submitted
+          if (data.status === 'submitted') {
+            setIsSubmitted(true);
+          }
+        }
+      }).catch(error => {
+        logger.error('Failed to subscribe to task_update events:', error);
+      });
+    }
+    
+    // Clean up subscriptions
+    return () => {
+      if (wsUnsubscribeRef.current) {
+        wsUnsubscribeRef.current();
+        wsUnsubscribeRef.current = null;
+      }
+    };
+  }, [taskId, queryClient]);
   
   const { data: task, isLoading, error, refetch } = useQuery<Task>({
     queryKey: [`/api/tasks/${taskId}`],
@@ -323,6 +385,21 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                     setIsSubmitted(true);
                     setShowSuccessModal(true);
                     
+                    // Force invalidate the task data cache after successful submission
+                    logger.info(`Form submission successful, invalidating task cache for task ${task.id}`);
+                    queryClient.invalidateQueries({ queryKey: [`/api/tasks/${task.id}`] });
+                    queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+                    
+                    // Manually emit a WebSocket event to ensure all clients are notified
+                    wsService.emit('submission_status', {
+                      taskId: task.id,
+                      status: 'submitted',
+                      timestamp: Date.now(),
+                      source: 'client-emit'
+                    }).catch(error => {
+                      logger.error('Failed to emit WebSocket submission status:', error);
+                    });
+                    
                     // Don't show success toast here - we'll only show the modal
                   } else {
                     // This shouldn't happen if we validate in the previous then(),
@@ -432,6 +509,21 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                       // Update state for success modal
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
+                      
+                      // Force invalidate the task data cache after successful submission
+                      logger.info(`Security form submission successful, invalidating task cache for task ${task.id}`);
+                      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${task.id}`] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+                      
+                      // Manually emit a WebSocket event to ensure all clients are notified
+                      wsService.emit('submission_status', {
+                        taskId: task.id,
+                        status: 'submitted',
+                        timestamp: Date.now(),
+                        source: 'client-emit'
+                      }).catch(error => {
+                        logger.error('Failed to emit WebSocket submission status:', error);
+                      });
                       
                       // Don't show success toast - we'll only show the modal
                     } else {
@@ -548,6 +640,21 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                             setFileId(result.fileId);
                             setIsSubmitted(true);
                             setShowSuccessModal(true);
+                            
+                            // Force invalidate the task data cache after successful submission
+                            logger.info(`CARD form submission successful, invalidating task cache for task ${task.id}`);
+                            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${task.id}`] });
+                            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+                            
+                            // Manually emit a WebSocket event to ensure all clients are notified
+                            wsService.emit('submission_status', {
+                              taskId: task.id,
+                              status: 'submitted',
+                              timestamp: Date.now(),
+                              source: 'client-emit'
+                            }).catch(error => {
+                              logger.error('Failed to emit WebSocket submission status:', error);
+                            });
                             
                             // Don't show success toast - we'll only show the modal
                             
