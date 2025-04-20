@@ -434,9 +434,20 @@ class WebSocketService {
               // 3. Force immediate refetch of critical paths
               
               // Reset all company and tab related data
+              console.log(`[WebSocket] 🧨 CRITICAL: Complete cache reset for company ${updatedCompanyId}`);
+                           
+              // First, remove all company queries from the cache
               queryClient.removeQueries({ queryKey: ['/api/companies'] });
               queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
               queryClient.removeQueries({ queryKey: ['/api/companies', String(updatedCompanyId)] });
+              
+              // Now, remove additional related queries that might reference company data
+              queryClient.removeQueries({ queryKey: ['/api/dashboard'] });
+              queryClient.removeQueries({ queryKey: ['/api/tasks'] });
+              
+              // Most extreme: remove ALL queries (in case any other endpoints cache company data)
+              console.log(`[WebSocket] 💥 Emergency: Removing ALL queries from cache`);
+              queryClient.removeQueries();
               
               // Also clear tabs and any related state
               queryClient.removeQueries({ queryKey: ['/api/tabs'] });
