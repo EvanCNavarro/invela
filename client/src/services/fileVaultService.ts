@@ -108,7 +108,8 @@ async function fallbackEnableFileVault(companyId: number) {
     console.error('[FileVaultService] Fallback method error:', error);
     
     // Last resort - directly modify cache
-    directlyAddFileVaultTab();
+    // CRITICAL FIX: Pass the companyId parameter to ensure the correct company is updated
+    directlyAddFileVaultTab(companyId);
     return { success: true, message: 'File vault enabled via cache', source: 'direct-cache' };
   }
 }
