@@ -65,6 +65,7 @@ export class EnhancedKybFormService implements FormServiceInterface {
   private saveProgressTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSavedData: string = '';
   private logger = getLogger('Enhanced KYB Service');
+  private debugMode = process.env.NODE_ENV === 'development';
   
   private static fieldsCache: Record<number, KybField[]> = {};
   
