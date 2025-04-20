@@ -1453,118 +1453,81 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     if (kybFormFileId) {
       console.log(`[SERVER DEBUG] Found KYB form file ID ${kybFormFileId} in task metadata`);
       
-      // If we have very few fields (likely a data issue) AND the task is submitted,
-      // try to recover the data from the CSV file
-      const shouldLoadFromCsv = Object.keys(formData).length < 5 && 
-                                (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate);
-                                
-      if (shouldLoadFromCsv) {
-        console.log(`[SERVER DEBUG] Only ${Object.keys(formData).length} fields found in database, attempting to load from CSV file`);
+      // First, check if the file belongs to the same company as the task to prevent cross-company data leakage
+      try {
+        // Look up the file
+        const [file] = await db.select()
+          .from(files)
+          .where(eq(files.id, kybFormFileId));
         
-        try {
-          const fileData = await loadFormDataFromCsv(kybFormFileId);
+        // CRITICAL SECURITY CHECK: Verify file belongs to same company as task
+        if (!file) {
+          console.log(`[SERVER DEBUG] File with ID ${kybFormFileId} not found in database`);
+        } 
+        else if (file.company_id !== task.company_id) {
+          // This is a security issue - file belongs to different company than the task
+          console.error(`[SERVER SECURITY] POTENTIAL DATA LEAK PREVENTED: File ${kybFormFileId} belongs to company ${file.company_id} but task ${taskId} belongs to company ${task.company_id}`);
           
-          if (fileData && fileData.success) {
-            console.log(`[SERVER DEBUG] Successfully loaded ${Object.keys(fileData.formData).length} fields from CSV file`);
-            
-            // Merge the CSV data into our form data
-            Object.entries(fileData.formData).forEach(([key, value]) => {
-              if (value !== null && value !== undefined) {
-                if (formData[key] !== undefined && formData[key] !== value) {
-                  console.log(`[SERVER DEBUG] Data mismatch for field ${key}:`);
-                  console.log(`[SERVER DEBUG] - database: "${formData[key]}"`);
-                  console.log(`[SERVER DEBUG] - CSV file: "${value}"`);
-                  console.log(`[SERVER DEBUG] Using CSV file value as it's likely more complete`);
-                }
-                formData[key] = value;
-              }
+          try {
+            // Record security incident in audit logs
+            await db.insert(securityAuditLogs).values({
+              type: 'SECURITY_ALERT',
+              user_id: req.user?.id || null,
+              company_id: task.company_id,
+              details: JSON.stringify({
+                event: 'cross_company_data_access_prevented',
+                fileId: kybFormFileId,
+                fileCompanyId: file.company_id,
+                taskId: taskId,
+                taskCompanyId: task.company_id,
+                timestamp: new Date().toISOString()
+              }),
+              created_at: new Date()
             });
+          } catch (auditError) {
+            console.error('[SERVER SECURITY] Failed to log security audit:', auditError);
+          }
+        }
+        else if (Object.keys(formData).length < 5 && 
+                (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate)) {
+          // Only proceed with file loading if security check passed
+          console.log(`[SERVER DEBUG] Only ${Object.keys(formData).length} fields found in database, attempting to load from CSV file`);
+          
+          try {
+            // Load data from CSV file
+            const csvData = await loadFormDataFromCsv(kybFormFileId);
             
-            // If we successfully loaded data from CSV, also update the database
-            // This ensures future requests won't need to rely on CSV recovery
-            if (Object.keys(fileData.formData).length > 5) {
-              console.log(`[SERVER DEBUG] Updating database with recovered form data from CSV file`);
+            if (csvData && csvData.success) {
+              console.log(`[SERVER DEBUG] Successfully loaded ${Object.keys(csvData.formData).length} fields from CSV file`);
               
-              try {
-                // Get all KYB fields
-                const fields = await db.select().from(kybFields);
-                const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
-                
-                // Update responses in the database
-                for (const [fieldKey, value] of Object.entries(fileData.formData)) {
-                  const fieldId = fieldMap.get(fieldKey);
-                  
-                  if (!fieldId) {
-                    console.log(`[SERVER DEBUG] Field not found in database: ${fieldKey}`);
-                    continue;
-                  }
-                  
-                  try {
-                    // First check if this response already exists
-                    const [existingResponse] = await db.select()
-                      .from(kybResponses)
-                      .where(
-                        and(
-                          eq(kybResponses.task_id, parseInt(taskId)),
-                          eq(kybResponses.field_id, fieldId)
-                        )
-                      );
-                      
-                    if (existingResponse) {
-                      if (existingResponse.response_value !== value) {
-                        // Update the existing response
-                        await db.update(kybResponses)
-                          .set({
-                            response_value: value as string,
-                            status: value ? 'COMPLETE' : 'EMPTY',
-                            version: existingResponse.version + 1,
-                            updated_at: new Date()
-                          })
-                          .where(eq(kybResponses.id, existingResponse.id));
-                          
-                        console.log(`[SERVER DEBUG] Updated response for field ${fieldKey} with recovered value from CSV`);
-                      }
-                    } else {
-                      // Insert a new response
-                      await db.insert(kybResponses)
-                        .values({
-                          task_id: parseInt(taskId),
-                          field_id: fieldId,
-                          response_value: value as string,
-                          status: value ? 'COMPLETE' : 'EMPTY',
-                          version: 1,
-                          created_at: new Date(),
-                          updated_at: new Date()
-                        });
-                        
-                      console.log(`[SERVER DEBUG] Inserted new response for field ${fieldKey} with recovered value from CSV`);
-                    }
-                  } catch (error) {
-                    console.error(`[SERVER DEBUG] Error updating/inserting response for field ${fieldKey}:`, error);
-                  }
+              // Update form data with CSV values
+              Object.entries(csvData.formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  formData[key] = value;
                 }
+              });
+              
+              // Update database with recovered data
+              if (Object.keys(csvData.formData).length > 5) {
+                console.log(`[SERVER DEBUG] Updating database with recovered form data from CSV file`);
                 
-                // Also update the task's savedFormData field
-                const taskUpdate: any = {
-                  savedFormData: fileData.formData,
-                  updated_at: new Date()
-                };
-                
+                // Update the task's savedFormData field
                 await db.update(tasks)
-                  .set(taskUpdate)
+                  .set({ 
+                    savedFormData: csvData.formData,
+                    updated_at: new Date()
+                  })
                   .where(eq(tasks.id, parseInt(taskId)));
                   
                 console.log(`[SERVER DEBUG] Successfully updated task.savedFormData with recovered CSV data`);
-              } catch (dbUpdateError) {
-                console.error(`[SERVER DEBUG] Error updating database with recovered CSV data:`, dbUpdateError);
               }
             }
-          } else {
-            console.log(`[SERVER DEBUG] Failed to load data from CSV file`);
+          } catch (csvError) {
+            console.error(`[SERVER DEBUG] Error loading data from CSV file:`, csvError);
           }
-        } catch (csvError) {
-          console.error(`[SERVER DEBUG] Error loading data from CSV file:`, csvError);
         }
+      } catch (fileCheckError) {
+        console.error(`[SERVER DEBUG] Error checking file ownership:`, fileCheckError);
       }
     } else {
       console.log('[SERVER DEBUG] No KYB form file ID found in task metadata');
