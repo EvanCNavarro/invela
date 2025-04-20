@@ -60,6 +60,23 @@ export function Sidebar({
     console.log('[Sidebar] Available tabs updated:', availableTabs);
   }, [availableTabs]);
   
+  // Add event listener for forced sidebar updates (for truly INSTANT updates)
+  useEffect(() => {
+    const handleForcedUpdate = () => {
+      console.log('[Sidebar] ⚡ INSTANT UPDATE triggered via force-sidebar-update event');
+      // Force a re-render by updating state
+      setTaskCount(prev => prev); // This triggers re-render without changing the actual count
+    };
+    
+    // Add event listener
+    window.addEventListener('force-sidebar-update', handleForcedUpdate);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('force-sidebar-update', handleForcedUpdate);
+    };
+  }, []);
+  
   // Update taskCount when tasks data changes
   useEffect(() => {
     if (!isPlayground && Array.isArray(tasks)) {
