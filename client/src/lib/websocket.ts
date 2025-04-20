@@ -25,11 +25,27 @@ class WebSocketService {
   private pongTimeout: NodeJS.Timeout | null = null;
   private connectionId: string = '';
   private isInitialized: boolean = false;
+  private connectionStatusListeners: Set<(status: 'connected' | 'disconnected' | 'connecting' | 'error') => void> = new Set();
 
   constructor() {
     this.connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     // Don't connect immediately - lazy initialize only when actually needed
     this.isInitialized = false;
+    
+    // Monitor page visibility changes to better handle reconnection
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          // Page became visible again, check connection
+          if (this.isInitialized && (!this.socket || this.socket.readyState !== WebSocket.OPEN)) {
+            logger.info('Page visible, reconnecting WebSocket');
+            this.connect().catch(err => {
+              logger.error('Reconnection error on visibility change:', err);
+            });
+          }
+        }
+      });
+    }
   }
 
   private getWebSocketUrl(): string {
@@ -71,6 +87,10 @@ class WebSocketService {
 
     // Mark as initialized
     this.isInitialized = true;
+    
+    // Update connection status to 'connecting'
+    this.updateConnectionStatus('connecting');
+    
     logger.info('Service initializing connection now:', {
       connectionId: this.connectionId,
       timestamp: new Date().toISOString()
@@ -109,6 +129,10 @@ class WebSocketService {
           this.reconnectAttempts = 0;
           this.reconnectTimeout = 1000;
           this.startHeartbeat();
+          
+          // Update connection status to connected
+          this.updateConnectionStatus('connected');
+          
           if (this.connectionResolve) {
             this.connectionResolve();
             this.connectionResolve = null;
@@ -157,6 +181,9 @@ class WebSocketService {
           clearTimeout(connectionTimeout);
           this.cleanup();
           
+          // Update connection status to disconnected
+          this.updateConnectionStatus('disconnected');
+          
           // Notify subscribers that the connection is closed
           this.handleMessage('connection_closed', {
             code: event.code,
@@ -176,6 +203,9 @@ class WebSocketService {
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
           });
+          
+          // Update connection status to error
+          this.updateConnectionStatus('error');
           
           // We don't close the socket here, but do notify about the error
           this.handleMessage('connection_error', {
@@ -261,7 +291,41 @@ class WebSocketService {
     }
   }
 
+  // Methods to monitor connection status
+  public onConnectionStatusChange(callback: (status: 'connected' | 'disconnected' | 'connecting' | 'error') => void): () => void {
+    this.connectionStatusListeners.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.connectionStatusListeners.delete(callback);
+    };
+  }
+  
+  private updateConnectionStatus(status: 'connected' | 'disconnected' | 'connecting' | 'error'): void {
+    // Notify all listeners of the new status
+    this.connectionStatusListeners.forEach(listener => {
+      try {
+        listener(status);
+      } catch (error) {
+        logger.error('Error in connection status listener:', error);
+      }
+    });
+    
+    // Also trigger a message event for components that listen via subscribe
+    this.handleMessage('connection_status', { status, timestamp: new Date().toISOString() });
+  }
+
   private handleMessage(type: string, data: any) {
+    // Update connection status based on message type
+    if (type === 'connection_established') {
+      this.updateConnectionStatus('connected');
+    } else if (type === 'connection_closed') {
+      this.updateConnectionStatus('disconnected');
+    } else if (type === 'connection_error') {
+      this.updateConnectionStatus('error');
+    }
+    
+    // Process message handlers
     const handlers = this.messageHandlers.get(type);
     if (handlers) {
       handlers.forEach(handler => {
