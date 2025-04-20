@@ -1657,10 +1657,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             // Import queryClient dynamically to avoid circular dependencies
             const { queryClient } = await import('@/lib/queryClient');
             
-            // Invalidate the company data to force a refresh
+            // Invalidate and FORCE an immediate refetch of company data 
+            // to ensure permissions are updated and file vault is unlocked in UI
             queryClient.invalidateQueries({
               queryKey: ['/api/companies/current'],
-              exact: true
+              exact: true,
+              refetchType: 'active', // Force active queries to refetch immediately
+            });
+            
+            // Explicitly force refetch of company data
+            queryClient.refetchQueries({
+              queryKey: ['/api/companies/current'],
+              exact: true,
+              type: 'active'
             });
             
             // Also invalidate tasks data for good measure
@@ -1759,9 +1768,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         try {
           console.log(`[SUBMIT FLOW] Invalidating company data after status verification warning`);
           const { queryClient } = await import('@/lib/queryClient');
+          // Invalidate and FORCE an immediate refetch of company data 
+          // to ensure permissions are updated and file vault is unlocked in UI
           queryClient.invalidateQueries({
             queryKey: ['/api/companies/current'],
-            exact: true
+            exact: true,
+            refetchType: 'active', // Force active queries to refetch immediately
+          });
+          
+          // Explicitly force refetch of company data
+          queryClient.refetchQueries({
+            queryKey: ['/api/companies/current'],
+            exact: true,
+            type: 'active'
           });
         } catch (refreshError) {
           console.error(`Error refreshing company data:`, refreshError);

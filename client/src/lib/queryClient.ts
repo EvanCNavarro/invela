@@ -153,16 +153,16 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     refetchOnMount: true,
   };
   
-  // Frequently accessed endpoints - much more aggressive caching to dramatically reduce API calls
+  // Frequently accessed endpoints - moderate caching but ensure updates are reflected for company permissions
   if (urlStr.includes('/api/companies/current')) {
     return {
-      refetchInterval: 300000,      // 5 minutes - poll less frequently 
-      refetchOnWindowFocus: false,  // Don't fetch when tab becomes active
-      staleTime: 240000,            // 4 minutes - keep data fresh for much longer
+      refetchInterval: 180000,      // 3 minutes - poll more frequently to catch permission changes
+      refetchOnWindowFocus: true,   // Fetch when tab becomes active to check for updated permissions
+      staleTime: 60000,             // 1 minute - keep data fresh for less time to reflect permission changes
       retry: false,
-      cacheTime: 10 * 60 * 1000,    // 10 minutes - keep in cache longer
-      refetchOnReconnect: false,    // Don't refetch on reconnect
-      refetchOnMount: false,        // Don't refetch on mount
+      cacheTime: 5 * 60 * 1000,     // 5 minutes - shorter cache time
+      refetchOnReconnect: true,     // Refetch on reconnect to ensure permissions are current
+      refetchOnMount: true,         // Refetch on mount to ensure permissions are current
     };
   }
   
