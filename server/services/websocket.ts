@@ -283,12 +283,17 @@ export function broadcastSubmissionStatus(taskId: number, status: string) {
   console.log(`[WebSocket] Broadcasting submission status for task ${taskId}:`, {
     status,
     timestamp: new Date().toISOString(),
-    openClients: openClientCount
+    openClients: openClientCount,
+    clientsDetail: Array.from(wss.clients).map(c => ({ 
+      readyState: c.readyState, 
+      readyStateText: ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'][c.readyState] || 'UNKNOWN' 
+    }))
   });
 
   // If no clients are connected, log a warning
   if (openClientCount === 0) {
     console.warn('[WebSocket] No connected clients to receive submission status update');
+    console.log('[WebSocket] Server will attempt broadcast anyway in case clients reconnect');
   }
 
   // Message to send
@@ -324,21 +329,53 @@ export function broadcastSubmissionStatus(taskId: number, status: string) {
     totalClients: openClientCount
   });
   
-  // Try once more after a short delay if any sends failed
-  if (successCount < openClientCount) {
+  // Set up multiple retries to ensure message delivery
+  // This is critical for ensuring the form submission confirmation reaches clients
+  const maxRetries = 5; // Try up to 5 times
+  for (let i = 1; i <= maxRetries; i++) {
     setTimeout(() => {
       let retryCount = 0;
-      wss.clients.forEach((client) => {
+      
+      // Count current open clients
+      let currentOpenClients = 0;
+      wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
-          try {
-            client.send(message);
-            retryCount++;
-          } catch (error) {
-            console.error('[WebSocket] Error on retry broadcast:', error);
-          }
+          currentOpenClients++;
         }
       });
-      console.log(`[WebSocket] Retry broadcast for task ${taskId} sent to ${retryCount} clients`);
-    }, 500);
+      
+      console.log(`[WebSocket] Retry #${i} for task ${taskId}:`, {
+        openClients: currentOpenClients,
+        timestamp: new Date().toISOString()
+      });
+      
+      // If there are open clients now, send to them
+      if (currentOpenClients > 0) {
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            try {
+              client.send(message);
+              retryCount++;
+            } catch (error) {
+              console.error(`[WebSocket] Error on retry #${i} broadcast:`, error);
+            }
+          }
+        });
+        
+        console.log(`[WebSocket] Retry #${i} broadcast for task ${taskId} sent to ${retryCount} clients`);
+      } else {
+        console.log(`[WebSocket] Retry #${i}: No open clients to receive message`);
+      }
+    }, 500 * i); // Stagger retries: 500ms, 1000ms, 1500ms, etc.
   }
+  
+  // Also use the generic broadcast method as a fallback
+  setTimeout(() => {
+    broadcastMessage('task_status_update', { 
+      taskId, 
+      status, 
+      source: 'submission_status_fallback',
+      timestamp: Date.now()
+    });
+  }, 1000);
 }
