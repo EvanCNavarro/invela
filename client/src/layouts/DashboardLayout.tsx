@@ -120,115 +120,30 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const isRouteAccessible = () => {
     if (isLoadingCompany || !currentCompany) return true; // Wait for company data
     
-    // CRITICAL FIX: Ensure we always have available_tabs as an array
-    // and special case for file-vault tabs to help with the bug
-    let availableTabs = currentCompany.available_tabs || ['task-center'];
-    
-    // Special handling for DevTest companies - always ensure they have file-vault tab visible
-    // This is a critical fix to ensure the tab is visible even if the database update fails
-    const isDevTestCompany = 
-      currentCompany.id === 207 || 
-      currentCompany.id === 208 || 
-      currentCompany.id === 209 || 
-      (currentCompany.name && currentCompany.name.toLowerCase().includes('devtest'));
-      
-    if (isDevTestCompany && !availableTabs.includes('file-vault')) {
-      // For DevTest companies, always add file-vault tab to the list
-      console.log(`[DashboardLayout] 🛠️ SPECIAL CASE: Adding file-vault tab for DevTest company ${currentCompany.id}`);
-      availableTabs = [...availableTabs, 'file-vault'];
-      
-      // Update the cache to ensure consistent UI
-      queryClient.setQueryData(['/api/companies/current'], {
-        ...currentCompany,
-        available_tabs: availableTabs
-      });
-    }
-    
+    // Ensure we always have available_tabs as an array
+    const availableTabs = currentCompany.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
     
-    // Special handling for file-vault tab - CRITICAL fix for file vault tab not showing
-    // Force a cache refresh if we get company data without file-vault
-    if (currentTab === 'file-vault' && !availableTabs.includes('file-vault')) {
-      console.log('[DashboardLayout] 🚨 CRITICAL: User requested file-vault but not in available tabs, forcing refresh');
-      setTimeout(() => {
-        queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
-        queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-      }, 100);
-    }
+    // Log current tab and available tabs for debugging
+    console.log('[DashboardLayout] Checking route access:', {
+      currentTab,
+      availableTabs,
+      isLoadingCompany
+    });
 
-    // Add extra debug logging when checking file-vault access
-    if (currentTab === 'file-vault') {
-      console.log('[DashboardLayout] 🔍 CHECKING FILE VAULT ACCESS:', {
-        currentTab,
-        availableTabs,
-        hasFileVault: availableTabs.includes('file-vault'),
-        companyId: currentCompany.id,
-        companyName: currentCompany.name
-      });
-    } else {
-      console.log('[DashboardLayout] Checking route access:', {
-        currentTab,
-        availableTabs,
-        isLoadingCompany
-      });
-    }
-
-    // Enhanced validation that always allows file-vault in certain debugging conditions
-    // CRITICAL: We're using this to avoid "invalid tab" redirects while we debug
-    if (currentTab === 'file-vault') {
-      // Check if this is any of our test companies (DevTest, DevTest2, etc.)
-      const companyName = currentCompany.name || '';
-      const isDevTestCompany = 
-        currentCompany.id === 207 || // Original DevTest company 
-        currentCompany.id === 208 || // DevTest2 company
-        companyName.toLowerCase().includes('devtest') || // Any DevTest-named company
-        companyName.toLowerCase().includes('test'); // Any testing company
-        
-      if (isDevTestCompany && !availableTabs.includes('file-vault')) {
-        console.log(`[DashboardLayout] ⚠️ Test company detected (ID: ${currentCompany.id}, Name: ${companyName}), forcing file-vault access`);
-        
-        // Try to update the company data in-memory to include the file-vault tab
-        const updatedCompany = {
-          ...currentCompany,
-          available_tabs: [...availableTabs, 'file-vault']
-        };
-        queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-        
-        // Always return true for file-vault tab in test companies
-        return true;
-      }
+    // Check if the current tab is accessible based on available tabs
+    const isAccessible = currentTab === 'task-center' || availableTabs.includes(currentTab);
+    
+    // If trying to access file-vault but it's not available, refresh company data
+    // This handles cases where the database was updated but the UI hasn't caught up
+    if (currentTab === 'file-vault' && !isAccessible) {
+      console.log('[DashboardLayout] User requested file-vault but not in available tabs, refreshing data');
       
-      // Special emergency handling for recently submitted KYB forms
-      // This forces file-vault access after a successful KYB form submission
-      // even if the server hasn't updated the tabs yet
-      try {
-        // Check task data for recent submissions (any company)
-        if (tasks && tasks.length > 0) {
-          const recentSubmissions = tasks.filter(task => 
-            (task.task_type === 'kyb' || task.task_type === 'company_kyb') && 
-            (task.status === 'submitted' || task.status === 'completed') &&
-            task.company_id === currentCompany.id
-          );
-          
-          if (recentSubmissions.length > 0) {
-            console.log(`[DashboardLayout] 🔑 Found ${recentSubmissions.length} completed KYB submissions for company ${currentCompany.id}, forcing file-vault access`);
-            
-            // Update company data in-memory to include file-vault tab
-            const updatedCompany = {
-              ...currentCompany,
-              available_tabs: [...availableTabs, 'file-vault']
-            };
-            queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-            
-            return true;
-          }
-        }
-      } catch (error) {
-        console.error('[DashboardLayout] Error checking for recent KYB submissions:', error);
-      }
+      // Refresh company data to get latest tab permissions
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
     }
-
-    return currentTab === 'task-center' || availableTabs.includes(currentTab);
+    
+    return isAccessible;
   };
 
   useEffect(() => {

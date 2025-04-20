@@ -1,29 +1,21 @@
 /**
- * FileVaultService - Reliable file vault tab enablement
+ * FileVaultService - File vault tab enablement
  * 
- * This service provides multiple redundant methods to ensure the file vault tab
- * becomes visible after a KYB form submission, handling edge cases where:
- * 
- * 1. WebSocket connections fail (common in secure environments)
- * 2. Cache invalidation doesn't properly update UI components
- * 3. Server-side database updates happen but don't propagate to the UI
- * 
- * The service uses a multi-layered approach:
- * - Direct API calls to enable the file vault tab
- * - Cache manipulation to force tab visibility
- * - Multiple refresh strategies with error handling
+ * This service provides methods to enable the file vault tab for companies
+ * after a KYB form submission using proper API calls and caching strategies.
  */
 
 import { queryClient } from "@/lib/queryClient";
 
 /**
- * Enable file vault tab via direct API call
- * This is the most reliable method as it directly updates the database
+ * Enable file vault tab via API call
+ * This updates the database and then refreshes the UI to show the tab
  */
 export async function enableFileVault(companyId: number) {
   try {
     console.log(`[FileVaultService] Enabling file vault for company ${companyId}`);
     
+    // Make the API call to enable file vault
     const response = await fetch(`/api/companies/${companyId}/unlock-file-vault`, {
       method: 'POST',
       headers: {
@@ -32,214 +24,92 @@ export async function enableFileVault(companyId: number) {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[FileVaultService] Error enabling file vault: ${errorText}`);
-      
-      // Try fallback direct method
-      return await fallbackEnableFileVault(companyId);
+      throw new Error(`Failed to enable file vault: ${response.statusText}`);
     }
     
-    const result = await response.json();
-    console.log(`[FileVaultService] File vault enabled successfully:`, result);
+    // Parse the response
+    const data = await response.json();
+    console.log('[FileVaultService] File vault enabled successfully:', data);
     
-    // Force invalidate the company cache
+    // Update the company data in the cache if available
+    if (data.availableTabs) {
+      updateCachedCompanyTabs(companyId, data.availableTabs);
+    }
+    
+    // Invalidate and refresh the company data to ensure consistency
     await refreshCompanyData();
     
-    return result;
+    return { success: true, ...data };
   } catch (error) {
     console.error('[FileVaultService] Error enabling file vault:', error);
     
-    // Try fallback direct method
-    return await fallbackEnableFileVault(companyId);
-  }
-}
-
-/**
- * Fallback method using the emergency endpoint
- */
-async function fallbackEnableFileVault(companyId: number) {
-  try {
-    console.log(`[FileVaultService] Using fallback method for company ${companyId}`);
-    
-    // Use the emergency endpoint which is more reliable
-    const response = await fetch(`/api/emergency/unlock-file-vault/${companyId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[FileVaultService] Emergency endpoint failed: ${errorText}`);
-      
-      // Try the general refresh endpoint as a second fallback
-      const refreshResponse = await fetch(`/api/refresh-file-vault`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!refreshResponse.ok) {
-        console.error(`[FileVaultService] All API endpoints failed, using cache method`);
-        // Last resort - directly modify cache
-        directlyAddFileVaultTab(companyId);
-        return { success: true, message: 'File vault enabled via cache', source: 'direct-cache' };
-      }
-      
-      const refreshResult = await refreshResponse.json();
-      console.log(`[FileVaultService] Refresh endpoint succeeded:`, refreshResult);
-      
-      // Force invalidate the company cache
-      await refreshCompanyData();
-      
-      return refreshResult;
-    }
-    
-    const result = await response.json();
-    console.log(`[FileVaultService] Emergency endpoint succeeded:`, result);
-    
-    // Force invalidate the company cache
+    // Always invalidate cache on error to ensure fresh data is fetched
     await refreshCompanyData();
     
-    return result;
-  } catch (error) {
-    console.error('[FileVaultService] Fallback method error:', error);
-    
-    // Last resort - directly modify cache
-    // CRITICAL FIX: Pass the companyId parameter to ensure the correct company is updated
-    directlyAddFileVaultTab(companyId);
-    return { success: true, message: 'File vault enabled via cache', source: 'direct-cache' };
+    throw error;
   }
 }
 
 /**
- * Get the current company data from the cache
+ * Update the cached company data with new available tabs
+ * This updates the cache to immediately reflect tab changes
  */
-async function getCurrentCompany() {
+function updateCachedCompanyTabs(companyId: number, newAvailableTabs: string[]) {
   try {
-    // Get the current company from the cache
+    // Get current company data from cache
     const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
     
-    if (!companyData) {
-      console.warn('[FileVaultService] No company data in cache');
-      return null;
+    // If there's no company data or it's not the right company, don't update
+    if (!companyData || companyData.id !== companyId) {
+      console.log('[FileVaultService] No matching company data in cache to update');
+      return false;
     }
     
-    return companyData;
+    // Create updated company data with new tabs
+    const updatedCompany = {
+      ...companyData,
+      available_tabs: newAvailableTabs
+    };
+    
+    // Update the cache
+    queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+    
+    console.log('[FileVaultService] Cache updated with new available tabs:', newAvailableTabs);
+    
+    // Broadcast a WebSocket-like event so components can react
+    broadcastTabsUpdatedEvent(companyId, newAvailableTabs);
+    
+    return true;
   } catch (error) {
-    console.error('[FileVaultService] Error getting company data:', error);
-    return null;
-  }
-}
-
-/**
- * Directly add the file-vault tab to the company data in the cache
- * This bypasses server communication entirely
- */
-export function directlyAddFileVaultTab(companyId?: number) {
-  try {
-    console.log(`[FileVaultService] Directly adding file-vault tab to cache${companyId ? ` for company ${companyId}` : ''}`);
-    
-    // Get the current company from the cache
-    const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
-    
-    if (!companyData) {
-      console.warn('[FileVaultService] No company data in cache to update');
-      return false;
-    }
-    
-    // Special handling for DevTest (207), DevTest2 (208), and DevTest3 (209) companies
-    // CRITICAL FIX: This ensures file vault access works for the specific test companies
-    const isDevTestCompany = 
-      companyData.id === 207 || 
-      companyData.id === 208 || 
-      companyData.id === 209 || 
-      (companyData.name && companyData.name.toLowerCase().includes('devtest'));
-      
-    if (isDevTestCompany) {
-      console.log(`[FileVaultService] ⚠️ Critical: Special handling for DevTest company ${companyData.id} (${companyData.name})`);
-      
-      // Force file vault tab regardless of companyId parameter
-      const availableTabs = companyData.available_tabs || [];
-      
-      // Create updated company data with file-vault tab
-      const updatedCompany = {
-        ...companyData,
-        available_tabs: availableTabs.includes('file-vault') ? 
-          availableTabs : [...availableTabs, 'file-vault']
-      };
-      
-      // Update the cache immediately
-      queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-      
-      console.log('[FileVaultService] 🔥 Emergency override: DevTest cache updated with file-vault tab');
-      
-      // Also try to update server via emergency endpoint
-      fetch(`/api/emergency/unlock-file-vault/${companyData.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }).catch(e => console.error('[FileVaultService] DevTest emergency endpoint error:', e));
-      
-      // Broadcast custom event to notify UI
-      try {
-        const event = new CustomEvent('file-vault-unlocked', {
-          detail: {
-            companyId: companyData.id,
-            availableTabs: updatedCompany.available_tabs,
-            source: 'devtest-override'
-          }
-        });
-        window.dispatchEvent(event);
-      } catch (eventError) {
-        console.error('[FileVaultService] Error dispatching custom event:', eventError);
-      }
-      
-      return true;
-    }
-    
-    // Check if this is the right company ID if specified
-    if (companyId && companyData.id !== companyId) {
-      console.warn(`[FileVaultService] Cache company ID ${companyData.id} doesn't match target ${companyId}, trying emergency endpoint`);
-      
-      // Try emergency endpoint as fallback
-      fetch(`/api/emergency/unlock-file-vault/${companyId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }).catch(e => console.error('[FileVaultService] Emergency endpoint error:', e));
-      
-      return false;
-    }
-    
-    // Add file-vault to available_tabs if not already present
-    const availableTabs = companyData.available_tabs || [];
-    if (!availableTabs.includes('file-vault')) {
-      console.log('[FileVaultService] Adding file-vault to available tabs in cache');
-      
-      // Create updated company data with file-vault tab
-      const updatedCompany = {
-        ...companyData,
-        available_tabs: [...availableTabs, 'file-vault']
-      };
-      
-      // Update the cache
-      queryClient.setQueryData(['/api/companies/current'], updatedCompany);
-      
-      console.log('[FileVaultService] Cache updated with file-vault tab');
-      return true;
-    } else {
-      console.log('[FileVaultService] file-vault already in available tabs in cache');
-      return false;
-    }
-  } catch (error) {
-    console.error('[FileVaultService] Error directly adding file-vault tab:', error);
+    console.error('[FileVaultService] Error updating cached company tabs:', error);
     return false;
   }
 }
 
 /**
- * Refresh file vault status by checking the current status and forcing an update if needed
+ * Broadcast an event when tabs are updated
+ * This allows components to react to tab changes without refetching
+ */
+function broadcastTabsUpdatedEvent(companyId: number, availableTabs: string[]) {
+  try {
+    const event = new CustomEvent('company-tabs-updated', {
+      detail: {
+        companyId,
+        availableTabs,
+        timestamp: Date.now(),
+        cacheInvalidation: true
+      }
+    });
+    window.dispatchEvent(event);
+    console.log('[FileVaultService] Dispatched company-tabs-updated event');
+  } catch (error) {
+    console.error('[FileVaultService] Error dispatching custom event:', error);
+  }
+}
+
+/**
+ * Refresh file vault status by checking the current status
+ * If needed, enables the file vault
  */
 export async function refreshFileVaultStatus(companyId: number) {
   try {
@@ -253,8 +123,7 @@ export async function refreshFileVaultStatus(companyId: number) {
     });
     
     if (!response.ok) {
-      console.error(`[FileVaultService] Error checking file vault status: ${response.statusText}`);
-      return null;
+      throw new Error(`Failed to check file vault status: ${response.statusText}`);
     }
     
     const data = await response.json();
@@ -270,12 +139,10 @@ export async function refreshFileVaultStatus(companyId: number) {
   } catch (error) {
     console.error('[FileVaultService] Error refreshing file vault status:', error);
     
-    // CRITICAL FIX: If the refresh method fails, fall back to directly adding the tab
-    // This ensures the tab appears even if the API call fails
-    console.log(`[FileVaultService] Falling back to direct tab manipulation for company ${companyId}`);
-    directlyAddFileVaultTab(companyId);
+    // Invalidate cache on error to ensure fresh data is fetched
+    await refreshCompanyData();
     
-    return { isUnlocked: true, message: 'File vault enabled via fallback method' };
+    throw error;
   }
 }
 

@@ -1685,22 +1685,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             } else {
               console.log(`[SUBMIT FLOW] Using companyId ${companyId} to enable file vault tab`);
               
-              // 1. First try with the dedicated FileVaultService which has built-in fallbacks
-              const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
+              // Use the FileVaultService to enable file vault access
+              const { enableFileVault } = await import('@/services/fileVaultService');
               
-              // Handle the main company ID from the task
+              // Enable file vault for the company
               try {
-                console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method for company ${companyId}`);
+                console.log(`[SUBMIT FLOW] Calling enableFileVault() for company ${companyId}`);
                 await enableFileVault(companyId);
-              } catch (enableError) {
-                console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+              } catch (error) {
+                console.error(`[SUBMIT FLOW] Error enabling file vault:`, error);
                 
-                try {
-                  console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method for company ${companyId}`);
-                  directlyAddFileVaultTab(companyId);
-                } catch (directError) {
-                  console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
-                }
+                // Even if this fails, the UI should still update via WebSocket
+                // when the server processes the form submission
               }
               
               // If we detected a different company ID for the current user, also handle that one
@@ -1715,17 +1711,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 }
               }
               
-              // 3. Also refresh as a final safety measure
+              // Ensure we refresh the company data
               try {
-                console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
-                await refreshFileVaultStatus(companyId);
+                console.log(`[SUBMIT FLOW] Refreshing company data to show updated tabs`);
                 
-                // If we're handling two different companies, refresh both
-                if (currentUserCompanyId && currentUserCompanyId !== companyId) {
-                  await refreshFileVaultStatus(currentUserCompanyId);
-                }
+                // Imported in the previous section, so we can use it directly
+                const { queryClient } = await import('@/lib/queryClient');
+                
+                // Invalidate company data to ensure UI is up-to-date
+                queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
               } catch (refreshError) {
-                console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+                console.warn(`[SUBMIT FLOW] Company data refresh failed:`, refreshError);
               }
             }
             
@@ -1902,22 +1898,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           } else {
             console.log(`[SUBMIT FLOW] Using companyId ${companyId} to enable file vault tab`);
             
-            // 1. First try with the dedicated FileVaultService which has built-in fallbacks
-            const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
+            // Use the FileVaultService to enable file vault access
+            const { enableFileVault, refreshFileVaultStatus } = await import('@/services/fileVaultService');
             
-            // Handle the main company ID from the task
+            // Enable file vault for the company
             try {
-              console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method for company ${companyId}`);
+              console.log(`[SUBMIT FLOW] Calling enableFileVault() for company ${companyId}`);
               await enableFileVault(companyId);
-            } catch (enableError) {
-              console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
-              
-              try {
-                console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method for company ${companyId}`);
-                directlyAddFileVaultTab(companyId);
-              } catch (directError) {
-                console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
-              }
+            } catch (error) {
+              console.error(`[SUBMIT FLOW] Error enabling file vault:`, error);
             }
             
             // If we detected a different company ID for the current user, also handle that one
@@ -1926,9 +1915,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               
               try {
                 await enableFileVault(currentUserCompanyId);
-              } catch (enableError) {
-                console.warn(`[SUBMIT FLOW] enableFileVault() failed for user company:`, enableError);
-                directlyAddFileVaultTab(currentUserCompanyId);
+              } catch (error) {
+                console.warn(`[SUBMIT FLOW] Error enabling file vault for user company:`, error);
               }
             }
             
