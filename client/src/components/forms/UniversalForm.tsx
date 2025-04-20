@@ -1707,7 +1707,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   await enableFileVault(currentUserCompanyId);
                 } catch (enableError) {
                   console.warn(`[SUBMIT FLOW] enableFileVault() failed for user company:`, enableError);
-                  directlyAddFileVaultTab(currentUserCompanyId);
+                  // Use optimistic update instead of directlyAddFileVaultTab function
+                  try {
+                    const { queryClient } = await import('@/lib/queryClient');
+                    const currentCompanyData = queryClient.getQueryData<any>(['/api/companies/current']);
+                    if (currentCompanyData && !currentCompanyData.available_tabs?.includes('file-vault')) {
+                      queryClient.setQueryData(['/api/companies/current'], {
+                        ...currentCompanyData,
+                        available_tabs: [...(currentCompanyData.available_tabs || ['task-center']), 'file-vault']
+                      });
+                    }
+                  } catch (err) {
+                    console.error(`[SUBMIT FLOW] Optimistic update failed:`, err);
+                  }
                 }
               }
               
@@ -1787,6 +1799,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Show success modal (centralized in one place)
           console.log(`[SUBMIT FLOW] 13. Showing success modal`);
           logger.info(`SUBMISSION FLOW UI: Showing success modal for task ${taskId}`);
+          
+          // OPTIMIZATION: Immediately update the company data with file-vault tab
+          // This provides an instant UI update without waiting for WebSocket
+          try {
+            const { queryClient } = await import('@/lib/queryClient');
+            const currentCompanyData = queryClient.getQueryData<any>(['/api/companies/current']);
+            
+            if (currentCompanyData && !currentCompanyData.available_tabs?.includes('file-vault')) {
+              console.log(`[SUBMIT FLOW] ⚡ OPTIMISTIC UPDATE: Adding file-vault tab to company data`);
+              
+              // Create a new available_tabs array with file-vault added
+              const updatedTabs = [...(currentCompanyData.available_tabs || ['task-center']), 'file-vault'];
+              
+              // Update the React Query cache with the new tabs
+              queryClient.setQueryData(['/api/companies/current'], {
+                ...currentCompanyData,
+                available_tabs: updatedTabs
+              });
+              
+              console.log(`[SUBMIT FLOW] ✅ Optimistic UI update complete. Available tabs:`, updatedTabs);
+            }
+          } catch (error) {
+            console.error(`[SUBMIT FLOW] Error during optimistic UI update:`, error);
+            // Non-critical - fall back to standard WebSocket update if this fails
+          }
           
           // BUGFIX: Force the form to switch to submitted view mode
           setFormSubmittedLocally(true);
@@ -1978,7 +2015,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             description: `${taskType.toUpperCase()} Form File Created`,
             data: { 
               details: `A copy of your ${taskType.toUpperCase()} form has been saved to the File Vault.`,
-              fileVaultId: numericFileId  // Changed from fileId to fileVaultId to match expected type
+              fileId: numericFileId  // Use fileId which is the correct property name
             }
           });
         }
