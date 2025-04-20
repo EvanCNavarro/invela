@@ -30,6 +30,7 @@ import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
 import submissionsRouter from './routes/submissions';
+import companyTabsRouter from './routes/company-tabs';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -66,6 +67,115 @@ export function registerRoutes(app: Express): Express {
 
   // Register KYB timestamps route for field-level timestamp support
   app.use('/api/kyb/timestamps', kybTimestampRouter);
+  
+  // Register Company Tabs routes for file vault unlock functionality
+  app.use('/api/company-tabs', companyTabsRouter);
+  
+  // EMERGENCY ENDPOINT: Direct fix for file vault access
+  app.post('/api/emergency/unlock-file-vault/:companyId', async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.companyId);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: 'Invalid company ID' });
+      }
+      
+      console.log(`[EMERGENCY] Unlocking file vault for company ${companyId}`);
+      
+      // Get current company data
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+        
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+      
+      console.log(`[EMERGENCY] Current company state:`, {
+        id: company.id,
+        name: company.name,
+        available_tabs: company.available_tabs
+      });
+      
+      // Ensure we have a proper available_tabs array
+      const currentTabs = company.available_tabs || ['task-center'];
+      
+      // Check if file-vault is already included
+      if (currentTabs.includes('file-vault')) {
+        console.log(`[EMERGENCY] File vault already enabled for company ${companyId}`);
+        
+        // Force broadcast WebSocket event to refresh client caches
+        broadcastMessage('company_tabs_updated', {
+          companyId,
+          availableTabs: currentTabs,
+          timestamp: new Date().toISOString(),
+          source: 'emergency_endpoint',
+          cache_invalidation: true
+        });
+        
+        // Force clear company cache
+        invalidateCompanyCache(companyId);
+        
+        return res.json({
+          success: true,
+          message: 'File vault already enabled, forced cache refresh',
+          company: {
+            id: company.id,
+            name: company.name,
+            available_tabs: currentTabs
+          }
+        });
+      }
+      
+      // Add file-vault to the tabs
+      const updatedTabs = [...currentTabs, 'file-vault'];
+      console.log(`[EMERGENCY] Updating tabs from ${JSON.stringify(currentTabs)} to ${JSON.stringify(updatedTabs)}`);
+      
+      // Direct database update
+      const [updatedCompany] = await db.update(companies)
+        .set({
+          available_tabs: updatedTabs,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning();
+        
+      console.log(`[EMERGENCY] Successfully updated company tabs:`, {
+        id: updatedCompany.id,
+        name: updatedCompany.name,
+        available_tabs: updatedCompany.available_tabs
+      });
+      
+      // Clear any server-side cache
+      invalidateCompanyCache(companyId);
+      console.log(`[EMERGENCY] Invalidated cache for company ${companyId}`);
+      
+      // Broadcast WebSocket event to update clients
+      broadcastMessage('company_tabs_updated', {
+        companyId,
+        availableTabs: updatedCompany.available_tabs,
+        timestamp: new Date().toISOString(),
+        source: 'emergency_endpoint',
+        cache_invalidation: true
+      });
+      
+      console.log(`[EMERGENCY] WebSocket broadcast sent for company ${companyId}`);
+      
+      // Return success
+      res.json({
+        success: true,
+        message: 'File vault unlocked successfully',
+        company: {
+          id: updatedCompany.id,
+          name: updatedCompany.name,
+          available_tabs: updatedCompany.available_tabs
+        }
+      });
+    } catch (error) {
+      console.error('[EMERGENCY] Error unlocking file vault:', error);
+      res.status(500).json({ message: 'Error unlocking file vault' });
+    }
+  });
   
   // Special endpoint to force refresh file vault access
   app.post('/api/refresh-file-vault', requireAuth, async (req, res) => {
