@@ -86,6 +86,9 @@ export const CompanyTabsService = {
    * Safely unlocks the file vault for a company
    * This should be called after form submission to ensure
    * users can access the file vault.
+   * 
+   * PERFORMANCE CRITICAL: This must execute quickly to ensure
+   * users see the file vault tab immediately after submission.
    */
   async unlockFileVault(companyId: number) {
     if (!companyId) {
@@ -94,50 +97,47 @@ export const CompanyTabsService = {
     }
 
     try {
-      // Get current company data
-      const [company] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, companyId));
-
-      if (!company) {
-        console.error(`[CompanyTabsService] Company with ID ${companyId} not found for file vault unlock`);
-        return null;
-      }
-
-      // Get current tabs or default to task-center
-      const currentTabs = company.available_tabs || ['task-center'];
+      // OPTIMIZATION: Use a direct update instead of select-then-update
+      // This reduces round-trips and transaction time
       
-      // Check if file-vault is already present
-      if (currentTabs.includes('file-vault')) {
-        console.log(`[CompanyTabsService] Company ${companyId} already has file-vault tab`);
-        return company;
-      }
+      // Directly update the company record with a SQL expression that safely adds
+      // 'file-vault' to the available_tabs array if it's not already there
+      // Using SQL concatenation is faster than the previous JavaScript approach
+      const timestamp = new Date();
+      console.log(`[CompanyTabsService] Directly updating company ${companyId} with file-vault tab at ${timestamp.toISOString()}`);
       
-      // Add file-vault tab
-      const updatedTabs = [...currentTabs, 'file-vault'];
-      
-      console.log(`[CompanyTabsService] Adding file-vault tab to company ${companyId}`);
-      
-      // Update the company record
+      // Use a SQL expression to conditionally add file-vault if it doesn't exist
       const [updatedCompany] = await db.update(companies)
         .set({
-          available_tabs: updatedTabs,
-          updated_at: new Date()
+          // PERFORMANCE: Use raw SQL with a case statement for conditional array update
+          // This avoids needing to fetch the current array first
+          available_tabs: db.sql`
+            CASE 
+              WHEN 'file-vault' = ANY(${companies.available_tabs}) THEN ${companies.available_tabs}
+              WHEN ${companies.available_tabs} IS NULL THEN array['task-center', 'file-vault']
+              ELSE array_append(${companies.available_tabs}, 'file-vault')
+            END
+          `,
+          updated_at: timestamp
         })
         .where(eq(companies.id, companyId))
         .returning();
         
+      if (!updatedCompany) {
+        console.error(`[CompanyTabsService] Failed to update company ${companyId} - no record returned`);
+        return null;
+      }
+        
       console.log(`[CompanyTabsService] Successfully unlocked file vault for company ${companyId}:`, {
-        previousTabs: currentTabs,
-        newTabs: updatedCompany.available_tabs
+        newTabs: updatedCompany.available_tabs,
+        timestamp: timestamp.toISOString()
       });
       
-      // Broadcast a WebSocket event to notify all clients of the tab update
+      // CRITICAL: Broadcast a WebSocket event to notify all clients of the tab update
+      // This needs to happen immediately to ensure real-time updates
       try {
-        // Import the correct WebSocket service functions from our implementation
+        // Import the WebSocket service and broadcast right away
         const { broadcastCompanyTabsUpdate } = require('../services/websocket');
-        
-        // Call the specific broadcast function we created for company tabs
         broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
         
         console.log(`[CompanyTabsService] Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
