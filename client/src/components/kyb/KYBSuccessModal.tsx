@@ -15,54 +15,83 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Synchronize UI update with backend to ensure instant visibility
+  // Ultra-optimized synchronization for instant visual tab appearance
   useEffect(() => {
     if (open) {
       console.time('file-vault-tab-update');
-
-      // Pre-render optimization - update before React cycle
+      
+      // PHASE 0: Preload file-vault path data - prevents flickering on navigation
+      const preloadFileVaultPath = document.createElement('link');
+      preloadFileVaultPath.rel = 'prefetch';
+      preloadFileVaultPath.href = '/file-vault';
+      document.head.appendChild(preloadFileVaultPath);
+      
+      // Prioritize DOM operations with multiple execution approaches
       const executeTabUpdate = () => {
-        // Get current company data
-        const company = queryClient.getQueryData(['/api/companies/current']) as any;
-        
-        if (company) {
-          console.log('[KYBSuccessModal] PHASE 1: Direct cache update');
+        try {
+          // Get current company data
+          const company = queryClient.getQueryData(['/api/companies/current']) as any;
           
-          // Direct DOM update for true sync with backend logs
-          document.querySelectorAll('[data-menu-item="file-vault"]').forEach(item => {
-            // Set the data attribute that controls visibility
-            item.setAttribute('data-locked', 'false'); 
+          if (company) {
+            console.log('[KYBSuccessModal] PHASE 1: Instant UI update');
             
-            // Remove lock icon if present
-            const lockIcon = item.querySelector('.lock-icon');
-            if (lockIcon) lockIcon.remove();
-          });
-          
-          // Update company data with file-vault tab
-          queryClient.setQueryData(['/api/companies/current'], {
-            ...company,
-            available_tabs: [...new Set([...(company.available_tabs || ['task-center']), 'file-vault'])]
-          });
-          
-          // Using high priority microtask for UI update
-          queueMicrotask(() => {
-            console.log('[KYBSuccessModal] PHASE 2: Force UI update');
-            // Force component re-renders
-            window.dispatchEvent(new CustomEvent('force-sidebar-update'));
+            // CRITICAL: Direct DOM manipulation for ZERO-DELAY tab visibility
+            document.querySelectorAll('[data-menu-item="file-vault"]').forEach(item => {
+              // Immediate CSS changes through data attributes 
+              item.setAttribute('data-locked', 'false');
+              item.classList.add('fast-transition');
+              
+              // Remove lock icon if present
+              const lockIcon = item.querySelector('.lock-icon');
+              if (lockIcon) lockIcon.remove();
+            });
             
-            // Tell server (after UI is updated)
-            fetch(`/api/companies/${company.id}/unlock-file-vault`, { method: 'POST' })
-              .then(() => console.log('[KYBSuccessModal] PHASE 3: Server notified'))
-              .catch(() => {/* Ignore errors */});
+            // PHASE 2: Update React Query cache for longer-term data consistency
+            console.log('[KYBSuccessModal] PHASE 2: Cache update');
+            queryClient.setQueryData(['/api/companies/current'], {
+              ...company,
+              available_tabs: [...new Set([...(company.available_tabs || ['task-center']), 'file-vault'])]
+            });
             
-            console.timeEnd('file-vault-tab-update');
-          });
+            // PHASE 3: Force component re-renders with microtask priority
+            queueMicrotask(() => {
+              console.log('[KYBSuccessModal] PHASE 3: Component update');
+              window.dispatchEvent(new CustomEvent('force-sidebar-update', { 
+                detail: { tabs: ['file-vault'], action: 'unlock' }
+              }));
+              
+              // PHASE 4: Server notification (lowest priority, happens last)
+              setTimeout(() => {
+                fetch(`/api/companies/${company.id}/unlock-file-vault`, { method: 'POST' })
+                  .then(() => console.log('[KYBSuccessModal] PHASE 4: Server notified'))
+                  .catch(() => {/* Ignore errors */});
+                  
+                console.timeEnd('file-vault-tab-update');
+              }, 0);
+            });
+          }
+        } catch (error) {
+          console.error('[KYBSuccessModal] Tab update error:', error);
         }
       };
       
-      // Execute immediately and with requestAnimationFrame for next paint cycle
-      executeTabUpdate();
-      requestAnimationFrame(executeTabUpdate);
+      // Execute with multiple timing approaches to ensure at least one succeeds quickly
+      executeTabUpdate(); // Instant execution
+      requestAnimationFrame(executeTabUpdate); // Next frame priority execution
+      
+      // Set up a tiny CSS animation trigger on the tab for perceived immediate response
+      const style = document.createElement('style');
+      style.textContent = `
+        [data-menu-item="file-vault"] {
+          animation: highlight-tab 200ms ease-out;
+        }
+        @keyframes highlight-tab {
+          0% { background-color: rgba(73, 101, 236, 0.08); }
+          100% { background-color: transparent; }
+        }
+      `;
+      document.head.appendChild(style);
+      setTimeout(() => document.head.removeChild(style), 300);
     }
   }, [open, queryClient]);
 

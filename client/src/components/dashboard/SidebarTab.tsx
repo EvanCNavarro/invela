@@ -36,7 +36,7 @@ export function SidebarTab({
       data-locked={isDisabled ? 'true' : 'false'}
       className={cn(
         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
-        "transition-all duration-200 relative",
+        "transition-all duration-75 relative", // Faster transition for immediate visual feedback
         !isExpanded && "justify-center",
         isActive && !isDisabled
           ? variant === 'invela'
@@ -44,7 +44,8 @@ export function SidebarTab({
             : "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
           : isDisabled
             ? "opacity-50 cursor-not-allowed bg-muted/50"
-            : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
+            : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer",
+        href === '/file-vault' && 'fast-transition'
       )}
       onClick={(e) => {
         if (isPlayground) {
