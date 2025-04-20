@@ -77,14 +77,43 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       if (companyId === currentCompany?.id) {
         console.log('[DashboardLayout] Processing update for current company');
         
+        // OPTIMIZATION: Immediately update the cache before refetching
+        // This makes the UI update instantly without waiting for network
+        try {
+          const currentData = queryClient.getQueryData<Company>(['/api/companies/current']);
+          if (currentData) {
+            console.log('[DashboardLayout] ⚡ INSTANT UPDATE: Applying optimistic update to company tabs');
+            
+            // Create updated tabs array, ensuring 'file-vault' is included if in availableTabs
+            const updatedTabs = Array.isArray(availableTabs) 
+              ? [...new Set([...(currentData.available_tabs || []), ...availableTabs])]
+              : [...new Set([...(currentData.available_tabs || []), 'file-vault'])];
+            
+            // Update the cache immediately
+            queryClient.setQueryData(['/api/companies/current'], {
+              ...currentData,
+              available_tabs: updatedTabs
+            });
+            
+            console.log('[DashboardLayout] ✅ Cache updated immediately with tabs:', updatedTabs);
+          }
+        } catch (error) {
+          console.error('[DashboardLayout] Error during optimistic update:', error);
+        }
+        
+        // Still do the background refetch for consistency
         // For critical updates with cache_invalidation, be more aggressive
         if (cacheInvalidation) {
-          console.log('[DashboardLayout] Critical update detected, forcing refetch');
-          queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
-          refetchCompany();
+          console.log('[DashboardLayout] Critical update detected, forcing refetch in background');
+          setTimeout(() => {
+            queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+            refetchCompany();
+          }, 0);
         } else {
-          // Standard invalidation for normal updates
-          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+          // Standard invalidation for normal updates (in background)
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+          }, 0);
         }
       }
     };
