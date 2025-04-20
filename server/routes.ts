@@ -307,6 +307,58 @@ export function registerRoutes(app: Express): Express {
     }
   });
   
+  // Force unlock file vault endpoint - direct API call to ensure immediate visibility
+  app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) => {
+    try {
+      console.log('[API] Force unlock file vault request received:', {
+        userId: req.user?.id,
+        companyId: req.params.id, 
+        timestamp: new Date().toISOString()
+      });
+      
+      const { id } = req.params;
+      const companyId = parseInt(id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID", 
+          code: "INVALID_ID" 
+        });
+      }
+      
+      // Use the CompanyTabsService to handle unlocking
+      const { CompanyTabsService } = await import('./services/companyTabsService');
+      console.log(`[API] Calling CompanyTabsService.unlockFileVault for company ${companyId}`);
+      
+      const updatedCompany = await CompanyTabsService.unlockFileVault(companyId);
+      
+      if (!updatedCompany) {
+        console.error(`[API] Failed to unlock file vault for company ${companyId}`);
+        return res.status(404).json({ 
+          message: "Failed to unlock file vault", 
+          code: "UNLOCK_FAILED" 
+        });
+      }
+      
+      console.log(`[API] Successfully unlocked file vault for company ${companyId}`);
+      
+      // Return success response
+      return res.json({
+        message: "File vault unlocked successfully",
+        companyId,
+        availableTabs: updatedCompany.available_tabs,
+        changes: true,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('[API] Error unlocking file vault:', error);
+      return res.status(500).json({ 
+        message: "Internal server error", 
+        code: "SERVER_ERROR" 
+      });
+    }
+  });
+  
   // Check if a company is a demo company - accept either companyId or taskId
   app.get("/api/companies/is-demo", requireAuth, async (req, res) => {
     try {
