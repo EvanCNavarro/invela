@@ -8,6 +8,7 @@ import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { CompanyTabsService } from '../services/companyTabsService';
+import { unlockFileVault } from '../patches/updateCompanyTabs';
 
 const logger = new Logger('KYBRoutes');
 
