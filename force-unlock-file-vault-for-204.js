@@ -5,46 +5,51 @@
  * and broadcasts a critical WebSocket message to update the UI
  */
 
-const { db } = require('./db');
-const { companies } = require('./db/schema');
+const { db } = require('./server/db');
+const { companies } = require('./server/db/schema');
 const { eq } = require('drizzle-orm');
 
+// The company ID that needs fixing
 const COMPANY_ID = 204;
 
 async function unlockFileVault() {
-  console.log(`🔐 Attempting to unlock file vault for company ID ${COMPANY_ID}`);
+  console.log(`[CRITICAL FIX] Starting file vault unlock for company ${COMPANY_ID}`);
   
   try {
-    // Step 1: Get the current company data to check if the tab already exists
+    // First, get the current company data
     const [company] = await db.select()
       .from(companies)
       .where(eq(companies.id, COMPANY_ID));
-    
+      
     if (!company) {
-      console.error(`❌ Company with ID ${COMPANY_ID} not found`);
-      return;
+      console.error(`[CRITICAL FIX] Company with ID ${COMPANY_ID} not found`);
+      return false;
     }
     
-    console.log(`📊 Current company details:`, {
+    console.log(`[CRITICAL FIX] Current company data:`, {
       id: company.id,
-      name: company.name, 
-      tabs: company.available_tabs
+      name: company.name,
+      available_tabs: company.available_tabs
     });
     
-    // Step 2: Check if file-vault is already in the list
+    // Check current tabs
     const currentTabs = company.available_tabs || ['task-center'];
     
+    // Check if file-vault is already in the tabs
     if (currentTabs.includes('file-vault')) {
-      console.log(`✅ File vault is already enabled for company ${COMPANY_ID}`);
-      broadcastUpdate(company);
-      return;
+      console.log(`[CRITICAL FIX] File vault already included in tabs for company ${COMPANY_ID}`);
+      
+      // Even if already included, we still want to force a WebSocket broadcast
+      await broadcastUpdate(company);
+      return true;
     }
     
-    // Step 3: Add file-vault to the list of available tabs
+    // Add file-vault to the tabs
     const updatedTabs = [...currentTabs, 'file-vault'];
-    console.log(`🔄 Updating tabs from ${JSON.stringify(currentTabs)} to ${JSON.stringify(updatedTabs)}`);
     
-    // Step 4: Update the database
+    console.log(`[CRITICAL FIX] Updating tabs from ${JSON.stringify(currentTabs)} to ${JSON.stringify(updatedTabs)}`);
+    
+    // Update the company record
     const [updatedCompany] = await db.update(companies)
       .set({
         available_tabs: updatedTabs,
@@ -52,89 +57,88 @@ async function unlockFileVault() {
       })
       .where(eq(companies.id, COMPANY_ID))
       .returning();
-    
+      
     if (!updatedCompany) {
-      console.error(`❌ Failed to update company ${COMPANY_ID} - no record returned`);
-      return;
+      console.error(`[CRITICAL FIX] Failed to update company ${COMPANY_ID}`);
+      return false;
     }
     
-    console.log(`✅ Successfully updated company ${COMPANY_ID}:`, {
+    console.log(`[CRITICAL FIX] Successfully updated company:`, {
       id: updatedCompany.id,
       name: updatedCompany.name,
-      tabs: updatedCompany.available_tabs
+      available_tabs: updatedCompany.available_tabs
     });
     
-    // Step 5: Broadcast WebSocket event for immediate UI update
-    broadcastUpdate(updatedCompany);
+    // Broadcast the update to all connected clients
+    await broadcastUpdate(updatedCompany);
     
+    return true;
   } catch (error) {
-    console.error(`❌ Error unlocking file vault:`, error);
+    console.error('[CRITICAL FIX] Error unlocking file vault:', error);
+    return false;
   }
 }
 
 async function broadcastUpdate(company) {
   try {
-    // Import WebSocket service
+    // Import the WebSocket service
     const { broadcastMessage } = require('./server/services/websocket');
     
-    // Clear any cache
-    try {
-      const { invalidateCompanyCache } = require('./server/routes');
-      const invalidated = invalidateCompanyCache(COMPANY_ID);
-      console.log(`🧹 Cache invalidation result:`, invalidated);
-    } catch (cacheError) {
-      console.error(`⚠️ Error invalidating cache:`, cacheError);
-    }
-    
-    console.log(`📢 Broadcasting WebSocket update for company ${COMPANY_ID}`);
-    
-    // Send with cache_invalidation flag to force refresh
+    // Broadcast the update with cache_invalidation flag to force client cache refresh
     broadcastMessage('company_tabs_updated', {
-      companyId: COMPANY_ID,
+      companyId: company.id,
       availableTabs: company.available_tabs,
       timestamp: new Date().toISOString(),
-      source: 'emergency_fix_script',
-      cache_invalidation: true
+      source: 'critical_fix_script',
+      cache_invalidation: true,
+      operation: 'unlock_file_vault_emergency'
     });
     
-    console.log(`📢 Sent WebSocket broadcast with cache_invalidation flag`);
+    console.log(`[CRITICAL FIX] WebSocket broadcast sent for company ${company.id}`);
     
-    // Schedule multiple delayed broadcasts for reliability
-    const delays = [500, 1500, 3000];
-    for (const delay of delays) {
-      setTimeout(() => {
-        try {
-          console.log(`📢 Sending delayed (${delay}ms) broadcast`);
-          broadcastMessage('company_tabs_updated', {
-            companyId: COMPANY_ID,
-            availableTabs: company.available_tabs,
-            timestamp: new Date().toISOString(),
-            source: 'emergency_fix_script_delayed',
-            delay,
-            cache_invalidation: true
-          });
-        } catch (e) {
-          console.error(`⚠️ Error in delayed broadcast:`, e);
-        }
-      }, delay);
+    // Clear any server-side cache
+    try {
+      const { invalidateCompanyCache } = require('./server/routes');
+      invalidateCompanyCache(company.id);
+      console.log(`[CRITICAL FIX] Company cache invalidated for ID ${company.id}`);
+    } catch (cacheError) {
+      console.error(`[CRITICAL FIX] Error invalidating cache:`, cacheError);
     }
     
-    console.log(`✅ Broadcasts scheduled`);
+    // Schedule additional broadcasts to ensure clients receive the update
+    setTimeout(() => {
+      try {
+        broadcastMessage('company_tabs_updated', {
+          companyId: company.id,
+          availableTabs: company.available_tabs,
+          timestamp: new Date().toISOString(),
+          source: 'critical_fix_script_delayed',
+          cache_invalidation: true,
+          operation: 'unlock_file_vault_emergency'
+        });
+        console.log(`[CRITICAL FIX] Delayed broadcast sent for company ${company.id}`);
+      } catch (e) {
+        console.error(`[CRITICAL FIX] Error in delayed broadcast:`, e);
+      }
+    }, 2000);
     
+    return true;
   } catch (error) {
-    console.error(`❌ Error broadcasting update:`, error);
+    console.error('[CRITICAL FIX] Error broadcasting update:', error);
+    return false;
   }
 }
 
-// Run the script
-unlockFileVault().then(() => {
-  // Keep the script running for a few seconds to allow broadcasts to complete
-  console.log(`🕒 Keeping script alive for broadcasts to complete...`);
+// Execute the fix
+unlockFileVault().then(success => {
+  console.log(`[CRITICAL FIX] Operation completed with status: ${success ? 'SUCCESS' : 'FAILURE'}`);
+  
+  // Keep process alive for delayed broadcasts
   setTimeout(() => {
-    console.log(`✅ Script execution complete`);
-    process.exit(0);
-  }, 5000);
+    console.log(`[CRITICAL FIX] Exiting...`);
+    process.exit(success ? 0 : 1);
+  }, 3000);
 }).catch(error => {
-  console.error(`❌ Script execution failed:`, error);
+  console.error('[CRITICAL FIX] Unhandled error:', error);
   process.exit(1);
 });
