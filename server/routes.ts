@@ -218,15 +218,12 @@ export function registerRoutes(app: Express): Express {
         console.log(`[File Vault] Added file-vault tab for company ${companyId}`);
         
         // Broadcast the update via WebSocket
-        broadcastMessage({
-          type: 'company_tabs_updated',
-          payload: {
-            companyId,
-            availableTabs: newTabs,
-            cache_invalidation: true,
-            timestamp: new Date().toISOString(),
-            source: 'force-refresh-endpoint'
-          }
+        broadcastMessage('company_tabs_updated', {
+          companyId,
+          availableTabs: newTabs,
+          cache_invalidation: true,
+          timestamp: new Date().toISOString(),
+          source: 'force-refresh-endpoint'
         });
       }
       
