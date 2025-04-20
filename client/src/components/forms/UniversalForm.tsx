@@ -1310,18 +1310,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               }
               
               const statusCheckResponse = await fetch(`/api/tasks/${taskId}`);
-              taskStatusData = await statusCheckResponse.json();
+              
+              // Handle non-OK responses gracefully
+              if (!statusCheckResponse.ok) {
+                logger.warn(`Status check response not OK: ${statusCheckResponse.status}`);
+                continue;
+              }
+              
+              const responseData = await statusCheckResponse.json();
+              // Safely assign the data, defaulting to an empty object if null/undefined
+              taskStatusData = responseData || {};
               
               logger.info(`Task status check response (attempt ${retry + 1}/${maxRetries}):`, taskStatusData);
               
-              // Check if the status shows as submitted or if progress is very high (95%+)
-              if (taskStatusData.status === 'submitted' || 
-                  (taskStatusData.metadata && taskStatusData.metadata.submissionDate) ||
-                  taskStatusData.progress >= 95) {
+              // Safe property checks with optional chaining
+              if (taskStatusData?.status === 'submitted' || 
+                  (taskStatusData?.metadata?.submissionDate) ||
+                  (typeof taskStatusData?.progress === 'number' && taskStatusData.progress >= 95)) {
                 isSubmitted = true;
                 break;
               }
             } catch (retryError) {
+              // Log the error but continue with retries
               logger.error(`Error on status check retry ${retry + 1}/${maxRetries}:`, retryError);
               // We continue the loop even after errors - we don't break the success flow
             }
@@ -1332,8 +1342,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         }
         
         // Provide fallback behavior: if we have a submission result and high progress, consider it submitted
-        const hasHighProgress = taskStatusData && taskStatusData.progress >= 95;
-        const hasSubmissionFile = taskStatusData?.metadata?.kybFormFile || submissionResult?.fileId;
+        const hasHighProgress = typeof taskStatusData?.progress === 'number' && taskStatusData.progress >= 95;
+        const hasSubmissionFile = !!(taskStatusData?.metadata?.kybFormFile || submissionResult?.fileId);
         
         // Always trigger success flow if status is 'submitted' or we have good indicators of submission
         // OR we're forcing success due to UI/UX considerations
