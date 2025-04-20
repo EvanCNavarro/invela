@@ -15,46 +15,77 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Add the File Vault tab immediately upon opening the success modal
+  // Immediately and permanently unlock the file-vault tab
   useEffect(() => {
+    // Only run once when the modal is opened
     if (!open) return;
     
-    // Execute immediately to prevent any flickering
-    setTimeout(() => {
-      try {
-        // Get current company data
-        const company = queryClient.getQueryData(['/api/companies/current']) as any;
-        if (!company) return;
-        
-        console.log('[KYBSuccessModal] Making file-vault tab visible - single-operation approach');
-        
-        // Add file-vault to available_tabs only once (no flickering)
-        if (!company.available_tabs?.includes('file-vault')) {
-          // Create a stable tabs array with file-vault
-          const stableTabs = [...(Array.isArray(company.available_tabs) 
-            ? company.available_tabs 
-            : ['task-center']), 'file-vault'];
-          
-          // Permanently update the cache to include file-vault tab
+    console.log('[KYBSuccessModal] AGGRESSIVE UNLOCK: Forcing file-vault tab visibility');
+    
+    // Force the file-vault tab to be visible by directly patching React Query cache
+    // This runs immediately at component mount to prevent any flickering
+    try {
+      // Get current company data
+      const company = queryClient.getQueryData(['/api/companies/current']) as any;
+      if (!company) {
+        console.log('[KYBSuccessModal] No company data in cache, cannot update tabs');
+        return;
+      }
+      
+      // AGGRESSIVELY set file-vault as visible without checking current state
+      console.log('[KYBSuccessModal] Directly forcing file-vault tab visibility');
+      
+      // Create stable tabs array that always includes file-vault and any existing tabs
+      const baseTabsArray = Array.isArray(company.available_tabs) ? company.available_tabs : ['task-center'];
+      const stableTabs = baseTabsArray.includes('file-vault') 
+        ? baseTabsArray
+        : [...baseTabsArray, 'file-vault'];
+      
+      // Forcefully update the cache with file-vault included
+      queryClient.setQueryData(['/api/companies/current'], {
+        ...company,
+        available_tabs: stableTabs
+      });
+      
+      console.log('[KYBSuccessModal] TABS FORCEFULLY UPDATED TO:', stableTabs);
+      
+      // Immediately send server update to persist changes
+      fetch(`/api/companies/${company.id}/unlock-file-vault`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      }).then(response => {
+        if (!response.ok) throw new Error('Server update failed');
+        return response.json();
+      }).then(data => {
+        console.log('[KYBSuccessModal] Server confirmed file-vault unlocked:', data);
+      }).catch(err => {
+        console.error('[KYBSuccessModal] Server error, but UI already updated:', err);
+      });
+      
+      // CRITICAL: Disable any polling or auto-refresh that could cause flickering
+      // by setting up a blocker that runs multiple times
+      const preventFlickering = () => {
+        // Refresh company data from cache
+        const latestCompany = queryClient.getQueryData(['/api/companies/current']) as any;
+        if (latestCompany && !latestCompany.available_tabs?.includes('file-vault')) {
+          console.log('[KYBSuccessModal] ANTI-FLICKER: Correcting missing file-vault tab');
           queryClient.setQueryData(['/api/companies/current'], {
-            ...company,
-            available_tabs: stableTabs
-          });
-          
-          console.log('[KYBSuccessModal] Tab visibility updated:', stableTabs);
-          
-          // Also notify server (async, doesn't block UI)
-          fetch(`/api/companies/${company.id}/unlock-file-vault`, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          }).catch(err => {
-            console.error('[KYBSuccessModal] Server notification error, but UI is already updated:', err);
+            ...latestCompany,
+            available_tabs: [...(latestCompany.available_tabs || []), 'file-vault']
           });
         }
-      } catch (error) {
-        console.error('[KYBSuccessModal] Tab update error:', error);
-      }
-    }, 0); // Execute immediately but after current render cycle
+      };
+      
+      // Run the flicker prevention multiple times to ensure stability
+      preventFlickering();
+      setTimeout(preventFlickering, 100);
+      setTimeout(preventFlickering, 500);
+      setTimeout(preventFlickering, 1000);
+      setTimeout(preventFlickering, 2000);
+      
+    } catch (error) {
+      console.error('[KYBSuccessModal] Critical tab visibility error:', error);
+    }
   }, [open, queryClient]);
 
   return (
