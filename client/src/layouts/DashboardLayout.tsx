@@ -4,7 +4,7 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
@@ -31,6 +31,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
+  const queryClient = useQueryClient();
 
   // Use the optimized query options for frequently accessed endpoints
   const { data: tasks = [] } = useQuery<Task[]>({
