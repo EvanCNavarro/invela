@@ -48,6 +48,71 @@ export function registerRoutes(app: Express): Express {
   // Register KYB timestamps route for field-level timestamp support
   app.use('/api/kyb/timestamps', kybTimestampRouter);
   
+  // Special endpoint to force refresh file vault access
+  app.post('/api/refresh-file-vault', requireAuth, async (req, res) => {
+    try {
+      // Get the user's company ID
+      if (!req.user || !req.user.company_id) {
+        return res.status(400).json({ error: 'No company associated with user' });
+      }
+      
+      const companyId = req.user.company_id;
+      console.log(`[File Vault] Force refresh requested for company ${companyId}`);
+      
+      // Check company exists
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+        
+      if (!company) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      // Check if file-vault is in available_tabs
+      const hasFileVault = company.available_tabs && 
+                          company.available_tabs.includes('file-vault');
+                          
+      if (!hasFileVault) {
+        // Add file-vault to available_tabs
+        const newTabs = company.available_tabs 
+          ? [...company.available_tabs, 'file-vault'] 
+          : ['task-center', 'file-vault'];
+          
+        // Update company record
+        await db.update(companies)
+          .set({ 
+            available_tabs: newTabs,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId));
+          
+        console.log(`[File Vault] Added file-vault tab for company ${companyId}`);
+        
+        // Broadcast the update via WebSocket
+        broadcastMessage({
+          type: 'company_tabs_updated',
+          payload: {
+            companyId,
+            availableTabs: newTabs,
+            cache_invalidation: true,
+            timestamp: new Date().toISOString(),
+            source: 'force-refresh-endpoint'
+          }
+        });
+      }
+      
+      return res.json({
+        success: true,
+        message: 'File vault access refreshed',
+        company_name: company.name,
+        available_tabs: hasFileVault ? company.available_tabs : [...(company.available_tabs || []), 'file-vault']
+      });
+    } catch (error) {
+      console.error('[File Vault] Error in refresh endpoint:', error);
+      return res.status(500).json({ error: 'Failed to refresh file vault access' });
+    }
+  });
+  
   // Register enhanced debugging routes
   app.use('/api/debug', enhancedDebugRoutes);
   app.use('/api/debug', debugRouter);
