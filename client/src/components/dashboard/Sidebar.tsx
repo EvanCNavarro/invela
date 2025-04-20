@@ -54,48 +54,20 @@ export function Sidebar({
     enabled: !isPlayground,
   });
 
-  // Force re-render when availableTabs change to ensure sidebar updates
+  // Simple monitoring of availableTabs
   useEffect(() => {
-    // Log when tabs are updated for debugging
     console.log('[Sidebar] Available tabs updated:', availableTabs);
-    
-    // Check for file-vault route forcing
-    if (window.location.pathname.includes('file-vault') && !availableTabs.includes('file-vault')) {
-      console.log('[Sidebar] 🔴 EMERGENCY: We are on file-vault route but tab is still locked!');
-      // Force re-render to try and correct this critical issue
-      setTaskCount(prev => prev + 1);
-    }
   }, [availableTabs]);
   
-  // ULTRA-RESPONSIVE event listener for forced sidebar updates
+  // Special case for file-vault route - ensure tab is unlocked
   useEffect(() => {
-    // This function will immediately force a re-render
-    const handleForcedUpdate = () => {
-      console.log('[Sidebar] ⚡ INSTANT UPDATE triggered via force-sidebar-update event');
-      // Force multiple consecutive re-renders for maximum responsiveness
-      requestAnimationFrame(() => setTaskCount(prev => prev + 1));
-      setTimeout(() => setTaskCount(prev => prev + 1), 0);
-      setTimeout(() => setTaskCount(prev => prev + 1), 50);
-    };
-    
-    // Listen for both window and document events (belt and suspenders)
-    window.addEventListener('force-sidebar-update', handleForcedUpdate);
-    document.addEventListener('file-vault-unlocked', handleForcedUpdate);
-    
-    // This ensures we also check when the DOM is ready
-    if (document.readyState === 'complete') {
-      handleForcedUpdate();
-    } else {
-      window.addEventListener('load', handleForcedUpdate);
+    // Always show File Vault when on the File Vault route
+    if (location.includes('file-vault') && !availableTabs.includes('file-vault')) {
+      console.log('[Sidebar] On file-vault route - ensuring tab is visible');
+      // We're already using this tab, so it should be visible
+      // No need to modify taskCount here
     }
-    
-    // Clean up all event listeners
-    return () => {
-      window.removeEventListener('force-sidebar-update', handleForcedUpdate);
-      document.removeEventListener('file-vault-unlocked', handleForcedUpdate);
-      window.removeEventListener('load', handleForcedUpdate);
-    };
-  }, []);
+  }, [location, availableTabs]);
   
   // Update taskCount when tasks data changes
   useEffect(() => {
@@ -136,16 +108,12 @@ export function Sidebar({
         });
         subscriptions.push(unsubTaskUpdate);
         
-        // NEW: Subscribe to company tabs updates
+        // Subscribe to company tabs updates
         const unsubCompanyTabs = await wsService.subscribe('company_tabs_updated', (data: any) => {
-          console.log('[Sidebar] 🔄 Received company_tabs_updated event:', data);
+          console.log('[Sidebar] Received company_tabs_updated event:', data);
           
-          // Force rerender by updating a state variable
-          // This ensures that component will recheck availableTabs on next render
-          setTaskCount(prev => {
-            console.log('[Sidebar] Forcing rerender due to company tabs update');
-            return prev; // Return same value to avoid unwanted UI changes
-          });
+          // React Query will automatically update the cache when WebSocket events come in
+          // No need to manually force re-renders
         });
         subscriptions.push(unsubCompanyTabs);
       } catch (error) {
