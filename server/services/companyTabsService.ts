@@ -119,6 +119,19 @@ export const CompanyTabsService = {
         newTabs: updatedCompany.available_tabs
       });
       
+      // Broadcast a WebSocket event to notify all clients of the tab update
+      try {
+        const { wsService } = require('./websocket');
+        wsService.broadcast('company_tabs_updated', {
+          companyId,
+          availableTabs: updatedCompany.available_tabs,
+          timestamp: new Date().toISOString()
+        });
+        console.log(`[CompanyTabsService] Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
+      } catch (wsError) {
+        console.error(`[CompanyTabsService] Failed to broadcast WebSocket event:`, wsError);
+      }
+      
       return updatedCompany;
     } catch (error) {
       console.error('[CompanyTabsService] Error unlocking file vault:', error);
