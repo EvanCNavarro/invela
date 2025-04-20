@@ -1722,7 +1722,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           console.error(`Error refreshing company data:`, refreshError);
         }
         
-        // Create submission result with warning status
+        // Create submission result with warning status - include all 3 actions as in the success case
         const warningSubmissionResult: SubmissionResult = {
           fileId: numericFileId,
           completedActions: [
@@ -1735,6 +1735,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               type: "file_vault_unlocked",
               description: "File Vault Unlocked",
               data: { details: "You now have access to upload and manage documents in the File Vault." }
+            },
+            // Adding the third block that was missing - the next task action
+            {
+              type: "next_task",
+              description: "Next Task Unlocked",
+              data: { details: "You can now proceed to the next step in your onboarding process." }
             }
           ],
           taskId: taskId ? Number(taskId) : undefined,
