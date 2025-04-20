@@ -56,6 +56,10 @@ export function registerServices(): void {
     // Register KY3P form service
     console.log('[Service Registration] Registering KY3P form service for type: sp_ky3p_assessment');
     componentFactory.registerFormService('sp_ky3p_assessment', ky3pFormService);
+    
+    // Also register KY3P form service for the client-side type name (ky3p)
+    console.log('[Service Registration] Registering KY3P form service for client type: ky3p');
+    componentFactory.registerFormService('ky3p', ky3pFormService);
     console.log('[Service Registration] KY3PFormServiceFactory initialized and ready for isolated service creation');
     
     // Final check - specifically check for KYB service
