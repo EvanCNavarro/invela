@@ -125,10 +125,11 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       return; // Prevent navigation
     }
 
-    // Navigate to form pages for KYB, Security and CARD tasks (including submitted tasks)
+    // Navigate to form pages for KYB, Security, KY3P and CARD tasks (including submitted tasks)
     if (task.task_type === 'company_kyb' || 
         task.task_type === 'company_card' ||
-        task.task_type === 'security_assessment') {
+        task.task_type === 'security_assessment' ||
+        task.task_type === 'sp_ky3p_assessment') {
       
       // Get task ID for direct navigation
       const taskId = task.id;
@@ -141,6 +142,8 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         formType = 'card';
       } else if (task.task_type === 'security_assessment') {
         formType = 'security';
+      } else if (task.task_type === 'sp_ky3p_assessment') {
+        formType = 'ky3p';
       }
       
       // Get company name from task title or metadata
@@ -151,7 +154,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         companyName = task.metadata.company.name;
       } else {
         // Try to extract from title as fallback
-        const match = task.title.match(/(\d+\.\s*)?(?:Company\s*)?(?:KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(?:\s*Form)?(?:\s*Assessment)?:\s*(.*)/i);
+        const match = task.title.match(/(\d+\.\s*)?(?:Company\s*)?(?:KYB|CARD|Open Banking \(1033\) Survey|Security Assessment|S&P KY3P Security Assessment)(?:\s*Form)?(?:\s*Assessment)?:\s*(.*)/i);
         if (match && match[2]) {
           companyName = match[2].trim();
         }
