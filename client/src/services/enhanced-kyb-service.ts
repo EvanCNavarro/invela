@@ -572,13 +572,18 @@ export class EnhancedKybFormService implements FormServiceInterface {
   updateFormData(fieldKey: string, value: any, taskId?: number): void {
     const oldValue = this.timestampedFormData.values[fieldKey];
     
-    // Add enhanced logging for demo data issues
-    console.log(`[EnhancedKYBService] Updating field ${fieldKey} from "${oldValue}" to "${value}"`);
-    
     // Skip if value hasn't changed (prevents unnecessary updates)
     if (oldValue === value) {
-      console.log(`[EnhancedKYBService] Skipping update for ${fieldKey} - value unchanged`);
+      // Only log at debug level for development or if explicitly needed
+      if (process.env.NODE_ENV === 'development' && this.debugMode) {
+        this.logger.debug(`Skipping update for ${fieldKey} - value unchanged`);
+      }
       return;
+    }
+    
+    // Add essential logging only for actual changes
+    if (process.env.NODE_ENV === 'development' && this.debugMode) {
+      this.logger.debug(`Updating field ${fieldKey} from "${oldValue}" to "${value}"`);
     }
     
     // Update the field with new timestamp
