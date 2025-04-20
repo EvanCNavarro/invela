@@ -405,6 +405,54 @@ export const securityResponsesRelations = relations(securityResponses, ({ one })
   })
 }));
 
+// Define the S&P KY3P Security Assessment tables
+export const ky3pFields = pgTable("ky3p_fields", {
+  id: serial("id").primaryKey(),
+  order: integer("order").notNull(),
+  field_key: text("field_key").notNull(),
+  label: text("label").notNull(),
+  description: text("description").notNull(),
+  help_text: text("help_text"),
+  demo_autofill: text("demo_autofill"),
+  section: text("section").notNull(),
+  field_type: text("field_type").$type<keyof typeof KYBFieldType>().notNull(),
+  is_required: boolean("is_required").notNull(),
+  answer_expectation: text("answer_expectation"),
+  validation_type: text("validation_type"),
+  phasing: text("phasing"),
+  soc2_overlap: text("soc2_overlap"),
+  validation_rules: text("validation_rules"),
+  step_index: integer("step_index").default(0),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const ky3pResponses = pgTable("ky3p_responses", {
+  id: serial("id").primaryKey(),
+  task_id: integer("task_id").references(() => tasks.id).notNull(),
+  field_id: integer("field_id").references(() => ky3pFields.id).notNull(),
+  response_value: text("response_value"),
+  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default('empty'),
+  version: integer("version").notNull().default(1),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const ky3pFieldsRelations = relations(ky3pFields, ({ many }) => ({
+  responses: many(ky3pResponses),
+}));
+
+export const ky3pResponsesRelations = relations(ky3pResponses, ({ one }) => ({
+  field: one(ky3pFields, {
+    fields: [ky3pResponses.field_id],
+    references: [ky3pFields.id],
+  }),
+  task: one(tasks, {
+    fields: [ky3pResponses.task_id],
+    references: [tasks.id],
+  }),
+}));
+
 export const filesRelations = relations(files, ({ one, many }) => ({
   user: one(users, {
     fields: [files.user_id],
@@ -581,6 +629,12 @@ export const selectSecurityFieldSchema = createSelectSchema(securityFields);
 export const insertSecurityResponseSchema = createInsertSchema(securityResponses);
 export const selectSecurityResponseSchema = createSelectSchema(securityResponses);
 
+// KY3P schemas
+export const insertKy3pFieldSchema = createInsertSchema(ky3pFields);
+export const selectKy3pFieldSchema = createSelectSchema(ky3pFields);
+export const insertKy3pResponseSchema = createInsertSchema(ky3pResponses);
+export const selectKy3pResponseSchema = createSelectSchema(ky3pResponses);
+
 // Task template configuration tables
 export const taskTemplates = pgTable("task_templates", {
   id: serial("id").primaryKey(),
@@ -628,3 +682,9 @@ export type InsertTaskTemplate = typeof taskTemplates.$inferInsert;
 export type SelectTaskTemplate = typeof taskTemplates.$inferSelect;
 export type InsertComponentConfig = typeof componentConfigurations.$inferInsert;
 export type SelectComponentConfig = typeof componentConfigurations.$inferSelect;
+
+// KY3P types
+export type InsertKy3pField = typeof ky3pFields.$inferInsert;
+export type SelectKy3pField = typeof ky3pFields.$inferSelect;
+export type InsertKy3pResponse = typeof ky3pResponses.$inferInsert;
+export type SelectKy3pResponse = typeof ky3pResponses.$inferSelect;
