@@ -1,176 +1,142 @@
-// force-unlock-file-vault-direct.js
-// This script directly updates the company record to include 'file-vault' in the available_tabs
-// It then broadcasts a WebSocket message to notify clients to refresh company data
-// To run: node force-unlock-file-vault-direct.js [companyId]
+/**
+ * Force unlock file vault for a specific company
+ * 
+ * This script directly updates the company record in the database
+ * and broadcasts a WebSocket event to update the UI
+ */
 
-// Get company ID from command line or default to 200
-const companyId = process.argv[2] ? parseInt(process.argv[2]) : 200;
+// Import required modules
+const { db } = require('./db/index.js');
+const { eq } = require('drizzle-orm');
+const { companies } = require('./db/schema.js');
 
-// Require dependencies
-const { Pool } = require('pg');
-const WebSocket = require('ws');
+// Configuration - Set the company ID
+const COMPANY_ID = process.argv[2] ? parseInt(process.argv[2]) : 203;
 
-// Setup PostgreSQL connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
-
-// Create WebSocket client
-function createWebSocketClient() {
-  // Determine the protocol based on the DATABASE_URL
-  const protocol = process.env.DATABASE_URL.startsWith('postgres:') ? 'ws:' : 'wss:';
-  const host = '0.0.0.0:5000'; // Since we're running locally
-  const wsUrl = `${protocol}//${host}/ws`;
-  
-  console.log(`Connecting to WebSocket at ${wsUrl}`);
-  
-  return new WebSocket(wsUrl);
-}
-
-// Function to update the company record
 async function unlockFileVault(companyId) {
-  console.log(`\n🔐 Force unlocking file vault for company ${companyId}...`);
+  console.log(`[Unlock] Force unlocking file vault for company ${companyId}...`);
   
   try {
-    // First get current company data
-    const { rows: beforeRows } = await pool.query(
-      'SELECT id, name, available_tabs FROM companies WHERE id = $1',
-      [companyId]
-    );
+    // Get the current company record
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, companyId));
     
-    if (beforeRows.length === 0) {
-      console.error(`❌ Company ${companyId} not found`);
+    if (!company) {
+      console.error(`[Unlock] Company ${companyId} not found!`);
       return null;
     }
     
-    const company = beforeRows[0];
-    console.log(`Current company: ${company.name} (ID: ${company.id})`);
-    console.log(`Current tabs:`, company.available_tabs);
+    console.log(`[Unlock] Current company: ${company.name}`);
+    console.log(`[Unlock] Current tabs: ${company.available_tabs?.join(', ') || 'none'}`);
     
-    // Check if file-vault already exists
+    // Check if file-vault is already in available_tabs
     const hasFileVault = company.available_tabs && 
                          company.available_tabs.includes('file-vault');
     
     if (hasFileVault) {
-      console.log(`✅ File vault is already unlocked for company ${companyId}`);
-      return company;
+      console.log(`[Unlock] File vault tab already exists for company ${companyId}`);
+      
+      // Even though tab already exists, invalidate cache and broadcast event
+      // This helps with "stuck" UIs that might not be showing the tab
+      console.log(`[Unlock] Forcing cache invalidation and WebSocket broadcast...`);
+    } else {
+      // Add file-vault to available_tabs
+      const newTabs = company.available_tabs 
+        ? [...company.available_tabs, 'file-vault'] 
+        : ['task-center', 'file-vault'];
+      
+      // Update the company record
+      const startTime = new Date();
+      await db.update(companies)
+        .set({ 
+          available_tabs: newTabs,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId));
+      
+      const endTime = new Date();
+      const updateDuration = endTime - startTime;
+      
+      console.log(`[Unlock] Added file-vault tab to company ${companyId} (took ${updateDuration}ms)`);
+      
+      // Get the updated company record
+      const [updatedCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+      
+      console.log(`[Unlock] Updated tabs: ${updatedCompany.available_tabs?.join(', ') || 'none'}`);
     }
     
-    // Prepare new tabs array
-    const newTabs = company.available_tabs 
-      ? [...company.available_tabs, 'file-vault'] 
-      : ['task-center', 'file-vault'];
-    
-    // Update company record
-    console.log(`Updating company ${companyId} with new tabs:`, newTabs);
-    
-    const { rows } = await pool.query(
-      'UPDATE companies SET available_tabs = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
-      [newTabs, companyId]
-    );
-    
-    if (rows.length === 0) {
-      console.error(`❌ Failed to update company ${companyId}`);
-      return null;
-    }
-    
-    const updatedCompany = rows[0];
-    console.log(`✅ Successfully updated company ${companyId}:`);
-    console.log(`New tabs:`, updatedCompany.available_tabs);
-    
-    return updatedCompany;
-  } catch (error) {
-    console.error(`❌ Database error:`, error);
-    return null;
-  }
-}
-
-// Function to broadcast WebSocket message
-function broadcastWebSocketMessage(companyId, availableTabs) {
-  return new Promise((resolve, reject) => {
-    console.log(`\n📡 Broadcasting company_tabs_updated message...`);
-    
-    const ws = createWebSocketClient();
-    let timeoutId;
-    
-    // Set a timeout to avoid hanging indefinitely
-    timeoutId = setTimeout(() => {
-      ws.terminate();
-      reject(new Error('WebSocket connection timeout'));
-    }, 10000);
-    
-    ws.on('open', () => {
-      console.log(`🔌 WebSocket connected`);
-      
-      // Send message
-      const message = {
-        type: 'company_tabs_updated',
-        payload: {
-          companyId,
-          availableTabs,
-          cache_invalidation: true,
-          timestamp: new Date().toISOString(),
-          source: 'force-unlock-file-vault-direct'
-        }
-      };
-      
-      console.log(`📤 Sending message:`, message);
-      ws.send(JSON.stringify(message));
-      
-      // Wait briefly before closing to ensure message is sent
-      setTimeout(() => {
-        ws.close();
-        clearTimeout(timeoutId);
-        console.log(`🔌 WebSocket closed`);
-        resolve(true);
-      }, 1000);
-    });
-    
-    ws.on('message', (data) => {
-      console.log(`📥 Received:`, data.toString());
-    });
-    
-    ws.on('error', (error) => {
-      console.error(`❌ WebSocket error:`, error);
-      clearTimeout(timeoutId);
-      reject(error);
-    });
-    
-    ws.on('close', () => {
-      clearTimeout(timeoutId);
-      console.log(`🔌 WebSocket connection closed`);
-    });
-  });
-}
-
-// Main function
-async function main() {
-  console.log(`🚀 Starting file vault force unlock for company ${companyId}`);
-  
-  try {
-    // Step 1: Update the company record
-    const updatedCompany = await unlockFileVault(companyId);
-    
-    if (!updatedCompany) {
-      console.error(`\n❌ Failed to update company record`);
-      process.exit(1);
-    }
-    
-    // Step 2: Broadcast WebSocket message
+    // Invalidate the company cache
     try {
-      await broadcastWebSocketMessage(companyId, updatedCompany.available_tabs);
-      console.log(`\n✅ WebSocket broadcast completed`);
-    } catch (wsError) {
-      console.error(`\n⚠️ WebSocket broadcast failed, but database was updated:`, wsError);
+      const { invalidateCompanyCache } = require('./server/routes.js');
+      const invalidated = invalidateCompanyCache(companyId);
+      console.log(`[Unlock] Company cache invalidation result: ${invalidated}`);
+    } catch (cacheError) {
+      console.error(`[Unlock] Error invalidating company cache:`, cacheError);
     }
     
-    console.log(`\n✅ File vault should now be unlocked for company ${companyId}`);
-    process.exit(0);
+    // Broadcast WebSocket event
+    try {
+      const { broadcastMessage } = require('./server/services/websocket.js');
+      
+      broadcastMessage('company_tabs_updated', {
+        companyId,
+        availableTabs: hasFileVault ? company.available_tabs : [...(company.available_tabs || []), 'file-vault'],
+        timestamp: new Date().toISOString(),
+        source: 'force-unlock-file-vault-direct',
+        cache_invalidation: true,
+        operation: 'force_unlock_file_vault'
+      });
+      
+      console.log(`[Unlock] WebSocket broadcast sent successfully`);
+      
+      // Send delayed broadcasts to ensure clients receive the update
+      const delayTimes = [500, 1500, 3000]; // 0.5s, 1.5s, 3s delays
+      
+      for (const delay of delayTimes) {
+        setTimeout(() => {
+          try {
+            console.log(`[Unlock] Sending delayed (${delay}ms) websocket broadcast`);
+            broadcastMessage('company_tabs_updated', {
+              companyId,
+              availableTabs: hasFileVault ? company.available_tabs : [...(company.available_tabs || []), 'file-vault'],
+              timestamp: new Date().toISOString(),
+              source: 'force-unlock-file-vault-direct.delayed',
+              delay,
+              cache_invalidation: true,
+              operation: 'force_unlock_file_vault'
+            });
+          } catch (e) {
+            console.error(`[Unlock] Error in delayed WebSocket broadcast (${delay}ms):`, e);
+          }
+        }, delay);
+      }
+      
+      return true;
+    } catch (wsError) {
+      console.error(`[Unlock] Error broadcasting WebSocket event:`, wsError);
+      return false;
+    }
   } catch (error) {
-    console.error(`\n❌ Unhandled error:`, error);
-    process.exit(1);
+    console.error(`[Unlock] Error:`, error);
+    return false;
   }
 }
 
-// Run the main function
-main();
+// Execute the script
+unlockFileVault(COMPANY_ID)
+  .then(result => {
+    console.log(`[Unlock] ${result ? 'SUCCESS' : 'FAILED'}: File vault unlocking operation`);
+    
+    // Give time for the delayed broadcasts to complete before exiting
+    setTimeout(() => {
+      console.log(`[Unlock] Script completed.`);
+      process.exit(0);
+    }, 3500);
+  })
+  .catch(error => {
+    console.error(`[Unlock] Unexpected error:`, error);
+    process.exit(1);
+  });

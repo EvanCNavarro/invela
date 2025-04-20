@@ -259,9 +259,31 @@ export function setupAuth(app: Express) {
         try {
           // Attempt to import the routes module to get the cache reference
           const routesModule = require('./routes');
-          if (routesModule && routesModule.companyCache && companyId) {
-            console.log(`[Auth] Clearing company ${companyId} from cache during logout via routes module`);
-            routesModule.companyCache.delete(companyId);
+          
+          // Check if we can access the company cache
+          if (routesModule && routesModule.companyCache) {
+            if (companyId) {
+              // First, try to clear the specific company
+              console.log(`[Auth] Clearing company ${companyId} from cache during logout via routes module`);
+              routesModule.companyCache.delete(companyId);
+            }
+            
+            // IMPORTANT: Always clear the entire cache on logout to prevent session overlap issues
+            console.log(`[Auth] Performing full company cache clear for session separation`);
+            const cacheSize = routesModule.companyCache.size;
+            routesModule.companyCache.clear();
+            console.log(`[Auth] Cleared ${cacheSize} company entries from cache`);
+            
+            // Use the invalidation function if available - will broadcast WebSocket events
+            if (routesModule.invalidateCompanyCache && companyId) {
+              try {
+                const invalidated = routesModule.invalidateCompanyCache(companyId);
+                console.log(`[Auth] Cache invalidation result for company ${companyId}: ${invalidated}`);
+              } catch (invalidateError) {
+                console.warn('[Auth] Error invalidating company cache:', invalidateError);
+              }
+            }
+            
             return true;
           }
           return false;
@@ -274,7 +296,7 @@ export function setupAuth(app: Express) {
       // Try to clear the cache, log result
       const cleared = clearCompanyCache();
       if (!cleared) {
-        console.log(`[Auth] No company cache found to clear for company ${companyId}`);
+        console.log(`[Auth] No company cache found to clear during logout`);
       }
     } catch (e) {
       console.warn('[Auth] Error during company cache clearing:', e);
