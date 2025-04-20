@@ -1690,8 +1690,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           // Clear any previous toast notifications
           console.log(`[SUBMIT FLOW] 11. Clearing previous toast notifications`);
-          if (submittingToastId) {
-            toast.dismiss(submittingToastId);
+          try {
+            if (submittingToastId && typeof submittingToastId === 'string') {
+              // Use DOM manipulation instead of toast.dismiss to avoid TypeErrors
+              const toastElements = document.querySelectorAll(`[data-toast-id="${submittingToastId}"]`);
+              toastElements.forEach(el => {
+                if (el && el.parentElement) {
+                  el.parentElement.removeChild(el);
+                }
+              });
+              console.log(`[SUBMIT FLOW] Toast elements removed: ${toastElements.length}`);
+            }
+          } catch (e) {
+            console.warn("[SUBMIT FLOW] Failed to dismiss toast:", e);
           }
           
           // Single success toast
@@ -1731,8 +1742,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           logger.error('Form submission failed:', submissionError);
           
           // Clear any previous toast notifications
-          if (submittingToastId) {
-            toast.dismiss(submittingToastId);
+          try {
+            if (submittingToastId && typeof submittingToastId === 'string') {
+              // Instead of using toast.dismiss, use window.document methods
+              // to avoid TypeErrors when toast.dismiss is not available
+              const toastElements = document.querySelectorAll(`[data-toast-id="${submittingToastId}"]`);
+              toastElements.forEach(el => {
+                if (el && el.parentElement) {
+                  el.parentElement.removeChild(el);
+                }
+              });
+            }
+          } catch (e) {
+            console.warn("Failed to dismiss toast:", e);
           }
           
           // Show error toast
@@ -1749,15 +1771,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Emit status verification error via WebSocket
         try {
-          wsService.emit('submission_status', {
-            taskId: Number(taskId),
-            status: 'submitted', // Changed from 'warning' to 'submitted' for compatibility
-            verified: false, // Add flag to indicate verification issue
-            message: 'Status verification failed, but form data was saved',
-            source: 'client-status-verification'
-          });
+          // Fix TypeError by safely handling the emit call
+          if (wsService && typeof wsService.emit === 'function') {
+            wsService.emit('submission_status', {
+              taskId: Number(taskId || 0), // Ensure we have a valid number even if taskId is undefined
+              status: 'submitted', // Changed from 'warning' to 'submitted' for compatibility
+              verified: false, // Add flag to indicate verification issue
+              message: 'Status verification failed, but form data was saved',
+              source: 'client-status-verification'
+            });
+          }
         } catch (wsError) {
-          logger.error(`[WebSocket] Error emitting status verification warning:`, wsError);
+          // Enhanced error logging with safe object handling
+          console.error('[UniversalForm] WebSocket emit error:', 
+            wsError instanceof Error ? wsError.message : 'Unknown WebSocket error');
         }
         
         // MESSAGING FIX: Improved consistency between modal and toast notifications
@@ -1857,14 +1884,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Emit error status via WebSocket for monitoring
       try {
-        wsService.emit('submission_status', {
-          taskId: Number(taskId),
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error',
-          source: 'client-submission-exception-handler'
-        });
+        // Safely handle the WebSocket emit with type checking and error prevention
+        if (wsService && typeof wsService.emit === 'function') {
+          wsService.emit('submission_status', {
+            taskId: Number(taskId || 0), // Ensure we have a valid number even if taskId is undefined
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            source: 'client-submission-exception-handler'
+          });
+        }
       } catch (wsError) {
-        logger.error(`[WebSocket] Error emitting submission failure event:`, wsError);
+        // Enhanced error logging with safe object handling
+        console.error('[UniversalForm] WebSocket emit error during submission failure:', 
+          wsError instanceof Error ? wsError.message : 'Unknown WebSocket error');
       }
       
       // Show error toast
