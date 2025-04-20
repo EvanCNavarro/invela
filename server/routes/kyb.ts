@@ -5,7 +5,7 @@ import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@d
 import { eq, and, ilike, sql } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
-import { broadcastTaskUpdate, broadcastMessage } from '../services/websocket';
+import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
 
 const logger = new Logger('KYBRoutes');
 
