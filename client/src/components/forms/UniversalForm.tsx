@@ -249,16 +249,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (data.fieldKey === 'legalEntityName') {
         logger.info(`Received real-time update for field "${data.fieldKey}": "${data.value}"`);
         
-        // Update form data with the new value
+        // Update form data with the new value silently, without user notification
         if (updateField) {
           updateField(data.fieldKey, data.value);
-          
-          // Notify with a small toast that a field was updated
-          toast({
-            title: "Form field updated",
-            description: `The business name has been updated to "${data.value}"`,
-            duration: 3000
-          });
+          // No toast notification - this is a system-level update that shouldn't distract users
         }
       }
     };
