@@ -15,6 +15,7 @@ import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
+import { checkAndUnlockSecurityTasks } from './routes/kyb';
 import { getKybProgress } from './routes/kyb-update';
 import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
