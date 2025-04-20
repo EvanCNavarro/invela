@@ -1220,9 +1220,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Handle form submission
   const handleSubmit = useCallback(async (data: FormData) => {
+    // Start comprehensive logging for submission flow
+    console.log(`[SUBMIT FLOW] 1. Submit button clicked for task ${taskId || 'unknown'}`);
+    logger.info(`SUBMISSION FLOW START: Form submission initiated for task ${taskId || 'unknown'} of type ${taskType}`, {
+      taskId,
+      taskType,
+      formProgress: overallProgress,
+      formFieldCount: fields.length,
+      timestamp: new Date().toISOString()
+    });
+    
     try {
       // Verify form is complete before submitting
       if (overallProgress < 100) {
+        console.log(`[SUBMIT FLOW] 2a. INCOMPLETE: Form has ${overallProgress}% progress, stopping submission`);
+        logger.warn(`SUBMISSION FLOW STOPPED: Form incomplete (${overallProgress}%)`);
         toast({
           title: "Form incomplete",
           description: "Please complete all required fields before submitting.",
@@ -1230,6 +1242,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         });
         return;
       }
+      
+      console.log(`[SUBMIT FLOW] 2. VALIDATION: Form has 100% progress, continuing submission`);
+      logger.info(`SUBMISSION FLOW VALIDATION: Form has 100% completion, proceeding with submission`);
       
       // Double-check for any remaining empty fields
       const emptyFields = checkForEmptyValues(data);
@@ -1347,31 +1362,63 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // *** CRITICAL FIX: Send form data to server FIRST, wait for confirmation ***
         // Before showing any success indicators or toasts
-        logger.info('Submitting form data to server...');
+        console.log(`[SUBMIT FLOW] 3. Preparing server submission for task ${taskId}`);
+        logger.info(`SUBMISSION FLOW: Initiating server submission for task ${taskId}`, {
+          taskId,
+          taskType,
+          timestamp: new Date().toISOString()
+        });
         
         try {
           // Set up WebSocket listener for server confirmation BEFORE submission
           // This ensures we won't miss the event if it comes quickly
+          console.log(`[SUBMIT FLOW] 4. Creating WebSocket confirmation listeners for task ${taskId}`);
           const confirmationPromise = new Promise<boolean>((resolve, reject) => {
             // Set a timeout for server response
+            console.log(`[SUBMIT FLOW] 5. Setting 15-second timeout for server confirmation`);
             const timeoutId = setTimeout(() => {
+              console.log(`[SUBMIT FLOW] ERROR: Submission confirmation timed out after 15 seconds for task ${taskId}`);
+              logger.error(`SUBMISSION FLOW TIMEOUT: Server confirmation timed out after 15 seconds`, {
+                taskId,
+                timestamp: new Date().toISOString()
+              });
               reject(new Error('Server submission confirmation timed out'));
             }, 15000); // 15 second timeout
             
             // Listen for server confirmation via WebSocket
+            console.log(`[SUBMIT FLOW] 6. Adding WebSocket listener for 'submission_status' events`);
             const unsubscribe = wsService.subscribe('submission_status', (data: any) => {
+              console.log(`[SUBMIT FLOW] RECEIVED: WebSocket event:`, data);
+              
               if (data.taskId === Number(taskId) && data.status === 'submitted') {
-                logger.info('Received server submission confirmation', data);
+                console.log(`[SUBMIT FLOW] 9. SUCCESS: Server confirmed submission for task ${taskId}`);
+                logger.info(`SUBMISSION FLOW SUCCESS: Received server confirmation`, {
+                  taskId: data.taskId,
+                  status: data.status,
+                  source: data.source || 'unknown',
+                  timestamp: new Date().toISOString()
+                });
                 clearTimeout(timeoutId);
                 unsubscribe();
                 resolve(true);
+              } else {
+                console.log(`[SUBMIT FLOW] IGNORED: WebSocket event for different task or status`);
               }
             });
             
             // Also listen for error status
+            console.log(`[SUBMIT FLOW] 7. Adding WebSocket listener for error events`);
             const errorUnsubscribe = wsService.subscribe('submission_status', (data: any) => {
+              console.log(`[SUBMIT FLOW] RECEIVED: Error status event:`, data);
+              
               if (data.taskId === Number(taskId) && data.status === 'error') {
-                logger.error('Received server submission error', data);
+                console.log(`[SUBMIT FLOW] ERROR: Server reported submission error`);
+                logger.error(`SUBMISSION FLOW ERROR: Server reported error`, {
+                  taskId: data.taskId,
+                  error: data.error || 'Unknown server error',
+                  source: data.source || 'unknown',
+                  timestamp: new Date().toISOString()
+                });
                 clearTimeout(timeoutId);
                 unsubscribe();
                 errorUnsubscribe();
@@ -1381,22 +1428,32 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           });
           
           // Call parent's onSubmit handler which should make the actual API call
+          console.log(`[SUBMIT FLOW] 8. Calling onSubmit handler to submit data to server`);
           if (onSubmit) {
             onSubmit(data);
+          } else {
+            console.log(`[SUBMIT FLOW] WARNING: No onSubmit handler provided`);
           }
           
           // Wait for server confirmation via WebSocket
+          console.log(`[SUBMIT FLOW] 9. Waiting for server confirmation via WebSocket...`);
           await confirmationPromise;
           
           // Server confirmed success - now show success indicators
-          logger.info('Server confirmed submission success');
+          console.log(`[SUBMIT FLOW] 10. SUCCESS: Server confirmed form submission for task ${taskId}`);
+          logger.info(`SUBMISSION FLOW SUCCESS: Server confirmed submission success`, {
+            taskId,
+            timestamp: new Date().toISOString()
+          });
           
           // Clear any previous toast notifications
+          console.log(`[SUBMIT FLOW] 11. Clearing previous toast notifications`);
           if (submittingToastId) {
             toast.dismiss(submittingToastId);
           }
           
           // Single success toast
+          console.log(`[SUBMIT FLOW] 12. Showing success toast notification`);
           toast({
             title: "Form Submitted",
             description: "Your form was submitted successfully.",
@@ -1404,16 +1461,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           });
           
           // Show success modal (centralized in one place)
-          logger.info('Showing success modal');
+          console.log(`[SUBMIT FLOW] 13. Showing success modal`);
+          logger.info(`SUBMISSION FLOW UI: Showing success modal for task ${taskId}`);
           setShowSuccessModal(true);
           
           // Show confetti effect (single trigger)
+          console.log(`[SUBMIT FLOW] 14. Triggering confetti effect`);
           try {
             const { fireSuperConfetti } = await import('@/utils/confetti');
             fireSuperConfetti();
           } catch (confettiError) {
+            console.log(`[SUBMIT FLOW] ERROR: Failed to trigger confetti:`, confettiError);
             logger.error('Error showing confetti:', confettiError);
           }
+          
+          // Submission flow complete
+          console.log(`[SUBMIT FLOW] 15. COMPLETE: Form submission flow finished successfully for task ${taskId}`);
+          logger.info(`SUBMISSION FLOW COMPLETE: Form submission process completed successfully`, {
+            taskId,
+            timestamp: new Date().toISOString()
+          });
         } catch (submissionError) {
           // Handle submission error
           logger.error('Form submission failed:', submissionError);
