@@ -839,6 +839,26 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         email: userEmail
       });
 
+      // Dynamic Task Unlocking: Check if any security tasks need to be unlocked
+      // This ensures tasks are properly unlocked whenever a user accesses the Task Center
+      try {
+        const unlockResult = await checkAndUnlockSecurityTasks(companyId, userId);
+        if (unlockResult.unlocked) {
+          console.log('[Tasks] Dynamic task unlocking completed successfully:', {
+            companyId,
+            userId,
+            tasksUnlocked: unlockResult.count,
+            message: unlockResult.message
+          });
+          
+          // Clear task cache to ensure updated task status is returned
+          tasksCache.delete(cacheKey);
+        }
+      } catch (unlockError) {
+        console.error('[Tasks] Error in dynamic task unlocking:', unlockError);
+        // Continue with regular task fetching even if dynamic unlocking fails
+      }
+
       // First, let's check if there are any company-wide KYB tasks
       const kybTasks = await db.select()
         .from(tasks)
