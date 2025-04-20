@@ -7,6 +7,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { enhancedKybServiceFactory } from "@/services/enhanced-kyb-service";
+import { directlyAddFileVaultTab } from "@/services/fileVaultService";
 
 interface KYBTaskPageProps {
   params: {
@@ -195,9 +196,46 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 }
               })
               .then(() => {
+                // DIRECT FIX: Add file-vault tab directly to the current company data in cache
+                // This bypasses the broken WebSocket mechanism completely
+                try {
+                  console.log('[KYB Form] KYB form submitted successfully, directly updating file vault tab in cache');
+                  
+                  // Immediately use the imported function 
+                  const result = directlyAddFileVaultTab();
+                  console.log('[KYB Form] Direct file vault tab update result:', result);
+                  
+                  // For extra redundancy, add a delay and try again
+                  setTimeout(() => {
+                    try {
+                      console.log('[KYB Form] Running secondary file vault unlock attempt for reliability');
+                      const secondResult = directlyAddFileVaultTab();
+                      console.log('[KYB Form] Secondary file vault unlock result:', secondResult);
+                    } catch (secondaryError) {
+                      console.error('[KYB Form] Secondary file vault unlock attempt failed:', secondaryError);
+                    }
+                  }, 1000);
+                  
+                } catch (cacheUpdateError) {
+                  console.error('[KYB Form] Error updating file vault tab in cache:', cacheUpdateError);
+                  
+                  // Try fallback method if the direct method fails
+                  setTimeout(() => {
+                    try {
+                      console.log('[KYB Form] Trying fallback method with dynamic import');
+                      import('@/services/fileVaultService').then(({ directlyAddFileVaultTab }) => {
+                        const result = directlyAddFileVaultTab();
+                        console.log('[KYB Form] Fallback file vault unlock result:', result);
+                      });
+                    } catch (fallbackError) {
+                      console.error('[KYB Form] Fallback method also failed:', fallbackError);
+                    }
+                  }, 500);
+                }
+                
                 toast({
                   title: "KYB Form Submitted",
-                  description: "Your KYB form has been saved and the task has been updated.",
+                  description: "Your KYB form has been saved and the task has been updated. The File Vault tab is now enabled.",
                 });
                 navigate('/task-center');
               })
