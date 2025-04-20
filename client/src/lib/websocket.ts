@@ -172,6 +172,9 @@ class WebSocketService {
         };
 
         this.socket.onclose = (event) => {
+          // Use console.log for immediate visibility in browser console
+          console.log(`[WebSocket] Connection closed: ${event.code} ${event.reason}`);
+          
           logger.info('Connection closed:', {
             code: event.code,
             reason: event.reason,
@@ -198,6 +201,9 @@ class WebSocketService {
         };
 
         this.socket.onerror = (error) => {
+          // Use console.error for immediate visibility in browser console
+          console.error(`[WebSocket] Connection error:`, error);
+          
           logger.error('Error:', {
             error,
             connectionId: this.connectionId,
