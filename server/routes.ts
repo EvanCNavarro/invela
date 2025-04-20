@@ -36,6 +36,25 @@ import { PDFExtract } from 'pdf.js-extract';
 // Create PDFExtract instance
 const pdfExtract = new PDFExtract();
 
+// Company cache for current company endpoint - exported for other modules to use
+export const companyCache = new Map<number, { company: any, timestamp: number }>();
+export const COMPANY_CACHE_TTL = 1 * 60 * 1000; // Reduced to 1 minute to improve UI responsiveness
+
+/**
+ * Invalidate company cache for a specific company ID 
+ * This should be called when tabs are updated to ensure clients see the latest changes
+ * 
+ * @param companyId The company ID to invalidate in the cache
+ */
+export function invalidateCompanyCache(companyId: number) {
+  if (companyId && companyCache.has(companyId)) {
+    console.log(`[Cache] Invalidating company cache for company ${companyId}`);
+    companyCache.delete(companyId);
+    return true;
+  }
+  return false;
+}
+
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
@@ -247,24 +266,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Company cache for current company endpoint
-  const companyCache = new Map<number, { company: any, timestamp: number }>();
-  const COMPANY_CACHE_TTL = 1 * 60 * 1000; // Reduced to 1 minute to improve UI responsiveness
-
-  /**
-   * Invalidate company cache for a specific company ID 
-   * This should be called when tabs are updated to ensure clients see the latest changes
-   * 
-   * @param companyId The company ID to invalidate in the cache
-   */
-  function invalidateCompanyCache(companyId: number) {
-    if (companyId && companyCache.has(companyId)) {
-      console.log(`[Cache] Invalidating company cache for company ${companyId}`);
-      companyCache.delete(companyId);
-      return true;
-    }
-    return false;
-  }
+  // Use the company cache exported from the top-level of this file
   
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {

@@ -143,12 +143,14 @@ export const CompanyTabsService = {
       
       // CRITICAL: Invalidate the company cache
       try {
-        // Access the company cache directly
-        const companyCache = global.companyCache || require('../routes').companyCache;
+        // Import the invalidateCompanyCache function from routes
+        const { invalidateCompanyCache } = require('../routes');
         
-        if (companyCache && companyCache.has(companyId)) {
-          console.log(`[CompanyTabsService] ⚡ CRITICAL: Invalidating company ${companyId} cache to ensure fresh data`);
-          companyCache.delete(companyId);
+        // Use the dedicated cache invalidation function
+        const cacheInvalidated = invalidateCompanyCache(companyId);
+        
+        if (cacheInvalidated) {
+          console.log(`[CompanyTabsService] ⚡ CRITICAL: Successfully invalidated company ${companyId} cache`);
         } else {
           console.log(`[CompanyTabsService] Company ${companyId} not found in cache, no invalidation needed`);
         }
