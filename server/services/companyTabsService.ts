@@ -7,7 +7,6 @@
 import { db } from '@db';
 import { companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { unlockFileVault } from '../patches/updateCompanyTabs';
 
 export const CompanyTabsService = {
   /**
@@ -76,6 +75,54 @@ export const CompanyTabsService = {
    * users can access the file vault.
    */
   async unlockFileVault(companyId: number) {
-    return unlockFileVault(companyId);
+    if (!companyId) {
+      console.warn('[CompanyTabsService] Invalid company ID provided for file vault unlock');
+      return null;
+    }
+
+    try {
+      // Get current company data
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+
+      if (!company) {
+        console.error(`[CompanyTabsService] Company with ID ${companyId} not found for file vault unlock`);
+        return null;
+      }
+
+      // Get current tabs or default to task-center
+      const currentTabs = company.available_tabs || ['task-center'];
+      
+      // Check if file-vault is already present
+      if (currentTabs.includes('file-vault')) {
+        console.log(`[CompanyTabsService] Company ${companyId} already has file-vault tab`);
+        return company;
+      }
+      
+      // Add file-vault tab
+      const updatedTabs = [...currentTabs, 'file-vault'];
+      
+      console.log(`[CompanyTabsService] Adding file-vault tab to company ${companyId}`);
+      
+      // Update the company record
+      const [updatedCompany] = await db.update(companies)
+        .set({
+          available_tabs: updatedTabs,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning();
+        
+      console.log(`[CompanyTabsService] Successfully unlocked file vault for company ${companyId}:`, {
+        previousTabs: currentTabs,
+        newTabs: updatedCompany.available_tabs
+      });
+      
+      return updatedCompany;
+    } catch (error) {
+      console.error('[CompanyTabsService] Error unlocking file vault:', error);
+      return null;
+    }
   }
 };
