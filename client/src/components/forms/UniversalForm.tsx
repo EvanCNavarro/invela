@@ -1749,6 +1749,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Set the updated submission result
         setSubmissionResult(warningSubmissionResult);
+        
+        // CRITICAL FIX: Set form as locally submitted to transition to read-only mode
+        setFormSubmittedLocally(true);
         setShowSuccessModal(true);
         
         // Show a warning toast, but make it positive since the data was saved
