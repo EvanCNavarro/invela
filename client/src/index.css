@@ -151,23 +151,5 @@
     z-index: 50;
   }
   
-  /* Fast transition for the file vault tab - zero delay appearance */
-  .fast-transition {
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
-  }
-  
-  /* Don't hide locked items by default - let React control this */
-  /* Instead, add styles that enhance visibility when unlocked */
-  [data-locked="false"] {
-    opacity: 1 !important;
-    visibility: visible !important;
-    animation: tab-appear 10ms forwards;
-  }
-  
-  /* Instant tab appearance animation */
-  @keyframes tab-appear {
-    0% { opacity: 0.95; }
-    100% { opacity: 1; }
-  }
+  /* Remove any special CSS rules that might cause flashing */
 }

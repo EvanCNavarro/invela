@@ -33,8 +33,6 @@ export function SidebarTab({
   const content = (
     <div
       data-menu-item={href.replace('/', '')}
-      data-locked={isDisabled ? 'true' : 'false'}
-      style={{ display: 'flex' }} // Always show, but let React control disabled state
       className={cn(
         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
         "transition-all duration-75 relative", // Faster transition for immediate visual feedback
@@ -46,7 +44,7 @@ export function SidebarTab({
           : isDisabled
             ? "opacity-50 cursor-not-allowed bg-muted/50"
             : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer",
-        href === '/file-vault' && 'fast-transition'
+        /* no special styles for file-vault tab */
       )}
       onClick={(e) => {
         if (isPlayground) {

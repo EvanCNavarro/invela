@@ -77,44 +77,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       if (companyId === currentCompany?.id) {
         console.log('[DashboardLayout] Processing update for current company');
         
-        // OPTIMIZATION: Immediately update the cache before refetching
-        // This makes the UI update instantly without waiting for network
-        try {
-          const currentData = queryClient.getQueryData<Company>(['/api/companies/current']);
-          if (currentData) {
-            console.log('[DashboardLayout] ⚡ INSTANT UPDATE: Applying optimistic update to company tabs');
-            
-            // Create updated tabs array, ensuring 'file-vault' is included if in availableTabs
-            const updatedTabs = Array.isArray(availableTabs) 
-              ? [...new Set([...(currentData.available_tabs || []), ...availableTabs])]
-              : [...new Set([...(currentData.available_tabs || []), 'file-vault'])];
-            
-            // Update the cache immediately
-            queryClient.setQueryData(['/api/companies/current'], {
-              ...currentData,
-              available_tabs: updatedTabs
-            });
-            
-            console.log('[DashboardLayout] ✅ Cache updated immediately with tabs:', updatedTabs);
-          }
-        } catch (error) {
-          console.error('[DashboardLayout] Error during optimistic update:', error);
-        }
-        
-        // Still do the background refetch for consistency
-        // For critical updates with cache_invalidation, be more aggressive
-        if (cacheInvalidation) {
-          console.log('[DashboardLayout] Critical update detected, forcing refetch in background');
-          setTimeout(() => {
-            queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
-            refetchCompany();
-          }, 0);
-        } else {
-          // Standard invalidation for normal updates (in background)
-          setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-          }, 0);
-        }
+        // Simple approach - just refetch data from server once
+        console.log('[DashboardLayout] Received company update, refetching company data');
+        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+        refetchCompany();
       }
     };
     
@@ -189,73 +155,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
   
-  // Subscribe to WebSocket events for real-time company tab updates
-  useEffect(() => {
-    const subscriptions: Array<() => void> = [];
-    
-    const setupWebSocketSubscriptions = async () => {
-      try {
-        // Import WebSocket service
-        const { wsService } = await import('@/lib/websocket');
-        
-        // Subscribe to company tabs updates with enhanced handler
-        const unsubTabsUpdate = await wsService.subscribe('company_tabs_updated', (data: any) => {
-          console.log(`[DashboardLayout] 🔄 Received company_tabs_updated event:`, data);
-          
-          // If we don't have company data yet, force a refresh
-          if (!currentCompany) {
-            console.log(`[DashboardLayout] No current company loaded, forcing full refresh`);
-            refetchCompany();
-            return;
-          }
-          
-          // Log detailed information for debugging
-          console.log(`[DashboardLayout] Current company: ${currentCompany?.id} (${currentCompany?.available_tabs?.join(', ')})`);
-          console.log(`[DashboardLayout] Update for company: ${data.companyId} (${data.availableTabs?.join(', ')})`);
-          
-          // IMPORTANT: Always force a refetch to ensure the UI is up-to-date
-          // This ensures we catch updates even if company IDs don't match (multiple companies per user)
-          console.log(`[DashboardLayout] 🔄 Forcing company data refetch due to tab update`);
-          
-          // Critical: Invalidate the cache for the /api/companies/current endpoint
-          // This ensures the next refetch will get fresh data from the server
-          queryClient.invalidateQueries({ queryKey: ["/api/companies/current"] });
-          
-          // Force an immediate refetch to update the UI
-          refetchCompany();
-        });
-        
-        subscriptions.push(unsubTabsUpdate);
-        
-        // Also subscribe to connection status events to maintain reliable connection
-        const unsubConnStatus = await wsService.subscribe('connection_status', (data: any) => {
-          if (data.status === 'connected') {
-            console.log(`[DashboardLayout] WebSocket reconnected, refreshing company data`);
-            refetchCompany();
-          }
-        });
-        
-        subscriptions.push(unsubConnStatus);
-      } catch (error) {
-        console.error('[DashboardLayout] Error setting up WebSocket subscriptions:', error);
-      }
-    };
-    
-    // Set up WebSocket subscriptions immediately, don't wait for company data
-    // This ensures we catch updates even during initial loading
-    setupWebSocketSubscriptions();
-    
-    return () => {
-      // Cleanup subscriptions when component unmounts
-      subscriptions.forEach(unsubscribe => {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error('[DashboardLayout] Error unsubscribing from WebSocket:', error);
-        }
-      });
-    };
-  }, [refetchCompany, currentCompany?.id]); // Intentionally re-subscribing when company ID changes to ensure proper context
+  // We don't need duplicate WebSocket event handling here
+  // The other useEffect already handles the 'company-tabs-updated' event
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
