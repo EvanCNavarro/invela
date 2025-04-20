@@ -341,10 +341,12 @@ class WebSocketService {
       // Extract companyId from the data to match against current context
       const updatedCompanyId = data?.companyId;
       const availableTabs = data?.availableTabs || [];
+      const cacheInvalidation = !!data?.cache_invalidation;
       
       console.log(`[WebSocket] 📊 Company tabs update details:`, {
         updatedCompanyId,
         availableTabs,
+        cacheInvalidation,
         timestamp: new Date().toISOString()
       });
       
@@ -356,23 +358,47 @@ class WebSocketService {
           const queryClient = (window as any).__REACT_QUERY_GLOBAL_CLIENT__;
           
           if (queryClient) {
-            console.log(`[WebSocket] 🧹 Invalidating company queries in cache`);
+            console.log(`[WebSocket] 🧹 Invalidating company queries in cache (cache_invalidation flag: ${cacheInvalidation})`);
             
-            // More aggressive cache invalidation:
-            // 1. Force refetch of current company
-            // 2. Invalidate company listing
-            // 3. Reset all related state
-            
-            // Completely remove the data from cache first
-            queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
-            queryClient.removeQueries({ queryKey: ['/api/companies'] });
-            
-            // Then invalidate to trigger refetch
-            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-            
-            // Force refetch the current company data immediately to ensure we have fresh data
-            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+            // More aggressive cache invalidation when the cache_invalidation flag is true
+            if (cacheInvalidation) {
+              console.log(`[WebSocket] 🚨 Performing CRITICAL cache invalidation due to cache_invalidation flag`);
+              
+              // Most aggressive approach - completely reset all company-related data
+              // 1. Remove all queries related to companies
+              // 2. Remove all queries that might depend on company data
+              // 3. Force immediate refetch of critical paths
+              
+              // Reset all company and tab related data
+              queryClient.removeQueries({ queryKey: ['/api/companies'] });
+              queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.removeQueries({ queryKey: ['/api/companies', String(updatedCompanyId)] });
+              
+              // Also clear tabs and any related state
+              queryClient.removeQueries({ queryKey: ['/api/tabs'] });
+              queryClient.removeQueries({ queryKey: ['/api/dashboard'] }); 
+              
+              // Refresh all company data immediately
+              setTimeout(() => {
+                queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+                queryClient.refetchQueries({ queryKey: ['/api/companies'] });
+                console.log(`[WebSocket] ✅ Completed critical cache refresh`);
+              }, 100); // Small delay to ensure state updates first
+            } 
+            else {
+              // Standard cache invalidation for non-critical updates
+              
+              // Remove cached data first
+              queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.removeQueries({ queryKey: ['/api/companies'] });
+              
+              // Then invalidate to trigger refetch
+              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+              
+              // Force refetch the current company data immediately
+              queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+            }
             
             console.log(`[WebSocket] ✅ Successfully invalidated and refetched company queries`);
             
@@ -382,7 +408,9 @@ class WebSocketService {
                 detail: { 
                   companyId: updatedCompanyId,
                   availableTabs,
-                  source: 'websocket'
+                  cacheInvalidation, // Include the cache invalidation flag in the event
+                  source: 'websocket',
+                  timestamp: new Date().toISOString()
                 } 
               });
               window.dispatchEvent(companyUpdateEvent);
