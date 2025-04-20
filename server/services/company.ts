@@ -133,13 +133,13 @@ async function createCompanyInternal(
       duration: Date.now() - startTime
     });
 
-    // Create Security Assessment task (locked until KYB is completed)
-    console.log('[Company Service] Creating Security Assessment task for company:', newCompany.id);
+    // Create S&P KY3P Security Assessment task (locked until KYB is completed)
+    console.log('[Company Service] Creating S&P KY3P Security Assessment task for company:', newCompany.id);
     const [securityTask] = await tx.insert(tasks)
       .values({
-        title: `2. Security Assessment: ${newCompany.name}`,
-        description: `Complete Security Assessment for ${newCompany.name}`,
-        task_type: 'security_assessment',
+        title: `2. S&P KY3P Security Assessment: ${newCompany.name}`,
+        description: `Complete S&P KY3P Security Assessment for ${newCompany.name}`,
+        task_type: 'sp_ky3p_assessment', // Updated task type for KY3P assessment
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'medium',
@@ -172,7 +172,7 @@ async function createCompanyInternal(
       })
       .returning();
 
-    console.log('[Company Service] Created Security Assessment task:', {
+    console.log('[Company Service] Created S&P KY3P Security Assessment task:', {
       taskId: securityTask.id,
       companyId: newCompany.id,
       duration: Date.now() - startTime
@@ -210,8 +210,8 @@ async function createCompanyInternal(
           last_updated: new Date().toISOString(),
           created_by_id: createdById,
           locked: true, // Task is initially locked
-          prerequisite_task_id: securityTask.id, // Security Assessment task is a prerequisite
-          prerequisite_task_type: 'security_assessment'
+          prerequisite_task_id: securityTask.id, // S&P KY3P Security Assessment task is a prerequisite
+          prerequisite_task_type: 'sp_ky3p_assessment'
         }
       })
       .returning();
