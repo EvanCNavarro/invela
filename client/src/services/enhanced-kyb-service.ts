@@ -1334,10 +1334,65 @@ export class EnhancedKybFormService implements FormServiceInterface {
   }
 }
 
-// Export a singleton instance of the Enhanced KYB form service
-export const enhancedKybService = new EnhancedKybFormService();
+// Create a factory for managing isolated instances of EnhancedKybFormService
+class EnhancedKybServiceFactory {
+  private instances: Map<string, EnhancedKybFormService> = new Map();
+  private logger = getLogger('EnhancedKybServiceFactory');
 
-// Export convenience functions
+  /**
+   * Get an instance for a specific company and task
+   * @param companyId The company ID
+   * @param taskId The task ID
+   * @returns An isolated instance of EnhancedKybFormService
+   */
+  getInstance(companyId: number | string, taskId: number | string): EnhancedKybFormService {
+    const instanceKey = `company-${companyId}-task-${taskId}`;
+    
+    if (!this.instances.has(instanceKey)) {
+      this.logger.info(`Creating new EnhancedKybFormService instance for ${instanceKey}`);
+      this.instances.set(instanceKey, new EnhancedKybFormService());
+    }
+    
+    return this.instances.get(instanceKey)!;
+  }
+
+  /**
+   * Clear instance for a specific company and task
+   * @param companyId The company ID
+   * @param taskId The task ID
+   */
+  clearInstance(companyId: number | string, taskId: number | string): void {
+    const instanceKey = `company-${companyId}-task-${taskId}`;
+    
+    if (this.instances.has(instanceKey)) {
+      this.logger.info(`Clearing EnhancedKybFormService instance for ${instanceKey}`);
+      this.instances.delete(instanceKey);
+    }
+  }
+
+  /**
+   * Get the current active instance or create a default one
+   * This is provided for backward compatibility with existing code
+   * @deprecated Use getInstance with specific company and task IDs instead
+   */
+  getDefaultInstance(): EnhancedKybFormService {
+    this.logger.warn('Using deprecated default instance - should specify company and task IDs');
+    return this.getInstance('default', 'default');
+  }
+}
+
+// Create and export the factory
+export const enhancedKybServiceFactory = new EnhancedKybServiceFactory();
+
+// For backward compatibility, provide the default instance
+export const enhancedKybService = enhancedKybServiceFactory.getDefaultInstance();
+
+// Updated convenience functions that accept company and task IDs
+export const getKybService = (companyId: number | string, taskId: number | string): EnhancedKybFormService => 
+  enhancedKybServiceFactory.getInstance(companyId, taskId);
+
+// Legacy convenience functions using the default instance
+// These should be gradually replaced with the instance-specific versions
 export const getKybFields = (): Promise<KybField[]> => enhancedKybService.getKybFields();
 export const getKybFieldsByStepIndex = (stepIndex: number): Promise<KybField[]> => enhancedKybService.getKybFieldsByStepIndex(stepIndex);
 export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybField[]> => enhancedKybService.groupFieldsBySection(fields);
