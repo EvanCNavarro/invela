@@ -270,6 +270,94 @@ export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: st
  * 
  * Enhanced with better logging, multiple attempts, and client counting
  */
+/**
+ * Broadcast a company tabs update with cache invalidation
+ * This function is crucial for ensuring file vault tab appears after form submission
+ */
+export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: string[]) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized, cannot broadcast company tabs update');
+    return;
+  }
+
+  console.log(`[WebSocket] Broadcasting company tabs update for company ${companyId}:`, {
+    availableTabs,
+    timestamp: new Date().toISOString()
+  });
+
+  // Directly try to invalidate company data in the cache
+  // Since we can't access the cache directly due to circular dependencies,
+  // we'll broadcast a special internal message that the client will use
+  // to force a cache refresh
+  console.log(`[WebSocket] Sending cache invalidation message for company ${companyId}`);
+  
+  // Include cache_invalidation field in the payload to trigger client-side cache busting
+  const cacheInvalidationPayload = {
+    companyId,
+    availableTabs,
+    timestamp: new Date().toISOString(),
+    cache_invalidation: true
+  };
+  
+  // We'll handle cache busting on the client side instead
+
+  // Build the message with consistent payload format
+  const message = JSON.stringify({
+    type: 'company_tabs_updated',
+    payload: cacheInvalidationPayload
+  });
+  
+  // Track successful sends
+  let successCount = 0;
+  
+  // Count active clients for debugging
+  let openClientCount = 0;
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      openClientCount++;
+    }
+  });
+
+  // Send to all clients
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(message);
+        successCount++;
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting company tabs update:', error);
+      }
+    }
+  });
+  
+  console.log(`[WebSocket] Company tabs update broadcast summary:`, {
+    companyId,
+    successCount,
+    totalClients: openClientCount,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Set up delayed retries to ensure message delivery even if clients reconnect
+  const delayTimes = [500, 1500, 3000]; // 0.5s, 1.5s, 3s delays
+  for (const delay of delayTimes) {
+    setTimeout(() => {
+      try {
+        let retryOpenClients = 0;
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            retryOpenClients++;
+            client.send(message);
+          }
+        });
+        
+        console.log(`[WebSocket] Delayed company tabs update (${delay}ms) sent to ${retryOpenClients} clients`);
+      } catch (e) {
+        console.error(`[WebSocket] Error in delayed company tabs broadcast (${delay}ms):`, e);
+      }
+    }, delay);
+  }
+}
+
 export function broadcastSubmissionStatus(taskId: number, status: string) {
   if (!wss) {
     console.warn('[WebSocket] Server not initialized, cannot broadcast submission status');
