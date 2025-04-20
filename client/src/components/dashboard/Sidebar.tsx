@@ -54,6 +54,12 @@ export function Sidebar({
     enabled: !isPlayground,
   });
 
+  // Force re-render when availableTabs change to ensure sidebar updates
+  useEffect(() => {
+    // Log when tabs are updated for debugging
+    console.log('[Sidebar] Available tabs updated:', availableTabs);
+  }, [availableTabs]);
+  
   // Update taskCount when tasks data changes
   useEffect(() => {
     if (!isPlayground && Array.isArray(tasks)) {
