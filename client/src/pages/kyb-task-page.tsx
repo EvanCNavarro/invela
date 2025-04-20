@@ -6,6 +6,7 @@ import { UniversalForm } from "@/components/forms/UniversalForm";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { enhancedKybServiceFactory } from "@/services/enhanced-kyb-service";
 
 interface KYBTaskPageProps {
   params: {
@@ -53,6 +54,24 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
       navigate('/task-center');
     }
   }, [error, navigate, toast]);
+  
+  // Create isolated service instance for this task when the task data loads
+  useEffect(() => {
+    if (task) {
+      const companyId = task.metadata?.company_id;
+      if (companyId) {
+        console.log(`[KYB Task Page] Creating isolated KYB service instance for company ${companyId}, task ${task.id}`);
+        // Get company-specific service instance
+        enhancedKybServiceFactory.getInstance(companyId, task.id);
+        
+        // Clean up the instance when component unmounts or task/company changes
+        return () => {
+          console.log(`[KYB Task Page] Cleaning up KYB service instance for company ${companyId}, task ${task.id}`);
+          enhancedKybServiceFactory.clearInstance(companyId, task.id);
+        };
+      }
+    }
+  }, [task]);
 
   if (isLoading) {
     return (
