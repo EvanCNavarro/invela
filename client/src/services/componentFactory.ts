@@ -105,9 +105,9 @@ export class ComponentFactory {
       // Get instance from Enhanced KYB factory
       logger.info(`Getting isolated KYB service instance for company ${companyId}, task ${taskId}`);
       return enhancedKybServiceFactory.getInstance(companyId, taskId);
-    } else if (taskType === 'sp_ky3p_assessment') {
+    } else if (taskType === 'sp_ky3p_assessment' || taskType === 'ky3p') {
       // Get instance from KY3P factory
-      logger.info(`Getting isolated KY3P service instance for company ${companyId}, task ${taskId}`);
+      logger.info(`Getting isolated KY3P service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
       return ky3pFormServiceFactory.getServiceInstance(companyId, taskId);
     }
     
