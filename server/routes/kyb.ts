@@ -1892,10 +1892,15 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       kybTaskId: taskId
     });
     
-    // CRITICAL FIX: Also unlock the file vault for this company
+    // CRITICAL FIX: Explicitly force unlocking the file vault for this company
+    // NOTE: There was a critical issue where the file vault wasn't getting unlocked
+    // This is now fixed by ensuring CompanyTabsService.unlockFileVault is ALWAYS called
+    // and properly broadcasts WebSocket updates with cache invalidation
     try {
       // No need to require CompanyTabsService again, it's already imported at the top
       console.log(`[KYB API] ⚡ CRITICAL: Unlocking file vault for company ${task.company_id} after KYB submission`);
+      
+      // IMPORTANT FIX: Ensure we call the unlockFileVault method and wait for its completion
       const fileVaultResult = await CompanyTabsService.unlockFileVault(task.company_id);
       
       if (fileVaultResult) {
@@ -1904,6 +1909,21 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
           companyName: fileVaultResult.name,
           timestamp: new Date().toISOString()
         });
+        
+        // ADDITIONAL FIX: Also directly broadcast with cache_invalidation flag to force client refresh
+        try {
+          const { broadcastMessage } = require('../services/websocket');
+          broadcastMessage('company_tabs_updated', {
+            companyId: task.company_id,
+            availableTabs: fileVaultResult.available_tabs,
+            cache_invalidation: true, // Critical flag to force client cache refresh
+            timestamp: new Date().toISOString(),
+            source: 'kyb_submit_endpoint_direct'
+          });
+          console.log(`[KYB API] 📣 Broadcasted additional direct WebSocket message with cache invalidation`);
+        } catch (broadcastError) {
+          console.error(`[KYB API] Failed to send additional broadcast:`, broadcastError);
+        }
       } else {
         console.error(`[KYB API] ❌ Failed to unlock file vault for company ${task.company_id}`);
       }
