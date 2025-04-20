@@ -39,9 +39,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   });
 
   // Use the optimized query options for frequently accessed endpoints
-  const { data: currentCompany, isLoading: isLoadingCompany } = useQuery<Company>({
+  // But make sure we use aggressive refetching settings to reflect unlocked features
+  const { data: currentCompany, isLoading: isLoadingCompany, refetch: refetchCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     ...getOptimizedQueryOptions("/api/companies/current"),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Consider data stale immediately to ensure fresh data
   });
 
   const relevantTasks = tasks.filter(task => {
