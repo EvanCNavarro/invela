@@ -120,7 +120,10 @@ export function broadcast(type: string, data: any) {
     return;
   }
   
-  const message = JSON.stringify({ type, data });
+  const message = JSON.stringify({ 
+    type, 
+    payload: data  // Changed from 'data' to 'payload' to match client expectations
+  });
   let clientCount = 0;
   
   wss.clients.forEach((client) => {
