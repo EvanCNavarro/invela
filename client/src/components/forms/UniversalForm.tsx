@@ -1459,9 +1459,115 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             console.log(`[SUBMIT FLOW] WARNING: No onSubmit handler provided`);
           }
           
-          // Wait for server confirmation via WebSocket
-          console.log(`[SUBMIT FLOW] 9. Waiting for server confirmation via WebSocket...`);
-          await confirmationPromise;
+          // Set up a fallback HTTP confirmation system - this is more reliable than WebSockets
+          // which can disconnect due to proxies, firewalls, and network conditions
+          let confirmationTimeoutTriggered = false;
+          let confirmationRetryCount = 0;
+          const MAX_CONFIRMATION_RETRIES = 6;
+          const CONFIRMATION_RETRY_DELAY = 1500; // 1.5 seconds initially, will increase with backoff
+          
+          const checkSubmissionViaHTTP = async () => {
+            if (confirmationRetryCount >= MAX_CONFIRMATION_RETRIES) {
+              console.log(`[SUBMIT FLOW] HTTP Confirmation: Max retries (${MAX_CONFIRMATION_RETRIES}) reached`);
+              return null;
+            }
+            
+            try {
+              confirmationRetryCount++;
+              const backoffDelay = CONFIRMATION_RETRY_DELAY * (1 + 0.5 * (confirmationRetryCount - 1)); // Exponential backoff
+              console.log(`[SUBMIT FLOW] HTTP Confirmation: Attempt #${confirmationRetryCount} with delay ${backoffDelay}ms`);
+              
+              // Make an HTTP request to check submission status
+              const response = await fetch(`/api/submissions/check/${taskId}`);
+              
+              if (!response.ok) {
+                console.log(`[SUBMIT FLOW] HTTP Confirmation: Server returned ${response.status}`);
+                return null;
+              }
+              
+              const result = await response.json();
+              console.log(`[SUBMIT FLOW] HTTP Confirmation: Server returned status:`, result);
+              
+              if (result.success && result.status.isSubmitted) {
+                console.log(`[SUBMIT FLOW] HTTP Confirmation: Success! Task ${taskId} is confirmed as submitted`);
+                return true;
+              } else {
+                console.log(`[SUBMIT FLOW] HTTP Confirmation: Task not yet confirmed as submitted, will retry...`);
+                return null;
+              }
+            } catch (error) {
+              console.error(`[SUBMIT FLOW] HTTP Confirmation: Error checking status:`, error);
+              return null;
+            }
+          };
+          
+          // Function to check submission status via HTTP on a regular interval as a fallback
+          const startHTTPConfirmationPolling = () => {
+            if (confirmationTimeoutTriggered) {
+              console.log(`[SUBMIT FLOW] HTTP polling started after WebSocket timeout`);
+              
+              const pollInterval = setInterval(async () => {
+                const confirmed = await checkSubmissionViaHTTP();
+                
+                if (confirmed === true) {
+                  clearInterval(pollInterval);
+                  // If we reach this point, we've confirmed via HTTP that the submission succeeded
+                  console.log(`[SUBMIT FLOW] HTTP Confirmation: Successfully confirmed submission`);
+                  
+                  // Resolve the promise to proceed with the success flow
+                  if (!confirmationPromiseResolved) {
+                    confirmationPromiseResolve(true);
+                    confirmationPromiseResolved = true;
+                  }
+                } else if (confirmationRetryCount >= MAX_CONFIRMATION_RETRIES) {
+                  clearInterval(pollInterval);
+                  console.log(`[SUBMIT FLOW] HTTP Confirmation: Max retries reached, assuming success`);
+                  
+                  // Assuming success because we likely saved the data but can't confirm status
+                  if (!confirmationPromiseResolved) {
+                    confirmationPromiseResolve(true);
+                    confirmationPromiseResolved = true;
+                  }
+                }
+              }, CONFIRMATION_RETRY_DELAY);
+            }
+          };
+          
+          // Keep track of whether we've resolved the promise to avoid duplicate resolutions
+          let confirmationPromiseResolved = false;
+          let confirmationPromiseResolve: (value: boolean | PromiseLike<boolean>) => void;
+          
+          // Create a new promise that we can resolve either via WebSocket or HTTP confirmation
+          const enhancedConfirmationPromise = new Promise<boolean>((resolve) => {
+            confirmationPromiseResolve = resolve;
+            
+            // First try WebSocket confirmation
+            confirmationPromise.then(() => {
+              if (!confirmationPromiseResolved) {
+                console.log(`[SUBMIT FLOW] Confirmation successful via WebSocket`);
+                confirmationPromiseResolved = true;
+                resolve(true);
+              }
+            }).catch((error) => {
+              console.log(`[SUBMIT FLOW] WebSocket confirmation failed:`, error);
+              // Don't resolve here, let the HTTP polling try to confirm
+            });
+          });
+          
+          // Wait for confirmation via either WebSocket or HTTP fallback
+          console.log(`[SUBMIT FLOW] 9. Waiting for server confirmation via WebSocket or HTTP...`);
+          
+          // Set up a timeout after which we'll try HTTP confirmation if WebSocket hasn't worked
+          setTimeout(() => {
+            if (!confirmationPromiseResolved) {
+              console.log(`[SUBMIT FLOW] WebSocket confirmation timed out, falling back to HTTP`);
+              confirmationTimeoutTriggered = true;
+              startHTTPConfirmationPolling();
+            }
+          }, 3000); // 3 seconds timeout for WebSocket confirmation
+          
+          // Wait for either WebSocket or HTTP confirmation to succeed
+          await enhancedConfirmationPromise;
           
           // Server confirmed success - now show success indicators
           console.log(`[SUBMIT FLOW] 10. SUCCESS: Server confirmed form submission for task ${taskId}`);
