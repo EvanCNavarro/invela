@@ -1766,17 +1766,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Invalidate the company data query to refresh permissions regardless of the error
         try {
-          console.log(`[SUBMIT FLOW] Invalidating company data after status verification warning`);
+          console.log(`[SUBMIT FLOW] Completely purging and refetching company data to update UI`);
           const { queryClient } = await import('@/lib/queryClient');
-          // Invalidate and FORCE an immediate refetch of company data 
-          // to ensure permissions are updated and file vault is unlocked in UI
-          queryClient.invalidateQueries({
+          
+          // First completely remove all company data from cache to force a fresh fetch
+          queryClient.removeQueries({ 
             queryKey: ['/api/companies/current'],
-            exact: true,
-            refetchType: 'active', // Force active queries to refetch immediately
+            exact: true 
           });
           
-          // Explicitly force refetch of company data
+          // Then explicitly force a complete refetch
+          queryClient.refetchQueries({
+            queryKey: ['/api/companies/current'],
+            exact: true,
+            type: 'all', // Refetch all queries, not just active ones
+          }, { throwOnError: false }); // Don't throw on error
+          
+          // Also clear any related company queries
+          queryClient.invalidateQueries({
+            queryKey: ['/api/companies'],
+            exact: false, // Invalidate all company-related queries
+          });
           queryClient.refetchQueries({
             queryKey: ['/api/companies/current'],
             exact: true,

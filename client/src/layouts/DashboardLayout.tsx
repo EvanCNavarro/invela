@@ -92,6 +92,51 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       navigate('/task-center');
     }
   }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
+  
+  // Subscribe to WebSocket events for real-time company tab updates
+  useEffect(() => {
+    const subscriptions: Array<() => void> = [];
+    
+    const setupWebSocketSubscriptions = async () => {
+      try {
+        // Import WebSocket service
+        const { wsService } = await import('@/lib/websocket');
+        
+        // Subscribe to company tabs updates
+        const unsubTabsUpdate = await wsService.subscribe('company_tabs_updated', (data: any) => {
+          console.log(`[DashboardLayout] Received company_tabs_updated event:`, data);
+          
+          // Check if this update is for our company
+          if (data.companyId === currentCompany?.id) {
+            console.log(`[DashboardLayout] Forcing company data refetch due to tab update`);
+            
+            // Force an immediate refetch
+            refetchCompany();
+          }
+        });
+        
+        subscriptions.push(unsubTabsUpdate);
+      } catch (error) {
+        console.error('[DashboardLayout] Error setting up WebSocket subscriptions:', error);
+      }
+    };
+    
+    // Only set up subscriptions if we have a company ID
+    if (currentCompany?.id) {
+      setupWebSocketSubscriptions();
+    }
+    
+    return () => {
+      // Cleanup subscriptions when component unmounts
+      subscriptions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('[DashboardLayout] Error unsubscribing from WebSocket:', error);
+        }
+      });
+    };
+  }, [currentCompany?.id, refetchCompany]);
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
