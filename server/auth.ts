@@ -298,6 +298,23 @@ export function setupAuth(app: Express) {
       if (!cleared) {
         console.log(`[Auth] No company cache found to clear during logout`);
       }
+      
+      // Broadcast WebSocket event to inform clients of cache invalidation
+      try {
+        const { broadcastMessage } = require('./services/websocket');
+        if (broadcastMessage && typeof broadcastMessage === 'function') {
+          console.log(`[Auth] Broadcasting cache invalidation WebSocket message`);
+          broadcastMessage('cache_invalidation', {
+            type: 'logout',
+            userId: userId,
+            companyId: companyId,
+            timestamp: new Date().toISOString(),
+            cache_invalidation: true
+          });
+        }
+      } catch (broadcastError) {
+        console.warn('[Auth] Error broadcasting cache invalidation:', broadcastError);
+      }
     } catch (e) {
       console.warn('[Auth] Error during company cache clearing:', e);
     }
