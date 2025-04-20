@@ -331,6 +331,70 @@ class WebSocketService {
       this.updateConnectionStatus('disconnected');
     } else if (type === 'connection_error') {
       this.updateConnectionStatus('error');
+    } else if (type === 'cache_invalidation') {
+      // Handle direct cache invalidation messages from the server
+      console.log(`[WebSocket] 🚨 Received cache invalidation message:`, data);
+      
+      // Extract info from the message
+      const invalidationType = data?.type || 'unknown';
+      const userId = data?.userId;
+      const companyId = data?.companyId;
+      const hasCacheInvalidationFlag = !!data?.cache_invalidation;
+      
+      console.log(`[WebSocket] 🧹 Cache invalidation details:`, {
+        type: invalidationType,
+        userId,
+        companyId,
+        hasCacheInvalidationFlag,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Force invalidate query cache based on the type of invalidation
+      try {
+        if (typeof window !== 'undefined') {
+          const queryClient = (window as any).__REACT_QUERY_GLOBAL_CLIENT__;
+          
+          if (queryClient) {
+            console.log(`[WebSocket] 🔄 Processing cache invalidation for type: ${invalidationType}`);
+            
+            // Handle different invalidation types
+            if (invalidationType === 'logout') {
+              // Special handling for logout - completely reset authentication and company queries
+              console.log(`[WebSocket] 🔑 Processing logout cache invalidation`);
+              
+              // Clear critical caches
+              queryClient.removeQueries({ queryKey: ['/api/user'] });
+              queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.removeQueries({ queryKey: ['/api/companies'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/auth'] });
+              
+              // Dispatch a custom event for components to handle
+              try {
+                const logoutEvent = new CustomEvent('session-logout', { 
+                  detail: { 
+                    userId,
+                    timestamp: new Date().toISOString()
+                  } 
+                });
+                window.dispatchEvent(logoutEvent);
+                console.log('[WebSocket] 📣 Dispatched session-logout event');
+              } catch (eventError) {
+                console.error('[WebSocket] Failed to dispatch logout event:', eventError);
+              }
+            } else {
+              // Generic cache invalidation for unknown types
+              console.log(`[WebSocket] Performing generic cache invalidation`);
+              
+              // Invalidate most common caches that could be affected
+              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`[WebSocket] Error processing cache invalidation:`, error);
+      }
     }
     
     // Special handling for company tab updates

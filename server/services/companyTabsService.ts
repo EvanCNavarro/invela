@@ -101,14 +101,66 @@ export const CompanyTabsService = {
       const operationStartTime = new Date();
       console.log(`[CompanyTabsService] ⚡ CRITICAL TIMING: File vault unlock operation started for company ${companyId} at ${operationStartTime.toISOString()}`);
       
-      // OPTIMIZATION: Use a direct update instead of select-then-update
-      // This reduces round-trips and transaction time
+      // DEBUGGING: First fetch the company to check current state
+      const [currentCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+        
+      if (!currentCompany) {
+        console.error(`[CompanyTabsService] Company with ID ${companyId} not found`);
+        return null;
+      }
       
-      // Directly update the company record with a SQL expression that safely adds
-      // 'file-vault' to the available_tabs array if it's not already there
-      // Using SQL concatenation is faster than the previous JavaScript approach
+      console.log(`[CompanyTabsService] Current company state before unlock:`, {
+        companyId,
+        name: currentCompany.name,
+        available_tabs: currentCompany.available_tabs,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Ensure we have a proper available_tabs array to work with
+      const currentTabs = currentCompany.available_tabs || ['task-center'];
+      
+      // Check if file-vault is already in the array
+      if (currentTabs.includes('file-vault')) {
+        console.log(`[CompanyTabsService] File vault tab already enabled for company ${companyId}`);
+        return currentCompany;
+      }
+      
+      // BUGFIX: Use both SQL and object based approach for maximum compatibility
       const timestamp = new Date();
       console.log(`[CompanyTabsService] Directly updating company ${companyId} with file-vault tab at ${timestamp.toISOString()}`);
+      
+      // Update with both SQL and standard object approach
+      try {
+        // First try with simpler approach - add file-vault to the array directly
+        const updatedTabs = [...currentTabs, 'file-vault'];
+        console.log(`[CompanyTabsService] Updating company ${companyId} tabs from ${JSON.stringify(currentTabs)} to ${JSON.stringify(updatedTabs)}`);
+        
+        const [updatedCompany] = await db.update(companies)
+          .set({
+            available_tabs: updatedTabs,
+            updated_at: timestamp
+          })
+          .where(eq(companies.id, companyId))
+          .returning();
+          
+        if (updatedCompany) {
+          console.log(`[CompanyTabsService] Successfully updated using direct array approach:`, {
+            companyId,
+            newTabs: updatedCompany.available_tabs,
+            timestamp: new Date().toISOString()
+          });
+          
+          // If we got here, the update succeeded
+          return updatedCompany;
+        }
+      } catch (directUpdateError) {
+        console.error(`[CompanyTabsService] Error updating with direct array approach:`, directUpdateError);
+      }
+      
+      // Fallback to SQL expression approach if the direct update failed
+      console.log(`[CompanyTabsService] Falling back to SQL expression approach for company ${companyId}`);
       
       // Use a SQL expression to conditionally add file-vault if it doesn't exist
       const [updatedCompany] = await db.update(companies)
