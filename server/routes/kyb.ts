@@ -641,6 +641,18 @@ router.post('/api/kyb/progress', async (req, res) => {
               console.error(`[SERVER DEBUG] ❌ UPDATE VERIFICATION FAILED - values don't match!`);
             } else {
               console.log(`[SERVER DEBUG] ✅ UPDATE SUCCESSFUL for field "${fieldKey}" (ID: ${existingResponse.id})`);
+              
+              // Special handling for legalEntityName field - broadcast via WebSocket to all clients
+              // This ensures all clients have the most up-to-date business name
+              if (fieldKey === 'legalEntityName') {
+                console.log(`[SERVER DEBUG] Broadcasting legalEntityName update via WebSocket: "${responseValue}"`);
+                try {
+                  const { broadcastFieldUpdate } = await import('../services/websocket');
+                  broadcastFieldUpdate(taskId, fieldKey, responseValue);
+                } catch (wsError) {
+                  console.error(`[SERVER DEBUG] Error broadcasting field update:`, wsError);
+                }
+              }
             }
           } catch (error) {
             console.error(`[SERVER DEBUG] ❌ DATABASE ERROR updating response for field "${fieldKey}":`);
@@ -683,6 +695,18 @@ router.post('/api/kyb/progress', async (req, res) => {
               console.error(`[SERVER DEBUG] ❌ INSERT VERIFICATION FAILED - values don't match!`);
             } else {
               console.log(`[SERVER DEBUG] ✅ INSERT SUCCESSFUL for field "${fieldKey}"`);
+              
+              // Special handling for legalEntityName field - broadcast via WebSocket to all clients
+              // This ensures all clients have the most up-to-date business name
+              if (fieldKey === 'legalEntityName') {
+                console.log(`[SERVER DEBUG] Broadcasting legalEntityName insert via WebSocket: "${responseValue}"`);
+                try {
+                  const { broadcastFieldUpdate } = await import('../services/websocket');
+                  broadcastFieldUpdate(taskId, fieldKey, responseValue);
+                } catch (wsError) {
+                  console.error(`[SERVER DEBUG] Error broadcasting field update:`, wsError);
+                }
+              }
             }
           } catch (error) {
             console.error(`[SERVER DEBUG] ❌ DATABASE ERROR inserting response for field "${fieldKey}":`);

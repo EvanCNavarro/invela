@@ -82,6 +82,7 @@ import { useUser, User as UserFromHook } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { UniversalSuccessModal, SubmissionResult, SubmissionAction } from './UniversalSuccessModal';
 import confetti from 'canvas-confetti';
+import { wsService } from '@/lib/websocket';
 
 import SectionContent from './SectionContent';
 
@@ -235,6 +236,51 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     onChange: onProgress
   });
   
+  // Set up WebSocket listener for field updates
+  useEffect(() => {
+    if (!taskId) return;
+    
+    // Define a handler for field update messages
+    const handleFieldUpdate = (data: any) => {
+      // Only process messages for the current task
+      if (data.taskId !== taskId) return;
+      
+      // Check if we have the legalEntityName field
+      if (data.fieldKey === 'legalEntityName') {
+        logger.info(`Received real-time update for field "${data.fieldKey}": "${data.value}"`);
+        
+        // Update form data with the new value
+        if (updateField) {
+          updateField(data.fieldKey, data.value);
+          
+          // Notify with a small toast that a field was updated
+          toast({
+            title: "Form field updated",
+            description: `The business name has been updated to "${data.value}"`,
+            duration: 3000
+          });
+        }
+      }
+    };
+    
+    // Subscribe to field update messages
+    let unsubscribe: (() => void) | null = null;
+    wsService.subscribe('field_update', handleFieldUpdate)
+      .then(unsub => {
+        unsubscribe = unsub;
+      })
+      .catch(error => {
+        logger.error('Error subscribing to field updates:', error);
+      });
+      
+    // Clean up subscription when component unmounts
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [taskId, updateField]);
+
   // Update sections when main form sections change to include the Review & Submit section
   useEffect(() => {
     if (sections.length > 0) {
