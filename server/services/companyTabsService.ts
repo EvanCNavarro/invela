@@ -62,6 +62,19 @@ export const CompanyTabsService = {
         
       console.log(`[CompanyTabsService] Successfully updated company tabs for ${companyId}`);
       
+      // Broadcast a WebSocket event to notify all clients of the tab update
+      try {
+        // Import the correct WebSocket service functions from our implementation
+        const { broadcastCompanyTabsUpdate } = require('../services/websocket');
+        
+        // Call the specific broadcast function we created for company tabs
+        broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
+        
+        console.log(`[CompanyTabsService] Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
+      } catch (wsError) {
+        console.error(`[CompanyTabsService] Failed to broadcast WebSocket event:`, wsError);
+      }
+      
       return updatedCompany;
     } catch (error) {
       console.error('[CompanyTabsService] Error updating company tabs:', error);
@@ -121,12 +134,12 @@ export const CompanyTabsService = {
       
       // Broadcast a WebSocket event to notify all clients of the tab update
       try {
-        const { wsService } = require('./websocket');
-        wsService.broadcast('company_tabs_updated', {
-          companyId,
-          availableTabs: updatedCompany.available_tabs,
-          timestamp: new Date().toISOString()
-        });
+        // Import the correct WebSocket service functions from our implementation
+        const { broadcastCompanyTabsUpdate } = require('../services/websocket');
+        
+        // Call the specific broadcast function we created for company tabs
+        broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
+        
         console.log(`[CompanyTabsService] Broadcasted company_tabs_updated event via WebSocket for company ${companyId}`);
       } catch (wsError) {
         console.error(`[CompanyTabsService] Failed to broadcast WebSocket event:`, wsError);
