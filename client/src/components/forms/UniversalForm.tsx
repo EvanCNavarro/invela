@@ -1405,6 +1405,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Set the submission result
         setSubmissionResult(finalSubmissionResult);
         
+        // PRE-EMPTIVE UI UPDATE: Unlock File Vault tab IMMEDIATELY
+        // This ensures tab visibility without waiting for server response
+        if (taskType === 'kyb' || taskType === 'company_kyb') {
+          console.log(`[SUBMIT FLOW] ⚡ PRE-EMPTIVE: Unlocking File Vault tab in UI before server submission`);
+          
+          // Import and call our pre-emptive unlock function
+          import('@/services/fileVaultService').then(({ preEmptivelyUnlockFileVault }) => {
+            try {
+              const result = preEmptivelyUnlockFileVault();
+              console.log(`[SUBMIT FLOW] ⚡ Pre-emptive unlock result:`, result);
+            } catch (unlockError) {
+              console.error(`[SUBMIT FLOW] Error during pre-emptive unlock:`, unlockError);
+              // Non-blocking - continue with form submission even if this fails
+            }
+          }).catch(importError => {
+            console.error(`[SUBMIT FLOW] Error importing fileVaultService:`, importError);
+          });
+        }
+        
         // *** CRITICAL FIX: Send form data to server FIRST, wait for confirmation ***
         // Before showing any success indicators or toasts
         console.log(`[SUBMIT FLOW] 3. Preparing server submission for task ${taskId}`);
@@ -1799,31 +1818,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Show success modal (centralized in one place)
           console.log(`[SUBMIT FLOW] 13. Showing success modal`);
           logger.info(`SUBMISSION FLOW UI: Showing success modal for task ${taskId}`);
-          
-          // OPTIMIZATION: Immediately update the company data with file-vault tab
-          // This provides an instant UI update without waiting for WebSocket
-          try {
-            const { queryClient } = await import('@/lib/queryClient');
-            const currentCompanyData = queryClient.getQueryData<any>(['/api/companies/current']);
-            
-            if (currentCompanyData && !currentCompanyData.available_tabs?.includes('file-vault')) {
-              console.log(`[SUBMIT FLOW] ⚡ OPTIMISTIC UPDATE: Adding file-vault tab to company data`);
-              
-              // Create a new available_tabs array with file-vault added
-              const updatedTabs = [...(currentCompanyData.available_tabs || ['task-center']), 'file-vault'];
-              
-              // Update the React Query cache with the new tabs
-              queryClient.setQueryData(['/api/companies/current'], {
-                ...currentCompanyData,
-                available_tabs: updatedTabs
-              });
-              
-              console.log(`[SUBMIT FLOW] ✅ Optimistic UI update complete. Available tabs:`, updatedTabs);
-            }
-          } catch (error) {
-            console.error(`[SUBMIT FLOW] Error during optimistic UI update:`, error);
-            // Non-critical - fall back to standard WebSocket update if this fails
-          }
           
           // BUGFIX: Force the form to switch to submitted view mode
           setFormSubmittedLocally(true);
