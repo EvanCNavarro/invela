@@ -187,6 +187,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // State for accordion management
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   
+  // BUGFIX: State to force form into submitted mode after successful submission
+  const [formSubmittedLocally, setFormSubmittedLocally] = useState(false);
+  
   // We'll use React Hook Form for all form state management
   
   // Use our new form data manager hook to handle form data
@@ -1390,9 +1393,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               resolve(true);
             }, 15000); // 15 second timeout
             
+            // BUGFIX: Fixed the unsubscribe is not a function error
             // Listen for server confirmation via WebSocket
             console.log(`[SUBMIT FLOW] 6. Adding WebSocket listener for 'submission_status' events`);
-            const unsubscribe = wsService.subscribe('submission_status', (data: any) => {
+            
+            // Initialize unsubscribe functions
+            let successUnsubscribeFn: (() => void) | null = null;
+            let errorUnsubscribeFn: (() => void) | null = null;
+            
+            // Subscribe to successful submissions
+            wsService.subscribe('submission_status', (data: any) => {
               console.log(`[SUBMIT FLOW] RECEIVED: WebSocket event:`, data);
               
               // Accept both 'submitted' status and 'warning' with saved data as success
@@ -1406,7 +1416,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     timestamp: new Date().toISOString()
                   });
                   clearTimeout(timeoutId);
-                  unsubscribe();
+                  
+                  // Safely unsubscribe from both handlers
+                  if (typeof successUnsubscribeFn === 'function') successUnsubscribeFn();
+                  if (typeof errorUnsubscribeFn === 'function') errorUnsubscribeFn();
+                  
                   resolve(true);
                 } 
                 // Also accept warning status as success if data was saved
@@ -1420,7 +1434,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     timestamp: new Date().toISOString()
                   });
                   clearTimeout(timeoutId);
-                  unsubscribe();
+                  
+                  // Safely unsubscribe from both handlers
+                  if (typeof successUnsubscribeFn === 'function') successUnsubscribeFn();
+                  if (typeof errorUnsubscribeFn === 'function') errorUnsubscribeFn();
+                  
                   resolve(true);
                 } else {
                   console.log(`[SUBMIT FLOW] NOTED: WebSocket event for matching task with status ${data.status}`);
@@ -1428,11 +1446,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               } else {
                 console.log(`[SUBMIT FLOW] IGNORED: WebSocket event for different task`);
               }
+            }).then(unsubscribeFn => {
+              successUnsubscribeFn = unsubscribeFn;
+            }).catch(err => {
+              console.error('[SUBMIT FLOW] Error setting up success subscription:', err);
             });
             
             // Also listen for error status
             console.log(`[SUBMIT FLOW] 7. Adding WebSocket listener for error events`);
-            const errorUnsubscribe = wsService.subscribe('submission_status', (data: any) => {
+            wsService.subscribe('submission_status', (data: any) => {
               console.log(`[SUBMIT FLOW] RECEIVED: Error status event:`, data);
               
               if (data.taskId === Number(taskId) && data.status === 'error') {
@@ -1444,10 +1466,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   timestamp: new Date().toISOString()
                 });
                 clearTimeout(timeoutId);
-                unsubscribe();
-                errorUnsubscribe();
+                
+                // Safely unsubscribe from both handlers
+                if (typeof successUnsubscribeFn === 'function') successUnsubscribeFn();
+                if (typeof errorUnsubscribeFn === 'function') errorUnsubscribeFn();
+                
                 reject(new Error(data.error || 'Server reported submission error'));
               }
+            }).then(unsubscribeFn => {
+              errorUnsubscribeFn = unsubscribeFn;
+            }).catch(err => {
+              console.error('[SUBMIT FLOW] Error setting up error subscription:', err);
             });
           });
           
@@ -1623,6 +1652,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Show success modal (centralized in one place)
           console.log(`[SUBMIT FLOW] 13. Showing success modal`);
           logger.info(`SUBMISSION FLOW UI: Showing success modal for task ${taskId}`);
+          
+          // BUGFIX: Force the form to switch to submitted view mode
+          setFormSubmittedLocally(true);
           setShowSuccessModal(true);
           
           // Show confetti effect (single trigger)
@@ -1774,8 +1806,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
-  // Check if form is submitted or completed
-  const isSubmitted = taskStatus === 'submitted' || taskStatus === 'completed';
+  // BUGFIX: Ensure form shows as submitted after successful submission 
+  // Check if form is submitted or completed either from props or local state
+  const isSubmitted = formSubmittedLocally || taskStatus === 'submitted' || taskStatus === 'completed';
   
   // Format submission date if available in metadata
   const submissionDate = taskMetadata?.submissionDate 
