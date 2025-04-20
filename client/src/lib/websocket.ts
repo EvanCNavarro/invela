@@ -160,8 +160,10 @@ class WebSocketService {
               return;
             }
 
-            // Fixed: Pass message.payload instead of message.data to properly handle the server message format
-            this.handleMessage(message.type, message.payload);
+            // Handle both 'payload' and 'data' formats for backwards compatibility
+            // This ensures robust handling regardless of server message format
+            const messageData = message.payload !== undefined ? message.payload : message.data;
+            this.handleMessage(message.type, messageData);
           } catch (error) {
             logger.error('Error parsing message:', {
               error,
