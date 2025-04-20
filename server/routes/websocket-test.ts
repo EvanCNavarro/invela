@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
-import { broadcastSubmissionStatus, broadcastTaskUpdate } from '../services/websocket';
+import { broadcastSubmissionStatus, broadcastTaskUpdate, getWebSocketServer } from '../services/websocket';
 import { TaskStatus } from '@db/schema';
 
 /**
@@ -9,9 +9,6 @@ import { TaskStatus } from '@db/schema';
  */
 
 export const router = Router();
-
-// Import wss directly from the websocket service
-import { wss } from '../services/websocket';
 
 // Test endpoint to broadcast a submission status update
 router.get('/test-submission-status/:taskId', async (req, res) => {
@@ -31,8 +28,9 @@ router.get('/test-submission-status/:taskId', async (req, res) => {
     let clientCount = 0;
     let openClientCount = 0;
     
-    if (wss) {
-      wss.clients.forEach(client => {
+    const ws = getWebSocketServer();
+    if (ws) {
+      ws.clients.forEach(client => {
         clientCount++;
         if (client.readyState === WebSocket.OPEN) {
           openClientCount++;
@@ -95,8 +93,9 @@ router.get('/test-form-error/:taskId', async (req, res) => {
     let clientCount = 0;
     let openClientCount = 0;
     
-    if (wss) {
-      wss.clients.forEach(client => {
+    const ws = getWebSocketServer();
+    if (ws) {
+      ws.clients.forEach(client => {
         clientCount++;
         if (client.readyState === WebSocket.OPEN) {
           openClientCount++;

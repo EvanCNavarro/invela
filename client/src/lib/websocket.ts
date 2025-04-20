@@ -336,18 +336,61 @@ class WebSocketService {
       // Log the received data for debugging
       console.log(`[WebSocket] 🔄 Received company tabs update:`, data);
       
+      // Extract companyId from the data to match against current context
+      const updatedCompanyId = data?.companyId;
+      const availableTabs = data?.availableTabs || [];
+      
+      console.log(`[WebSocket] 📊 Company tabs update details:`, {
+        updatedCompanyId,
+        availableTabs,
+        timestamp: new Date().toISOString()
+      });
+      
       // Force invalidate any company-related API data in the query cache
       try {
         // Try using global queryClient if available
-        if (typeof window !== 'undefined' && (window as any).__REACT_QUERY_GLOBAL_CLIENT__) {
+        if (typeof window !== 'undefined') {
+          // First try React Query v5 client
           const queryClient = (window as any).__REACT_QUERY_GLOBAL_CLIENT__;
           
-          console.log(`[WebSocket] 🧹 Invalidating company queries in cache`);
-          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-          console.log(`[WebSocket] ✅ Successfully invalidated company queries`);
-        } else {
-          console.warn(`[WebSocket] ⚠️ Query client not found for cache invalidation`);
+          if (queryClient) {
+            console.log(`[WebSocket] 🧹 Invalidating company queries in cache`);
+            
+            // More aggressive cache invalidation:
+            // 1. Force refetch of current company
+            // 2. Invalidate company listing
+            // 3. Reset all related state
+            
+            // Completely remove the data from cache first
+            queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+            queryClient.removeQueries({ queryKey: ['/api/companies'] });
+            
+            // Then invalidate to trigger refetch
+            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+            
+            // Force refetch the current company data immediately to ensure we have fresh data
+            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+            
+            console.log(`[WebSocket] ✅ Successfully invalidated and refetched company queries`);
+            
+            // Also try to update any local app state via custom event
+            try {
+              const companyUpdateEvent = new CustomEvent('company-tabs-updated', { 
+                detail: { 
+                  companyId: updatedCompanyId,
+                  availableTabs,
+                  source: 'websocket'
+                } 
+              });
+              window.dispatchEvent(companyUpdateEvent);
+              console.log('[WebSocket] 📣 Dispatched company-tabs-updated event');
+            } catch (eventError) {
+              console.error('[WebSocket] Failed to dispatch custom event:', eventError);
+            }
+          } else {
+            console.warn(`[WebSocket] ⚠️ Query client not found for cache invalidation`);
+          }
         }
       } catch (error) {
         console.error(`[WebSocket] ❌ Error invalidating cache:`, error);

@@ -12,7 +12,7 @@ import WebSocket from 'ws';
 const { Client } = pg;
 
 // Constants - modify these as needed
-const COMPANY_ID = 192;  // The company to update
+const COMPANY_ID = 193;  // The company to update (DevelopmentTestingM)
 const DATABASE_URL = process.env.DATABASE_URL;
 const SERVER_URL = 'http://localhost:5000';
 const WS_URL = 'ws://localhost:5000/ws';
