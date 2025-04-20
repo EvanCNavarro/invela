@@ -47,8 +47,58 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0, // Consider data stale immediately to ensure fresh data
-    refetchInterval: 1000, // Automatically refetch every second to pick up tab changes
+    
+    // Reduced polling frequency to reduce server load
+    // We rely on WebSocket events for real-time updates instead
+    refetchInterval: 10000, // Poll every 10 seconds as a fallback
   });
+  
+  // Listen for WebSocket events to refresh company data in real-time
+  useEffect(() => {
+    // Handler for WebSocket connection status changes
+    const handleWebSocketReconnect = () => {
+      console.log('[DashboardLayout] WebSocket reconnected, refreshing company data');
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      refetchCompany();
+    };
+    
+    // Handler for company tabs updates via WebSocket
+    const handleCompanyTabsUpdate = (event: CustomEvent) => {
+      const { companyId, availableTabs, cacheInvalidation } = event.detail || {};
+      
+      console.log('[DashboardLayout] Received company-tabs-updated event:', {
+        companyId,
+        availableTabs,
+        cacheInvalidation,
+        currentCompanyId: currentCompany?.id
+      });
+      
+      // Only process if it affects the current company
+      if (companyId === currentCompany?.id) {
+        console.log('[DashboardLayout] Processing update for current company');
+        
+        // For critical updates with cache_invalidation, be more aggressive
+        if (cacheInvalidation) {
+          console.log('[DashboardLayout] Critical update detected, forcing refetch');
+          queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+          refetchCompany();
+        } else {
+          // Standard invalidation for normal updates
+          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+        }
+      }
+    };
+    
+    // Register event listeners
+    window.addEventListener('websocket-reconnected', handleWebSocketReconnect);
+    window.addEventListener('company-tabs-updated', handleCompanyTabsUpdate as EventListener);
+    
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('websocket-reconnected', handleWebSocketReconnect);
+      window.removeEventListener('company-tabs-updated', handleCompanyTabsUpdate as EventListener);
+    };
+  }, [currentCompany?.id, queryClient, refetchCompany]);
 
   const relevantTasks = tasks.filter(task => {
     if (task.company_id !== currentCompany?.id) {

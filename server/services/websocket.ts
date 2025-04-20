@@ -173,7 +173,11 @@ export function broadcastTaskUpdate(data: any) {
  * @param companyId Company ID
  * @param availableTabs Available tabs array
  */
-export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: string[]) {
+export function broadcastCompanyTabsUpdate(
+  companyId: number, 
+  availableTabs: string[], 
+  options: { cache_invalidation?: boolean, source?: string } = {}
+) {
   if (!wss) {
     console.warn('[WebSocket] Cannot broadcast company tabs update, server not initialized');
     return;
@@ -185,7 +189,9 @@ export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: str
     payload: {  // Changed 'data' to 'payload' to match client expectations
       companyId,
       availableTabs,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      cache_invalidation: options.cache_invalidation === true,
+      source: options.source || 'server'
     }
   });
   
@@ -202,7 +208,9 @@ export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: str
   console.log(`[WebSocket] Broadcast "company_tabs_updated" sent to ${clientCount} clients for company ${companyId}`, {
     availableTabs,
     clientCount,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    cache_invalidation: options.cache_invalidation === true,
+    source: options.source || 'server'
   });
   
   // For debugging, also log out the available tabs
