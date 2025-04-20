@@ -102,17 +102,23 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         // Import WebSocket service
         const { wsService } = await import('@/lib/websocket');
         
-        // Subscribe to company tabs updates
+        // Subscribe to company tabs updates - handle ALL companies, not just the current one
+        // This ensures we don't miss updates when switching between companies or contexts
         const unsubTabsUpdate = await wsService.subscribe('company_tabs_updated', (data: any) => {
           console.log(`[DashboardLayout] Received company_tabs_updated event:`, data);
           
-          // Check if this update is for our company
-          if (data.companyId === currentCompany?.id) {
-            console.log(`[DashboardLayout] Forcing company data refetch due to tab update`);
-            
-            // Force an immediate refetch
-            refetchCompany();
+          // Always refetch company data when we receive an update
+          // This ensures the sidebar reflects the latest tabs regardless of company context
+          console.log(`[DashboardLayout] Forcing company data refetch due to tab update`);
+          
+          // Check if we have any companies loaded to compare
+          if (currentCompany) {
+            console.log(`[DashboardLayout] Current company ID: ${currentCompany.id}, Update for company ID: ${data.companyId}`);
           }
+          
+          // Force an immediate refetch regardless of company ID
+          // This ensures we always have the latest data even in multi-company contexts
+          refetchCompany();
         });
         
         subscriptions.push(unsubTabsUpdate);
@@ -121,10 +127,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       }
     };
     
-    // Only set up subscriptions if we have a company ID
-    if (currentCompany?.id) {
-      setupWebSocketSubscriptions();
-    }
+    // Set up WebSocket subscriptions immediately, don't wait for company data
+    // This ensures we catch updates even during initial loading
+    setupWebSocketSubscriptions();
     
     return () => {
       // Cleanup subscriptions when component unmounts
@@ -136,7 +141,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         }
       });
     };
-  }, [currentCompany?.id, refetchCompany]);
+  }, [refetchCompany]); // Only depend on refetchCompany, not on currentCompany.id
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
