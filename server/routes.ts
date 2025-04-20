@@ -31,6 +31,7 @@ import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
+import fileVaultRouter from './routes/file-vault';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -70,6 +71,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register Company Tabs routes for file vault unlock functionality
   app.use('/api/company-tabs', companyTabsRouter);
+  
+  // Register the File Vault router for direct access to file vault functionality
+  app.use(fileVaultRouter);
   
   // EMERGENCY ENDPOINT: Direct fix for file vault access
   app.post('/api/emergency/unlock-file-vault/:companyId', async (req, res) => {
