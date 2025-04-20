@@ -5,9 +5,9 @@
  * and broadcasts a critical WebSocket message to update the UI
  */
 
-const { db } = require('./server/db');
-const { companies } = require('./server/db/schema');
-const { eq } = require('drizzle-orm');
+import { db } from './server/db/index.js';
+import { companies } from './server/db/schema.js';
+import { eq } from 'drizzle-orm';
 
 // The company ID that needs fixing
 const COMPANY_ID = 204;
@@ -82,7 +82,8 @@ async function unlockFileVault() {
 async function broadcastUpdate(company) {
   try {
     // Import the WebSocket service
-    const { broadcastMessage } = require('./server/services/websocket');
+    const websocketModule = await import('./server/services/websocket.js');
+    const { broadcastMessage } = websocketModule;
     
     // Broadcast the update with cache_invalidation flag to force client cache refresh
     broadcastMessage('company_tabs_updated', {
@@ -98,7 +99,8 @@ async function broadcastUpdate(company) {
     
     // Clear any server-side cache
     try {
-      const { invalidateCompanyCache } = require('./server/routes');
+      const routesModule = await import('./server/routes.js');
+      const { invalidateCompanyCache } = routesModule;
       invalidateCompanyCache(company.id);
       console.log(`[CRITICAL FIX] Company cache invalidated for ID ${company.id}`);
     } catch (cacheError) {
@@ -106,9 +108,11 @@ async function broadcastUpdate(company) {
     }
     
     // Schedule additional broadcasts to ensure clients receive the update
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        broadcastMessage('company_tabs_updated', {
+        // Re-import the module to ensure we have the latest reference
+        const delayedModule = await import('./server/services/websocket.js');
+        delayedModule.broadcastMessage('company_tabs_updated', {
           companyId: company.id,
           availableTabs: company.available_tabs,
           timestamp: new Date().toISOString(),
