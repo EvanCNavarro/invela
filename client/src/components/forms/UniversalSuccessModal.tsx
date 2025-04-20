@@ -231,7 +231,7 @@ export function UniversalSuccessModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti relative z-50">
+      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti relative z-50 fixed inset-0 mx-auto my-auto max-h-[90vh] h-auto">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
             <div className="rounded-full bg-green-50 p-3">

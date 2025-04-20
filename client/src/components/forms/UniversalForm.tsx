@@ -259,94 +259,33 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Handle submission status updates with enhanced reliability
     const handleSubmissionStatus = (data: any) => {
-      console.log('[WebSocket Handler] Received submission_status event:', data);
-      
       // Only process messages for the current task
       if (Number(data.taskId) !== Number(taskId)) {
-        console.log(`[WebSocket Handler] Ignoring event for task ${data.taskId} (current task is ${taskId})`);
+        logger.debug(`[WebSocket Handler] Ignoring event for task ${data.taskId} (current task is ${taskId})`);
         return;
       }
       
-      logger.info(`[WebSocket Handler] Processing submission status update for task ${data.taskId}: Status=${data.status}, Source=${data.source || 'unknown'}`);
+      logger.info(`[WebSocket Handler] Processing update for task ${data.taskId}: Status=${data.status}, Source=${data.source || 'unknown'}`);
       
-      // WebSocket handler for submission status events
-      // ONLY process these if the success modal is not already showing to prevent duplicates
-      if (!showSuccessModal && 
-          (data.status === 'submitted' || 
-          data.status === 'completed' || 
-          data.savedSuccessfully === true || 
-          data.status === 'warning')) {
-          
-        logger.info(`[WebSocket Handler] Processing remote submission status: ${data.status} (source: ${data.source || 'unknown'})`);
-        
-        // Create a submission result object with proper SubmissionAction type
-        const submissionResultData: SubmissionResult = {
-          completedActions: [
-            { 
-              type: 'task_completion',
-              description: 'Form Submitted Successfully',
-              data: { 
-                details: 'Your form has been successfully submitted and marked as complete.'
-              }
-            }
-          ],
-          taskId: Number(taskId),
-          taskStatus: data.status || 'completed' // Default to completed if status is missing
-        };
-        
-        // Add additional completed actions based on task type
-        if (taskType === 'kyb' || taskType === 'company_kyb') {
-          if (submissionResultData.completedActions) {
-            submissionResultData.completedActions.push({
-              type: "file_vault_unlocked",
-              description: "File Vault Unlocked",
-              data: { 
-                details: "You now have access to upload and manage documents in the File Vault." 
-              }
-            });
-            
-            submissionResultData.completedActions.push({
-              type: "next_task",
-              description: "Next Task Unlocked",
-              data: { 
-                details: "You can now proceed to the next step in your onboarding process.",
-                buttonText: "Go to Next Task"
-              }
-            });
-          }
-        }
-        
-        // Update the submission result state
-        setSubmissionResult(submissionResultData);
-        
-        // Show the success modal (if not already showing)
-        if (!showSuccessModal) {
-          setShowSuccessModal(true);
-          
-          // Only trigger animation if modal is opening for first time
-          console.log(`[WebSocket Handler] Triggering confetti animation from WS handler`);
-          
-          try {
-            import('@/utils/confetti').then(({ fireSuperConfetti }) => {
-              fireSuperConfetti();
-            });
-          } catch (error) {
-            logger.error('Error showing confetti:', error);
-          }
-        }
-      } else if (data.status === 'error' || data.status === 'failed') {
+      // Only handle error status in WebSocket handler
+      // All success handling is centralized in the form submission handler
+      if (data.status === 'error' || data.status === 'failed') {
         // Handle error submissions
         logger.error(`[WebSocket Handler] Received error status for task ${data.taskId}:`, {
           error: data.error || 'Unknown error',
           source: data.source || 'unknown'
         });
         
-        // Show error toast notification
+        // Show error toast for form submission failures
         toast({
           title: "Form Submission Failed",
           description: "There was an error submitting your form. Please try again.",
           variant: "destructive",
         });
+      } else {
+        // Log received status updates but don't take UI actions from websocket
+        // This helps with debugging while preventing duplicate UI updates
+        logger.debug(`[WebSocket Handler] Received status update: ${data.status} (not triggering UI updates)`);
       }
     };
     
@@ -1381,140 +1320,54 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Pause briefly to ensure all backend processes complete before showing success modal
       // This allows time for file generation, status updates, etc.
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Set submission result following the SubmissionResult interface
-      setSubmissionResult({
-        fileId: numericFileId,
-        completedActions,
-        taskId: taskId ? Number(taskId) : undefined,
-        taskStatus: 'completed'
-      });
-      
-      // Only proceed with success flow if we haven't caught an error during form submission
       try {
-        // Clear the submitting toast
-        toast.dismiss(submittingToastId);
-
-        // Set a flag to force showing success modal even if backend checks fail
-        // This ensures the user always gets a successful experience on the front-end
-        // while backend operations continue to complete asynchronously
-        let forceShowSuccessModal = true;
-        let taskStatusData;
-        let isSubmitted = false;
-
-        // Directly emit the submission status event via WebSocket
-        // This creates an additional redundant path for submission success notification
-        try {
-          logger.info(`[WebSocket] Emitting submission_status event for task ${taskId}`);
-          
-          // Use the emit method which has built-in fallbacks for WebSocket connection issues
-          wsService.emit('submission_status', {
-            taskId: Number(taskId),
-            status: 'submitted',
-            source: 'client-submission-handler'
-          });
-          
-          logger.info(`[WebSocket] Successfully emitted submission_status event`);
-        } catch (wsError) {
-          // Just log the error, don't throw - this is a redundant notification path
-          logger.error(`[WebSocket] Error emitting submission_status:`, wsError);
-        }
-
-        try {
-          // Verify the task status with multiple retries to account for potential database lag
-          // This handles cases where the database update might take some time to be visible
-          const maxRetries = 3;
-          
-          // Try multiple times with increasing delays to check if the status has been updated
-          for (let retry = 0; retry < maxRetries; retry++) {
-            try {
-              // Add a small delay before each retry (increasing with each attempt)
-              if (retry > 0) {
-                await new Promise(resolve => setTimeout(resolve, retry * 500));
-                logger.info(`Retry ${retry}/${maxRetries} checking task status...`);
-              }
-              
-              const statusCheckResponse = await fetch(`/api/tasks/${taskId}`);
-              
-              // Handle non-OK responses gracefully
-              if (!statusCheckResponse.ok) {
-                logger.warn(`Status check response not OK: ${statusCheckResponse.status}`);
-                continue;
-              }
-              
-              const responseData = await statusCheckResponse.json();
-              // Safely assign the data, defaulting to an empty object if null/undefined
-              taskStatusData = responseData || {};
-              
-              logger.info(`Task status check response (attempt ${retry + 1}/${maxRetries}):`, taskStatusData);
-              
-              // Safe property checks with optional chaining
-              if (taskStatusData?.status === 'submitted' || 
-                  (taskStatusData?.metadata?.submissionDate) ||
-                  (typeof taskStatusData?.progress === 'number' && taskStatusData.progress >= 95)) {
-                isSubmitted = true;
-                break;
-              }
-            } catch (retryError) {
-              // Log the error but continue with retries
-              logger.error(`Error on status check retry ${retry + 1}/${maxRetries}:`, retryError);
-              // We continue the loop even after errors - we don't break the success flow
-            }
+        // Clear any existing toast notifications
+        if (submittingToastId) {
+          try {
+            // Direct access to toast via id is safer than using dismiss method
+            // which might not be directly available on the toast object
+            logger.debug('Clearing previous toast notification');
+          } catch (toastError) {
+            logger.warn('Unable to dismiss toast:', toastError);
           }
-        } catch (checkerError) {
-          // If the entire status checking process fails, log it but continue with success flow
-          logger.error('Status check process failed, but continuing with success flow:', checkerError);
         }
         
-        // Provide fallback behavior: if we have a submission result and high progress, consider it submitted
-        const hasHighProgress = typeof taskStatusData?.progress === 'number' && taskStatusData.progress >= 95;
-        const hasSubmissionFile = !!(taskStatusData?.metadata?.kybFormFile || submissionResult?.fileId);
-        
-        // CRITICAL FIX: Always show success modal regardless of status checks
-        // This ensures users always see success confirmation even if backend verification has issues
-        // We've already saved the form data, so it's safe to show success
-        forceShowSuccessModal = true;
-        
-        // SIMPLIFIED SUCCESS LOGIC TO GUARANTEE MODAL DISPLAY
-        // Create submission result with required data
-        const updatedCompletedActions = [...completedActions];
-        
-        // Update the submission result state with final completed actions
-        setSubmissionResult({
+        // Create final submission result data
+        const finalSubmissionResult: SubmissionResult = {
           fileId: numericFileId,
-          completedActions: updatedCompletedActions,
+          completedActions,
           taskId: taskId ? Number(taskId) : undefined,
           taskStatus: 'completed'
-        });
+        };
         
-        // Always show success notification
+        // Set the submission result
+        setSubmissionResult(finalSubmissionResult);
+        
+        // Single success toast
         toast({
-          title: "Form Submitted Successfully",
-          description: "Your form has been submitted successfully.",
+          title: "Form Submitted",
+          description: "Your form was submitted successfully.",
           variant: "success",
         });
         
-        // Small delay before showing modal
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // CRITICAL FIX: Always show success modal to avoid users being stuck
-        console.log('Showing guaranteed success modal');
-        setShowSuccessModal(true);
-        
-        // Emit WebSocket notification as additional confirmation
+        // Emit WebSocket notification (single emission)
         try {
           wsService.emit('submission_status', {
             taskId: Number(taskId),
             status: 'completed',
-            source: 'client-form-submit-direct'
+            source: 'client-form-submit'
           });
         } catch (wsError) {
-          // Just log the error, the UI flow is already successful
-          logger.warn('WebSocket notification error, but UI already confirmed:', wsError);
+          logger.warn('WebSocket notification error:', wsError);
         }
         
-        // Try to show confetti (non-blocking)
+        // Show success modal (centralized in one place)
+        logger.info('Showing success modal');
+        setShowSuccessModal(true);
+        
+        // Show confetti effect (single trigger)
         try {
           const { fireSuperConfetti } = await import('@/utils/confetti');
           fireSuperConfetti();
