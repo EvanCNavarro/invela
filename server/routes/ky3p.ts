@@ -16,10 +16,11 @@ import {
   KYBFieldStatus
 } from '@db/schema';
 import { eq, asc, and, desc } from 'drizzle-orm';
-import { isAuthenticated } from '../middleware/auth';
-import { logger } from '../utils/logger';
+import { requireAuth } from '../middleware/auth';
+import { Logger } from '../utils/logger';
 
 const router = Router();
+const logger = new Logger('KY3PRoutes');
 
 // Middleware to check if the user has access to the requested task
 async function hasTaskAccess(req, res, next) {
@@ -58,7 +59,7 @@ async function hasTaskAccess(req, res, next) {
 /**
  * Get all KY3P field definitions
  */
-router.get('/api/ky3p-fields', isAuthenticated, async (req, res) => {
+router.get('/api/ky3p-fields', requireAuth, async (req, res) => {
   try {
     const fields = await db
       .select()
@@ -75,7 +76,7 @@ router.get('/api/ky3p-fields', isAuthenticated, async (req, res) => {
 /**
  * Get all KY3P responses for a task
  */
-router.get('/api/tasks/:taskId/ky3p-responses', isAuthenticated, hasTaskAccess, async (req, res) => {
+router.get('/api/tasks/:taskId/ky3p-responses', requireAuth, hasTaskAccess, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     
@@ -114,7 +115,7 @@ router.get('/api/tasks/:taskId/ky3p-responses', isAuthenticated, hasTaskAccess, 
 /**
  * Save a KY3P response for a field
  */
-router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', isAuthenticated, hasTaskAccess, async (req, res) => {
+router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAccess, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     const fieldId = parseInt(req.params.fieldId);
@@ -215,7 +216,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', isAuthenticated, hasTa
 /**
  * Create a new KY3P assessment task
  */
-router.post('/api/tasks/ky3p', isAuthenticated, async (req, res) => {
+router.post('/api/tasks/ky3p', requireAuth, async (req, res) => {
   try {
     const { company_id, assigned_to, title } = req.body;
     
@@ -269,7 +270,7 @@ router.post('/api/tasks/ky3p', isAuthenticated, async (req, res) => {
 /**
  * Submit a KY3P assessment task
  */
-router.post('/api/tasks/:taskId/ky3p-submit', isAuthenticated, hasTaskAccess, async (req, res) => {
+router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     

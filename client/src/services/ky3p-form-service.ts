@@ -1,0 +1,227 @@
+/**
+ * S&P KY3P Security Assessment Form Service
+ * 
+ * This service extends the EnhancedKybFormService to provide specialized 
+ * functionality for the S&P KY3P Security Assessment form.
+ */
+
+import { EnhancedKybFormService } from './enhanced-kyb-service';
+import { FormField, FormSection } from './formService';
+import getLogger from '@/utils/logger';
+
+const logger = getLogger('KY3PFormService');
+
+// Singleton instance for backwards compatibility
+let _instance: KY3PFormService | null = null;
+
+export class KY3PFormService extends EnhancedKybFormService {
+  // Override the form type to match the task type in the database
+  protected readonly formType = 'sp_ky3p_assessment';
+  
+  constructor(companyId?: number, taskId?: number) {
+    super(companyId, taskId);
+    
+    logger.info(
+      '[KY3P Form Service] Initializing KY3P Form Service',
+      { companyId, taskId }
+    );
+  }
+  
+  /**
+   * Load form fields from the server
+   * Override to use the KY3P-specific endpoint
+   */
+  protected async loadFormFields(): Promise<FormField[]> {
+    try {
+      const response = await fetch('/api/ky3p-fields');
+      if (!response.ok) {
+        throw new Error(`Failed to load KY3P fields: ${response.status}`);
+      }
+      
+      const fields = await response.json();
+      return this.transformFieldsFromApi(fields);
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error loading fields:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Transform the API fields into the format expected by the UniversalForm
+   */
+  private transformFieldsFromApi(apiFields: any[]): FormField[] {
+    return apiFields.map(apiField => ({
+      id: apiField.id,
+      key: apiField.field_key,
+      label: apiField.label,
+      description: apiField.description,
+      type: apiField.field_type,
+      section: apiField.section,
+      required: apiField.is_required,
+      helpText: apiField.help_text,
+      demoAutofill: apiField.demo_autofill,
+      validation: {
+        type: apiField.validation_type,
+        rules: apiField.validation_rules
+      },
+      answerExpectation: apiField.answer_expectation,
+      stepIndex: apiField.step_index || 0
+    }));
+  }
+  
+  /**
+   * Get form sections from fields
+   * Group fields by section
+   */
+  protected async getFormSections(): Promise<FormSection[]> {
+    const fields = await this.getFormFields();
+    
+    // Group fields by section
+    const sectionMap = new Map<string, FormField[]>();
+    fields.forEach(field => {
+      if (!sectionMap.has(field.section)) {
+        sectionMap.set(field.section, []);
+      }
+      sectionMap.get(field.section)?.push(field);
+    });
+    
+    // Create sections
+    return Array.from(sectionMap.entries())
+      .map(([sectionName, sectionFields], index) => ({
+        id: `section-${index}`,
+        title: sectionName,
+        fields: sectionFields,
+        order: index
+      }))
+      .sort((a, b) => a.order - b.order);
+  }
+  
+  /**
+   * Save a specific field's response
+   */
+  public async saveField(fieldId: number, value: any): Promise<void> {
+    if (!this.taskId) {
+      throw new Error('No task ID provided for saving field');
+    }
+    
+    try {
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/${fieldId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          response_value: value
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save field: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error saving field:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Submit the entire form
+   */
+  public async submitForm(): Promise<void> {
+    if (!this.taskId) {
+      throw new Error('No task ID provided for form submission');
+    }
+    
+    try {
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to submit form: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error submitting form:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Load existing responses for the form
+   */
+  public async loadResponses(): Promise<Record<string, any>> {
+    if (!this.taskId) {
+      throw new Error('No task ID provided for loading responses');
+    }
+    
+    try {
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load responses: ${response.status}`);
+      }
+      
+      const responses = await response.json();
+      
+      // Convert responses to a key-value map
+      const responseMap: Record<string, any> = {};
+      for (const resp of responses) {
+        const field = await this.getFieldById(resp.field_id);
+        if (field) {
+          responseMap[field.key] = resp.response_value;
+        }
+      }
+      
+      return responseMap;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error loading responses:', error);
+      return {};
+    }
+  }
+}
+
+/**
+ * Factory class for creating isolated KY3P form service instances
+ * Follows the same pattern as EnhancedKybServiceFactory
+ */
+export class KY3PFormServiceFactory {
+  private static instance: KY3PFormServiceFactory;
+  private instances: Map<string, KY3PFormService> = new Map();
+  
+  private constructor() {}
+  
+  public static getInstance(): KY3PFormServiceFactory {
+    if (!KY3PFormServiceFactory.instance) {
+      KY3PFormServiceFactory.instance = new KY3PFormServiceFactory();
+    }
+    return KY3PFormServiceFactory.instance;
+  }
+  
+  /**
+   * Get or create an isolated KY3P form service instance
+   * @param companyId The company ID
+   * @param taskId The task ID
+   * @returns KY3P form service instance specific to this company and task
+   */
+  public getServiceInstance(companyId: number | string, taskId: number | string): KY3PFormService {
+    const key = `${companyId}-${taskId}`;
+    
+    if (!this.instances.has(key)) {
+      logger.info(`[KY3PFormServiceFactory] Creating new KY3P form service instance for company ${companyId}, task ${taskId}`);
+      this.instances.set(key, new KY3PFormService(Number(companyId), Number(taskId)));
+    }
+    
+    return this.instances.get(key)!;
+  }
+}
+
+// Create singleton instance for use in the application
+export const ky3pFormService = _instance || (_instance = new KY3PFormService());
+export const ky3pFormServiceFactory = KY3PFormServiceFactory.getInstance();
