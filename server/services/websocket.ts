@@ -148,12 +148,15 @@ export function broadcastSubmissionStatus(taskId: number, status: string) {
 
 /**
  * Broadcast a task update
- * @param taskId Task ID
- * @param data Task data
+ * @param data Task data (must include an id property)
  */
-export function broadcastTaskUpdate(taskId: number, data: any) {
+export function broadcastTaskUpdate(data: any) {
+  if (!data || !data.id) {
+    console.error('[WebSocket] broadcastTaskUpdate: Missing task ID in data');
+    return;
+  }
+  
   broadcast('task_updated', {
-    taskId,
     ...data,
     timestamp: new Date().toISOString()
   });
@@ -208,6 +211,25 @@ export function broadcastCompanyTabsUpdate(companyId: number, availableTabs: str
 // Add broadcastMessage as an alias for broadcast to maintain compatibility
 export const broadcastMessage = broadcast;
 
+// Add broadcastDocumentCountUpdate for files.ts
+export function broadcastDocumentCountUpdate(companyId: number, count: number) {
+  broadcast('document_count_update', {
+    companyId,
+    count,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Add broadcastFieldUpdate for kyb.ts
+export function broadcastFieldUpdate(taskId: number, fieldId: number, data: any) {
+  broadcast('field_update', {
+    taskId,
+    fieldId,
+    ...data,
+    timestamp: new Date().toISOString()
+  });
+}
+
 export default {
   setupWebSocket,
   getWebSocketServer,
@@ -215,5 +237,7 @@ export default {
   broadcastMessage,
   broadcastSubmissionStatus,
   broadcastTaskUpdate,
-  broadcastCompanyTabsUpdate
+  broadcastCompanyTabsUpdate,
+  broadcastDocumentCountUpdate,
+  broadcastFieldUpdate
 };
