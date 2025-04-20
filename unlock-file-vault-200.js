@@ -8,15 +8,15 @@
  */
 
 // Import the database
-const { db } = require('./server/db');
-const { companies } = require('./server/db/schema');
-const { eq } = require('drizzle-orm');
+import { db } from './server/db';
+import { companies } from './server/db/schema';
+import { eq } from 'drizzle-orm';
 
 // Import the CompanyTabsService
-const { CompanyTabsService } = require('./server/services/companyTabsService');
+import { CompanyTabsService } from './server/services/companyTabsService';
 
 // Import WebSocket service for broadcasting
-const { broadcastMessage, broadcastCompanyTabsUpdate } = require('./server/services/websocket');
+import { broadcastMessage, broadcastCompanyTabsUpdate } from './server/services/websocket';
 
 async function unlockFileVault(companyId) {
   console.log(`⚡ CRITICAL: Unlocking file vault for company ${companyId}`);
