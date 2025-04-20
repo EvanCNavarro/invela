@@ -1891,6 +1891,34 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       companyId: task.company_id,
       kybTaskId: taskId
     });
+    
+    // CRITICAL FIX: Also unlock the file vault for this company
+    try {
+      // Import the CompanyTabsService to unlock file vault
+      const { CompanyTabsService } = require('../services/companyTabsService');
+      const companyTabsService = new CompanyTabsService();
+      
+      console.log(`[KYB API] ⚡ CRITICAL: Unlocking file vault for company ${task.company_id} after KYB submission`);
+      const fileVaultResult = await companyTabsService.unlockFileVault(task.company_id);
+      
+      if (fileVaultResult) {
+        console.log(`[KYB API] ✅ Successfully unlocked file vault for company ${task.company_id}`, {
+          tabs: fileVaultResult.available_tabs,
+          companyName: fileVaultResult.name,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.error(`[KYB API] ❌ Failed to unlock file vault for company ${task.company_id}`);
+      }
+    } catch (fileVaultError) {
+      // Log error but don't fail the entire submission
+      console.error(`[KYB API] Error unlocking file vault:`, fileVaultError);
+      logger.error('Failed to unlock file vault', {
+        error: fileVaultError,
+        companyId: task.company_id,
+        taskId
+      });
+    }
 
     // Broadcast submission status via WebSocket with enhanced logging
     console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (KYB submit endpoint)`);
