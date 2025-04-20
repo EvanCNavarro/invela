@@ -1466,7 +1466,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   resolve(true);
                 } 
                 // Also accept warning status as success if data was saved
-                else if (data.status === 'warning' && data.error?.includes('form data was saved')) {
+                // Also check for our older "warning" status format for backward compatibility
+                else if ((data.status === 'warning' || (data.status === 'submitted' && data.verified === false)) && 
+                         (data.error?.includes('form data was saved') || data.message?.includes('form data was saved'))) {
                   console.log(`[SUBMIT FLOW] SUCCESS WITH WARNING: Form data saved but status verification failed`);
                   logger.info(`SUBMISSION FLOW SUCCESS WITH WARNING: Form data saved`, {
                     taskId: data.taskId,
@@ -1740,8 +1742,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         try {
           wsService.emit('submission_status', {
             taskId: Number(taskId),
-            status: 'warning',
-            error: 'Status verification failed, but form data was saved',
+            status: 'submitted', // Changed from 'warning' to 'submitted' for compatibility
+            verified: false, // Add flag to indicate verification issue
+            message: 'Status verification failed, but form data was saved',
             source: 'client-status-verification'
           });
         } catch (wsError) {
