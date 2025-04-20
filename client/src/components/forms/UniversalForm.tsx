@@ -262,16 +262,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       console.log('[WebSocket Handler] Received submission_status event:', data);
       
       // Only process messages for the current task
-      if (data.taskId !== taskId) {
+      if (Number(data.taskId) !== Number(taskId)) {
         console.log(`[WebSocket Handler] Ignoring event for task ${data.taskId} (current task is ${taskId})`);
         return;
       }
       
-      logger.info(`[WebSocket Handler] Processing submission status update for task ${data.taskId}: Status=${data.status}`);
+      logger.info(`[WebSocket Handler] Processing submission status update for task ${data.taskId}: Status=${data.status}, Source=${data.source || 'unknown'}`);
       
       // If we receive a successful submission status, show the success modal
       if (data.status === 'submitted' || data.status === 'completed') {
         console.log(`[WebSocket Handler] Showing success modal for task ${data.taskId}`);
+        
+        // Debug flags for tracing
+        const isLocalFallback = data.isLocalFallback === true;
+        const isEmergencyFallback = data.isEmergencyFallback === true;
+        
+        // Log more detailed information for debugging
+        logger.info(`[WebSocket Handler] Success modal trigger details:`, {
+          taskId: data.taskId,
+          status: data.status,
+          source: data.source || 'unknown',
+          isLocalFallback,
+          isEmergencyFallback,
+          timestamp: new Date().toISOString()
+        });
         
         // Create a submission result object with proper SubmissionAction type
         const submissionResultData: SubmissionResult = {
@@ -279,7 +293,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             { 
               type: 'task_completion',
               description: 'Form Submitted Successfully',
-              data: { details: 'Your form has been successfully submitted and marked as complete.' }
+              data: { 
+                details: 'Your form has been successfully submitted and marked as complete.',
+                timestamp: new Date().toISOString()
+              }
             }
           ],
           taskId: Number(taskId),
@@ -305,6 +322,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           title: "Form Submitted Successfully",
           description: "Your form has been submitted successfully.",
           variant: "success",
+        });
+      } else if (data.status === 'error' || data.status === 'failed') {
+        // Handle error submissions
+        logger.error(`[WebSocket Handler] Received error status for task ${data.taskId}:`, {
+          error: data.error || 'Unknown error',
+          source: data.source || 'unknown'
+        });
+        
+        // Show error toast notification
+        toast({
+          title: "Form Submission Failed",
+          description: "There was an error submitting your form. Please try again.",
+          variant: "destructive",
         });
       }
     };
@@ -1361,6 +1391,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         let forceShowSuccessModal = true;
         let taskStatusData;
         let isSubmitted = false;
+
+        // Directly emit the submission status event via WebSocket
+        // This creates an additional redundant path for submission success notification
+        try {
+          logger.info(`[WebSocket] Emitting submission_status event for task ${taskId}`);
+          
+          // Use the emit method which has built-in fallbacks for WebSocket connection issues
+          wsService.emit('submission_status', {
+            taskId: Number(taskId),
+            status: 'submitted',
+            source: 'client-submission-handler'
+          });
+          
+          logger.info(`[WebSocket] Successfully emitted submission_status event`);
+        } catch (wsError) {
+          // Just log the error, don't throw - this is a redundant notification path
+          logger.error(`[WebSocket] Error emitting submission_status:`, wsError);
+        }
 
         try {
           // Verify the task status with multiple retries to account for potential database lag
