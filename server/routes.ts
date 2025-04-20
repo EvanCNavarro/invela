@@ -307,21 +307,26 @@ export function registerRoutes(app: Express): Express {
     }
   });
   
-  // Check if a company is a demo company by checking task metadata instead of company database
+  // Check if a company is a demo company - accept either companyId or taskId
   app.get("/api/companies/is-demo", requireAuth, async (req, res) => {
     try {
       console.log(`[IsDemo Check] Received request with params:`, {
         taskId: req.query.taskId,
+        companyId: req.query.companyId,
         userId: req.user?.id,
         userCompanyId: req.user?.company_id
       });
       
+      // Accept either taskId or companyId parameter
       const taskId = req.query.taskId;
+      const companyIdParam = req.query.companyId;
       
-      if (!taskId) {
-        console.log(`[IsDemo Check] Missing taskId parameter`);
+      // If neither parameter is provided, return error
+      if (!taskId && !companyIdParam) {
+        console.log(`[IsDemo Check] Missing required parameter - need either taskId or companyId`);
         return res.status(400).json({ 
-          error: 'Missing taskId parameter',
+          message: 'Missing required parameter',
+          code: 'MISSING_PARAM',
           isDemo: false 
         });
       }
