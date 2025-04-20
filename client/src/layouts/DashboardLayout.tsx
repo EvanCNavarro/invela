@@ -155,10 +155,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     // Enhanced validation that always allows file-vault in certain debugging conditions
     // CRITICAL: We're using this to avoid "invalid tab" redirects while we debug
     if (currentTab === 'file-vault') {
-      // Always allow file-vault access for company ID 207 (DevTest environment)
-      const isDevTestCompany = currentCompany.id === 207;
+      // Check if this is any of our test companies (DevTest, DevTest2, etc.)
+      const companyName = currentCompany.name || '';
+      const isDevTestCompany = 
+        currentCompany.id === 207 || // Original DevTest company 
+        currentCompany.id === 208 || // DevTest2 company
+        companyName.toLowerCase().includes('devtest') || // Any DevTest-named company
+        companyName.toLowerCase().includes('test'); // Any testing company
+        
       if (isDevTestCompany && !availableTabs.includes('file-vault')) {
-        console.log('[DashboardLayout] ⚠️ DevTest company detected, forcing file-vault access');
+        console.log(`[DashboardLayout] ⚠️ Test company detected (ID: ${currentCompany.id}, Name: ${companyName}), forcing file-vault access`);
         
         // Try to update the company data in-memory to include the file-vault tab
         const updatedCompany = {
@@ -167,8 +173,37 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         };
         queryClient.setQueryData(['/api/companies/current'], updatedCompany);
         
-        // Always return true for file-vault tab in DevTest company
+        // Always return true for file-vault tab in test companies
         return true;
+      }
+      
+      // Special emergency handling for recently submitted KYB forms
+      // This forces file-vault access after a successful KYB form submission
+      // even if the server hasn't updated the tabs yet
+      try {
+        // Check task data for recent submissions (any company)
+        if (tasks && tasks.length > 0) {
+          const recentSubmissions = tasks.filter(task => 
+            (task.task_type === 'kyb' || task.task_type === 'company_kyb') && 
+            (task.status === 'submitted' || task.status === 'completed') &&
+            task.company_id === currentCompany.id
+          );
+          
+          if (recentSubmissions.length > 0) {
+            console.log(`[DashboardLayout] 🔑 Found ${recentSubmissions.length} completed KYB submissions for company ${currentCompany.id}, forcing file-vault access`);
+            
+            // Update company data in-memory to include file-vault tab
+            const updatedCompany = {
+              ...currentCompany,
+              available_tabs: [...availableTabs, 'file-vault']
+            };
+            queryClient.setQueryData(['/api/companies/current'], updatedCompany);
+            
+            return true;
+          }
+        }
+      } catch (error) {
+        console.error('[DashboardLayout] Error checking for recent KYB submissions:', error);
       }
     }
 

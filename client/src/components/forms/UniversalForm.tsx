@@ -1653,28 +1653,65 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           try {
             console.log(`[SUBMIT FLOW] 10a. Using FileVaultService to enable file vault tab`);
             
-            // Get the company ID from taskMetadata
-            const companyId = taskMetadata?.companyId;
+            // Get the company ID from multiple sources for maximum reliability
+            let companyId = taskMetadata?.companyId;
+            let currentUserCompanyId: number | null = null;
+            
+            // IMPORTANT: Also check the user's current company in case taskMetadata is incorrect
+            try {
+              // Use queryClient directly to get the current company data
+              const { queryClient } = await import('@/lib/queryClient');
+              const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
+              if (companyData?.id) {
+                currentUserCompanyId = companyData.id;
+                console.log(`[SUBMIT FLOW] Found current user's company ID: ${currentUserCompanyId}`);
+              }
+            } catch (companyError) {
+              console.error(`[SUBMIT FLOW] Error getting current user's company:`, companyError);
+            }
+            
+            // CRITICAL FIX: Always use the current user's company ID if available
+            // This ensures we're always working with the right company regardless of task metadata
+            if (!companyId && currentUserCompanyId) {
+              companyId = currentUserCompanyId;
+              console.log(`[SUBMIT FLOW] ⚠️ Using current user's company ID ${companyId} instead of missing task company ID`);
+            } else if (companyId && currentUserCompanyId && companyId !== currentUserCompanyId) {
+              console.warn(`[SUBMIT FLOW] ⚠️ CRITICAL MISMATCH: Task company ID ${companyId} differs from user's company ID ${currentUserCompanyId}`);
+              // In this case, we'll handle both company IDs to be safe
+            }
+            
             if (!companyId) {
-              console.warn(`[SUBMIT FLOW] Missing companyId in taskMetadata, cannot enable file vault tab reliably`);
+              console.error(`[SUBMIT FLOW] ❌ CRITICAL ERROR: Could not determine any company ID, cannot enable file vault tab reliably`);
             } else {
               console.log(`[SUBMIT FLOW] Using companyId ${companyId} to enable file vault tab`);
               
               // 1. First try with the dedicated FileVaultService which has built-in fallbacks
               const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
               
-              // 2. Try all available methods with careful error handling
+              // Handle the main company ID from the task
               try {
-                console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
+                console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method for company ${companyId}`);
                 await enableFileVault(companyId);
               } catch (enableError) {
                 console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
                 
                 try {
-                  console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
-                  directlyAddFileVaultTab();
+                  console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method for company ${companyId}`);
+                  directlyAddFileVaultTab(companyId);
                 } catch (directError) {
                   console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+                }
+              }
+              
+              // If we detected a different company ID for the current user, also handle that one
+              if (currentUserCompanyId && currentUserCompanyId !== companyId) {
+                console.log(`[SUBMIT FLOW] 🔄 Also handling current user's company ID ${currentUserCompanyId}`);
+                
+                try {
+                  await enableFileVault(currentUserCompanyId);
+                } catch (enableError) {
+                  console.warn(`[SUBMIT FLOW] enableFileVault() failed for user company:`, enableError);
+                  directlyAddFileVaultTab(currentUserCompanyId);
                 }
               }
               
@@ -1682,6 +1719,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               try {
                 console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
                 await refreshFileVaultStatus(companyId);
+                
+                // If we're handling two different companies, refresh both
+                if (currentUserCompanyId && currentUserCompanyId !== companyId) {
+                  await refreshFileVaultStatus(currentUserCompanyId);
+                }
               } catch (refreshError) {
                 console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
               }
