@@ -92,6 +92,19 @@ export function Sidebar({
           }
         });
         subscriptions.push(unsubTaskUpdate);
+        
+        // NEW: Subscribe to company tabs updates
+        const unsubCompanyTabs = await wsService.subscribe('company_tabs_updated', (data: any) => {
+          console.log('[Sidebar] 🔄 Received company_tabs_updated event:', data);
+          
+          // Force rerender by updating a state variable
+          // This ensures that component will recheck availableTabs on next render
+          setTaskCount(prev => {
+            console.log('[Sidebar] Forcing rerender due to company tabs update');
+            return prev; // Return same value to avoid unwanted UI changes
+          });
+        });
+        subscriptions.push(unsubCompanyTabs);
       } catch (error) {
         console.error('Error setting up WebSocket subscriptions:', error);
       }
