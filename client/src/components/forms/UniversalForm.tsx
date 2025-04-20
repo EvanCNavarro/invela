@@ -356,8 +356,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           'kyb': 'company_kyb',
           'card': 'company_card',
           'security': 'security_assessment',
-          'ky3p': 'sp_ky3p_assessment'
+          'ky3p': 'sp_ky3p_assessment',
+          'sp_ky3p_assessment': 'sp_ky3p_assessment' // Make sure both names map correctly
         };
+        
+        logger.info(`Task type mapping: ${taskType} -> ${taskTypeMap[taskType] || taskType}`);
         
         // Use the mapped task type for API requests if available
         const dbTaskType = taskTypeMap[taskType] || taskType;
