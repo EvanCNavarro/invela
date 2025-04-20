@@ -242,7 +242,10 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   console.error('[KYB Form] Error updating file vault tab in cache:', cacheUpdateError);
                   
                   // If direct update fails, try with emergency endpoint
-                  console.log('[KYB Form] Using emergency file vault update method');
+                  console.log('[KYB Form] Using emergency file vault update method for company ID:', task.metadata?.company_id);
+                  
+                  // Make sure we handle the case where we're submitting for company 206 (DevelopmentTestingZ)
+                  // as well as 205 (DevelopmentTestingY)
                   fetch('/api/emergency/unlock-file-vault/' + task.metadata?.company_id, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
