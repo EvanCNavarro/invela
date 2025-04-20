@@ -1345,39 +1345,92 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Set the submission result
         setSubmissionResult(finalSubmissionResult);
         
-        // Single success toast
-        toast({
-          title: "Form Submitted",
-          description: "Your form was submitted successfully.",
-          variant: "success",
-        });
+        // *** CRITICAL FIX: Send form data to server FIRST, wait for confirmation ***
+        // Before showing any success indicators or toasts
+        logger.info('Submitting form data to server...');
         
-        // Emit WebSocket notification (single emission)
         try {
-          wsService.emit('submission_status', {
-            taskId: Number(taskId),
-            status: 'completed',
-            source: 'client-form-submit'
+          // Set up WebSocket listener for server confirmation BEFORE submission
+          // This ensures we won't miss the event if it comes quickly
+          const confirmationPromise = new Promise<boolean>((resolve, reject) => {
+            // Set a timeout for server response
+            const timeoutId = setTimeout(() => {
+              reject(new Error('Server submission confirmation timed out'));
+            }, 15000); // 15 second timeout
+            
+            // Listen for server confirmation via WebSocket
+            const unsubscribe = wsService.subscribe('submission_status', (data: any) => {
+              if (data.taskId === Number(taskId) && data.status === 'submitted') {
+                logger.info('Received server submission confirmation', data);
+                clearTimeout(timeoutId);
+                unsubscribe();
+                resolve(true);
+              }
+            });
+            
+            // Also listen for error status
+            const errorUnsubscribe = wsService.subscribe('submission_status', (data: any) => {
+              if (data.taskId === Number(taskId) && data.status === 'error') {
+                logger.error('Received server submission error', data);
+                clearTimeout(timeoutId);
+                unsubscribe();
+                errorUnsubscribe();
+                reject(new Error(data.error || 'Server reported submission error'));
+              }
+            });
           });
-        } catch (wsError) {
-          logger.warn('WebSocket notification error:', wsError);
-        }
-        
-        // Show success modal (centralized in one place)
-        logger.info('Showing success modal');
-        setShowSuccessModal(true);
-        
-        // Show confetti effect (single trigger)
-        try {
-          const { fireSuperConfetti } = await import('@/utils/confetti');
-          fireSuperConfetti();
-        } catch (confettiError) {
-          logger.error('Error showing confetti:', confettiError);
-        }
-        
-        // Then call the onSubmit callback if provided
-        if (onSubmit) {
-          onSubmit(data);
+          
+          // Call parent's onSubmit handler which should make the actual API call
+          if (onSubmit) {
+            onSubmit(data);
+          }
+          
+          // Wait for server confirmation via WebSocket
+          await confirmationPromise;
+          
+          // Server confirmed success - now show success indicators
+          logger.info('Server confirmed submission success');
+          
+          // Clear any previous toast notifications
+          if (submittingToastId) {
+            toast.dismiss(submittingToastId);
+          }
+          
+          // Single success toast
+          toast({
+            title: "Form Submitted",
+            description: "Your form was submitted successfully.",
+            variant: "success",
+          });
+          
+          // Show success modal (centralized in one place)
+          logger.info('Showing success modal');
+          setShowSuccessModal(true);
+          
+          // Show confetti effect (single trigger)
+          try {
+            const { fireSuperConfetti } = await import('@/utils/confetti');
+            fireSuperConfetti();
+          } catch (confettiError) {
+            logger.error('Error showing confetti:', confettiError);
+          }
+        } catch (submissionError) {
+          // Handle submission error
+          logger.error('Form submission failed:', submissionError);
+          
+          // Clear any previous toast notifications
+          if (submittingToastId) {
+            toast.dismiss(submittingToastId);
+          }
+          
+          // Show error toast
+          toast({
+            title: 'Submission Failed',
+            description: submissionError instanceof Error 
+              ? submissionError.message 
+              : 'Failed to submit form. Please try again.',
+            variant: 'destructive',
+          });
         }
       } catch (statusCheckError) {
         logger.error('Status verification error:', statusCheckError);
