@@ -6,6 +6,7 @@ import { eq, and, ilike, sql } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
+import { requireAuth } from '../middleware/auth';
 
 const logger = new Logger('KYBRoutes');
 
@@ -1397,30 +1398,45 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
   }
 });
 
-router.get('/api/kyb/progress/:taskId', async (req, res) => {
+router.get('/api/kyb/progress/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
     console.log('[KYB API Debug] Loading progress for task:', taskId);
 
+    if (!req.user?.company_id) {
+      console.error('[KYB API Debug] No company ID in user session');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     // First, reconcile the task progress to ensure consistency
     await reconcileTaskProgress(parseInt(taskId), { debug: true });
     
-    // Get task data (now with reconciled progress values)
+    // Get task data (now with reconciled progress values) with company verification
     const [task] = await db.select()
       .from(tasks)
-      .where(eq(tasks.id, parseInt(taskId)));
+      .where(
+        and(
+          eq(tasks.id, parseInt(taskId)),
+          eq(tasks.company_id, req.user.company_id) // Ensure the task belongs to user's company
+        )
+      );
 
     logTaskDebug('Retrieved task', task);
 
     if (!task) {
-      console.log('[KYB API Debug] Task not found:', taskId);
-      return res.status(404).json({ error: 'Task not found' });
+      console.log('[KYB API Debug] Task not found or access denied:', {
+        taskId,
+        userCompanyId: req.user.company_id,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ error: 'Task not found or access denied' });
     }
 
     // Get all KYB responses for this task with their field information
     const responses = await db.select({
       response_value: kybResponses.response_value,
       field_key: kybFields.field_key,
+      field_id: kybResponses.field_id,
       status: kybResponses.status
     })
       .from(kybResponses)
@@ -1472,25 +1488,16 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
           // This is a security issue - file belongs to different company than the task
           console.error(`[SERVER SECURITY] POTENTIAL DATA LEAK PREVENTED: File ${kybFormFileId} belongs to company ${file.company_id} but task ${taskId} belongs to company ${task.company_id}`);
           
-          try {
-            // Record security incident in audit logs
-            await db.insert(securityAuditLogs).values({
-              type: 'SECURITY_ALERT',
-              user_id: req.user?.id || null,
-              company_id: task.company_id,
-              details: JSON.stringify({
-                event: 'cross_company_data_access_prevented',
-                fileId: kybFormFileId,
-                fileCompanyId: file.company_id,
-                taskId: taskId,
-                taskCompanyId: task.company_id,
-                timestamp: new Date().toISOString()
-              }),
-              created_at: new Date()
-            });
-          } catch (auditError) {
-            console.error('[SERVER SECURITY] Failed to log security audit:', auditError);
-          }
+          // Log security incident details to the console
+          console.error('[SERVER SECURITY] Security incident details:', {
+            event: 'cross_company_data_access_prevented',
+            fileId: kybFormFileId,
+            fileCompanyId: file.company_id,
+            taskId: taskId,
+            taskCompanyId: task.company_id,
+            userId: req.user?.id || null,
+            timestamp: new Date().toISOString()
+          });
         }
         else if (Object.keys(formData).length < 5 && 
                 (task.status === TaskStatus.SUBMITTED || task.metadata?.submissionDate)) {
