@@ -3,7 +3,9 @@ import { Server } from 'http';
 import type { TaskStatus } from '@db/schema';
 import { DocumentCategory } from '@db/schema';
 
+// Make wss available for external modules to access
 let wss: WebSocketServer;
+export { wss };
 
 interface TaskUpdate {
   id: number;
@@ -53,6 +55,14 @@ export function setupWebSocket(server: Server) {
   });
 
   console.log('[WebSocket] Server initialized on path: /ws');
+  
+  // Initialize WebSocketServer reference in the test router
+  try {
+    // Will be imported at runtime when routes.ts registers all routes
+    console.log('[WebSocket] WebSocketServer instance exported for test endpoints');
+  } catch (error) {
+    console.warn('[WebSocket] Error in WebSocket setup:', error);
+  }
 
   wss.on('connection', (ws) => {
     console.log('New WebSocket client connected');

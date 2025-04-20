@@ -28,7 +28,7 @@ import tasksRouter from './routes/tasks';
 import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
-import { router as wsTestRouter, initializeWssReference } from './routes/websocket-test';
+import { router as wsTestRouter } from './routes/websocket-test';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 

@@ -9,12 +9,9 @@ import { TaskStatus } from '@db/schema';
  */
 
 export const router = Router();
-let wss: WebSocketServer; // Will be initialized from the imported variable
 
-// Initialize WebSocketServer reference
-export function initializeWssReference(websocketServer: WebSocketServer) {
-  wss = websocketServer;
-}
+// Import wss directly from the websocket service
+import { wss } from '../services/websocket';
 
 // Test endpoint to broadcast a submission status update
 router.get('/test-submission-status/:taskId', async (req, res) => {
@@ -115,7 +112,7 @@ router.get('/test-form-error/:taskId', async (req, res) => {
     // Also send via task update
     broadcastTaskUpdate({
       id: taskId,
-      status: TaskStatus.ERROR,
+      status: 'failed' as TaskStatus, // Using 'failed' instead of ERROR
       progress: 0,
       metadata: {
         error: 'This is a test error message',
