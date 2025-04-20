@@ -470,6 +470,15 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
     // Explicitly set header for JSON (crucial to avoid Vite interference)
     res.setHeader('Content-Type', 'application/json');
     
+    // SECURITY: Check if user is authenticated and has a company ID
+    if (!req.user?.company_id) {
+      console.error('[Tasks Routes] Access denied - user has no company ID:', {
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
     const taskId = parseInt(req.params.id);
     
     if (isNaN(taskId)) {
@@ -478,12 +487,16 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
     
     console.log('[Tasks Routes] Fetching task by ID:', {
       taskId,
+      userCompanyId: req.user.company_id,
       timestamp: new Date().toISOString()
     });
     
-    // Get the task data
+    // Get the task data WITH COMPANY VERIFICATION
     const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+      where: and(
+        eq(tasks.id, taskId),
+        eq(tasks.company_id, req.user.company_id) // CRITICAL: Verify task belongs to user's company
+      )
     });
     
     if (!task) {
@@ -566,6 +579,15 @@ router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
     // Force JSON response
     res.setHeader('Content-Type', 'application/json');
     
+    // SECURITY: Check if user is authenticated and has a company ID
+    if (!req.user?.company_id) {
+      console.error('[Tasks Routes] Access denied - user has no company ID (special .json endpoint):', {
+        userId: req.user?.id,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
     const taskId = parseInt(req.params.id);
     
     if (isNaN(taskId)) {
@@ -574,12 +596,16 @@ router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
     
     console.log('[Tasks Routes] Fetching task by ID (special .json endpoint):', {
       taskId,
+      userCompanyId: req.user.company_id,
       timestamp: new Date().toISOString()
     });
     
-    // Get the task data
+    // Get the task data WITH COMPANY VERIFICATION
     const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+      where: and(
+        eq(tasks.id, taskId),
+        eq(tasks.company_id, req.user.company_id) // CRITICAL: Verify task belongs to user's company
+      )
     });
     
     if (!task) {
