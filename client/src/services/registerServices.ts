@@ -4,6 +4,7 @@
 import { componentFactory } from './componentFactory';
 import { kybService } from './kybService';
 import { enhancedKybService, enhancedKybServiceFactory } from './enhanced-kyb-service';
+import { ky3pFormService, ky3pFormServiceFactory } from './ky3p-form-service';
 
 /**
  * Register all form services with ComponentFactory
@@ -51,6 +52,11 @@ export function registerServices(): void {
     // componentFactory.registerFormService('company_card', cardService);
     // componentFactory.registerFormService('security', securityService);
     // componentFactory.registerFormService('security_assessment', securityService);
+    
+    // Register KY3P form service
+    console.log('[Service Registration] Registering KY3P form service for type: sp_ky3p_assessment');
+    componentFactory.registerFormService('sp_ky3p_assessment', ky3pFormService);
+    console.log('[Service Registration] KY3PFormServiceFactory initialized and ready for isolated service creation');
     
     // Final check - specifically check for KYB service
     const kybRegistered = componentFactory.getFormService('kyb');
