@@ -1653,30 +1653,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           try {
             console.log(`[SUBMIT FLOW] 10a. Using FileVaultService to enable file vault tab`);
             
-            // 1. First try with the dedicated FileVaultService which has built-in fallbacks
-            const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
-            
-            // 2. Try all available methods with careful error handling
-            try {
-              console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
-              await enableFileVault();
-            } catch (enableError) {
-              console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+            // Get the company ID from taskMetadata
+            const companyId = taskMetadata?.companyId;
+            if (!companyId) {
+              console.warn(`[SUBMIT FLOW] Missing companyId in taskMetadata, cannot enable file vault tab reliably`);
+            } else {
+              console.log(`[SUBMIT FLOW] Using companyId ${companyId} to enable file vault tab`);
               
+              // 1. First try with the dedicated FileVaultService which has built-in fallbacks
+              const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
+              
+              // 2. Try all available methods with careful error handling
               try {
-                console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
-                directlyAddFileVaultTab();
-              } catch (directError) {
-                console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+                console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
+                await enableFileVault(companyId);
+              } catch (enableError) {
+                console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+                
+                try {
+                  console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
+                  directlyAddFileVaultTab();
+                } catch (directError) {
+                  console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+                }
               }
-            }
-            
-            // 3. Also refresh as a final safety measure
-            try {
-              console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
-              await refreshFileVaultStatus();
-            } catch (refreshError) {
-              console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+              
+              // 3. Also refresh as a final safety measure
+              try {
+                console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
+                await refreshFileVaultStatus(companyId);
+              } catch (refreshError) {
+                console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+              }
             }
             
             // 4. Finally, also use the original approach as backup
@@ -1820,30 +1828,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         try {
           console.log(`[SUBMIT FLOW] Using FileVaultService to enable file vault tab`);
           
-          // 1. First try with the dedicated FileVaultService which has built-in fallbacks
-          const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
-          
-          // 2. Try all available methods with careful error handling
-          try {
-            console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
-            await enableFileVault();
-          } catch (enableError) {
-            console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+          // Get the company ID from taskMetadata
+          const companyId = taskMetadata?.companyId;
+          if (!companyId) {
+            console.warn(`[SUBMIT FLOW] Missing companyId in taskMetadata, cannot enable file vault tab reliably`);
+          } else {
+            console.log(`[SUBMIT FLOW] Using companyId ${companyId} to enable file vault tab`);
             
+            // 1. First try with the dedicated FileVaultService which has built-in fallbacks
+            const { enableFileVault, directlyAddFileVaultTab, refreshFileVaultStatus } = await import('@/services/fileVaultService');
+            
+            // 2. Try all available methods with careful error handling
             try {
-              console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
-              directlyAddFileVaultTab();
-            } catch (directError) {
-              console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+              console.log(`[SUBMIT FLOW] Method 1: Calling enableFileVault() API method`);
+              await enableFileVault(companyId);
+            } catch (enableError) {
+              console.warn(`[SUBMIT FLOW] enableFileVault() failed, falling back to direct method:`, enableError);
+              
+              try {
+                console.log(`[SUBMIT FLOW] Method 2: Calling directlyAddFileVaultTab() cache method`);
+                directlyAddFileVaultTab();
+              } catch (directError) {
+                console.warn(`[SUBMIT FLOW] directlyAddFileVaultTab() failed:`, directError);
+              }
             }
-          }
-          
-          // 3. Also refresh as a final safety measure
-          try {
-            console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
-            await refreshFileVaultStatus();
-          } catch (refreshError) {
-            console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+            
+            // 3. Also refresh as a final safety measure
+            try {
+              console.log(`[SUBMIT FLOW] Method 3: Calling refreshFileVaultStatus() refresh method`);
+              await refreshFileVaultStatus(companyId);
+            } catch (refreshError) {
+              console.warn(`[SUBMIT FLOW] refreshFileVaultStatus() failed:`, refreshError);
+            }
           }
           
           // 4. Manually force company data refresh as the most extreme fallback
