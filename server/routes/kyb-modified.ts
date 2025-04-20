@@ -1,283 +1,138 @@
-import { Router } from 'express';
-import { join } from 'path';
-import { db } from '@db';
-import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
-import { eq, and, ilike, sql } from 'drizzle-orm';
-import { FileCreationService } from '../services/file-creation';
-import { Logger } from '../utils/logger';
-import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
+/**
+ * This file contains the KYB route modifications for file vault unlocking
+ */
 
-const logger = new Logger('KYBRoutes');
-
-// Save KYB form data with WebSocket broadcasting
-router.post('/api/kyb/save', async (req, res) => {
+// Replace the normal file vault update with our service call
+// In the first submission handler (around line 1044-1060)
+function updateFirstHandler() {
+  // Before: Get company record and update available_tabs manually
+  /* REPLACE WITH:
   try {
-    // Enhanced detailed DEBUG entry point logging
-    console.log('[KYB API Debug] KYB save endpoint triggered:', {
-      endpoint: '/api/kyb/save',
-      method: 'POST',
-      url: req.url,
-      headers: {
-        contentType: req.headers['content-type'],
-        accept: req.headers.accept,
-        cookie: !!req.headers.cookie // Just log if cookie is present without exposing its value
-      },
-      timestamp: new Date().toISOString()
-    });
+    console.log(`[SERVER DEBUG] Unlocking file vault access for company ${taskId}`);
+    const updatedCompany = await CompanyTabsService.unlockFileVault(taskId);
     
-    // Check if user is authenticated
-    if (!req.isAuthenticated() || !req.user) {
-      console.error('[KYB API Debug] Unauthorized access attempt', {
-        path: '/api/kyb/save',
-        authenticated: req.isAuthenticated(),
-        hasUser: !!req.user,
-        hasSession: !!req.session,
-        sessionID: req.sessionID,
-        cookiePresent: !!req.headers.cookie,
+    if (updatedCompany) {
+      console.log(`[SERVER DEBUG] Successfully updated company tabs:`, {
+        companyId: taskId,
+        availableTabs: updatedCompany.available_tabs,
         timestamp: new Date().toISOString()
       });
-      
-      // Send a more detailed 401 response
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'You must be logged in to save KYB data',
-        details: {
-          authenticated: req.isAuthenticated(),
-          hasUser: !!req.user,
-          hasSession: !!req.session,
-          timestamp: new Date().toISOString()
-        }
+      // Broadcast updates to all connected clients
+      broadcastSubmissionStatus(taskId, {
+        fileVaultUnlocked: true,
+        availableTabs: updatedCompany.available_tabs
+      });
+    } else {
+      console.error(`[SERVER ERROR] Failed to unlock file vault for company ${taskId}`);
+      // Broadcast update failure
+      broadcastTaskUpdate(taskId, {
+        status: TaskStatus.PENDING_REVIEW,
+        fileVaultError: true
+      });
+    }
+  } catch (tabError) {
+    // Log but don't fail the entire request if tab updating fails
+    console.error(`[SERVER ERROR] Error updating company tabs:`, {
+      error: tabError instanceof Error ? tabError.message : String(tabError),
+      companyId: taskId,
+      timestamp: new Date().toISOString()
+    });
+  }
+  */
+}
+
+// In the second submission handler (around line 1759-1775)
+function updateSecondHandler() {
+  // Before: Get company record and update available_tabs manually  
+  /* REPLACE WITH:
+  try {
+    console.log(`[SERVER DEBUG] Unlocking file vault access for company ${taskId}`);
+    const updatedCompany = await CompanyTabsService.unlockFileVault(taskId);
+    
+    if (updatedCompany) {
+      console.log(`[SERVER DEBUG] Successfully updated company tabs:`, {
+        companyId: taskId,
+        availableTabs: updatedCompany.available_tabs,
+        timestamp: new Date().toISOString()
+      });
+      // Broadcast updates to all connected clients
+      broadcastSubmissionStatus(taskId, {
+        fileVaultUnlocked: true,
+        availableTabs: updatedCompany.available_tabs
+      });
+    } else {
+      console.error(`[SERVER ERROR] Failed to unlock file vault for company ${taskId}`);
+      // Broadcast update failure
+      broadcastTaskUpdate(taskId, {
+        status: TaskStatus.PENDING_REVIEW,
+        fileVaultError: true
+      });
+    }
+  } catch (tabError) {
+    // Log but don't fail the entire request if tab updating fails
+    console.error(`[SERVER ERROR] Error updating company tabs:`, {
+      error: tabError instanceof Error ? tabError.message : String(tabError),
+      companyId: taskId,
+      timestamp: new Date().toISOString()
+    });
+  }
+  */
+}
+
+// Endpoint to export KYB data as CSV
+router.post('/api/kyb/export-csv', requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.body;
+    
+    if (!taskId) {
+      return res.status(400).json({
+        message: "Task ID is required"
       });
     }
     
-    // If authenticated, log user details
-    console.log('[KYB API Debug] User authenticated:', {
-      userId: req.user.id,
-      userEmail: req.user.email,
-      companyId: req.user.company_id,
-      timestamp: new Date().toISOString()
-    });
-
-    const { fileName, formData, taskId, status } = req.body;
-    
-    // Check if this is a submission (client indicates "submitted" status)
-    const isSubmission = status === 'submitted';
-
-    logger.debug('Save request received', {
-      taskId,
-      formDataKeys: Object.keys(formData),
-      fileName,
-      userId: req.user.id,
-      isSubmission,
-      requestedStatus: status
-    });
-
-    // Get task details with full task data
     const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
-
+      
     if (!task) {
-      throw new Error('Task not found');
+      return res.status(404).json({
+        message: "Task not found"
+      });
     }
-
-    // If created_by is missing, use the current user's ID
-    if (!task.created_by && req.user?.id) {
-      await db.update(tasks)
-        .set({ 
-          created_by: req.user.id,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, taskId));
-
-      task.created_by = req.user.id;
-    }
-
-    // Still check for required fields after potential update
-    if (!task.created_by || !task.company_id) {
-      throw new Error('Missing task user or company information');
-    }
-
-    // Get all KYB fields with their groups
+    
+    // Get all KYB fields
     const fields = await db.select()
       .from(kybFields)
-      .orderBy(kybFields.order);
-
-    // Convert form data to CSV
-    const csvData = convertResponsesToCSV(fields, formData);
-
-    // Create file using FileCreationService
-    const fileCreationResult = await FileCreationService.createFile({
-      name: fileName || FileCreationService.generateStandardFileName("KYBForm", taskId, task.metadata?.company_name, task.metadata?.formVersion || "1.0", "csv"),
-      content: csvData,
-      type: 'text/csv',
-      userId: task.created_by,
-      companyId: task.company_id,
-      metadata: {
-        taskId,
-        taskType: 'kyb',
-        formVersion: '1.0',
-        submissionDate: new Date().toISOString(),
-        fields: fields.map(f => f.field_key)
-      },
-      status: 'uploaded'
-    });
-
-    if (!fileCreationResult.success) {
-      logger.error('File creation failed', {
-        error: fileCreationResult.error,
-        taskId,
-        fileName
-      });
-      throw new Error(fileCreationResult.error);
-    }
-
-    // Get company record to update available tabs
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
-
-    if (company) {
-      // Add file-vault to available tabs if not already present
-      const currentTabs = company.available_tabs || ['task-center'];
-      if (!currentTabs.includes('file-vault')) {
-        await db.update(companies)
-          .set({ 
-            available_tabs: [...currentTabs, 'file-vault'],
-            updated_at: new Date()
-          })
-          .where(eq(companies.id, task.company_id));
-      }
-    }
-
-    // Update task status and metadata
-    await db.update(tasks)
-      .set({
-        status: TaskStatus.SUBMITTED,
-        progress: 100,
-        updated_at: new Date(),
-        metadata: {
-          ...task.metadata,
-          kybFormFile: fileCreationResult.fileId,
-          submissionDate: new Date().toISOString(),
-          formVersion: '1.0',
-          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
-            .filter((v, i, a) => a.indexOf(v) === i)
-        }
-      })
-      .where(eq(tasks.id, taskId));
+      .orderBy(sql`"group" ASC, "order" ASC`);
       
-    // Broadcast submission status via WebSocket to ensure all clients
-    // receive notification, even if HTTP response fails
-    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
-    broadcastSubmissionStatus(taskId, 'submitted');
+    // Get all responses for this task
+    const responses = await db.select()
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, taskId));
       
-    // Also broadcast the task update for dashboard real-time updates
-    broadcastTaskUpdate({
-      id: taskId,
-      status: TaskStatus.SUBMITTED,
-      progress: 100,
-      metadata: {
-        lastUpdated: new Date().toISOString(),
-        submissionDate: new Date().toISOString()
-      }
-    });
-
-    let warnings = [];
-    // Save responses to database
-    for (const field of fields) {
-      const value = formData[field.field_key];
-      const status = value ? 'COMPLETE' : 'EMPTY';
-
-      try {
-        // First try to insert
-        await db.insert(kybResponses)
-          .values({
-            task_id: taskId,
-            field_id: field.id,
-            response_value: value || null,
-            status,
-            version: 1,
-            created_at: new Date(),
-            updated_at: new Date()
-          });
-      } catch (err) {
-        const error = err as Error;
-        if (error.message.includes('duplicate key value violates unique constraint')) {
-          // If duplicate, update instead
-          await db.update(kybResponses)
-            .set({
-              response_value: value || null,
-              status,
-              version: sql`${kybResponses.version} + 1`,
-              updated_at: new Date()
-            })
-            .where(
-              and(
-                eq(kybResponses.task_id, taskId),
-                eq(kybResponses.field_id, field.id)
-              )
-            );
-          warnings.push(`Updated existing response for field: ${field.field_key}`);
-        } else {
-          throw error;
-        }
+    // Convert responses to a form data object
+    const formData = {};
+    for (const response of responses) {
+      const field = fields.find(f => f.id === response.field_id);
+      if (field && response.response_value) {
+        formData[field.field_key] = response.response_value;
       }
     }
-
-    logger.info('Save completed successfully', {
-      taskId,
-      fileId: fileCreationResult.fileId,
-      responseCount: fields.length,
-      warningCount: warnings.length
-    });
-
-    res.json({
-      success: true,
-      fileId: fileCreationResult.fileId,
-      warnings: warnings.length ? warnings : undefined
-    });
+    
+    // Generate CSV content
+    const csvContent = convertResponsesToCSV(fields, formData);
+    
+    // Create a temp file to store the CSV
+    const fileName = `kyb_export_${taskId}_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(csvContent);
   } catch (error) {
-    // Enhanced detailed error logging
-    console.error('[KYB API Debug] Error saving KYB form', {
-      errorType: error?.constructor?.name,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      errorStack: error instanceof Error ? error.stack : undefined,
-      requestHeaders: {
-        contentType: req.headers['content-type'],
-        accept: req.headers.accept,
-        cookiePresent: !!req.headers.cookie
-      },
-      sessionID: req.sessionID,
-      authenticatedStatus: req.isAuthenticated(),
-      userPresent: !!req.user,
-      timestamp: new Date().toISOString()
-    });
-    
-    logger.error('Error saving KYB form', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
-    // Set appropriate status code based on error type
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.message.includes('not found') || error.message.includes('does not exist')) {
-        statusCode = 404;
-      } else if (error.message.includes('Unauthorized') || error.message.includes('unauthenticated')) {
-        statusCode = 401;
-      } else if (error.message.includes('Invalid') || error.message.includes('validation')) {
-        statusCode = 400;
-      }
-    }
-    
-    res.status(statusCode).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred',
-      code: statusCode === 500 ? 'INTERNAL_ERROR' : 
-            statusCode === 404 ? 'NOT_FOUND' :
-            statusCode === 401 ? 'UNAUTHORIZED' : 'BAD_REQUEST'
+    console.error('Error exporting KYB data as CSV:', error);
+    res.status(500).json({
+      message: "Failed to export KYB data",
+      error: error instanceof Error ? error.message : "Unknown error"
     });
   }
 });
