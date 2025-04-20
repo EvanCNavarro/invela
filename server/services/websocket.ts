@@ -51,7 +51,7 @@ export function setupWebSocket(server: Server, app?: Express) {
     // Send connected message
     ws.send(JSON.stringify({
       type: 'connection_established',
-      data: {
+      payload: {  // Changed from 'data' to 'payload' for consistency
         timestamp: new Date().toISOString()
       }
     }));
