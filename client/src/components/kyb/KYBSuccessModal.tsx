@@ -46,11 +46,16 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
               if (lockIcon) lockIcon.remove();
             });
             
-            // PHASE 2: Update React Query cache for longer-term data consistency
+            // PHASE 2: Update React Query cache for longer-term data consistency - preserve all existing data
             console.log('[KYBSuccessModal] PHASE 2: Cache update');
+            const currentTabsData = company.available_tabs || [];
+            // Important: Check if 'task-center' exists before adding it to avoid overwriting tabs
+            const mergedTabs = [...new Set([...currentTabsData, 'task-center', 'file-vault'])];
+            console.log('[KYBSuccessModal] Updating tabs:', currentTabsData, ' -> ', mergedTabs);
+            
             queryClient.setQueryData(['/api/companies/current'], {
               ...company,
-              available_tabs: [...new Set([...(company.available_tabs || ['task-center']), 'file-vault'])]
+              available_tabs: mergedTabs
             });
             
             // PHASE 3: Force component re-renders with microtask priority
