@@ -69,7 +69,7 @@ export function setupWebSocket(server: Server) {
 
     ws.send(JSON.stringify({
       type: 'connection_established',
-      data: { timestamp: new Date().toISOString() }
+      payload: { timestamp: new Date().toISOString() } // Changed 'data' to 'payload' for consistent message format
     }));
 
     const pingInterval = setInterval(() => {
@@ -161,7 +161,11 @@ export function broadcastDocumentCountUpdate(update: DocumentCountUpdate) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       try {
-        client.send(JSON.stringify(update));
+        // Format message with consistent payload structure
+        client.send(JSON.stringify({
+          type: 'document_count_update',
+          payload: update // Wrap in payload property for consistency
+        }));
       } catch (error) {
         console.error('[WebSocket] Error broadcasting document count:', error);
       }
@@ -180,7 +184,11 @@ export function broadcastUploadProgress(update: UploadProgress) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       try {
-        client.send(JSON.stringify(update));
+        // Format message with consistent payload structure
+        client.send(JSON.stringify({
+          type: 'upload_progress',
+          payload: update // Wrap in payload property for consistency
+        }));
       } catch (error) {
         console.error('[WebSocket] Error broadcasting upload progress:', error);
       }
