@@ -269,22 +269,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       logger.info(`[WebSocket Handler] Processing submission status update for task ${data.taskId}: Status=${data.status}, Source=${data.source || 'unknown'}`);
       
-      // If we receive a successful submission status or any status with saved data, show the success modal
-      // ENHANCED: We treat any status with saved data as a success case to improve UX reliability
-      if (data.status === 'submitted' || 
+      // WebSocket handler for submission status events
+      // ONLY process these if the success modal is not already showing to prevent duplicates
+      if (!showSuccessModal && 
+          (data.status === 'submitted' || 
           data.status === 'completed' || 
           data.savedSuccessfully === true || 
-          data.status === 'warning') {
+          data.status === 'warning')) {
           
-        console.log(`[WebSocket Handler] Showing success modal for task ${data.taskId}`);
-        
-        // Log more detailed information for debugging
-        logger.info(`[WebSocket Handler] Success modal trigger details:`, {
-          taskId: data.taskId,
-          status: data.status,
-          source: data.source || 'unknown',
-          timestamp: new Date().toISOString()
-        });
+        logger.info(`[WebSocket Handler] Processing remote submission status: ${data.status} (source: ${data.source || 'unknown'})`);
         
         // Create a submission result object with proper SubmissionAction type
         const submissionResultData: SubmissionResult = {
@@ -326,32 +319,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Update the submission result state
         setSubmissionResult(submissionResultData);
         
-        // GUARANTEED SUCCESS: Always show the success modal regardless of condition
-        // This is critical to ensure users never get stuck in the submitting state
-        setShowSuccessModal(true);
-        
-        // Fire confetti animation
-        console.log(`[WebSocket Handler] Triggering confetti animation`);
-        import('@/utils/confetti').then(({ fireSuperConfetti }) => {
-          fireSuperConfetti();
-        }).catch(error => {
-          logger.error('Error showing confetti:', error);
-          // Even if the confetti fails, we still want to show the success modal and toast
-        });
-        
-        // Show an appropriate toast notification based on status
-        if (data.status === 'warning' || !data.status) {
-          toast({
-            title: "Form Data Saved",
-            description: "Your form data was saved and will be processed shortly.",
-            variant: "warning",
-          });
-        } else {
-          toast({
-            title: "Form Submitted Successfully",
-            description: "Your form has been submitted successfully.",
-            variant: "success",
-          });
+        // Show the success modal (if not already showing)
+        if (!showSuccessModal) {
+          setShowSuccessModal(true);
+          
+          // Only trigger animation if modal is opening for first time
+          console.log(`[WebSocket Handler] Triggering confetti animation from WS handler`);
+          
+          try {
+            import('@/utils/confetti').then(({ fireSuperConfetti }) => {
+              fireSuperConfetti();
+            });
+          } catch (error) {
+            logger.error('Error showing confetti:', error);
+          }
         }
       } else if (data.status === 'error' || data.status === 'failed') {
         // Handle error submissions
