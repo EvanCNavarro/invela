@@ -62,7 +62,7 @@ interface Task {
   savedFormData?: Record<string, any>;
 }
 
-type TaskContentType = 'kyb' | 'card' | 'security' | 'unknown';
+type TaskContentType = 'kyb' | 'card' | 'security' | 'ky3p' | 'unknown';
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
@@ -171,6 +171,8 @@ export default function TaskPage({ params }: TaskPageProps) {
       type = 'security';
     } else if (taskData.task_type === 'company_card' || taskData.task_type === 'card') {
       type = 'card';
+    } else if (taskData.task_type === 'sp_ky3p_assessment') {
+      type = 'ky3p';
     }
     
     setTaskContentType(type);
@@ -704,6 +706,110 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                 )}
               </div>
             </div>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // KY3P Assessment Form Rendering
+  if (taskContentType === 'ky3p' && task) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+          </div>
+          
+          <div className="w-full">
+            <UniversalForm
+              taskId={task.id}
+              taskType="sp_ky3p_assessment"
+              taskStatus={task.status}
+              taskMetadata={task.metadata || {}}
+              initialData={task.savedFormData}
+              taskTitle={task.title}
+              companyName={derivedCompanyName}
+              fileId={fileId}
+              onDownload={handleDownload}
+              onSubmit={(formData) => {
+                // Generate a proper filename for submission
+                const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
+                const cleanTitle = task.title.toLowerCase().replace(/\s+/g, '_');
+                const fileName = `ky3p_assessment_${task.id}_${timestamp}.csv`;
+                
+                logger.info('[TaskPage] Submitting KY3P assessment with filename:', fileName);
+                
+                fetch(`/api/tasks/${task.id}/ky3p-submit`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({ 
+                    taskId: task.id,
+                    formData 
+                  })
+                })
+                .then(async response => {
+                  // First try to parse the response
+                  try {
+                    const data = await response.json();
+                    
+                    // Then check if the response was successful
+                    if (!response.ok) {
+                      throw new Error(data.message || data.error || 'Failed to submit KY3P assessment');
+                    }
+                    
+                    return data;
+                  } catch (parseError) {
+                    // Handle JSON parse errors specifically
+                    if (parseError instanceof SyntaxError) {
+                      logger.error('[TaskPage] Failed to parse server response:', parseError);
+                      throw new Error('Server returned an invalid response format. Please try again.');
+                    }
+                    // Re-throw other errors
+                    throw parseError;
+                  }
+                })
+                .then((result) => {
+                  // Update state for success modal
+                  setIsSubmitted(true);
+                  setShowSuccessModal(true);
+                  
+                  // Force invalidate the task data cache after successful submission
+                  logger.info(`KY3P assessment submission successful, invalidating task cache for task ${task.id}`);
+                  queryClient.invalidateQueries({ queryKey: [`/api/tasks/${task.id}`] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+                  
+                  // Manually emit a WebSocket event to ensure all clients are notified
+                  wsService.emit('submission_status', {
+                    taskId: task.id,
+                    status: 'submitted',
+                    timestamp: Date.now(),
+                    source: 'client-emit'
+                  }).catch(error => {
+                    logger.error('Failed to emit WebSocket submission status:', error);
+                  });
+                })
+                .catch(error => {
+                  // Log the error for debugging
+                  logger.error('[TaskPage] KY3P assessment submission failed:', error);
+                  
+                  // Reset any partial success state to avoid showing success modal
+                  setIsSubmitted(false);
+                  setShowSuccessModal(false);
+                  
+                  // Show error toast with specific error message
+                  toast({
+                    title: "Submission Failed",
+                    description: error.message || "Failed to submit KY3P assessment. Please try again.",
+                    variant: "destructive",
+                  });
+                });
+              }}
+            />
           </div>
         </PageTemplate>
       </DashboardLayout>
