@@ -985,6 +985,62 @@ export default function TaskPage({ params }: TaskPageProps) {
                   taskStatus={task.status}
                   companyName={displayName}
                   initialData={task.savedFormData}
+                  onSubmit={async (formData) => {
+                    console.log(`[OpenBanking] Starting form submission for task ${task.id}`);
+                    
+                    try {
+                      // Create filename with company name
+                      const fileName = `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+                      
+                      // Send form data to our direct endpoint
+                      const response = await fetch(`/api/tasks/${task.id}/open-banking-submit`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          formData,
+                          fileName
+                        }),
+                      });
+                      
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Form submission failed: ${response.status} - ${errorText}`);
+                      }
+                      
+                      const result = await response.json();
+                      console.log(`[OpenBanking] Submission successful, file ID: ${result.fileId}`);
+                      
+                      // Store file ID for download functionality
+                      if (result.fileId) {
+                        setFileId(result.fileId);
+                      }
+                      
+                      // Update UI state
+                      setIsSubmitted(true);
+                      
+                      // Show success modal
+                      setShowSuccessModal(true);
+                      
+                      // Fire confetti effect
+                      fireEnhancedConfetti();
+                      
+                      // Force refresh the task list
+                      fetch('/api/tasks').catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                      
+                    } catch (error) {
+                      console.error(`[OpenBanking] Error during submission:`, error);
+                      
+                      // Show error toast
+                      toast({
+                        title: "Form Submission Failed",
+                        description: error instanceof Error ? error.message : "Failed to submit Open Banking form",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                   onProgress={(progress) => {
                     updateTaskProgress(progress, task);
                     
@@ -1007,102 +1063,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     .catch(err => {
                       console.error('[TaskPage] Error updating progress:', err);
                     });
-                  }}
-                  onSubmit={async (formData) => {
-                    console.log(`[OPENBANKING SUBMIT] Starting submission for task ${task.id}`);
-                    
-                    try {
-                      // Submit the form data directly to the server
-                      const fileName = `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
-                      console.log(`[OPENBANKING SUBMIT] Direct server submission`);
-                      
-                      // Call the server API directly
-                      const response = await fetch(`/api/tasks/${task.id}/open-banking-submit`, {
-                        method: 'POST',
-                        credentials: 'include', // Include session cookies
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          formData,
-                          fileName
-                        }),
-                      });
-                      
-                      if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error(`[OPENBANKING SUBMIT] Submission failed: ${response.status}`, errorText);
-                        throw new Error(`Form submission failed: ${response.status} - ${errorText}`);
-                      }
-                      
-                      const result = await response.json();
-                      
-                      console.log(`[OPENBANKING SUBMIT] Submission successful:`, {
-                        fileId: result.fileId,
-                        fileName: result.fileName
-                      });
-                      
-                      // Store the fileId for download functionality
-                      if (result.fileId) {
-                        setFileId(result.fileId);
-                      }
-                    } catch (error) {
-                      console.error(`[OPENBANKING SUBMIT] Error during submission:`, error);
-                      
-                      // Show error toast
-                      toast({
-                        title: "Form Submission Failed",
-                        description: error instanceof Error ? error.message : "Failed to submit Open Banking form",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                  onSuccess={() => {
-                    try {
-                      console.log(`[OPENBANKING SUBMIT] 1. onSuccess handler triggered`);
-                      
-                      // Set form as submitted
-                      setIsSubmitted(true);
-                      console.log(`[OPENBANKING SUBMIT] 2. Form marked as submitted`);
-                      
-                      // Show success modal
-                      setShowSuccessModal(true);
-                      console.log(`[OPENBANKING SUBMIT] 3. Success modal triggered with company name: ${displayName}`);
-                      
-                      // CONFETTI DISABLED per user request
-                      console.log(`[OPENBANKING SUBMIT] 4. Confetti animation disabled as requested`);
-                      
-                      console.log(`[OPENBANKING SUBMIT] 5. Fetching updated task data for ID ${task.id}`);
-                      
-                      fetch(`/api/tasks/${task.id}`)
-                        .then(response => {
-                          console.log(`[OPENBANKING SUBMIT] 6. Response received with status: ${response.status}`);
-                          return response.json();
-                        })
-                        .then(data => {
-                          console.log(`[OPENBANKING SUBMIT] 7. Task data received:`, {
-                            fileId: data.metadata?.openBankingFormFile,
-                            status: data.status,
-                            progress: data.progress
-                          });
-                          
-                          if (data.metadata?.openBankingFormFile) {
-                            console.log(`[OPENBANKING SUBMIT] 8. File ID found: ${data.metadata.openBankingFormFile}`);
-                            setFileId(data.metadata.openBankingFormFile);
-                          } else {
-                            console.log(`[OPENBANKING SUBMIT] 8. No fileId found in metadata`);
-                          }
-                          
-                          console.log(`[OPENBANKING SUBMIT] 9. Form submission sequence completed successfully`);
-                        })
-                        .catch(err => {
-                          console.error('[OPENBANKING SUBMIT] ERROR: Error fetching updated task:', err);
-                        });
-                    } catch (error) {
-                      console.error('[TaskPage] Error in OpenBanking onSuccess handler:', error);
-                      // Still try to show success even if there's an error
-                      setIsSubmitted(true);
-                    }
                   }}
                 />
               </div>
