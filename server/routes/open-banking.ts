@@ -541,7 +541,7 @@ async function unlockDependentTasks(taskId: number) {
     
     if (currentTask.length === 0) {
       logger.warn('[OpenBankingRoutes] Task not found for unlocking dependents', { taskId });
-      return;
+      return 0;
     }
     
     const task = currentTask[0];
@@ -549,25 +549,46 @@ async function unlockDependentTasks(taskId: number) {
     
     if (!companyId) {
       logger.warn('[OpenBankingRoutes] Task has no company ID, cannot unlock dependents', { taskId });
-      return;
+      return 0;
     }
     
     // Check if this is an open banking survey task
     if (task.task_type !== 'open_banking_survey') {
       logger.info('[OpenBankingRoutes] Not an open banking survey task, no dependents to unlock', { taskId, taskType: task.task_type });
-      return;
+      return 0;
     }
     
-    // Update all tasks that depend on this one
-    // If you have specific dependent task types, you would list them here
-    const dependentTasks = await db.select().from(tasks)
+    // Find tasks that explicitly depend on this one via metadata
+    // This handles direct dependencies specified in the task metadata
+    const explicitDependentTasks = await db.select().from(tasks)
       .where(and(
         eq(tasks.company_id, companyId),
-        eq(tasks.status, TaskStatus.PENDING),
-        // Add specific task types here if needed
+        eq(tasks.status, TaskStatus.LOCKED),
+        sql`${tasks.metadata}->>'dependsOn' = ${taskId.toString()}`
       ));
     
-    logger.info('[OpenBankingRoutes] Found dependent tasks', { count: dependentTasks.length });
+    // Also find tasks that depend on the completion of open banking survey by task type
+    // This handles implicit dependencies based on task type
+    const implicitDependentTasks = await db.select().from(tasks)
+      .where(and(
+        eq(tasks.company_id, companyId),
+        eq(tasks.status, TaskStatus.LOCKED),
+        sql`${tasks.metadata}->>'dependsOnType' = 'open_banking_survey'`
+      ));
+    
+    // Combine the lists, removing duplicates
+    const dependentTaskIds = new Set([
+      ...explicitDependentTasks.map(t => t.id),
+      ...implicitDependentTasks.map(t => t.id)
+    ]);
+    
+    const dependentTasks = await db.select().from(tasks)
+      .where(inArray(tasks.id, Array.from(dependentTaskIds)));
+    
+    logger.info('[OpenBankingRoutes] Found dependent tasks', { 
+      count: dependentTasks.length,
+      taskIds: dependentTasks.map(t => t.id).join(',')
+    });
     
     // Unlock each dependent task
     for (const depTask of dependentTasks) {
@@ -579,9 +600,21 @@ async function unlockDependentTasks(taskId: number) {
         .where(eq(tasks.id, depTask.id));
       
       logger.info('[OpenBankingRoutes] Unlocked dependent task', { taskId: depTask.id });
+      
+      // Broadcast task update via WebSocket
+      broadcastMessage({
+        type: 'task_updated',
+        payload: {
+          taskId: depTask.id,
+          companyId: companyId,
+          status: TaskStatus.NOT_STARTED
+        }
+      });
     }
     
+    return dependentTasks.length;
   } catch (error) {
     logger.error('[OpenBankingRoutes] Error unlocking dependent tasks', { error, taskId });
+    return 0;
   }
 }
