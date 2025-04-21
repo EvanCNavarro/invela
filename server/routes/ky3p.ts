@@ -220,7 +220,13 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAc
         status: progress >= 1 ? 'ready_for_submission' : 'in_progress',
         updated_at: new Date()
       })
-      .where(eq(tasks.id, taskId));
+      .where(
+        and(
+          eq(tasks.id, taskId),
+          // Never revert a task from submitted status to anything else
+          ne(tasks.status, 'submitted')
+        )
+      );
     
     res.json(responseResult[0]);
   } catch (error) {
@@ -568,7 +574,13 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         status: progress >= 1 ? 'ready_for_submission' : 'in_progress',
         updated_at: new Date()
       })
-      .where(eq(tasks.id, taskId))
+      .where(
+        and(
+          eq(tasks.id, taskId),
+          // Never revert a task from submitted status to anything else
+          ne(tasks.status, 'submitted')
+        )
+      )
       .returning();
     
     // Get all updated responses to return
