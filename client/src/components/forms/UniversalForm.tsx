@@ -2314,7 +2314,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Calendar className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
                       <div className="flex flex-col">
                         <span className="font-medium">Submitted</span>
-                        <span className="break-words">{submissionDate || 'N/A'}</span>
+                        <span className="break-words">
+                          {submissionDate ? 
+                            new Date(submissionDate).toLocaleString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 
+                            'Recently submitted'
+                          }
+                        </span>
                       </div>
                     </div>
                     
@@ -2322,8 +2333,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <UserCircle className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
                       <div className="flex flex-col">
                         <span className="font-medium">Submitted by</span>
-                        <span className="break-words truncate max-w-[200px]" title={user?.name || user?.email || 'N/A'}>
-                          {user?.name || user?.email || 'N/A'}
+                        <span className="break-words truncate max-w-[200px]" 
+                              title={user?.name || user?.email || (task?.submitter_email || task?.created_by_email || '')}>
+                          {user?.name || user?.email || 
+                           (task?.submitter_email || task?.created_by_email || 'Company user')}
                         </span>
                       </div>
                     </div>
@@ -2332,8 +2345,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Building2 className="h-4 w-4 mr-2.5 text-blue-500 flex-shrink-0 mt-0.5" />
                       <div className="flex flex-col">
                         <span className="font-medium">Company</span>
-                        <span className="break-words truncate max-w-[200px]" title={displayCompanyName || 'N/A'}>
-                          {displayCompanyName || 'N/A'}
+                        <span className="break-words truncate max-w-[200px]" 
+                              title={displayCompanyName || task?.company?.name || task?.metadata?.companyName || ''}>
+                          {displayCompanyName || task?.company?.name || task?.metadata?.companyName || 'Company'}
                         </span>
                       </div>
                     </div>
@@ -2380,7 +2394,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             
                             // Get field value
                             const fieldValue = formData[field.key];
-                            const displayValue = fieldValue ? String(fieldValue) : '-';
+                            let displayValue = 'No answer provided';
+                            let hasValue = false;
+                            
+                            // Properly handle all possible field value types
+                            if (fieldValue !== undefined && fieldValue !== null) {
+                              if (typeof fieldValue === 'string') {
+                                // Handle string values - check if it's not empty
+                                hasValue = fieldValue.trim() !== '' && fieldValue !== '-' && fieldValue !== 'N/A';
+                                displayValue = fieldValue;
+                              } else if (typeof fieldValue === 'boolean') {
+                                // Handle boolean values
+                                hasValue = true;
+                                displayValue = fieldValue ? 'Yes' : 'No';
+                              } else if (typeof fieldValue === 'number') {
+                                // Handle number values
+                                hasValue = true;
+                                displayValue = String(fieldValue);
+                              } else if (Array.isArray(fieldValue)) {
+                                // Handle array values (e.g., multi-select)
+                                hasValue = fieldValue.length > 0;
+                                displayValue = fieldValue.join(', ');
+                              } else if (typeof fieldValue === 'object') {
+                                // Handle object values (e.g., complex data)
+                                hasValue = Object.keys(fieldValue).length > 0;
+                                try {
+                                  displayValue = JSON.stringify(fieldValue);
+                                } catch (e) {
+                                  displayValue = '[Complex data]';
+                                }
+                              }
+                            }
                             
                             return (
                               <div key={field.key} className="pb-5 last:pb-2">
@@ -2394,7 +2438,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                       <Skeleton className="h-4 w-4 mr-2 mt-0.5 rounded-full" />
                                       <Skeleton className="h-4 w-40" />
                                     </div>
-                                  ) : fieldValue && fieldValue !== '-' ? (
+                                  ) : hasValue ? (
                                     <div className="flex items-start text-gray-700">
                                       <Check className="h-4 w-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
                                       <span className="text-gray-700">{displayValue}</span>
