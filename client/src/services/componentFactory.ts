@@ -109,6 +109,13 @@ export class ComponentFactory {
       // Get instance from KY3P factory
       logger.info(`Getting isolated KY3P service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
       return ky3pFormServiceFactory.getServiceInstance(companyId, taskId);
+    } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+      // Get instance from OpenBanking factory
+      logger.info(`Getting isolated Open Banking service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
+      
+      // Import here to avoid circular dependencies
+      const { openBankingFormServiceFactory } = require('./open-banking-form-service');
+      return openBankingFormServiceFactory.getServiceInstance(companyId, taskId);
     }
     
     // Fall back to standard form service for other task types
