@@ -35,36 +35,70 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   /**
    * COMPLETE OVERRIDE of initialize method from EnhancedKybFormService
    * to prevent inheriting the KYB section logic
+   * 
+   * Modified to make templateId optional and to use a direct field fetch 
+   * even when no template is available
    */
-  async initialize(templateId: number): Promise<void> {
-    if (this.initialized && this.templateId === templateId) {
-      logger.info('[OpenBankingFormService] Already initialized with template:', templateId);
-      return; // Already initialized with this template
+  async initialize(templateId?: number): Promise<void> {
+    // If already initialized and the same template ID, just return
+    if (this.initialized && (templateId === undefined || this.templateId === templateId)) {
+      logger.info('[OpenBankingFormService] Already initialized', { 
+        templateId: templateId || 'none provided'
+      });
+      return; 
     }
     
     try {
-      this.templateId = templateId;
+      // Store template ID if provided
+      if (templateId !== undefined) {
+        this.templateId = templateId;
+      }
       
       // Step 1: Get the field definitions from the Open Banking fields table
       // Uses a custom API endpoint for Open Banking fields
       let fields;
-      if (OpenBankingFormService.openBankingFieldsCache[templateId]) {
+      
+      // Only use cache if we have a template ID and it exists in cache
+      if (templateId !== undefined && OpenBankingFormService.openBankingFieldsCache[templateId]) {
         fields = OpenBankingFormService.openBankingFieldsCache[templateId];
         logger.info('[OpenBankingFormService] Using cached fields for template', templateId);
       } else {
-        logger.info('[OpenBankingFormService] Fetching fields from API for template', templateId);
-        const apiResponse = await fetch('/api/open-banking/fields');
+        // Always fetch fields directly from API, ignoring template
+        logger.info('[OpenBankingFormService] Fetching fields from API directly');
         
-        if (!apiResponse.ok) {
-          throw new Error(`Failed to fetch Open Banking fields: ${apiResponse.statusText}`);
+        try {
+          const apiResponse = await fetch('/api/open-banking/fields');
+          
+          if (!apiResponse.ok) {
+            throw new Error(`Failed to fetch Open Banking fields: ${apiResponse.statusText}`);
+          }
+          
+          fields = await apiResponse.json();
+          
+          // Cache if we have a template ID
+          if (templateId !== undefined) {
+            OpenBankingFormService.openBankingFieldsCache[templateId] = fields;
+          }
+        } catch (fetchError) {
+          logger.error('[OpenBankingFormService] Field fetch error', fetchError);
+          throw fetchError;
         }
-        
-        fields = await apiResponse.json();
-        OpenBankingFormService.openBankingFieldsCache[templateId] = fields;
+      }
+      
+      // Validate fields array exists and has content
+      if (!fields || !Array.isArray(fields) || fields.length === 0) {
+        logger.error('[OpenBankingFormService] No fields returned from API', { fields });
+        throw new Error('No Open Banking fields found');
       }
       
       // Step 2: Process the fields into sections based on group and step_index
       const sections = this.processFieldsIntoSections(fields);
+      
+      // Validate sections were created
+      if (!sections || !Array.isArray(sections) || sections.length === 0) {
+        logger.error('[OpenBankingFormService] No sections generated from fields', { fields });
+        throw new Error('Failed to create sections from Open Banking fields');
+      }
       
       // Step 3: Store the sections and set initialized flag
       this.sections = sections;
@@ -181,11 +215,43 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    */
   async getSections(): Promise<any[]> {
     if (!this.initialized) {
-      throw new Error('Open Banking Form Service not initialized. Call initialize() first.');
+      logger.warn('[OpenBankingFormService] Not initialized, attempting auto-initialization');
+      try {
+        await this.initialize();
+      } catch (error) {
+        logger.error('[OpenBankingFormService] Auto-initialization failed', { error });
+        throw new Error('Open Banking Form Service not initialized. Call initialize() first.');
+      }
     }
     
     logger.info('[OpenBankingFormService] Getting sections', { count: this.sections.length });
     return this.sections;
+  }
+  
+  /**
+   * Get all fields from all sections
+   * This is required by the FormServiceInterface
+   */
+  getFields(): any[] {
+    if (!this.initialized) {
+      logger.warn('[OpenBankingFormService] getFields called before initialization');
+      return [];
+    }
+    
+    // Extract fields from all sections and flatten into a single array
+    const allFields = this.sections.flatMap(section => {
+      return section.fields || [];
+    });
+    
+    // Map fields to ensure they have a "key" property that matches "name"
+    // This is needed for compatibility with the Universal Form component
+    const fieldsWithKeys = allFields.map(field => ({
+      ...field,
+      key: field.name || field.key // Ensure key exists
+    }));
+    
+    logger.info('[OpenBankingFormService] Returning all fields', { count: fieldsWithKeys.length });
+    return fieldsWithKeys;
   }
   
   /**
