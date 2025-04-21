@@ -30,7 +30,7 @@ import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../serv
 import path from 'path';
 import fs from 'fs';
 import { openai } from '../utils/openaiUtils';
-import { CompanyTabsService } from '../services/companyTabsService';
+import { CompanyTabsService } from '../services/company-tabs';
 
 // Create a logger instance
 const logger = new Logger('OpenBankingRoutes');
@@ -317,35 +317,27 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
           })
           .where(eq(companies.id, task.company_id));
           
-        // Unlock company tabs for file-vault
-        const [company] = await db.select().from(companies)
-          .where(eq(companies.id, task.company_id))
-          .limit(1);
-        
-        if (company) {
-          const availableTabs = company.available_tabs || ['task-center'];
+        // Unlock dashboard and insights tabs for the company using CompanyTabsService
+        // This is consistent with the dedicated submission endpoint
+        try {
+          // First ensure file vault is unlocked
+          await CompanyTabsService.unlockFileVault(task.company_id);
           
-          // Add file-vault if not already present
-          if (!availableTabs.includes('file-vault')) {
-            const updatedTabs = [...availableTabs, 'file-vault'];
-            
-            await db.update(companies)
-              .set({ 
-                available_tabs: updatedTabs,
-                updated_at: new Date()
-              })
-              .where(eq(companies.id, task.company_id));
-              
-            // Broadcast tab update via WebSocket
-            if (wss) {
-              broadcastMessage('company_tabs_updated', {
-                companyId: task.company_id,
-                availableTabs: updatedTabs,
-                timestamp: new Date().toISOString(),
-                cache_invalidation: true
-              });
-            }
+          // Then unlock dashboard and insights tabs
+          const updatedCompany = await CompanyTabsService.unlockDashboardAndInsights(task.company_id);
+          
+          if (updatedCompany) {
+            logger.info('[OpenBankingRoutes] Successfully unlocked all tabs via direct endpoint', {
+              companyId: task.company_id,
+              availableTabs: updatedCompany.available_tabs
+            });
           }
+        } catch (tabError) {
+          // Log but continue with form submission
+          logger.error('[OpenBankingRoutes] Error unlocking tabs via direct endpoint', {
+            error: tabError instanceof Error ? tabError.message : 'Unknown error',
+            companyId: task.company_id
+          });
         }
       }
       
@@ -1491,49 +1483,23 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       // 3. Update company tabs to unlock dashboard and insights
       try {
-        // Use the CompanyTabsService to ensure file vault is unlocked
-        // Get current tabs
-        const [currentCompany] = await db.select()
-          .from(companies)
-          .where(eq(companies.id, companyId))
-          .limit(1);
-          
-        // Define all tabs that should be available after Open Banking submission
-        // Include file-vault, dashboard, and insights
-        const desiredTabs = ['task-center', 'file-vault', 'dashboard', 'insights'];
+        // Use the dedicated CompanyTabsService method for unlocking dashboard and insights
+        // This maintains consistency with how other form types handle tab unlocking
+        const updatedCompany = await CompanyTabsService.unlockDashboardAndInsights(companyId);
         
-        // Check which tabs need to be added
-        const currentTabs = currentCompany.available_tabs || ['task-center'];
-        const tabsToAdd = desiredTabs.filter(tab => !currentTabs.includes(tab));
-        
-        if (tabsToAdd.length > 0) {
-          // Update available tabs
-          const updatedTabs = [...currentTabs, ...tabsToAdd];
-          
-          await db.update(companies)
-            .set({
-              available_tabs: updatedTabs,
-              updated_at: new Date()
-            })
-            .where(eq(companies.id, companyId));
-          
-          logger.info('[OpenBankingRoutes] Updated company tabs', {
+        if (updatedCompany) {
+          logger.info('[OpenBankingRoutes] Successfully unlocked dashboard and insights tabs', {
             companyId,
-            previousTabs: currentTabs,
-            updatedTabs
+            availableTabs: updatedCompany.available_tabs
           });
-          
-          // Broadcast the update via WebSocket
-          broadcastMessage('company_tabs_updated', {
-            companyId,
-            availableTabs: updatedTabs,
-            timestamp: new Date().toISOString(),
-            cache_invalidation: true // Important flag to ensure client cache is invalidated
+        } else {
+          logger.warn('[OpenBankingRoutes] Failed to unlock dashboard and insights tabs', {
+            companyId
           });
         }
       } catch (tabsError) {
         logger.error('[OpenBankingRoutes] Error updating company tabs', {
-          error: tabsError,
+          error: tabsError instanceof Error ? tabsError.message : 'Unknown error',
           companyId
         });
         // Continue with submission even if tabs update fails
