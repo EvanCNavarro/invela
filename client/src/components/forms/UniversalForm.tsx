@@ -609,8 +609,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       'security': 'Security assessment form for risk evaluation',
       'security_assessment': 'Security assessment form for risk evaluation',
       'sp_ky3p_assessment': 'S&P KY3P Security Assessment for third-party risk evaluation',
-      'open_banking': 'Open Banking Survey for financial services compliance assessment',
-      'open_banking_survey': 'Open Banking Survey for financial services compliance assessment'
+      'open_banking': '1033 Open Banking Survey for financial services compliance assessment',
+      'open_banking_survey': '1033 Open Banking Survey for financial services compliance assessment'
     };
     
     return descriptions[taskType] || 'Please complete all required information';

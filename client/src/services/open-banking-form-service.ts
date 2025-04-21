@@ -203,7 +203,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
                 type: this.mapFieldType(field.field_type),
                 required: field.is_required || field.required || false,
                 options: this.parseFieldOptions(field),
-                placeholder: field.placeholder || field.display_name,
+                placeholder: "",
                 validationType: field.validation_type,
                 validationRules: field.validation_rules,
                 section: sectionId, // Critical for field-section association
