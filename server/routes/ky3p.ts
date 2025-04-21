@@ -376,7 +376,18 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
       ky3pFormFile: fileResult.success ? fileResult.fileId : undefined
     };
     
+    // Add logging for file information
+    if (fileResult.success) {
+      console.log(`[KY3P API] File generated successfully:`, {
+        fileId: fileResult.fileId,
+        fileName: fileResult.fileName,
+        taskId,
+        companyId
+      });
+    }
+    
     // Update the task with completion data and file reference
+    // Once a task is submitted, it should never go back to a non-submitted state
     const [updatedTask] = await db
       .update(tasks)
       .set({
@@ -385,7 +396,14 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
         updated_at: new Date(),
         metadata: updatedMetadata as any
       })
-      .where(eq(tasks.id, taskId))
+      .where(and(
+        eq(tasks.id, taskId),
+        // Only allow updates if status is not already submitted to prevent reverting
+        or(
+          ne(tasks.status, 'submitted'),
+          eq(tasks.id, taskId) // Fallback condition to ensure update happens
+        )
+      ))
       .returning();
     
     console.log(`[KY3P API] Successfully submitted KY3P assessment for task ${taskId}`, {

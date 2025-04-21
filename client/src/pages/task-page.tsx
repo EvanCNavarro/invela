@@ -813,6 +813,17 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                     }
                   }
                   
+                  // Make sure the success modal gets the correct information
+                  const hasCompletedActions = result.completedActions && 
+                    Array.isArray(result.completedActions) && 
+                    result.completedActions.length > 0;
+                  
+                  logger.info(`KY3P assessment submission result:`, {
+                    hasFileId: !!result.fileId,
+                    hasCompletedActions,
+                    actionsCount: hasCompletedActions ? result.completedActions.length : 0
+                  });
+                  
                   // Force invalidate the task data cache after successful submission
                   logger.info(`KY3P assessment submission successful, invalidating task cache for task ${task.id}`);
                   queryClient.invalidateQueries({ queryKey: [`/api/tasks/${task.id}`] });

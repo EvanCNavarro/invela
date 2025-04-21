@@ -683,8 +683,9 @@ router.get("/api/files/:id/download", async (req, res) => {
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
 
-    // Check if this is a KYB form CSV file
-    const isKybCsvFile = fileRecord.name.toLowerCase().includes('kyb_form') && 
+    // Check if this is a KYB or KY3P form CSV file
+    const isKybCsvFile = (fileRecord.name.toLowerCase().includes('kyb_form') || 
+                          fileRecord.name.toLowerCase().includes('ky3p_security_assessment')) && 
                           fileRecord.type === 'text/csv';
     
     if (isKybCsvFile) {
