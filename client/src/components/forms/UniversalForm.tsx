@@ -179,7 +179,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   // This state specifically tracks if this is a demo company - separate from company.isDemo
-  const [isCompanyDemo, setIsCompanyDemo] = useState<boolean | null>(null);
+  const [isCompanyDemo, setIsCompanyDemo] = useState<boolean | null>(true); // For testing, default to true
   
   // Force re-render state for complex form updates
   const [forceRerender, setForceRerender] = useState<boolean>(false);
