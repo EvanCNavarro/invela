@@ -353,8 +353,20 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       }).from(openBankingResponses)
         .where(eq(openBankingResponses.task_id, taskId));
       
+      // If no responses found, reject submission
+      if (responses.length === 0) {
+        return res.status(400).json({
+          error: 'Cannot submit empty form. Please provide responses to the required fields.'
+        });
+      }
+      
       // Get all fields to check completion
       const fields = await db.select().from(openBankingFields);
+      if (fields.length === 0) {
+        return res.status(500).json({
+          error: 'Form field definitions not found. Please contact support.'
+        });
+      }
       
       // Check if all required fields have responses
       const requiredFields = fields.filter(field => field.required);
@@ -490,11 +502,14 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       // After updating the company, broadcast a WebSocket event to notify clients
       if (companyUpdate.length > 0) {
-        broadcastMessage('company_updated', {
-          company_id: companyId,
-          company_name: companyUpdate[0].name,
-          available_tabs: companyUpdate[0].available_tabs,
-          cache_invalidation: true
+        broadcastMessage({
+          type: 'company_updated',
+          payload: {
+            company_id: companyId,
+            company_name: companyUpdate[0].name,
+            available_tabs: companyUpdate[0].available_tabs,
+            cache_invalidation: true
+          }
         });
       }
       
