@@ -881,7 +881,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       let endpoint;
       if (taskType === 'sp_ky3p_assessment') {
         endpoint = `/api/ky3p/demo-autofill/${taskId}`;
-      } else if (taskType === 'open_banking') {
+      } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
         endpoint = `/api/open-banking/demo-autofill/${taskId}`;
       } else {
         endpoint = `/api/kyb/demo-autofill/${taskId}`;
