@@ -88,13 +88,25 @@ export function determineStatusFromProgress(
  * @param progress New progress value (0-100)
  * @param status Optional status override
  * @param metadata Optional metadata to include
+ * @param options Optional configuration
  */
 export function broadcastProgressUpdate(
   taskId: number,
   progress: number,
   status?: TaskStatus,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
+  options: { forceUpdate?: boolean; ignoreSkipCheck?: boolean } = {}
 ) {
+  // Check if reconciliation is disabled for this task (e.g. during clearing operations)
+  // This helps to prevent WebSocket spam during bulk operations like clearing all fields
+  if (!options.ignoreSkipCheck) {
+    const skipUntil = global.__skipTaskReconciliation?.[taskId] || 0;
+    if (skipUntil > Date.now()) {
+      // Skip the broadcast if this task is locked for reconciliation
+      console.log(`[Progress Utils] Skipping broadcast for task ${taskId} due to temporary lock until ${new Date(skipUntil).toISOString()}`);
+      return;
+    }
+  }
   // Validate the progress value
   const validatedProgress = Math.max(0, Math.min(100, progress));
   
