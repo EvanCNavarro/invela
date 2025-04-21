@@ -2334,9 +2334,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <div className="flex flex-col">
                         <span className="font-medium">Submitted by</span>
                         <span className="break-words truncate max-w-[200px]" 
-                              title={user?.name || user?.email || (task?.submitter_email || task?.created_by_email || '')}>
-                          {user?.name || user?.email || 
-                           (task?.submitter_email || task?.created_by_email || 'Company user')}
+                              title={user?.name || user?.email || ''}>
+                          {user?.name || user?.email || 'Company user'}
                         </span>
                       </div>
                     </div>
@@ -2346,8 +2345,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <div className="flex flex-col">
                         <span className="font-medium">Company</span>
                         <span className="break-words truncate max-w-[200px]" 
-                              title={displayCompanyName || task?.company?.name || task?.metadata?.companyName || ''}>
-                          {displayCompanyName || task?.company?.name || task?.metadata?.companyName || 'Company'}
+                              title={displayCompanyName || ''}>
+                          {displayCompanyName || 'Company'}
                         </span>
                       </div>
                     </div>
