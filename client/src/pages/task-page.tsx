@@ -49,7 +49,7 @@ interface Task {
 }
 
 // Define task type as a valid type
-type TaskContentType = 'kyb' | 'card' | 'security' | 'open_banking' | 'unknown';
+type TaskContentType = 'kyb' | 'card' | 'security' | 'ky3p' | 'open_banking' | 'unknown';
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
@@ -149,7 +149,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         // Otherwise try to parse the slug for name-based lookup
         else {
           // Parse the slug format: "{taskType}-{companyName}"
-          const match = params.taskSlug.match(/^(kyb|card|security)-(.+)$/i);
+          const match = params.taskSlug.match(/^(kyb|card|security|ky3p)-(.+)$/i);
           
           if (match) {
             const [, type, companyName] = match;
@@ -165,8 +165,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               lookupEndpoint = `/api/tasks/kyb/${encodeURIComponent(companyName)}`;
             } else if (type.toLowerCase() === 'card') {
               lookupEndpoint = `/api/tasks/card/${encodeURIComponent(companyName)}`;
-            } else if (type.toLowerCase() === 'security') {
-              lookupEndpoint = `/api/tasks/security/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'security' || type.toLowerCase() === 'ky3p') {
+              lookupEndpoint = `/api/tasks/ky3p/${encodeURIComponent(companyName)}`;
             }
             
             if (lookupEndpoint) {
@@ -218,8 +218,10 @@ export default function TaskPage({ params }: TaskPageProps) {
       type = 'kyb';
     } else if (taskData.task_type === 'company_card') {
       type = 'card';
-    } else if (taskData.task_type === 'security_assessment' || taskData.task_type === 'sp_ky3p_assessment' || taskData.task_type === 'ky3p') {
-      type = 'security';
+    } else if (taskData.task_type === 'security_assessment' || taskData.task_type === 'sp_ky3p_assessment' || taskData.task_type === 'ky3p' || taskData.task_type === 'security') {
+      // Always use 'ky3p' as the taskType for the form component, regardless of the task.task_type value
+      // This ensures we use the correct form service
+      type = 'ky3p';
     } else if (taskData.task_type === 'open_banking_survey' || taskData.task_type === 'open_banking') {
       type = 'open_banking';
     }
@@ -243,12 +245,12 @@ export default function TaskPage({ params }: TaskPageProps) {
         taskData.status === 'submitted' || 
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
-        (type === 'security' && taskData.metadata?.securityFormFile) ||
+        (type === 'ky3p' && taskData.metadata?.securityFormFile) ||
         (type === 'open_banking' && taskData.metadata?.openBankingFormFile)
       ),
       fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
               type === 'card' ? taskData.metadata?.cardFormFile :
-              type === 'security' ? taskData.metadata?.securityFormFile :
+              type === 'ky3p' ? taskData.metadata?.securityFormFile :
               type === 'open_banking' ? taskData.metadata?.openBankingFormFile : null
     };
   }, [extractCompanyNameFromTitle]);
@@ -542,8 +544,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
   
-  // Security Assessment Form Rendering
-  if (taskContentType === 'security' && task) {
+  // Security Assessment (KY3P) Form Rendering
+  if (taskContentType === 'ky3p' && task) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
@@ -585,7 +587,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <DocumentUploadWizard
                   taskId={task.id}
-                  taskType="security"
+                  taskType="ky3p"
                   companyName={displayName}
                   onSuccess={(fileId) => {
                     setFileId(fileId);
@@ -602,7 +604,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <UniversalForm
                   taskId={task.id}
-                  taskType="security"
+                  taskType="ky3p"
                   taskStatus={task.status}
                   companyName={displayName}
                   initialData={task.savedFormData}
