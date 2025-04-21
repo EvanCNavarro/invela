@@ -64,12 +64,24 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
         return res.status(403).json({ error: 'Access denied' });
       }
       
+      // Get all fields for this form type
+      const fields = await db
+        .select()
+        .from(openBankingFields);
+        
+      // Create a map of field keys to field objects for quick lookup
+      const fieldKeyMap: Record<string, typeof openBankingFields.$inferSelect> = {};
+      for (const field of fields) {
+        fieldKeyMap[field.field_key] = field;
+      }
+      
       // Get all responses for this task
       const responses = await db
         .select({
           response_value: openBankingResponses.response_value,
           field_key: openBankingFields.field_key,
-          status: openBankingResponses.status
+          status: openBankingResponses.status,
+          field_id: openBankingFields.id
         })
         .from(openBankingResponses)
         .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
@@ -77,10 +89,35 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
       
       // Transform responses into form data
       const formData: Record<string, any> = {};
+      
+      // First ensure all field keys are initialized to empty strings
+      for (const field of fields) {
+        formData[field.field_key] = '';
+      }
+      
+      // Then populate with actual response values
       for (const response of responses) {
         if (response.response_value !== null) {
           formData[response.field_key] = response.response_value;
         }
+      }
+      
+      // Calculate how many fields have values (as a sanity check against task.progress)
+      const filledFieldCount = Object.values(formData).filter(value => 
+        value !== null && value !== undefined && value !== ''
+      ).length;
+      
+      // If progress in task doesn't match reality, log a warning
+      const calculatedProgress = fields.length > 0 ? 
+        Math.ceil((filledFieldCount / fields.length) * 100) / 100 : 0;
+        
+      if (Math.abs(calculatedProgress - task.progress) > 0.1) { // 10% difference threshold
+        logger.warn(`[Open Banking API] Progress mismatch for task ${taskId}`, {
+          storedProgress: task.progress,
+          calculatedProgress,
+          filledFieldCount,
+          totalFields: fields.length
+        });
       }
       
       logger.info(`[Open Banking API] Progress data loaded for task ${taskId}`, {
@@ -325,11 +362,22 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
       // Determine task status from progress if not explicitly provided
       let newStatus = status;
       if (!newStatus) {
-        newStatus = TaskStatus.NOT_STARTED;
+        // Always advance from not_started if there's any progress at all
         if (progress > 0) {
+          // If progress is complete, mark as ready for submission
           newStatus = progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS;
+        } else {
+          // Only use not_started if there's truly no progress
+          newStatus = TaskStatus.NOT_STARTED;
         }
       }
+      
+      // Log status determination logic for debugging
+      logger.info('[Open Banking API] Status determination:', {
+        providedStatus: status,
+        calculatedStatus: newStatus,
+        progress
+      });
       
       // Update task progress and status
       await db
