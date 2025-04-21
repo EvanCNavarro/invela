@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { UniversalForm } from "@/components/forms/UniversalForm";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
+import { OpenBankingPlayground } from "@/components/playground/OpenBankingPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -55,7 +56,7 @@ interface Task {
 }
 
 // Define task type as a valid type
-type TaskContentType = 'kyb' | 'card' | 'security' | 'unknown';
+type TaskContentType = 'kyb' | 'card' | 'security' | 'open_banking' | 'unknown';
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
@@ -226,6 +227,8 @@ export default function TaskPage({ params }: TaskPageProps) {
       type = 'card';
     } else if (taskData.task_type === 'security_assessment') {
       type = 'security';
+    } else if (taskData.task_type === 'open_banking_survey') {
+      type = 'open_banking';
     }
     
     // Extract company information
@@ -246,11 +249,13 @@ export default function TaskPage({ params }: TaskPageProps) {
       isSubmitted: !!(
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
-        (type === 'security' && taskData.metadata?.securityFormFile)
+        (type === 'security' && taskData.metadata?.securityFormFile) ||
+        (type === 'open_banking' && taskData.metadata?.openBankingFormFile)
       ),
       fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
               type === 'card' ? taskData.metadata?.cardFormFile :
-              type === 'security' ? taskData.metadata?.securityFormFile : null
+              type === 'security' ? taskData.metadata?.securityFormFile :
+              type === 'open_banking' ? taskData.metadata?.openBankingFormFile : null
     };
   }, [extractCompanyNameFromTitle]);
   

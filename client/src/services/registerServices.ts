@@ -5,6 +5,7 @@ import { componentFactory } from './componentFactory';
 import { kybService } from './kybService';
 import { enhancedKybService, enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { ky3pFormService, ky3pFormServiceFactory } from './ky3p-form-service';
+import { openBankingFormService, openBankingFormServiceFactory } from './open-banking-form-service';
 
 /**
  * Register all form services with ComponentFactory
@@ -61,6 +62,15 @@ export function registerServices(): void {
     console.log('[Service Registration] Registering KY3P form service for client type: ky3p');
     componentFactory.registerFormService('ky3p', ky3pFormService);
     console.log('[Service Registration] KY3PFormServiceFactory initialized and ready for isolated service creation');
+    
+    // Register Open Banking form service
+    console.log('[Service Registration] Registering Open Banking form service for type: open_banking_survey');
+    componentFactory.registerFormService('open_banking_survey', openBankingFormService);
+    
+    // Also register Open Banking form service for the client-side type name (open_banking)
+    console.log('[Service Registration] Registering Open Banking form service for client type: open_banking');
+    componentFactory.registerFormService('open_banking', openBankingFormService);
+    console.log('[Service Registration] OpenBankingFormServiceFactory initialized and ready for isolated service creation');
     
     // Final check - specifically check for KYB service
     const kybRegistered = componentFactory.getFormService('kyb');
