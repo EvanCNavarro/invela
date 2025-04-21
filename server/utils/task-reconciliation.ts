@@ -141,29 +141,91 @@ export async function reconcileTaskProgress(
         // Fetch Open Banking responses
         console.log(`${logPrefix} Fetching Open Banking responses for task ${taskId}`);
         
-        // Get the progress directly from the task metadata
-        if (task.progress > 0) {
-          console.log(`${logPrefix} Using task's existing progress for Open Banking task: ${task.progress}`);
-          // We can exit early since the Open Banking form service handles progress
-          return;
+        // For Open Banking, we should always recalculate the progress directly from the database
+        // to ensure consistency between form and task center views
+        
+        // Count total fields
+        const totalFieldsResult = await db
+          .select({
+            count: db.count()
+          })
+          .from(openBankingFields);
+        
+        const totalFields = totalFieldsResult[0].count;
+        
+        // Count completed responses (complete status)
+        const completedResponsesResult = await db
+          .select({
+            count: db.count()
+          })
+          .from(openBankingResponses)
+          .where(
+            and(
+              eq(openBankingResponses.task_id, taskId),
+              or(
+                eq(openBankingResponses.status, 'COMPLETE'),
+                eq(openBankingResponses.status, 'complete')
+              )
+            )
+          );
+        
+        const completedFields = completedResponsesResult[0].count;
+        
+        // Calculate accurate progress percentage
+        const calculatedProgress = 
+          totalFields > 0 && completedFields > 0
+            ? Math.max(1, Math.ceil((completedFields / totalFields) * 100))
+            : 0;
+            
+        console.log(`${logPrefix} Recalculated Open Banking progress:`, {
+          taskId,
+          totalFields,
+          completedFields,
+          currentProgress: task.progress,
+          calculatedProgress
+        });
+        
+        // If progress differs, update the task and broadcast
+        if (task.progress !== calculatedProgress) {
+          // Determine the correct status based on progress
+          const newStatus = 
+            calculatedProgress === 0 ? TaskStatus.NOT_STARTED :
+            calculatedProgress >= 100 ? TaskStatus.READY_FOR_SUBMISSION :
+            TaskStatus.IN_PROGRESS;
+            
+          console.log(`${logPrefix} Updating Open Banking task progress:`, {
+            taskId,
+            progressFrom: task.progress,
+            progressTo: calculatedProgress,
+            statusFrom: task.status,
+            statusTo: newStatus
+          });
+          
+          // Update task in database
+          const [updatedTask] = await db.update(tasks)
+            .set({
+              progress: calculatedProgress,
+              status: newStatus,
+              updated_at: new Date(),
+              metadata: {
+                ...task.metadata,
+                lastProgressReconciliation: new Date().toISOString()
+              }
+            })
+            .where(eq(tasks.id, taskId))
+            .returning();
+          
+          // Broadcast the update to all connected clients
+          broadcastProgressUpdate(
+            taskId,
+            calculatedProgress,
+            newStatus,
+            updatedTask.metadata || {}
+          );
         }
         
-        // Get the current progress from Open Banking service
-        const openBankingFields = await db
-          .select()
-          .from(openBankingResponses)
-          .where(eq(openBankingResponses.task_id, taskId));
-        
-        console.log(`${logPrefix} Found ${openBankingFields.length} Open Banking responses for task ${taskId}`);
-        
-        // Format the responses for progress calculation
-        responses = openBankingFields.map(response => ({
-          response_value: response.response_value,
-          field_key: `field_${response.field_id}`,
-          status: response.status,
-          field_id: response.field_id,
-          required: true // Assume all fields are required for now
-        }));
+        // Exit early since we've handled everything for Open Banking
+        return;
       } catch (error) {
         console.error(`${logPrefix} Error fetching Open Banking responses:`, error);
         // Fall back to empty responses
