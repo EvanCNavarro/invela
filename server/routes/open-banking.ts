@@ -26,10 +26,10 @@ import {
 import { Logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
 import { broadcastMessage } from '../services/websocket';
+import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
 import path from 'path';
 import fs from 'fs';
 import { openai } from '../utils/openaiUtils';
-import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
 import { CompanyTabsService } from '../services/companyTabsService';
 
 // Create a logger instance
@@ -1380,13 +1380,19 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       const fileRecord = await db.insert(files)
         .values({
           name: effectiveFileName,
-          company_id: companyId,
-          task_id: taskId,
-          content_type: 'text/csv',
-          category: DocumentCategory.OPEN_BANKING_SURVEY,
-          contents: csvContent,
+          path: `/uploads/${effectiveFileName}`,
+          type: 'text/csv',
+          status: 'active',
           size: Buffer.from(csvContent).length,
-          user_id: req.user?.id
+          company_id: companyId,
+          user_id: req.user?.id,
+          document_category: 'open_banking_survey',
+          created_at: new Date(),
+          updated_at: new Date(),
+          upload_time: new Date(),
+          download_count: 0,
+          version: 1.0,
+          metadata: { taskId, generated: true }
         })
         .returning();
       
