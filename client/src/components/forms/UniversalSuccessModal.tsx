@@ -88,6 +88,9 @@ export function UniversalSuccessModal({
       case "security":
         setTitleText("Security Assessment Complete");
         break;
+      case "sp_ky3p_assessment":
+        setTitleText("S&P KY3P Security Assessment Complete");
+        break;
       case "card":
         setTitleText("Open Banking (1033) Survey Complete");
         break;
