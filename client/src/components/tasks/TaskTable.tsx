@@ -82,12 +82,12 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
     );
   };
 
-  // Find Security Assessment task completion status for the company
+  // Find Security Assessment or KY3P task completion status for the company
   const isSecurityCompleted = (companyId: number | null): boolean => {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      task.task_type === 'security_assessment' && 
+      (task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment') && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
@@ -112,16 +112,28 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       }
     });
 
-    // Check if Security Assessment task is locked (needs KYB to be completed)
-    if (task.task_type === 'security_assessment' && !isKybCompleted(task.company_id)) {
-      console.log('[TaskTable] Security Assessment task locked - KYB not completed');
+    // Check if Security Assessment or KY3P task is locked (needs KYB to be completed)
+    if ((task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment') && 
+        !isKybCompleted(task.company_id)) {
+      console.log(`[TaskTable] ${task.task_type} task locked - KYB not completed`);
       return; // Prevent navigation
     }
 
-    // Check if CARD task is locked (needs both KYB and Security Assessment to be completed)
+    // Check if CARD task is locked (needs both KYB and Security Assessment or KY3P to be completed)
     if (task.task_type === 'company_card' && 
         (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) {
-      console.log('[TaskTable] CARD task locked - prerequisite tasks not completed');
+      console.log('[TaskTable] CARD/Open Banking Survey task locked - prerequisite tasks not completed');
+      return; // Prevent navigation
+    }
+    
+    // Also check explicitly for locked status in metadata
+    if (task.metadata?.locked === true || task.metadata?.prerequisite_completed === false) {
+      console.log('[TaskTable] Task explicitly locked in metadata:', {
+        taskId: task.id, 
+        taskType: task.task_type,
+        locked: task.metadata?.locked,
+        prerequisiteCompleted: task.metadata?.prerequisite_completed
+      });
       return; // Prevent navigation
     }
 
@@ -244,20 +256,25 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
               // Determine if the task is locked based on its type and prerequisites
               const isCardTask = task.task_type === 'company_card';
               const isSecurityTask = task.task_type === 'security_assessment';
+              const isKy3pTask = task.task_type === 'sp_ky3p_assessment';
               
               // Check locked status based on task type and prerequisites
               const isLocked = 
-                (isSecurityTask && !isKybCompleted(task.company_id)) || 
+                ((isSecurityTask || isKy3pTask) && !isKybCompleted(task.company_id)) || 
                 (isCardTask && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
-                // Also consider the locked flag in metadata if it exists
-                (task.metadata?.locked === true);
+                // Also check if metadata explicitly marks task as locked
+                (task.metadata?.locked === true) ||
+                // Check prerequisite relationship in metadata
+                (task.metadata?.prerequisite_completed === false);
 
               // Get tooltip content based on task type
               const tooltipContent = isLocked ? (
                 isSecurityTask ? 
                   "Complete the KYB form to unlock this Security Assessment task" :
+                isKy3pTask ? 
+                  "Complete the KYB form to unlock this S&P KY3P Security Assessment task" :
                 isCardTask ? 
-                  "Complete both KYB and Security Assessment tasks to unlock this CARD task" :
+                  "Complete both KYB and Security Assessment tasks to unlock this Open Banking Survey task" :
                   "This task is locked due to dependencies"
               ) : null;
 
