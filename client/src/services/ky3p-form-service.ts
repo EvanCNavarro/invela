@@ -452,6 +452,41 @@ export class KY3PFormService extends EnhancedKybFormService {
       throw error;
     }
   }
+  
+  /**
+   * Load progress from the server
+   * This method is used by the FormDataManager to load saved form data
+   */
+  public async loadProgress(taskId?: number): Promise<Record<string, any>> {
+    // Use provided taskId or fall back to the service's taskId
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      throw new Error('No task ID provided for loading progress');
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Loading progress for task ${effectiveTaskId}`);
+      
+      // Use our dedicated KY3P progress endpoint
+      const progress = await this.getProgress();
+      
+      if (progress && progress.formData) {
+        // Store the form data in the service for future reference
+        this.loadFormData(progress.formData);
+        
+        // Return the form data for the form manager to use
+        return progress.formData;
+      }
+      
+      // If no data was found, return an empty object
+      logger.warn(`[KY3P Form Service] No form data found for task ${effectiveTaskId}`);
+      return {};
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error loading progress:', error);
+      return {};
+    }
+  }
 }
 
 /**
