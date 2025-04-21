@@ -410,7 +410,7 @@ export const ky3pFields = pgTable("ky3p_fields", {
   id: serial("id").primaryKey(),
   order: integer("order").notNull(),
   field_key: text("field_key").notNull(),
-  label: text("label").notNull(),
+  display_name: text("display_name").notNull(), // Renamed from label
   question: text("question").notNull(), // Renamed from description
   help_text: text("help_text"),
   demo_autofill: text("demo_autofill"),

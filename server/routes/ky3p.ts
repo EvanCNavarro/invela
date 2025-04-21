@@ -109,7 +109,7 @@ router.get('/api/tasks/:taskId/ky3p-responses', requireAuth, hasTaskAccess, asyn
         field: {
           id: ky3pFields.id,
           field_key: ky3pFields.field_key,
-          label: ky3pFields.label,
+          display_name: ky3pFields.display_name,
           question: ky3pFields.question,
           group: ky3pFields.group,
           field_type: ky3pFields.field_type,
