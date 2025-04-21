@@ -430,23 +430,41 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    * Get progress data for the task in the format expected by UniversalForm
    * This method uses our dedicated progress endpoint for Open Banking tasks
    */
-  public async getProgress(): Promise<{
+  public async getProgress(taskId?: number): Promise<{
     formData: Record<string, any>;
     progress: number;
     status: string;
   }> {
-    if (!this.taskId) {
-      throw new Error('No task ID provided for getting progress');
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      // Return default empty progress instead of throwing to make the component more resilient
+      logger.warn('[OpenBankingFormService] No task ID provided for getting progress, returning default empty progress');
+      return {
+        formData: {},
+        progress: 0,
+        status: 'not_started'
+      };
     }
     
     try {
-      logger.info(`[OpenBankingFormService] Getting progress for task ${this.taskId}`);
+      logger.info(`[OpenBankingFormService] Getting progress for task ${effectiveTaskId}`);
       
-      const response = await fetch(`/api/open-banking/progress/${this.taskId}`, {
+      const response = await fetch(`/api/open-banking/progress/${effectiveTaskId}`, {
         credentials: 'include' // Include session cookies
       });
       
       if (!response.ok) {
+        // If endpoint not found (404), return empty data instead of throwing
+        if (response.status === 404) {
+          logger.warn(`[OpenBankingFormService] Progress endpoint not found for task ${effectiveTaskId}, returning default values`);
+          return {
+            formData: {},
+            progress: 0,
+            status: 'not_started'
+          };
+        }
+        
         const errorText = await response.text();
         logger.error(`[OpenBankingFormService] Failed to get progress: ${response.status}`, errorText);
         throw new Error(`Failed to get progress: ${response.status} - ${errorText}`);
@@ -455,7 +473,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       const data = await response.json();
       
       logger.info(`[OpenBankingFormService] Progress loaded successfully:`, {
-        taskId: this.taskId,
+        taskId: effectiveTaskId,
         progress: data.progress,
         status: data.status,
         formDataKeys: Object.keys(data.formData || {}).length
@@ -469,7 +487,12 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       };
     } catch (error) {
       logger.error('[OpenBankingFormService] Error getting progress:', error);
-      throw error;
+      // Instead of propagating the error, return default values
+      return {
+        formData: {},
+        progress: 0,
+        status: 'not_started'
+      };
     }
   }
   
@@ -508,7 +531,8 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       
       // Use our dedicated Open Banking progress endpoint
       try {
-        const progress = await this.getProgress();
+        // Pass the effectiveTaskId to ensure it's used even if this.taskId is not yet set
+        const progress = await this.getProgress(effectiveTaskId);
         
         if (progress && progress.formData) {
           // Store the form data in the service for future reference
@@ -557,8 +581,8 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // Get current progress and status to include in the save
       let progress, status;
       try {
-        // Try to fetch current progress first
-        const progressData = await this.getProgress();
+        // Try to fetch current progress first - pass the effective task ID explicitly
+        const progressData = await this.getProgress(effectiveTaskId);
         progress = progressData.progress;
         status = progressData.status;
       } catch (progressError) {
