@@ -457,10 +457,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Fetch fields from the service
         try {
-          const serviceFields = formService.getFields();
+          // Check if getFields is async (OpenBankingFormService) or sync (KYB)
+          const fieldsResult = formService.getFields();
+          
+          // Handle both Promise and direct return value
+          const getServiceFields = async () => {
+            try {
+              // If it's a Promise (async), await it
+              if (fieldsResult instanceof Promise) {
+                return await fieldsResult;
+              }
+              // Otherwise return directly
+              return fieldsResult;
+            } catch (error) {
+              logger.error('Error resolving fields:', error);
+              return [];
+            }
+          };
+          
+          // Get the fields and continue processing
+          const serviceFields = await getServiceFields();
           
           if (serviceFields && serviceFields.length > 0) {
-            logger.info(`Loaded ${serviceFields.length} fields from form service`);
+            logger.info(`Loaded ${serviceFields.length} fields from form service`, {
+              fieldSample: serviceFields[0] ? {
+                key: serviceFields[0].key,
+                section: serviceFields[0].section
+              } : 'none'
+            });
             setFields(sortFields(serviceFields));
           } else {
             logger.warn('No fields returned from form service (empty array or null)');
@@ -473,10 +497,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Fetch sections from the service
         try {
-          const serviceSections = formService.getSections();
+          // Check if getSections is async (OpenBankingFormService) or sync (KYB)
+          const sectionsResult = formService.getSections();
+          
+          // Handle both Promise and direct return value
+          const getServiceSections = async () => {
+            try {
+              // If it's a Promise (async), await it
+              if (sectionsResult instanceof Promise) {
+                return await sectionsResult;
+              }
+              // Otherwise return directly
+              return sectionsResult;
+            } catch (error) {
+              logger.error('Error resolving sections:', error);
+              return [];
+            }
+          };
+          
+          // Get the sections and continue processing
+          const serviceSections = await getServiceSections();
           
           if (serviceSections && serviceSections.length > 0) {
-            logger.info(`Loaded ${serviceSections.length} sections from form service`);
+            logger.info(`Loaded ${serviceSections.length} sections from form service:`, {
+              sectionIds: serviceSections.map(s => s.id).join(', ')
+            });
             
             // Convert to navigation sections and sort
             const navigationSections = toNavigationSections(serviceSections);
