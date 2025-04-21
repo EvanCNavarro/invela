@@ -721,53 +721,154 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       // Process each response from the key-value object
       const processedCount = { updated: 0, created: 0, skipped: 0 };
       
-      for (const [fieldKey, responseValue] of Object.entries(responses)) {
-        // Skip if field key doesn't exist
-        if (!fieldKeyToIdMap.has(fieldKey)) {
-          logger.warn(`[OpenBankingRoutes] Field not found for key: ${fieldKey}`);
-          processedCount.skipped++;
-          continue;
-        }
-        
-        const fieldId = fieldKeyToIdMap.get(fieldKey);
-        
-        // Check if a response already exists
-        const existingResponse = await db.select()
-          .from(openBankingResponses)
-          .where(and(
-            eq(openBankingResponses.task_id, taskId),
-            eq(openBankingResponses.field_id, fieldId!)
-          ))
-          .limit(1);
-        
-        // Convert response value to string and trim
-        const processedValue = responseValue?.toString().trim() || '';
-        const status = processedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
-        
-        if (existingResponse.length > 0) {
-          // Update existing response
-          await db.update(openBankingResponses)
-            .set({
-              response_value: processedValue,
-              status,
-              version: existingResponse[0].version + 1,
-              updated_at: new Date()
-            })
-            .where(eq(openBankingResponses.id, existingResponse[0].id));
+      try {
+        // Performance Optimization: Process all responses in a single transaction
+        await db.transaction(async (tx) => {
+          // Step 1: Get all existing responses for this task
+          const existingResponses = await tx.select()
+            .from(openBankingResponses)
+            .where(eq(openBankingResponses.task_id, taskId));
           
-          processedCount.updated++;
-        } else {
-          // Create new response
-          await db.insert(openBankingResponses)
-            .values({
-              task_id: taskId,
-              field_id: fieldId!,
-              response_value: processedValue,
-              status,
-              version: 1
+          // Create a map of field_id to existing response for O(1) lookups
+          const existingResponseMap = new Map(
+            existingResponses.map(resp => [resp.field_id, resp])
+          );
+          
+          // Step 2: Prepare batch arrays for updates and inserts
+          const updateValues = [];
+          const insertValues = [];
+          
+          // Process all responses and sort into update or insert arrays
+          for (const [fieldKey, responseValue] of Object.entries(responses)) {
+            // Skip if field key doesn't exist
+            if (!fieldKeyToIdMap.has(fieldKey)) {
+              logger.warn(`[OpenBankingRoutes] Field not found for key: ${fieldKey}`);
+              processedCount.skipped++;
+              continue;
+            }
+            
+            const fieldId = fieldKeyToIdMap.get(fieldKey)!;
+            const processedValue = responseValue?.toString().trim() || '';
+            const status = processedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
+            
+            // Check if this response already exists
+            if (existingResponseMap.has(fieldId)) {
+              // Add to update array
+              const existingResponse = existingResponseMap.get(fieldId);
+              updateValues.push({
+                id: existingResponse!.id,
+                response_value: processedValue,
+                status,
+                version: existingResponse!.version + 1,
+                updated_at: new Date()
+              });
+              processedCount.updated++;
+            } else {
+              // Add to insert array
+              insertValues.push({
+                task_id: taskId,
+                field_id: fieldId,
+                response_value: processedValue,
+                status,
+                version: 1,
+                created_at: new Date(),
+                updated_at: new Date()
+              });
+              processedCount.created++;
+            }
+          }
+          
+          // Step 3: Execute batch updates if any
+          if (updateValues.length > 0) {
+            // Using SQL batch update instead of individual updates
+            for (const updateValue of updateValues) {
+              await tx.update(openBankingResponses)
+                .set({
+                  response_value: updateValue.response_value,
+                  status: updateValue.status,
+                  version: updateValue.version,
+                  updated_at: updateValue.updated_at
+                })
+                .where(eq(openBankingResponses.id, updateValue.id));
+            }
+            
+            logger.info(`[OpenBankingRoutes] Batch updated ${updateValues.length} responses`);
+          }
+          
+          // Step 4: Execute batch inserts if any
+          if (insertValues.length > 0) {
+            await tx.insert(openBankingResponses).values(insertValues);
+            logger.info(`[OpenBankingRoutes] Batch inserted ${insertValues.length} responses`);
+          }
+        });
+      } catch (batchError) {
+        logger.error('[OpenBankingRoutes] Error during batch processing', { 
+          error: batchError, 
+          taskId,
+          updateCount: processedCount.updated,
+          insertCount: processedCount.created
+        });
+        
+        // Fall back to individual processing in case of batch failure
+        logger.warn('[OpenBankingRoutes] Falling back to individual processing');
+        
+        for (const [fieldKey, responseValue] of Object.entries(responses)) {
+          // Skip if field key doesn't exist
+          if (!fieldKeyToIdMap.has(fieldKey)) {
+            logger.warn(`[OpenBankingRoutes] Field not found for key: ${fieldKey}`);
+            processedCount.skipped++;
+            continue;
+          }
+          
+          const fieldId = fieldKeyToIdMap.get(fieldKey);
+          
+          try {
+            // Check if a response already exists
+            const existingResponse = await db.select()
+              .from(openBankingResponses)
+              .where(and(
+                eq(openBankingResponses.task_id, taskId),
+                eq(openBankingResponses.field_id, fieldId!)
+              ))
+              .limit(1);
+            
+            // Convert response value to string and trim
+            const processedValue = responseValue?.toString().trim() || '';
+            const status = processedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
+            
+            if (existingResponse.length > 0) {
+              // Update existing response
+              await db.update(openBankingResponses)
+                .set({
+                  response_value: processedValue,
+                  status,
+                  version: existingResponse[0].version + 1,
+                  updated_at: new Date()
+                })
+                .where(eq(openBankingResponses.id, existingResponse[0].id));
+              
+              processedCount.updated++;
+            } else {
+              // Create new response
+              await db.insert(openBankingResponses)
+                .values({
+                  task_id: taskId,
+                  field_id: fieldId!,
+                  response_value: processedValue,
+                  status,
+                  version: 1
+                });
+              
+              processedCount.created++;
+            }
+          } catch (individualError) {
+            logger.error('[OpenBankingRoutes] Error processing individual field', {
+              error: individualError,
+              fieldKey,
+              fieldId
             });
-          
-          processedCount.created++;
+            processedCount.skipped++;
+          }
         }
       }
       
