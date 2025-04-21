@@ -56,14 +56,19 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
     
     // Check each task to see if it's dependent on the KY3P task that was just completed
     for (const dependentTask of dependentTasks) {
-      // Check if the task is locked and if the KY3P task is a prerequisite
-      if (dependentTask.metadata?.locked === true || 
+      // Special case for Open Banking Survey - always unlock it after KY3P submission
+      // OR check the standard prerequisite logic for other task types
+      const isOpenBankingSurvey = dependentTask.task_type === 'open_banking_survey';
+      
+      if (isOpenBankingSurvey || 
+          dependentTask.metadata?.locked === true || 
           dependentTask.metadata?.prerequisite_task_id === ky3pTaskId ||
           dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment') {
         
         logger.info('[KY3P API] Unlocking dependent task', {
           dependentTaskId: dependentTask.id,
           dependentTaskType: dependentTask.task_type,
+          isOpenBankingSpecialCase: isOpenBankingSurvey,
           previousMetadata: {
             locked: dependentTask.metadata?.locked,
             prerequisiteTaskId: dependentTask.metadata?.prerequisite_task_id,
@@ -74,7 +79,7 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
         // Update the dependent task to unlock it
         await db.update(tasks)
           .set({
-            status: dependentTask.status === 'locked' ? TaskStatus.NOT_STARTED : dependentTask.status,
+            status: dependentTask.status === 'locked' || !dependentTask.status ? 'not_started' : dependentTask.status,
             metadata: {
               ...dependentTask.metadata,
               locked: false, // Explicitly unlock the task
@@ -95,18 +100,27 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
         // Broadcast the task update through WebSocket
         try {
           const { broadcastTaskUpdate } = await import('../services/websocket.js');
-          await broadcastTaskUpdate(dependentTask.id, {
-            ...dependentTask,
-            status: dependentTask.status === 'locked' ? 'not_started' : dependentTask.status,
-            metadata: {
-              ...dependentTask.metadata,
-              locked: false,
-              prerequisite_completed: true,
-              prerequisite_completed_at: new Date().toISOString(),
-              prerequisite_completed_by: userId,
-              unlocked_by: 'ky3p_submission'
-            }
-          });
+          await broadcastTaskUpdate(dependentTask.id);
+          
+          // Also broadcast the progress update to ensure UI refreshes
+          const { broadcastProgressUpdate } = await import('../utils/progress');
+          
+          // Create a safe status value for the task
+          const newStatus = dependentTask.status === 'locked' || !dependentTask.status ? 'not_started' : dependentTask.status;
+          
+          // Set metadata to indicate task is unlocked
+          const updatedMetadata = {
+            ...dependentTask.metadata,
+            locked: false,
+            prerequisite_completed: true,
+            prerequisite_completed_at: new Date().toISOString(),
+            prerequisite_completed_by: userId,
+            unlocked_by: 'ky3p_submission'
+          };
+          
+          // Update UI with task progress information
+          await broadcastProgressUpdate(dependentTask.id, 0);
+          
           logger.info('[KY3P API] WebSocket broadcast sent for task unlock', {
             taskId: dependentTask.id
           });
