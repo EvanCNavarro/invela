@@ -184,10 +184,10 @@ async function unlockDependentTasks(taskId: number) {
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
   
-  // Ultra-Optimized endpoint for fast clearing of all field values
+  // Ultra-Optimized endpoint for fast clearing of all field values with aggressive reconciliation skipping
   app.post('/api/tasks/:taskId/open-banking-responses/clear-all', async (req, res) => {
     const taskId = parseInt(req.params.taskId, 10);
-    const { clearAction, skipReconciliation } = req.body;
+    const { clearAction, skipReconciliation, forceLock, preventRecalc } = req.body;
     
     if (isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
@@ -216,17 +216,28 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       logger.info('[OpenBankingRoutes] Processing FAST_DELETE_ALL request for task', { 
         taskId,
-        currentTaskType: taskData[0].task_type
+        currentTaskType: taskData[0].task_type,
+        forceLock: !!forceLock,
+        preventRecalc: !!preventRecalc
       });
       
       const startTime = Date.now();
       
+      // Determine lock duration
+      let lockDurationMs = forceLock ? 300000 : 120000; // 5 minutes if forceLock, 2 minutes otherwise
+      
       // Immediately disable task reconciliation BEFORE any DB operations
       if (skipReconciliation === true) {
         global.__skipTaskReconciliation = global.__skipTaskReconciliation || {};
-        // Skip for a full 2 minutes (120000ms) to ensure all operations complete
-        global.__skipTaskReconciliation[taskId] = Date.now() + 120000;
-        logger.info('[OpenBankingRoutes] Task reconciliation disabled for 2 minutes', { taskId });
+        
+        // Use the appropriate lock duration
+        global.__skipTaskReconciliation[taskId] = Date.now() + lockDurationMs;
+        
+        logger.info('[OpenBankingRoutes] Task reconciliation disabled', { 
+          taskId,
+          durationMs: lockDurationMs,
+          lockUntil: new Date(Date.now() + lockDurationMs).toISOString()
+        });
       }
       
       // Execute a single transaction with LEAST number of DB operations possible
@@ -265,7 +276,11 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       };
       
       // Broadcast exactly one WebSocket message with all flags to prevent any further updates
+      // Use direct WebSocket broadcast instead of going through progress utils to bypass all checks
       broadcastMessage('task_updated', updatePayload);
+      
+      // Log that we're using a direct message instead of the usual channel
+      logger.info('[OpenBankingRoutes] Used direct WebSocket broadcast to bypass reconciliation checks');
       
       logger.info('[OpenBankingRoutes] Fast clear completed successfully', { 
         taskId, 
