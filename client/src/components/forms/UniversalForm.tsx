@@ -1198,20 +1198,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [taskId, form, fields, updateField, saveProgress, refreshStatus, toast, onProgress]);
   
-  // State for the clear fields confirmation dialog
+  // State for the clear fields confirmation dialog and clearing progress
   const [showClearFieldsDialog, setShowClearFieldsDialog] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   // Actual function to perform the clearing operation after confirmation
   const doClearFields = useCallback(async () => {
     try {
       logger.info(`[UniversalForm] Clearing all fields for task ${taskId}`);
       
-      // Show loading toast
-      toast({
-        title: "Clearing Fields",
-        description: "Removing all entered data...",
-        duration: 3000,
-      });
+      // Close the dialog and show clearing indicator
+      setShowClearFieldsDialog(false);
+      setIsClearing(true);
       
       // Create empty data object
       const emptyData: Record<string, string> = {};
@@ -1231,14 +1229,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           // Select the right endpoint based on task type
           if (taskType === 'open_banking_survey') {
-            // Open Banking endpoint
+            // Open Banking endpoint - uses our improved clear mechanism
             endpoint = `/api/tasks/${taskId}/open-banking-responses/bulk`;
             body = { responses: emptyData, clearAll: true };
           } 
           else if (taskType === 'sp_ky3p_assessment') {
             // KY3P endpoint
             endpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
-            body = { responses: emptyData };
+            body = { responses: emptyData, clearAll: true };
           }
           else {
             // Default KYB endpoint
@@ -1299,15 +1297,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       const isOnReviewSection = activeSection === allSections.length - 1;
       
       if (isOnReviewSection && setActiveSection) {
-        console.log('[UniversalForm] Was on review section, redirecting to first section after clearing fields');
+        logger.info('[UniversalForm] Was on review section, redirecting to first section after clearing fields');
         
         // Redirect IMMEDIATELY without delay to ensure user sees the change
         // First section is always index 0
         setActiveSection(0);
-        
-        // Log for debugging
-        console.log(`[UniversalForm] Redirected from review section (index ${activeSection}) to first section (index 0)`);
       }
+      
+      // Short delay before showing success message to ensure UI has time to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Hide clearing indicator and show success toast
+      setIsClearing(false);
       
       // Show success message
       toast({
@@ -1320,11 +1321,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (onProgress) {
         onProgress(0);
       }
-      
-      // Close the dialog
-      setShowClearFieldsDialog(false);
             
     } catch (err) {
+      // Hide clearing indicator
+      setIsClearing(false);
+      
       logger.error('[UniversalForm] Clear fields error:', err);
       toast({
         variant: "destructive",
@@ -1332,7 +1333,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: err instanceof Error ? err.message : "There was an error clearing the form fields",
       });
     }
-  }, [taskId, fields, form, updateField, refreshStatus, toast, onProgress, setShowClearFieldsDialog, activeSection, setActiveSection, sections]);
+  }, [taskId, taskType, fields, form, refreshStatus, toast, onProgress, activeSection, setActiveSection, allSections.length]);
   
   // Handle clearing all fields in the form - shows confirmation dialog
   const handleClearFields = useCallback(() => {
