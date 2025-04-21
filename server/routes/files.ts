@@ -10,6 +10,7 @@ import { createDocumentChunks, processChunk } from '../services/documentChunking
 import { broadcastDocumentCountUpdate } from '../services/websocket';
 import { aggregateAnswers } from '../services/answerAggregation';
 import { FileCreationService } from '../services/file-creation';
+import { FileDetectionService } from '../services/file-detection';
 
 // Helper function to get company name from ID
 async function getCompanyName(companyId: number): Promise<string> {
