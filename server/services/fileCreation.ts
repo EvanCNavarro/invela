@@ -41,8 +41,8 @@ export class FileCreationService {
   private generateCSV(data: Record<string, any>, fields: any[] = []): string {
     console.log('[FileCreation] Generating CSV for KY3P assessment');
     
-    // Create CSV header
-    let csv = 'Question,Answer,Group,Section\n';
+    // Create CSV header in KYB format
+    let csv = 'Question Number,Group,Question,Answer,Type\n';
     
     // Create a field key map for easier lookup
     const fieldMap = new Map();
@@ -55,12 +55,16 @@ export class FileCreationService {
           JSON.stringify(fields[0], null, 2).substring(0, 500)); // Limit output size
       }
       
-      fields.forEach(field => {
+      // Sort fields by order to ensure consistent question numbering
+      const sortedFields = [...fields].sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      sortedFields.forEach((field, idx) => {
         // Handle different field key properties based on the schema
         // KY3P fields use field_key in the database schema
         const key = field.field_key || field.key;
         if (key) {
-          fieldMap.set(key, field);
+          // Add index to field for question numbering
+          fieldMap.set(key, { ...field, index: idx + 1 });
         } else {
           console.warn('[FileCreation] Field missing both field_key and key properties:', field);
         }
@@ -97,19 +101,22 @@ export class FileCreationService {
       
       // Handle various field schema possibilities - KY3P fields use group/section differently
       const group = field?.group || '';
-      // Some schemas use section, others use step_index
-      const section = field?.section || (field?.step_index ? `Step ${field.step_index}` : '');
+      // Determine the field type (default to TEXT if not specified)
+      const fieldType = field?.field_type || 'TEXT';
       // Ensure we get the question text from various possible field names
       const question = field?.question || field?.display_name || field?.label || key;
+      // Use the index from the field map or just incremental order
+      const questionNumber = field?.index || '?';
       
       // Escape quotes in CSV fields
+      const escapedQuestionNumber = String(questionNumber).replace(/"/g, '""');
       const escapedQuestion = question.replace(/"/g, '""');
       const escapedValue = String(value || '').replace(/"/g, '""');
       const escapedGroup = group.replace(/"/g, '""');
-      const escapedSection = section.replace(/"/g, '""');
+      const escapedType = fieldType.toUpperCase().replace(/"/g, '""');
       
-      // Add row
-      csv += `"${escapedQuestion}","${escapedValue}","${escapedGroup}","${escapedSection}"\n`;
+      // Add row with KYB format: Question Number,Group,Question,Answer,Type
+      csv += `"${escapedQuestionNumber}","${escapedGroup}","${escapedQuestion}","${escapedValue}","${escapedType}"\n`;
     }
     
     // Now add any fields from the field map that weren't in the data
@@ -117,24 +124,32 @@ export class FileCreationService {
     if (Array.isArray(fields) && fields.length > 0) {
       console.log(`[FileCreation] Adding remaining fields from field definitions (${fields.length} total fields)`);
       
-      for (const field of fields) {
+      // Sort fields by order to ensure consistent question numbering for any missing fields
+      const sortedFields = [...fields].sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      for (const field of sortedFields) {
         const key = field.field_key || field.key;
         
         // Skip fields we've already processed
         if (key && !processedKeys.has(key)) {
           console.log(`[FileCreation] Adding empty field to CSV: ${key}`);
           
+          // Find field metadata to add to CSV with empty answer
           const group = field.group || '';
-          const section = field.section || (field.step_index ? `Step ${field.step_index}` : '');
+          const fieldType = field.field_type || 'TEXT';
           const question = field.question || field.display_name || field.label || key;
           
+          // Use index position in sorted array for question numbering (1-based)
+          const questionNumber = sortedFields.findIndex(f => (f.field_key || f.key) === key) + 1;
+          
           // Escape quotes in CSV fields
+          const escapedQuestionNumber = String(questionNumber).replace(/"/g, '""');
           const escapedQuestion = question.replace(/"/g, '""');
           const escapedGroup = group.replace(/"/g, '""');
-          const escapedSection = section.replace(/"/g, '""');
+          const escapedType = fieldType.toUpperCase().replace(/"/g, '""');
           
-          // Add row with empty value
-          csv += `"${escapedQuestion}","","${escapedGroup}","${escapedSection}"\n`;
+          // Add row with KYB format: Question Number,Group,Question,Answer,Type
+          csv += `"${escapedQuestionNumber}","${escapedGroup}","${escapedQuestion}","","${escapedType}"\n`;
         }
       }
     }
