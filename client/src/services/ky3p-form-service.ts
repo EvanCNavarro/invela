@@ -138,7 +138,7 @@ export class KY3PFormService extends EnhancedKybFormService {
           fields.slice(0, 3).map((f: any) => ({ 
             id: f.id, 
             key: f.field_key, 
-            label: f.label, 
+            displayName: f.display_name, 
             group: f.group
           }))
         );
@@ -243,7 +243,7 @@ export class KY3PFormService extends EnhancedKybFormService {
     return apiFields.map(apiField => ({
       id: apiField.id,
       key: apiField.field_key,
-      label: apiField.label,
+      label: apiField.display_name,
       // Use question field which matches KYB field structure
       description: apiField.question,
       type: apiField.field_type,
