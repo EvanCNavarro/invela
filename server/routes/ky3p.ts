@@ -297,6 +297,9 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     const taskId = parseInt(req.params.taskId);
     const userId = req.user!.id;
     
+    // Extract form data from request body if available
+    const { formData } = req.body;
+    
     // Get the task data
     const [task] = await db
       .select()
@@ -326,7 +329,88 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
       .select()
       .from(ky3pFields);
     
-    // Get all KY3P responses for this task
+    // ENHANCEMENT: Process any pending form data updates before CSV creation
+    // This ensures the CSV file contains the latest data, including auto-filled values
+    if (formData && typeof formData === 'object') {
+      logger.info(`[KY3P API] Synchronizing form data from submission request for task ${taskId}`, {
+        fieldCount: Object.keys(formData).length
+      });
+      
+      try {
+        // Get field key to ID mapping
+        const fieldKeyToIdMap = new Map(allFields.map(field => [field.field_key, field.id]));
+        
+        // Track how many fields we update
+        let fieldUpdatesCount = 0;
+        
+        // Process each field in the form data
+        for (const [fieldKey, value] of Object.entries(formData)) {
+          const fieldId = fieldKeyToIdMap.get(fieldKey);
+          
+          if (!fieldId) {
+            logger.warn(`[KY3P API] Field key not found during pre-submission sync: ${fieldKey}`);
+            continue;
+          }
+          
+          // Value sanitization - convert to string and handle null/undefined
+          const sanitizedValue = value !== null && value !== undefined ? String(value) : '';
+          
+          // Determine field status based on value
+          const status = sanitizedValue ? 'COMPLETE' : 'EMPTY';
+          
+          try {
+            // Check if response already exists for this field
+            const [existingResponse] = await db
+              .select()
+              .from(ky3pResponses)
+              .where(
+                and(
+                  eq(ky3pResponses.task_id, taskId),
+                  eq(ky3pResponses.field_id, fieldId)
+                )
+              )
+              .limit(1);
+              
+            if (existingResponse) {
+              // Update existing response
+              await db
+                .update(ky3pResponses)
+                .set({
+                  response_value: sanitizedValue,
+                  status: status as any,
+                  version: existingResponse.version + 1,
+                  updated_at: new Date()
+                })
+                .where(eq(ky3pResponses.id, existingResponse.id));
+            } else {
+              // Create new response
+              await db
+                .insert(ky3pResponses)
+                .values({
+                  task_id: taskId,
+                  field_id: fieldId,
+                  response_value: sanitizedValue,
+                  status: status as any,
+                  version: 1,
+                  created_at: new Date(),
+                  updated_at: new Date()
+                });
+            }
+            
+            fieldUpdatesCount++;
+          } catch (updateError) {
+            logger.error(`[KY3P API] Error updating field ${fieldKey} during pre-submission sync:`, updateError);
+          }
+        }
+        
+        logger.info(`[KY3P API] Pre-submission sync complete: updated ${fieldUpdatesCount} fields`);
+      } catch (syncError) {
+        logger.error(`[KY3P API] Error during pre-submission form data sync:`, syncError);
+        // Continue with CSV generation even if sync fails
+      }
+    }
+    
+    // Get all KY3P responses for this task AFTER any updates above
     const responses = await db
       .select()
       .from(ky3pResponses)
