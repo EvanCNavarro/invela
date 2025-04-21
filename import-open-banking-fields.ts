@@ -10,7 +10,10 @@ import { db } from './db';
 import { openBankingFields } from './db/schema';
 import * as fs from 'fs';
 import * as path from 'path';
-import { logger } from './server/utils/logger';
+import { Logger } from './server/utils/logger';
+
+// Create a logger instance
+const logger = new Logger('OpenBankingImport');
 
 function parseCSV(csvText: string): { headers: string[], rows: string[][] } {
   const lines = csvText.trim().split('\n');
