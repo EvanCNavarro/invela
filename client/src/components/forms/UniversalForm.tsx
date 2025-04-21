@@ -1148,12 +1148,32 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         try {
           logger.info(`[UniversalForm] Using KY3P bulk responses endpoint for task ${taskId}`);
           
+          // Make sure we're sending a proper response object
+          const responsesToSend = { responses: {} };
+          
+          // Filter out any non-string/non-number values to prevent JSON parsing issues
+          for (const [key, value] of Object.entries(completeData)) {
+            // Skip the key if it's "bulk" which causes the error
+            if (key === 'bulk') continue;
+            
+            // Only include values that are strings, numbers, or booleans
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+              responsesToSend.responses[key] = value;
+            } else if (value && typeof value === 'object') {
+              // Handle objects by converting to JSON strings
+              responsesToSend.responses[key] = JSON.stringify(value);
+            }
+          }
+          
+          // Log what we're sending for debugging
+          logger.info(`[UniversalForm] Sending bulk responses: ${Object.keys(responsesToSend.responses).length} fields`);
+          
           const bulkResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ responses: completeData })
+            body: JSON.stringify(responsesToSend)
           });
           
           if (bulkResponse.ok) {
