@@ -85,6 +85,7 @@ import confetti from 'canvas-confetti';
 
 import SectionContent from './SectionContent';
 import { wsService } from '@/lib/websocket';
+import { ClearingFieldsIndicator } from './ClearingFieldsIndicator';
 
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
