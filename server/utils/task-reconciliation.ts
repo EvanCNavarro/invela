@@ -175,7 +175,7 @@ export async function reconcileTaskProgress(
         // Calculate accurate progress percentage
         const calculatedProgress = 
           totalFields > 0 && completedFields > 0
-            ? Math.max(1, Math.ceil((completedFields / totalFields) * 100))
+            ? Math.min(100, Math.max(1, Math.ceil((completedFields / totalFields) * 100)))
             : 0;
             
         console.log(`${logPrefix} Recalculated Open Banking progress:`, {

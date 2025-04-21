@@ -360,7 +360,8 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
       if (totalFields > 0 && completedFieldsCount > 0) {
         // Force a minimum progress of 1% if any fields are completed
         // Store as whole number percentage (5 instead of 0.05) to match KYB/KY3P
-        progress = Math.max(1, Math.ceil((completedFieldsCount / totalFields) * 100));
+        // CRITICAL: Use Math.min to ensure progress never exceeds 100%
+        progress = Math.min(100, Math.max(1, Math.ceil((completedFieldsCount / totalFields) * 100)));
       } else {
         // If no fields at all have been filled, show 0 progress
         progress = 0;
