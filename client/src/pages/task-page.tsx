@@ -77,10 +77,27 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Function to extract company name from task title
   const extractCompanyNameFromTitle = useCallback((title: string): string => {
-    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/);
-    if (match && match[6]) {
-      return match[6].trim();
+    console.log(`[TaskPage] Extracting company name from title: "${title}"`);
+    
+    // Updated regex to match various Open Banking Survey patterns
+    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking(\s*\(1033\))?\s*Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/i);
+    
+    if (match && match[8]) {
+      const companyName = match[8].trim();
+      console.log(`[TaskPage] Extracted company name: "${companyName}"`);
+      return companyName;
     }
+    
+    // If standard pattern doesn't match, try a simpler approach for the OpenBanking form
+    if (title?.includes('Open Banking Survey:')) {
+      const companyName = title.split('Open Banking Survey:')[1]?.trim();
+      if (companyName) {
+        console.log(`[TaskPage] Extracted company name (fallback): "${companyName}"`);
+        return companyName;
+      }
+    }
+    
+    console.log(`[TaskPage] Could not extract company name from title: "${title}"`);
     return 'Unknown Company';
   }, []);
   
@@ -404,11 +421,29 @@ export default function TaskPage({ params }: TaskPageProps) {
     // Extract company information
     const extractedName = extractCompanyNameFromTitle(taskData.title);
     
-    // Set display name from metadata or fallback to extracted name
+    // Extract company name from current company data (using React Query cache)
+    const { queryClient } = require('@/lib/queryClient');
+    const currentCompanyData = queryClient.getQueryData<any>(['/api/companies/current']);
+    const currentCompanyName = currentCompanyData?.name;
+    
+    if (currentCompanyName) {
+      console.log(`[TaskPage] Found current company name from API: "${currentCompanyName}"`);
+    }
+    
+    // Set display name from multiple sources with priority order
     const displayNameValue = taskData?.metadata?.company?.name || 
                             taskData?.metadata?.companyName || 
                             extractedName || 
+                            currentCompanyName ||
                             'Unknown Company';
+                            
+    console.log(`[TaskPage] Company name set for ${type} form:`, {
+      displayNameValue,
+      extractedName,
+      metadataName: taskData?.metadata?.company?.name || taskData?.metadata?.companyName,
+      currentCompanyName,
+      taskTitle: taskData.title
+    });
     
     // Return the processed values
     return {
