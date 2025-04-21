@@ -242,18 +242,8 @@ export function OpenBankingPlayground({
         timestamp: new Date().toISOString()
       });
 
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-      });
-
-      setSuccessData({
-        riskScore: data.riskScore,
-        assessmentFile: data.assessmentFile
-      });
-      setIsSuccessModalOpen(true);
+      // The parent component handles the confetti and success modal
+      // We'll just show a toast and notify the parent via onSubmit
 
       toast({
         title: "Open Banking Survey Submitted",
@@ -417,80 +407,7 @@ export function OpenBankingPlayground({
         />
       </div>
       
-      {/* Success Modal */}
-      <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Trophy className="text-yellow-500 h-6 w-6 mr-2" />
-              Open Banking Survey Completed!
-            </DialogTitle>
-            <DialogDescription>
-              Your Open Banking Survey has been successfully submitted and processed.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {successData && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm font-medium">
-                    <Shield className="h-5 w-5 mr-2 text-primary" />
-                    Risk Score
-                  </div>
-                  <div className="font-bold text-lg">{successData.riskScore}</div>
-                </div>
-                
-                <div className="border-t pt-4">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    The following features are now available:
-                  </p>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                      <span>Assessment File Generated</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                      <span>Company Risk Score Updated</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                      <span>Company Onboarding Completed</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                      <span>Insights Dashboard Unlocked</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                navigate(`/files/${successData?.assessmentFile}`);
-              }}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              View Assessment
-            </Button>
-            
-            <Button
-              onClick={() => {
-                navigate('/company/dashboard');
-              }}
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Go to Dashboard
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* No success modal needed here - it's handled by the parent task-page component */}
     </div>
   );
 }
