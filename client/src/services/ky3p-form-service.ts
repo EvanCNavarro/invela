@@ -541,49 +541,95 @@ export class KY3PFormService extends EnhancedKybFormService {
       // use the KY3P progress endpoint which will fetch from the database
       try {
         // The progress endpoint loads all responses from ky3p_responses table
-        // We need a debugging URL to determine what endpoints are available
-        const debugResponse = await fetch(`/api/ky3p-fields`);
-        logger.info(`[KY3P Form Service] Debug API call result: ${debugResponse.status}`);
+        // We need to use the proper endpoint that matches what's defined in server/routes/ky3p.ts
         
-        const response = await fetch(`/api/ky3p/progress/${this.taskId}`);
+        logger.info(`[KY3P Form Service] Attempting to get KY3P responses from task ${this.taskId}`);
         
-        // Log more detailed information for debugging
-        logger.info(`[KY3P Form Service] Progress API call status: ${response.status}`);
+        // First try fetching directly from the responses endpoint to get raw data
+        const responsesUrl = `/api/tasks/${this.taskId}/ky3p-responses`;
+        logger.info(`[KY3P Form Service] Fetching from: ${responsesUrl}`);
         
-        if (response.ok) {
-          const data = await response.json();
-          // Log the raw data to see what we're getting
-          logger.debug(`[KY3P Form Service] Raw API response data:`, data);
+        try {
+          const responsesResponse = await fetch(responsesUrl);
+          logger.info(`[KY3P Form Service] Responses API call status: ${responsesResponse.status}`);
           
-          logger.info(`[KY3P Form Service] Progress endpoint returned:`, {
-            taskId: this.taskId,
-            progress: data.progress,
-            status: data.status,
-            formDataKeys: Object.keys(data.formData || {}).length
-          });
-          
-          formData = data.formData || {};
-          
-          // If the endpoint returned data, use it
-          if (Object.keys(formData).length > 0) {
-            // If task is submitted, add submission date if not already present
-            if (isSubmitted && submissionDate && !formData._submissionDate) {
-              formData._submissionDate = submissionDate;
+          if (responsesResponse.ok) {
+            const rawResponses = await responsesResponse.json();
+            logger.info(`[KY3P Form Service] Retrieved ${rawResponses.length} raw responses`);
+            
+            // Convert responses to the format expected by the form
+            const formattedData: Record<string, any> = {};
+            
+            for (const response of rawResponses) {
+              if (response.field?.field_key) {
+                formattedData[response.field.field_key] = response.response_value;
+                logger.debug(`[KY3P Form Service] Found response for field: ${response.field.field_key}`);
+              }
             }
             
+            const progress = 100; // Task is submitted
+            const status = 'submitted';
+            
+            // Return the formatted data
+            logger.info(`[KY3P Form Service] Successfully formatted ${Object.keys(formattedData).length} responses`);
+            
             return {
-              formData,
-              progress: data.progress || (isSubmitted ? 100 : 0),
-              status: data.status || (isSubmitted ? 'submitted' : 'not_started')
+              formData: formattedData,
+              progress,
+              status
             };
           } else {
-            logger.warn(`[KY3P Form Service] Progress endpoint returned empty form data for task ${this.taskId}`);
+            logger.warn(`[KY3P Form Service] Raw responses endpoint failed with status: ${responsesResponse.status}`);
           }
-        } else {
-          logger.warn(`[KY3P Form Service] Progress endpoint failed with status: ${response.status}`);
+        } catch (responseError) {
+          logger.error(`[KY3P Form Service] Error fetching from responses endpoint:`, responseError);
         }
-      } catch (progressError) {
-        logger.error(`[KY3P Form Service] Progress endpoint error:`, progressError);
+        
+        // If direct responses fetch failed, try the intended progress endpoint as a fallback
+        try {
+          const progressUrl = `/api/ky3p/progress/${this.taskId}`;
+          logger.info(`[KY3P Form Service] Trying alternate endpoint: ${progressUrl}`);
+          
+          const response = await fetch(progressUrl);
+          logger.info(`[KY3P Form Service] Progress API call status: ${response.status}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            // Log the raw data to see what we're getting
+            logger.debug(`[KY3P Form Service] Raw API response data:`, data);
+            
+            logger.info(`[KY3P Form Service] Progress endpoint returned:`, {
+              taskId: this.taskId,
+              progress: data.progress,
+              status: data.status,
+              formDataKeys: Object.keys(data.formData || {}).length
+            });
+            
+            formData = data.formData || {};
+            
+            // If the endpoint returned data, use it
+            if (Object.keys(formData).length > 0) {
+              // If task is submitted, add submission date if not already present
+              if (isSubmitted && submissionDate && !formData._submissionDate) {
+                formData._submissionDate = submissionDate;
+              }
+              
+              return {
+                formData,
+                progress: data.progress || (isSubmitted ? 100 : 0),
+                status: data.status || (isSubmitted ? 'submitted' : 'not_started')
+              };
+            } else {
+              logger.warn(`[KY3P Form Service] Progress endpoint returned empty form data for task ${this.taskId}`);
+            }
+          } else {
+            logger.warn(`[KY3P Form Service] Progress endpoint failed with status: ${response.status}`);
+          }
+        } catch (progressError) {
+          logger.error(`[KY3P Form Service] Progress endpoint error:`, progressError);
+        }
+      } catch (mainError) {
+        logger.error(`[KY3P Form Service] Main error in getProgress:`, mainError);
       }
       
       // If we couldn't get data from either method but know the task is submitted,
