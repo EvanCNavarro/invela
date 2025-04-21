@@ -648,39 +648,61 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       if (clearAll === true) {
         logger.info('[OpenBankingRoutes] Processing CLEAR ALL fields request for task', { taskId });
         
-        // Delete all existing responses for this task
-        await db.delete(openBankingResponses)
-          .where(eq(openBankingResponses.task_id, taskId));
+        try {
+          // Start a transaction to ensure consistency
+          await db.transaction(async (tx) => {
+            // Delete all existing responses for this task in one operation
+            await tx.delete(openBankingResponses)
+              .where(eq(openBankingResponses.task_id, taskId));
+            
+            // Immediately mark task as not started with 0 progress
+            await tx.update(tasks)
+              .set({ 
+                progress: 0, 
+                status: TaskStatus.NOT_STARTED,
+                updated_at: new Date()
+              })
+              .where(eq(tasks.id, taskId));
+          });
           
-        // Reset the task progress to 0 and status to not_started
-        await db.update(tasks)
-          .set({ 
-            progress: 0, 
-            status: TaskStatus.NOT_STARTED,
-            updated_at: new Date()
-          })
-          .where(eq(tasks.id, taskId));
+          // After transaction succeeds, broadcast exactly one update
+          const updatePayload = {
+            id: taskId,
+            status: 'not_started',
+            progress: 0,
+            metadata: {
+              lastUpdated: new Date().toISOString(),
+              lastProgressReconciliation: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          };
           
-        // Broadcast task update via WebSocket
-        broadcastMessage('task_updated', {
-          id: taskId,
-          status: 'not_started',
-          progress: 0,
-          metadata: {
-            lastProgressReconciliation: new Date().toISOString()
-          },
-          timestamp: new Date().toISOString()
-        });
-        
-        logger.info('[OpenBankingRoutes] Successfully cleared all responses for task', { taskId });
-        
-        return res.json({
-          success: true,
-          taskId,
-          progress: 0,
-          status: 'not_started',
-          message: 'All fields cleared successfully'
-        });
+          // Send only one WebSocket update
+          broadcastMessage('task_updated', updatePayload);
+          
+          // Disable the task reconciliation process for this task for a few seconds
+          // to prevent cascading updates
+          global.__skipTaskReconciliation = global.__skipTaskReconciliation || {};
+          global.__skipTaskReconciliation[taskId] = Date.now() + 5000; // skip for 5 seconds
+          
+          logger.info('[OpenBankingRoutes] Successfully cleared all responses for task', { taskId });
+          
+          return res.json({
+            success: true,
+            taskId,
+            progress: 0,
+            status: 'not_started',
+            message: 'All fields cleared successfully',
+            skipReconciliation: true
+          });
+        }
+        catch (error) {
+          logger.error('[OpenBankingRoutes] Error clearing fields', { error, taskId });
+          return res.status(500).json({ 
+            error: 'Failed to clear fields',
+            details: error instanceof Error ? error.message : String(error)
+          });
+        }
       }
       
       logger.info('[OpenBankingRoutes] Processing bulk update for task', { 

@@ -6,6 +6,11 @@ import { calculateKybFormProgress } from './kyb-progress';
 import { determineStatusFromProgress, broadcastProgressUpdate } from './progress';
 import { fixTaskSubmittedStatus } from '../middleware/task-status';
 
+// Add typings for the global skip reconciliation object
+declare global {
+  var __skipTaskReconciliation: Record<number, number> | undefined;
+}
+
 /**
  * Reconcile task progress across the system to ensure consistency
  * 
@@ -24,6 +29,16 @@ export async function reconcileTaskProgress(
   const logPrefix = '[Task Reconciliation]';
   
   try {
+    // Check if reconciliation for this task is temporarily disabled
+    // This is used by the "clear all fields" function to prevent cascading updates
+    const skipUntil = global.__skipTaskReconciliation?.[taskId] || 0;
+    if (skipUntil > Date.now()) {
+      if (debug) {
+        console.log(`${logPrefix} Skipping reconciliation for task ${taskId} due to temporary lock until ${new Date(skipUntil).toISOString()}`);
+      }
+      return;
+    }
+    
     // 1. Fetch the task
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
