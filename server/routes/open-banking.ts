@@ -12,7 +12,6 @@
 import type { Express, Request, Response } from 'express';
 import { db } from '@db';
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
-import { handleFileCreation } from '../services/fileCreation';
 import {
   companies,
   DocumentCategory,
@@ -23,13 +22,15 @@ import {
   TaskStatus,
   tasks
 } from '@db/schema';
-import { logger } from '../utils/logger';
-import { openaiAnalyzeContent } from '../services/openai';
+import { Logger } from '../utils/logger';
+import { analyzeContent } from '../services/openai';
 import { WebSocketServer, WebSocket } from 'ws';
-import { broadcastWebSocketEvent } from '../services/websocket';
+import { broadcastMessage } from '../services/websocket';
 import path from 'path';
 import fs from 'fs';
-import * as csv from 'csv-stringify';
+
+// Create a logger instance
+const logger = new Logger('OpenBankingRoutes');
 
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');

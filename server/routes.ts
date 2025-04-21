@@ -10,7 +10,7 @@ import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './ty
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import { broadcastTaskUpdate, broadcastMessage } from './services/websocket';
+import { broadcastTaskUpdate, broadcastMessage, getWebSocketServer } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -24,6 +24,7 @@ import ky3pRouter from './routes/ky3p';
 import filesRouter from './routes/files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
+import { registerOpenBankingRoutes } from './routes/open-banking';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
@@ -254,6 +255,9 @@ export function registerRoutes(app: Express): Express {
   app.use(securityRouter);
   app.use(ky3pRouter);
   app.use(filesRouter);
+  
+  // Register Open Banking Survey routes with WebSocket support
+  registerOpenBankingRoutes(app, getWebSocketServer());
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
