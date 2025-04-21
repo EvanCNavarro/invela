@@ -38,10 +38,10 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
       // Wait for the download to complete
       await onDownload(format);
       
-      // Show success toast with task type specific message
-      const taskTypeDisplay = taskType === 'kyb' ? 'KYB Form' :
-                             taskType === 'ky3p' ? 'S&P KY3P Security Assessment' :
-                             taskType === 'open_banking' ? 'Open Banking Survey' :
+      // Show success toast with task type specific message and new file format
+      const taskTypeDisplay = taskType === 'kyb' ? 'KYB Assessment' :
+                             taskType === 'ky3p' ? 'S&P KY3P Assessment' :
+                             taskType === 'open_banking' ? 'Open Banking Assessment' :
                              taskType === 'card' ? 'CARD Assessment' : 'Form';
                              
       toast({
