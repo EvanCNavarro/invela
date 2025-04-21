@@ -1,21 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { UniversalForm } from "@/components/forms/UniversalForm";
-import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
-import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
-import { OpenBankingPlayground } from "@/components/playground/OpenBankingPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { UniversalForm } from "@/components/forms/UniversalForm";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ArrowLeft } from "lucide-react";
 import { TaskDownloadMenu } from "@/components/TaskDownloadMenu";
 import { PageTemplate } from "@/components/ui/page-template";
@@ -51,6 +42,7 @@ interface Task {
     kybFormFile?: number;
     cardFormFile?: number;
     securityFormFile?: number;
+    openBankingFormFile?: number;
     [key: string]: any;
   } | null;
   savedFormData?: Record<string, any>;
@@ -107,36 +99,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     navigate('/task-center');
   }, [navigate]);
   
-  // Standardized download dropdown menu component
-  const StandardizedDownloadMenu = useCallback(() => {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleDownload('csv')}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Download as CSV
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleDownload('txt')}>
-            <FileText className="mr-2 h-4 w-4" />
-            Download as TXT
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleDownload('json')}>
-            <FileJson className="mr-2 h-4 w-4" />
-            Download as JSON
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }, [handleDownload]);
-
   // Handle file downloads
-  const handleDownload = useCallback(async (format: 'json' | 'csv' | 'txt') => {
+  const handleDownload = useCallback(async (format: 'csv' | 'txt' | 'json') => {
     if (!fileId) return;
     
     try {
@@ -399,30 +363,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Download as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Download as TXT
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
             </div>
           </div>
 
@@ -455,90 +396,152 @@ export default function TaskPage({ params }: TaskPageProps) {
                   })
                   .then(response => {
                     if (!response.ok) {
-                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                      console.error('[TaskPage] Failed to update progress:', response.statusText);
                     }
-                    return response.json();
                   })
-                  .then(result => {
-                    console.log('[TaskPage] Task progress updated on server:', result);
-                    
-                    // Force refetch of tasks to update task center
-                    fetch('/api/tasks')
-                      .then(response => response.json())
-                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
-                  })
-                  .catch(error => {
-                    console.error('[TaskPage] Failed to update task progress:', error);
-                    
-                    // Revert local state on error if we have a valid task
-                    if (task) {
-                      updateTaskProgress(task.progress, task);
-                    }
+                  .catch(err => {
+                    console.error('[TaskPage] Error updating progress:', err);
                   });
                 }}
-                onSubmit={(formData) => {
-                  toast({
-                    title: "Submitting KYB Form",
-                    description: "Please wait while we process your submission...",
-                  });
-
-                  fetch(`/api/kyb/submit/${task.id}`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ formData })
-                  })
-                    .then(async response => {
-                      const data = await response.json();
-                      if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to save KYB form');
+                onSuccess={() => {
+                  setShowSuccessModal(true);
+                  fireEnhancedConfetti();
+                  
+                  // Fetch updated task data to get the file ID
+                  fetch(`/api/tasks/${task.id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                      if (data.metadata?.kybFormFile) {
+                        setFileId(data.metadata.kybFormFile);
                       }
-                      return data;
                     })
-                    .then((result) => {
-                      confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                      });
-
-                      setFileId(result.fileId);
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "KYB form has been saved successfully.",
-                        variant: "default",
-                      });
-                    })
-                    .catch(error => {
-                      console.error('[TaskPage] Form submission failed:', error);
-                      toast({
-                        title: "Error",
-                        description: error.message || "Failed to save KYB form. Please try again.",
-                        variant: "destructive",
-                      });
+                    .catch(err => {
+                      console.error('[TaskPage] Error fetching updated task:', err);
                     });
                 }}
               />
             </div>
+          </div>
+          
+          {/* KYB Success Modal */}
+          <KYBSuccessModal
+            open={showSuccessModal}
+            onOpenChange={setShowSuccessModal}
+            companyName={displayName}
+          />
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+  
+  // Card Form Rendering
+  if (taskContentType === 'card' && task) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
 
-            {showSuccessModal && (
-              <KYBSuccessModal
-                open={showSuccessModal}
-                onOpenChange={(open) => setShowSuccessModal(open)}
-                companyName={displayName}
-              />
+              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
+            </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            {/* Method selection first, then form */}
+            {!showForm && !isSubmitted && (
+              <div className="mb-6">
+                <CardMethodChoice
+                  companyName={displayName}
+                  onMethodSelect={(method) => {
+                    setSelectedMethod(method);
+                    setShowForm(true);
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Document upload option */}
+            {selectedMethod === 'upload' && showForm && !isSubmitted && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <DocumentUploadWizard
+                  taskId={task.id}
+                  taskType="card"
+                  companyName={displayName}
+                  onSuccess={(fileId) => {
+                    setFileId(fileId);
+                    setIsSubmitted(true);
+                    fireEnhancedConfetti();
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Manual form filling option or view submitted form */}
+            {(selectedMethod === 'manual' || isSubmitted) && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <UniversalForm
+                  taskId={task.id}
+                  taskType="card"
+                  taskStatus={task.status}
+                  companyName={displayName}
+                  initialData={task.savedFormData}
+                  onProgress={(progress) => {
+                    updateTaskProgress(progress, task);
+                    
+                    fetch(`/api/tasks/${task.id}/update-progress`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ 
+                        progress,
+                        calculateFromForm: false, 
+                        forceStatusUpdate: true 
+                      })
+                    })
+                    .then(response => {
+                      if (!response.ok) {
+                        console.error('[TaskPage] Failed to update progress:', response.statusText);
+                      }
+                    })
+                    .catch(err => {
+                      console.error('[TaskPage] Error updating progress:', err);
+                    });
+                  }}
+                  onSuccess={() => {
+                    setIsSubmitted(true);
+                    fireEnhancedConfetti();
+                    
+                    fetch(`/api/tasks/${task.id}`)
+                      .then(response => response.json())
+                      .then(data => {
+                        if (data.metadata?.cardFormFile) {
+                          setFileId(data.metadata.cardFormFile);
+                        }
+                      })
+                      .catch(err => {
+                        console.error('[TaskPage] Error fetching updated task:', err);
+                      });
+                  }}
+                />
+              </div>
             )}
           </div>
         </PageTemplate>
       </DashboardLayout>
     );
   }
-
+  
   // Security Assessment Form Rendering
   if (taskContentType === 'security' && task) {
     return (
@@ -557,313 +560,107 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
             </div>
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Universal form for Security Assessment */}
-              <UniversalForm
-                taskId={task.id}
-                taskType="ky3p"
-                taskStatus={task.status}
-                companyName={displayName}
-                initialData={task.savedFormData}
-                onProgress={(progress) => {
-                  // Update local state immediately for responsive UI
-                  updateTaskProgress(progress, task);
-                  
-                  console.log('[TaskPage] Security Form progress updated:', progress);
-                  
-                  // Send the progress to the server to update the task
-                  fetch(`/api/tasks/${task.id}/update-progress`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                      progress,
-                      calculateFromForm: false, // We're explicitly setting progress
-                      forceStatusUpdate: true // Force the task status to update
+            {/* Method selection first, then form */}
+            {!showForm && !isSubmitted && (
+              <div className="mb-6">
+                <CardMethodChoice
+                  companyName={displayName}
+                  onMethodSelect={(method) => {
+                    setSelectedMethod(method);
+                    setShowForm(true);
+                  }}
+                  title="S&P KY3P Security Assessment"
+                  description="Please choose how you would like to complete this S&P KY3P Security Assessment."
+                />
+              </div>
+            )}
+            
+            {/* Document upload option */}
+            {selectedMethod === 'upload' && showForm && !isSubmitted && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <DocumentUploadWizard
+                  taskId={task.id}
+                  taskType="security"
+                  companyName={displayName}
+                  onSuccess={(fileId) => {
+                    setFileId(fileId);
+                    setIsSubmitted(true);
+                    setShowSuccessModal(true);
+                    fireEnhancedConfetti();
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Manual form filling option or view submitted form */}
+            {(selectedMethod === 'manual' || isSubmitted) && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <UniversalForm
+                  taskId={task.id}
+                  taskType="security"
+                  taskStatus={task.status}
+                  companyName={displayName}
+                  initialData={task.savedFormData}
+                  onProgress={(progress) => {
+                    updateTaskProgress(progress, task);
+                    
+                    fetch(`/api/tasks/${task.id}/update-progress`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ 
+                        progress,
+                        calculateFromForm: false, 
+                        forceStatusUpdate: true 
+                      })
                     })
-                  })
-                  .then(response => {
-                    if (!response.ok) {
-                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                  })
-                  .then(result => {
-                    console.log('[TaskPage] Task progress updated on server:', result);
-                    
-                    // Force refetch of tasks to update task center
-                    fetch('/api/tasks')
-                      .then(response => response.json())
-                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
-                  })
-                  .catch(error => {
-                    console.error('[TaskPage] Failed to update task progress:', error);
-                    
-                    // Revert local state on error if we have a valid task
-                    if (task) {
-                      updateTaskProgress(task.progress, task);
-                    }
-                  });
-                }}
-                onSubmit={(formData) => {
-                  toast({
-                    title: "Submitting Security Assessment",
-                    description: "Please wait while we process your submission...",
-                  });
-
-                  // Submit the security assessment
-                  fetch(`/api/security/submit/${task.id}`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ formData })
-                  })
-                    .then(async response => {
-                      const data = await response.json();
+                    .then(response => {
                       if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                        console.error('[TaskPage] Failed to update progress:', response.statusText);
                       }
-                      return data;
                     })
-                    .then(() => {
-                      confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                      });
-
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "Security assessment has been submitted successfully.",
-                        variant: "default",
-                      });
-                    })
-                    .catch(error => {
-                      console.error('[TaskPage] Security assessment submission failed:', error);
-                      toast({
-                        title: "Error",
-                        description: error.message || "Failed to submit security assessment. Please try again.",
-                        variant: "destructive",
-                      });
+                    .catch(err => {
+                      console.error('[TaskPage] Error updating progress:', err);
                     });
-                }}
-              />
-            </div>
+                  }}
+                  onSuccess={() => {
+                    setIsSubmitted(true);
+                    setShowSuccessModal(true);
+                    fireEnhancedConfetti();
+                    
+                    fetch(`/api/tasks/${task.id}`)
+                      .then(response => response.json())
+                      .then(data => {
+                        if (data.metadata?.securityFormFile) {
+                          setFileId(data.metadata.securityFormFile);
+                        }
+                      })
+                      .catch(err => {
+                        console.error('[TaskPage] Error fetching updated task:', err);
+                      });
+                  }}
+                />
+              </div>
+            )}
           </div>
           
-          {showSuccessModal && (
-            <SecuritySuccessModal
-              open={showSuccessModal}
-              onOpenChange={(open) => setShowSuccessModal(open)}
-              companyName={displayName}
-            />
-          )}
+          {/* Security Success Modal */}
+          <SecuritySuccessModal
+            open={showSuccessModal}
+            onOpenChange={setShowSuccessModal}
+            companyName={displayName}
+          />
         </PageTemplate>
       </DashboardLayout>
     );
   }
   
-  // CARD (1033) Assessment Form Rendering
-  if (taskContentType === 'card' && task) {
-    return (
-      <DashboardLayout>
-        <PageTemplate className="space-y-6">
-          <div className="space-y-4">
-            <BreadcrumbNav forceFallback={true} />
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm font-medium bg-white border-muted-foreground/20"
-                onClick={handleBackClick}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Task Center
-              </Button>
-
-              {isSubmitted && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Download as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Download as Text
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </div>
-
-          <div className="container max-w-7xl mx-auto">
-            {selectedMethod === 'upload' && !showForm ? (
-              <DocumentUploadWizard
-                companyName={derivedCompanyName}
-                onComplete={() => {
-                  setShowForm(true);
-                }}
-              />
-            ) : (selectedMethod === 'manual' || showForm) ? (
-              <UniversalForm
-                taskId={task.id}
-                taskType="card"
-                taskStatus={task.status}
-                companyName={displayName}
-                initialData={task.savedFormData}
-                onProgress={(progress) => {
-                  // Update local state immediately for responsive UI
-                  updateTaskProgress(progress, task);
-                  
-                  console.log('[TaskPage] Card Form progress updated:', progress);
-                  
-                  // Send the progress to the server to update the task
-                  fetch(`/api/tasks/${task.id}/update-progress`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                      progress,
-                      calculateFromForm: false, // We're explicitly setting progress
-                      forceStatusUpdate: true // Force the task status to update
-                    })
-                  })
-                  .then(response => {
-                    if (!response.ok) {
-                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                  })
-                  .then(result => {
-                    console.log('[TaskPage] Task progress updated on server:', result);
-                    
-                    // Force refetch of tasks to update task center
-                    fetch('/api/tasks')
-                      .then(response => response.json())
-                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
-                  })
-                  .catch(error => {
-                    console.error('[TaskPage] Failed to update task progress:', error);
-                    
-                    // Revert local state on error if we have a valid task
-                    if (task) {
-                      updateTaskProgress(task.progress, task);
-                    }
-                  });
-                }}
-                onSubmit={(formData) => {
-                  fetch('/api/card/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                      formData,
-                      taskId: task.id
-                    })
-                  })
-                    .then(async response => {
-                      const data = await response.json();
-                      if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to save compliance form');
-                      }
-                      return data;
-                    })
-                    .then((result) => {
-                      confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                      });
-
-                      setFileId(result.fileId);
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: result.warnings?.length
-                          ? "Compliance form has been saved successfully with some updates to existing data."
-                          : "Compliance form has been saved successfully.",
-                        variant: "default",
-                      });
-
-                      if (result.warnings?.length) {
-                        result.warnings.forEach((warning: string) => {
-                          console.warn('[Card Form] Warning:', warning);
-                        });
-                      }
-                    })
-                    .catch(error => {
-                      console.error('[TaskPage] Form submission failed:', error);
-                      toast({
-                        title: "Error",
-                        description: error.message || "Failed to submit compliance form. Please try again.",
-                        variant: "destructive",
-                      });
-                    });
-                }}
-              />
-            ) : (
-              // Method selection screen
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 className="text-2xl font-semibold mb-4">Open Banking (1033) Survey: {displayName}</h2>
-                <p className="text-muted-foreground mb-6">
-                  Please select how you would like to provide the Section 1033 compliance information for {displayName}.
-                </p>
-                
-                <CardMethodChoice 
-                  taskId={task.id}
-                  onMethodSelect={(method) => setSelectedMethod(method)} 
-                  companyName={displayName}
-                />
-              </div>
-            )}
-          </div>
-        </PageTemplate>
-      </DashboardLayout>
-    );
-  }
-
   // Open Banking Survey Form Rendering
   if (taskContentType === 'open_banking' && task) {
     return (
@@ -882,94 +679,123 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleDownload('json')}>
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Download as JSON
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Download as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Download as TXT
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
             </div>
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Universal form for Open Banking Survey */}
-              <UniversalForm
-                taskId={task.id}
-                taskType="open_banking"
-                taskStatus={task.status}
-                companyName={displayName}
-                initialData={task.savedFormData}
-                onSubmit={(formData) => {
-                  console.log('[TaskPage] Open Banking Survey submitted via playground');
-                  
-                  // Update UI state
-                  setIsSubmitted(true);
-                  
-                  // Force refetch of tasks to update task center
-                  fetch('/api/tasks')
-                    .then(response => response.json())
-                    .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+            {/* Method selection first, then form */}
+            {!showForm && !isSubmitted && (
+              <div className="mb-6">
+                <CardMethodChoice
+                  companyName={displayName}
+                  onMethodSelect={(method) => {
+                    setSelectedMethod(method);
+                    setShowForm(true);
+                  }}
+                  title="Open Banking Survey"
+                  description="Please choose how you would like to complete this Open Banking Survey."
+                />
+              </div>
+            )}
+            
+            {/* Document upload option */}
+            {selectedMethod === 'upload' && showForm && !isSubmitted && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <DocumentUploadWizard
+                  taskId={task.id}
+                  taskType="open_banking"
+                  companyName={displayName}
+                  onSuccess={(fileId) => {
+                    setFileId(fileId);
+                    setIsSubmitted(true);
+                    setShowSuccessModal(true);
+                    fireEnhancedConfetti();
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Manual form filling option or view submitted form */}
+            {(selectedMethod === 'manual' || isSubmitted) && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <UniversalForm
+                  taskId={task.id}
+                  taskType="open_banking"
+                  taskStatus={task.status}
+                  companyName={displayName}
+                  initialData={task.savedFormData}
+                  onProgress={(progress) => {
+                    updateTaskProgress(progress, task);
                     
-                  // Show success toast
-                  toast({
-                    title: "Success",
-                    description: "Open Banking Survey has been submitted successfully.",
-                    variant: "default",
-                  });
-                }}
-              />
-            </div>
+                    fetch(`/api/tasks/${task.id}/update-progress`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ 
+                        progress,
+                        calculateFromForm: false, 
+                        forceStatusUpdate: true 
+                      })
+                    })
+                    .then(response => {
+                      if (!response.ok) {
+                        console.error('[TaskPage] Failed to update progress:', response.statusText);
+                      }
+                    })
+                    .catch(err => {
+                      console.error('[TaskPage] Error updating progress:', err);
+                    });
+                  }}
+                  onSuccess={() => {
+                    setIsSubmitted(true);
+                    setShowSuccessModal(true);
+                    fireEnhancedConfetti();
+                    
+                    fetch(`/api/tasks/${task.id}`)
+                      .then(response => response.json())
+                      .then(data => {
+                        if (data.metadata?.openBankingFormFile) {
+                          setFileId(data.metadata.openBankingFormFile);
+                        }
+                      })
+                      .catch(err => {
+                        console.error('[TaskPage] Error fetching updated task:', err);
+                      });
+                  }}
+                />
+              </div>
+            )}
           </div>
           
-          {/* Show success modal if needed */}
-          {showSuccessModal && (
-            <SecuritySuccessModal
-              open={showSuccessModal}
-              onOpenChange={(open) => setShowSuccessModal(open)}
-              companyName={displayName}
-              description="The Open Banking Survey has been successfully submitted and processed."
-            />
-          )}
+          {/* Success Modal (reusing Security Success Modal) */}
+          <SecuritySuccessModal
+            open={showSuccessModal}
+            onOpenChange={setShowSuccessModal}
+            companyName={displayName}
+          />
         </PageTemplate>
       </DashboardLayout>
     );
   }
-
-  // Fallback handling - this should ideally never happen but provides graceful degradation
+  
+  // Fallback content if task type is unknown
   return (
     <DashboardLayout>
-      <PageTemplate className="container">
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-4">Task Not Available</h2>
-            <p className="text-muted-foreground mb-6">
-              This task is no longer available or cannot be displayed.
-            </p>
-            <Button onClick={handleBackClick}>
-              Back to Task Center
-            </Button>
-          </div>
+      <div className="container max-w-7xl py-6">
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Task Not Found</h2>
+          <p className="text-muted-foreground mb-6">
+            We couldn't find the task you're looking for. It may have been removed or you
+            don't have access to it.
+          </p>
+          <Button onClick={handleBackClick}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Task Center
+          </Button>
         </div>
-      </PageTemplate>
+      </div>
     </DashboardLayout>
   );
 }
