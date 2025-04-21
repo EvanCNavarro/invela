@@ -357,17 +357,37 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     
     // Extract fields from all sections and flatten into a single array
     const allFields = this.sections.flatMap(section => {
-      return section.fields || [];
+      // Make sure each field has the correct section ID
+      return (section.fields || []).map(field => ({
+        ...field,
+        section: section.id // Critical: ensure every field has a section property
+      }));
     });
+    
+    // Log detailed field mapping for debugging
+    if (allFields.length > 0) {
+      logger.info('[OpenBankingFormService] Field sample with section mapping', {
+        fieldSample: {
+          key: allFields[0].key,
+          name: allFields[0].name,
+          section: allFields[0].section
+        }
+      });
+    }
     
     // Map fields to ensure they have a "key" property that matches "name"
     // This is needed for compatibility with the Universal Form component
     const fieldsWithKeys = allFields.map(field => ({
       ...field,
-      key: field.name || field.key // Ensure key exists
+      key: field.name || field.key, // Ensure key exists
+      section: field.section // Ensure section is present
     }));
     
-    logger.info('[OpenBankingFormService] Returning all fields', { count: fieldsWithKeys.length });
+    logger.info('[OpenBankingFormService] Returning all fields', { 
+      count: fieldsWithKeys.length,
+      distinctSections: [...new Set(fieldsWithKeys.map(f => f.section))].join(', ')
+    });
+    
     return fieldsWithKeys;
   }
   
