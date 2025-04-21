@@ -552,7 +552,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               {/* Universal form for Security Assessment */}
               <UniversalForm
                 taskId={task.id}
-                taskType="security"
+                taskType="ky3p"
                 taskStatus={task.status}
                 companyName={displayName}
                 initialData={task.savedFormData}
