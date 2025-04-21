@@ -660,7 +660,13 @@ router.get('/api/files', async (req, res) => {
 router.get("/api/files/:id/download", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
-    console.log('[Files] Download request for file:', fileId);
+    const format = (req.query.format as string)?.toLowerCase() || 'csv'; // Get requested format (default to CSV)
+    
+    console.log('[Files] Download request for file:', {
+      fileId,
+      format,
+      query: req.query
+    });
 
     const fileRecord = await db.query.files.findFirst({
       where: eq(files.id, fileId)
@@ -676,6 +682,7 @@ router.get("/api/files/:id/download", async (req, res) => {
       name: fileRecord.name,
       type: fileRecord.type,
       size: fileRecord.size,
+      format: format,
       pathType: typeof fileRecord.path,
       pathLength: fileRecord.path ? fileRecord.path.length : 0,
       pathFirstChars: fileRecord.path ? fileRecord.path.substring(0, Math.min(20, fileRecord.path.length)) + '...' : ''
