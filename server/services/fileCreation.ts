@@ -68,22 +68,31 @@ export class FileCreationService {
     }
     
     console.log(`[FileCreation] Field map created with ${fieldMap.size} entries`);
+    console.log(`[FileCreation] Data object contains ${Object.keys(data).length} keys`);
     
-    // Add data rows
+    // First, process all entries in the form data
+    const processedKeys = new Set<string>();
+    
     for (const [key, value] of Object.entries(data)) {
-      // Skip empty fields
-      if (!value || value === '') continue;
+      // Log the data being processed
+      console.log(`[FileCreation] Processing field ${key} with value:`, value);
+      
+      // Include all fields, even empty ones (but with a blank value)
+      // This ensures the CSV includes all questions, even if unanswered
       
       // Find field metadata if available
       const field = fieldMap.get(key);
+      processedKeys.add(key); // Mark this key as processed
       
-      // Log field data if debugging
-      if (field && process.env.NODE_ENV !== 'production') {
-        console.log(`[FileCreation] Processing field ${key}:`, {
+      // Log field data for debugging (in all environments)
+      if (field) {
+        console.log(`[FileCreation] Found field metadata for ${key}:`, {
           fieldKeys: Object.keys(field).join(', '),
           fieldId: field.id,
           fieldKey: field.field_key || field.key
         });
+      } else {
+        console.log(`[FileCreation] No field metadata found for ${key}`);
       }
       
       // Handle various field schema possibilities - KY3P fields use group/section differently
