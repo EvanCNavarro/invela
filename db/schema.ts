@@ -411,10 +411,10 @@ export const ky3pFields = pgTable("ky3p_fields", {
   order: integer("order").notNull(),
   field_key: text("field_key").notNull(),
   label: text("label").notNull(),
-  description: text("description").notNull(),
+  question: text("question").notNull(), // Renamed from description
   help_text: text("help_text"),
   demo_autofill: text("demo_autofill"),
-  section: text("section").notNull(),
+  group: text("group").notNull(), // Renamed from section
   field_type: text("field_type").$type<keyof typeof KYBFieldType>().notNull(),
   is_required: boolean("is_required").notNull(),
   answer_expectation: text("answer_expectation"),
