@@ -147,7 +147,7 @@ export async function reconcileTaskProgress(
         // Count total fields
         const totalFieldsResult = await db
           .select({
-            count: db.count()
+            count: sql<number>`count(*)`
           })
           .from(openBankingFields);
         
@@ -156,7 +156,7 @@ export async function reconcileTaskProgress(
         // Count completed responses (complete status)
         const completedResponsesResult = await db
           .select({
-            count: db.count()
+            count: sql<number>`count(*)`
           })
           .from(openBankingResponses)
           .where(
@@ -169,7 +169,8 @@ export async function reconcileTaskProgress(
             )
           );
         
-        const completedFields = completedResponsesResult[0].count;
+        // Extract the completed fields count
+        const completedFields = completedResponsesResult[0]?.count || 0;
         
         // Calculate accurate progress percentage
         const calculatedProgress = 
