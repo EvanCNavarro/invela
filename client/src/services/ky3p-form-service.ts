@@ -31,6 +31,74 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * COMPLETE OVERRIDE of initialize method from EnhancedKybFormService
+   * to prevent inheriting the KYB section logic
+   */
+  async initialize(templateId: number): Promise<void> {
+    if (this.initialized && this.templateId === templateId) {
+      logger.info('[KY3P Form Service] Already initialized with template:', templateId);
+      return; // Already initialized with this template
+    }
+
+    try {
+      this.templateId = templateId;
+      logger.info(`[KY3P Form Service] Initializing with template ID: ${templateId}`);
+      
+      // CLEAR PREVIOUS STATE to ensure fresh initialization
+      this.fields = [];
+      this.sections = [];
+      this.initialized = false;
+      
+      // Fetch KY3P fields from the server or cache
+      const fields = await this.getKybFields(); // This calls our overridden method that fetches KY3P fields
+      logger.info(`[KY3P Form Service] Retrieved KY3P fields from API: ${fields.length}`);
+      
+      if (fields.length === 0) {
+        logger.error('[KY3P Form Service] No KY3P fields retrieved from API - form will be empty');
+        this.initialized = true; // Mark as initialized even though it's empty
+        return;
+      }
+      
+      // Group fields by section name without any expected/hardcoded sections
+      const groupedFields = this.groupFieldsBySection(fields);
+      logger.info(`[KY3P Form Service] Field grouping result: ${Object.keys(groupedFields).length} groups found`);
+      logger.info(`[KY3P Form Service] Sections found: ${Object.keys(groupedFields).join(', ')}`);
+      
+      // Create sections directly from the groups without any normalization or injecting empty KYB sections
+      this.sections = Object.entries(groupedFields).map(([sectionName, sectionFields], index) => {
+        const sectionId = `section-${index}`;
+        
+        logger.info(`[KY3P Form Service] Creating section "${sectionName}" with ID "${sectionId}" (${sectionFields.length} fields)`);
+        
+        // Create the section with the properly assigned fields
+        const section = {
+          id: sectionId,
+          title: sectionName,
+          description: '',
+          order: index,
+          collapsed: false,
+          // Convert each field and assign the proper section ID
+          fields: sectionFields.map(field => this.convertToFormField(field, sectionId))
+        };
+        
+        return section;
+      });
+      
+      // Create a flat array of all fields from all sections
+      this.fields = this.sections.flatMap(section => section.fields);
+      
+      logger.info('[KY3P Form Service] Form initialization complete:',
+        `${this.sections.length} sections, ${this.fields.length} fields`);
+      
+      // Mark as initialized
+      this.initialized = true;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error initializing form:', error);
+      throw error;
+    }
+  }
+  
+  /**
    * Override getKybFields to use KY3P fields instead
    * This is the main method called by the EnhancedKybFormService
    */
