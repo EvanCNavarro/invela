@@ -971,31 +971,69 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     
     // Process each response
     for (const [fieldKey, responseValue] of Object.entries(responses)) {
-      const fieldId = fieldKeyToIdMap.get(fieldKey);
+      let fieldId;
+      let sanitizedValue;
+      let finalValue;
+      let status;
       
-      if (!fieldId) {
-        logger.warn(`[KY3P API] Field key not found: ${fieldKey}`);
+      try {
+        fieldId = fieldKeyToIdMap.get(fieldKey);
+        
+        if (!fieldId) {
+          logger.warn(`[KY3P API] Field key not found: ${fieldKey}`);
+          continue;
+        }
+        
+        // Find the field definition to get its type
+        const fieldDefinition = fields.find(field => field.field_key === fieldKey);
+        
+        // Log detailed field info to debug type issues
+        logger.debug(`[KY3P API] Processing field:`, {
+          fieldKey,
+          fieldId,
+          fieldDefinition: fieldDefinition ? {
+            id: fieldDefinition.id,
+            field_key: fieldDefinition.field_key,
+            field_type: fieldDefinition.field_type,
+            display_name: fieldDefinition.display_name
+          } : null,
+          valueType: typeof responseValue,
+          valuePreview: typeof responseValue === 'object' 
+            ? JSON.stringify(responseValue).substring(0, 100) 
+            : String(responseValue).substring(0, 100)
+        });
+        
+        const fieldType = fieldDefinition?.field_type || 'TEXT';
+        
+        // Use the safe type conversion utility with enhanced logging
+        sanitizedValue = safeTypeConversion(responseValue, fieldType, {
+          fieldKey,
+          fieldName: fieldDefinition?.display_name,
+          formType: 'ky3p'
+        });
+        
+        // Always store as string in database for consistency - this prevents type errors
+        finalValue = String(sanitizedValue);
+        
+        // Determine status based on whether there's a non-empty value
+        status = (finalValue !== null && finalValue !== undefined && finalValue.trim() !== '') 
+          ? 'COMPLETE' 
+          : 'EMPTY';
+          
+        // Log the conversion result
+        logger.debug(`[KY3P API] Value conversion result:`, {
+          fieldKey,
+          originalType: typeof responseValue,
+          convertedType: typeof sanitizedValue,
+          fieldType,
+          finalValue: finalValue.substring(0, 50) + (finalValue.length > 50 ? '...' : ''),
+          status
+        });
+      } catch (fieldError) {
+        // Log but continue processing other fields
+        logger.error(`[KY3P API] Error processing field ${fieldKey}:`, fieldError);
         continue;
       }
-      
-      // Find the field definition to get its type
-      const fieldDefinition = fields.find(field => field.field_key === fieldKey);
-      const fieldType = fieldDefinition?.field_type || 'TEXT';
-      
-      // Use the safe type conversion utility to handle any type issues
-      // This prevents PostgreSQL type conversion errors (22P02)
-      const sanitizedValue = safeTypeConversion(responseValue, fieldType, {
-        fieldKey,
-        fieldName: fieldDefinition?.display_name,
-        formType: 'ky3p'
-      });
-      
-      // Always store as string in database for consistency - this prevents type errors
-      const finalValue = String(sanitizedValue);
-      
-      // Determine status - the field is complete if it has any value (even empty string)
-      // This ensures the field appears in the CSV even if the answer is intentionally blank
-      const status = (sanitizedValue !== null && sanitizedValue !== undefined && sanitizedValue !== '') ? 'COMPLETE' : 'EMPTY';
       
       // Check if response exists
       const [existingResponse] = await db
@@ -1008,6 +1046,17 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
           )
         )
         .limit(1);
+      
+      // Skip updates if any required values are missing (prevents database errors)
+      if (!fieldId || !finalValue || !status) {
+        logger.warn(`[KY3P API] Missing required values for field update:`, {
+          fieldKey,
+          fieldId: fieldId || 'MISSING',
+          hasValue: !!finalValue,
+          hasStatus: !!status
+        });
+        continue;
+      }
       
       if (existingResponse) {
         // Update existing
@@ -1049,7 +1098,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     const requiredFields = await db
       .select()
       .from(ky3pFields)
-      .where(ky3pFields.is_required);
+      .where(eq(ky3pFields.is_required, true));
     
     const totalRequiredFields = requiredFields.length;
     
