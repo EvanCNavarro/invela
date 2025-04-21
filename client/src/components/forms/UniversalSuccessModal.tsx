@@ -25,6 +25,7 @@ export interface SubmissionAction {
     url?: string;      // Optional URL for navigation actions
     fileId?: number;   // Optional file ID for file-related actions
   };
+  fileId?: number;    // Optional file ID passed directly for CSV or PDF files
 }
 
 interface UniversalSuccessModalProps {
@@ -180,7 +181,10 @@ export function UniversalSuccessModal({
     
     // File download button (if a file was generated)
     const fileAction = submissionResult.completedActions?.find(a => a.type === "file_generation");
-    if (fileAction || submissionResult.fileId || submissionResult.downloadUrl) {
+    const hasFileAction = fileAction || submissionResult.fileId || submissionResult.downloadUrl;
+    const hasFileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId;
+    
+    if (hasFileAction || hasFileId) {
       buttons.push(
         <Button
           key="view-files"
