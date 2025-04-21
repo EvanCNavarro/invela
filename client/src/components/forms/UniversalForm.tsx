@@ -86,6 +86,8 @@ import confetti from 'canvas-confetti';
 import SectionContent from './SectionContent';
 import { wsService } from '@/lib/websocket';
 import { ClearingFieldsIndicator } from './ClearingFieldsIndicator';
+import { ClearFieldsButton } from './ClearFieldsButton';
+import { FormClearingService } from '@/services/formClearingService';
 
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
@@ -1202,6 +1204,48 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // State for the clear fields confirmation dialog and clearing progress
   const [showClearFieldsDialog, setShowClearFieldsDialog] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  
+  // Enhanced clear fields function using FormClearingService
+  const handleEnhancedClearFields = useCallback(async () => {
+    if (!taskId || !formService) {
+      logger.error('[UniversalForm] Cannot clear fields - taskId or formService missing');
+      return;
+    }
+    
+    try {
+      logger.info(`[UniversalForm] Enhanced clearing for task ${taskId} (${taskType})`);
+      
+      // Use FormClearingService to handle the clearing process
+      await FormClearingService.clearFormFields({
+        taskId,
+        taskType,
+        form,
+        formService,
+        fields,
+        refreshStatus,
+        setActiveSection
+      });
+      
+      // Reset form in React state
+      if (resetForm) {
+        resetForm();
+      }
+      
+      // Refresh form status
+      await refreshStatus();
+      
+      // Reset progress to 0%
+      if (onProgress) {
+        onProgress(0);
+      }
+      
+      logger.info(`[UniversalForm] Enhanced clearing completed successfully`);
+      return Promise.resolve();
+    } catch (error) {
+      logger.error('[UniversalForm] Enhanced clearing error:', error);
+      return Promise.reject(error);
+    }
+  }, [taskId, taskType, form, formService, fields, refreshStatus, setActiveSection, resetForm, onProgress]);
 
   // Actual function to perform the clearing operation after confirmation
   const doClearFields = useCallback(async () => {
