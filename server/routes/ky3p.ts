@@ -145,6 +145,80 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAc
       status = 'EMPTY';
     }
     
+    // Get current task to check its status
+    const [currentTask] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+    // If task is already submitted, just save the response but don't change task status
+    if (currentTask && currentTask.status === 'submitted') {
+      logger.info(`[KY3P API] Task ${taskId} is already submitted, saving response but keeping submission status`);
+      
+      // Check if a response already exists for this task and field
+      const [existingResponse] = await db
+        .select()
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.field_id, fieldId)
+          )
+        )
+        .limit(1);
+      
+      let responseResult;
+      
+      if (existingResponse) {
+        // Update the existing response
+        responseResult = await db
+          .update(ky3pResponses)
+          .set({
+            response_value,
+            status,
+            version: existingResponse.version + 1,
+            updated_at: new Date()
+          })
+          .where(eq(ky3pResponses.id, existingResponse.id))
+          .returning();
+      } else {
+        // Create a new response
+        responseResult = await db
+          .insert(ky3pResponses)
+          .values({
+            task_id: taskId,
+            field_id: fieldId,
+            response_value,
+            status,
+            version: 1,
+            created_at: new Date(),
+            updated_at: new Date()
+          })
+          .returning();
+      }
+      
+      // For submitted tasks, ensure metadata has the submitted status marker
+      if (!currentTask.metadata?.status || currentTask.metadata.status !== 'submitted') {
+        await db
+          .update(tasks)
+          .set({
+            metadata: {
+              ...currentTask.metadata,
+              status: 'submitted',
+              lastStatusUpdate: new Date().toISOString()
+            },
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info(`[KY3P API] Added 'submitted' status flag to task ${taskId} metadata`);
+      }
+      
+      return res.json(responseResult[0]);
+    }
+    
+    // Normal flow for non-submitted tasks
     // Check if a response already exists for this task and field
     const [existingResponse] = await db
       .select()
@@ -689,22 +763,55 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       ? Math.min(100, Math.round((completedRequiredFields / totalRequiredFields) * 100)) / 100
       : 0;
     
-    // Update the task progress
-    const [updatedTask] = await db
-      .update(tasks)
-      .set({
-        progress,
-        status: progress >= 1 ? 'ready_for_submission' : 'in_progress',
-        updated_at: new Date()
-      })
-      .where(
-        and(
-          eq(tasks.id, taskId),
-          // Never revert a task from submitted status to anything else
-          ne(tasks.status, 'submitted')
+    // Get current task to check if it's already submitted
+    const [currentTask] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+    let finalProgress = progress;
+    let finalStatus = progress >= 1 ? 'ready_for_submission' : 'in_progress';
+    let updatedTask;
+    
+    // If task is already submitted, don't change the status or progress
+    if (currentTask && currentTask.status === 'submitted') {
+      logger.info(`[KY3P API] Task ${taskId} is already submitted, preserving status and progress`);
+      
+      // Maintain submitted status but update timestamp
+      [updatedTask] = await db
+        .update(tasks)
+        .set({
+          updated_at: new Date(),
+          // Ensure metadata has the submitted flag
+          metadata: {
+            ...currentTask.metadata,
+            status: 'submitted',
+          }
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+        
+      finalStatus = 'submitted';
+      finalProgress = 100;
+    } else {
+      // Normal progress update for non-submitted tasks
+      [updatedTask] = await db
+        .update(tasks)
+        .set({
+          progress,
+          status: finalStatus,
+          updated_at: new Date()
+        })
+        .where(
+          and(
+            eq(tasks.id, taskId),
+            // Never revert a task from submitted status to anything else
+            ne(tasks.status, 'submitted')
+          )
         )
-      )
-      .returning();
+        .returning();
+    }
     
     // Get all updated responses to return
     const allResponses = await db
@@ -717,13 +824,18 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       .from(ky3pResponses)
       .where(eq(ky3pResponses.task_id, taskId));
     
-    // Broadcast WebSocket update for task progress
+    // Use the enhanced broadcast utility for consistent messaging
     try {
-      const { broadcastTaskUpdate } = await import('../services/websocket.js');
-      await broadcastTaskUpdate(updatedTask.id, updatedTask);
-      logger.info(`[KY3P API] WebSocket broadcast sent for task ${taskId} progress update: ${progress}`);
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      broadcastProgressUpdate(
+        taskId,
+        finalProgress,
+        finalStatus,
+        updatedTask.metadata
+      );
+      logger.info(`[KY3P API] Progress update broadcast sent: ${finalStatus} (${finalProgress}%)`);
     } catch (wsError) {
-      logger.error('[KY3P API] Failed to broadcast WebSocket update:', wsError);
+      logger.error('[KY3P API] Failed to broadcast progress update:', wsError);
     }
     
     res.json({
