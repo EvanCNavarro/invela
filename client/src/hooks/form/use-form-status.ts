@@ -323,11 +323,13 @@ export function useFormStatus({
     });
     
     // Notify parent component if callback provided
-    if (onChange) {
-      onChange(overallProgress);
+    // IMPORTANT: Using a local reference to onChange to prevent dependency loops
+    const onChangeCallback = onChange;
+    if (onChangeCallback) {
+      onChangeCallback(overallProgress);
     }
     
-  }, [getFormValues, sectionFieldsMap, sections, requiredOnly, onChange]);
+  }, [getFormValues, sectionFieldsMap, sections, requiredOnly]);
 
   // The publicly exposed refresh function
   const refreshStatus = useCallback(() => {
