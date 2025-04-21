@@ -15,7 +15,7 @@ import {
   companies,
   KYBFieldStatus
 } from '@db/schema';
-import { eq, asc, and, desc } from 'drizzle-orm';
+import { eq, asc, and, desc, or, ne } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 
@@ -138,11 +138,11 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAc
     const { response_value } = req.body;
     
     // Determine the status of the response based on the value
-    let status: keyof typeof KYBFieldStatus = 'empty';
+    let status: keyof typeof KYBFieldStatus = 'EMPTY';
     if (response_value) {
-      status = 'complete';
+      status = 'COMPLETE';
     } else {
-      status = 'empty';
+      status = 'EMPTY';
     }
     
     // Check if a response already exists for this task and field
@@ -387,7 +387,7 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     }
     
     // Update the task with completion data and file reference
-    // Once a task is submitted, it should never go back to a non-submitted state
+    // Make sure to mark it as submitted and include the file reference
     const [updatedTask] = await db
       .update(tasks)
       .set({
@@ -396,14 +396,7 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
         updated_at: new Date(),
         metadata: updatedMetadata as any
       })
-      .where(and(
-        eq(tasks.id, taskId),
-        // Only allow updates if status is not already submitted to prevent reverting
-        or(
-          ne(tasks.status, 'submitted'),
-          eq(tasks.id, taskId) // Fallback condition to ensure update happens
-        )
-      ))
+      .where(eq(tasks.id, taskId))
       .returning();
     
     console.log(`[KY3P API] Successfully submitted KY3P assessment for task ${taskId}`, {
