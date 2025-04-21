@@ -210,12 +210,29 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    * Process fields into sections based on group and step_index
    */
   private processFieldsIntoSections(fields: any[]): any[] {
-    logger.info('[OpenBankingFormService] Processing fields into sections', { fieldsCount: fields.length });
+    logger.info('[OpenBankingFormService] Processing fields into sections', { 
+      fieldsCount: fields.length,
+      fieldSample: fields.length > 0 ? {
+        id: fields[0].id,
+        field_key: fields[0].field_key,
+        field_type: fields[0].field_type,
+        group: fields[0].group,
+        step_index: fields[0].step_index
+      } : 'no fields'
+    });
     
     try {
+      // Ensure we have fields to process
+      if (!fields || fields.length === 0) {
+        logger.error('[OpenBankingFormService] No fields to process into sections');
+        return [];
+      }
+      
       // Group fields by step index and group
       const fieldsByStep = fields.reduce((acc: Record<number, Record<string, any[]>>, field) => {
-        const stepIndex = field.step_index || 0;
+        // Always default to step_index 0 if missing
+        const stepIndex = typeof field.step_index === 'number' ? field.step_index : 0;
+        // Always default to 'General' if group is missing
         const group = field.group || 'General';
         
         if (!acc[stepIndex]) {
@@ -230,23 +247,36 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         return acc;
       }, {});
       
+      // Log the grouped structure for debugging
+      logger.info('[OpenBankingFormService] Fields grouped by step and group', {
+        stepCount: Object.keys(fieldsByStep).length,
+        steps: Object.keys(fieldsByStep)
+      });
+      
       // Convert to sections array
       const sections = Object.entries(fieldsByStep)
         .map(([stepIndex, groups]) => {
           return Object.entries(groups).map(([groupName, groupFields]) => {
-            // Sort fields by order within each group
-            const sortedFields = [...groupFields].sort((a, b) => (a.order || 0) - (b.order || 0));
+            // Sort fields by display_order or order within each group
+            const sortedFields = [...groupFields].sort((a, b) => {
+              const aOrder = a.display_order || a.order || 0;
+              const bOrder = b.display_order || b.order || 0;
+              return aOrder - bOrder;
+            });
             
             // Map fields to the format expected by the Universal Form
             const formattedFields = sortedFields.map(field => ({
               id: field.id,
               name: field.field_key,
+              key: field.field_key, // Important: add key property for form mapping
               label: field.display_name,
+              displayName: field.display_name, // Add displayName for consistency
               description: field.help_text,
+              question: field.question || field.display_name, // Add question for form display
               type: this.mapFieldType(field.field_type),
-              required: field.required,
-              options: field.validation_rules ? JSON.parse(field.validation_rules) : undefined,
-              placeholder: field.display_name,
+              required: field.is_required || field.required || false,
+              options: this.parseFieldOptions(field),
+              placeholder: field.placeholder || field.display_name,
               validationType: field.validation_type,
               validationRules: field.validation_rules
             }));
@@ -276,9 +306,50 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Parse field options from various formats
+   */
+  private parseFieldOptions(field: any): any[] {
+    try {
+      // If field already has parsed options array, return it
+      if (field.options && Array.isArray(field.options)) {
+        return field.options;
+      }
+      
+      // If field has options as a string, try to parse it
+      if (field.options && typeof field.options === 'string') {
+        return JSON.parse(field.options);
+      }
+      
+      // Try to parse from validation_rules if available
+      if (field.validation_rules) {
+        const rules = typeof field.validation_rules === 'string' 
+          ? JSON.parse(field.validation_rules) 
+          : field.validation_rules;
+          
+        if (rules.options && Array.isArray(rules.options)) {
+          return rules.options;
+        }
+        
+        // Some formats store options directly in validation_rules as an array
+        if (Array.isArray(rules)) {
+          return rules;
+        }
+      }
+      
+      // Default to empty array if no options found
+      return [];
+    } catch (error) {
+      logger.warn(`[OpenBankingFormService] Error parsing options for field ${field.id || 'unknown'}`, { error });
+      return [];
+    }
+  }
+
+  /**
    * Map field type from database to Universal Form field type
    */
   private mapFieldType(fieldType: string): string {
+    if (!fieldType) return 'text';
+    
     switch (fieldType.toUpperCase()) {
       case 'TEXT':
         return 'text';
@@ -315,8 +386,33 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       }
     }
     
-    logger.info('[OpenBankingFormService] Getting sections', { count: this.sections.length });
-    return this.sections;
+    // If sections are still empty despite initialization, try one more time
+    if (!this.sections || this.sections.length === 0) {
+      logger.warn('[OpenBankingFormService] Sections array is empty after initialization, forcing reload');
+      try {
+        // Force re-initialization to reload fields and sections
+        this.initialized = false; 
+        await this.initialize();
+        
+        // Still empty? Log detailed error
+        if (!this.sections || this.sections.length === 0) {
+          logger.error('[OpenBankingFormService] Failed to load sections after forced reload', {
+            initialized: this.initialized,
+            sectionsState: this.sections ? 'empty array' : 'null',
+            templateId: this.templateId || 'none'
+          });
+        }
+      } catch (reloadError) {
+        logger.error('[OpenBankingFormService] Error during forced reload', { reloadError });
+      }
+    }
+    
+    logger.info('[OpenBankingFormService] Getting sections', { 
+      count: this.sections ? this.sections.length : 0,
+      sectionIds: this.sections ? this.sections.map(s => s.id).join(', ') : 'none'
+    });
+    
+    return this.sections || [];
   }
   
   /**
