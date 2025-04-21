@@ -172,7 +172,7 @@ export class KY3PFormService extends EnhancedKybFormService {
   
   /**
    * Get form sections from fields
-   * Group fields by section
+   * Group fields by section - Override to prevent inheriting KYB section logic
    */
   protected async getFormSections(): Promise<FormSection[]> {
     const fields = await this.getFormFields();
@@ -186,15 +186,24 @@ export class KY3PFormService extends EnhancedKybFormService {
       sectionMap.get(field.section)?.push(field);
     });
     
-    // Create sections
-    return Array.from(sectionMap.entries())
+    // Create sections - only use the sections that have fields
+    // Don't add any sections from the EnhancedKybFormService base class
+    const sections = Array.from(sectionMap.entries())
+      .filter(([_, sectionFields]) => sectionFields.length > 0) // Only include non-empty sections
       .map(([sectionName, sectionFields], index) => ({
         id: `section-${index}`,
         title: sectionName,
         fields: sectionFields,
-        order: index
+        order: index,
+        collapsed: false, // Required by FormSection interface
+        description: ''   // Required by FormSection interface
       }))
       .sort((a, b) => a.order - b.order);
+    
+    this.logger.info('KY3P Form: Created sections with only KY3P fields:', 
+      sections.map(s => `${s.title} (${s.fields.length} fields)`).join(', '));
+    
+    return sections;
   }
   
   /**
