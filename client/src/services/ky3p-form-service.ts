@@ -487,6 +487,159 @@ export class KY3PFormService extends EnhancedKybFormService {
       return {};
     }
   }
+  
+  /**
+   * Save the form's current state
+   * @param options Save options
+   * @returns True if save was successful, false otherwise
+   */
+  public async save(options: { taskId?: number, includeMetadata?: boolean }): Promise<boolean> {
+    if (!this.taskId && !options.taskId) {
+      throw new Error('No task ID provided for saving form');
+    }
+    
+    const effectiveTaskId = options.taskId || this.taskId;
+    
+    try {
+      logger.info(`[KY3P Form Service] Saving form data for task ${effectiveTaskId}`);
+      
+      // Get current form data
+      const formData = this.getFormData();
+      
+      // Call bulk save API to save all form data at once
+      // This is a more efficient approach than saving individual fields
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          responses: formData
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to save form data: ${response.status}`, errorText);
+        return false;
+      }
+      
+      logger.info(`[KY3P Form Service] Form data saved successfully for task ${effectiveTaskId}`);
+      return true;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error saving form data:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Save the current progress 
+   * @param taskId The task ID (optional, will use instance's taskId if not provided)
+   */
+  public async saveProgress(taskId?: number): Promise<void> {
+    await this.save({ taskId, includeMetadata: true });
+  }
+  
+  /**
+   * Submit the form
+   * @param options The submission options
+   * @returns The submission response
+   */
+  public async submit(options: { taskId?: number, fileName?: string, format?: 'json' | 'pdf' | 'csv' }): Promise<{
+    success: boolean;
+    error?: string;
+    details?: string;
+    fileName?: string;
+    fileId?: number;
+  }> {
+    const effectiveTaskId = options.taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      throw new Error('No task ID provided for submitting form');
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Submitting form for task ${effectiveTaskId}`);
+      
+      // First save all form data to ensure everything is up to date
+      const saveResult = await this.save({ taskId: effectiveTaskId, includeMetadata: true });
+      
+      if (!saveResult) {
+        logger.error(`[KY3P Form Service] Failed to save form data before submission`);
+        return {
+          success: false,
+          error: 'Failed to save form data before submission',
+        };
+      }
+      
+      // Call the submit endpoint
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData: this.getFormData(),
+          fileName: options.fileName
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Form submission failed: ${response.status}`, errorText);
+        return {
+          success: false,
+          error: `Form submission failed: ${response.status}`,
+          details: errorText
+        };
+      }
+      
+      const result = await response.json();
+      
+      logger.info(`[KY3P Form Service] Form submitted successfully:`, {
+        fileId: result.fileId,
+        fileName: result.fileName
+      });
+      
+      return {
+        success: true,
+        fileId: result.fileId,
+        fileName: result.fileName
+      };
+    } catch (error) {
+      logger.error('[KY3P Form Service] Form submission error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: String(error)
+      };
+    }
+  }
+  
+  /**
+   * Simple validation for the form
+   * @param data The form data to validate
+   * @returns True if the form is valid, or an object with validation errors
+   */
+  public validate(data: Record<string, any>): boolean | Record<string, string> {
+    // Basic form validation logic
+    const errors: Record<string, string> = {};
+    
+    // Get all required fields
+    const requiredFields = this.fields.filter(field => field.required);
+    
+    for (const field of requiredFields) {
+      const value = data[field.key];
+      
+      // Check if field has a value
+      if (value === undefined || value === null || value === '') {
+        errors[field.key] = 'This field is required';
+      }
+    }
+    
+    // Return true if no errors, otherwise return errors object
+    return Object.keys(errors).length === 0 ? true : errors;
+  }
 }
 
 /**
