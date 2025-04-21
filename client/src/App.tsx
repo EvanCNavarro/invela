@@ -175,6 +175,16 @@ function Router() {
             return <Redirect to={`/task-center/task/${params.taskId}`} />;
           }}
         />
+        
+        {/* Plural 'tasks' route - also redirects to task-center for consistency */}
+        <ProtectedRoute 
+          path="/tasks/:taskId"
+          component={({ params }: { params: { taskId: string } }) => {
+            console.log('[Router] Redirecting from plural tasks route to nested task route');
+            // Redirect to the nested path with the same ID
+            return <Redirect to={`/task-center/task/${params.taskId}`} />;
+          }}
+        />
 
         <ProtectedRoute 
           path="/file-vault" 
