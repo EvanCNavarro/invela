@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // Validation schema for file metadata
 const fileMetadataSchema = z.object({
-  taskType: z.enum(['company_kyb', 'company_card']),
+  taskType: z.enum(['company_kyb', 'company_card', 'sp_ky3p_assessment']),
   taskId: z.number(),
   companyName: z.string(),
   additionalData: z.record(z.unknown()).optional()
@@ -27,7 +27,60 @@ export class FileCreationService {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '');
     const taskType = metadata.taskType.replace('company_', '');
     const sanitizedCompanyName = metadata.companyName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    
+    // For KY3P assessments, create CSV files
+    if (metadata.taskType === 'sp_ky3p_assessment') {
+      return `sp_ky3p_security_assessment_${sanitizedCompanyName}_${timestamp}.csv`;
+    }
+    
+    // Default to JSON for other assessment types
     return `${taskType}_assessment_${sanitizedCompanyName}_${timestamp}.json`;
+  }
+  
+  // Convert form data to CSV format for KY3P assessments
+  private generateCSV(data: Record<string, any>, fields: any[] = []): string {
+    console.log('[FileCreation] Generating CSV for KY3P assessment');
+    
+    // Create CSV header
+    let csv = 'Question,Answer,Group,Section\n';
+    
+    // Create a field key map for easier lookup
+    const fieldMap = new Map();
+    if (Array.isArray(fields)) {
+      fields.forEach(field => {
+        // Handle different field key properties based on the schema
+        const key = field.key || field.field_key;
+        if (key) {
+          fieldMap.set(key, field);
+        }
+      });
+    }
+    
+    console.log(`[FileCreation] Field map created with ${fieldMap.size} entries`);
+    
+    // Add data rows
+    for (const [key, value] of Object.entries(data)) {
+      // Skip empty fields
+      if (!value || value === '') continue;
+      
+      // Find field metadata if available
+      const field = fieldMap.get(key);
+      const group = field?.group || '';
+      const section = field?.section || '';
+      // Handle various field schema possibilities
+      const question = field?.question || field?.display_name || field?.label || key;
+      
+      // Escape quotes in CSV fields
+      const escapedQuestion = question.replace(/"/g, '""');
+      const escapedValue = String(value).replace(/"/g, '""');
+      const escapedGroup = group.replace(/"/g, '""');
+      const escapedSection = section.replace(/"/g, '""');
+      
+      // Add row
+      csv += `"${escapedQuestion}","${escapedValue}","${escapedGroup}","${escapedSection}"\n`;
+    }
+    
+    return csv;
   }
 
   async createTaskFile(
@@ -61,11 +114,30 @@ export class FileCreationService {
       }
 
       const fileName = this.generateFileName(metadata);
-      const fileContent = JSON.stringify(content, null, 2);
+      let fileContent: string;
+      let contentType: string;
+      
+      // Generate content based on file type
+      if (metadata.taskType === 'sp_ky3p_assessment') {
+        // For KY3P assessments, generate CSV content
+        fileContent = this.generateCSV(content, metadata.additionalData?.fields);
+        contentType = 'text/csv';
+        
+        console.log('[FileCreation] Generated CSV content for KY3P assessment', {
+          contentLength: fileContent.length,
+          fieldsCount: metadata.additionalData?.fields?.length || 0
+        });
+      } else {
+        // For other types, use JSON
+        fileContent = JSON.stringify(content, null, 2);
+        contentType = 'application/json';
+      }
+      
       const timestamp = new Date();
 
       console.log('[FileCreation] Creating file record:', {
         fileName,
+        contentType,
         contentLength: fileContent.length,
         timestamp: timestamp.toISOString()
       });
@@ -75,7 +147,7 @@ export class FileCreationService {
         .values({
           name: fileName,
           size: Buffer.from(fileContent).length,
-          type: 'application/json',
+          type: contentType,
           path: fileContent, // Store content directly in path field as per existing pattern
           status: 'uploaded',
           user_id: userId,
