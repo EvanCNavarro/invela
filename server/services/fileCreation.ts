@@ -104,13 +104,43 @@ export class FileCreationService {
       
       // Escape quotes in CSV fields
       const escapedQuestion = question.replace(/"/g, '""');
-      const escapedValue = String(value).replace(/"/g, '""');
+      const escapedValue = String(value || '').replace(/"/g, '""');
       const escapedGroup = group.replace(/"/g, '""');
       const escapedSection = section.replace(/"/g, '""');
       
       // Add row
       csv += `"${escapedQuestion}","${escapedValue}","${escapedGroup}","${escapedSection}"\n`;
     }
+    
+    // Now add any fields from the field map that weren't in the data
+    // This ensures ALL form fields appear in the CSV, even if they weren't submitted
+    if (Array.isArray(fields) && fields.length > 0) {
+      console.log(`[FileCreation] Adding remaining fields from field definitions (${fields.length} total fields)`);
+      
+      for (const field of fields) {
+        const key = field.field_key || field.key;
+        
+        // Skip fields we've already processed
+        if (key && !processedKeys.has(key)) {
+          console.log(`[FileCreation] Adding empty field to CSV: ${key}`);
+          
+          const group = field.group || '';
+          const section = field.section || (field.step_index ? `Step ${field.step_index}` : '');
+          const question = field.question || field.display_name || field.label || key;
+          
+          // Escape quotes in CSV fields
+          const escapedQuestion = question.replace(/"/g, '""');
+          const escapedGroup = group.replace(/"/g, '""');
+          const escapedSection = section.replace(/"/g, '""');
+          
+          // Add row with empty value
+          csv += `"${escapedQuestion}","","${escapedGroup}","${escapedSection}"\n`;
+        }
+      }
+    }
+    
+    // Log the final CSV size
+    console.log(`[FileCreation] Final CSV contains ${csv.split('\n').length - 1} rows`);
     
     return csv;
   }
