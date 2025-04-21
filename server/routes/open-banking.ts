@@ -257,15 +257,19 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       // Create file record in database
       const [file] = await db.insert(files)
         .values({
-          filename: generatedFileName,
-          mimetype: 'text/csv',
+          name: generatedFileName,
+          type: 'text/csv',
+          path: `/uploads/open-banking/${taskId}/${generatedFileName}`,
           size: Buffer.from(csvContent).length,
-          content: Buffer.from(csvContent),
-          task_id: taskId,
-          company_id: task.company_id || null,
-          uploaded_by: req.user?.id,
+          status: 'available',
+          user_id: req.user?.id,
+          company_id: task.company_id || 0,
           created_at: new Date(),
-          updated_at: new Date()
+          updated_at: new Date(),
+          metadata: {
+            content: Buffer.from(csvContent).toString('base64'),
+            originalName: generatedFileName
+          }
         })
         .returning();
       
@@ -316,7 +320,7 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
               
             // Broadcast tab update via WebSocket
             if (wss) {
-              broadcastMessage(wss, 'company_tabs_updated', {
+              broadcastMessage('company_tabs_updated', {
                 companyId: task.company_id,
                 availableTabs: updatedTabs,
                 timestamp: new Date().toISOString(),
@@ -329,7 +333,7 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       // Broadcast task update via WebSocket
       if (wss) {
-        broadcastMessage(wss, 'task_updated', {
+        broadcastMessage('task_updated', {
           taskId,
           status: 'submitted',
           progress: 100,
@@ -342,7 +346,7 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         success: true,
         message: 'Form submitted successfully',
         fileId: file.id,
-        fileName: file.filename
+        fileName: file.name
       });
     } catch (error) {
       logger.error('[OpenBankingRoutes] Error processing form submission:', error);
