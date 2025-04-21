@@ -13,6 +13,7 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
+import { OpenBankingSuccessModal } from "@/components/openbanking/OpenBankingSuccessModal";
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
@@ -984,12 +985,28 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
           
-          {/* Success Modal (reusing Security Success Modal) */}
-          <SecuritySuccessModal
-            open={showSuccessModal}
-            onOpenChange={setShowSuccessModal}
-            companyName={displayName}
-          />
+          {/* Render the appropriate success modal based on the task type */}
+          {taskContentType === 'open_banking' && (
+            <OpenBankingSuccessModal
+              open={showSuccessModal}
+              onOpenChange={setShowSuccessModal}
+              companyName={displayName}
+            />
+          )}
+          {taskContentType === 'kyb' && (
+            <KYBSuccessModal
+              open={showSuccessModal}
+              onOpenChange={setShowSuccessModal}
+              companyName={displayName}
+            />
+          )}
+          {(taskContentType === 'security' || taskContentType === 'ky3p') && (
+            <SecuritySuccessModal
+              open={showSuccessModal} 
+              onOpenChange={setShowSuccessModal}
+              companyName={displayName}
+            />
+          )}
         </PageTemplate>
       </DashboardLayout>
     );
