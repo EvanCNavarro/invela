@@ -1322,7 +1322,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         title: "Submitting Form...",
         description: "Please wait while we process your submission.",
         variant: "default",
-        duration: 10000, // Longer duration to ensure it stays visible
+        duration: taskType === 'open_banking' ? 5000 : 10000, // Shorter duration for OpenBanking to prevent overlap with success modal
       });
       
       // Set completion_date to the current timestamp
@@ -1401,6 +1401,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             // Direct access to toast via id is safer than using dismiss method
             // which might not be directly available on the toast object
             logger.debug('Clearing previous toast notification');
+            
+            // For OpenBanking, forcefully remove toast DOM elements to avoid the persistent toast
+            if (taskType === 'open_banking') {
+              const toastElements = document.querySelectorAll('[role="status"]');
+              toastElements.forEach(el => {
+                if (el && el.textContent && el.textContent.includes('Submitting Form')) {
+                  if (el.parentElement) {
+                    el.parentElement.removeChild(el);
+                    console.log(`[SUBMIT FLOW] Forcefully removed OpenBanking submitting toast`);
+                  }
+                }
+              });
+            }
           } catch (toastError) {
             logger.warn('Unable to dismiss toast:', toastError);
           }
