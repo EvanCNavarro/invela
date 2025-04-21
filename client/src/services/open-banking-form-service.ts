@@ -438,15 +438,36 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     try {
       logger.info(`[OpenBankingFormService] Loading progress for task ${effectiveTaskId}`);
       
-      // Use our dedicated Open Banking progress endpoint
-      const progress = await this.getProgress();
+      // Get the task information first to check if it's already submitted
+      try {
+        const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`);
+        if (taskResponse.ok) {
+          const taskData = await taskResponse.json();
+          if (taskData.status === 'submitted') {
+            logger.info(`[OpenBankingFormService] Task ${effectiveTaskId} is already submitted, returning empty form data`);
+            return {};
+          }
+        }
+      } catch (taskError) {
+        // If we can't get the task, continue with trying to get the progress
+        logger.warn(`[OpenBankingFormService] Could not check task status: ${taskError}`);
+      }
       
-      if (progress && progress.formData) {
-        // Store the form data in the service for future reference
-        this.loadFormData(progress.formData);
+      // Use our dedicated Open Banking progress endpoint
+      try {
+        const progress = await this.getProgress();
         
-        // Return the form data for the form manager to use
-        return progress.formData;
+        if (progress && progress.formData) {
+          // Store the form data in the service for future reference
+          this.loadFormData(progress.formData);
+          
+          // Return the form data for the form manager to use
+          return progress.formData;
+        }
+      } catch (progressError) {
+        // If we fail to get progress, log it but don't throw
+        logger.warn(`[OpenBankingFormService] Could not load progress, returning empty object: ${progressError}`);
+        return {};
       }
       
       // If no data was found, return an empty object
@@ -454,6 +475,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       return {};
     } catch (error) {
       logger.error('[OpenBankingFormService] Error loading progress:', error);
+      // Return empty object instead of throwing to ensure the form still loads
       return {};
     }
   }
