@@ -11,7 +11,8 @@
 
 import type { Express, Request, Response } from 'express';
 import { db } from '@db';
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, sql, or } from 'drizzle-orm';
+import { requireAuth } from '../middleware/auth';
 import {
   companies,
   DocumentCategory,
@@ -185,6 +186,172 @@ async function unlockDependentTasks(taskId: number) {
 
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
+  
+  // Direct endpoint for open banking form submissions
+  app.post('/api/tasks/:taskId/open-banking-submit', requireAuth, async (req, res) => {
+    const taskId = parseInt(req.params.taskId, 10);
+    const { formData, fileName } = req.body;
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    if (!formData) {
+      return res.status(400).json({ error: 'Form data is required' });
+    }
+    
+    try {
+      logger.info('[OpenBankingRoutes] Processing direct form submission', { taskId });
+      
+      // Check if task exists and is an Open Banking task
+      const taskData = await db.select().from(tasks)
+        .where(and(
+          eq(tasks.id, taskId),
+          or(
+            eq(tasks.task_type, 'open_banking'),
+            eq(tasks.task_type, 'open_banking_survey')
+          )
+        ))
+        .limit(1);
+      
+      if (taskData.length === 0) {
+        return res.status(404).json({ error: 'Open Banking task not found' });
+      }
+
+      // Get the task with the company relation
+      const task = taskData[0];
+      
+      // Create a filename if not provided
+      const generatedFileName = fileName || `Open_Banking_Survey_task_${taskId}_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      // Generate CSV data
+      const fieldKeys = Object.keys(formData);
+      const csvRows = [];
+      
+      // Header row with 'Field Key', 'Question', 'Response'
+      csvRows.push(['Field Key', 'Question', 'Response']);
+      
+      // Add data rows
+      for (const key of fieldKeys) {
+        // Get the actual question from the database
+        const [field] = await db.select().from(openBankingFields)
+          .where(eq(openBankingFields.field_key, key))
+          .limit(1);
+        
+        const question = field?.display_name || field?.question || key;
+        const response = formData[key] || '';
+        
+        csvRows.push([key, question, response]);
+      }
+      
+      // Convert to CSV string
+      const csvContent = csvRows.map(row => 
+        row.map(cell => 
+          // Properly escape values with quotes if they contain commas, quotes, or newlines
+          typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n')) 
+            ? '"' + cell.replace(/"/g, '""') + '"' 
+            : cell
+        ).join(',')
+      ).join('\n');
+      
+      // Create file record in database
+      const [file] = await db.insert(files)
+        .values({
+          filename: generatedFileName,
+          mimetype: 'text/csv',
+          size: Buffer.from(csvContent).length,
+          content: Buffer.from(csvContent),
+          task_id: taskId,
+          company_id: task.company_id || null,
+          uploaded_by: req.user?.id,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning();
+      
+      // Update task metadata with the file ID
+      const updatedMetadata = {
+        ...task.metadata,
+        openBankingFormFile: file.id
+      };
+      
+      // Update task status to submitted and save form data
+      await db.update(tasks)
+        .set({
+          status: 'submitted',
+          progress: 100,
+          metadata: updatedMetadata,
+          saved_form_data: formData,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // Also update company's onboarding_company_completed if needed
+      if (task.company_id) {
+        await db.update(companies)
+          .set({
+            onboarding_company_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, task.company_id));
+          
+        // Unlock company tabs for file-vault
+        const [company] = await db.select().from(companies)
+          .where(eq(companies.id, task.company_id))
+          .limit(1);
+        
+        if (company) {
+          const availableTabs = company.available_tabs || ['task-center'];
+          
+          // Add file-vault if not already present
+          if (!availableTabs.includes('file-vault')) {
+            const updatedTabs = [...availableTabs, 'file-vault'];
+            
+            await db.update(companies)
+              .set({ 
+                available_tabs: updatedTabs,
+                updated_at: new Date()
+              })
+              .where(eq(companies.id, task.company_id));
+              
+            // Broadcast tab update via WebSocket
+            if (wss) {
+              broadcastMessage(wss, 'company_tabs_updated', {
+                companyId: task.company_id,
+                availableTabs: updatedTabs,
+                timestamp: new Date().toISOString(),
+                cache_invalidation: true
+              });
+            }
+          }
+        }
+      }
+      
+      // Broadcast task update via WebSocket
+      if (wss) {
+        broadcastMessage(wss, 'task_updated', {
+          taskId,
+          status: 'submitted',
+          progress: 100,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Return success response with file ID
+      res.json({
+        success: true,
+        message: 'Form submitted successfully',
+        fileId: file.id,
+        fileName: file.filename
+      });
+    } catch (error) {
+      logger.error('[OpenBankingRoutes] Error processing form submission:', error);
+      res.status(500).json({ 
+        error: 'Failed to process form submission',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // Track ongoing clear operations to prevent duplicates
   const ongoingClearOperations = new Set<number>();
