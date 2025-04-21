@@ -683,7 +683,14 @@ export default function TaskPage({ params }: TaskPageProps) {
                     fetch(`/api/tasks/${task.id}`)
                       .then(response => response.json())
                       .then(data => {
-                        if (data.metadata?.securityFormFile) {
+                        console.log('[TaskPage] KY3P task updated metadata:', data.metadata);
+                        
+                        // Check for both field names and use whichever is available
+                        if (data.metadata?.ky3pFormFile) {
+                          console.log('[TaskPage] Using ky3pFormFile:', data.metadata.ky3pFormFile);
+                          setFileId(data.metadata.ky3pFormFile);
+                        } else if (data.metadata?.securityFormFile) {
+                          console.log('[TaskPage] Using securityFormFile:', data.metadata.securityFormFile);
                           setFileId(data.metadata.securityFormFile);
                         }
                       })

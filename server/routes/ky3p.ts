@@ -828,9 +828,11 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     }
     
     // Update the task status and include the file ID in metadata
+    // Store under both ky3pFormFile and securityFormFile keys for backward compatibility
     const updatedMetadata = {
       ...task.metadata,
-      ky3pFormFile: fileResult.success ? fileResult.fileId : undefined
+      ky3pFormFile: fileResult.success ? fileResult.fileId : undefined,
+      securityFormFile: fileResult.success ? fileResult.fileId : undefined // For backward compatibility
     };
     
     // Add logging for file information
