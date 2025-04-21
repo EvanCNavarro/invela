@@ -688,17 +688,62 @@ router.get("/api/files/:id/download", async (req, res) => {
 
     // Check if this is a KYB or KY3P form CSV file
     const isKybCsvFile = (fileRecord.name.toLowerCase().includes('kyb_form') || 
-                          fileRecord.name.toLowerCase().includes('ky3p_security_assessment') || 
-                          fileRecord.name.toLowerCase().includes('spglobal_ky3p')) && 
+                          fileRecord.name.toLowerCase().includes('kybform')) && 
                           (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
     
-    if (isKybCsvFile) {
-      console.log('[Files] Handling KYB CSV file download');
+    const isKy3pCsvFile = (fileRecord.name.toLowerCase().includes('ky3p') || 
+                           fileRecord.name.toLowerCase().includes('spglobal') ||
+                           fileRecord.name.toLowerCase().includes('security_assessment')) && 
+                          (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
+    
+    // Handle both KYB and KY3P CSV files with special logic
+    if (isKybCsvFile || isKy3pCsvFile) {
+      console.log('[Files] Handling CSV file download:', {
+        isKyb: isKybCsvFile,
+        isKy3p: isKy3pCsvFile,
+        fileName: fileRecord.name,
+        fileType: fileRecord.type
+      });
+      
+      // Special handling for KY3P files with database prefix marker
+      if (isKy3pCsvFile && fileRecord.path && fileRecord.path.startsWith('database:')) {
+        console.log('[Files] KY3P CSV file with database marker found');
+        
+        // For CSV files, set more specific headers for better browser handling
+        res.setHeader('Content-Type', 'text/csv');
+        
+        // Use standardized filename format for download
+        const taskType = 'KY3P';
+        
+        // Get task ID from query params, metadata, or default to 0
+        const taskId = Number(req.query.taskId) || 
+                      (fileRecord.metadata && fileRecord.metadata.taskId ? Number(fileRecord.metadata.taskId) : 0);
+        
+        // Get company name from file metadata or use a default
+        const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
+        
+        // Create standardized filename
+        const standardizedFilename = FileCreationService.generateStandardFileName(
+          taskType, 
+          taskId, 
+          companyName,
+          '1.0',
+          'csv'
+        );
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
+        
+        // Extract content by removing the database prefix
+        const content = fileRecord.path.replace('database:', '');
+        
+        console.log('[Files] Sending KY3P CSV content from database field, length:', content.length);
+        return res.send(content);
+      }
       
       // For inline content (stored in the path field directly), use that as content
       // CSV content typically has commas or starts with a header row
       if (fileRecord.path && (fileRecord.path.includes(',') || fileRecord.path.startsWith('Field') || fileRecord.path.startsWith('Question'))) {
-        console.log('[Files] KYB CSV file content found in database path field');
+        console.log('[Files] CSV file content found in database path field');
         
         // For CSV files, set more specific headers for better browser handling
         res.setHeader('Content-Type', 'text/csv');
