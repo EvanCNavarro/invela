@@ -2193,12 +2193,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // BUGFIX: Ensure form shows as submitted after successful submission 
   // Check if form is submitted or completed either from props or local state
   // Using formSubmittedLocally state from line 191
-  const isSubmitted = formSubmittedLocally || taskStatus === 'submitted' || taskStatus === 'completed';
+  const isSubmitted = formSubmittedLocally || taskStatus === 'submitted' || taskStatus === 'completed' || taskStatus === 'approved';
   
   // Format submission date if available in metadata
   const submissionDate = taskMetadata?.submissionDate 
     ? new Date(taskMetadata.submissionDate).toLocaleDateString() 
     : undefined;
+    
+  // Check if we should show the download button (when form is submitted and fileId exists)
+  const showDownloadButton = isSubmitted && (fileId !== undefined && fileId !== null);
     
   // Resolve title and company name values for display
   const displayTitle = taskTitle || formTitle;
@@ -2234,8 +2237,45 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           </div>
           
           {isSubmitted ? (
-            // Removed duplicate download button as it already exists in the page header
-            <div></div>
+            // Show download button for submitted forms when fileId is available
+            <div>
+              {showDownloadButton && (
+                <div className="flex flex-col">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Download your submitted form in your preferred format:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload('csv')}
+                      className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"
+                    >
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download CSV
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload('json')}
+                      className="flex items-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-200"
+                    >
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download JSON
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload('txt')}
+                      className="flex items-center bg-purple-50 hover:bg-purple-100 text-purple-600 border-purple-200"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download TXT
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : isCompanyDemo && (
             <div className="flex flex-wrap gap-4">
               <Button 
@@ -2771,6 +2811,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           e.preventDefault(); // Prevent any form submission
                           setActiveSection(activeSection + 1);
                         }}
+                        disabled={taskStatus === 'submitted' || taskStatus === 'approved'}
                         className="flex items-center gap-1"
                       >
                         Next <ArrowRight className="ml-1 h-4 w-4" />
