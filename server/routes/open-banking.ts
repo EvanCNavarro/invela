@@ -183,6 +183,103 @@ async function unlockDependentTasks(taskId: number) {
 
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
+  
+  // Optimized endpoint for fast clearing of all field values
+  app.post('/api/tasks/:taskId/open-banking-responses/clear-all', async (req, res) => {
+    const taskId = parseInt(req.params.taskId, 10);
+    const { clearAction } = req.body;
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    // Verify this is a valid clear request
+    if (clearAction !== 'FAST_DELETE_ALL') {
+      return res.status(400).json({ error: 'Invalid clear action specified' });
+    }
+    
+    try {
+      // Check if task exists and is an Open Banking task
+      const taskData = await db.select().from(tasks)
+        .where(and(
+          eq(tasks.id, taskId),
+          eq(tasks.task_type, 'open_banking')
+        ))
+        .limit(1);
+      
+      if (taskData.length === 0) {
+        return res.status(404).json({ error: 'Open Banking task not found' });
+      }
+      
+      logger.info('[OpenBankingRoutes] Processing FAST_DELETE_ALL request for task', { taskId });
+      
+      const startTime = Date.now();
+      
+      // Execute a single transaction for the entire operation
+      await db.transaction(async (tx) => {
+        // 1. Delete all responses in one efficient operation
+        await tx.delete(openBankingResponses)
+          .where(eq(openBankingResponses.task_id, taskId));
+        
+        // 2. Reset task state
+        await tx.update(tasks)
+          .set({ 
+            progress: 0, 
+            status: TaskStatus.NOT_STARTED,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+      });
+      
+      // Capture how long the operation took
+      const operationTime = Date.now() - startTime;
+      
+      // Disable the task reconciliation process for this task for a longer time
+      // to prevent any cascading updates
+      global.__skipTaskReconciliation = global.__skipTaskReconciliation || {};
+      global.__skipTaskReconciliation[taskId] = Date.now() + 30000; // skip for 30 seconds
+      
+      // Broadcast exactly one WebSocket message with force update flag
+      const updatePayload = {
+        id: taskId,
+        status: 'not_started',
+        progress: 0,
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          lastProgressReconciliation: new Date().toISOString(),
+          forceReload: true  // Tell client to reload form state
+        },
+        timestamp: new Date().toISOString(),
+        forceUpdate: true
+      };
+      
+      broadcastMessage('task_updated', updatePayload);
+      
+      logger.info('[OpenBankingRoutes] Fast clear completed successfully', { 
+        taskId, 
+        durationMs: operationTime,
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.json({
+        success: true,
+        taskId,
+        progress: 0,
+        status: 'not_started',
+        message: 'All fields cleared successfully',
+        durationMs: operationTime,
+        skipReconciliation: true,
+        forceReload: true
+      });
+    }
+    catch (error) {
+      logger.error('[OpenBankingRoutes] Error in fast clear operation', { error, taskId });
+      return res.status(500).json({ 
+        error: 'Failed to clear fields',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   /**
    * Endpoint to provide demo data for auto-filling Open Banking Survey forms
