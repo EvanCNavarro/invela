@@ -782,6 +782,35 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                   if (result.fileId) {
                     logger.info(`KY3P assessment generated file with ID: ${result.fileId}`);
                     setFileId(result.fileId);
+                    
+                    // Also update the submission result for the success modal
+                    // The server should return completedActions, but we'll ensure they're constructed properly here too
+                    if (!result.completedActions || !Array.isArray(result.completedActions) || result.completedActions.length === 0) {
+                      logger.warn('Server did not return completedActions array, constructing locally');
+                      
+                      // Create a default set of completed actions for the success modal
+                      const completedActions = [
+                        {
+                          type: "task_completion",
+                          description: "Task Completed",
+                          data: { 
+                            details: "Your S&P KY3P Security Assessment has been successfully submitted."
+                          }
+                        },
+                        {
+                          type: "file_generation",
+                          description: "CSV File Generated",
+                          fileId: result.fileId,
+                          data: { 
+                            details: "The S&P KY3P Security Assessment responses have been saved as a CSV file in your file vault.",
+                            fileId: result.fileId 
+                          }
+                        }
+                      ];
+                      
+                      // Update result object to include completedActions
+                      result.completedActions = completedActions;
+                    }
                   }
                   
                   // Force invalidate the task data cache after successful submission
