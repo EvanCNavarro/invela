@@ -712,8 +712,9 @@ router.get("/api/files/:id/download", async (req, res) => {
         // For CSV files, set more specific headers for better browser handling
         res.setHeader('Content-Type', 'text/csv');
         
-        // Use standardized filename format for download
-        const taskType = 'KY3P';
+        // Use consistent naming with the file-vault format
+        // Always use 'ky3p' type for KY3P files to trigger the special S&P format
+        const taskType = 'ky3p';
         
         // Get task ID from query params, metadata, or default to 0
         const taskId = Number(req.query.taskId) || 
@@ -722,7 +723,7 @@ router.get("/api/files/:id/download", async (req, res) => {
         // Get company name from file metadata or use a default
         const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
         
-        // Create standardized filename
+        // Create standardized filename using S&P format (handled in the service)
         const standardizedFilename = FileCreationService.generateStandardFileName(
           taskType, 
           taskId, 
@@ -748,8 +749,15 @@ router.get("/api/files/:id/download", async (req, res) => {
         // For CSV files, set more specific headers for better browser handling
         res.setHeader('Content-Type', 'text/csv');
         
-        // Use standardized filename format for download
-        const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
+        // Determine if this is a KY3P file based on filename and content
+        const isKy3p = fileRecord.name.toLowerCase().includes('ky3p') || 
+                      fileRecord.name.toLowerCase().includes('spglobal') ||
+                      fileRecord.name.toLowerCase().includes('security_assessment') ||
+                      (fileRecord.path && fileRecord.path.includes('S&P KY3P Security Assessment'));
+        
+        // Set appropriate task type to trigger the right filename format
+        const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 
+                        (isKy3p ? 'ky3p' : 'FORM');
         
         // Get task ID from query params, metadata, or default to 0
         const taskId = Number(req.query.taskId) || 
@@ -858,8 +866,15 @@ router.get("/api/files/:id/download", async (req, res) => {
         // For CSV files, set more specific headers for better browser handling
         res.setHeader('Content-Type', 'text/csv');
         
-        // Use standardized filename format for download
-        const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
+        // Determine if this is a KY3P file based on filename and content
+        const isKy3p = fileRecord.name.toLowerCase().includes('ky3p') || 
+                      fileRecord.name.toLowerCase().includes('spglobal') ||
+                      fileRecord.name.toLowerCase().includes('security_assessment') ||
+                      (fileRecord.path && fileRecord.path.includes('S&P KY3P Security Assessment'));
+        
+        // Set appropriate task type to trigger the right filename format
+        const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 
+                        (isKy3p ? 'ky3p' : 'FORM');
         
         // Get task ID from query params, metadata, or default to 0
         const taskId = Number(req.query.taskId) || 
@@ -891,8 +906,14 @@ router.get("/api/files/:id/download", async (req, res) => {
       // For CSV files, set more specific headers for better browser handling
       res.setHeader('Content-Type', 'text/csv');
       
-      // Use standardized filename format for download
-      const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 'FORM';
+      // Determine if this is a KY3P file based on filename and content
+      const isKy3p = fileRecord.name.toLowerCase().includes('ky3p') || 
+                    fileRecord.name.toLowerCase().includes('spglobal') ||
+                    fileRecord.name.toLowerCase().includes('security_assessment');
+      
+      // Set appropriate task type to trigger the right filename format
+      const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 
+                      (isKy3p ? 'ky3p' : 'FORM');
       
       // Get task ID from query params, metadata, or default to 0
       const taskId = Number(req.query.taskId) || 
