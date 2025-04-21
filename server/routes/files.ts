@@ -753,8 +753,14 @@ router.get("/api/files/:id/download", async (req, res) => {
       if (fileRecord.path && (fileRecord.path.includes(',') || fileRecord.path.startsWith('Field') || fileRecord.path.startsWith('Question'))) {
         console.log('[Files] CSV file content found in database path field');
         
-        // For CSV files, set more specific headers for better browser handling
-        res.setHeader('Content-Type', 'text/csv');
+        // Set content type based on requested format
+        const contentTypes: Record<string, string> = {
+          'csv': 'text/csv',
+          'txt': 'text/plain',
+          'json': 'application/json'
+        };
+        
+        res.setHeader('Content-Type', contentTypes[format] || 'text/csv');
         
         // Determine if this is a KY3P file based on filename and content
         const isKy3p = fileRecord.name.toLowerCase().includes('ky3p') || 
@@ -837,7 +843,80 @@ router.get("/api/files/:id/download", async (req, res) => {
             dataRows.forEach((row, index) => {
               row.unshift(`${index + 1}`);
             });
+          }
+          
+          // Create structured data object with all fields and responses
+          const structuredData = dataRows.map((row, index) => {
+            const rowData: Record<string, string> = {};
+            headers.forEach((header, headerIndex) => {
+              rowData[header] = row[headerIndex] || '';
+            });
+            return rowData;
+          });
+          
+          // Format the data based on requested format
+          let finalContent = '';
+          
+          console.log('[Files] Converting to requested format:', format);
+          
+          if (format === 'json') {
+            // JSON format
+            const filename = standardizedFilename.replace('.csv', '.json');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
             
+            // For JSON, provide a structured object with metadata
+            const jsonData = {
+              metadata: {
+                taskType,
+                taskId,
+                companyName,
+                generatedAt: new Date().toISOString(),
+                fieldCount: headers.length,
+                responseCount: dataRows.length
+              },
+              fields: headers,
+              responses: structuredData
+            };
+            
+            finalContent = JSON.stringify(jsonData, null, 2);
+          } else if (format === 'txt') {
+            // TXT format - simple table with fixed width columns
+            const filename = standardizedFilename.replace('.csv', '.txt');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            
+            // Determine column widths
+            const columnWidths = headers.map(header => Math.max(
+              header.length, 
+              ...dataRows.map(row => String(row[headers.indexOf(header)] || '').length),
+              15 // Minimum width
+            ));
+            
+            // Create header line with padding
+            const headerLine = headers.map((header, i) => 
+              header.padEnd(columnWidths[i])
+            ).join(' | ');
+            
+            // Create separator line
+            const separatorLine = columnWidths.map(width => 
+              '-'.repeat(width)
+            ).join('-+-');
+            
+            // Create data lines with padding
+            const dataLines = dataRows.map(row => 
+              headers.map((header, i) => 
+                String(row[i] || '').padEnd(columnWidths[i])
+              ).join(' | ')
+            );
+            
+            // Build the final content
+            finalContent = [
+              headerLine,
+              separatorLine,
+              ...dataLines
+            ].join('\n');
+            
+          } else {
+            // Default CSV format
             // Rebuild the CSV content with proper CSV escaping
             const escapeCell = (cell) => {
               if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
@@ -846,16 +925,17 @@ router.get("/api/files/:id/download", async (req, res) => {
               return cell;
             };
             
-            fileContent = [
+            finalContent = [
               headers.map(h => escapeCell(h)).join(','),
               ...dataRows.map(row => row.map(cell => escapeCell(cell)).join(','))
             ].join('\n');
           }
           
-          console.log('[Files] Successfully processed CSV with question numbers');
-          return res.send(fileContent);
-        } catch (processError) {
-          console.error('[Files] Error processing CSV file:', processError);
+          console.log('[Files] Successfully processed content in format:', format);
+          return res.send(finalContent);
+        } catch (error: unknown) {
+          const processError = error as Error;
+          console.error('[Files] Error processing CSV file:', processError.message);
           console.error(processError.stack);
           // If there's an error in processing, send the original content
           return res.send(fileRecord.path.replace('database:', ''));
@@ -910,8 +990,14 @@ router.get("/api/files/:id/download", async (req, res) => {
         return res.send(content);
       }
       
-      // For CSV files, set more specific headers for better browser handling
-      res.setHeader('Content-Type', 'text/csv');
+      // Set content type based on requested format
+      const contentTypes: Record<string, string> = {
+        'csv': 'text/csv',
+        'txt': 'text/plain',
+        'json': 'application/json'
+      };
+      
+      res.setHeader('Content-Type', contentTypes[format] || 'text/csv');
       
       // Determine if this is a KY3P file based on filename and content
       const isKy3p = fileRecord.name.toLowerCase().includes('ky3p') || 
@@ -934,13 +1020,17 @@ router.get("/api/files/:id/download", async (req, res) => {
         ? Number(fileRecord.metadata.questionNumber) 
         : undefined;
         
+      // Use appropriate file extension based on requested format
+      const fileExtension = format === 'json' ? 'json' : 
+                            format === 'txt' ? 'txt' : 'csv';
+      
       // Create standardized filename
       const standardizedFilename = FileCreationService.generateStandardFileName(
         taskType, 
         taskId, 
         companyName,
         '1.0',
-        'csv',
+        fileExtension,
         questionNumber
       );
       
@@ -950,6 +1040,113 @@ router.get("/api/files/:id/download", async (req, res) => {
       try {
         const csvContent = fs.readFileSync(filePath, 'utf8');
         console.log('[Files] Successfully read CSV file of size:', csvContent.length);
+        
+        // If we need to convert the format, parse CSV and convert to the requested format
+        if (format !== 'csv' && csvContent.includes(',')) {
+          console.log('[Files] Converting CSV content to:', format);
+          
+          try {
+            // Parse the CSV content
+            const parseCsvRow = (row: string) => {
+              const result: string[] = [];
+              let inQuotes = false;
+              let currentValue = '';
+              
+              for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                
+                if (char === '"') {
+                  inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                  result.push(currentValue);
+                  currentValue = '';
+                } else {
+                  currentValue += char;
+                }
+              }
+              
+              // Add the last value
+              result.push(currentValue);
+              return result;
+            };
+            
+            const rows = csvContent.split('\n');
+            const headers = parseCsvRow(rows[0]);
+            const dataRows = rows.slice(1).map(row => parseCsvRow(row)).filter(row => row.length > 1);
+            
+            // Create structured data object with all fields and responses
+            const structuredData = dataRows.map((row, index) => {
+              const rowData: Record<string, string> = {};
+              headers.forEach((header, headerIndex) => {
+                rowData[header] = row[headerIndex] || '';
+              });
+              return rowData;
+            });
+            
+            // Format the data based on requested format
+            let finalContent = '';
+            
+            if (format === 'json') {
+              // For JSON, provide a structured object with metadata
+              const jsonData = {
+                metadata: {
+                  taskType,
+                  taskId,
+                  companyName,
+                  generatedAt: new Date().toISOString(),
+                  fieldCount: headers.length,
+                  responseCount: dataRows.length
+                },
+                fields: headers,
+                responses: structuredData
+              };
+              
+              finalContent = JSON.stringify(jsonData, null, 2);
+            } else if (format === 'txt') {
+              // TXT format - simple table with fixed width columns
+              // Determine column widths
+              const columnWidths = headers.map(header => Math.max(
+                header.length, 
+                ...dataRows.map(row => String(row[headers.indexOf(header)] || '').length),
+                15 // Minimum width
+              ));
+              
+              // Create header line with padding
+              const headerLine = headers.map((header, i) => 
+                header.padEnd(columnWidths[i])
+              ).join(' | ');
+              
+              // Create separator line
+              const separatorLine = columnWidths.map(width => 
+                '-'.repeat(width)
+              ).join('-+-');
+              
+              // Create data lines with padding
+              const dataLines = dataRows.map(row => 
+                headers.map((header, i) => 
+                  String(row[i] || '').padEnd(columnWidths[i])
+                ).join(' | ')
+              );
+              
+              // Build the final content
+              finalContent = [
+                headerLine,
+                separatorLine,
+                ...dataLines
+              ].join('\n');
+            }
+            
+            if (finalContent) {
+              console.log('[Files] Successfully converted content to', format);
+              return res.send(finalContent);
+            }
+          } catch (error: unknown) {
+            const conversionError = error as Error;
+            console.error('[Files] Error converting CSV format:', conversionError.message);
+            // Fall back to sending original content if conversion fails
+          }
+        }
+        
         return res.send(csvContent);
       } catch (readError) {
         console.error('[Files] Error reading CSV file:', readError);
