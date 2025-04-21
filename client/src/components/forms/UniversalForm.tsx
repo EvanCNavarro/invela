@@ -1207,77 +1207,77 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.info(`[UniversalForm] Clearing all fields for task ${taskId}`);
       
       // Show loading toast
-      const loadingToastId = toast({
+      toast({
         title: "Clearing Fields",
         description: "Removing all entered data...",
-        duration: 5000,
+        duration: 3000,
       });
       
       // Create an empty object with all fields set to empty strings
       const emptyData: Record<string, string> = {};
       
       // Set all form fields to empty strings in one go
-      fields.forEach(field => {
-        emptyData[field.key] = '';
-      });
+      // Only include fields that actually exist in the form
+      let fieldsCleared = 0;
+      for (const field of fields) {
+        if (field && field.key) {
+          emptyData[field.key] = '';
+          fieldsCleared++;
+          
+          // Set each field individually to ensure it's registered by react-hook-form
+          form.setValue(field.key, '');
+        }
+      }
       
-      // Reset the form immediately to improve UI responsiveness
-      form.reset(emptyData);
+      logger.info(`[UniversalForm] Set ${fieldsCleared} fields to empty values in form state`);
+      
+      // Clear any form errors
       form.clearErrors();
-      
-      // Submit the empty data to server - but don't block UI on this
-      let serverSuccess = false;
       
       if (taskId) {
         try {
-          let endpointUrl = '';
-          let requestBody = {};
-          
-          // Determine the appropriate endpoint based on task type
+          // Use the appropriate endpoint based on task type
           if (taskType === 'sp_ky3p_assessment') {
-            endpointUrl = `/api/tasks/${taskId}/ky3p-responses/bulk`;
-            requestBody = { responses: emptyData };
-          } else if (taskType === 'open_banking_survey') {
-            endpointUrl = `/api/tasks/${taskId}/open-banking-responses/bulk`;
-            requestBody = { responses: emptyData };
-          } else {
-            // Default to KYB endpoint for other types
-            endpointUrl = '/api/kyb/progress';
-            requestBody = { 
-              taskId: taskId,
-              formData: emptyData,
-              progress: 0,
-              status: 'in_progress'
-            };
+            logger.info(`[UniversalForm] Using KY3P endpoint to clear fields for task ${taskId}`);
+            await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ responses: emptyData })
+            });
+          } 
+          else if (taskType === 'open_banking_survey') {
+            logger.info(`[UniversalForm] Using Open Banking endpoint to clear fields for task ${taskId}`);
+            await fetch(`/api/tasks/${taskId}/open-banking-responses/bulk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ responses: emptyData })
+            });
+          }
+          else {
+            // Default endpoint for KYB forms
+            logger.info(`[UniversalForm] Using KYB endpoint to clear fields for task ${taskId}`);
+            await fetch('/api/kyb/progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                taskId,
+                formData: emptyData,
+                progress: 0,
+                status: 'in_progress'
+              })
+            });
           }
           
-          // Make a single network request to clear fields
-          logger.info(`[UniversalForm] Clearing fields on server using endpoint: ${endpointUrl}`);
-          const response = await fetch(endpointUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody)
-          });
-          
-          if (response.ok) {
-            serverSuccess = true;
-            logger.info(`[UniversalForm] Successfully cleared fields on server: ${response.status}`);
-            
-            // Force invalidate relevant queries
-            const { queryClient } = await import('@/lib/queryClient');
-            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          } else {
-            logger.warn(`[UniversalForm] Failed to clear fields on server: ${response.status}`);
-          }
-        } catch (serverError) {
+          // Invalidate task queries to update UI
+          const { queryClient } = await import('@/lib/queryClient');
+          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        } 
+        catch (serverError) {
           logger.error('[UniversalForm] Server error when clearing fields:', serverError);
         }
       }
       
-      // Single refresh status call
+      // Refresh form status if available
       if (refreshStatus) {
         await refreshStatus();
       }
