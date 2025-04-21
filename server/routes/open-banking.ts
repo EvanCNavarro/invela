@@ -122,6 +122,21 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   // Get all Open Banking fields
   app.get('/api/open-banking/fields', async (req, res) => {
     try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized access to fields');
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required',
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
       logger.info('[OpenBankingRoutes] Fetching all fields');
       const fields = await db.select().from(openBankingFields).orderBy(openBankingFields.order);
       res.json(fields);
@@ -136,6 +151,21 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     const taskId = parseInt(req.params.taskId);
     
     try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized access to responses', { taskId });
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required', 
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
       logger.info('[OpenBankingRoutes] Fetching responses for task', { taskId });
       
       const responses = await db.select().from(openBankingResponses)
@@ -160,6 +190,21 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     }
     
     try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized attempt to save response', { taskId, fieldId });
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required',
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
       logger.info('[OpenBankingRoutes] Saving field response', { taskId, fieldId });
       
       // Check if a response already exists for this task and field
@@ -243,6 +288,21 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     }
     
     try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized analysis attempt', { taskId, fieldId });
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required',
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
       logger.info('[OpenBankingRoutes] Analyzing response with OpenAI', { taskId, fieldId });
       
       // Get field information to provide context
@@ -325,6 +385,21 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     const taskId = parseInt(req.params.taskId);
     
     try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized submission attempt', { taskId });
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required',
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
       logger.info('[OpenBankingRoutes] Processing form submission', { taskId });
       
       // Get the task data
