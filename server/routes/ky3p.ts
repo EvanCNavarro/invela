@@ -308,4 +308,169 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
   }
 });
 
+/**
+ * Endpoint to provide demo data for auto-filling KY3P forms
+ */
+router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      logger.error('Unauthenticated user attempted to access demo auto-fill');
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to use this feature'
+      });
+    }
+    
+    const { taskId } = req.params;
+    logger.info('KY3P Demo auto-fill requested for task', { taskId, userId: req.user.id });
+    
+    // Get the task to retrieve company information
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId, 10)));
+      
+    if (!task) {
+      logger.error('Task not found for KY3P demo auto-fill', { taskId });
+      return res.status(404).json({ 
+        error: 'Task not found',
+        message: 'Could not find the specified task for auto-filling'
+      });
+    }
+    
+    // CRITICAL SECURITY CHECK: Verify user belongs to company that owns the task
+    if (req.user.company_id !== task.company_id) {
+      logger.error('Security violation: User attempted to access task from another company', {
+        userId: req.user.id,
+        userCompanyId: req.user.company_id,
+        taskId: task.id,
+        taskCompanyId: task.company_id
+      });
+      
+      return res.status(403).json({
+        error: 'Access denied',
+        message: 'You do not have permission to access this task'
+      });
+    }
+    
+    // Check if the company associated with this task is a demo company
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+      
+    // Ensure we're explicitly checking for true, not just truthy values 
+    if (!company || company.is_demo !== true) {
+      logger.error('Company is not a demo company', { 
+        taskId, 
+        companyId: task.company_id,
+        isDemo: company?.is_demo
+      });
+      
+      return res.status(403).json({
+        error: 'Not a demo company',
+        message: 'Auto-fill is only available for demo companies'
+      });
+    }
+    
+    // Get all KY3P fields with explicit selection of the demo_autofill column
+    const fields = await db.select({
+      id: ky3pFields.id,
+      field_key: ky3pFields.field_key,
+      display_name: ky3pFields.display_name,
+      field_type: ky3pFields.field_type,
+      question: ky3pFields.question,
+      group: ky3pFields.group,
+      required: ky3pFields.is_required,
+      order: ky3pFields.order,
+      step_index: ky3pFields.step_index,
+      validation_rules: ky3pFields.validation_rules,
+      help_text: ky3pFields.help_text,
+      demo_autofill: ky3pFields.demo_autofill // Explicitly select demo_autofill
+    })
+      .from(ky3pFields)
+      .orderBy(asc(ky3pFields.order));
+    
+    logger.info('Fetched fields for KY3P demo auto-fill', {
+      fieldCount: fields.length,
+      taskId
+    });
+    
+    // Create demo data for each field using predefined demo_autofill values from the database
+    const demoData: Record<string, any> = {};
+    
+    // Get current user information for personalized values
+    let userEmail = '';
+    if (req.user) {
+      userEmail = req.user.email;
+    }
+    
+    // Log the first few fields to debug with explicit column check
+    console.log('[KY3P Demo Auto-Fill] First 5 fields from database:');
+    
+    // Inspect the raw database results to verify the structure
+    const rawFields = fields.slice(0, 5);
+    console.log('[KY3P Demo Auto-Fill] Raw field objects:', rawFields);
+    
+    for (const field of fields) {
+      const fieldKey = field.field_key;
+      
+      // Use the demo_autofill value directly from the database
+      if (field.demo_autofill !== null && field.demo_autofill !== undefined) {
+        // For fields that might contain company name references
+        if (typeof field.demo_autofill === 'string' && field.demo_autofill.includes('{{COMPANY_NAME}}')) {
+          demoData[fieldKey] = field.demo_autofill.replace('{{COMPANY_NAME}}', company.name);
+          console.log(`[KY3P Demo Auto-Fill] Replaced template in ${fieldKey}: ${demoData[fieldKey]}`);
+        } else {
+          // Use the predefined value from the database
+          demoData[fieldKey] = field.demo_autofill;
+          console.log(`[KY3P Demo Auto-Fill] Used database value for ${fieldKey}: ${demoData[fieldKey]}`);
+        }
+      } 
+      // Fallback for any fields without defined demo values
+      else {
+        // Generate a basic fallback value based on field type
+        console.log(`[KY3P Demo Auto-Fill] No demo_autofill value found for ${fieldKey}`);
+        
+        switch (field.field_type?.toUpperCase()) {
+          case 'TEXTAREA':
+            demoData[fieldKey] = `This is a sample response for ${field.display_name || fieldKey}.`;
+            break;
+          case 'EMAIL':
+            demoData[fieldKey] = userEmail || 'demo@example.com';
+            break;
+          case 'NUMBER':
+            demoData[fieldKey] = '123';
+            break;
+          case 'DATE':
+            demoData[fieldKey] = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            break;
+          case 'CHECKBOX':
+          case 'BOOLEAN':
+            demoData[fieldKey] = true;
+            break;
+          case 'SELECT':
+          case 'DROPDOWN':
+          case 'TEXT':
+          default:
+            demoData[fieldKey] = `Demo value for ${field.display_name || fieldKey}`;
+            break;
+        }
+      }
+    }
+    
+    logger.info('KY3P Demo auto-fill data generated', {
+      fieldCount: Object.keys(demoData).length,
+      taskId
+    });
+    
+    res.json(demoData);
+  } catch (error) {
+    logger.error('Error generating KY3P demo auto-fill data:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      message: 'An unexpected error occurred while generating demo data'
+    });
+  }
+});
+
 export default router;
