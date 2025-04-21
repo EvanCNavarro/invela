@@ -740,17 +740,42 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                 
                 logger.info('[TaskPage] Submitting KY3P assessment with filename:', fileName);
                 
-                fetch(`/api/tasks/${task.id}/ky3p-submit`, {
+                // CRITICAL FIX: First save all form data to database before submission using the bulk endpoint
+                // This ensures all auto-filled data gets saved before the CSV is generated
+                logger.info('[TaskPage] First saving all form data with bulk endpoint before submission');
+                
+                fetch(`/api/tasks/${task.id}/ky3p-responses/bulk`, {
                   method: 'POST',
                   headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Content-Type': 'application/json'
                   },
-                  credentials: 'include',
-                  body: JSON.stringify({ 
-                    taskId: task.id,
-                    formData 
-                  })
+                  body: JSON.stringify({ responses: formData })
+                })
+                .then(bulkResponse => {
+                  if (!bulkResponse.ok) {
+                    logger.warn(`[TaskPage] Failed to save form data before submission: ${bulkResponse.status}`);
+                    // Continue with submission anyway, but warn about potential missing data
+                  } else {
+                    logger.info('[TaskPage] Successfully saved all form data before submission');
+                  }
+                  
+                  // Add small delay to ensure database updates are complete
+                  return new Promise(resolve => setTimeout(() => resolve(null), 300));
+                })
+                .then(() => {
+                  // Now proceed with actual submission
+                  return fetch(`/api/tasks/${task.id}/ky3p-submit`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                      taskId: task.id,
+                      formData 
+                    })
+                  });
                 })
                 .then(async response => {
                   // First try to parse the response
