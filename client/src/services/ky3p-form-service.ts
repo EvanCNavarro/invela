@@ -909,6 +909,50 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Bulk update form responses
+   * This is a direct implementation of the bulk update functionality 
+   * that's called from the UniversalForm auto-fill mechanism
+   * 
+   * @param data Record of field keys to values
+   * @param taskId Optional task ID override
+   * @returns Promise resolving to success status
+   */
+  public async bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean> {
+    if (!this.taskId && !taskId) {
+      throw new Error('No task ID provided for bulk update');
+    }
+    
+    const effectiveTaskId = taskId || this.taskId;
+    
+    try {
+      logger.info(`[KY3P Form Service] Performing bulk update for task ${effectiveTaskId}`);
+      
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include session cookies
+        body: JSON.stringify({
+          responses: data
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to perform bulk update: ${response.status}`, errorText);
+        return false;
+      }
+      
+      logger.info(`[KY3P Form Service] Bulk update successful for task ${effectiveTaskId}`);
+      return true;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error during bulk update:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Save the current progress 
    * @param taskId The task ID (optional, will use instance's taskId if not provided)
    */
