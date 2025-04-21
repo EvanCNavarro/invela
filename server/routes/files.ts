@@ -997,12 +997,18 @@ router.get("/api/files/:id/download", async (req, res) => {
         'json': 'application/json'
       };
       
-      res.setHeader('Content-Type', contentTypes[format] || 'text/csv');
-      
       // Determine if this is a KY3P file based on filename and content
       const isKy3p = fileRecord.name.toLowerCase().includes('ky3p') || 
                     fileRecord.name.toLowerCase().includes('spglobal') ||
                     fileRecord.name.toLowerCase().includes('security_assessment');
+      
+      // Set the requested format in response headers for debugging purposes
+      res.setHeader('X-Requested-Format', format || 'csv');
+      res.setHeader('X-File-Id', fileId.toString());
+      res.setHeader('X-File-Type', isKy3p ? 'ky3p' : (fileRecord.name.toLowerCase().includes('kyb') ? 'kyb' : 'other'));
+      
+      // Set proper content type header
+      res.setHeader('Content-Type', contentTypes[format] || 'text/csv');
       
       // Set appropriate task type to trigger the right filename format
       const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 
