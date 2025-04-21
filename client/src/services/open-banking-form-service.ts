@@ -361,6 +361,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // Save responses
       const apiResponse = await fetch(`/api/open-banking/responses/${taskId}`, {
         method: 'POST',
+        credentials: 'include', // Include session cookies
         headers: {
           'Content-Type': 'application/json'
         },
@@ -394,7 +395,9 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     try {
       logger.info(`[OpenBankingFormService] Getting progress for task ${this.taskId}`);
       
-      const response = await fetch(`/api/open-banking/progress/${this.taskId}`);
+      const response = await fetch(`/api/open-banking/progress/${this.taskId}`, {
+        credentials: 'include' // Include session cookies
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -440,7 +443,9 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       
       // Get the task information first to check if it's already submitted
       try {
-        const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`);
+        const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`, {
+          credentials: 'include' // Include session cookies
+        });
         if (taskResponse.ok) {
           const taskData = await taskResponse.json();
           if (taskData.status === 'submitted') {
@@ -503,6 +508,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // This is a more efficient approach than saving individual fields
       const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/bulk`, {
         method: 'POST',
+        credentials: 'include', // Include session cookies
         headers: {
           'Content-Type': 'application/json',
         },
@@ -568,6 +574,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // Call the submit endpoint
       const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-submit`, {
         method: 'POST',
+        credentials: 'include', // Include session cookies
         headers: {
           'Content-Type': 'application/json',
         },
