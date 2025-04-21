@@ -309,6 +309,161 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
 });
 
 /**
+ * Bulk update KY3P responses for a task
+ * This is used primarily by the auto-fill functionality
+ */
+router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    const { responses } = req.body;
+    
+    if (!responses || typeof responses !== 'object') {
+      return res.status(400).json({ 
+        message: 'Invalid request: responses object is required'
+      });
+    }
+    
+    logger.info(`[KY3P API] Processing bulk responses update for task ${taskId}`, {
+      responseCount: Object.keys(responses).length
+    });
+    
+    // Get all fields to match field_key to field_id
+    const fields = await db.select().from(ky3pFields);
+    const fieldKeyToIdMap = new Map(fields.map(field => [field.field_key, field.id]));
+    
+    // Store all response updates to process
+    const responseUpdates = [];
+    
+    // Process each response
+    for (const [fieldKey, responseValue] of Object.entries(responses)) {
+      const fieldId = fieldKeyToIdMap.get(fieldKey);
+      
+      if (!fieldId) {
+        logger.warn(`[KY3P API] Field key not found: ${fieldKey}`);
+        continue;
+      }
+      
+      // Determine status
+      const status = responseValue ? 'complete' : 'empty';
+      
+      // Check if response exists
+      const [existingResponse] = await db
+        .select()
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.field_id, fieldId)
+          )
+        )
+        .limit(1);
+      
+      if (existingResponse) {
+        // Update existing
+        responseUpdates.push(
+          db.update(ky3pResponses)
+            .set({
+              response_value: responseValue as string,
+              status,
+              version: existingResponse.version + 1,
+              updated_at: new Date()
+            })
+            .where(eq(ky3pResponses.id, existingResponse.id))
+        );
+      } else {
+        // Create new
+        responseUpdates.push(
+          db.insert(ky3pResponses)
+            .values({
+              task_id: taskId,
+              field_id: fieldId,
+              response_value: responseValue as string,
+              status,
+              version: 1,
+              created_at: new Date(),
+              updated_at: new Date()
+            })
+        );
+      }
+    }
+    
+    // Execute all updates
+    if (responseUpdates.length > 0) {
+      for (const update of responseUpdates) {
+        await update;
+      }
+    }
+    
+    // Calculate new progress
+    const requiredFields = await db
+      .select()
+      .from(ky3pFields)
+      .where(ky3pFields.is_required);
+    
+    const totalRequiredFields = requiredFields.length;
+    
+    const completedResponses = await db
+      .select()
+      .from(ky3pResponses)
+      .where(
+        and(
+          eq(ky3pResponses.task_id, taskId),
+          eq(ky3pResponses.status, 'complete')
+        )
+      );
+    
+    const completedRequiredFields = completedResponses.length;
+    
+    // Calculate progress as a percentage
+    const progress = totalRequiredFields > 0 
+      ? Math.min(100, Math.round((completedRequiredFields / totalRequiredFields) * 100)) / 100
+      : 0;
+    
+    // Update the task progress
+    const [updatedTask] = await db
+      .update(tasks)
+      .set({
+        progress,
+        status: progress >= 1 ? 'ready_for_submission' : 'in_progress',
+        updated_at: new Date()
+      })
+      .where(eq(tasks.id, taskId))
+      .returning();
+    
+    // Get all updated responses to return
+    const allResponses = await db
+      .select({
+        id: ky3pResponses.id,
+        fieldId: ky3pResponses.field_id,
+        value: ky3pResponses.response_value,
+        status: ky3pResponses.status
+      })
+      .from(ky3pResponses)
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    // Broadcast WebSocket update for task progress
+    try {
+      const { broadcastTaskUpdate } = await import('../services/websocket.js');
+      await broadcastTaskUpdate(updatedTask.id, updatedTask);
+      logger.info(`[KY3P API] WebSocket broadcast sent for task ${taskId} progress update: ${progress}`);
+    } catch (wsError) {
+      logger.error('[KY3P API] Failed to broadcast WebSocket update:', wsError);
+    }
+    
+    res.json({
+      success: true,
+      updatedFields: Object.keys(responses).length,
+      progress,
+      status: updatedTask.status,
+      responses: allResponses
+    });
+  } catch (error) {
+    logger.error('[KY3P API] Error updating responses in bulk:', error);
+    res.status(500).json({ message: 'Error updating responses in bulk' });
+  }
+});
+
+/**
  * Endpoint to provide demo data for auto-filling KY3P forms
  */
 router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
