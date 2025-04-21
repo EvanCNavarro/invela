@@ -17,7 +17,6 @@ import { OpenBankingSuccessModal } from "@/components/openbanking/OpenBankingSuc
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
-import { OpenBankingFormService } from "@/services/open-banking-form-service";
 
 interface TaskPageProps {
   params: {
@@ -1013,26 +1012,39 @@ export default function TaskPage({ params }: TaskPageProps) {
                     console.log(`[OPENBANKING SUBMIT] Starting submission for task ${task.id}`);
                     
                     try {
-                      // Create service instance with task ID
-                      const formService = new OpenBankingFormService(undefined, task.id);
+                      // Submit the form data directly to the server
+                      const fileName = `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+                      console.log(`[OPENBANKING SUBMIT] Direct server submission`);
                       
-                      // Submit the form data
-                      console.log(`[OPENBANKING SUBMIT] Calling OpenBankingFormService.submit()`);
-                      const result = await formService.submit({
-                        taskId: task.id,
-                        fileName: `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`
+                      // Call the server API directly
+                      const response = await fetch(`/api/tasks/${task.id}/open-banking-submit`, {
+                        method: 'POST',
+                        credentials: 'include', // Include session cookies
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          formData,
+                          fileName
+                        }),
                       });
                       
-                      if (result.success) {
-                        console.log(`[OPENBANKING SUBMIT] Submission successful, file ID: ${result.fileId}`);
-                        
-                        // Store the fileId for download functionality
-                        if (result.fileId) {
-                          setFileId(result.fileId);
-                        }
-                      } else {
-                        console.error(`[OPENBANKING SUBMIT] Submission failed:`, result.error);
-                        throw new Error(result.error || 'Unknown error during submission');
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`[OPENBANKING SUBMIT] Submission failed: ${response.status}`, errorText);
+                        throw new Error(`Form submission failed: ${response.status} - ${errorText}`);
+                      }
+                      
+                      const result = await response.json();
+                      
+                      console.log(`[OPENBANKING SUBMIT] Submission successful:`, {
+                        fileId: result.fileId,
+                        fileName: result.fileName
+                      });
+                      
+                      // Store the fileId for download functionality
+                      if (result.fileId) {
+                        setFileId(result.fileId);
                       }
                     } catch (error) {
                       console.error(`[OPENBANKING SUBMIT] Error during submission:`, error);
