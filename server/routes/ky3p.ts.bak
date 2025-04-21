@@ -201,7 +201,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAc
       .where(
         and(
           eq(ky3pResponses.task_id, taskId),
-          eq(ky3pResponses.status, "COMPLETE")
+          eq(ky3pResponses.status, 'complete')
         )
       );
     
@@ -549,7 +549,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       .where(
         and(
           eq(ky3pResponses.task_id, taskId),
-          eq(ky3pResponses.status, "COMPLETE")
+          eq(ky3pResponses.status, 'complete')
         )
       );
     
