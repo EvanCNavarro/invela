@@ -836,6 +836,70 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
+  // Open Banking Survey Form Rendering
+  if (taskContentType === 'open_banking' && task) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as TXT
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto space-y-6">
+            <OpenBankingPlayground
+              taskId={task.id}
+              companyName={derivedCompanyName}
+              companyData={{
+                name: displayName,
+                description: task.metadata?.company?.description
+              }}
+              onSubmit={(formData) => {
+                console.log('[TaskPage] Open Banking Survey submitted:', { formData });
+                setIsSubmitted(true);
+              }}
+            />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
   // Fallback handling - this should ideally never happen but provides graceful degradation
   return (
     <DashboardLayout>
