@@ -2282,25 +2282,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 <Code className="mr-2 h-4 w-4" />
                 Demo Auto-Fill
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleClearFields}
-                disabled={isClearing}
-                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
-              >
-                {isClearing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Clearing...
-                  </>
-                ) : (
-                  <>
-                    <Eraser className="mr-2 h-4 w-4" />
-                    Clear Fields
-                  </>
-                )}
-              </Button>
+              <ClearFieldsButton 
+                taskId={taskId}
+                taskType={taskType}
+                onClear={handleEnhancedClearFields}
+                className="w-[170px]"
+              />
             </div>
           )}
         </div>
