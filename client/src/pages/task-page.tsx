@@ -101,16 +101,58 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Handle file downloads
   const handleDownload = useCallback(async (format: 'csv' | 'txt' | 'json') => {
-    if (!fileId) return;
+    console.log('[TaskPage] Starting download process:', { 
+      format, 
+      fileId, 
+      taskContentType,
+      taskType: task?.task_type,
+      taskStatus: task?.status,
+      metadata: task?.metadata
+    });
+    
+    if (!fileId) {
+      console.error('[TaskPage] Download failed: No file ID available');
+      toast({
+        title: "Download Failed",
+        description: "No file is available for download. Please contact support.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
-      const response = await fetch(`/api/files/${fileId}/download?format=${format}`);
+      // If this is a ky3p task but we're using the security form file, log this information
+      if (taskContentType === 'ky3p') {
+        console.log('[TaskPage] KY3P task download:', { 
+          fileId,
+          securityFormFile: task?.metadata?.securityFormFile,
+          ky3pFormFile: task?.metadata?.ky3pFormFile
+        });
+      }
+      
+      console.log(`[TaskPage] Fetching file from: /api/files/${fileId}/download?format=${format}`);
+      
+      const response = await fetch(`/api/files/${fileId}/download?format=${format}`, {
+        credentials: 'include' // Include session cookies for authentication
+      });
+      
+      console.log(`[TaskPage] Download response:`, { 
+        status: response.status, 
+        statusText: response.statusText,
+        ok: response.ok
+      });
+      
       if (!response.ok) {
         throw new Error(`Failed to download file: ${response.statusText}`);
       }
       
       // Handle file download
       const blob = await response.blob();
+      console.log(`[TaskPage] Downloaded blob:`, { 
+        size: blob.size, 
+        type: blob.type
+      });
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -119,6 +161,8 @@ export default function TaskPage({ params }: TaskPageProps) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      console.log(`[TaskPage] Download completed successfully`);
     } catch (err) {
       console.error('[TaskPage] Download error:', err);
       toast({
@@ -245,12 +289,12 @@ export default function TaskPage({ params }: TaskPageProps) {
         taskData.status === 'submitted' || 
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
-        (type === 'ky3p' && taskData.metadata?.securityFormFile) ||
+        (type === 'ky3p' && (taskData.metadata?.securityFormFile || taskData.metadata?.ky3pFormFile)) ||
         (type === 'open_banking' && taskData.metadata?.openBankingFormFile)
       ),
       fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
               type === 'card' ? taskData.metadata?.cardFormFile :
-              type === 'ky3p' ? taskData.metadata?.securityFormFile :
+              type === 'ky3p' ? taskData.metadata?.ky3pFormFile || taskData.metadata?.securityFormFile :
               type === 'open_banking' ? taskData.metadata?.openBankingFormFile : null
     };
   }, [extractCompanyNameFromTitle]);
