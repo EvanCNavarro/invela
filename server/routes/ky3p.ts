@@ -956,7 +956,12 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     }
     
     logger.info(`[KY3P API] Processing bulk responses update for task ${taskId}`, {
-      responseCount: Object.keys(responses).length
+      responseCount: Object.keys(responses).length,
+      taskId,
+      firstKeys: Object.keys(responses).slice(0, 3),
+      firstValues: Object.values(responses).slice(0, 3).map(v => 
+        typeof v === 'object' ? JSON.stringify(v).slice(0, 50) : String(v).slice(0, 50)
+      )
     });
     
     // Get all fields to match field_key to field_id
