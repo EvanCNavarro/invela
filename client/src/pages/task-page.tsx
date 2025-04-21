@@ -1008,6 +1008,45 @@ export default function TaskPage({ params }: TaskPageProps) {
                       console.error('[TaskPage] Error updating progress:', err);
                     });
                   }}
+                  onSubmit={async (formData) => {
+                    console.log(`[OPENBANKING SUBMIT] Starting submission for task ${task.id}`);
+                    
+                    try {
+                      // Import the form service to handle submission
+                      const { OpenBankingFormService } = await import('@/services/open-banking-form-service');
+                      
+                      // Create service instance with task ID
+                      const formService = new OpenBankingFormService(undefined, task.id);
+                      
+                      // Submit the form data
+                      console.log(`[OPENBANKING SUBMIT] Calling OpenBankingFormService.submit()`);
+                      const result = await formService.submit({
+                        taskId: task.id,
+                        fileName: `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`
+                      });
+                      
+                      if (result.success) {
+                        console.log(`[OPENBANKING SUBMIT] Submission successful, file ID: ${result.fileId}`);
+                        
+                        // Store the fileId for download functionality
+                        if (result.fileId) {
+                          setFileId(result.fileId);
+                        }
+                      } else {
+                        console.error(`[OPENBANKING SUBMIT] Submission failed:`, result.error);
+                        throw new Error(result.error || 'Unknown error during submission');
+                      }
+                    } catch (error) {
+                      console.error(`[OPENBANKING SUBMIT] Error during submission:`, error);
+                      
+                      // Show error toast
+                      toast({
+                        title: "Form Submission Failed",
+                        description: error instanceof Error ? error.message : "Failed to submit Open Banking form",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                   onSuccess={() => {
                     try {
                       console.log(`[OPENBANKING SUBMIT] 1. onSuccess handler triggered`);
