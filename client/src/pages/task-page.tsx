@@ -923,22 +923,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             )}
             
-            {/* Force show manual form for initial view of Open Banking Survey */}
-            {!showForm && !isSubmitted && (
-              <button
-                className="hidden"
-                onClick={() => {
-                  console.log('[OpenBanking] Auto-selecting manual entry mode');
-                  setSelectedMethod('manual');
-                  setShowForm(true);
-                }}
-                data-testid="auto-select-manual"
-                ref={(btn) => {
-                  // Auto-click the button once rendered
-                  if (btn) setTimeout(() => btn.click(), 100);
-                }}
-              />
-            )}
+            {/* Force show method selection for Open Banking Survey, but don't auto-select anymore */}
+            {/* We want users to choose between upload and manual entry explicitly */}
             
             {/* Manual form filling option or view submitted form */}
             {(selectedMethod === 'manual' || isSubmitted) && (
