@@ -1148,20 +1148,40 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         try {
           logger.info(`[UniversalForm] Using KY3P bulk responses endpoint for task ${taskId}`);
           
-          // Make sure we're sending a proper response object
-          const responsesToSend = { responses: {} };
+          // Using standardized approach for all form types
+          // The server expects: { responses: { field_key1: value1, field_key2: value2, ... } }
+          const responsesToSend: { responses: Record<string, string | number | boolean> } = { 
+            responses: {} 
+          };
+          
+          // Enhanced error logging for debugging
+          console.log('[UniversalForm] Preparing KY3P bulk responses', {
+            taskId,
+            dataFields: Object.keys(completeData).length,
+            dataFieldSample: Object.keys(completeData).slice(0, 5) 
+          });
           
           // Filter out any non-string/non-number values to prevent JSON parsing issues
           for (const [key, value] of Object.entries(completeData)) {
-            // Skip the key if it's "bulk" which causes the error
-            if (key === 'bulk') continue;
+            // Skip problematic keys that might cause field ID format errors
+            if (key === 'bulk' || key === 'fieldIdRaw' || key === 'taskIdRaw' || 
+                key === 'responseValue' || key === 'responseValueType') {
+              console.log(`[UniversalForm] Skipping problematic key: ${key}`);
+              continue;
+            }
             
             // Only include values that are strings, numbers, or booleans
             if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
               responsesToSend.responses[key] = value;
+              console.log(`[UniversalForm] Added ${key}: ${value.toString().substring(0, 30)}`);
             } else if (value && typeof value === 'object') {
               // Handle objects by converting to JSON strings
-              responsesToSend.responses[key] = JSON.stringify(value);
+              try {
+                responsesToSend.responses[key] = JSON.stringify(value);
+                console.log(`[UniversalForm] Added object ${key} as JSON string`);
+              } catch (jsonError) {
+                console.error(`[UniversalForm] Failed to stringify object for ${key}:`, jsonError);
+              }
             }
           }
           

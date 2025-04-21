@@ -1035,12 +1035,15 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     if (req.body && req.body.fieldIdRaw === 'bulk') {
       logger.warn(`[KY3P API] Detected malformed bulk request with fieldIdRaw=bulk pattern`, {
         taskIdRaw: req.body.taskIdRaw,
-        fieldIdRaw: req.body.fieldIdRaw
+        fieldIdRaw: req.body.fieldIdRaw,
+        responseValue: req.body.responseValue,
+        responseValueType: typeof req.body.responseValue
       });
       
       return res.status(400).json({
-        message: 'Invalid request format: bulk endpoint requires responses object',
-        hint: 'Request should be in format: { responses: { field_key1: value1, field_key2: value2, ... } }'
+        message: 'Invalid field ID format',
+        hint: 'Request should be in format: { responses: { field_key1: value1, field_key2: value2, ... } }',
+        error: 'malformed_request_structure'
       });
     }
     
