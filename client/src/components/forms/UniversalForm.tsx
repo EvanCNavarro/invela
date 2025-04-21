@@ -815,8 +815,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         duration: 3000,
       });
       
-      // Make API call to get demo data
-      const response = await fetch(`/api/kyb/demo-autofill/${taskId}`);
+      // Make API call to get demo data based on form type
+      const endpoint = taskType === 'sp_ky3p_assessment' 
+        ? `/api/ky3p/demo-autofill/${taskId}`
+        : `/api/kyb/demo-autofill/${taskId}`;
+      
+      logger.info(`[UniversalForm] Using demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}: ${response.statusText}`);
