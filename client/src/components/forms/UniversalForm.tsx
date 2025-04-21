@@ -1021,8 +1021,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     try {
       logger.info(`[UniversalForm] Enhanced clearing for task ${taskId} (${taskType})`);
+      setIsClearing(true);
       
-      // Use FormClearingService to handle the clearing process
+      // First create an empty data object for all fields
+      const emptyData: Record<string, string> = {};
+      fields.forEach(field => {
+        if (field && field.key) {
+          emptyData[field.key] = '';
+        }
+      });
+      
+      // Reset form in UI first for immediate feedback
+      form.reset(emptyData);
+      
+      // Use FormClearingService to handle the server-side clearing process
       await FormClearingService.clearFormFields({
         taskId,
         taskType,
@@ -1030,13 +1042,59 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         formService,
         fields,
         refreshStatus,
-        setActiveSection
+        setActiveSection,
+        // Add an onSuccess callback to ensure form is refreshed
+        onSuccess: async () => {
+          logger.info(`[UniversalForm] Form cleared successfully, updating UI state`);
+          
+          // Explicitly clear form values again to ensure consistency
+          form.reset(emptyData);
+          
+          // Clear saved form data in task metadata to prevent reloading
+          try {
+            // Make sure the task.savedFormData is also cleared
+            const { apiRequest } = await import('@/lib/queryClient'); 
+            await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+              savedFormData: null,  // Explicitly set to null
+              metadata: {
+                lastCleared: new Date().toISOString()
+              }
+            });
+            logger.info(`[UniversalForm] Successfully cleared task savedFormData`);
+          } catch (err) {
+            logger.error(`[UniversalForm] Error clearing task savedFormData:`, err);
+          }
+        }
       });
       
-      // Reset form in React state
+      // Reset form in React state again to ensure it's truly empty
       if (resetForm) {
         resetForm();
+        // Force set all form values to empty strings again
+        Object.keys(emptyData).forEach(key => {
+          form.setValue(key, '');
+        });
       }
+      
+      // Force invalidate queries to reload the latest data
+      const { queryClient } = await import('@/lib/queryClient');
+      
+      // Invalidate task data
+      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      
+      // Invalidate form progress data for all form types
+      // KYB form progress
+      queryClient.invalidateQueries({ queryKey: ['/api/kyb/progress'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
+      
+      // KY3P form progress
+      queryClient.invalidateQueries({ queryKey: ['/api/ky3p/progress'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/ky3p/progress/${taskId}`] });
+      
+      // Open Banking form progress
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/open-banking'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/open-banking-responses`] });
       
       // Refresh form status
       await refreshStatus();
@@ -1046,13 +1104,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         onProgress(0);
       }
       
+      // Show success toast
+      toast({
+        title: "Fields Cleared",
+        description: "All form fields have been cleared successfully.",
+        variant: "success",
+      });
+      
       logger.info(`[UniversalForm] Enhanced clearing completed successfully`);
+      setIsClearing(false);
       return Promise.resolve();
     } catch (error) {
       logger.error('[UniversalForm] Enhanced clearing error:', error);
+      setIsClearing(false);
+      
+      // Show error toast
+      toast({
+        title: "Error Clearing Fields",
+        description: error instanceof Error ? error.message : "There was an error clearing the form fields",
+        variant: "destructive",
+      });
+      
       return Promise.reject(error);
     }
-  }, [taskId, taskType, form, formService, fields, refreshStatus, setActiveSection, resetForm, onProgress]);
+  }, [taskId, taskType, form, formService, fields, refreshStatus, setActiveSection, resetForm, onProgress, toast, logger]);
 
   // Old clearing functions removed in favor of the enhanced version that uses FormClearingService
   
