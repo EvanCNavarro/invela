@@ -316,6 +316,96 @@ router.get('/api/tasks/:taskId/ky3p-responses', requireAuth, hasTaskAccess, asyn
 });
 
 /**
+ * Get KY3P task progress and form data
+ * This endpoint follows the same pattern as /api/kyb/progress/:taskId
+ * to ensure compatibility with the UniversalForm component
+ */
+router.get('/api/ky3p/progress/:taskId', requireAuth, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    // Get the task
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Check access - user must be assigned to the task or part of the company
+    if (task.assigned_to !== req.user.id && task.created_by !== req.user.id && task.company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get all responses for this task
+    const responses = await db
+      .select({
+        response_value: ky3pResponses.response_value,
+        field_key: ky3pFields.field_key
+      })
+      .from(ky3pResponses)
+      .leftJoin(ky3pFields, eq(ky3pResponses.field_id, ky3pFields.id))
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    logger.debug('Retrieved task:', {
+      taskId,
+      status: task.status,
+      progress: task.progress,
+      metadata: Object.keys(task.metadata || {}),
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.debug('Retrieved responses:', { 
+      responseCount: responses.length, 
+      timestamp: new Date().toISOString()
+    });
+    
+    // Convert responses to key-value format expected by the form
+    const formData: Record<string, any> = {};
+    
+    for (const response of responses) {
+      if (response.field_key) {
+        formData[response.field_key] = response.response_value;
+      }
+    }
+    
+    // Add submission date from task metadata if available
+    const submissionDate = task.metadata?.submissionDate || task.completion_date;
+    
+    if (task.status === 'submitted' && submissionDate) {
+      formData['_submissionDate'] = submissionDate;
+    }
+    
+    // For debugging purposes
+    logger.debug('Retrieved task data:', {
+      id: taskId,
+      responseCount: responses.length,
+      progress: task.progress,
+      status: task.status,
+      formDataKeys: Object.keys(formData)
+    });
+    
+    // Return the formatted data
+    return res.json({
+      formData,
+      progress: task.status === 'submitted' ? 100 : task.progress,
+      status: task.status
+    });
+    
+  } catch (error) {
+    logger.error('Error fetching KY3P progress:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * Save a KY3P response for a field
  */
 router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAccess, async (req, res) => {

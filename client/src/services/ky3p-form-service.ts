@@ -407,6 +407,51 @@ export class KY3PFormService extends EnhancedKybFormService {
       return {};
     }
   }
+  
+  /**
+   * Get progress data for the task in the format expected by UniversalForm
+   * This method uses our new dedicated progress endpoint for KY3P tasks
+   */
+  public async getProgress(): Promise<{
+    formData: Record<string, any>;
+    progress: number;
+    status: string;
+  }> {
+    if (!this.taskId) {
+      throw new Error('No task ID provided for getting progress');
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Getting progress for task ${this.taskId}`);
+      
+      const response = await fetch(`/api/ky3p/progress/${this.taskId}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to get progress: ${response.status}`, errorText);
+        throw new Error(`Failed to get progress: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      logger.info(`[KY3P Form Service] Progress loaded successfully:`, {
+        taskId: this.taskId,
+        progress: data.progress,
+        status: data.status,
+        formDataKeys: Object.keys(data.formData || {}).length
+      });
+      
+      // If no form data, use an empty object as fallback
+      return {
+        formData: data.formData || {},
+        progress: data.progress || 0,
+        status: data.status || 'not_started'
+      };
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error getting progress:', error);
+      throw error;
+    }
+  }
 }
 
 /**
