@@ -649,11 +649,14 @@ export default function TaskPage({ params }: TaskPageProps) {
             {!showForm && !isSubmitted && (
               <div className="mb-6">
                 <CardMethodChoice
+                  taskId={task.id}
                   companyName={displayName}
                   onMethodSelect={(method) => {
                     setSelectedMethod(method);
                     setShowForm(true);
                   }}
+                  title="Card Industry Questionnaire"
+                  description={`Please choose how you would like to complete this Card Industry Questionnaire for ${displayName}.`}
                 />
               </div>
             )}
@@ -763,13 +766,14 @@ export default function TaskPage({ params }: TaskPageProps) {
             {!showForm && !isSubmitted && (
               <div className="mb-6">
                 <CardMethodChoice
+                  taskId={task.id}
                   companyName={displayName}
                   onMethodSelect={(method) => {
                     setSelectedMethod(method);
                     setShowForm(true);
                   }}
                   title="S&P KY3P Security Assessment"
-                  description="Please choose how you would like to complete this S&P KY3P Security Assessment."
+                  description={`Please choose how you would like to complete this S&P KY3P Security Assessment for ${displayName}.`}
                 />
               </div>
             )}
@@ -895,13 +899,14 @@ export default function TaskPage({ params }: TaskPageProps) {
             {!showForm && !isSubmitted && (
               <div className="mb-6">
                 <CardMethodChoice
+                  taskId={task.id}
                   companyName={displayName}
                   onMethodSelect={(method) => {
                     setSelectedMethod(method);
                     setShowForm(true);
                   }}
                   title="Open Banking Survey"
-                  description="Please choose how you would like to complete this Open Banking Survey."
+                  description={`Please choose how you would like to complete this Open Banking Survey for ${displayName}.`}
                 />
               </div>
             )}
