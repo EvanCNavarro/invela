@@ -824,7 +824,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [onDownload, fileId, taskType, toast]);
   
-  // Handle demo auto-fill functionality
+    // Handle demo auto-fill functionality
   const handleDemoAutoFill = useCallback(async () => {
     if (!taskId) {
       toast({
@@ -832,7 +832,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         title: "Auto-Fill Failed",
         description: "No task ID available for auto-fill",
       });
-      return;
+      return false;
     }
     
     try {
@@ -881,337 +881,88 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // First ensure all fields have a value, even if empty
       fields.forEach(field => {
         completeData[field.key] = '';
-        console.log(`[UniversalForm] Setting base field ${field.key} to empty string`);
       });
       
       // Then apply any demo data that's available
       Object.entries(demoData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           completeData[key] = value;
-          console.log(`[UniversalForm] Setting field ${key} to demo value: ${value}`);
         }
       });
       
-      // Log the complete data object before resetting
-      console.log('[UniversalForm] Complete data object before form reset:', 
-        Object.keys(completeData).length, 'fields');
+      // Clear previous values to avoid conflicts
+      form.reset({});
       
-      try {
-        // First forcefully clear all previous values to avoid any conflicts
-        console.log('[UniversalForm] Forcefully clearing previous form values...');
-        form.reset({});
+      // Wait for state updates to process
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Add a manual re-render component flag
+      setForceRerender(prev => !prev);
+      
+      // For KY3P, Open Banking, and other form types, use the bulk update approach
+      if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
+        // Filter out empty or undefined values and get only non-empty field values
+        const validResponses: Record<string, any> = {};
+        let fieldCount = 0;
         
-        // Wait for state updates to process
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Add a manual re-render component flag
-        setForceRerender(prev => !prev);
-        
-        // First update the form service directly
-        if (formService) {
-          console.log('[UniversalForm] Setting values directly on form service...');
-          
-          // Process field by field to ensure updates are tracked properly
-          for (const [fieldName, fieldValue] of Object.entries(completeData)) {
-            try {
-              formService.updateFormData(fieldName, fieldValue, taskId);
-              console.log(`[UniversalForm] Updated form service for ${fieldName}: "${fieldValue}"`);
-            } catch (serviceError) {
-              console.error(`[UniversalForm] Error updating form service for ${fieldName}:`, serviceError);
-            }
-          }
-          
-          console.log('[UniversalForm] Successfully updated form service with demo data');
-        } else {
-          console.warn('[UniversalForm] No form service available to update!');
-        }
-        
-        // Force longer wait to ensure form service updates are complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Reset the form with all values at once
-        console.log('[UniversalForm] Resetting form with complete demo data...');
-        form.reset(completeData, {
-          keepDefaultValues: false, // Don't keep defaults
-        });
-        console.log('[UniversalForm] Form reset completed');
-        
-        // Wait again for the reset to fully process
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Now set each field individually with validation flags
-        console.log('[UniversalForm] Setting individual field values...');
-        let fieldsUpdated = 0;
-        
-        // First pass - make a special pass for section-0 (Company Profile) fields 
-        // Add all fields from Company Profile section to ensure none are missed
-        // This directly addresses the missing field issue in the first section
-        
-        // Get all fields belonging to section-0
-        const companyProfileFields = fields
-          .filter(field => field.section === 'section-0')
-          .map(field => field.key);
-          
-        console.log('[UniversalForm] Found Company Profile fields:', companyProfileFields);
-        
-        // Process them first with extra care
-        for (const fieldName of companyProfileFields) {
-          if (fieldName in completeData) {
-            const fieldValue = completeData[fieldName];
-            try {
-              console.log(`[UniversalForm] Setting Company Profile field ${fieldName}: "${fieldValue}"`);
-              
-              // Forcefully clear the field first
-              form.setValue(fieldName, null);
-              await new Promise(resolve => setTimeout(resolve, 10));
-              
-              // Set with validation
-              form.setValue(fieldName, fieldValue, {
-                shouldValidate: true,
-                shouldDirty: true,
-                shouldTouch: true
-              });
-              
-              // Update backend - call twice to ensure persistence
-              if (typeof updateField === 'function') {
-                updateField(fieldName, fieldValue);
-                
-                // Small delay then update again for redundancy
-                await new Promise(resolve => setTimeout(resolve, 20));
-                updateField(fieldName, fieldValue);
-                fieldsUpdated++;
-              }
-              
-              // Longer delay between Company Profile fields
-              await new Promise(resolve => setTimeout(resolve, 50));
-            } catch (err) {
-              console.error(`[UniversalForm] Error setting Company Profile field ${fieldName}:`, err);
-            }
-          } else {
-            console.warn(`[UniversalForm] Field ${fieldName} not found in demo data!`);
-          }
-        }
-        
-        // Second pass - handle all other fields
-        for (const [fieldName, fieldValue] of Object.entries(completeData)) {
-          // Skip Company Profile fields that were already processed in first pass
-          const isCompanyProfileField = companyProfileFields.includes(fieldName);
-          if (isCompanyProfileField) {
-            continue;
-          }
-          
-          try {
-            // Log the field being updated
-            console.log(`[UniversalForm] Setting form value for ${fieldName}: "${fieldValue}" (${typeof fieldValue})`);
+        for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+          if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+            // Add to valid responses
+            validResponses[fieldKey] = fieldValue;
+            fieldCount++;
             
-            // Forcefully clear the field first
-            form.setValue(fieldName, null);
-            
-            // Then set the new value with validation flags
-            form.setValue(fieldName, fieldValue, {
+            // Update the UI form state immediately
+            form.setValue(fieldKey, fieldValue, {
               shouldValidate: true,
               shouldDirty: true,
               shouldTouch: true
             });
-            
-            // Update backend via our field update mechanism
-            console.log(`[UniversalForm] Updating backend for ${fieldName}...`);
-            if (typeof updateField === 'function') {
-              updateField(fieldName, fieldValue);
-              fieldsUpdated++;
-            } else {
-              console.error(`[UniversalForm] updateField is not a function! Type: ${typeof updateField}`);
-            }
-            
-            // Small delay between fields to prevent race conditions
-            await new Promise(resolve => setTimeout(resolve, 10));
-          } catch (fieldError) {
-            console.error(`[UniversalForm] Error updating field ${fieldName}:`, fieldError);
           }
         }
         
-        // Special third pass just for Operations & Compliance fields
-        // This ensures the last section's fields get set properly
-        const operationsFields = fields.filter(field => field.section === 'section-3').map(field => field.key);
-        
-        if (operationsFields.length > 0) {
-          console.log('[UniversalForm] Making special pass for Operations & Compliance fields:', operationsFields);
-          
-          // Add a small delay before processing section-3 fields
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          for (const fieldName of operationsFields) {
-            if (fieldName in completeData) {
-              const fieldValue = completeData[fieldName];
-              try {
-                console.log(`[UniversalForm] Re-setting Operations field ${fieldName}: "${fieldValue}"`);
-                
-                // Set directly with validation
-                form.setValue(fieldName, fieldValue, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                  shouldTouch: true
-                });
-                
-                // Force longer delay for Operations fields
-                await new Promise(resolve => setTimeout(resolve, 30));
-              } catch (err) {
-                console.error(`[UniversalForm] Error in Operations fields pass for ${fieldName}:`, err);
-              }
-            }
-          }
+        // Proceed only if we have valid responses
+        if (fieldCount === 0) {
+          logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+          throw new Error("No valid demo data available for auto-fill");
         }
         
-        // Enhanced final re-rendering and validation with extra delay
-        // First trigger immediate validation
-        await form.trigger();
+        // Construct proper endpoint based on form type
+        const endpoint = 
+          taskType === 'sp_ky3p_assessment' 
+            ? `/api/tasks/${taskId}/ky3p-responses/bulk` 
+            : `/api/tasks/${taskId}/${taskType}-responses/bulk`;
         
-        // Force re-render immediately
-        setForceRerender(prev => !prev);
+        // Use standardized format for all form types
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            responses: validResponses
+          }),
+        });
         
-        // Add a secondary delayed validation for fields that might not have updated
-        setTimeout(async () => {
-          // Re-validate all fields again after a delay
-          await form.trigger();
-          // Force another re-render
-          setForceRerender(prev => !prev);
-          // Log the final state for debugging
-          console.log('[UniversalForm] Final re-render and validation completed');
-          
-          // Verify all fields have values in form state
-          const formValues = form.getValues();
-          console.log('[UniversalForm] Form values after final validation:', 
-            Object.keys(formValues).length, 'fields');
-          
-          // Check which section might have issues
-          const sectionFields = {
-            'Company Profile': Object.keys(formValues).filter(key => {
-              const field = fields.find(f => f.key === key);
-              return field && field.section === 'section-0';
-            }),
-            'Governance & Leadership': Object.keys(formValues).filter(key => {
-              const field = fields.find(f => f.key === key);
-              return field && field.section === 'section-1';
-            }),
-            'Financial Profile': Object.keys(formValues).filter(key => {
-              const field = fields.find(f => f.key === key);
-              return field && field.section === 'section-2';
-            }),
-            'Operations & Compliance': Object.keys(formValues).filter(key => {
-              const field = fields.find(f => f.key === key);
-              return field && field.section === 'section-3';
-            })
-          };
-          
-          console.log('[UniversalForm] Section field counts:', {
-            'Company Profile': sectionFields['Company Profile'].length,
-            'Governance & Leadership': sectionFields['Governance & Leadership'].length,
-            'Financial Profile': sectionFields['Financial Profile'].length,
-            'Operations & Compliance': sectionFields['Operations & Compliance'].length
-          });
-          
-          // Final field checking - find any missing field and set it directly
-          // This is our last fallback to ensure 100% completion
-          fields.forEach(field => {
-            const { key, section } = field;
-            const currentValue = formValues[key];
-            
-            if (!currentValue && completeData[key]) {
-              // Found a missing field, set it again
-              console.log(`[UniversalForm] Final pass - fixing missing field ${key} in section ${section}`);
-              form.setValue(key, completeData[key], {
-                shouldValidate: true,
-                shouldDirty: true,
-                shouldTouch: true
-              });
-              
-              // Update backend if needed
-              if (typeof updateField === 'function') {
-                updateField(key, completeData[key]);
-              }
-            }
-          });
-          
-          // One last force re-render after fixing any missing fields
-          setForceRerender(prev => !prev);
-        }, 500);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Bulk update failed: ${response.status} - ${errorText}`);
+        }
         
-        console.log(`[UniversalForm] Updated ${fieldsUpdated} fields in backend`);
-      } catch (resetError) {
-        console.error('[UniversalForm] Error during form reset or field updates:', resetError);
-        throw resetError; // Re-throw to be caught by the outer try/catch
-      }
-      
-      // For KY3P, Open Banking, and other form types, leverage the field-by-field approach 
-  // This ensures consistent behavior across form types
-  if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
-    try {
-      logger.info(`[UniversalForm] Auto-filling ${taskType} form for task ${taskId}`);
-      
-      // Enhanced approach: Process each field individually with proper error handling
-      const fields = Array.isArray(fields) ? fields : [];
-      const processingPromises: Promise<void>[] = [];
-      let processedFields = 0;
-      
-      logger.info(`[UniversalForm] Processing ${fields.length} fields for auto-fill`);
-      
-      // Process fields in groups to avoid overwhelming the server
-      const fieldsWithDemoValues = fields.filter(field => {
-        const value = completeData[field.key];
-        return value !== undefined && value !== null && value !== '';
-      });
-      
-      logger.info(`[UniversalForm] Found ${fieldsWithDemoValues.length} fields with demo values`);
-      
-      // Process in batches of 10 fields
-      const batchSize = 10;
-      for (let i = 0; i < fieldsWithDemoValues.length; i += batchSize) {
-        const batch = fieldsWithDemoValues.slice(i, i + batchSize);
+        const result = await response.json();
         
-        // Wait for each batch to complete before starting the next
-        await Promise.all(
-          batch.map(async (field) => {
-            try {
-              const value = completeData[field.key];
-              if (value !== undefined && value !== null) {
-                await updateField(field.key, value);
-                processedFields++;
-              }
-            } catch (fieldError) {
-              logger.error(`[UniversalForm] Error updating field ${field.key}:`, fieldError);
-            }
-          })
-        );
-        
-        // Add a small delay between batches to avoid overwhelming the server
-        if (i + batchSize < fieldsWithDemoValues.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+        // Import queryClient directly to invalidate task data queries
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      } else {
+        // Update form service for KYB or other traditional forms
+        if (formService) {
+          await formService.bulkUpdate(completeData);
         }
       }
       
-      logger.info(`[UniversalForm] Successfully processed ${processedFields} fields for auto-fill`);
-      
-      // If we have a formService with save method, use it to finalize the form data
-      // This helps with progress calculation and status updates
-      if (formService && typeof (formService as any).saveProgress === 'function') {
-        try {
-          logger.info(`[UniversalForm] Calling formService.saveProgress() to finalize data`);
-          await (formService as any).saveProgress(taskId);
-          
-          // Import queryClient directly to invalidate task data queries
-          const { queryClient } = await import('@/lib/queryClient');
-          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-        } catch (saveError) {
-          logger.error(`[UniversalForm] Error finalizing form data:`, saveError);
-        }
-      }
-    } catch (autoFillError) {
-      logger.error(`[UniversalForm] Auto-fill error:`, autoFillError);
-    }
-  }
-      
-      // Save regular progress to server for other form types
+      // Save regular progress
       if (saveProgress) {
         await saveProgress();
       }
@@ -1229,6 +980,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         onProgress(100);
       }
       
+      return true;
     } catch (err) {
       logger.error('[UniversalForm] Auto-fill error:', err);
       toast({
@@ -1236,8 +988,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         title: "Auto-Fill Failed",
         description: err instanceof Error ? err.message : "There was an error loading demo data",
       });
+      return false;
     }
-  }, [taskId, form, fields, updateField, saveProgress, refreshStatus, toast, onProgress]);
+  }, [toast, taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, logger]);
   
   // State for clearing fields progress indicator
   const [isClearing, setIsClearing] = useState(false);
