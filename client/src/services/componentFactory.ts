@@ -4,6 +4,7 @@ import { getFieldComponentType } from '@/utils/formUtils';
 import { TaskTemplateWithConfigs } from './taskTemplateService';
 import { enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { ky3pFormServiceFactory } from './ky3p-form-service';
+import { openBankingFormServiceFactory } from './open-banking-form-service';
 import getLogger from '@/utils/logger';
 
 /**
@@ -113,8 +114,7 @@ export class ComponentFactory {
       // Get instance from OpenBanking factory
       logger.info(`Getting isolated Open Banking service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
       
-      // Import here to avoid circular dependencies
-      const { openBankingFormServiceFactory } = require('./open-banking-form-service');
+      // Use the imported factory (now imported at the top of the file)
       return openBankingFormServiceFactory.getServiceInstance(companyId, taskId);
     }
     
