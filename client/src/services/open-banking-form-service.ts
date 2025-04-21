@@ -717,6 +717,11 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     }
   }
   
+    // Add throttling variables for progress updates
+  private static lastSaveTime: Record<number, number> = {};
+  private static saveQueue: Record<number, any> = {};
+  private static MIN_SAVE_INTERVAL = 2000; // 2 seconds between saves
+  
   /**
    * Save the form's current state
    * @param options Save options
@@ -728,6 +733,34 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     }
     
     const effectiveTaskId = options.taskId || this.taskId;
+    
+    // Implement throttling to prevent too many save operations
+    const now = Date.now();
+    if (OpenBankingFormService.lastSaveTime[effectiveTaskId]) {
+      const timeSinceLastSave = now - OpenBankingFormService.lastSaveTime[effectiveTaskId];
+      if (timeSinceLastSave < OpenBankingFormService.MIN_SAVE_INTERVAL) {
+        // Queue the save to be done later
+        logger.debug(`[OpenBankingFormService] Throttling save for task ${effectiveTaskId} - queued for later`);
+        
+        // Store the latest form data in the queue
+        OpenBankingFormService.saveQueue[effectiveTaskId] = {
+          formData: this.getFormData(),
+          timestamp: now
+        };
+        
+        // Successfully queued
+        return true;
+      }
+    }
+    
+    // If we're here, it's been long enough since the last save
+    // Update the last save time
+    OpenBankingFormService.lastSaveTime[effectiveTaskId] = now;
+    
+    // Clear the queue entry if it exists
+    if (OpenBankingFormService.saveQueue[effectiveTaskId]) {
+      delete OpenBankingFormService.saveQueue[effectiveTaskId];
+    }
     
     try {
       logger.info(`[OpenBankingFormService] Saving form data for task ${effectiveTaskId}`);
