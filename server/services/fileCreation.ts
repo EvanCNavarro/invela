@@ -30,7 +30,7 @@ export class FileCreationService {
     
     // For KY3P assessments, create CSV files
     if (metadata.taskType === 'sp_ky3p_assessment') {
-      return `sp_ky3p_security_assessment_${sanitizedCompanyName}_${timestamp}.csv`;
+      return `spglobal_ky3p_security_assessment_${sanitizedCompanyName}_${timestamp}.csv`;
     }
     
     // Default to JSON for other assessment types
