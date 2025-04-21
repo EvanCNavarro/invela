@@ -119,8 +119,8 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       return; // Prevent navigation
     }
 
-    // Check if CARD task is locked (needs both KYB and Security Assessment or KY3P to be completed)
-    if (task.task_type === 'company_card' && 
+    // Check if CARD or Open Banking task is locked (needs both KYB and Security Assessment or KY3P to be completed)
+    if ((task.task_type === 'company_card' || task.task_type === 'open_banking' || task.task_type === 'open_banking_survey') && 
         (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) {
       console.log('[TaskTable] CARD/Open Banking Survey task locked - prerequisite tasks not completed');
       return; // Prevent navigation
@@ -137,11 +137,13 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       return; // Prevent navigation
     }
 
-    // Navigate to form pages for KYB, Security, KY3P and CARD tasks (including submitted tasks)
+    // Navigate to form pages for KYB, Security, KY3P, CARD, and Open Banking tasks (including submitted tasks)
     if (task.task_type === 'company_kyb' || 
         task.task_type === 'company_card' ||
         task.task_type === 'security_assessment' ||
-        task.task_type === 'sp_ky3p_assessment') {
+        task.task_type === 'sp_ky3p_assessment' ||
+        task.task_type === 'open_banking' ||
+        task.task_type === 'open_banking_survey') {
       
       // Get task ID for direct navigation
       const taskId = task.id;
@@ -156,6 +158,8 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         formType = 'security';
       } else if (task.task_type === 'sp_ky3p_assessment') {
         formType = 'ky3p';
+      } else if (task.task_type === 'open_banking' || task.task_type === 'open_banking_survey') {
+        formType = 'open_banking';
       }
       
       // Get company name from task title or metadata
@@ -255,13 +259,14 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
             {tasks.map((task) => {
               // Determine if the task is locked based on its type and prerequisites
               const isCardTask = task.task_type === 'company_card';
+              const isOpenBankingTask = task.task_type === 'open_banking' || task.task_type === 'open_banking_survey';
               const isSecurityTask = task.task_type === 'security_assessment';
               const isKy3pTask = task.task_type === 'sp_ky3p_assessment';
               
               // Check locked status based on task type and prerequisites
               const isLocked = 
                 ((isSecurityTask || isKy3pTask) && !isKybCompleted(task.company_id)) || 
-                (isCardTask && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
+                ((isCardTask || isOpenBankingTask) && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
                 // Also check if metadata explicitly marks task as locked
                 (task.metadata?.locked === true) ||
                 // Check prerequisite relationship in metadata
@@ -273,7 +278,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                   "Complete the KYB form to unlock this Security Assessment task" :
                 isKy3pTask ? 
                   "Complete the KYB form to unlock this S&P KY3P Security Assessment task" :
-                isCardTask ? 
+                (isCardTask || isOpenBankingTask) ? 
                   "Complete both KYB and Security Assessment tasks to unlock this Open Banking Survey task" :
                   "This task is locked due to dependencies"
               ) : null;
