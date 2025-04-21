@@ -424,12 +424,89 @@ export class KY3PFormService extends EnhancedKybFormService {
     try {
       logger.info(`[KY3P Form Service] Getting progress for task ${this.taskId}`);
       
+      // First try to get the task data for context
+      const taskResponse = await fetch(`/api/tasks/${this.taskId}`);
+      let taskInfo = null;
+      let isSubmitted = false;
+      
+      if (taskResponse.ok) {
+        try {
+          taskInfo = await taskResponse.json();
+          isSubmitted = taskInfo?.status === 'submitted';
+          
+          logger.info(`[KY3P Form Service] Retrieved task info for ${this.taskId}:`, {
+            status: taskInfo?.status,
+            isSubmitted,
+            metadata: taskInfo?.metadata ? Object.keys(taskInfo.metadata) : 'none'
+          });
+        } catch (taskJsonError) {
+          logger.warn(`[KY3P Form Service] Error parsing task JSON:`, taskJsonError);
+        }
+      }
+      
+      // Try to get the KY3P progress from our API
       const response = await fetch(`/api/ky3p/progress/${this.taskId}`);
       
+      // If server returns an error but the task is submitted, fall back to KY3P responses
+      if (!response.ok && isSubmitted) {
+        logger.warn(`[KY3P Form Service] Progress API not working, falling back to KY3P responses:`, {
+          status: response.status, 
+          statusText: response.statusText
+        });
+        
+        // Fallback: Load responses directly from the KY3P responses endpoint
+        try {
+          const responsesResponse = await fetch(`/api/tasks/${this.taskId}/ky3p-responses`);
+          
+          if (responsesResponse.ok) {
+            const responses = await responsesResponse.json();
+            
+            logger.info(`[KY3P Form Service] Retrieved ${responses.length} responses for fallback`);
+            
+            // Convert responses to a formData object
+            const formData: Record<string, any> = {};
+            
+            for (const resp of responses) {
+              if (resp.field_id && resp.response_value) {
+                // Use the field repository to map field ID to field key
+                const field = this.fields.find(f => f.id === resp.field_id);
+                if (field) {
+                  formData[field.key] = resp.response_value;
+                }
+              }
+            }
+            
+            // Add submission date from task info if available
+            if (taskInfo?.completion_date) {
+              formData._submissionDate = taskInfo.completion_date;
+            } else if (taskInfo?.metadata?.submissionDate) {
+              formData._submissionDate = taskInfo.metadata.submissionDate;
+            } else {
+              formData._submissionDate = new Date().toISOString();
+            }
+            
+            return {
+              formData,
+              progress: 100,
+              status: 'submitted'
+            };
+          }
+        } catch (fallbackError) {
+          logger.error(`[KY3P Form Service] Error in fallback approach:`, fallbackError);
+        }
+      }
+      
+      // Proceed with normal flow if progress API is working
       if (!response.ok) {
         const errorText = await response.text();
         logger.error(`[KY3P Form Service] Failed to get progress: ${response.status}`, errorText);
-        throw new Error(`Failed to get progress: ${response.status} - ${errorText}`);
+        
+        // Return empty data but include submission status
+        return {
+          formData: {},
+          progress: isSubmitted ? 100 : 0,
+          status: isSubmitted ? 'submitted' : 'not_started'
+        };
       }
       
       const data = await response.json();
@@ -441,15 +518,37 @@ export class KY3PFormService extends EnhancedKybFormService {
         formDataKeys: Object.keys(data.formData || {}).length
       });
       
+      // If no form data but task is submitted, add submission date
+      if (isSubmitted && Object.keys(data.formData || {}).length === 0) {
+        const formData = { ...data.formData } || {};
+        
+        if (taskInfo?.completion_date) {
+          formData._submissionDate = taskInfo.completion_date;
+        } else if (taskInfo?.metadata?.submissionDate) {
+          formData._submissionDate = taskInfo.metadata.submissionDate;
+        } else {
+          formData._submissionDate = new Date().toISOString();
+        }
+        
+        // Override the empty form data
+        data.formData = formData;
+      }
+      
       // If no form data, use an empty object as fallback
       return {
         formData: data.formData || {},
-        progress: data.progress || 0,
-        status: data.status || 'not_started'
+        progress: data.progress || (isSubmitted ? 100 : 0),
+        status: data.status || (isSubmitted ? 'submitted' : 'not_started')
       };
     } catch (error) {
       logger.error('[KY3P Form Service] Error getting progress:', error);
-      throw error;
+      
+      // Return a minimal response instead of throwing
+      return {
+        formData: {},
+        progress: 0,
+        status: 'not_started'
+      };
     }
   }
   
