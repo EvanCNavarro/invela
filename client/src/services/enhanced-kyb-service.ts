@@ -1094,6 +1094,52 @@ export class EnhancedKybFormService implements FormServiceInterface {
   }
   
   /**
+   * Bulk update multiple form fields at once
+   * Used primarily for demo auto-fill functionality
+   * @param data Record of field keys and values to update
+   * @param taskId Optional task ID for immediate persistence
+   * @returns Promise resolving to a boolean indicating success
+   */
+  public async bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean> {
+    if (!taskId) {
+      throw new Error('No task ID provided for bulk update');
+    }
+    
+    try {
+      this.logger.info(`[Enhanced KYB Service] Performing bulk update for task ${taskId}`);
+      
+      // First update the local form data
+      Object.entries(data).forEach(([key, value]) => {
+        this.updateFormData(key, value);
+      });
+      
+      // Then send to server with proper payload format including 'responses' wrapper
+      const response = await fetch(`/api/kyb/bulk-update/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include session cookies
+        body: JSON.stringify({
+          responses: data
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(`[Enhanced KYB Service] Failed to perform bulk update: ${response.status}`, errorText);
+        return false;
+      }
+      
+      this.logger.info(`[Enhanced KYB Service] Bulk update successful for task ${taskId}`);
+      return true;
+    } catch (error) {
+      this.logger.error('[Enhanced KYB Service] Error during bulk update:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Save the form
    */
   async save(options: FormSubmitOptions): Promise<boolean> {
