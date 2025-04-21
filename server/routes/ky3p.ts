@@ -1224,69 +1224,48 @@ router.post('/api/tasks/fix-company-card', async (req, res) => {
       companyId
     });
     
-    // Use direct SQL for maximum reliability
-    const currentTime = new Date().toISOString();
-    const result = await db.execute(`
-      UPDATE tasks 
-      SET 
-        status = CASE WHEN status = 'locked' OR status IS NULL THEN 'not_started' ELSE status END,
-        metadata = jsonb_set(
-          jsonb_set(
-            jsonb_set(
-              jsonb_set(
-                COALESCE(metadata, '{}'::jsonb),
-                '{locked}', 
-                'false'
-              ),
-              '{prerequisite_completed}',
-              'true'
-            ),
-            '{prerequisite_completed_at}',
-            concat('"', $2, '"')::jsonb
-          ),
-          '{unlocked_by}',
-          '"manual_endpoint_fix"'
-        ),
-        updated_at = NOW()
-      WHERE id = $1
-      RETURNING id, status, metadata->>'locked' AS is_locked
-    `, [taskId, currentTime]);
+    // Execute the SQL query using psql directly
+    const { exec } = await import('child_process');
+    const cmd = `psql $DATABASE_URL -c "UPDATE tasks SET metadata = jsonb_set(metadata, '{locked}', 'false'), status = 'not_started' WHERE id = ${taskId};"`;
     
-    logger.info('[KY3P Fix] SQL update result:', result);
-    
-    // Try to broadcast the update
-    try {
-      const { broadcastTaskUpdate } = await import('../services/websocket.js');
-      await broadcastTaskUpdate(taskId);
-      
-      const { broadcastProgressUpdate } = await import('../utils/progress');
-      await broadcastProgressUpdate(taskId, 0);
-      
-      logger.info('[KY3P Fix] Broadcast complete for task:' + taskId);
-    } catch (error) {
-      logger.error('[KY3P Fix] Failed to broadcast task update:', error);
-    }
-    
-    // Get the updated task to verify and return complete details
-    const [updatedTask] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
-      
-    res.json({ 
-      success: true, 
-      message: `Task ${taskId} unlocked successfully`,
-      task: {
-        id: updatedTask.id,
-        status: updatedTask.status,
-        isLocked: updatedTask.metadata?.locked === true,
-        metadata: updatedTask.metadata
+    exec(cmd, async (error, stdout, stderr) => {
+      if (error) {
+        logger.error('[KY3P Fix] SQL execution error:', error);
+        return res.status(500).json({ message: 'SQL execution failed', error: error.message });
       }
+      
+      logger.info('[KY3P Fix] Task updated successfully, SQL output:', stdout);
+      
+      // Try to broadcast the update
+      try {
+        const broadcastCmd = `curl -X POST http://localhost:5000/api/tasks/${taskId}/broadcast`;
+        exec(broadcastCmd);
+        logger.info('[KY3P Fix] Broadcast initiated for task: ' + taskId);
+      } catch (error) {
+        logger.error('[KY3P Fix] Failed to broadcast task update:', error);
+      }
+      
+      // Get the updated task
+      const [updatedTask] = await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId))
+        .limit(1);
+        
+      res.json({ 
+        success: true, 
+        message: `Task ${taskId} unlocked successfully`,
+        task: {
+          id: updatedTask.id,
+          status: updatedTask.status,
+          isLocked: updatedTask.metadata?.locked === true,
+          metadata: updatedTask.metadata
+        }
+      });
     });
   } catch (error) {
     logger.error('[KY3P Fix] Error in fix-company-card endpoint:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
