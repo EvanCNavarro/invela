@@ -74,7 +74,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       <div className="field-display-only mb-4 border-b pb-3">
         <div className="mb-1 font-semibold text-gray-700">{field.label || field.key}</div>
         {field.question && <div className="text-base mb-2">{field.question}</div>}
-        {field.helpText && <div className="text-sm text-gray-500 mb-1">{field.helpText}</div>}
+        {(field.helpText || field.tooltip) && <div className="text-sm text-gray-500 mb-1">{field.helpText || field.tooltip}</div>}
         <div className="border p-2 rounded bg-gray-50 mt-1">
           {fieldValue ? (
             <span>{fieldValue}</span>
@@ -142,7 +142,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
               {field.label}
             </Label>
             
-            {field.helpText && (
+            {(field.helpText || field.tooltip) && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -151,7 +151,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                    {field.helpText}
+                    {field.helpText || field.tooltip}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -404,7 +404,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                     {field.label}
                   </FormLabel>
                   
-                  {field.helpText && (
+                  {(field.helpText || field.tooltip) && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -413,7 +413,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                          {field.helpText}
+                          {field.helpText || field.tooltip}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
