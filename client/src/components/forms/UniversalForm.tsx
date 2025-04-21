@@ -1144,10 +1144,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // For KY3P forms, use the bulk endpoint to update all responses at once
       // This ensures proper task progress calculation in the database
-      if (taskType === 'sp_ky3p_assessment') {
+      if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
         try {
-          logger.info(`[UniversalForm] Using KY3P bulk responses endpoint for task ${taskId}`);
+          logger.info(`[UniversalForm] Using bulk responses endpoint for task ${taskId} (type: ${taskType})`);
           
+          // For KY3P form types - use formService.save method directly if available
+          // This prevents conflicts between individual field updates and bulk updates
+          if (formService && typeof (formService as any).save === 'function') {
+            logger.info(`[UniversalForm] Using formService.save() method for bulk update`);
+            
+            try {
+              // This will use the service's specialized bulk save method
+              const saveResult = await (formService as any).save({ taskId, includeMetadata: true });
+              
+              if (saveResult) {
+                logger.info(`[UniversalForm] Bulk save via formService succeeded`);
+                
+                // Import queryClient directly to invalidate task data queries
+                const { queryClient } = await import('@/lib/queryClient');
+                queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+                queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+                return; // Early return to prevent the standard approach below
+              } else {
+                logger.warn(`[UniversalForm] Bulk save via formService failed, falling back to manual approach`);
+              }
+            } catch (formServiceError) {
+              logger.error(`[UniversalForm] Error using formService.save():`, formServiceError);
+              // Continue to fallback approach
+            }
+          }
+          
+          // Fallback approach - manually construct and send the bulk request
           // Using standardized approach for all form types
           // The server expects: { responses: { field_key1: value1, field_key2: value2, ... } }
           const responsesToSend: { responses: Record<string, string | number | boolean> } = { 
@@ -1155,7 +1182,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           };
           
           // Enhanced error logging for debugging
-          console.log('[UniversalForm] Preparing KY3P bulk responses', {
+          console.log(`[UniversalForm] Preparing ${taskType} bulk responses`, {
             taskId,
             dataFields: Object.keys(completeData).length,
             dataFieldSample: Object.keys(completeData).slice(0, 5) 
@@ -1188,7 +1215,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Log what we're sending for debugging
           logger.info(`[UniversalForm] Sending bulk responses: ${Object.keys(responsesToSend.responses).length} fields`);
           
-          const bulkResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
+          // Determine the correct endpoint based on form type
+          let bulkEndpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
+          if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+            bulkEndpoint = `/api/tasks/${taskId}/open-banking-responses/bulk`;
+          }
+          
+          const bulkResponse = await fetch(bulkEndpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1198,7 +1231,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           if (bulkResponse.ok) {
             const result = await bulkResponse.json();
-            logger.info(`[UniversalForm] KY3P bulk update succeeded: ${result.updatedFields} fields, progress: ${result.progress * 100}%`);
+            logger.info(`[UniversalForm] Bulk update succeeded: ${result.updatedFields || 'unknown'} fields, progress: ${result.progress * 100}%`);
             
             // Import queryClient directly to invalidate task data queries
             const { queryClient } = await import('@/lib/queryClient');
@@ -1206,10 +1239,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
           } else {
             const errorText = await bulkResponse.text();
-            logger.warn(`[UniversalForm] KY3P bulk update failed: ${bulkResponse.status}`, errorText);
+            logger.warn(`[UniversalForm] Bulk update failed: ${bulkResponse.status}`, errorText);
           }
         } catch (bulkError) {
-          logger.error(`[UniversalForm] KY3P bulk update error:`, bulkError);
+          logger.error(`[UniversalForm] Bulk update error:`, bulkError);
         }
       }
       
