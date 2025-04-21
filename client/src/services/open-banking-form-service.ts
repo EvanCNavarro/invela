@@ -444,8 +444,9 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         if (taskResponse.ok) {
           const taskData = await taskResponse.json();
           if (taskData.status === 'submitted') {
-            logger.info(`[OpenBankingFormService] Task ${effectiveTaskId} is already submitted, returning empty form data`);
-            return {};
+            logger.info(`[OpenBankingFormService] Task ${effectiveTaskId} is already submitted, still loading form data for display`);
+            // Special handling for submitted tasks, but we continue to load the data
+            // Don't return an empty object, continue with loading the data
           }
         }
       } catch (taskError) {
