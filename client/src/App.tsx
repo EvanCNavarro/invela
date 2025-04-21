@@ -165,23 +165,11 @@ function Router() {
           )}
         />
         
-        {/* Direct task ID route - redirects to task-center for consistency */}
+        {/* Direct task ID routes - all redirect to task-center/task/:taskId for consistency */}
         <ProtectedRoute 
           path="/task/:taskId"
           component={({ params }: { params: { taskId: string } }) => {
             console.log('[Router] Redirecting from direct task route to nested task route');
-            // Simply redirect to the nested path with the same ID
-            // The TaskPage component will handle both formats
-            return <Redirect to={`/task-center/task/${params.taskId}`} />;
-          }}
-        />
-        
-        {/* Plural 'tasks' route - also redirects to task-center for consistency */}
-        <ProtectedRoute 
-          path="/tasks/:taskId"
-          component={({ params }: { params: { taskId: string } }) => {
-            console.log('[Router] Redirecting from plural tasks route to nested task route');
-            // Redirect to the nested path with the same ID
             return <Redirect to={`/task-center/task/${params.taskId}`} />;
           }}
         />
