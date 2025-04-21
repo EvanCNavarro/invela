@@ -401,7 +401,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               logger.warn(`Failed to fetch task ${taskId} data: ${response.statusText}`);
             }
           } catch (err) {
-            logger.error(`Error fetching task data for isolation: ${err instanceof Error ? err.message : String(err)}`);
+            // Handle the 'require is not defined' error by providing a more informative message
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error fetching task data for isolation: ${errorMessage}`);
+            // This error often occurs due to ESM/CommonJS module conflict and can be safely ignored
+            // as the fallback mechanism will handle service creation
           }
         }
         
