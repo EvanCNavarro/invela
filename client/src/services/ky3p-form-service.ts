@@ -823,26 +823,84 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Get current form data
       const formData = this.getFormData();
       
-      // Call bulk save API to save all form data at once
-      // This is a more efficient approach than saving individual fields
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: formData
-        }),
-      });
+      // First try using the manual approach for each field
+      // This avoids the bulk formatting issues with the API
+      let fallbackMethod = false;
+      let successCount = 0;
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to save form data: ${response.status}`, errorText);
-        return false;
+      try {
+        // Get list of fields from the service
+        const fields = await this.getFormFields();
+        
+        // Log what we're about to save
+        logger.info(`[KY3P Form Service] Saving ${Object.keys(formData).length} fields for task ${effectiveTaskId}`);
+        
+        // Process each field individually to ensure proper field ID mapping
+        for (const [fieldKey, fieldValue] of Object.entries(formData)) {
+          try {
+            // Find the field definition by key
+            const fieldDef = fields.find(f => f.key === fieldKey);
+            
+            if (!fieldDef) {
+              logger.warn(`[KY3P Form Service] Could not find field definition for key: ${fieldKey}`);
+              continue;
+            }
+            
+            // Get the field ID from the definition
+            const fieldId = fieldDef.id;
+            
+            if (!fieldId) {
+              logger.warn(`[KY3P Form Service] Missing field ID for key: ${fieldKey}`);
+              continue;
+            }
+            
+            // Save this individual field
+            await this.saveField(fieldId, fieldValue);
+            successCount++;
+          } catch (fieldError) {
+            logger.error(`[KY3P Form Service] Error saving field ${fieldKey}:`, fieldError);
+          }
+        }
+        
+        logger.info(`[KY3P Form Service] Successfully saved ${successCount} out of ${Object.keys(formData).length} fields`);
+        
+        if (successCount > 0) {
+          return true;
+        }
+        
+        // If we didn't save any fields, try the bulk API as a fallback
+        fallbackMethod = true;
+      } catch (individualError) {
+        logger.error(`[KY3P Form Service] Error during individual field processing:`, individualError);
+        fallbackMethod = true;
       }
       
-      logger.info(`[KY3P Form Service] Form data saved successfully for task ${effectiveTaskId}`);
+      // Fallback to bulk API if individual approach failed
+      if (fallbackMethod) {
+        logger.info(`[KY3P Form Service] Using fallback bulk API approach for task ${effectiveTaskId}`);
+        
+        // Call bulk save API to save all form data at once
+        // This is a more efficient approach than saving individual fields
+        const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include session cookies
+          body: JSON.stringify({
+            responses: formData
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`[KY3P Form Service] Failed to save form data: ${response.status}`, errorText);
+          return false;
+        }
+        
+        logger.info(`[KY3P Form Service] Form data saved successfully via bulk API for task ${effectiveTaskId}`);
+      }
+      
       return true;
     } catch (error) {
       logger.error('[KY3P Form Service] Error saving form data:', error);
