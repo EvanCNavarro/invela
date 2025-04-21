@@ -881,20 +881,114 @@ export default function TaskPage({ params }: TaskPageProps) {
             </div>
           </div>
 
-          <div className="container max-w-7xl mx-auto space-y-6">
-            <OpenBankingPlayground
-              taskId={task.id}
-              companyName={derivedCompanyName}
-              companyData={{
-                name: displayName,
-                description: task.metadata?.company?.description
-              }}
-              onSubmit={(formData) => {
-                console.log('[TaskPage] Open Banking Survey submitted:', { formData });
-                setIsSubmitted(true);
-              }}
-            />
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              {/* Universal form component for Open Banking */}
+              <UniversalForm
+                taskId={task.id}
+                taskType="open_banking"
+                initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Open Banking Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Open Banking task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update Open Banking task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
+                }}
+                onSubmit={(formData) => {
+                  toast({
+                    title: "Submitting Open Banking Survey",
+                    description: "Please wait while we process your submission...",
+                  });
+                  
+                  fetch(`/api/open-banking/submit/${task.id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ formData })
+                  })
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to submit Open Banking survey');
+                      }
+                      return data;
+                    })
+                    .then((result) => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+                      
+                      setFileId(result.fileId);
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+                      
+                      toast({
+                        title: "Success",
+                        description: "Open Banking survey has been submitted successfully.",
+                        variant: "default",
+                      });
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Open Banking survey submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to submit Open Banking survey. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
+            </div>
           </div>
+          
+          {showSuccessModal && (
+            <SecuritySuccessModal
+              open={showSuccessModal}
+              onOpenChange={(open) => setShowSuccessModal(open)}
+              companyName={displayName}
+              title="Open Banking Survey Completed"
+              description="The Open Banking Survey has been successfully submitted and processed."
+            />
+          )}
         </PageTemplate>
       </DashboardLayout>
     );
