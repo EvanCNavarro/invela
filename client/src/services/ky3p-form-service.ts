@@ -314,6 +314,7 @@ export class KY3PFormService extends EnhancedKybFormService {
     try {
       const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/${fieldId}`, {
         method: 'POST',
+        credentials: 'include', // Include session cookies
         headers: {
           'Content-Type': 'application/json',
         },
@@ -353,6 +354,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       const response = await fetch(`/api/tasks/${this.taskId}/ky3p-submit`, {
         method: 'POST',
+        credentials: 'include', // Include session cookies
         headers: {
           'Content-Type': 'application/json',
         }
@@ -470,7 +472,12 @@ export class KY3PFormService extends EnhancedKybFormService {
       logger.debug(`[KY3P Form Service] Tracing API call to ${url}`);
       
       const startTime = performance.now();
-      const response = await fetch(url, options);
+      // Ensure credentials are included
+      const enhancedOptions = {
+        ...options,
+        credentials: 'include'
+      };
+      const response = await fetch(url, enhancedOptions);
       const endTime = performance.now();
       
       logger.debug(`[KY3P Form Service] API response from ${url}:`, {
