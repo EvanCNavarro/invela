@@ -70,18 +70,89 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
         status: dependentTask.status
       });
       
-      if (isCardOrSurveyTask || 
-          dependentTask.metadata?.locked === true || 
-          dependentTask.metadata?.prerequisite_task_id === ky3pTaskId ||
-          dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment') {
+      // For Card/Survey tasks, always force unlock them regardless of their current status
+      if (isCardOrSurveyTask) {
+        logger.info('[KY3P API] Force unlocking Card/Survey task regardless of current status', {
+          taskId: dependentTask.id,
+          taskType: dependentTask.task_type
+        });
         
-        logger.info('[KY3P API] Unlocking dependent task', {
+        try {
+          // Use direct SQL for maximum reliability
+          await db.execute(`
+            UPDATE tasks 
+            SET 
+              status = CASE WHEN status = 'locked' OR status IS NULL THEN 'not_started' ELSE status END,
+              metadata = jsonb_set(
+                jsonb_set(
+                  jsonb_set(
+                    jsonb_set(
+                      COALESCE(metadata, '{}'::jsonb),
+                      '{locked}', 
+                      'false'
+                    ),
+                    '{prerequisite_completed}',
+                    'true'
+                  ),
+                  '{prerequisite_completed_at}',
+                  '"${new Date().toISOString()}"'
+                ),
+                '{unlocked_by}',
+                '"ky3p_submission"'
+              ),
+              updated_at = NOW()
+            WHERE id = $1
+          `, [dependentTask.id]);
+          
+          logger.info('[KY3P API] Task successfully unlocked using direct SQL', {
+            taskId: dependentTask.id,
+            taskType: dependentTask.task_type
+          });
+        } catch (sqlError) {
+          logger.error('[KY3P API] Failed to unlock task with direct SQL, falling back to ORM:', sqlError);
+          
+          // Fallback to the ORM update method
+          await db.update(tasks)
+            .set({
+              status: dependentTask.status === 'locked' || !dependentTask.status ? 'not_started' : dependentTask.status,
+              metadata: {
+                ...dependentTask.metadata,
+                locked: false, // Explicitly unlock the task
+                prerequisite_completed: true,
+                prerequisite_completed_at: new Date().toISOString(),
+                prerequisite_completed_by: userId,
+                unlocked_by: 'ky3p_submission' // Mark how this was unlocked
+              },
+              updated_at: new Date()
+            })
+            .where(eq(tasks.id, dependentTask.id));
+        }
+        
+        // Broadcast the task update through WebSocket
+        try {
+          const { broadcastTaskUpdate } = await import('../services/websocket.js');
+          await broadcastTaskUpdate(dependentTask.id);
+          
+          // Also broadcast the progress update to ensure UI refreshes
+          const { broadcastProgressUpdate } = await import('../utils/progress');
+          await broadcastProgressUpdate(dependentTask.id, 0);
+          
+          logger.info('[KY3P API] WebSocket broadcast sent for task unlock', {
+            taskId: dependentTask.id
+          });
+        } catch (wsError) {
+          logger.error('[KY3P API] Failed to broadcast WebSocket update for task unlock:', wsError);
+        }
+      }
+      // Handle normal task prerequisite logic for other task types
+      else if (
+        dependentTask.metadata?.locked === true || 
+        dependentTask.metadata?.prerequisite_task_id === ky3pTaskId ||
+        dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment'
+      ) {
+        logger.info('[KY3P API] Unlocking dependent task based on prerequisites', {
           dependentTaskId: dependentTask.id,
           dependentTaskType: dependentTask.task_type,
-          isSpecialCaseTask: isCardOrSurveyTask,
-          isOpenBankingSurvey,
-          isCompanyCard,
-          currentStatus: dependentTask.status,
           previousMetadata: {
             locked: dependentTask.metadata?.locked,
             prerequisiteTaskId: dependentTask.metadata?.prerequisite_task_id,
@@ -117,21 +188,6 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
           
           // Also broadcast the progress update to ensure UI refreshes
           const { broadcastProgressUpdate } = await import('../utils/progress');
-          
-          // Create a safe status value for the task
-          const newStatus = dependentTask.status === 'locked' || !dependentTask.status ? 'not_started' : dependentTask.status;
-          
-          // Set metadata to indicate task is unlocked
-          const updatedMetadata = {
-            ...dependentTask.metadata,
-            locked: false,
-            prerequisite_completed: true,
-            prerequisite_completed_at: new Date().toISOString(),
-            prerequisite_completed_by: userId,
-            unlocked_by: 'ky3p_submission'
-          };
-          
-          // Update UI with task progress information
           await broadcastProgressUpdate(dependentTask.id, 0);
           
           logger.info('[KY3P API] WebSocket broadcast sent for task unlock', {
@@ -1163,31 +1219,40 @@ router.post('/api/tasks/fix-company-card', async (req, res) => {
       return res.status(400).json({ message: 'Missing required parameters' });
     }
     
-    console.log(`[KY3P Fix] Unlocking company card task: ${taskId} for company: ${companyId}`);
+    logger.info('[KY3P Fix] Unlocking company card task via endpoint', {
+      taskId,
+      companyId
+    });
     
     // Use direct SQL for maximum reliability
+    const currentTime = new Date().toISOString();
     const result = await db.execute(`
       UPDATE tasks 
       SET 
-        status = 'not_started',
+        status = CASE WHEN status = 'locked' OR status IS NULL THEN 'not_started' ELSE status END,
         metadata = jsonb_set(
           jsonb_set(
             jsonb_set(
-              COALESCE(metadata, '{}'::jsonb),
-              '{locked}', 
-              'false'
+              jsonb_set(
+                COALESCE(metadata, '{}'::jsonb),
+                '{locked}', 
+                'false'
+              ),
+              '{prerequisite_completed}',
+              'true'
             ),
-            '{prerequisite_completed}',
-            'true'
+            '{prerequisite_completed_at}',
+            concat('"', $2, '"')::jsonb
           ),
           '{unlocked_by}',
-          '"manual_fix"'
+          '"manual_endpoint_fix"'
         ),
         updated_at = NOW()
       WHERE id = $1
-    `, [taskId]);
+      RETURNING id, status, metadata->>'locked' AS is_locked
+    `, [taskId, currentTime]);
     
-    console.log('[KY3P Fix] SQL update result:', result);
+    logger.info('[KY3P Fix] SQL update result:', result);
     
     // Try to broadcast the update
     try {
@@ -1197,14 +1262,30 @@ router.post('/api/tasks/fix-company-card', async (req, res) => {
       const { broadcastProgressUpdate } = await import('../utils/progress');
       await broadcastProgressUpdate(taskId, 0);
       
-      console.log('[KY3P Fix] Broadcast complete for task:', taskId);
+      logger.info('[KY3P Fix] Broadcast complete for task:' + taskId);
     } catch (error) {
-      console.error('[KY3P Fix] Failed to broadcast task update:', error);
+      logger.error('[KY3P Fix] Failed to broadcast task update:', error);
     }
     
-    res.json({ success: true, message: 'Task unlocked successfully' });
+    // Get the updated task to verify and return complete details
+    const [updatedTask] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+    res.json({ 
+      success: true, 
+      message: `Task ${taskId} unlocked successfully`,
+      task: {
+        id: updatedTask.id,
+        status: updatedTask.status,
+        isLocked: updatedTask.metadata?.locked === true,
+        metadata: updatedTask.metadata
+      }
+    });
   } catch (error) {
-    console.error('[KY3P Fix] Error in fix-company-card endpoint:', error);
+    logger.error('[KY3P Fix] Error in fix-company-card endpoint:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
