@@ -99,8 +99,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     navigate('/task-center');
   }, [navigate]);
   
-  // Handle file downloads
-  const handleDownload = useCallback(async (format: 'csv' | 'txt' | 'json') => {
+  // Handle file downloads - returns a Promise that resolves when download is started
+  const handleDownload = useCallback(async (format: 'csv' | 'txt' | 'json'): Promise<void> => {
     console.log('[TaskPage] Starting download process:', { 
       format, 
       fileId, 
@@ -112,12 +112,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     
     if (!fileId) {
       console.error('[TaskPage] Download failed: No file ID available');
-      toast({
-        title: "Download Failed",
-        description: "No file is available for download. Please contact support.",
-        variant: "destructive",
-      });
-      return;
+      // Throw an error to be caught by the TaskDownloadMenu component
+      throw new Error("No file is available for download. Please contact support.");
     }
     
     try {
@@ -498,7 +494,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
+              {isSubmitted && (
+                <TaskDownloadMenu 
+                  onDownload={handleDownload}
+                  taskType="kyb"
+                  disabled={!fileId}
+                />
+              )}
             </div>
           </div>
 
@@ -587,7 +589,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
+              {isSubmitted && (
+                <TaskDownloadMenu 
+                  onDownload={handleDownload}
+                  taskType="card"
+                  disabled={!fileId}
+                />
+              )}
             </div>
           </div>
 
@@ -695,7 +703,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
+              {isSubmitted && (
+                <TaskDownloadMenu 
+                  onDownload={handleDownload}
+                  taskType="ky3p"
+                  disabled={!fileId}
+                />
+              )}
             </div>
           </div>
 
@@ -821,7 +835,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {isSubmitted && <TaskDownloadMenu onDownload={handleDownload} />}
+              {isSubmitted && (
+                <TaskDownloadMenu 
+                  onDownload={handleDownload}
+                  taskType="open_banking"
+                  disabled={!fileId}
+                />
+              )}
             </div>
           </div>
 
