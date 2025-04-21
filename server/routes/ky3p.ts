@@ -485,7 +485,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       }
       
       // Determine status
-      const status = responseValue ? 'complete' : 'empty';
+      const status = responseValue ? 'COMPLETE' : 'EMPTY';
       
       // Check if response exists
       const [existingResponse] = await db
