@@ -106,6 +106,34 @@ export default function TaskPage({ params }: TaskPageProps) {
     navigate('/task-center');
   }, [navigate]);
   
+  // Standardized download dropdown menu component
+  const StandardizedDownloadMenu = useCallback(() => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleDownload('csv')}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Download as CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDownload('txt')}>
+            <FileText className="mr-2 h-4 w-4" />
+            Download as TXT
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDownload('json')}>
+            <FileJson className="mr-2 h-4 w-4" />
+            Download as JSON
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }, [handleDownload]);
+
   // Handle file downloads
   const handleDownload = useCallback(async (format: 'json' | 'csv' | 'txt') => {
     if (!fileId) return;
