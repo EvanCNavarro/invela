@@ -40,6 +40,7 @@ export class FileCreationService {
   // Convert form data to CSV format for KY3P assessments
   private generateCSV(data: Record<string, any>, fields: any[] = []): string {
     console.log('[FileCreation] Generating CSV for KY3P assessment');
+    console.log('[FileCreation] CRITICAL FIX: Processing form data to include all values in CSV');
     
     // Create CSV header in KYB format
     let csv = 'Question Number,Group,Question,Answer,Type\n';
@@ -74,30 +75,43 @@ export class FileCreationService {
     console.log(`[FileCreation] Field map created with ${fieldMap.size} entries`);
     console.log(`[FileCreation] Data object contains ${Object.keys(data).length} keys`);
     
-    // First, process all entries in the form data
+    // Get sorted list of fields for consistent order
+    let sortedFieldKeys: string[] = [];
+    
+    // CRITICAL FIX: Ensure we process ALL fields in correct order, not just those in the data object
+    if (Array.isArray(fields) && fields.length > 0) {
+      // Create a sorted list of all field keys from field definitions
+      sortedFieldKeys = fields
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .map(field => field.field_key || field.key)
+        .filter(key => !!key); // Filter out any undefined keys
+        
+      console.log(`[FileCreation] Using ${sortedFieldKeys.length} sorted field keys for CSV generation`);
+    } else {
+      // Fallback to using keys from data object if field definitions aren't available
+      sortedFieldKeys = Object.keys(data);
+      console.log(`[FileCreation] No field definitions available, using data keys: ${sortedFieldKeys.length} keys`);
+    }
+    
+    // Track which keys we've already processed
     const processedKeys = new Set<string>();
     
-    for (const [key, value] of Object.entries(data)) {
-      // Log the data being processed
-      console.log(`[FileCreation] Processing field ${key} with value:`, value);
+    // Process fields in correct order
+    for (const key of sortedFieldKeys) {
+      // Skip if we've already processed this key (shouldn't happen with sorted unique keys)
+      if (processedKeys.has(key)) continue;
       
-      // Include all fields, even empty ones (but with a blank value)
-      // This ensures the CSV includes all questions, even if unanswered
+      // Mark this key as processed
+      processedKeys.add(key);
+      
+      // Get the value from data object if it exists (otherwise empty string)
+      const value = data[key] || '';
+      
+      // Log the data being processed
+      console.log(`[FileCreation] Processing field ${key} with value type: ${typeof value}`);
       
       // Find field metadata if available
       const field = fieldMap.get(key);
-      processedKeys.add(key); // Mark this key as processed
-      
-      // Log field data for debugging (in all environments)
-      if (field) {
-        console.log(`[FileCreation] Found field metadata for ${key}:`, {
-          fieldKeys: Object.keys(field).join(', '),
-          fieldId: field.id,
-          fieldKey: field.field_key || field.key
-        });
-      } else {
-        console.log(`[FileCreation] No field metadata found for ${key}`);
-      }
       
       // Handle various field schema possibilities - KY3P fields use group/section differently
       const group = field?.group || '';
@@ -106,7 +120,7 @@ export class FileCreationService {
       // Ensure we get the question text from various possible field names
       const question = field?.question || field?.display_name || field?.label || key;
       // Use the index from the field map or just incremental order
-      const questionNumber = field?.index || '?';
+      const questionNumber = field?.index || sortedFieldKeys.indexOf(key) + 1 || '?';
       
       // Escape quotes in CSV fields
       const escapedQuestionNumber = String(questionNumber).replace(/"/g, '""');
@@ -119,40 +133,11 @@ export class FileCreationService {
       csv += `"${escapedQuestionNumber}","${escapedGroup}","${escapedQuestion}","${escapedValue}","${escapedType}"\n`;
     }
     
-    // Now add any fields from the field map that weren't in the data
-    // This ensures ALL form fields appear in the CSV, even if they weren't submitted
-    if (Array.isArray(fields) && fields.length > 0) {
-      console.log(`[FileCreation] Adding remaining fields from field definitions (${fields.length} total fields)`);
-      
-      // Sort fields by order to ensure consistent question numbering for any missing fields
-      const sortedFields = [...fields].sort((a, b) => (a.order || 0) - (b.order || 0));
-      
-      for (const field of sortedFields) {
-        const key = field.field_key || field.key;
-        
-        // Skip fields we've already processed
-        if (key && !processedKeys.has(key)) {
-          console.log(`[FileCreation] Adding empty field to CSV: ${key}`);
-          
-          // Find field metadata to add to CSV with empty answer
-          const group = field.group || '';
-          const fieldType = field.field_type || 'TEXT';
-          const question = field.question || field.display_name || field.label || key;
-          
-          // Use index position in sorted array for question numbering (1-based)
-          const questionNumber = sortedFields.findIndex(f => (f.field_key || f.key) === key) + 1;
-          
-          // Escape quotes in CSV fields
-          const escapedQuestionNumber = String(questionNumber).replace(/"/g, '""');
-          const escapedQuestion = question.replace(/"/g, '""');
-          const escapedGroup = group.replace(/"/g, '""');
-          const escapedType = fieldType.toUpperCase().replace(/"/g, '""');
-          
-          // Add row with KYB format: Question Number,Group,Question,Answer,Type
-          csv += `"${escapedQuestionNumber}","${escapedGroup}","${escapedQuestion}","","${escapedType}"\n`;
-        }
-      }
-    }
+    // The redundant loop that adds missing fields is no longer needed!
+    // Our new approach already processes ALL fields in the correct order,
+    // including those not present in the data object.
+    console.log(`[FileCreation] No need to add remaining fields - already processed all ${sortedFieldKeys.length} fields`);
+    
     
     // Log the final CSV size
     console.log(`[FileCreation] Final CSV contains ${csv.split('\n').length - 1} rows`);
