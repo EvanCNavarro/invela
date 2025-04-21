@@ -247,6 +247,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       displayNameValue,
       shouldRedirect: type === 'unknown',
       isSubmitted: !!(
+        taskData.status === 'submitted' || 
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
         (type === 'security' && taskData.metadata?.securityFormFile) ||
