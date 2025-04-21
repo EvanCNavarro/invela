@@ -32,6 +32,7 @@ interface SectionContentProps {
   template?: TaskTemplateWithConfigs;
   onFieldChange: (name: string, value: any) => void;
   startingQuestionNumber?: number; // Add starting question number prop
+  isSubmitted?: boolean; // Add isSubmitted prop to disable form fields
 }
 
 /**
@@ -42,7 +43,8 @@ const SectionContent: React.FC<SectionContentProps> = ({
   fields,
   template,
   onFieldChange,
-  startingQuestionNumber = 1
+  startingQuestionNumber = 1,
+  isSubmitted = false
 }) => {
   // Try to get the form context from React Hook Form
   // If we're inside a FormProvider, this will give us the form methods
@@ -121,6 +123,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 setValue: () => ({})
               }}
               onFieldChange={(value) => onFieldChange(field.key, value)}
+              isSubmitted={isSubmitted}
             />
           </div>
         ))}

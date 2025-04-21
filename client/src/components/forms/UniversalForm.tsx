@@ -2694,6 +2694,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           template={template || undefined}
                           onFieldChange={handleFieldChange}
                           startingQuestionNumber={previousSectionsFieldCount + 1} // Pass the starting number
+                          isSubmitted={taskStatus === 'submitted' || taskStatus === 'approved'} // Disable form fields if task is submitted
                         />
                       </div>
                     );
@@ -2710,7 +2711,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         setActiveSection(activeSection - 1);
                       }
                     }}
-                    disabled={activeSection === 0}
+                    disabled={activeSection === 0 || taskStatus === 'submitted' || taskStatus === 'approved'}
                     className="flex items-center gap-1"
                   >
                     <ArrowLeft className="h-4 w-4" />
