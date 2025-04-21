@@ -481,23 +481,51 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
       });
     }
     
+    // Get current date for consistent timestamps
+    const submissionDate = new Date();
+    
+    // Add submission metadata markers that match KYB task format
+    const enhancedMetadata = {
+      ...updatedMetadata,
+      status: 'submitted', // Explicit status flag
+      submissionDate: submissionDate.toISOString(), // Match KYB format
+      lastStatusUpdate: submissionDate.toISOString(),
+      ky3pSubmitted: true, // Add explicit KY3P flag for queries
+    };
+    
     // Update the task with completion data and file reference
     // Make sure to mark it as submitted and include the file reference
     const [updatedTask] = await db
       .update(tasks)
       .set({
         status: 'submitted',
-        completion_date: new Date(),
-        updated_at: new Date(),
-        metadata: updatedMetadata as any
+        completion_date: submissionDate,
+        progress: 100, // Set to 100% explicitly
+        updated_at: submissionDate,
+        metadata: enhancedMetadata as any
       })
       .where(eq(tasks.id, taskId))
       .returning();
     
     console.log(`[KY3P API] Successfully submitted KY3P assessment for task ${taskId}`, {
       fileId: fileResult.success ? fileResult.fileId : undefined,
-      fileName: fileResult.success ? fileResult.fileName : undefined
+      fileName: fileResult.success ? fileResult.fileName : undefined,
+      metadata: enhancedMetadata
     });
+    
+    // Broadcast update via the standard progress update utility
+    try {
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      broadcastProgressUpdate(
+        taskId, 
+        100,
+        'submitted',
+        enhancedMetadata
+      );
+      logger.info(`[KY3P API] Broadcast task update with submission status`);
+    } catch (wsError) {
+      logger.error('[KY3P API] Failed to broadcast submission status update:', wsError);
+    }
     
     // Structure the response with completedActions similar to KYB submission
     const completedActions = [
