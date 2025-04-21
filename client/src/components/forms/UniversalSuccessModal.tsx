@@ -185,6 +185,27 @@ export function UniversalSuccessModal({
     const hasFileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId;
     
     if (hasFileAction || hasFileId) {
+      // First, add a direct download button for this specific file
+      if (hasFileId) {
+        const fileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId;
+        const buttonText = fileAction?.data?.buttonText || "Download File";
+        
+        buttons.push(
+          <Button
+            key="download-file"
+            variant="outline" 
+            onClick={() => {
+              // Use the /api/files/:id/download endpoint for direct download
+              window.open(`/api/files/${fileId}/download`, '_blank');
+            }}
+            className="flex-1"
+          >
+            {buttonText}
+          </Button>
+        );
+      }
+      
+      // Also include a button to navigate to the file vault
       buttons.push(
         <Button
           key="view-files"
