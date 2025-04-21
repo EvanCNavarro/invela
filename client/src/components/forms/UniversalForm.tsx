@@ -382,7 +382,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         let service = null;
         
         // Check if this is a form type that supports isolation and we have task/company info
-        const isolationSupportedTypes = ['kyb', 'company_kyb', 'sp_ky3p_assessment'];
+        const isolationSupportedTypes = ['kyb', 'company_kyb', 'sp_ky3p_assessment', 'open_banking', 'open_banking_survey'];
         if (isolationSupportedTypes.includes(taskType) && taskId) {
           // Get the metadata from the task to find company ID
           try {
@@ -444,8 +444,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // First try to get fields and sections from the service
         logger.info('Initializing form structure with form service');
         
-        // Initialize service with template if needed
-        if (template && typeof formService.initialize === 'function') {
+        // Special handling for Open Banking forms which don't need a template
+        if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+          try {
+            // Force initialization without template ID for Open Banking
+            logger.info(`Auto-initializing Open Banking Form Service (no template required)`);
+            if (typeof formService.initialize === 'function') {
+              await formService.initialize();
+              logger.info(`Open Banking service initialization completed`);
+            }
+          } catch (obInitError) {
+            logger.error('Error initializing Open Banking form service:', obInitError);
+          }
+        } 
+        // Standard initialization for other form types that use templates
+        else if (template && typeof formService.initialize === 'function') {
           try {
             logger.info(`Initializing form service with template ID: ${template.id}`);
             await formService.initialize(template.id);
@@ -548,7 +561,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     };
     
     initializeForm();
-  }, [formService, template]);
+  }, [formService, template, taskType]);
   
   // Register the agreement confirmation field once when the form is created
   useEffect(() => {
