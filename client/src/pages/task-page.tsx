@@ -133,14 +133,69 @@ export default function TaskPage({ params }: TaskPageProps) {
       console.log(`[TaskPage] Fetching file from: /api/files/${fileId}/download?format=${format}`);
       
       // Fix type error: use proper credentials type
-      const response = await fetch(`/api/files/${fileId}/download?format=${format}`, {
-        credentials: 'include' as RequestCredentials // Include session cookies for authentication
-      });
+      // Add timestamp to prevent caching issues
+      const timestamp = new Date().getTime();
+      
+      // Enhanced request with retry capability
+      let response;
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          console.log(`[TaskPage] Requesting download (attempt ${retryCount + 1}/${maxRetries + 1}):`, 
+            `/api/files/${fileId}/download?format=${format}&t=${timestamp}`
+          );
+          
+          response = await fetch(`/api/files/${fileId}/download?format=${format}&t=${timestamp}`, {
+            credentials: 'include' as RequestCredentials, // Include session cookies for authentication
+            headers: {
+              'Accept': format === 'json' ? 'application/json' : 
+                       format === 'txt' ? 'text/plain' : 'text/csv',
+              'X-Download-Format': format,
+              'X-Task-Type': taskContentType || 'unknown'
+            },
+            cache: 'no-store' // Prevent caching to ensure fresh content
+          });
+          
+          // Break the retry loop if successful
+          if (response.ok) break;
+          
+          // If error is not retryable (client errors), break immediately
+          if (response.status >= 400 && response.status < 500) {
+            console.error(`[TaskPage] Client error (${response.status}), not retrying.`);
+            break;
+          }
+          
+          // If we've reached the maximum retries, break
+          if (retryCount >= maxRetries) break;
+          
+          // Increment retry counter and wait before next attempt
+          retryCount++;
+          console.warn(`[TaskPage] Download attempt failed, retrying (${retryCount}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+        } catch (fetchError) {
+          console.error('[TaskPage] Fetch error during download:', fetchError);
+          
+          // If we've reached the maximum retries, break and re-throw
+          if (retryCount >= maxRetries) throw fetchError;
+          
+          // Increment retry counter and wait before next attempt
+          retryCount++;
+          console.warn(`[TaskPage] Network error, retrying (${retryCount}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+        }
+      }
+      
+      if (!response) {
+        throw new Error('Network error during download');
+      }
       
       console.log(`[TaskPage] Download response:`, { 
         status: response.status, 
         statusText: response.statusText,
-        ok: response.ok
+        ok: response.ok,
+        retries: retryCount
       });
       
       if (!response.ok) {
@@ -168,14 +223,33 @@ export default function TaskPage({ params }: TaskPageProps) {
       console.log('[TaskPage] Response headers:', headers);
       
       // Create and trigger download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `compliance_data_${taskContentType}_${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      try {
+        const url = window.URL.createObjectURL(blob);
+        console.log('[TaskPage] Created blob URL:', url);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Generate standardized filename with timestamp
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `compliance_data_${taskContentType}_${timestamp}.${format}`;
+        a.download = filename;
+        
+        console.log('[TaskPage] Setting download filename:', filename);
+        
+        // Append temporarily to document to trigger download
+        document.body.appendChild(a);
+        console.log('[TaskPage] Initiating download...');
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        console.log('[TaskPage] Download cleanup complete');
+      } catch (downloadError) {
+        console.error('[TaskPage] Error during download file creation:', downloadError);
+        throw downloadError; // Re-throw to be caught by outer try/catch
+      }
       
       console.log(`[TaskPage] Download completed successfully`);
     } catch (err) {
