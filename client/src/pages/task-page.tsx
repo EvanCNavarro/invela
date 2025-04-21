@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UniversalForm } from "@/components/forms/UniversalForm";
-import { useToast, toast as toastFn } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
@@ -294,7 +294,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       // First dismiss the "Download Started" toast if it exists
       if (downloadStartedToastId) {
-        toastFn.dismiss(downloadStartedToastId);
+        toast.dismiss(downloadStartedToastId);
       }
       
       // Show the success toast
@@ -310,7 +310,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       // Dismiss the "Download Started" toast if it exists
       if (downloadStartedToastId) {
-        toastFn.dismiss(downloadStartedToastId);
+        toast.dismiss(downloadStartedToastId);
       }
       
       toast({
