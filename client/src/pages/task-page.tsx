@@ -403,6 +403,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               <UniversalForm
                 taskId={task.id}
                 taskType="kyb"
+                taskStatus={task.status}
+                companyName={displayName}
                 initialData={task.savedFormData}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
