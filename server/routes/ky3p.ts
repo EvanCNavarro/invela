@@ -1024,12 +1024,33 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       });
     }
     
+    // Check if the request is valid
+    logger.debug(`[KY3P API] Processing bulk request body:`, {
+      bodyKeys: Object.keys(req.body),
+      hasResponses: req.body && req.body.responses ? 'yes' : 'no',
+      requestBodyPreview: JSON.stringify(req.body).substring(0, 200)
+    });
+    
+    // Special handling for requests with 'fieldIdRaw': 'bulk' pattern - used to identify malformed requests
+    if (req.body && req.body.fieldIdRaw === 'bulk') {
+      logger.warn(`[KY3P API] Detected malformed bulk request with fieldIdRaw=bulk pattern`, {
+        taskIdRaw: req.body.taskIdRaw,
+        fieldIdRaw: req.body.fieldIdRaw
+      });
+      
+      return res.status(400).json({
+        message: 'Invalid request format: bulk endpoint requires responses object',
+        hint: 'Request should be in format: { responses: { field_key1: value1, field_key2: value2, ... } }'
+      });
+    }
+    
     // Validate response object
     const { responses } = req.body;
     
     if (!responses || typeof responses !== 'object') {
       return res.status(400).json({ 
-        message: 'Invalid request: responses object is required'
+        message: 'Invalid request: responses object is required',
+        hint: 'Request should be in format: { responses: { field_key1: value1, field_key2: value2, ... } }'
       });
     }
     
