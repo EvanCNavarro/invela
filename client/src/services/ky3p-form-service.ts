@@ -151,7 +151,8 @@ export class KY3PFormService extends EnhancedKybFormService {
       id: apiField.id,
       key: apiField.field_key,
       label: apiField.label,
-      description: apiField.description,
+      // Use question field which matches KYB field structure
+      description: apiField.question,
       type: apiField.field_type,
       // Now we directly use group since we've migrated the database schema
       group: apiField.group,
