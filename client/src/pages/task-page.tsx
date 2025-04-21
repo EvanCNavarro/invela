@@ -132,8 +132,9 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       console.log(`[TaskPage] Fetching file from: /api/files/${fileId}/download?format=${format}`);
       
+      // Fix type error: use proper credentials type
       const response = await fetch(`/api/files/${fileId}/download?format=${format}`, {
-        credentials: 'include' // Include session cookies for authentication
+        credentials: 'include' as RequestCredentials // Include session cookies for authentication
       });
       
       console.log(`[TaskPage] Download response:`, { 
@@ -150,9 +151,23 @@ export default function TaskPage({ params }: TaskPageProps) {
       const blob = await response.blob();
       console.log(`[TaskPage] Downloaded blob:`, { 
         size: blob.size, 
-        type: blob.type
+        type: blob.type,
+        empty: blob.size === 0
       });
       
+      // Check if the blob is empty or very small
+      if (blob.size === 0) {
+        console.warn('[TaskPage] Downloaded file appears to be empty. This may indicate a server-side error.');
+      }
+      
+      // Log headers for debugging
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+      console.log('[TaskPage] Response headers:', headers);
+      
+      // Create and trigger download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
