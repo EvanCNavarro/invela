@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UniversalForm } from "@/components/forms/UniversalForm";
-import { useToast } from "@/hooks/use-toast";
+import { useToast, toast as toastFn } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
@@ -116,7 +116,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       throw new Error("No file is available for download. Please contact support.");
     }
     
-    // Track the toast ID so we can dismiss it later
+    // Create a toast ID for the download started notification
     let downloadStartedToastId: string | undefined;
     
     try {
@@ -277,6 +277,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                            taskContentType === 'open_banking' ? 'Open Banking Assessment' :
                            taskContentType === 'card' ? 'CARD Assessment' : 'Form';
       
+      // First dismiss the "Download Started" toast if it exists
+      if (downloadStartedToastId) {
+        toastFn.dismiss(downloadStartedToastId);
+      }
+      
+      // Show the success toast
       toast({
         title: "Download Complete",
         description: `Your ${taskTypeDisplay} has been downloaded successfully.`,
@@ -286,6 +292,12 @@ export default function TaskPage({ params }: TaskPageProps) {
       console.log(`[TaskPage] Download completed successfully`);
     } catch (err) {
       console.error('[TaskPage] Download error:', err);
+      
+      // Dismiss the "Download Started" toast if it exists
+      if (downloadStartedToastId) {
+        toast.dismiss(downloadStartedToastId);
+      }
+      
       toast({
         title: "Download Failed",
         description: "Could not download the file. Please try again later.",
