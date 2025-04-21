@@ -417,36 +417,31 @@ export class KY3PFormService extends EnhancedKybFormService {
    * This is a fallback mechanism for when the API endpoints aren't working
    */
   private getMockResponses(): Record<string, any> {
-    // We'll use a map of field_key to response value
-    // This avoids the issues with field.id access
+    // Use the exact field_keys from the database as seen in our SQL queries
     const mockResponsesByKey: Record<string, string> = {
-      // Development section
-      'developmentExternalInfo': "We maintain a comprehensive inventory system that tracks all external information assets.",
-      'dataBreachNotification': "Our incident response team immediately notifies data controllers via our secure alert system.",
-      'privacyProcedures': "We have a dedicated privacy incident response team with formalized procedures.",
-      'piiDataInventory': "We maintain a detailed PII inventory with classification levels.",
-      'accessControlMeasures': "Our access controls include MFA, role-based permissions, and regular reviews.",
+      // These field keys match the actual database records
+      'externalSystems': "We maintain a comprehensive inventory system that tracks all external information assets. Updates occur monthly through automated discovery scans.",
+      'breachNotification': "Our incident response team immediately notifies data controllers via our secure alert system within 24 hours of breach confirmation.",
+      'privacyIncidentProcedure': "We have a dedicated privacy incident response team with formalized procedures for reporting, containment, and resolution.",
+      'privacyNotices': "Privacy notices are prominently displayed at all data collection points in multiple languages with clear opt-in mechanisms.",
+      'privacyStandards': "Our privacy policy framework aligns with GDPR, CCPA, and CPPA requirements with quarterly compliance reviews.",
+      'dataRetention': "Personal data is retained only for the duration specified in our data retention schedule with automated purging.",
+      'dataPurposeLimit': "Access controls and data classification ensure collection is limited to what's necessary for the stated purpose.",
+      'individualRights': "We have a dedicated portal for users to exercise their privacy rights with 30-day response guarantees.",
+      'dataMinimization': "Our data minimization policy requires justification for all data fields collected in any system.",
       
-      // Access Control section
-      'loginAttemptLockout': "The system blocks access after 3 failed login attempts.",
-      'multifactorAuth': "We require MFA for all privileged accounts and remote access.",
-      'passwordComplexity': "Our password policy requires 12+ characters with complexity requirements.",
-      'passwordRetention': "Password history prevents reuse of the last 10 passwords.",
-      'privilegedAccountReview': "We conduct monthly reviews of all privileged account access.",
-      
-      // Security Monitoring section
-      'encryptionTransport': "All data in transit is encrypted using TLS 1.3 or higher.",
-      'encryptionStorage': "We use AES-256 encryption for all stored sensitive data.",
-      'vulnerabilityScanFrequency': "We conduct automated vulnerability scans weekly and manual penetration tests quarterly.",
-      'securityMonitoring': "Our 24/7 SOC monitors all security events with automated alerting.",
-      'auditLogReview': "Security logs are automatically analyzed with anomaly detection.",
-      
-      // Vendor Management section
-      'vendorSelection': "Vendors undergo a comprehensive security assessment before onboarding.",
-      'vendorMonitoring': "We perform annual reassessments and continuous monitoring of all vendors.",
-      'criticalVendors': "Critical vendors are subject to quarterly security reviews.",
-      'vendorTermination': "Our vendor offboarding process includes immediate access revocation.",
-      'cloudProviders': "Cloud providers must meet our enhanced security requirements."
+      // Security controls
+      'accessControl': "Multi-layered access controls include biometric, MFA, and role-based permissions with quarterly reviews.",
+      'defaultPasswords': "All default passwords are immediately changed using an automated provisioning process before deployment.",
+      'remoteMfa': "MFA is mandatory for all remote access using a combination of authenticator apps and hardware tokens.",
+      'encryptionStandards': "We use AES-256 encryption for data at rest and TLS 1.3 for data in transit across all systems.",
+      'vulnerabilityTesting': "Our security team conducts weekly automated scans and quarterly penetration tests of all systems.",
+      'incidentResponse': "Our 24/7 SOC team has documented incident response procedures with 15-minute SLAs for critical alerts.",
+      'assetRetrieval': "Our HR and security teams have a documented process for retrieving all company assets during offboarding.",
+      'patchManagement': "Critical security patches are applied within 24 hours following our documented patch management process.",
+      'disasterRecovery': "Our disaster recovery plan includes daily backups, redundant systems, and quarterly testing.",
+      'businessContinuity': "Our business continuity plan ensures critical functions can resume within 4 hours of a major disruption.",
+      'vendorSecurity': "Third-party vendors undergo rigorous security assessments before onboarding and annual security reviews."
     };
 
     // Create response data using the key mapping
