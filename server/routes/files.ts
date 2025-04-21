@@ -693,21 +693,29 @@ router.get("/api/files/:id/download", async (req, res) => {
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
 
-    // Check if this is a KYB or KY3P form CSV file
-    const isKybCsvFile = (fileRecord.name.toLowerCase().includes('kyb_form') || 
-                          fileRecord.name.toLowerCase().includes('kybform')) && 
+    // Check if this is a form CSV file using the new unified naming scheme
+    const isKybCsvFile = (fileRecord.name.toLowerCase().includes('kyb_assessment') || 
+                          fileRecord.name.toLowerCase().includes('kyb_form')) && 
                           (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
     
-    const isKy3pCsvFile = (fileRecord.name.toLowerCase().includes('ky3p') || 
-                           fileRecord.name.toLowerCase().includes('spglobal') ||
+    const isKy3pCsvFile = (fileRecord.name.toLowerCase().includes('spglobal_ky3p_assessment') || 
+                           fileRecord.name.toLowerCase().includes('ky3p') ||
                            fileRecord.name.toLowerCase().includes('security_assessment')) && 
                           (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
     
-    // Handle both KYB and KY3P CSV files with special logic
-    if (isKybCsvFile || isKy3pCsvFile) {
+    const isOpenBankingCsvFile = (fileRecord.name.toLowerCase().includes('open_banking_assessment')) && 
+                          (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
+                          
+    const isCardCsvFile = (fileRecord.name.toLowerCase().includes('card_assessment')) && 
+                          (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
+    
+    // Handle all assessment CSV files with special logic
+    if (isKybCsvFile || isKy3pCsvFile || isOpenBankingCsvFile || isCardCsvFile) {
       console.log('[Files] Handling CSV file download:', {
         isKyb: isKybCsvFile,
         isKy3p: isKy3pCsvFile,
+        isOpenBanking: isOpenBankingCsvFile,
+        isCard: isCardCsvFile,
         fileName: fileRecord.name,
         fileType: fileRecord.type
       });

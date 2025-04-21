@@ -28,9 +28,8 @@ export interface FileCreationResult {
 
 export class FileCreationService {
   /**
-   * Generate a standardized filename with format based on task type
-   * KYB format: kyb_form_[taskId]_[date]T[time].[extension]
-   * KY3P format: spglobal_ky3p_security_assessment_[companyName]_[date]T[time].[extension]
+   * Generate a standardized filename with a unified format for all assessment types
+   * Format: [assessment_type]_[company_name]_[taskId]_[timestamp].[extension]
    */
   static generateStandardFileName(
     taskType: string, 
@@ -46,31 +45,30 @@ export class FileCreationService {
     // Clean company name (remove spaces, special characters)
     const cleanCompanyName = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
     
-    // Special handling for KY3P files
-    if (taskType.toLowerCase() === 'ky3p' || 
+    // Map task types to standardized assessment names
+    let assessmentType = "";
+    
+    if (taskType.toLowerCase() === 'kyb' || taskType.toLowerCase().includes('kyb_form')) {
+      assessmentType = "kyb_assessment";
+    }
+    else if (taskType.toLowerCase() === 'ky3p' || 
         taskType.toLowerCase().includes('sp_ky3p') || 
         (taskType.toLowerCase() === 'form' && extension === 'csv' && companyName.toLowerCase().includes('security'))) {
-      
-      return `spglobal_ky3p_security_assessment_${cleanCompanyName}_${formattedDateTime}.${extension}`;
+      assessmentType = "spglobal_ky3p_assessment";
+    }
+    else if (taskType.toLowerCase() === 'open_banking') {
+      assessmentType = "open_banking_assessment";
+    }
+    else if (taskType.toLowerCase() === 'card') {
+      assessmentType = "card_assessment";
+    }
+    else {
+      // Default for unknown types
+      assessmentType = taskType.toLowerCase().replace(/\s+/g, '_');
     }
     
-    // KYB format
-    if (taskType.toLowerCase() === 'kyb' || taskType.toLowerCase().includes('kyb_form')) {
-      return `kyb_form_${taskId}_${formattedDateTime}.${extension}`;
-    }
-    
-    // Open Banking format
-    if (taskType.toLowerCase() === 'open_banking') {
-      return `open_banking_survey_${cleanCompanyName}_${formattedDateTime}.${extension}`;
-    }
-    
-    // Card format for backward compatibility
-    if (taskType.toLowerCase() === 'card') {
-      return `card_assessment_${cleanCompanyName}_${formattedDateTime}.${extension}`;
-    }
-    
-    // Default format as fallback
-    return `${taskType.toLowerCase()}_${taskId}_${formattedDateTime}.${extension}`;
+    // Generate unified filename format for all assessment types
+    return `${assessmentType}_${cleanCompanyName}_${taskId}_${formattedDateTime}.${extension}`;
   }
   
   /**
@@ -111,20 +109,20 @@ export class FileCreationService {
       let storagePath: string;
       
       // Store CSV files directly in the database for immediate access
-      // This applies to both KYB forms and KY3P assessment forms
+      // This applies to all assessment forms (KYB, KY3P, Open Banking)
       if (type === 'text/csv' && 
-          (name.toLowerCase().includes('kyb_form') || 
-           name.toLowerCase().includes('kybform') ||
-           name.toLowerCase().includes('ky3p') ||
-           name.toLowerCase().includes('spglobal'))) {
+          (name.toLowerCase().includes('kyb_assessment') || 
+           name.toLowerCase().includes('spglobal_ky3p_assessment') ||
+           name.toLowerCase().includes('open_banking_assessment') ||
+           name.toLowerCase().includes('card_assessment'))) {
         logger.debug('Storing CSV content directly in database', { 
           fileName: name, 
           contentType: type,
           fileSize: Buffer.from(content.toString()).length
         });
         
-        // Add a database marker prefix to help the file download handler
-        if (name.toLowerCase().includes('ky3p') || name.toLowerCase().includes('spglobal')) {
+        // Add a database marker prefix to help the file download handler for ky3p assessment
+        if (name.toLowerCase().includes('spglobal_ky3p_assessment')) {
           storagePath = `database:${content.toString()}`;
           logger.debug('Added database prefix marker to KY3P CSV content');
         } else {
