@@ -778,6 +778,12 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                   setIsSubmitted(true);
                   setShowSuccessModal(true);
                   
+                  // Store the fileId from the response if it exists
+                  if (result.fileId) {
+                    logger.info(`KY3P assessment generated file with ID: ${result.fileId}`);
+                    setFileId(result.fileId);
+                  }
+                  
                   // Force invalidate the task data cache after successful submission
                   logger.info(`KY3P assessment submission successful, invalidating task cache for task ${task.id}`);
                   queryClient.invalidateQueries({ queryKey: [`/api/tasks/${task.id}`] });
