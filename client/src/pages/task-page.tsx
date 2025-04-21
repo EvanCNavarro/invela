@@ -226,11 +226,32 @@ export default function TaskPage({ params }: TaskPageProps) {
         const a = document.createElement('a');
         a.href = url;
         
-        // Generate standardized filename with timestamp
-        const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `compliance_data_${taskContentType}_${timestamp}.${format}`;
-        a.download = filename;
+        // Try to get the filename from Content-Disposition header first
+        let filename = '';
+        const contentDisposition = response.headers.get('Content-Disposition');
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+?)"/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+            console.log('[TaskPage] Using server-provided filename:', filename);
+          }
+        }
         
+        // Fallback to generated filename if server didn't provide one
+        if (!filename) {
+          const timestamp = new Date().toISOString().split('T')[0];
+          // Use standardized assessment type naming conventions
+          const assessmentType = 
+            taskContentType === 'kyb' ? 'kyb_assessment' :
+            taskContentType === 'ky3p' ? 'spglobal_ky3p_assessment' :
+            taskContentType === 'open_banking' ? 'open_banking_assessment' :
+            taskContentType === 'card' ? 'card_assessment' : 'assessment';
+          
+          filename = `${assessmentType}_${timestamp}.${format}`;
+          console.log('[TaskPage] Using fallback filename:', filename);
+        }
+        
+        a.download = filename;
         console.log('[TaskPage] Setting download filename:', filename);
         
         // Append temporarily to document to trigger download
@@ -246,6 +267,18 @@ export default function TaskPage({ params }: TaskPageProps) {
         console.error('[TaskPage] Error during download file creation:', downloadError);
         throw downloadError; // Re-throw to be caught by outer try/catch
       }
+      
+      // Display success toast to confirm download complete
+      const taskTypeDisplay = taskContentType === 'kyb' ? 'KYB Assessment' :
+                           taskContentType === 'ky3p' ? 'S&P KY3P Assessment' :
+                           taskContentType === 'open_banking' ? 'Open Banking Assessment' :
+                           taskContentType === 'card' ? 'CARD Assessment' : 'Form';
+      
+      toast({
+        title: "Download Complete",
+        description: `Your ${taskTypeDisplay} has been downloaded successfully.`,
+        variant: "default",
+      });
       
       console.log(`[TaskPage] Download completed successfully`);
     } catch (err) {

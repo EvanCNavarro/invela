@@ -49,6 +49,8 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
         description: `Your ${taskTypeDisplay} is being downloaded as ${format.toUpperCase()} file.`,
         variant: "default",
       });
+      
+      // Note: The success toast is now handled in the task-page.tsx after download completes
     } catch (error) {
       console.error('[TaskDownloadMenu] Download error:', error);
       
