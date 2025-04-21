@@ -63,6 +63,7 @@ export class EnhancedLogger extends Logger {
   
   // Override debug method with category filtering
   debug(message: string, subcategory?: LogSubcategory, ...data: any[]): void {
+    // Always provide a no-op implementation even when logs are disabled
     if (this.shouldShowLog(subcategory)) {
       super.debug(message, ...data);
     }
