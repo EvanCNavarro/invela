@@ -226,7 +226,14 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
     try {
       const { taskId, formData, fieldUpdates } = req.body;
       // Extract progress and status from request
+      // Convert progress to a consistent whole number format (0-100)
       let progress = req.body.progress;
+      if (progress !== undefined) {
+        // If progress is a decimal < 1, convert to percentage (0.12 -> 12)
+        if (progress < 1 && progress > 0) {
+          progress = Math.ceil(progress * 100);
+        }
+      }
       const status = req.body.status;
       
       if (!taskId || !formData) {
