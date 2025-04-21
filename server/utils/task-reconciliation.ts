@@ -1,6 +1,6 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 import { db } from "@db";
-import { tasks, kybResponses, kybFields } from "@db/schema";
+import { tasks, kybResponses, kybFields, openBankingResponses, openBankingFields } from "@db/schema";
 import { TaskStatus } from '../types';
 import { calculateKybFormProgress } from './kyb-progress';
 import { determineStatusFromProgress, broadcastProgressUpdate } from './progress';
@@ -125,20 +125,45 @@ export async function reconcileTaskProgress(
       return;
     }
     
-    // 3. Fetch all KYB responses for this task with their field information
-    const responses = await db.select({
-      response_value: kybResponses.response_value,
-      field_key: kybFields.field_key,
-      status: kybResponses.status,
-      field_id: kybResponses.field_id,
-      required: kybFields.required
-    })
-    .from(kybResponses)
-    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-    .where(eq(kybResponses.task_id, taskId));
+    // 3. Check what type of task we're dealing with
+    const taskType = task.task_type;
+    let responses: {
+      response_value: string | null;
+      field_key: string;
+      status: string;
+      field_id: number;
+      required: boolean | null;
+    }[] = [];
+
+    // Check if it's a KYB or Open Banking task and fetch appropriate responses
+    if (taskType === 'open_banking') {
+      // Fetch Open Banking responses
+      responses = await db.select({
+        response_value: openBankingResponses.response_value,
+        field_key: openBankingFields.field_key,
+        status: openBankingResponses.status,
+        field_id: openBankingResponses.field_id,
+        required: openBankingFields.is_required
+      })
+      .from(openBankingResponses)
+      .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
+      .where(eq(openBankingResponses.task_id, taskId));
+    } else {
+      // Default to KYB responses for backward compatibility
+      responses = await db.select({
+        response_value: kybResponses.response_value,
+        field_key: kybFields.field_key,
+        status: kybResponses.status,
+        field_id: kybResponses.field_id,
+        required: kybFields.required
+      })
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, taskId));
+    }
     
     if (debug) {
-      console.log(`${logPrefix} Found ${responses.length} responses for task ${taskId}`);
+      console.log(`${logPrefix} Found ${responses.length} responses for task ${taskId} (type: ${taskType})`);
     }
     
     // 4. Build the response array in the format expected by our utilities
