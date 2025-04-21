@@ -1107,7 +1107,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         throw resetError; // Re-throw to be caught by the outer try/catch
       }
       
-      // Save progress to server
+      // For KY3P forms, use the bulk endpoint to update all responses at once
+      // This ensures proper task progress calculation in the database
+      if (taskType === 'sp_ky3p_assessment') {
+        try {
+          logger.info(`[UniversalForm] Using KY3P bulk responses endpoint for task ${taskId}`);
+          
+          const bulkResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ responses: completeData })
+          });
+          
+          if (bulkResponse.ok) {
+            const result = await bulkResponse.json();
+            logger.info(`[UniversalForm] KY3P bulk update succeeded: ${result.updatedFields} fields, progress: ${result.progress * 100}%`);
+            
+            // Import queryClient directly to invalidate task data queries
+            const { queryClient } = await import('@/lib/queryClient');
+            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          } else {
+            const errorText = await bulkResponse.text();
+            logger.warn(`[UniversalForm] KY3P bulk update failed: ${bulkResponse.status}`, errorText);
+          }
+        } catch (bulkError) {
+          logger.error(`[UniversalForm] KY3P bulk update error:`, bulkError);
+        }
+      }
+      
+      // Save regular progress to server for other form types
       if (saveProgress) {
         await saveProgress();
       }
@@ -1164,24 +1195,48 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // First submit this empty data directly to the server
       if (taskId) {
         try {
-          // Submit empty data to server to clear all fields
-          const response = await fetch('/api/kyb/progress', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-              taskId: taskId,
-              formData: emptyData,
-              progress: 0,
-              status: 'in_progress'
-            }),
-          });
-          
-          if (!response.ok) {
-            logger.warn(`Failed to clear fields on server: ${response.status}`);
+          if (taskType === 'sp_ky3p_assessment') {
+            // For KY3P forms, use the bulk endpoint to clear all fields
+            logger.info(`[UniversalForm] Using KY3P bulk endpoint to clear all fields for task ${taskId}`);
+            const bulkResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ responses: emptyData })
+            });
+            
+            if (bulkResponse.ok) {
+              const result = await bulkResponse.json();
+              logger.info(`[UniversalForm] KY3P fields cleared: ${result.updatedFields} fields reset`);
+              
+              // Force invalidate task queries to update task center
+              const { queryClient } = await import('@/lib/queryClient');
+              queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+              queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+            } else {
+              logger.warn(`[UniversalForm] Failed to clear KY3P fields on server: ${bulkResponse.status}`);
+            }
           } else {
-            logger.info('[UniversalForm] Successfully cleared fields on server');
+            // For KYB forms, use the standard endpoint
+            const response = await fetch('/api/kyb/progress', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                taskId: taskId,
+                formData: emptyData,
+                progress: 0,
+                status: 'in_progress'
+              }),
+            });
+            
+            if (!response.ok) {
+              logger.warn(`Failed to clear fields on server: ${response.status}`);
+            } else {
+              logger.info('[UniversalForm] Successfully cleared fields on server');
+            }
           }
         } catch (serverError) {
           logger.error('[UniversalForm] Server error when clearing fields:', serverError);
