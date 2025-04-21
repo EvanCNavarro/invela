@@ -116,6 +116,9 @@ export default function TaskPage({ params }: TaskPageProps) {
       throw new Error("No file is available for download. Please contact support.");
     }
     
+    // Track the toast ID so we can dismiss it later
+    let downloadStartedToastId: string | undefined;
+    
     try {
       // If this is a ky3p task but we're using the security form file, log this information
       if (taskContentType === 'ky3p') {
