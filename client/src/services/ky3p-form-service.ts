@@ -541,10 +541,19 @@ export class KY3PFormService extends EnhancedKybFormService {
       // use the KY3P progress endpoint which will fetch from the database
       try {
         // The progress endpoint loads all responses from ky3p_responses table
+        // We need a debugging URL to determine what endpoints are available
+        const debugResponse = await fetch(`/api/ky3p-fields`);
+        logger.info(`[KY3P Form Service] Debug API call result: ${debugResponse.status}`);
+        
         const response = await fetch(`/api/ky3p/progress/${this.taskId}`);
+        
+        // Log more detailed information for debugging
+        logger.info(`[KY3P Form Service] Progress API call status: ${response.status}`);
         
         if (response.ok) {
           const data = await response.json();
+          // Log the raw data to see what we're getting
+          logger.debug(`[KY3P Form Service] Raw API response data:`, data);
           
           logger.info(`[KY3P Form Service] Progress endpoint returned:`, {
             taskId: this.taskId,

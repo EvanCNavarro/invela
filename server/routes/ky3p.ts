@@ -325,7 +325,18 @@ router.get('/api/ky3p/progress/:taskId', requireAuth, async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     
     if (isNaN(taskId)) {
+      logger.warn(`[KY3P API] Invalid task ID provided: ${req.params.taskId}`);
       return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    logger.info(`[KY3P API] Fetching progress for task ${taskId}. User authenticated: ${!!req.user}`);
+    
+    // Log user details to help debug authentication issues
+    if (req.user) {
+      logger.debug(`[KY3P API] User details:`, {
+        userId: req.user.id,
+        companyId: req.user.company_id
+      })
     }
     
     // Get the task
