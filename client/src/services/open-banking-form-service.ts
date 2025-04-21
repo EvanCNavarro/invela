@@ -587,7 +587,41 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   }
   
   /**
-   * Clear all field values for the current task
+   * Reset form data in the service and local state without saving to server
+   * @param taskId Optional task ID (uses this.taskId if not provided)
+   */
+  public resetFormData(taskId?: number): void {
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      logger.error('[OpenBankingFormService] No task ID provided for resetting form data');
+      return;
+    }
+    
+    try {
+      // Create empty data object with all fields set to empty strings
+      const emptyData: Record<string, string> = {};
+      
+      // Set all fields to empty strings if we have them loaded
+      if (this.fields && this.fields.length > 0) {
+        this.fields.forEach(field => {
+          if (field && field.key) {
+            emptyData[field.key] = '';
+          }
+        });
+      }
+      
+      // Reset the form data in memory
+      this.loadFormData(emptyData);
+      
+      logger.info(`[OpenBankingFormService] Form data reset successfully for task ${effectiveTaskId}`);
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Error resetting form data:', error);
+    }
+  }
+  
+  /**
+   * Clear all field values for the current task (server-side)
    * @param taskId Optional task ID (uses this.taskId if not provided)
    * @returns True if clearing was successful, false otherwise
    */
