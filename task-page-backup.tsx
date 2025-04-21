@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { UniversalForm } from "@/components/forms/UniversalForm";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
+import { OpenBankingPlayground } from "@/components/playground/OpenBankingPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import confetti from "canvas-confetti";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,7 +56,7 @@ interface Task {
 }
 
 // Define task type as a valid type
-type TaskContentType = 'kyb' | 'card' | 'security' | 'unknown';
+type TaskContentType = 'kyb' | 'card' | 'security' | 'open_banking' | 'unknown';
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
@@ -70,6 +72,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [displayName, setDisplayName] = useState('');
   const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [task, setTask] = useState<Task | null>(null);
   
   // Parse taskSlug into a numeric ID if possible
   const parsedId = parseInt(params.taskSlug);
@@ -103,6 +106,34 @@ export default function TaskPage({ params }: TaskPageProps) {
     navigate('/task-center');
   }, [navigate]);
   
+  // Standardized download dropdown menu component
+  const StandardizedDownloadMenu = useCallback(() => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleDownload('csv')}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Download as CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDownload('txt')}>
+            <FileText className="mr-2 h-4 w-4" />
+            Download as TXT
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDownload('json')}>
+            <FileJson className="mr-2 h-4 w-4" />
+            Download as JSON
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }, [handleDownload]);
+
   // Handle file downloads
   const handleDownload = useCallback(async (format: 'json' | 'csv' | 'txt') => {
     if (!fileId) return;
@@ -133,8 +164,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
   }, [fileId, taskContentType, toast]);
   
-  // Fetch task data
-  const { data: task, isLoading, error } = useQuery<Task>({
+  // Fetch task data and keep local state to allow updates
+  const { data: taskData, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, taskId, params.taskSlug],
     queryFn: async () => {
       try {
@@ -222,8 +253,10 @@ export default function TaskPage({ params }: TaskPageProps) {
       type = 'kyb';
     } else if (taskData.task_type === 'company_card') {
       type = 'card';
-    } else if (taskData.task_type === 'security_assessment') {
+    } else if (taskData.task_type === 'security_assessment' || taskData.task_type === 'sp_ky3p_assessment' || taskData.task_type === 'ky3p') {
       type = 'security';
+    } else if (taskData.task_type === 'open_banking_survey' || taskData.task_type === 'open_banking') {
+      type = 'open_banking';
     }
     
     // Extract company information
@@ -242,16 +275,35 @@ export default function TaskPage({ params }: TaskPageProps) {
       displayNameValue,
       shouldRedirect: type === 'unknown',
       isSubmitted: !!(
+        taskData.status === 'submitted' || 
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
-        (type === 'security' && taskData.metadata?.securityFormFile)
+        (type === 'security' && taskData.metadata?.securityFormFile) ||
+        (type === 'open_banking' && taskData.metadata?.openBankingFormFile)
       ),
       fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
               type === 'card' ? taskData.metadata?.cardFormFile :
-              type === 'security' ? taskData.metadata?.securityFormFile : null
+              type === 'security' ? taskData.metadata?.securityFormFile :
+              type === 'open_banking' ? taskData.metadata?.openBankingFormFile : null
     };
   }, [extractCompanyNameFromTitle]);
   
+  // Function to safely update task progress
+  const updateTaskProgress = useCallback((progress: number, task: Task | null) => {
+    if (!task) return;
+    setTask({
+      ...task,
+      progress
+    });
+  }, []);
+
+  // Set task state from taskData when it changes
+  useEffect(() => {
+    if (taskData) {
+      setTask(taskData);
+    }
+  }, [taskData]);
+
   // Process task data once loaded - using useEffect properly
   useEffect(() => {
     if (!task) return;
@@ -379,7 +431,50 @@ export default function TaskPage({ params }: TaskPageProps) {
               <UniversalForm
                 taskId={task.id}
                 taskType="kyb"
+                taskStatus={task.status}
+                companyName={displayName}
                 initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
+                }}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting KYB Form",
@@ -401,8 +496,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      fireEnhancedConfetti();
-                      
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
                       setFileId(result.fileId);
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
@@ -421,9 +521,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                         variant: "destructive",
                       });
                     });
-                }}
-                onProgress={(progress) => {
-                  // Handle progress updates if needed
                 }}
               />
             </div>
@@ -480,16 +577,54 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Security Form Implementation - Header is now part of SecurityFormPlayground */}
-              <SecurityFormPlayground
+              {/* Universal form for Security Assessment */}
+              <UniversalForm
                 taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
-                savedFormData={task.savedFormData}
+                taskType="ky3p"
                 taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Security Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
+                }}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting Security Assessment",
@@ -607,12 +742,52 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
               />
             ) : (selectedMethod === 'manual' || showForm) ? (
-              <CardFormPlayground
+              <UniversalForm
                 taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
+                taskType="card"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Card Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
                 }}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
@@ -683,6 +858,96 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             )}
           </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Open Banking Survey Form Rendering
+  if (taskContentType === 'open_banking' && task) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as TXT
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              {/* Universal form for Open Banking Survey */}
+              <UniversalForm
+                taskId={task.id}
+                taskType="open_banking"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onSubmit={(formData) => {
+                  console.log('[TaskPage] Open Banking Survey submitted via playground');
+                  
+                  // Update UI state
+                  setIsSubmitted(true);
+                  
+                  // Force refetch of tasks to update task center
+                  fetch('/api/tasks')
+                    .then(response => response.json())
+                    .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                    
+                  // Show success toast
+                  toast({
+                    title: "Success",
+                    description: "Open Banking Survey has been submitted successfully.",
+                    variant: "default",
+                  });
+                }}
+              />
+            </div>
+          </div>
+          
+          {/* Show success modal if needed */}
+          {showSuccessModal && (
+            <SecuritySuccessModal
+              open={showSuccessModal}
+              onOpenChange={(open) => setShowSuccessModal(open)}
+              companyName={displayName}
+              description="The Open Banking Survey has been successfully submitted and processed."
+            />
+          )}
         </PageTemplate>
       </DashboardLayout>
     );
