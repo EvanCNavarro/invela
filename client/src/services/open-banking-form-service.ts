@@ -587,6 +587,64 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Clear all field values for the current task
+   * @param taskId Optional task ID (uses this.taskId if not provided)
+   * @returns True if clearing was successful, false otherwise
+   */
+  public async clearAllFields(taskId?: number): Promise<boolean> {
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      logger.error('[OpenBankingFormService] No task ID provided for clearing fields');
+      return false;
+    }
+    
+    try {
+      logger.info(`[OpenBankingFormService] Clearing all fields for task ${effectiveTaskId}`);
+      
+      // Create empty data object with all fields set to empty strings
+      const emptyData: Record<string, string> = {};
+      
+      // Get all field definitions
+      const fields = await this.getFields();
+      
+      // Set all fields to empty strings
+      fields.forEach(field => {
+        if (field && field.key) {
+          emptyData[field.key] = '';
+        }
+      });
+      
+      // Call the bulk endpoint to clear all fields at once
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/bulk`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          responses: emptyData,
+          clearAll: true // Add a flag to indicate we're clearing all fields
+        }),
+      });
+      
+      if (!response.ok) {
+        logger.error(`[OpenBankingFormService] Failed to clear fields: ${response.status}`);
+        return false;
+      }
+      
+      // Update form data in our service
+      this.loadFormData(emptyData);
+      
+      logger.info(`[OpenBankingFormService] Successfully cleared all fields for task ${effectiveTaskId}`);
+      return true;
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Error clearing fields:', error);
+      return false;
+    }
+  }
+
+  /**
    * Submit the form
    * @param options The submission options
    * @returns The submission response
