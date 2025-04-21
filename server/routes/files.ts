@@ -675,7 +675,10 @@ router.get("/api/files/:id/download", async (req, res) => {
       id: fileRecord.id,
       name: fileRecord.name,
       type: fileRecord.type,
-      size: fileRecord.size
+      size: fileRecord.size,
+      pathType: typeof fileRecord.path,
+      pathLength: fileRecord.path ? fileRecord.path.length : 0,
+      pathFirstChars: fileRecord.path ? fileRecord.path.substring(0, Math.min(20, fileRecord.path.length)) + '...' : ''
     });
 
     // Update download count
@@ -685,14 +688,16 @@ router.get("/api/files/:id/download", async (req, res) => {
 
     // Check if this is a KYB or KY3P form CSV file
     const isKybCsvFile = (fileRecord.name.toLowerCase().includes('kyb_form') || 
-                          fileRecord.name.toLowerCase().includes('ky3p_security_assessment')) && 
-                          fileRecord.type === 'text/csv';
+                          fileRecord.name.toLowerCase().includes('ky3p_security_assessment') || 
+                          fileRecord.name.toLowerCase().includes('spglobal_ky3p')) && 
+                          (fileRecord.type === 'text/csv' || fileRecord.type === 'text/plain');
     
     if (isKybCsvFile) {
       console.log('[Files] Handling KYB CSV file download');
       
       // For inline content (stored in the path field directly), use that as content
-      if (fileRecord.path && fileRecord.path.includes(',')) {
+      // CSV content typically has commas or starts with a header row
+      if (fileRecord.path && (fileRecord.path.includes(',') || fileRecord.path.startsWith('Field') || fileRecord.path.startsWith('Question'))) {
         console.log('[Files] KYB CSV file content found in database path field');
         
         // For CSV files, set more specific headers for better browser handling
@@ -830,7 +835,12 @@ router.get("/api/files/:id/download", async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
         
         // Send database content as fallback
-        return res.send(fileRecord.path);
+        const content = fileRecord.path.startsWith('database:') 
+          ? fileRecord.path.replace('database:', '')
+          : fileRecord.path;
+          
+        console.log('[Files] Sending CSV content from database field, length:', content.length);
+        return res.send(content);
       }
       
       // For CSV files, set more specific headers for better browser handling
