@@ -974,20 +974,36 @@ export default function TaskPage({ params }: TaskPageProps) {
                     });
                   }}
                   onSuccess={() => {
-                    setIsSubmitted(true);
-                    setShowSuccessModal(true);
-                    fireEnhancedConfetti();
-                    
-                    fetch(`/api/tasks/${task.id}`)
-                      .then(response => response.json())
-                      .then(data => {
-                        if (data.metadata?.openBankingFormFile) {
-                          setFileId(data.metadata.openBankingFormFile);
+                    try {
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+                      
+                      // Only try to fire confetti if we're in a browser environment
+                      // and wrap in try/catch to prevent blank screen issues
+                      try {
+                        if (typeof window !== 'undefined' && document.body) {
+                          console.log('[TaskPage] Firing enhanced confetti for OpenBanking success');
+                          fireEnhancedConfetti();
                         }
-                      })
-                      .catch(err => {
-                        console.error('[TaskPage] Error fetching updated task:', err);
-                      });
+                      } catch (confettiError) {
+                        console.warn('[TaskPage] Error firing confetti:', confettiError);
+                      }
+                      
+                      fetch(`/api/tasks/${task.id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                          if (data.metadata?.openBankingFormFile) {
+                            setFileId(data.metadata.openBankingFormFile);
+                          }
+                        })
+                        .catch(err => {
+                          console.error('[TaskPage] Error fetching updated task:', err);
+                        });
+                    } catch (error) {
+                      console.error('[TaskPage] Error in OpenBanking onSuccess handler:', error);
+                      // Still try to show success even if there's an error
+                      setIsSubmitted(true);
+                    }
                   }}
                 />
               </div>

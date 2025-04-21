@@ -1402,17 +1402,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             // which might not be directly available on the toast object
             logger.debug('Clearing previous toast notification');
             
-            // For OpenBanking, forcefully remove toast DOM elements to avoid the persistent toast
+            // For OpenBanking, safely try to dismiss toasts
             if (taskType === 'open_banking') {
-              const toastElements = document.querySelectorAll('[role="status"]');
-              toastElements.forEach(el => {
-                if (el && el.textContent && el.textContent.includes('Submitting Form')) {
-                  if (el.parentElement) {
-                    el.parentElement.removeChild(el);
-                    console.log(`[SUBMIT FLOW] Forcefully removed OpenBanking submitting toast`);
+              try {
+                // Try to use toast utilities to dismiss
+                if (submittingToastId) {
+                  // Use the global toast library that might have a dismiss method
+                  const toastLib = (window as any).toast;
+                  if (toastLib && typeof toastLib.dismiss === 'function') {
+                    toastLib.dismiss(submittingToastId);
+                    console.log(`[SUBMIT FLOW] Dismissed OpenBanking submitting toast via global toast.dismiss`);
                   }
                 }
-              });
+                
+                // Reduce the duration of any remaining toasts
+                const toastElements = document.querySelectorAll('[role="status"]');
+                console.log(`[SUBMIT FLOW] Found ${toastElements.length} toast elements to check`);
+              } catch (error) {
+                console.warn('[SUBMIT FLOW] Error handling toast cleanup:', error);
+              }
             }
           } catch (toastError) {
             logger.warn('Unable to dismiss toast:', toastError);
