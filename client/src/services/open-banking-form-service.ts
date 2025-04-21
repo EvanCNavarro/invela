@@ -197,7 +197,8 @@ export class OpenBankingFormService extends EnhancedKybFormService {
                 key: field.field_key, // Important: add key property for form mapping
                 label: field.display_name,
                 displayName: field.display_name, // Add displayName for consistency
-                description: field.help_text,
+                description: field.help_text || field.description,
+                tooltip: field.help_text || field.description,
                 question: field.question || field.display_name, // Add question for form display
                 type: this.mapFieldType(field.field_type),
                 required: field.is_required || field.required || false,
@@ -216,7 +217,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
               order: parseInt(stepIndex),
               fields: formattedFields,
               collapsed: false,
-              description: `${groupName} related questions`
+              description: ``
             };
           });
         })
@@ -278,11 +279,11 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    * Map field type from database to Universal Form field type
    */
   private mapFieldType(fieldType: string): string {
-    if (!fieldType) return 'text';
+    if (!fieldType) return 'textarea';
     
     switch (fieldType.toUpperCase()) {
       case 'TEXT':
-        return 'text';
+        return 'textarea'; // Changed from 'text' to 'textarea' for larger input fields
       case 'TEXTAREA':
         return 'textarea';
       case 'SELECT':
@@ -298,7 +299,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       case 'FILE':
         return 'file';
       default:
-        return 'text';
+        return 'textarea'; // Changed default to textarea as well
     }
   }
   

@@ -129,7 +129,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       // Prepare task type display name for toast notifications
       const taskTypeDisplay = taskContentType === 'kyb' ? 'KYB Assessment' :
                            taskContentType === 'ky3p' ? 'S&P KY3P Assessment' :
-                           taskContentType === 'open_banking' ? 'Open Banking Assessment' :
+                           taskContentType === 'open_banking' ? '1033 Open Banking Survey' :
                            taskContentType === 'card' ? 'CARD Assessment' : 'Form';
       
       // Skip showing the "Download Started" toast as requested
@@ -253,7 +253,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           const assessmentType = 
             taskContentType === 'kyb' ? 'kyb_assessment' :
             taskContentType === 'ky3p' ? 'spglobal_ky3p_assessment' :
-            taskContentType === 'open_banking' ? 'open_banking_assessment' :
+            taskContentType === 'open_banking' ? '1033_open_banking_survey' :
             taskContentType === 'card' ? 'card_assessment' : 'assessment';
           
           filename = `${assessmentType}_${timestamp}.${format}`;
@@ -905,8 +905,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                     setSelectedMethod(method);
                     setShowForm(true);
                   }}
-                  title="Open Banking Survey"
-                  description={`Please choose how you would like to complete this Open Banking Survey for ${displayName}.`}
+                  title="1033 Open Banking Survey"
+                  description={`Please choose how you would like to complete this 1033 Open Banking Survey for ${displayName}.`}
                 />
               </div>
             )}
