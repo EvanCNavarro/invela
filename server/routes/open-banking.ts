@@ -1032,9 +1032,10 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         }
       }
       
-      // Calculate task progress
+      // Calculate task progress more accurately
       const totalFields = fields.length;
       
+      // Get all responses for this task
       const completedResponses = await db.select().from(openBankingResponses)
         .where(and(
           eq(openBankingResponses.task_id, taskId),
@@ -1042,14 +1043,37 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         ));
       
       const completedCount = completedResponses.length;
-      const progress = totalFields > 0 ? Math.round((completedCount / totalFields) * 100) / 100 : 0;
+      
+      // Calculate progress - ensure we have proper precision and rounding
+      // Progress is represented as a decimal from 0 to 1
+      let progress = 0;
+      if (totalFields > 0 && completedCount > 0) {
+        progress = Math.min(1, Math.max(0, completedCount / totalFields));
+        // Round to 2 decimal places to avoid floating point issues
+        progress = Math.round(progress * 100) / 100;
+      }
+      
+      // Determine the correct task status based on progress
+      let newStatus = TaskStatus.NOT_STARTED;
+      if (progress > 0) {
+        newStatus = progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS;
+      }
+      
+      // Log progress calculation for debugging
+      logger.info('[OpenBankingRoutes] Progress calculation', {
+        taskId,
+        completedCount,
+        totalFields,
+        calculatedProgress: progress,
+        calculatedStatus: newStatus
+      });
       
       // Update task progress
       await db.update(tasks)
         .set({ 
           progress, 
           updated_at: new Date(),
-          status: progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS
+          status: newStatus  
         })
         .where(eq(tasks.id, taskId));
       
