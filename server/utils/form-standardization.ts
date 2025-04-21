@@ -11,6 +11,7 @@ import { eq } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { CompanyTabsService } from '../services/company-tabs';
 import { broadcastMessage } from '../services/websocket';
+import { broadcastTaskUpdate } from '../utils/task-broadcast';
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('FormStandardization');
@@ -75,11 +76,23 @@ export async function standardFormSubmission(options: FormSubmissionOptions) {
     // 2. Convert form data to CSV using the provided converter function
     const csvData = convertToCSV(fields, formData);
 
+    // Get company name from multiple sources with fallbacks
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+      
+    const companyName = task.metadata?.company_name || 
+                       task.metadata?.companyName || 
+                       company?.name || 
+                       (formData.legalEntityName || formData.company_name) || 
+                       'Company';
+
     // 3. Create file using FileCreationService with standardized format
     const defaultFileName = FileCreationService.generateStandardFileName(
       `${formType.toUpperCase()}Form`,
       taskId,
-      task.metadata?.company_name || '',
+      companyName,
       task.metadata?.formVersion || "1.0",
       "csv"
     );
@@ -148,7 +161,6 @@ export async function standardFormSubmission(options: FormSubmissionOptions) {
     }
 
     // 7. Broadcast task update
-    const { broadcastTaskUpdate } = require('../utils/task-broadcast');
     broadcastTaskUpdate({
       id: taskId,
       status: TaskStatus.SUBMITTED,
