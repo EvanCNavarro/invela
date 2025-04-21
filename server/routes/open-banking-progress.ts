@@ -284,38 +284,42 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
         }
       });
       
-      // Recalculate progress based on all responses if not explicitly provided
-      if (progress === undefined) {
-        // Get count of all required fields
-        const requiredFieldsCount = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(openBankingFields)
-          .where(eq(openBankingFields.required, true));
-        
-        const totalFields = requiredFieldsCount[0].count;
-        
-        // Get count of completed responses
-        const completedResponsesCount = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(openBankingResponses)
-          .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
-          .where(
-            and(
-              eq(openBankingResponses.task_id, parseInt(taskId)),
-              eq(openBankingResponses.status, KYBFieldStatus.COMPLETE),
-              eq(openBankingFields.required, true)
-            )
-          );
-        
-        const completedFields = completedResponsesCount[0].count;
-        
-        // Calculate progress as a percentage rounded UP to a whole number
-        if (totalFields > 0) {
-          const percentComplete = Math.ceil((completedFields / totalFields) * 100);
-          progress = percentComplete / 100;
-        } else {
-          progress = 0;
-        }
+      // Always recalculate progress based on all responses to ensure accuracy
+      // Get count of all fields (not just required ones to be more permissive)
+      const allFieldsCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(openBankingFields);
+      
+      const totalFields = allFieldsCount[0].count;
+      
+      // Get count of all responses with non-empty values
+      const filledResponsesCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(openBankingResponses)
+        .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
+        .where(
+          and(
+            eq(openBankingResponses.task_id, parseInt(taskId)),
+            eq(openBankingResponses.status, KYBFieldStatus.COMPLETE)
+          )
+        );
+      
+      const completedFieldsCount = filledResponsesCount[0].count;
+      
+      logger.info('[Open Banking API] Progress calculation:', {
+        totalFields, 
+        completedFieldsCount,
+        ratio: totalFields > 0 ? completedFieldsCount / totalFields : 0
+      });
+      
+      // Calculate progress as a percentage rounded UP to a whole number
+      if (totalFields > 0 && completedFieldsCount > 0) {
+        // Force a minimum progress of 1% if any fields are completed
+        const percentComplete = Math.max(1, Math.ceil((completedFieldsCount / totalFields) * 100));
+        progress = percentComplete / 100;
+      } else {
+        // If no fields at all have been filled, show 0 progress
+        progress = 0;
       }
       
       // Determine task status from progress if not explicitly provided

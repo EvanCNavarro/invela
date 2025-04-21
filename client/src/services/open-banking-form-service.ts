@@ -429,6 +429,8 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   /**
    * Get progress data for the task in the format expected by UniversalForm
    * This method uses our dedicated progress endpoint for Open Banking tasks
+   * 
+   * Enhanced with retry logic and better error handling to prevent infinite loading
    */
   public async getProgress(taskId?: number): Promise<{
     formData: Record<string, any>;
@@ -450,9 +452,44 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     try {
       logger.info(`[OpenBankingFormService] Getting progress for task ${effectiveTaskId}`);
       
-      const response = await fetch(`/api/open-banking/progress/${effectiveTaskId}`, {
-        credentials: 'include' // Include session cookies
-      });
+      // Try fetching with retries to handle transient network issues
+      let retries = 0;
+      const maxRetries = 3;
+      let response = null;
+      
+      while (retries < maxRetries) {
+        try {
+          response = await fetch(`/api/open-banking/progress/${effectiveTaskId}`, {
+            credentials: 'include', // Include session cookies
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          // If successful, break out of retry loop
+          if (response && response.ok) break;
+          
+          // If we get here, the response was not ok
+          logger.warn(`[OpenBankingFormService] Progress fetch attempt ${retries + 1} failed with status ${response?.status}`);
+          
+          // Only retry on certain error codes (5xx server errors, 429 throttling)
+          if (!response || (response.status >= 500 || response.status === 429)) {
+            retries++;
+            // Exponential backoff with jitter
+            const delay = Math.min(500 * Math.pow(2, retries) + Math.random() * 100, 3000);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            // For other error codes like 404, 403, etc. don't retry
+            break;
+          }
+        } catch (fetchError) {
+          logger.warn(`[OpenBankingFormService] Network error on attempt ${retries + 1}:`, fetchError);
+          retries++;
+          // Linear backoff for network errors
+          await new Promise(resolve => setTimeout(resolve, 500 * retries));
+        }
+      }
       
       if (!response.ok) {
         // If endpoint not found (404), return empty data instead of throwing
