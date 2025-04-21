@@ -78,7 +78,17 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Function to extract company name from task title
   const extractCompanyNameFromTitle = useCallback((title: string): string => {
+    if (!title) return 'Unknown Company';
+    
     console.log(`[TaskPage] Extracting company name from title: "${title}"`);
+    
+    // Special case for numbered KYB forms like "1. KYB Form: CompanyName"
+    const numberedKybMatch = title.match(/^\d+\.\s+KYB\s+Form:\s+(.+)$/i);
+    if (numberedKybMatch && numberedKybMatch[1]) {
+      const companyName = numberedKybMatch[1].trim();
+      console.log(`[TaskPage] Extracted company name (numbered KYB): "${companyName}"`);
+      return companyName;
+    }
     
     // Updated regex to match various Open Banking Survey patterns
     const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking(\s*\(1033\))?\s*Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/i);
@@ -98,7 +108,19 @@ export default function TaskPage({ params }: TaskPageProps) {
       }
     }
     
+    // Last resort, we'll try to get just the last part after any colon
+    const colonSplit = title.split(':');
+    if (colonSplit.length > 1) {
+      const lastPart = colonSplit[colonSplit.length - 1].trim();
+      if (lastPart) {
+        console.log(`[TaskPage] Extracted company name (colon split): "${lastPart}"`);
+        return lastPart;
+      }
+    }
+    
     console.log(`[TaskPage] Could not extract company name from title: "${title}"`);
+    
+    // Return a more descriptive unknown company name
     return 'Unknown Company';
   }, []);
   
@@ -431,10 +453,11 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
     
     // Set display name from multiple sources with priority order
-    const displayNameValue = taskData?.metadata?.company?.name || 
+    // Give priority to currentCompanyName (from the current company API)
+    const displayNameValue = currentCompanyName || 
+                            taskData?.metadata?.company?.name || 
                             taskData?.metadata?.companyName || 
                             extractedName || 
-                            currentCompanyName ||
                             'Unknown Company';
                             
     console.log(`[TaskPage] Company name set for ${type} form:`, {
