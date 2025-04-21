@@ -2257,6 +2257,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
 
   return (
     <div className="w-full mx-auto">
+      {/* Clearing Fields Indicator */}
+      <ClearingFieldsIndicator isClearing={isClearing} />
+      
       {/* Gray header box with title, subtitle, and download button */}
       <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
         <div className="flex flex-col mb-5">
