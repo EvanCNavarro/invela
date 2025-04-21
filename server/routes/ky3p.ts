@@ -56,11 +56,21 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
     
     // Check each task to see if it's dependent on the KY3P task that was just completed
     for (const dependentTask of dependentTasks) {
-      // Special case for Open Banking Survey - always unlock it after KY3P submission
+      // Special case for Open Banking Survey and Company Card tasks - always unlock them after KY3P submission
       // OR check the standard prerequisite logic for other task types
       const isOpenBankingSurvey = dependentTask.task_type === 'open_banking_survey';
+      const isCompanyCard = dependentTask.task_type === 'company_card';
+      const isCardOrSurveyTask = isOpenBankingSurvey || isCompanyCard;
       
-      if (isOpenBankingSurvey || 
+      logger.info('[KY3P API] Checking task for unlocking', {
+        taskId: dependentTask.id,
+        taskType: dependentTask.task_type,
+        isCardOrSurveyTask,
+        isLocked: dependentTask.metadata?.locked === true,
+        status: dependentTask.status
+      });
+      
+      if (isCardOrSurveyTask || 
           dependentTask.metadata?.locked === true || 
           dependentTask.metadata?.prerequisite_task_id === ky3pTaskId ||
           dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment') {
@@ -68,7 +78,10 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
         logger.info('[KY3P API] Unlocking dependent task', {
           dependentTaskId: dependentTask.id,
           dependentTaskType: dependentTask.task_type,
-          isOpenBankingSpecialCase: isOpenBankingSurvey,
+          isSpecialCaseTask: isCardOrSurveyTask,
+          isOpenBankingSurvey,
+          isCompanyCard,
+          currentStatus: dependentTask.status,
           previousMetadata: {
             locked: dependentTask.metadata?.locked,
             prerequisiteTaskId: dependentTask.metadata?.prerequisite_task_id,
@@ -1135,6 +1148,64 @@ router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
       error: 'Server error',
       message: 'An unexpected error occurred while generating demo data'
     });
+  }
+});
+
+/**
+ * Test endpoint to manually force-unlock a company card task (Open Banking Survey)
+ * This is for debugging purposes to test task dependency chain
+ */
+router.post('/api/tasks/fix-company-card', async (req, res) => {
+  try {
+    const { taskId, companyId } = req.body;
+    
+    if (!taskId || !companyId) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
+    
+    console.log(`[KY3P Fix] Unlocking company card task: ${taskId} for company: ${companyId}`);
+    
+    // Use direct SQL for maximum reliability
+    const result = await db.execute(`
+      UPDATE tasks 
+      SET 
+        status = 'not_started',
+        metadata = jsonb_set(
+          jsonb_set(
+            jsonb_set(
+              COALESCE(metadata, '{}'::jsonb),
+              '{locked}', 
+              'false'
+            ),
+            '{prerequisite_completed}',
+            'true'
+          ),
+          '{unlocked_by}',
+          '"manual_fix"'
+        ),
+        updated_at = NOW()
+      WHERE id = $1
+    `, [taskId]);
+    
+    console.log('[KY3P Fix] SQL update result:', result);
+    
+    // Try to broadcast the update
+    try {
+      const { broadcastTaskUpdate } = await import('../services/websocket.js');
+      await broadcastTaskUpdate(taskId);
+      
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      await broadcastProgressUpdate(taskId, 0);
+      
+      console.log('[KY3P Fix] Broadcast complete for task:', taskId);
+    } catch (error) {
+      console.error('[KY3P Fix] Failed to broadcast task update:', error);
+    }
+    
+    res.json({ success: true, message: 'Task unlocked successfully' });
+  } catch (error) {
+    console.error('[KY3P Fix] Error in fix-company-card endpoint:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
