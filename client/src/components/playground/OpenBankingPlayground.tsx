@@ -85,11 +85,7 @@ export function OpenBankingPlayground({
   const [uploadedDocument, setUploadedDocument] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [successData, setSuccessData] = useState<{
-    riskScore: number;
-    assessmentFile: string;
-  } | null>(null);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  // We don't need success state management here as it's handled by the parent task-page component
   const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
   const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, {
     suspicionLevel: number;
@@ -183,33 +179,60 @@ export function OpenBankingPlayground({
         timestamp: new Date().toISOString()
       });
 
-      const response = await fetch(`/api/open-banking/submit/${taskId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          formData,
-          companyName: companyData?.name || companyName
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to submit Open Banking Survey');
-      }
-
-      let data;
       try {
-        const text = await response.text();
-        data = JSON.parse(text);
+        console.log('[OpenBankingPlayground] Making API call to submit form');
+        const response = await fetch(`/api/open-banking/submit/${taskId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            formData,
+            companyName: companyData?.name || companyName
+          })
+        });
+
+        console.log('[OpenBankingPlayground] API response received:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          ok: response.ok,
+          headerContentType: response.headers.get('content-type'),
+          timestamp: new Date().toISOString()
+        });
+
+        // Read response body text
+        const responseText = await response.text();
+        console.log('[OpenBankingPlayground] Response body length:', responseText.length);
+        
+        // Try to parse the response text as JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+          console.log('[OpenBankingPlayground] Response parsed successfully:', {
+            success: data.success, 
+            hasRiskScore: !!data.riskScore,
+            hasAssessmentFile: !!data.assessmentFile
+          });
+        } catch (parseError) {
+          console.error('[OpenBankingPlayground] JSON parse error:', responseText.substring(0, 200) + '...');
+          throw new Error(`Invalid response format: ${parseError.message}`);
+        }
+
+        // Check if response was not ok (e.g., 4xx or 5xx status)
+        if (!response.ok) {
+          console.error('[OpenBankingPlayground] API error:', data);
+          throw new Error(data.message || `HTTP error ${response.status}: ${response.statusText}`);
+        }
+
+        // Check success flag in response body
+        if (!data.success) {
+          console.error('[OpenBankingPlayground] API reported failure:', data);
+          throw new Error(data.message || 'Server reported failure during submission');
+        }
+
+        return data;
       } catch (error) {
-        throw new Error('Invalid response format');
+        console.error('[OpenBankingPlayground] Submission error:', error);
+        throw error; // Re-throw to be handled by onError
       }
-
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to submit Open Banking Survey');
-      }
-
-      return data;
     },
     onSuccess: (data) => {
       console.log('[OpenBankingPlayground] Open Banking Survey submitted successfully:', {
