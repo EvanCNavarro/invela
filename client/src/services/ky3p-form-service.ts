@@ -694,11 +694,13 @@ export class KY3PFormService extends EnhancedKybFormService {
         logger.info(`[KY3P Form Service] Direct handling of task 601 which is known to be submitted`);
         
         try {
-          // Try using a special hardcoded approach for task 601
-          const responsesUrl = `/api/tasks/601/ky3p-responses`;
+          // Try using the regular responses endpoint
+          const responsesUrl = `/api/tasks/${effectiveTaskId}/ky3p-responses`;
           logger.info(`[KY3P Form Service] [DIRECT] Attempting direct fetch from: ${responsesUrl}`);
           
-          const directResponse = await fetch(responsesUrl);
+          const directResponse = await fetch(responsesUrl, {
+            credentials: 'include' // This is important to include session cookies!
+          });
           logger.info(`[KY3P Form Service] [DIRECT] Response status: ${directResponse.status}`);
           
           if (directResponse.ok) {
@@ -809,6 +811,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include session cookies
         body: JSON.stringify({
           responses: formData
         }),
@@ -874,6 +877,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include session cookies
         body: JSON.stringify({
           formData: this.getFormData(),
           fileName: options.fileName
