@@ -175,20 +175,26 @@ export function OpenBankingPlayground({
 
   // Submit assessment
   const submitAssessment = useMutation({
-    mutationFn: async () => {
-      console.log('[OpenBankingPlayground] Submitting assessment:', {
+    mutationFn: async (formData: Record<string, any>) => {
+      console.log('[OpenBankingPlayground] Submitting Open Banking Survey:', {
         taskId,
+        companyName: companyData?.name || companyName,
+        fieldCount: Object.keys(formData).length,
         timestamp: new Date().toISOString()
       });
 
       const response = await fetch(`/api/open-banking/submit/${taskId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          formData,
+          companyName: companyData?.name || companyName
+        })
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Failed to submit assessment');
+        throw new Error(errorText || 'Failed to submit Open Banking Survey');
       }
 
       let data;
@@ -200,13 +206,13 @@ export function OpenBankingPlayground({
       }
 
       if (!data.success) {
-        throw new Error(data.message || 'Failed to submit assessment');
+        throw new Error(data.message || 'Failed to submit Open Banking Survey');
       }
 
       return data;
     },
     onSuccess: (data) => {
-      console.log('[OpenBankingPlayground] Assessment submitted successfully:', {
+      console.log('[OpenBankingPlayground] Open Banking Survey submitted successfully:', {
         taskId,
         riskScore: data.riskScore,
         assessmentFile: data.assessmentFile,
@@ -227,12 +233,15 @@ export function OpenBankingPlayground({
       setIsSuccessModalOpen(true);
 
       toast({
-        title: "Assessment Submitted",
-        description: `Assessment completed successfully. Risk Score: ${data.riskScore}`,
+        title: "Open Banking Survey Submitted",
+        description: `Survey completed successfully. Risk Score: ${data.riskScore}`,
       });
 
+      // Invalidate queries to refresh data across the application
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      onSubmit({});
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      
+      onSubmit(data);
     },
     onError: (error) => {
       console.error('[OpenBankingPlayground] Submit error:', error);
@@ -245,14 +254,15 @@ export function OpenBankingPlayground({
   });
 
   // Handle form submission
-  const handleFormSubmit = async (data: Record<string, any>) => {
+  const handleFormSubmit = async (formData: Record<string, any>) => {
     console.log('[OpenBankingPlayground] Form submitted:', { 
-      fieldCount: Object.keys(data).length,
+      fieldCount: Object.keys(formData).length,
       timestamp: new Date().toISOString()
     });
     
     try {
-      submitAssessment.mutate();
+      // Pass the form data to the submission mutation
+      submitAssessment.mutate(formData);
     } catch (error) {
       console.error('[OpenBankingPlayground] Form submission error:', error);
     }
