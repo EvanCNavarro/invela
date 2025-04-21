@@ -184,6 +184,115 @@ async function unlockDependentTasks(taskId: number) {
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
 
+  /**
+   * Endpoint to provide demo data for auto-filling Open Banking Survey forms
+   * This follows the same pattern as the KYB and KY3P demo auto-fill endpoints
+   */
+  app.get('/api/open-banking/demo-autofill/:taskId', async (req, res) => {
+    try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized access to demo auto-fill');
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required' 
+        });
+      }
+      
+      const taskId = parseInt(req.params.taskId);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task ID' });
+      }
+      
+      logger.info('[OpenBankingRoutes] Processing demo auto-fill request', { taskId });
+      
+      // Get the task data first to verify it exists and get the company
+      const taskData = await db.select().from(tasks)
+        .where(eq(tasks.id, taskId))
+        .limit(1);
+      
+      if (taskData.length === 0) {
+        logger.error('[OpenBankingRoutes] Task not found for demo auto-fill', { taskId });
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      
+      const task = taskData[0];
+      const companyId = task.company_id;
+      
+      if (!companyId) {
+        return res.status(400).json({ error: 'Task has no associated company' });
+      }
+      
+      // Get company data for personalization
+      const companyData = await db.select().from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      if (companyData.length === 0) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      const company = companyData[0];
+      
+      // Get all Open Banking fields with demo_autofill data
+      const fields = await db.select({
+        id: openBankingFields.id,
+        field_key: openBankingFields.field_key,
+        display_name: openBankingFields.display_name,
+        question: openBankingFields.question,
+        field_type: openBankingFields.field_type,
+        group: openBankingFields.group,
+        required: openBankingFields.required,
+        demo_autofill: openBankingFields.demo_autofill // Explicitly select demo_autofill
+      })
+      .from(openBankingFields)
+      .orderBy(openBankingFields.order);
+      
+      logger.info('[OpenBankingRoutes] Fetched fields for demo auto-fill', {
+        fieldCount: fields.length
+      });
+      
+      // Create demo data for each field using demo_autofill values from the database
+      const demoData: Record<string, any> = {};
+      
+      for (const field of fields) {
+        const fieldKey = field.field_key;
+        
+        // Use the demo_autofill value directly from the database
+        if (field.demo_autofill !== null && field.demo_autofill !== undefined) {
+          // Replace {{COMPANY_NAME}} placeholder if present
+          if (typeof field.demo_autofill === 'string' && field.demo_autofill.includes('{{COMPANY_NAME}}')) {
+            demoData[fieldKey] = field.demo_autofill.replace('{{COMPANY_NAME}}', company.name);
+          }
+          // Use the value as-is
+          else {
+            demoData[fieldKey] = field.demo_autofill;
+          }
+        }
+        // For fields without demo data, provide reasonable defaults
+        else {
+          console.log(`[Open Banking Demo Auto-Fill] No demo_autofill value found for ${fieldKey}`);
+          
+          // Default to empty string to prevent errors
+          demoData[fieldKey] = '';
+        }
+      }
+      
+      // Add required agreement confirmation field
+      demoData['agreement_confirmation'] = true;
+      
+      // Return the demo data
+      res.json(demoData);
+      
+    } catch (error) {
+      logger.error('[OpenBankingRoutes] Error generating demo auto-fill data', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      res.status(500).json({ error: 'Failed to generate demo data' });
+    }
+  });
+
   // Get all Open Banking fields
   app.get('/api/open-banking/fields', async (req, res) => {
     try {
