@@ -626,7 +626,7 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   // Bulk update Open Banking responses (used by the save method in OpenBankingFormService)
   app.post('/api/tasks/:taskId/open-banking-responses/bulk', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
-    const { responses } = req.body;
+    const { responses, clearAll } = req.body;
     
     try {
       // Check authentication
@@ -641,6 +641,45 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
             hasSession: !!req.session,
             timestamp: new Date().toISOString()
           }
+        });
+      }
+      
+      // Check if this is a clear all fields request
+      if (clearAll === true) {
+        logger.info('[OpenBankingRoutes] Processing CLEAR ALL fields request for task', { taskId });
+        
+        // Delete all existing responses for this task
+        await db.delete(openBankingResponses)
+          .where(eq(openBankingResponses.task_id, taskId));
+          
+        // Reset the task progress to 0 and status to not_started
+        await db.update(tasks)
+          .set({ 
+            progress: 0, 
+            status: TaskStatus.NOT_STARTED,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+          
+        // Broadcast task update via WebSocket
+        broadcastMessage('task_updated', {
+          id: taskId,
+          status: 'not_started',
+          progress: 0,
+          metadata: {
+            lastProgressReconciliation: new Date().toISOString()
+          },
+          timestamp: new Date().toISOString()
+        });
+        
+        logger.info('[OpenBankingRoutes] Successfully cleared all responses for task', { taskId });
+        
+        return res.json({
+          success: true,
+          taskId,
+          progress: 0,
+          status: 'not_started',
+          message: 'All fields cleared successfully'
         });
       }
       
