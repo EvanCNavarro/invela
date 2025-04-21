@@ -799,10 +799,60 @@ export default function TaskPage({ params }: TaskPageProps) {
                       console.error('[TaskPage] Error updating progress:', err);
                     });
                   }}
+                  onSubmit={async (formData) => {
+                    try {
+                      // Create standardized filename with company name
+                      const fileName = `Card_Industry_Questionnaire_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+                      
+                      console.log(`[Card] Starting form submission for task ${task.id}`);
+                      
+                      // Use our new standardized endpoint
+                      const response = await fetch(`/api/tasks/${task.id}/card-submit`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          formData,
+                          fileName
+                        }),
+                      });
+                      
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Form submission failed: ${response.status} - ${errorText}`);
+                      }
+                      
+                      const result = await response.json();
+                      console.log(`[Card] Submission successful, file ID: ${result.fileId}`);
+                      
+                      // Store file ID for download functionality
+                      if (result.fileId) {
+                        setFileId(result.fileId);
+                      }
+                      
+                      // Update UI state
+                      setIsSubmitted(true);
+                      
+                      // Show confetti
+                      fireEnhancedConfetti();
+                      
+                      // Force refresh the task list
+                      fetch('/api/tasks').catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                    } catch (error) {
+                      console.error(`[Card] Error during submission:`, error);
+                      
+                      // Show error toast
+                      toast({
+                        title: "Form Submission Failed",
+                        description: error instanceof Error ? error.message : String(error),
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                   onSuccess={() => {
-                    setIsSubmitted(true);
-                    fireEnhancedConfetti();
-                    
+                    // This callback is still used for backward compatibility
                     fetch(`/api/tasks/${task.id}`)
                       .then(response => response.json())
                       .then(data => {
@@ -917,11 +967,61 @@ export default function TaskPage({ params }: TaskPageProps) {
                       console.error('[TaskPage] Error updating progress:', err);
                     });
                   }}
+                  onSubmit={async (formData) => {
+                    try {
+                      // Create standardized filename with company name
+                      const fileName = `S&P_KY3P_Security_Assessment_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+                      
+                      console.log(`[KY3P] Starting form submission for task ${task.id}`);
+                      
+                      // Use our new standardized endpoint
+                      const response = await fetch(`/api/tasks/${task.id}/ky3p-submit`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          formData,
+                          fileName
+                        }),
+                      });
+                      
+                      if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Form submission failed: ${response.status} - ${errorText}`);
+                      }
+                      
+                      const result = await response.json();
+                      console.log(`[KY3P] Submission successful, file ID: ${result.fileId}`);
+                      
+                      // Store file ID for download functionality
+                      if (result.fileId) {
+                        setFileId(result.fileId);
+                      }
+                      
+                      // Update UI state
+                      setIsSubmitted(true);
+                      
+                      // Show success modal and fire confetti
+                      setShowSuccessModal(true);
+                      fireEnhancedConfetti();
+                      
+                      // Force refresh the task list
+                      fetch('/api/tasks').catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                    } catch (error) {
+                      console.error(`[KY3P] Error during submission:`, error);
+                      
+                      // Show error toast
+                      toast({
+                        title: "Form Submission Failed",
+                        description: error instanceof Error ? error.message : String(error),
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                   onSuccess={() => {
-                    setIsSubmitted(true);
-                    setShowSuccessModal(true);
-                    fireEnhancedConfetti();
-                    
+                    // This callback is still used for backward compatibility
                     fetch(`/api/tasks/${task.id}`)
                       .then(response => response.json())
                       .then(data => {
@@ -1026,13 +1126,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                   companyName={displayName}
                   initialData={task.savedFormData}
                   onSubmit={async (formData) => {
-                    console.log(`[OpenBanking] Starting form submission for task ${task.id}`);
-                    
                     try {
-                      // Create filename with company name
+                      // Create standardized filename with company name
                       const fileName = `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
                       
-                      // Send form data to our direct endpoint
+                      console.log(`[OpenBanking] Starting form submission for task ${task.id}`);
+                      
+                      // Use our new standardized endpoint
                       const response = await fetch(`/api/tasks/${task.id}/open-banking-submit`, {
                         method: 'POST',
                         credentials: 'include',
@@ -1069,14 +1169,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                       
                       // Force refresh the task list
                       fetch('/api/tasks').catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
-                      
                     } catch (error) {
                       console.error(`[OpenBanking] Error during submission:`, error);
                       
                       // Show error toast
                       toast({
                         title: "Form Submission Failed",
-                        description: error instanceof Error ? error.message : "Failed to submit Open Banking form",
+                        description: error instanceof Error ? error.message : String(error),
                         variant: "destructive"
                       });
                     }
