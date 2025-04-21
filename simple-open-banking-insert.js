@@ -1,10 +1,36 @@
 /**
- * Simple script to insert Open Banking sample fields
+ * Simple script to insert Open Banking sample fields (ESM Format)
  */
-const { Pool } = require('pg');
+import pg from 'pg';
+const { Pool } = pg;
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import * as fs from 'fs';
+
+// Get the directory name
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Read the DATABASE_URL from the .env file
+const envContent = fs.readFileSync('.env', 'utf8');
+const envVars = envContent.split('\n').reduce((acc, line) => {
+  if (line && !line.startsWith('#')) {
+    const [key, value] = line.split('=');
+    if (key && value) {
+      acc[key.trim()] = value.trim();
+    }
+  }
+  return acc;
+}, {});
+
+const databaseUrl = envVars.DATABASE_URL;
+console.log('Using database URL:', databaseUrl ? 'Found' : 'Not found');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
+  ssl: {
+    rejectUnauthorized: false // For development only
+  }
 });
 
 const sampleFields = [
@@ -99,9 +125,14 @@ async function createSampleFields() {
     
     console.log('Inserting sample data...');
     for (const field of sampleFields) {
+      const keys = Object.keys(field);
       const values = Object.values(field);
       const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-      const columns = Object.keys(field).join(', ');
+      const columns = keys.map(key => {
+        if (key === 'order') return '"order"';
+        if (key === 'group') return '"group"';
+        return key;
+      }).join(', ');
       
       const query = `INSERT INTO open_banking_fields (${columns}) VALUES (${placeholders})`;
       
