@@ -549,16 +549,13 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Security Form Implementation - Header is now part of SecurityFormPlayground */}
-              <SecurityFormPlayground
+              {/* Universal form for Security Assessment */}
+              <UniversalForm
                 taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
-                savedFormData={task.savedFormData}
+                taskType="security"
                 taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
                   updateTaskProgress(progress, task);
@@ -717,13 +714,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
               />
             ) : (selectedMethod === 'manual' || showForm) ? (
-              <CardFormPlayground
+              <UniversalForm
                 taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
+                taskType="card"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
                   updateTaskProgress(progress, task);
@@ -886,14 +882,13 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Use OpenBankingPlayground component for better UX with document upload before form */}
-              <OpenBankingPlayground
+              {/* Universal form for Open Banking Survey */}
+              <UniversalForm
                 taskId={task.id}
+                taskType="open_banking"
+                taskStatus={task.status}
                 companyName={displayName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description
-                }}
+                initialData={task.savedFormData}
                 onSubmit={(formData) => {
                   console.log('[TaskPage] Open Banking Survey submitted via playground');
                   
