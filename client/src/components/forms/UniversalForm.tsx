@@ -957,8 +957,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       } else {
         // Update form service for KYB or other traditional forms
-        if (formService) {
-          await formService.bulkUpdate(completeData);
+        if (formService && taskId) {
+          await formService.bulkUpdate(completeData, taskId);
         }
       }
       
