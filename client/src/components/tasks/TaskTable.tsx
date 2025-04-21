@@ -327,7 +327,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(task.status)}>
-                      {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
+                      {taskStatusMap[task.status.toUpperCase() as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell>
