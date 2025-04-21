@@ -16,7 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { TaskDownloadMenu } from "@/components/TaskDownloadMenu";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
