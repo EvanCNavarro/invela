@@ -2260,10 +2260,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const displayTitle = taskTitle || formTitle;
   const displayCompanyName = companyName || (taskMetadata?.companyName || taskMetadata?.company?.name || '');
   
-  // If task is KYB, append the appropriate task title
+  // Set special titles for specific form types
   const headerTitle = taskType === 'kyb' || taskType === 'company_kyb' 
     ? `KYB Form: ${displayCompanyName}` 
-    : displayTitle;
+    : taskType === 'open_banking' || taskType === 'open_banking_survey'
+      ? `1033 Open Banking Survey` 
+      : displayTitle;
     
   // Create appropriate subtitle based on task type
   const headerSubtitle = taskType === 'kyb' || taskType === 'company_kyb'
