@@ -923,6 +923,23 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             )}
             
+            {/* Force show manual form for initial view of Open Banking Survey */}
+            {!showForm && !isSubmitted && (
+              <button
+                className="hidden"
+                onClick={() => {
+                  console.log('[OpenBanking] Auto-selecting manual entry mode');
+                  setSelectedMethod('manual');
+                  setShowForm(true);
+                }}
+                data-testid="auto-select-manual"
+                ref={(btn) => {
+                  // Auto-click the button once rendered
+                  if (btn) setTimeout(() => btn.click(), 100);
+                }}
+              />
+            )}
+            
             {/* Manual form filling option or view submitted form */}
             {(selectedMethod === 'manual' || isSubmitted) && (
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
