@@ -184,6 +184,9 @@ async function unlockDependentTasks(taskId: number) {
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
   
+  // Track ongoing clear operations to prevent duplicates
+  const ongoingClearOperations = new Set<number>();
+  
   // Ultra-Optimized endpoint for fast clearing of all field values with aggressive reconciliation skipping
   app.post('/api/tasks/:taskId/open-banking-responses/clear-all', async (req, res) => {
     const taskId = parseInt(req.params.taskId, 10);
@@ -197,6 +200,19 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     if (clearAction !== 'FAST_DELETE_ALL') {
       return res.status(400).json({ error: 'Invalid clear action specified' });
     }
+    
+    // Prevent multiple simultaneous clear operations for the same task
+    if (ongoingClearOperations.has(taskId)) {
+      logger.warn(`[OpenBankingRoutes] Clear operation already in progress for task ${taskId}, preventing duplicate`);
+      return res.status(429).json({ 
+        error: 'Operation in progress',
+        message: 'A clearing operation is already running, please wait...',
+        taskId
+      });
+    }
+    
+    // Track this operation
+    ongoingClearOperations.add(taskId);
     
     try {
       // Check if task exists and is an Open Banking task (check both possible type values)
@@ -848,6 +864,9 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       // Process each response from the key-value object
       const processedCount = { updated: 0, created: 0, skipped: 0 };
       
+      // List of problematic fields to skip
+      const fieldsToSkip = ['taskId', 'agreement_confirmation'];
+      
       try {
         // Performance Optimization: Process all responses in a single transaction
         await db.transaction(async (tx) => {
@@ -867,6 +886,13 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
           
           // Process all responses and sort into update or insert arrays
           for (const [fieldKey, responseValue] of Object.entries(responses)) {
+            // Skip fields that are known to cause issues
+            if (fieldsToSkip.includes(fieldKey)) {
+              logger.info(`[OpenBankingRoutes] Skipping special field: ${fieldKey}`);
+              processedCount.skipped++;
+              continue;
+            }
+            
             // Skip if field key doesn't exist
             if (!fieldKeyToIdMap.has(fieldKey)) {
               logger.warn(`[OpenBankingRoutes] Field not found for key: ${fieldKey}`);
@@ -940,6 +966,13 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         logger.warn('[OpenBankingRoutes] Falling back to individual processing');
         
         for (const [fieldKey, responseValue] of Object.entries(responses)) {
+          // Skip fields that are known to cause issues (same as batch processing)
+          if (fieldsToSkip.includes(fieldKey)) {
+            logger.info(`[OpenBankingRoutes] Skipping special field: ${fieldKey}`);
+            processedCount.skipped++;
+            continue;
+          }
+          
           // Skip if field key doesn't exist
           if (!fieldKeyToIdMap.has(fieldKey)) {
             logger.warn(`[OpenBankingRoutes] Field not found for key: ${fieldKey}`);
