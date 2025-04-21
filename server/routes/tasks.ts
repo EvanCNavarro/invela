@@ -772,8 +772,14 @@ router.post("/__special_non_vite_route__/unique_task_lookup_system", requireAuth
           t.task_type === 'security_assessment'
         );
       } else if (taskType === 'card') {
+        // Look for either company_card (old CARD task) or open_banking (new Open Banking Survey task)
         matchingTask = companyTasks.find(t => 
-          t.task_type === 'company_card'
+          t.task_type === 'company_card' || t.task_type === 'open_banking'
+        );
+      } else if (taskType === 'open_banking') {
+        // Direct lookup for Open Banking Survey task
+        matchingTask = companyTasks.find(t => 
+          t.task_type === 'open_banking'
         );
       }
       
