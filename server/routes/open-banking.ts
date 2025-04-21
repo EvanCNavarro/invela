@@ -23,14 +23,98 @@ import {
   tasks
 } from '@db/schema';
 import { Logger } from '../utils/logger';
-import { analyzeContent } from '../services/openai';
 import { WebSocketServer, WebSocket } from 'ws';
 import { broadcastMessage } from '../services/websocket';
 import path from 'path';
 import fs from 'fs';
+import { openai } from '../utils/openaiUtils';
 
 // Create a logger instance
 const logger = new Logger('OpenBankingRoutes');
+
+// Function to analyze content with OpenAI
+async function analyzeContent(response: string, context: any) {
+  const startTime = Date.now();
+  
+  console.log('[OpenAI Service] Starting Open Banking response analysis:', {
+    responseLength: response.length,
+    context: Object.keys(context),
+    startTime: new Date().toISOString()
+  });
+  
+  const prompt = `
+As a security and compliance expert, analyze this response to a banking compliance question.
+Compare it to best practices and evaluate its level of risk.
+
+Question: ${context.field_question}
+Field Key: ${context.field_key}
+Group: ${context.field_group}
+Help Text: ${context.field_help_text}
+Answer Expectation: ${context.answer_expectation}
+Company Name: ${context.company_name}
+Company Description: ${context.company_description}
+
+User Response: ${response}
+
+Analyze for:
+1. Completeness of the answer
+2. Alignment with industry best practices
+3. Potential red flags or concerning omissions
+4. Level of risk implied by the response
+
+Respond with a JSON object containing:
+{
+  "suspicionLevel": number (0-100, higher means more concerning),
+  "riskScore": number (0-100, higher means more risk),
+  "reasoning": string (explanation of the analysis)
+}
+`;
+  
+  try {
+    console.log('[OpenAI Service] Sending request to OpenAI:', {
+      timestamp: new Date().toISOString()
+    });
+    
+    const openaiResponse = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: "You are a banking compliance expert who analyzes responses to regulatory questions." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const duration = Date.now() - startTime;
+    
+    if (!openaiResponse.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    const result = JSON.parse(openaiResponse.choices[0].message.content);
+    
+    console.log('[OpenAI Service] Analysis completed successfully:', {
+      duration,
+      suspicionLevel: result.suspicionLevel,
+      riskScore: result.riskScore
+    });
+    
+    return {
+      suspicionLevel: result.suspicionLevel,
+      riskScore: result.riskScore,
+      reasoning: result.reasoning
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[OpenAI Service] Error analyzing content:', errorMessage);
+    
+    // Return default values on error
+    return {
+      suspicionLevel: 50,
+      riskScore: 50,
+      reasoning: "Error analyzing content: " + errorMessage
+    };
+  }
+}
 
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
@@ -198,8 +282,8 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         company_description: company.length > 0 ? company[0].description || "" : ""
       };
       
-      // Call OpenAI service
-      const analysisResult = await openaiAnalyzeContent(response, context);
+      // Call OpenAI service with the existing analyzeContent function
+      const analysisResult = await analyzeContent(response, context);
       
       // Update the response in the database with the analysis results
       const existingResponse = await db.select().from(openBankingResponses)
@@ -335,19 +419,19 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         };
       });
       
-      // Generate CSV file
-      const writeStream = fs.createWriteStream(csvFilePath);
-      const stringifier = csv.stringify({ header: true });
+      // Generate CSV file using a simple approach (without csv-stringify)
+      const headers = Object.keys(csvData[0]).join(',');
+      const rows = csvData.map(row => 
+        Object.values(row).map(value => 
+          typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+        ).join(',')
+      );
       
-      stringifier.pipe(writeStream);
-      csvData.forEach(row => stringifier.write(row));
-      stringifier.end();
+      // Combine headers and rows
+      const csvContent = [headers, ...rows].join('\n');
       
-      // Wait for the file to be written
-      await new Promise<void>((resolve, reject) => {
-        writeStream.on('finish', () => resolve());
-        writeStream.on('error', reject);
-      });
+      // Write to file
+      fs.writeFileSync(csvFilePath, csvContent);
       
       logger.info('[OpenBankingRoutes] CSV file generated', { taskId, csvFilePath });
       
@@ -362,20 +446,22 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       const fileBuffer = fs.readFileSync(csvFilePath);
       
       // Save file to database
-      const fileRecord = await handleFileCreation({
-        name: csvFileName,
-        size: fileStats.size,
-        type: 'text/csv',
-        buffer: fileBuffer,
-        userId,
-        companyId,
-        category: DocumentCategory.OTHER,
-        metadata: {
-          taskId,
-          taskType: 'open_banking_survey',
-          generated: true
-        }
-      });
+      const [fileRecord] = await db.insert(files)
+        .values({
+          name: csvFileName,
+          size: fileStats.size,
+          type: 'text/csv',
+          data: fileBuffer,
+          user_id: userId,
+          company_id: companyId,
+          category: DocumentCategory.OTHER,
+          metadata: {
+            taskId,
+            taskType: 'open_banking_survey',
+            generated: true
+          }
+        })
+        .returning();
       
       // Update task status
       await db.update(tasks)
@@ -404,14 +490,11 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       // After updating the company, broadcast a WebSocket event to notify clients
       if (companyUpdate.length > 0) {
-        await broadcastWebSocketEvent(wss, {
-          type: 'company_updated',
-          payload: {
-            company_id: companyId,
-            company_name: companyUpdate[0].name,
-            available_tabs: companyUpdate[0].available_tabs,
-            cache_invalidation: true
-          }
+        broadcastMessage('company_updated', {
+          company_id: companyId,
+          company_name: companyUpdate[0].name,
+          available_tabs: companyUpdate[0].available_tabs,
+          cache_invalidation: true
         });
       }
       
