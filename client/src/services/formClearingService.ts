@@ -69,9 +69,10 @@ export const FormClearingService = {
         
         // Select the right endpoint based on task type
         if (taskType === 'open_banking_survey') {
-          // Open Banking endpoint - uses our improved clear mechanism
-          endpoint = `/api/tasks/${taskId}/open-banking-responses/bulk`;
-          body = { responses: emptyData, clearAll: true };
+          // Open Banking endpoint - uses our improved clear mechanism with fast DELETE
+          // This uses a dedicated "fast clear" endpoint specifically for clearing all fields at once
+          endpoint = `/api/tasks/${taskId}/open-banking-responses/clear-all`;
+          body = { clearAction: 'FAST_DELETE_ALL' };
         } 
         else if (taskType === 'sp_ky3p_assessment') {
           // KY3P endpoint
