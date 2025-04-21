@@ -2286,10 +2286,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 variant="outline" 
                 size="sm" 
                 onClick={handleClearFields}
+                disabled={isClearing}
                 className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 justify-center w-[170px] whitespace-nowrap"
               >
-                <Eraser className="mr-2 h-4 w-4" />
-                Clear Fields
+                {isClearing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Eraser className="mr-2 h-4 w-4" />
+                    Clear Fields
+                  </>
+                )}
               </Button>
             </div>
           )}
