@@ -1044,13 +1044,17 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       const completedCount = completedResponses.length;
       
-      // Calculate progress - ensure we have proper precision and rounding
+      // Calculate progress - always round up to whole number percentage
       // Progress is represented as a decimal from 0 to 1
       let progress = 0;
       if (totalFields > 0 && completedCount > 0) {
-        progress = Math.min(1, Math.max(0, completedCount / totalFields));
-        // Round to 2 decimal places to avoid floating point issues
-        progress = Math.round(progress * 100) / 100;
+        // Calculate percentage as whole number (0-100) and round up
+        const percentComplete = Math.ceil((completedCount / totalFields) * 100);
+        // Convert back to decimal for database (0-1)
+        progress = percentComplete / 100;
+        
+        // Ensure bounds are respected
+        progress = Math.min(1, Math.max(0, progress));
       }
       
       // Determine the correct task status based on progress
