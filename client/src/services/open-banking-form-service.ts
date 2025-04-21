@@ -615,7 +615,12 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         }
       });
       
-      // Call the bulk endpoint to clear all fields at once
+      // Temporarily disable automatic form saving during clear operation
+      // to prevent firing multiple reconciliation requests
+      const wasSavingEnabled = this.autoSaveEnabled;
+      this.autoSaveEnabled = false;
+      
+      // Call the bulk endpoint to clear all fields at once with special clearAll flag
       const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/bulk`, {
         method: 'POST',
         credentials: 'include',
@@ -624,17 +629,25 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         },
         body: JSON.stringify({
           responses: emptyData,
-          clearAll: true // Add a flag to indicate we're clearing all fields
+          clearAll: true // Server will handle this with special transaction & reconciliation skip
         }),
       });
       
       if (!response.ok) {
         logger.error(`[OpenBankingFormService] Failed to clear fields: ${response.status}`);
+        this.autoSaveEnabled = wasSavingEnabled; // Restore previous auto-save setting
         return false;
       }
       
-      // Update form data in our service
+      // Update form data in our service without triggering save
       this.loadFormData(emptyData);
+      
+      // Instead of immediately saving/reconciling, wait a bit to let server-side 
+      // reconciliation skip timer expire
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Restore auto-save setting
+      this.autoSaveEnabled = wasSavingEnabled;
       
       logger.info(`[OpenBankingFormService] Successfully cleared all fields for task ${effectiveTaskId}`);
       return true;
