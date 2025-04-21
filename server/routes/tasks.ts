@@ -1,12 +1,18 @@
 import { Router } from "express";
 import { db } from "@db";
-import { tasks, TaskStatus, companies, kybFields, kybResponses } from "@db/schema";
+import { tasks, TaskStatus as DbTaskStatus, companies, kybFields, kybResponses, ky3pFields, openBankingFields } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastTaskUpdate, broadcastMessage } from "../services/websocket"; // Use the correct import path
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
 import { determineStatusFromProgress, broadcastProgressUpdate } from '../utils/progress';
+import { Logger } from '../utils/logger';
+import { standardFormSubmission, TaskStatus } from '../utils/form-standardization';
+import { FileCreationService } from '../services/file-creation';
+import { CompanyTabsService } from '../services/company-tabs';
+
+const logger = new Logger('TasksRoutes');
 
 const router = Router();
 
@@ -884,5 +890,270 @@ router.post('/api/tasks/:taskId/update-progress', requireAuth, async (req, res) 
 });
 
 
+
+// STANDARDIZED FORM SUBMISSION ENDPOINTS FOR ALL FORM TYPES
+// =====================================================================
+
+/**
+ * Convert KYB form data to CSV
+ */
+const convertKybToCSV = (fields: any[], formData: Record<string, any>): string => {
+  // Header row: field key, display name, response
+  const headerRow = ['Field Key', 'Display Name', 'Response'];
+  const rows = [headerRow];
+  
+  // Add data rows
+  for (const field of fields) {
+    const value = formData[field.field_key] ?? '';
+    rows.push([
+      field.field_key,
+      field.display_name || field.field_key,
+      // Ensure proper CSV escaping for values with commas
+      typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+    ]);
+  }
+  
+  // Join all rows with newlines
+  return rows.map(row => row.join(',')).join('\n');
+};
+
+/**
+ * Convert KY3P form data to CSV
+ */
+const convertKy3pToCSV = (fields: any[], formData: Record<string, any>): string => {
+  // Header row: field key, display name, group, response
+  const headerRow = ['Field Key', 'Display Name', 'Group', 'Response'];
+  const rows = [headerRow];
+  
+  // Add data rows
+  for (const field of fields) {
+    const value = formData[field.field_key] ?? '';
+    rows.push([
+      field.field_key,
+      field.display_name || field.field_key,
+      field.group || '',
+      // Ensure proper CSV escaping for values with commas
+      typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+    ]);
+  }
+  
+  // Join all rows with newlines
+  return rows.map(row => row.join(',')).join('\n');
+};
+
+/**
+ * Convert Open Banking form data to CSV
+ */
+const convertOpenBankingToCSV = (fields: any[], formData: Record<string, any>): string => {
+  // Header row: field key, display name, section, response
+  const headerRow = ['Field Key', 'Display Name', 'Section', 'Response'];
+  const rows = [headerRow];
+  
+  // Add data rows
+  for (const field of fields) {
+    const fieldKey = field.field_key || field.key || field.name;
+    const value = formData[fieldKey] ?? '';
+    rows.push([
+      fieldKey,
+      field.display_name || field.name || fieldKey,
+      field.section || '',
+      // Ensure proper CSV escaping for values with commas
+      typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+    ]);
+  }
+  
+  // Join all rows with newlines
+  return rows.map(row => row.join(',')).join('\n');
+};
+
+// Universal KYB form submission endpoint
+router.post('/api/tasks/:taskId/kyb-submit', requireAuth, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    const { formData, fileName } = req.body;
+    
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Get task details
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Get all KYB fields
+    const fields = await db.select()
+      .from(kybFields)
+      .orderBy(kybFields.order);
+    
+    // Use the standardized form submission process
+    const result = await standardFormSubmission({
+      taskId,
+      formData,
+      fileName,
+      userId: req.user.id,
+      companyId: task.company_id,
+      formType: 'kyb',
+      fields,
+      convertToCSV: convertKybToCSV
+    });
+    
+    // Save responses to database
+    for (const field of fields) {
+      const value = formData[field.field_key];
+      const status = value ? 'COMPLETE' : 'EMPTY';
+      
+      try {
+        // First try to insert
+        await db.insert(kybResponses)
+          .values({
+            task_id: taskId,
+            field_id: field.id,
+            response_value: value || null,
+            status,
+            version: 1,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+      } catch (err) {
+        const error = err as Error;
+        if (error.message.includes('duplicate key value violates unique constraint')) {
+          // If duplicate, update instead
+          await db.update(kybResponses)
+            .set({
+              response_value: value || null,
+              status,
+              version: sql`${kybResponses.version} + 1`,
+              updated_at: new Date()
+            })
+            .where(
+              and(
+                eq(kybResponses.task_id, taskId),
+                eq(kybResponses.field_id, field.id)
+              )
+            );
+        } else {
+          throw error;
+        }
+      }
+    }
+    
+    // Return the standardized response
+    res.json(result);
+  } catch (error) {
+    logger.error('Error submitting KYB form', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    res.status(500).json({ 
+      error: 'Failed to submit form',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Universal KY3P form submission endpoint
+router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    const { formData, fileName } = req.body;
+    
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Get task details
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Get all KY3P fields
+    const fields = await db.select()
+      .from(ky3pFields)
+      .orderBy(ky3pFields.order);
+    
+    // Use the standardized form submission process
+    const result = await standardFormSubmission({
+      taskId,
+      formData,
+      fileName,
+      userId: req.user.id,
+      companyId: task.company_id,
+      formType: 'ky3p',
+      fields,
+      convertToCSV: convertKy3pToCSV
+    });
+    
+    // Return the standardized response
+    res.json(result);
+  } catch (error) {
+    logger.error('Error submitting KY3P form', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    res.status(500).json({ 
+      error: 'Failed to submit form',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Universal Open Banking form submission endpoint
+router.post('/api/tasks/:taskId/open-banking-submit', requireAuth, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    const { formData, fileName } = req.body;
+    
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Get task details
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Get all Open Banking fields
+    const fields = await db.select()
+      .from(openBankingFields)
+      .orderBy(openBankingFields.order);
+    
+    // Use the standardized form submission process
+    const result = await standardFormSubmission({
+      taskId,
+      formData,
+      fileName,
+      userId: req.user.id,
+      companyId: task.company_id,
+      formType: 'open_banking',
+      fields,
+      convertToCSV: convertOpenBankingToCSV
+    });
+    
+    // Return the standardized response
+    res.json(result);
+  } catch (error) {
+    logger.error('Error submitting Open Banking form', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    res.status(500).json({ 
+      error: 'Failed to submit form',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
 
 export default router;
