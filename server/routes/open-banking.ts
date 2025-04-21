@@ -353,18 +353,23 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       if (wss) {
         broadcastMessage('task_updated', {
           taskId,
-          status: 'submitted',
+          status: TaskStatus.SUBMITTED, // Use enum value for consistency
           progress: 100,
+          metadata: {
+            lastUpdated: new Date().toISOString(),
+            submissionDate: new Date().toISOString(),
+            fileId: fileId // Include fileId for unified handling
+          },
           timestamp: new Date().toISOString()
         });
       }
       
-      // Return success response with file ID
+      // Return success response with file ID from FileCreationService
       res.json({
         success: true,
         message: 'Form submitted successfully',
-        fileId: file.id,
-        fileName: file.name
+        fileId: fileId, // Use the file ID from FileCreationService
+        fileName: generatedFileName // Use the generated filename
       });
     } catch (error) {
       logger.error('[OpenBankingRoutes] Error processing form submission:', error);

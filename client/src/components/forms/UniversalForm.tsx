@@ -1366,8 +1366,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         });
       }
       
-      // Add file vault unlocked action for KYB form
-      if (taskType === 'kyb' || taskType === 'company_kyb') {
+      // Add file vault unlocked action for forms that support it
+      if (taskType === 'kyb' || taskType === 'company_kyb' || taskType === 'open_banking') {
         completedActions.push({
           type: "file_vault_unlocked",
           description: "File Vault Unlocked",
@@ -2076,12 +2076,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           });
         }
         
-        // Add file vault unlocked action
-        warningCompletedActions.push({
-          type: "file_vault_unlocked",
-          description: "File Vault Unlocked",
-          data: { details: "You now have access to upload and manage documents in the File Vault." }
-        });
+        // Add file vault unlocked action - include OpenBanking here too
+        if (taskType === 'kyb' || taskType === 'company_kyb' || taskType === 'open_banking') {
+          warningCompletedActions.push({
+            type: "file_vault_unlocked",
+            description: "File Vault Unlocked",
+            data: { details: "You now have access to upload and manage documents in the File Vault." }
+          });
+        }
         
         // Add next task action
         warningCompletedActions.push({
