@@ -184,10 +184,10 @@ async function unlockDependentTasks(taskId: number) {
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
   
-  // Optimized endpoint for fast clearing of all field values
+  // Ultra-Optimized endpoint for fast clearing of all field values
   app.post('/api/tasks/:taskId/open-banking-responses/clear-all', async (req, res) => {
     const taskId = parseInt(req.params.taskId, 10);
-    const { clearAction } = req.body;
+    const { clearAction, skipReconciliation } = req.body;
     
     if (isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
@@ -199,11 +199,14 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     }
     
     try {
-      // Check if task exists and is an Open Banking task
+      // Check if task exists and is an Open Banking task (check both possible type values)
       const taskData = await db.select().from(tasks)
         .where(and(
           eq(tasks.id, taskId),
-          eq(tasks.task_type, 'open_banking')
+          or(
+            eq(tasks.task_type, 'open_banking'),
+            eq(tasks.task_type, 'open_banking_survey')
+          )
         ))
         .limit(1);
       
@@ -211,17 +214,29 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         return res.status(404).json({ error: 'Open Banking task not found' });
       }
       
-      logger.info('[OpenBankingRoutes] Processing FAST_DELETE_ALL request for task', { taskId });
+      logger.info('[OpenBankingRoutes] Processing FAST_DELETE_ALL request for task', { 
+        taskId,
+        currentTaskType: taskData[0].task_type
+      });
       
       const startTime = Date.now();
       
-      // Execute a single transaction for the entire operation
+      // Immediately disable task reconciliation BEFORE any DB operations
+      if (skipReconciliation === true) {
+        global.__skipTaskReconciliation = global.__skipTaskReconciliation || {};
+        // Skip for a full 2 minutes (120000ms) to ensure all operations complete
+        global.__skipTaskReconciliation[taskId] = Date.now() + 120000;
+        logger.info('[OpenBankingRoutes] Task reconciliation disabled for 2 minutes', { taskId });
+      }
+      
+      // Execute a single transaction with LEAST number of DB operations possible
       await db.transaction(async (tx) => {
-        // 1. Delete all responses in one efficient operation
-        await tx.delete(openBankingResponses)
-          .where(eq(openBankingResponses.task_id, taskId));
+        // 1. Direct SQL delete of all responses to maximize performance - one statement
+        const deleteResult = await tx.execute(
+          sql`DELETE FROM "open_banking_responses" WHERE "task_id" = ${taskId}`
+        );
         
-        // 2. Reset task state
+        // 2. Reset task state - one update
         await tx.update(tasks)
           .set({ 
             progress: 0, 
@@ -234,12 +249,7 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       // Capture how long the operation took
       const operationTime = Date.now() - startTime;
       
-      // Disable the task reconciliation process for this task for a longer time
-      // to prevent any cascading updates
-      global.__skipTaskReconciliation = global.__skipTaskReconciliation || {};
-      global.__skipTaskReconciliation[taskId] = Date.now() + 30000; // skip for 30 seconds
-      
-      // Broadcast exactly one WebSocket message with force update flag
+      // Create update payload with forceUpdate to ensure client doesn't try incremental updates
       const updatePayload = {
         id: taskId,
         status: 'not_started',
@@ -247,12 +257,14 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         metadata: {
           lastUpdated: new Date().toISOString(),
           lastProgressReconciliation: new Date().toISOString(),
-          forceReload: true  // Tell client to reload form state
+          forceReload: true,  // Force client to reload all form state
+          forceReconciliationSkip: true  // Extra flag to indicate no reconciliation
         },
         timestamp: new Date().toISOString(),
         forceUpdate: true
       };
       
+      // Broadcast exactly one WebSocket message with all flags to prevent any further updates
       broadcastMessage('task_updated', updatePayload);
       
       logger.info('[OpenBankingRoutes] Fast clear completed successfully', { 
@@ -261,15 +273,18 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         timestamp: new Date().toISOString()
       });
       
+      // Return success with detailed information and all flags needed by client
       return res.json({
         success: true,
         taskId,
         progress: 0,
         status: 'not_started',
-        message: 'All fields cleared successfully',
+        message: 'All fields cleared successfully - FAST_DELETE operation',
         durationMs: operationTime,
         skipReconciliation: true,
-        forceReload: true
+        forceReload: true,
+        operationType: 'FAST_DELETE',
+        timestamp: new Date().toISOString()
       });
     }
     catch (error) {

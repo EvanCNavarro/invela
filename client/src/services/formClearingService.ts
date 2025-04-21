@@ -68,16 +68,24 @@ export const FormClearingService = {
         let body = {};
         
         // Select the right endpoint based on task type
-        if (taskType === 'open_banking_survey') {
-          // Open Banking endpoint - uses our improved clear mechanism with fast DELETE
-          // This uses a dedicated "fast clear" endpoint specifically for clearing all fields at once
+        if (taskType === 'open_banking_survey' || taskType === 'open_banking') {
+          // Open Banking endpoint - uses our optimized fast clear mechanism
+          // This endpoint bypasses all the normal form submission steps and directly clears the database
           endpoint = `/api/tasks/${taskId}/open-banking-responses/clear-all`;
-          body = { clearAction: 'FAST_DELETE_ALL' };
+          body = { 
+            clearAction: 'FAST_DELETE_ALL',
+            skipReconciliation: true,
+            timestamp: new Date().toISOString()
+          };
+          
+          logger.info(`[FormClearingService] Using FAST_DELETE operation for Open Banking (${taskType})`);
         } 
         else if (taskType === 'sp_ky3p_assessment') {
           // KY3P endpoint
           endpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
           body = { responses: emptyData, clearAll: true };
+          
+          logger.info(`[FormClearingService] Using bulk update with clearAll for KY3P`);
         }
         else {
           // Default KYB endpoint
@@ -88,6 +96,8 @@ export const FormClearingService = {
             progress: 0,
             status: 'not_started'
           };
+          
+          logger.info(`[FormClearingService] Using standard form update for KYB`);
         }
         
         logger.info(`[FormClearingService] Clearing server data via ${endpoint}`);
