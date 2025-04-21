@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eraser, Loader2 } from 'lucide-react';
 import {
@@ -16,6 +16,12 @@ import { useToast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('ClearFieldsButton');
+
+// Track the last clear operation to prevent duplicates
+const lastClearOperation = {
+  taskId: 0,
+  timestamp: 0
+};
 
 interface ClearFieldsButtonProps {
   taskId: number;
@@ -43,6 +49,21 @@ export function ClearFieldsButton({
       // Close dialog and show loading state
       setIsOpen(false);
       setIsClearing(true);
+      
+      // Prevent duplicate operations within a short time window
+      const now = Date.now();
+      // Debounce within 3 seconds and same task
+      if (lastClearOperation.taskId === taskId && now - lastClearOperation.timestamp < 3000) {
+        logger.warn(`[ClearFieldsButton] Debouncing duplicate clear operation for task ${taskId}`);
+        // No need to actually clear again, just act like we did
+        await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
+        setIsClearing(false);
+        return;
+      }
+      
+      // Update the last clear operation
+      lastClearOperation.taskId = taskId;
+      lastClearOperation.timestamp = now;
       
       // Call parent's onClear function
       await onClear();

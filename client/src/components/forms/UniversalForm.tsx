@@ -1104,12 +1104,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         onProgress(0);
       }
       
-      // Show success toast
-      toast({
-        title: "Fields Cleared",
-        description: "All form fields have been cleared successfully.",
-        variant: "success",
-      });
+      // Don't show success toast here as the ClearFieldsButton component will handle it
       
       logger.info(`[UniversalForm] Enhanced clearing completed successfully`);
       setIsClearing(false);
