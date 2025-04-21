@@ -1,4 +1,4 @@
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, sql } from 'drizzle-orm';
 import { db } from "@db";
 import { tasks, kybResponses, kybFields, openBankingResponses, openBankingFields } from "@db/schema";
 import { TaskStatus } from '../types';
