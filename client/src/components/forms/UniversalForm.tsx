@@ -2205,7 +2205,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
   // Resolve title and company name values for display
   const displayTitle = taskTitle || formTitle;
-  const displayCompanyName = companyName || (taskMetadata?.companyName || taskMetadata?.company?.name || '');
+  
+  // More robust company name resolution with fallbacks and loading state
+  const companyNameFromMetadata = taskMetadata?.companyName || taskMetadata?.company?.name;
+  const effectiveCompanyName = companyName || companyNameFromMetadata || '';
+  
+  // Use proper fallback for unknown company name during loading
+  const displayCompanyName = 
+    effectiveCompanyName.trim() === '' || 
+    effectiveCompanyName === 'Unknown Company' ? 
+    (isDataLoading ? 'Loading...' : (company?.name || 'Unknown Company')) : 
+    effectiveCompanyName;
   
   // Set special titles for specific form types
   const headerTitle = taskType === 'kyb' || taskType === 'company_kyb' 
