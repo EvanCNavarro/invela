@@ -25,6 +25,8 @@ import filesRouter from './routes/files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
 import { registerOpenBankingRoutes } from './routes/open-banking';
+import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
+import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
@@ -258,6 +260,15 @@ export function registerRoutes(app: Express): Express {
   
   // Register Open Banking Survey routes with WebSocket support
   registerOpenBankingRoutes(app, getWebSocketServer());
+  
+  // Register Open Banking Progress routes for standardized form handling
+  const openBankingProgressRouter = Router();
+  registerOpenBankingProgressRoutes(openBankingProgressRouter);
+  app.use(openBankingProgressRouter);
+  
+  // Register Open Banking Timestamps routes for field-level timestamp conflict resolution
+  registerOpenBankingTimestampRoutes(app);
+  
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
