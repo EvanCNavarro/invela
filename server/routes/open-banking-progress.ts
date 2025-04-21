@@ -349,11 +349,11 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
         ratio: totalFields > 0 ? completedFieldsCount / totalFields : 0
       });
       
-      // Calculate progress as a percentage rounded UP to a whole number
+      // Calculate progress as a percentage (0-100) rounded UP to match the KYB/KY3P behavior
       if (totalFields > 0 && completedFieldsCount > 0) {
         // Force a minimum progress of 1% if any fields are completed
-        const percentComplete = Math.max(1, Math.ceil((completedFieldsCount / totalFields) * 100));
-        progress = percentComplete / 100;
+        // Store as whole number percentage (5 instead of 0.05) to match KYB/KY3P
+        progress = Math.max(1, Math.ceil((completedFieldsCount / totalFields) * 100));
       } else {
         // If no fields at all have been filled, show 0 progress
         progress = 0;

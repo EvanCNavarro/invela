@@ -137,17 +137,38 @@ export async function reconcileTaskProgress(
 
     // Check if it's a KYB or Open Banking task and fetch appropriate responses
     if (taskType === 'open_banking') {
-      // Fetch Open Banking responses
-      responses = await db.select({
-        response_value: openBankingResponses.response_value,
-        field_key: openBankingFields.field_key,
-        status: openBankingResponses.status,
-        field_id: openBankingResponses.field_id,
-        required: openBankingFields.is_required
-      })
-      .from(openBankingResponses)
-      .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
-      .where(eq(openBankingResponses.task_id, taskId));
+      try {
+        // Fetch Open Banking responses
+        console.log(`${logPrefix} Fetching Open Banking responses for task ${taskId}`);
+        
+        // Get the progress directly from the task metadata
+        if (task.progress > 0) {
+          console.log(`${logPrefix} Using task's existing progress for Open Banking task: ${task.progress}`);
+          // We can exit early since the Open Banking form service handles progress
+          return;
+        }
+        
+        // Get the current progress from Open Banking service
+        const openBankingFields = await db
+          .select()
+          .from(openBankingResponses)
+          .where(eq(openBankingResponses.task_id, taskId));
+        
+        console.log(`${logPrefix} Found ${openBankingFields.length} Open Banking responses for task ${taskId}`);
+        
+        // Format the responses for progress calculation
+        responses = openBankingFields.map(response => ({
+          response_value: response.response_value,
+          field_key: `field_${response.field_id}`,
+          status: response.status,
+          field_id: response.field_id,
+          required: true // Assume all fields are required for now
+        }));
+      } catch (error) {
+        console.error(`${logPrefix} Error fetching Open Banking responses:`, error);
+        // Fall back to empty responses
+        responses = [];
+      }
     } else {
       // Default to KYB responses for backward compatibility
       responses = await db.select({
