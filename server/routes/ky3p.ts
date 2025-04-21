@@ -289,19 +289,113 @@ router.post('/api/tasks/ky3p', requireAuth, async (req, res) => {
 router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
+    const userId = req.user!.id;
     
-    // Update the task status to submitted
+    // Get the task data
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    
+    const companyId = task.company_id;
+    
+    // Get company information for the file metadata
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+    
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    
+    // Get all KY3P field definitions
+    const allFields = await db
+      .select()
+      .from(ky3pFields);
+    
+    // Get all KY3P responses for this task
+    const responses = await db
+      .select()
+      .from(ky3pResponses)
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    // Format the data for file creation
+    const formattedData: Record<string, any> = {};
+    
+    // Build a map of field ID to field metadata
+    const fieldMap = new Map<number, typeof ky3pFields.$inferSelect>();
+    allFields.forEach(field => {
+      fieldMap.set(field.id, field);
+    });
+    
+    // Add all responses to the formatted data
+    responses.forEach(response => {
+      const field = fieldMap.get(response.field_id);
+      if (field && response.response_value) {
+        formattedData[field.key] = response.response_value;
+      }
+    });
+    
+    console.log(`[KY3P API] Creating KY3P assessment file for task ${taskId}`);
+    
+    // Generate a file from the form data
+    const { fileCreationService } = await import('../services/fileCreation');
+    const fileResult = await fileCreationService.createTaskFile(
+      userId,
+      companyId,
+      formattedData,
+      {
+        taskType: 'sp_ky3p_assessment',
+        taskId,
+        companyName: company.name,
+        additionalData: {
+          fields: allFields
+        }
+      }
+    );
+    
+    if (!fileResult.success) {
+      logger.error('Failed to create KY3P file', {
+        error: fileResult.error,
+        taskId,
+        companyId
+      });
+    }
+    
+    // Update the task status and include the file ID in metadata
+    const updatedMetadata = {
+      ...task.metadata,
+      ky3pFormFile: fileResult.success ? fileResult.fileId : undefined
+    };
+    
+    // Update the task with completion data and file reference
     const [updatedTask] = await db
       .update(tasks)
       .set({
         status: 'submitted',
         completion_date: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
+        metadata: updatedMetadata as any
       })
       .where(eq(tasks.id, taskId))
       .returning();
     
-    res.json(updatedTask);
+    console.log(`[KY3P API] Successfully submitted KY3P assessment for task ${taskId}`, {
+      fileId: fileResult.success ? fileResult.fileId : undefined,
+      fileName: fileResult.success ? fileResult.fileName : undefined
+    });
+    
+    res.json({
+      ...updatedTask,
+      fileId: fileResult.success ? fileResult.fileId : undefined
+    });
   } catch (error) {
     logger.error('Error submitting KY3P task:', error);
     res.status(500).json({ message: 'Error submitting KY3P task' });
