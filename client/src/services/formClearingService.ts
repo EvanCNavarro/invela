@@ -75,7 +75,9 @@ export const FormClearingService = {
           body = { 
             clearAction: 'FAST_DELETE_ALL',
             skipReconciliation: true,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            forceLock: true,  // Extra flag to ensure server uses maximum lock duration
+            preventRecalc: true  // Tell server to disable recalculation
           };
           
           logger.info(`[FormClearingService] Using FAST_DELETE operation for Open Banking (${taskType})`);

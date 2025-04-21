@@ -29,13 +29,25 @@ export async function reconcileTaskProgress(
   const logPrefix = '[Task Reconciliation]';
   
   try {
-    // Check if reconciliation for this task is temporarily disabled
-    // This is used by the "clear all fields" function to prevent cascading updates
+    // ENHANCED: More aggressive skip mechanism to prevent cascading WebSocket messages
+    // This is critical for operations like "clear all fields" which need to prevent update storms
     const skipUntil = global.__skipTaskReconciliation?.[taskId] || 0;
+    
+    // Skip if this task is locked for reconciliation
     if (skipUntil > Date.now()) {
-      if (debug) {
-        console.log(`${logPrefix} Skipping reconciliation for task ${taskId} due to temporary lock until ${new Date(skipUntil).toISOString()}`);
+      // Always log skips (not just in debug mode) to help diagnose performance issues
+      console.log(`${logPrefix} Skipping reconciliation for task ${taskId} due to temporary lock until ${new Date(skipUntil).toISOString()}`);
+      
+      // Check if we need to extend the lock based on continuous reconciliation attempts
+      // If we are getting a reconciliation request while already locked, extend the lock
+      // This prevents cascading reconciliation attempts from piling up and triggering as soon as lock expires
+      if (Date.now() + 10000 > skipUntil) { // If we're within 10 seconds of lock expiring
+        global.__skipTaskReconciliation = global.__skipTaskReconciliation || {};
+        global.__skipTaskReconciliation[taskId] = Date.now() + 30000; // Extend lock by 30 seconds
+        console.log(`${logPrefix} Extended reconciliation lock for task ${taskId} due to continued attempts`);
       }
+      
+      // Exit early - don't even attempt to check the task status
       return;
     }
     
