@@ -650,12 +650,7 @@ export default function TaskPage({ params }: TaskPageProps) {
             </div>
           </div>
           
-          {/* KYB Success Modal */}
-          <KYBSuccessModal
-            open={showSuccessModal}
-            onOpenChange={setShowSuccessModal}
-            companyName={displayName}
-          />
+          {/* We'll use the modal in the shared section at the bottom */}
         </PageTemplate>
       </DashboardLayout>
     );
@@ -900,12 +895,7 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
           
-          {/* Security Success Modal */}
-          <SecuritySuccessModal
-            open={showSuccessModal}
-            onOpenChange={setShowSuccessModal}
-            companyName={displayName}
-          />
+          {/* We'll use the modal in the shared section at the bottom */}
         </PageTemplate>
       </DashboardLayout>
     );
@@ -1068,32 +1058,66 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             )}
           </div>
-          
-          {/* Render the appropriate success modal based on the task type */}
-          {taskContentType === 'open_banking' && (
-            <OpenBankingSuccessModal
-              open={showSuccessModal}
-              onOpenChange={setShowSuccessModal}
-              companyName={displayName}
-            />
-          )}
-          {taskContentType === 'kyb' && (
-            <KYBSuccessModal
-              open={showSuccessModal}
-              onOpenChange={setShowSuccessModal}
-              companyName={displayName}
-            />
-          )}
-          {(taskContentType === 'security' || taskContentType === 'ky3p') && (
-            <SecuritySuccessModal
-              open={showSuccessModal} 
-              onOpenChange={setShowSuccessModal}
-              companyName={displayName}
-            />
-          )}
         </PageTemplate>
       </DashboardLayout>
     );
+  }
+
+  // Render the modals at the application-level (outside individual form sections)
+  // This ensures we only have one modal instance per type
+  if (showSuccessModal && task) {
+    if (taskContentType === 'open_banking') {
+      return (
+        <>
+          <DashboardLayout>
+            <PageTemplate>
+              <div className="container max-w-7xl mx-auto">
+                {/* Content remains visibly the same, modal is rendered separately */}
+              </div>
+            </PageTemplate>
+          </DashboardLayout>
+          <OpenBankingSuccessModal
+            open={showSuccessModal}
+            onOpenChange={setShowSuccessModal}
+            companyName={displayName}
+          />
+        </>
+      );
+    } else if (taskContentType === 'kyb') {
+      return (
+        <>
+          <DashboardLayout>
+            <PageTemplate>
+              <div className="container max-w-7xl mx-auto">
+                {/* Content remains visibly the same, modal is rendered separately */}
+              </div>
+            </PageTemplate>
+          </DashboardLayout>
+          <KYBSuccessModal
+            open={showSuccessModal}
+            onOpenChange={setShowSuccessModal}
+            companyName={displayName}
+          />
+        </>
+      );
+    } else if (taskContentType === 'security' || taskContentType === 'ky3p') {
+      return (
+        <>
+          <DashboardLayout>
+            <PageTemplate>
+              <div className="container max-w-7xl mx-auto">
+                {/* Content remains visibly the same, modal is rendered separately */}
+              </div>
+            </PageTemplate>
+          </DashboardLayout>
+          <SecuritySuccessModal
+            open={showSuccessModal}
+            onOpenChange={setShowSuccessModal}
+            companyName={displayName}
+          />
+        </>
+      );
+    }
   }
   
   // Fallback content if task type is unknown
