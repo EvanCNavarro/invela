@@ -392,9 +392,34 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
       fileName: fileResult.success ? fileResult.fileName : undefined
     });
     
+    // Structure the response with completedActions similar to KYB submission
+    const completedActions = [
+      {
+        type: "task_completion", 
+        description: "Task Completed",
+        data: {
+          details: "Your S&P KY3P Security Assessment has been successfully submitted."
+        }
+      }
+    ];
+    
+    // Add file generation action if the file was created successfully
+    if (fileResult.success && fileResult.fileId) {
+      completedActions.push({
+        type: "file_generation",
+        description: "CSV File Generated",
+        fileId: fileResult.fileId,
+        data: {
+          details: `A CSV file containing your S&P KY3P responses has been saved to the File Vault.`,
+          fileId: fileResult.fileId
+        }
+      });
+    }
+    
     res.json({
       ...updatedTask,
-      fileId: fileResult.success ? fileResult.fileId : undefined
+      fileId: fileResult.success ? fileResult.fileId : undefined,
+      completedActions
     });
   } catch (error) {
     logger.error('Error submitting KY3P task:', error);
