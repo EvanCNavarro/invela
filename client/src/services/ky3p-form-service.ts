@@ -59,10 +59,10 @@ export class KY3PFormService extends EnhancedKybFormService {
         return;
       }
       
-      // Group fields by section name without any expected/hardcoded sections
-      const groupedFields = this.groupFieldsBySection(fields);
+      // Group fields by group name (formerly section) without any expected/hardcoded groups
+      const groupedFields = this.groupFieldsByGroup(fields);
       logger.info(`[KY3P Form Service] Field grouping result: ${Object.keys(groupedFields).length} groups found`);
-      logger.info(`[KY3P Form Service] Sections found: ${Object.keys(groupedFields).join(', ')}`);
+      logger.info(`[KY3P Form Service] Groups found: ${Object.keys(groupedFields).join(', ')}`);
       
       // Create sections directly from the groups without any normalization or injecting empty KYB sections
       this.sections = Object.entries(groupedFields).map(([sectionName, sectionFields], index) => {
@@ -139,7 +139,7 @@ export class KY3PFormService extends EnhancedKybFormService {
             id: f.id, 
             key: f.field_key, 
             label: f.label, 
-            section: f.section
+            group: f.group
           }))
         );
       }
@@ -184,6 +184,7 @@ export class KY3PFormService extends EnhancedKybFormService {
             id: f.id, 
             key: f.key, 
             label: f.label, 
+            group: f.group,
             section: f.section,
             stepIndex: f.stepIndex
           }))
@@ -209,6 +210,30 @@ export class KY3PFormService extends EnhancedKybFormService {
       logger.error('[KY3P Form Service] Error loading fields:', error);
       throw error;
     }
+  }
+  
+  /**
+   * Group fields by their group property
+   */
+  private groupFieldsByGroup(fields: any[]): Record<string, any[]> {
+    const groups: Record<string, any[]> = {};
+    
+    for (const field of fields) {
+      const groupName = field.group || 'Ungrouped';
+      
+      if (!groups[groupName]) {
+        groups[groupName] = [];
+      }
+      
+      groups[groupName].push(field);
+    }
+    
+    // Sort fields within each group by ID to maintain consistent order
+    for (const groupName in groups) {
+      groups[groupName].sort((a, b) => a.id - b.id);
+    }
+    
+    return groups;
   }
   
   /**

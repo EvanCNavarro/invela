@@ -7,7 +7,7 @@
  */
 
 import { db } from './db';
-import { ky3p_fields } from './db/schema';
+import { ky3pFields } from './db/schema';
 import fs from 'fs';
 import { eq } from 'drizzle-orm';
 
@@ -92,7 +92,7 @@ async function updateFields() {
       // Update the field in the database
       console.log(`Updating field ${id}: ${fieldKey} (group: ${group})`);
       
-      await db.update(ky3p_fields)
+      await db.update(ky3pFields)
         .set({
           field_key: fieldKey,
           label,
@@ -106,7 +106,7 @@ async function updateFields() {
           validation_type: validationType,
           step_index: stepIndex
         })
-        .where(eq(ky3p_fields.id, id));
+        .where(eq(ky3pFields.id, id));
     }
     
     console.log('KY3P fields updated successfully!');
