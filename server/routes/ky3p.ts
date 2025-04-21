@@ -110,8 +110,8 @@ router.get('/api/tasks/:taskId/ky3p-responses', requireAuth, hasTaskAccess, asyn
           id: ky3pFields.id,
           field_key: ky3pFields.field_key,
           label: ky3pFields.label,
-          description: ky3pFields.description,
-          section: ky3pFields.section,
+          question: ky3pFields.question,
+          group: ky3pFields.group,
           field_type: ky3pFields.field_type,
           is_required: ky3pFields.is_required
         }
