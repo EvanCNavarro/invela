@@ -178,13 +178,13 @@ async function createCompanyInternal(
       duration: Date.now() - startTime
     });
 
-    // Create CARD compliance task (locked until Security Assessment is completed)
-    console.log('[Company Service] Creating CARD task for company:', newCompany.id);
+    // Create Open Banking Survey task (locked until Security Assessment is completed)
+    console.log('[Company Service] Creating Open Banking Survey task for company:', newCompany.id);
     const [cardTask] = await tx.insert(tasks)
       .values({
-        title: `3. 1033 Open Banking Survey: ${newCompany.name}`,
-        description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
-        task_type: 'company_card',
+        title: `3. Open Banking Survey: ${newCompany.name}`,
+        description: `Complete Open Banking Survey for ${newCompany.name}`,
+        task_type: 'open_banking',
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'high',
@@ -216,7 +216,7 @@ async function createCompanyInternal(
       })
       .returning();
 
-    console.log('[Company Service] Created CARD task:', {
+    console.log('[Company Service] Created Open Banking Survey task:', {
       taskId: cardTask.id,
       companyId: newCompany.id,
       duration: Date.now() - startTime
