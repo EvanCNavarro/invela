@@ -421,13 +421,73 @@ router.get('/api/ky3p/progress/:taskId', requireAuth, async (req, res) => {
  */
 router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAccess, async (req, res) => {
   try {
-    const taskId = parseInt(req.params.taskId);
-    const fieldId = parseInt(req.params.fieldId);
+    // Parse values with thorough validation and error handling
+    const taskIdRaw = req.params.taskId;
+    const fieldIdRaw = req.params.fieldId;
     const { response_value } = req.body;
+    
+    // Log the incoming request parameters
+    logger.debug(`[KY3P API] Processing single response:`, {
+      taskIdRaw,
+      fieldIdRaw,
+      responseValue: typeof response_value === 'object' 
+        ? JSON.stringify(response_value).substring(0, 100) 
+        : String(response_value).substring(0, 100),
+      responseValueType: typeof response_value
+    });
+    
+    // Ensure we have valid integer IDs
+    let taskId: number;
+    let fieldId: number;
+    
+    try {
+      taskId = parseInt(taskIdRaw);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ 
+          message: 'Invalid task ID format'
+        });
+      }
+    } catch (error) {
+      logger.error(`[KY3P API] Failed to parse taskId "${taskIdRaw}"`, error);
+      return res.status(400).json({ 
+        message: 'Invalid task ID format'
+      });
+    }
+    
+    try {
+      fieldId = parseInt(fieldIdRaw);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ 
+          message: 'Invalid field ID format'
+        });
+      }
+    } catch (error) {
+      logger.error(`[KY3P API] Failed to parse fieldId "${fieldIdRaw}"`, error);
+      return res.status(400).json({ 
+        message: 'Invalid field ID format'
+      });
+    }
+    
+    // For debugging field type mismatches
+    const [fieldDefinition] = await db
+      .select()
+      .from(ky3pFields)
+      .where(eq(ky3pFields.id, fieldId))
+      .limit(1);
+    
+    if (!fieldDefinition) {
+      logger.error(`[KY3P API] Field ID ${fieldId} not found in database`);
+      return res.status(404).json({
+        message: 'Field not found',
+        details: `No field with ID ${fieldId} exists in the database`
+      });
+    }
     
     // Determine the status of the response based on the value
     let status: keyof typeof KYBFieldStatus = 'EMPTY';
-    if (response_value) {
+    
+    // If we have a response value that's not empty or undefined
+    if (response_value !== null && response_value !== undefined && response_value !== '') {
       status = 'COMPLETE';
     } else {
       status = 'EMPTY';
@@ -946,7 +1006,25 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
  */
 router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess, async (req, res) => {
   try {
-    const taskId = parseInt(req.params.taskId);
+    // Parse taskId with validation
+    const taskIdRaw = req.params.taskId;
+    let taskId: number;
+    
+    try {
+      taskId = parseInt(taskIdRaw);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ 
+          message: 'Invalid task ID format'
+        });
+      }
+    } catch (error) {
+      logger.error(`[KY3P API] Failed to parse taskId "${taskIdRaw}"`, error);
+      return res.status(400).json({ 
+        message: 'Invalid task ID format'
+      });
+    }
+    
+    // Validate response object
     const { responses } = req.body;
     
     if (!responses || typeof responses !== 'object') {
@@ -976,16 +1054,25 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     
     // Process each response
     for (const [fieldKey, responseValue] of Object.entries(responses)) {
-      let fieldId;
-      let sanitizedValue;
-      let finalValue;
-      let status;
+      // We'll validate and process values for each field
+      let fieldId: number | undefined;
+      let sanitizedValue: any;
+      let finalValue: string;
+      let status: keyof typeof KYBFieldStatus;
       
       try {
-        fieldId = fieldKeyToIdMap.get(fieldKey);
+        // Get field ID from the map
+        const rawFieldId = fieldKeyToIdMap.get(fieldKey);
         
-        if (!fieldId) {
+        if (!rawFieldId) {
           logger.warn(`[KY3P API] Field key not found: ${fieldKey}`);
+          continue;
+        }
+        
+        // Validate that field ID is a proper number
+        fieldId = Number(rawFieldId);
+        if (isNaN(fieldId)) {
+          logger.error(`[KY3P API] Invalid field ID for key ${fieldKey}: ${rawFieldId}`);
           continue;
         }
         
@@ -1031,6 +1118,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
           originalType: typeof responseValue,
           convertedType: typeof sanitizedValue,
           fieldType,
+          fieldId,
           finalValue: finalValue.substring(0, 50) + (finalValue.length > 50 ? '...' : ''),
           status
         });
