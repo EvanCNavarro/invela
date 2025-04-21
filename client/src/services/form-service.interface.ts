@@ -59,6 +59,15 @@ export interface FormServiceInterface {
   updateFormData(fieldKey: string, value: any, taskId?: number): void;
   
   /**
+   * Bulk update multiple field values at once
+   * Used primarily for demo auto-fill functionality
+   * @param data Record of field keys and values to update
+   * @param taskId Optional task ID for immediate persistence
+   * @returns Promise resolving to a boolean indicating success
+   */
+  bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean>;
+  
+  /**
    * Get current form data
    */
   getFormData(): FormData;

@@ -601,6 +601,141 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 });
 
 // Save progress for KYB form
+/**
+ * Bulk update endpoint for KYB form fields
+ * This endpoint handles bulk updating of multiple fields at once,
+ * primarily used for demo auto-fill functionality
+ */
+router.post('/api/kyb/bulk-update/:taskId', requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { responses } = req.body;
+    
+    logger.info(`Bulk updating KYB form fields for task ${taskId}`, {
+      fieldCount: Object.keys(responses).length
+    });
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Task ID is required' 
+      });
+    }
+    
+    if (!responses || typeof responses !== 'object') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Responses object is required' 
+      });
+    }
+    
+    // Get the task to make sure it exists
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+      
+    if (!task) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Task not found' 
+      });
+    }
+    
+    // Get the user ID either from the authenticated user or the task creator
+    const userId = req.user?.id || task.created_by;
+    
+    // Process each field in the responses object
+    const updatePromises = Object.entries(responses).map(async ([fieldKey, value]) => {
+      // Get the field definition to make sure it exists
+      const [field] = await db.select()
+        .from(kybFields)
+        .where(eq(kybFields.field_key, fieldKey));
+        
+      if (!field) {
+        logger.warn(`Field ${fieldKey} not found in KYB fields`);
+        return null;
+      }
+      
+      // Check if response already exists
+      const [existingResponse] = await db.select()
+        .from(kybResponses)
+        .where(and(
+          eq(kybResponses.task_id, parseInt(taskId)),
+          eq(kybResponses.field_id, field.id)
+        ));
+        
+      if (existingResponse) {
+        // Update existing response
+        return db.update(kybResponses)
+          .set({
+            response_value: String(value),
+            updated_at: new Date(),
+            updated_by: userId,
+            version: sql`${kybResponses.version} + 1`
+          })
+          .where(eq(kybResponses.id, existingResponse.id));
+      } else {
+        // Create new response
+        return db.insert(kybResponses)
+          .values({
+            task_id: parseInt(taskId),
+            field_id: field.id,
+            field_key: fieldKey,
+            response_value: String(value),
+            created_by: userId,
+            updated_by: userId,
+            version: 1
+          });
+      }
+    });
+    
+    // Execute all updates in parallel
+    await Promise.all(updatePromises);
+    
+    // Update task progress based on the number of filled fields
+    const [responsesCount] = await db.select({ count: sql`count(*)` })
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
+      
+    const [fieldsCount] = await db.select({ count: sql`count(*)` })
+      .from(kybFields);
+      
+    const progress = Math.min(
+      Math.round((responsesCount.count / fieldsCount.count) * 100),
+      99 // Cap at 99% - final submission sets to 100%
+    );
+    
+    // Update task progress
+    await db.update(tasks)
+      .set({
+        progress,
+        status: progress > 0 ? TaskStatus.IN_PROGRESS : TaskStatus.NOT_STARTED,
+        updated_at: new Date()
+      })
+      .where(eq(tasks.id, parseInt(taskId)));
+      
+    // Broadcast task update via WebSocket
+    broadcastTaskUpdate({
+      id: parseInt(taskId),
+      progress,
+      status: progress > 0 ? TaskStatus.IN_PROGRESS : TaskStatus.NOT_STARTED
+    });
+    
+    return res.status(200).json({
+      success: true,
+      message: `Updated ${Object.keys(responses).length} fields`,
+      progress
+    });
+    
+  } catch (error) {
+    logger.error('Error in bulk update endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error processing bulk update'
+    });
+  }
+});
+
 router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, formData, fieldUpdates, status } = req.body;
