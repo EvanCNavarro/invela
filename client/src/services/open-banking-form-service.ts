@@ -426,11 +426,19 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     }
   }
   
+  // Simple in-memory cache for progress data to improve load times
+  private static progressCache: Map<number, {
+    formData: Record<string, any>;
+    progress: number;
+    status: string;
+    timestamp: number;
+  }> = new Map();
+  
   /**
    * Get progress data for the task in the format expected by UniversalForm
    * This method uses our dedicated progress endpoint for Open Banking tasks
    * 
-   * Enhanced with retry logic and better error handling to prevent infinite loading
+   * Enhanced with retry logic, caching, and better error handling to prevent infinite loading
    */
   public async getProgress(taskId?: number): Promise<{
     formData: Record<string, any>;
@@ -449,6 +457,23 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       };
     }
     
+    // Check cache first to speed up loading
+    const cachedData = OpenBankingFormService.progressCache.get(effectiveTaskId);
+    const now = Date.now();
+    // Use cache if it exists and is less than 10 seconds old - prevents slow reloading issue
+    if (cachedData && (now - cachedData.timestamp) < 10000) {
+      logger.info(`[OpenBankingFormService] Using cached progress data for task ${effectiveTaskId}`, {
+        age: `${(now - cachedData.timestamp)}ms`,
+        progress: cachedData.progress,
+        formDataKeys: Object.keys(cachedData.formData).length
+      });
+      return {
+        formData: cachedData.formData,
+        progress: cachedData.progress,
+        status: cachedData.status
+      };
+    }
+    
     try {
       logger.info(`[OpenBankingFormService] Getting progress for task ${effectiveTaskId}`);
       
@@ -456,44 +481,80 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       let retries = 0;
       const maxRetries = 3;
       let response = null;
+      let startTime = Date.now();
       
-      while (retries < maxRetries) {
-        try {
-          response = await fetch(`/api/open-banking/progress/${effectiveTaskId}`, {
-            credentials: 'include', // Include session cookies
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
+      // Set a timeout for the entire operation to prevent being stuck too long
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Progress fetch timeout exceeded'));
+        }, 8000); // 8 second overall timeout
+      });
+      
+      // Create the fetch promise with retries
+      const fetchWithRetries = async (): Promise<Response> => {
+        while (retries < maxRetries) {
+          try {
+            const fetchResponse = await fetch(`/api/open-banking/progress/${effectiveTaskId}`, {
+              credentials: 'include', // Include session cookies
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+              }
+            });
+            
+            // If successful, return the response
+            if (fetchResponse && fetchResponse.ok) return fetchResponse;
+            
+            // If we get here, the response was not ok
+            logger.warn(`[OpenBankingFormService] Progress fetch attempt ${retries + 1} failed with status ${fetchResponse?.status}`);
+            
+            // Only retry on certain error codes (5xx server errors, 429 throttling)
+            if (!fetchResponse || (fetchResponse.status >= 500 || fetchResponse.status === 429)) {
+              retries++;
+              // Exponential backoff with jitter
+              const delay = Math.min(500 * Math.pow(2, retries) + Math.random() * 100, 3000);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              // For other error codes like 404, 403, etc. don't retry
+              return fetchResponse;
             }
-          });
-          
-          // If successful, break out of retry loop
-          if (response && response.ok) break;
-          
-          // If we get here, the response was not ok
-          logger.warn(`[OpenBankingFormService] Progress fetch attempt ${retries + 1} failed with status ${response?.status}`);
-          
-          // Only retry on certain error codes (5xx server errors, 429 throttling)
-          if (!response || (response.status >= 500 || response.status === 429)) {
+          } catch (fetchError) {
+            logger.warn(`[OpenBankingFormService] Network error on attempt ${retries + 1}:`, fetchError);
             retries++;
-            // Exponential backoff with jitter
-            const delay = Math.min(500 * Math.pow(2, retries) + Math.random() * 100, 3000);
-            await new Promise(resolve => setTimeout(resolve, delay));
-          } else {
-            // For other error codes like 404, 403, etc. don't retry
-            break;
+            // Linear backoff for network errors
+            await new Promise(resolve => setTimeout(resolve, 500 * retries));
           }
-        } catch (fetchError) {
-          logger.warn(`[OpenBankingFormService] Network error on attempt ${retries + 1}:`, fetchError);
-          retries++;
-          // Linear backoff for network errors
-          await new Promise(resolve => setTimeout(resolve, 500 * retries));
         }
+        throw new Error(`Failed after ${maxRetries} retries`);
+      };
+      
+      try {
+        // Race between the fetch with retries and the timeout
+        response = await Promise.race([fetchWithRetries(), timeoutPromise]);
+      } catch (timeoutError) {
+        logger.warn(`[OpenBankingFormService] Request timed out after ${Date.now() - startTime}ms:`, timeoutError);
+        
+        // If we have a cached version, use it as fallback
+        if (cachedData) {
+          logger.info(`[OpenBankingFormService] Using cached data as fallback after timeout for task ${effectiveTaskId}`);
+          return {
+            formData: cachedData.formData,
+            progress: cachedData.progress,
+            status: cachedData.status
+          };
+        }
+        
+        // If we don't have a cached version, return default data
+        return {
+          formData: {},
+          progress: 0,
+          status: 'not_started'
+        };
       }
       
-      if (!response.ok) {
+      if (!response || !response.ok) {
         // If endpoint not found (404), return empty data instead of throwing
-        if (response.status === 404) {
+        if (response && response.status === 404) {
           logger.warn(`[OpenBankingFormService] Progress endpoint not found for task ${effectiveTaskId}, returning default values`);
           return {
             formData: {},
@@ -502,29 +563,91 @@ export class OpenBankingFormService extends EnhancedKybFormService {
           };
         }
         
-        const errorText = await response.text();
-        logger.error(`[OpenBankingFormService] Failed to get progress: ${response.status}`, errorText);
-        throw new Error(`Failed to get progress: ${response.status} - ${errorText}`);
+        // If we reach here, there was an error response
+        try {
+          const errorText = response ? await response.text() : 'No response';
+          logger.error(`[OpenBankingFormService] Failed to get progress: ${response?.status}`, errorText);
+          
+          // If we have a cached version, use it as fallback
+          if (cachedData) {
+            logger.info(`[OpenBankingFormService] Using cached data as fallback after error for task ${effectiveTaskId}`);
+            return {
+              formData: cachedData.formData,
+              progress: cachedData.progress,
+              status: cachedData.status
+            };
+          }
+        } catch (textError) {
+          logger.error('[OpenBankingFormService] Error reading error response text', textError);
+        }
+        
+        // Default return value for error case with no cache
+        return {
+          formData: {},
+          progress: 0,
+          status: 'not_started'
+        };
       }
       
-      const data = await response.json();
-      
-      logger.info(`[OpenBankingFormService] Progress loaded successfully:`, {
-        taskId: effectiveTaskId,
-        progress: data.progress,
-        status: data.status,
-        formDataKeys: Object.keys(data.formData || {}).length
-      });
-      
-      // If no form data, use an empty object as fallback
-      return {
-        formData: data.formData || {},
-        progress: data.progress || 0,
-        status: data.status || 'not_started'
-      };
+      // Process successful response
+      try {
+        const data = await response.json();
+        
+        // Create the result with fallbacks for missing data
+        const result = {
+          formData: data.formData || {},
+          progress: typeof data.progress === 'number' ? data.progress : 0,
+          status: data.status || 'not_started'
+        };
+        
+        // Store in cache for future fast loading
+        OpenBankingFormService.progressCache.set(effectiveTaskId, {
+          ...result,
+          timestamp: Date.now()
+        });
+        
+        // Log the success info
+        logger.info(`[OpenBankingFormService] Progress loaded successfully:`, {
+          taskId: effectiveTaskId,
+          progress: result.progress,
+          status: result.status,
+          formDataKeys: Object.keys(result.formData).length
+        });
+        
+        return result;
+      } catch (parseError) {
+        logger.error('[OpenBankingFormService] Error parsing progress response JSON:', parseError);
+        
+        // Use cache as fallback if JSON parsing fails
+        if (cachedData) {
+          return {
+            formData: cachedData.formData,
+            progress: cachedData.progress,
+            status: cachedData.status
+          };
+        }
+        
+        // Default return if no cache and parsing failed
+        return {
+          formData: {},
+          progress: 0, 
+          status: 'not_started'
+        };
+      }
     } catch (error) {
       logger.error('[OpenBankingFormService] Error getting progress:', error);
-      // Instead of propagating the error, return default values
+      
+      // Use cache as fallback for any other errors
+      if (cachedData) {
+        logger.info(`[OpenBankingFormService] Using cached data as fallback after error for task ${effectiveTaskId}`);
+        return {
+          formData: cachedData.formData,
+          progress: cachedData.progress,
+          status: cachedData.status
+        };
+      }
+      
+      // Default return value for any errors with no cache
       return {
         formData: {},
         progress: 0,
@@ -654,6 +777,18 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // Update local form data with any server-side changes
       if (result.savedData && result.savedData.formData) {
         this.loadFormData(result.savedData.formData);
+        
+        // Also update the cache to maintain consistency
+        const updatedProgress = result.savedData.progress;
+        const updatedStatus = result.savedData.status;
+        
+        // Update our cache for next time to prevent progress mismatches
+        OpenBankingFormService.progressCache.set(effectiveTaskId, {
+          formData: result.savedData.formData,
+          progress: updatedProgress,
+          status: updatedStatus,
+          timestamp: Date.now()
+        });
       }
       
       logger.info(`[OpenBankingFormService] Form data saved successfully for task ${effectiveTaskId}`, {
@@ -744,14 +879,26 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       const wasSavingEnabled = this.autoSaveEnabled;
       this.autoSaveEnabled = false;
       
-      // Use the standardized form clearing endpoint - consistent with KYB/KY3P
-      const response = await fetch(`/api/open-banking/clear/${effectiveTaskId}`, {
+      // First try the fast clear endpoint that matches KYB/KY3P
+      let response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/clear-all`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         }
       });
+      
+      // If fast clear fails, fall back to the standard clear endpoint
+      if (!response.ok) {
+        logger.warn(`[OpenBankingFormService] Fast clear failed, trying standard clear endpoint: ${response.status}`);
+        response = await fetch(`/api/open-banking/clear/${effectiveTaskId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+      }
       
       if (!response.ok) {
         logger.error(`[OpenBankingFormService] Failed to clear fields: ${response.status}`);
