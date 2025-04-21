@@ -1821,18 +1821,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             console.warn("[SUBMIT FLOW] Failed to dismiss toast:", e);
           }
           
-          // Show toast notification only for OpenBanking (since we won't show a modal)
+          // Show toast notification only for non-OpenBanking tasks
           console.log(`[SUBMIT FLOW] 12. Success notification handling`);
-          if (taskType === 'open_banking') {
-            // Skip toast for OpenBanking as it will have its own success modal
-            console.log(`[SUBMIT FLOW] Skipping success toast for OpenBanking - will show modal instead`);
-          } else {
-            // Show toast for other task types
-            toast({
-              title: "Form Submitted",
-              description: "Your form was submitted successfully.",
-              variant: "success",
-            });
+          try {
+            if (taskType === 'open_banking') {
+              // Skip toast for OpenBanking as it will have its own success modal
+              console.log(`[SUBMIT FLOW] Skipping success toast for OpenBanking - will show modal instead`);
+            } else {
+              // Show toast for other task types
+              console.log(`[SUBMIT FLOW] Showing success toast for ${taskType} task`);
+              if (typeof toast === 'function') {
+                toast({
+                  title: "Form Submitted",
+                  description: "Your form was submitted successfully.",
+                  variant: "success",
+                });
+              } else {
+                console.warn(`[SUBMIT FLOW] Toast function not available at submission time`);
+              }
+            }
+          } catch (toastError) {
+            console.error(`[SUBMIT FLOW] ERROR showing toast:`, toastError);
+            // Continue even if toast fails
           }
           
           // Show success modal (centralized in one place)

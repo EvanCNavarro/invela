@@ -975,29 +975,44 @@ export default function TaskPage({ params }: TaskPageProps) {
                   }}
                   onSuccess={() => {
                     try {
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
+                      console.log(`[OPENBANKING SUBMIT] 1. onSuccess handler triggered`);
                       
-                      // Only try to fire confetti if we're in a browser environment
-                      // and wrap in try/catch to prevent blank screen issues
-                      try {
-                        if (typeof window !== 'undefined' && document.body) {
-                          console.log('[TaskPage] Firing enhanced confetti for OpenBanking success');
-                          fireEnhancedConfetti();
-                        }
-                      } catch (confettiError) {
-                        console.warn('[TaskPage] Error firing confetti:', confettiError);
-                      }
+                      // Set form as submitted
+                      setIsSubmitted(true);
+                      console.log(`[OPENBANKING SUBMIT] 2. Form marked as submitted`);
+                      
+                      // Show success modal
+                      setShowSuccessModal(true);
+                      console.log(`[OPENBANKING SUBMIT] 3. Success modal triggered with company name: ${displayName}`);
+                      
+                      // CONFETTI DISABLED per user request
+                      console.log(`[OPENBANKING SUBMIT] 4. Confetti animation disabled as requested`);
+                      
+                      console.log(`[OPENBANKING SUBMIT] 5. Fetching updated task data for ID ${task.id}`);
                       
                       fetch(`/api/tasks/${task.id}`)
-                        .then(response => response.json())
+                        .then(response => {
+                          console.log(`[OPENBANKING SUBMIT] 6. Response received with status: ${response.status}`);
+                          return response.json();
+                        })
                         .then(data => {
+                          console.log(`[OPENBANKING SUBMIT] 7. Task data received:`, {
+                            fileId: data.metadata?.openBankingFormFile,
+                            status: data.status,
+                            progress: data.progress
+                          });
+                          
                           if (data.metadata?.openBankingFormFile) {
+                            console.log(`[OPENBANKING SUBMIT] 8. File ID found: ${data.metadata.openBankingFormFile}`);
                             setFileId(data.metadata.openBankingFormFile);
+                          } else {
+                            console.log(`[OPENBANKING SUBMIT] 8. No fileId found in metadata`);
                           }
+                          
+                          console.log(`[OPENBANKING SUBMIT] 9. Form submission sequence completed successfully`);
                         })
                         .catch(err => {
-                          console.error('[TaskPage] Error fetching updated task:', err);
+                          console.error('[OPENBANKING SUBMIT] ERROR: Error fetching updated task:', err);
                         });
                     } catch (error) {
                       console.error('[TaskPage] Error in OpenBanking onSuccess handler:', error);
