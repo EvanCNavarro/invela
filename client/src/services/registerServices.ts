@@ -61,6 +61,14 @@ export function registerServices(): void {
     // Also register KY3P form service for the client-side type name (ky3p)
     console.log('[Service Registration] Registering KY3P form service for client type: ky3p');
     componentFactory.registerFormService('ky3p', ky3pFormService);
+    
+    // Make sure to register for legacy task types to maintain backward compatibility
+    console.log('[Service Registration] Registering KY3P form service for legacy type: security');
+    componentFactory.registerFormService('security', ky3pFormService);
+    
+    console.log('[Service Registration] Registering KY3P form service for legacy type: security_assessment');
+    componentFactory.registerFormService('security_assessment', ky3pFormService);
+    
     console.log('[Service Registration] KY3PFormServiceFactory initialized and ready for isolated service creation');
     
     // Register Open Banking form service
