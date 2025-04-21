@@ -10,7 +10,12 @@ import { db } from './db';
 import { openBankingFields } from './db/schema';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { Logger } from './server/utils/logger';
+
+// ESM replacement for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create a logger instance
 const logger = new Logger('OpenBankingImport');
@@ -60,6 +65,12 @@ async function importOpenBankingFields() {
     
     // Read the CSV file
     const csvPath = path.join(__dirname, 'attached_assets', '1033_Open_Banking_Survey_Field_Additions_Normalized.csv');
+    
+    if (!fs.existsSync(csvPath)) {
+      logger.error(`[OpenBankingImport] CSV file not found at: ${csvPath}`);
+      throw new Error(`CSV file not found at: ${csvPath}`);
+    }
+    
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
     
     // Parse the CSV
@@ -83,8 +94,14 @@ async function importOpenBankingFields() {
     const stepIndexIndex = headers.findIndex(h => h.includes('step_index'));
     
     // Before inserting, check if the table is empty or not
-    const existingCount = await db.select({ count: db.fn.count() }).from(openBankingFields);
-    const hasExistingData = existingCount[0].count > 0;
+    try {
+        const existingCount = await db.select({ count: db.fn.count() }).from(openBankingFields);
+        console.log('Existing count query result:', existingCount);
+        const hasExistingData = existingCount && existingCount[0] && parseInt(existingCount[0].count as any) > 0;
+    } catch (error) {
+        console.error('Error checking existing data:', error);
+        // If there's an error, assume no existing data
+        const hasExistingData = false;
     
     if (hasExistingData) {
       logger.info('[OpenBankingImport] Found existing data in openBankingFields table');
@@ -129,6 +146,7 @@ async function importOpenBankingFields() {
     logger.info(`[OpenBankingImport] Successfully imported ${insertedCount} out of ${rows.length} fields`);
   } catch (error) {
     logger.error('[OpenBankingImport] Error importing Open Banking fields', { error });
+    console.error('Detailed error:', error);
     throw error;
   }
 }
