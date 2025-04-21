@@ -225,7 +225,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       type = 'kyb';
     } else if (taskData.task_type === 'company_card') {
       type = 'card';
-    } else if (taskData.task_type === 'security_assessment') {
+    } else if (taskData.task_type === 'security_assessment' || taskData.task_type === 'sp_ky3p_assessment' || taskData.task_type === 'ky3p') {
       type = 'security';
     } else if (taskData.task_type === 'open_banking_survey' || taskData.task_type === 'open_banking') {
       type = 'open_banking';
