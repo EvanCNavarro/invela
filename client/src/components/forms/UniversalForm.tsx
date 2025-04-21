@@ -2223,30 +2223,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           </div>
           
           {isSubmitted ? (
-            <div className="self-start">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleDownload('json')}>
-                    <FileJson className="mr-2 h-4 w-4" />
-                    Download as JSON
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Download as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download as TXT
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            // Removed duplicate download button as it already exists in the page header
+            <div></div>
           ) : isCompanyDemo && (
             <div className="flex flex-wrap gap-4">
               <Button 
