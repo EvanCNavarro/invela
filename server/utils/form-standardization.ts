@@ -16,6 +16,84 @@ import { Logger } from '../utils/logger';
 
 const logger = new Logger('FormStandardization');
 
+/**
+ * Utility for safe type conversion of form values
+ * This helps prevent PostgreSQL type conversion errors (22P02) when storing responses
+ * 
+ * @param value The value to convert
+ * @param targetType The target data type
+ * @param fieldInfo Optional field information for better error logging
+ * @returns The converted value or a safe default if conversion fails
+ */
+export function safeTypeConversion(value: any, targetType: string, fieldInfo?: {
+  fieldKey?: string;
+  fieldName?: string;
+  formType?: string;
+}): any {
+  try {
+    if (value === null || value === undefined) {
+      // Return type-appropriate defaults for null/undefined values
+      switch (targetType.toUpperCase()) {
+        case 'NUMBER':
+        case 'INTEGER':
+          return 0;
+        case 'BOOLEAN':
+          return false;
+        case 'TEXT':
+        case 'STRING':
+        case 'TEXTAREA':
+        default:
+          return '';
+      }
+    }
+    
+    // Convert based on target type
+    switch (targetType.toUpperCase()) {
+      case 'NUMBER':
+      case 'INTEGER':
+        // For numeric fields, ensure we have a valid number
+        const numValue = Number(value);
+        if (isNaN(numValue)) {
+          logger.warn(`Type conversion failed: "${value}" is not a valid number`, fieldInfo);
+          return 0; // Safe default
+        }
+        return numValue;
+        
+      case 'BOOLEAN':
+        // Convert various boolean representations
+        if (typeof value === 'string') {
+          return value.toLowerCase() === 'true' || value === '1';
+        }
+        return Boolean(value);
+        
+      case 'TEXT':
+      case 'STRING':
+      case 'TEXTAREA':
+      default:
+        // Ensure we always return a string for text fields
+        return String(value);
+    }
+  } catch (error) {
+    logger.error(`Error in type conversion for ${fieldInfo?.fieldKey || 'unknown field'}:`, {
+      error,
+      value,
+      targetType,
+      fieldInfo
+    });
+    
+    // Return safe defaults on error
+    switch (targetType.toUpperCase()) {
+      case 'NUMBER':
+      case 'INTEGER':
+        return 0;
+      case 'BOOLEAN':
+        return false;
+      default:
+        return '';
+    }
+  }
+}
+
 // Enum for task status values to ensure consistency
 export enum TaskStatus {
   PENDING = 'pending',

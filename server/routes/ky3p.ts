@@ -966,6 +966,9 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     // Store all response updates to process
     const responseUpdates = [];
     
+    // Import the safe type conversion utility
+    const { safeTypeConversion } = await import('../utils/form-standardization');
+    
     // Process each response
     for (const [fieldKey, responseValue] of Object.entries(responses)) {
       const fieldId = fieldKeyToIdMap.get(fieldKey);
@@ -975,14 +978,24 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         continue;
       }
       
-      // Never store null/undefined responses, use empty string instead
-      const sanitizedValue = responseValue !== null && responseValue !== undefined 
-        ? responseValue.toString() 
-        : '';
+      // Find the field definition to get its type
+      const fieldDefinition = fields.find(field => field.field_key === fieldKey);
+      const fieldType = fieldDefinition?.field_type || 'TEXT';
+      
+      // Use the safe type conversion utility to handle any type issues
+      // This prevents PostgreSQL type conversion errors (22P02)
+      const sanitizedValue = safeTypeConversion(responseValue, fieldType, {
+        fieldKey,
+        fieldName: fieldDefinition?.display_name,
+        formType: 'ky3p'
+      });
+      
+      // Always store as string in database for consistency - this prevents type errors
+      const finalValue = String(sanitizedValue);
       
       // Determine status - the field is complete if it has any value (even empty string)
       // This ensures the field appears in the CSV even if the answer is intentionally blank
-      const status = (responseValue !== null && responseValue !== undefined) ? 'COMPLETE' : 'EMPTY';
+      const status = (sanitizedValue !== null && sanitizedValue !== undefined && sanitizedValue !== '') ? 'COMPLETE' : 'EMPTY';
       
       // Check if response exists
       const [existingResponse] = await db
@@ -1001,7 +1014,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         responseUpdates.push(
           db.update(ky3pResponses)
             .set({
-              response_value: sanitizedValue,
+              response_value: finalValue,
               status,
               version: existingResponse.version + 1,
               updated_at: new Date()
@@ -1015,7 +1028,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
             .values({
               task_id: taskId,
               field_id: fieldId,
-              response_value: sanitizedValue,
+              response_value: finalValue,
               status,
               version: 1,
               created_at: new Date(),
@@ -1248,51 +1261,63 @@ router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
     const rawFields = fields.slice(0, 5);
     console.log('[KY3P Demo Auto-Fill] Raw field objects:', rawFields);
     
+    // Import the safe type conversion utility
+    const { safeTypeConversion } = await import('../utils/form-standardization');
+    
     for (const field of fields) {
       const fieldKey = field.field_key;
+      let rawValue: any = null;
       
       // Use the demo_autofill value directly from the database
       if (field.demo_autofill !== null && field.demo_autofill !== undefined) {
         // For fields that might contain company name references
         if (typeof field.demo_autofill === 'string' && field.demo_autofill.includes('{{COMPANY_NAME}}')) {
-          demoData[fieldKey] = field.demo_autofill.replace('{{COMPANY_NAME}}', company.name);
-          console.log(`[KY3P Demo Auto-Fill] Replaced template in ${fieldKey}: ${demoData[fieldKey]}`);
+          rawValue = field.demo_autofill.replace('{{COMPANY_NAME}}', company.name);
+          logger.info(`[KY3P Demo Auto-Fill] Replaced template in ${fieldKey}: ${rawValue}`);
         } else {
           // Use the predefined value from the database
-          demoData[fieldKey] = field.demo_autofill;
-          console.log(`[KY3P Demo Auto-Fill] Used database value for ${fieldKey}: ${demoData[fieldKey]}`);
+          rawValue = field.demo_autofill;
+          logger.info(`[KY3P Demo Auto-Fill] Used database value for ${fieldKey}: ${rawValue}`);
         }
       } 
       // Fallback for any fields without defined demo values
       else {
         // Generate a basic fallback value based on field type
-        console.log(`[KY3P Demo Auto-Fill] No demo_autofill value found for ${fieldKey}`);
+        logger.info(`[KY3P Demo Auto-Fill] No demo_autofill value found for ${fieldKey}`);
         
         switch (field.field_type?.toUpperCase()) {
           case 'TEXTAREA':
-            demoData[fieldKey] = `This is a sample response for ${field.display_name || fieldKey}.`;
+            rawValue = `This is a sample response for ${field.display_name || fieldKey}.`;
             break;
           case 'EMAIL':
-            demoData[fieldKey] = userEmail || 'demo@example.com';
+            rawValue = userEmail || 'demo@example.com';
             break;
           case 'NUMBER':
-            demoData[fieldKey] = '123';
+            rawValue = '123';
             break;
           case 'DATE':
-            demoData[fieldKey] = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            rawValue = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
             break;
           case 'CHECKBOX':
           case 'BOOLEAN':
-            demoData[fieldKey] = true;
+            rawValue = true;
             break;
           case 'SELECT':
           case 'DROPDOWN':
           case 'TEXT':
           default:
-            demoData[fieldKey] = `Demo value for ${field.display_name || fieldKey}`;
+            rawValue = `Demo value for ${field.display_name || fieldKey}`;
             break;
         }
       }
+      
+      // Use safe type conversion to ensure value matches field type
+      // This prevents PostgreSQL type conversion errors (22P02)
+      demoData[fieldKey] = safeTypeConversion(rawValue, field.field_type || 'TEXT', {
+        fieldKey,
+        fieldName: field.display_name,
+        formType: 'ky3p'
+      });
     }
     
     logger.info('KY3P Demo auto-fill data generated', {

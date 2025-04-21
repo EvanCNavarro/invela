@@ -781,6 +781,16 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       
       logger.info('[OpenBankingRoutes] Saving field response', { taskId, fieldId });
       
+      // Import the safe type conversion utility
+      const { safeTypeConversion } = await import('../utils/form-standardization');
+      
+      // Get field definition to determine its type
+      const [fieldDefinition] = await db
+        .select()
+        .from(openBankingFields)
+        .where(eq(openBankingFields.id, fieldId))
+        .limit(1);
+        
       // Check if a response already exists for this task and field
       const existingResponse = await db.select().from(openBankingResponses)
         .where(and(
@@ -789,9 +799,18 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         ))
         .limit(1);
       
-      let result;
-      const responseValue = response.trim();
+      // Use safe type conversion to handle type issues
+      const convertedValue = safeTypeConversion(response, fieldDefinition?.field_type || 'TEXT', {
+        fieldKey: fieldDefinition?.field_key,
+        fieldName: fieldDefinition?.display_name,
+        formType: 'open_banking'
+      });
+      
+      // Always store as string in database for consistency
+      const responseValue = String(convertedValue).trim();
       const status = responseValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
+      
+      let result;
       
       if (existingResponse.length > 0) {
         // Update existing response
@@ -1055,6 +1074,9 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       // List of problematic fields to skip
       const fieldsToSkip = ['taskId', 'agreement_confirmation'];
       
+      // Import the safe type conversion utility
+      const { safeTypeConversion } = await import('../utils/form-standardization');
+
       try {
         // Performance Optimization: Process all responses in a single transaction
         await db.transaction(async (tx) => {
@@ -1089,7 +1111,21 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
             }
             
             const fieldId = fieldKeyToIdMap.get(fieldKey)!;
-            const processedValue = responseValue?.toString().trim() || '';
+            
+            // Find field definition to get correct field type
+            const fieldDefinition = fields.find(field => field.id === fieldId);
+            const fieldType = fieldDefinition?.field_type || 'TEXT';
+            
+            // Use safe type conversion to ensure value matches field type
+            // This prevents PostgreSQL type conversion errors (22P02)
+            const convertedValue = safeTypeConversion(responseValue, fieldType, {
+              fieldKey,
+              fieldName: fieldDefinition?.display_name,
+              formType: 'open_banking'
+            });
+            
+            // Always store as string in the database for consistency
+            const processedValue = String(convertedValue).trim();
             const status = processedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
             
             // Check if this response already exists
@@ -1180,8 +1216,20 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
               ))
               .limit(1);
             
-            // Convert response value to string and trim
-            const processedValue = responseValue?.toString().trim() || '';
+            // Find field definition to get correct field type
+            const fieldDefinition = fields.find(field => field.id === fieldId);
+            const fieldType = fieldDefinition?.field_type || 'TEXT';
+            
+            // Use safe type conversion to ensure value matches field type
+            // This prevents PostgreSQL type conversion errors (22P02)
+            const convertedValue = safeTypeConversion(responseValue, fieldType, {
+              fieldKey,
+              fieldName: fieldDefinition?.display_name,
+              formType: 'open_banking'
+            });
+            
+            // Always store as string in the database for consistency
+            const processedValue = String(convertedValue).trim();
             const status = processedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
             
             if (existingResponse.length > 0) {
