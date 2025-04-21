@@ -17,6 +17,7 @@ import { OpenBankingSuccessModal } from "@/components/openbanking/OpenBankingSuc
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
+import { OpenBankingFormService } from "@/services/open-banking-form-service";
 
 interface TaskPageProps {
   params: {
@@ -1012,9 +1013,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     console.log(`[OPENBANKING SUBMIT] Starting submission for task ${task.id}`);
                     
                     try {
-                      // Import the form service to handle submission
-                      const { OpenBankingFormService } = await import('@/services/open-banking-form-service');
-                      
                       // Create service instance with task ID
                       const formService = new OpenBankingFormService(undefined, task.id);
                       
