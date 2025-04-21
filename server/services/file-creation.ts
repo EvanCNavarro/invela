@@ -28,7 +28,9 @@ export interface FileCreationResult {
 
 export class FileCreationService {
   /**
-   * Generate a standardized filename with format: TaskType_TaskID_QuestionNumber_CompanyName_Date_Time_Version
+   * Generate a standardized filename with format based on task type
+   * KYB format: kyb_form_[taskId]_[date]T[time].[extension]
+   * KY3P format: spglobal_ky3p_security_assessment_[companyName]_[date]T[time].[extension]
    */
   static generateStandardFileName(
     taskType: string, 
@@ -39,25 +41,36 @@ export class FileCreationService {
     questionNumber?: number
   ): string {
     const now = new Date();
-    const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
-    const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+    const formattedDateTime = now.toISOString().split('.')[0]; // YYYY-MM-DDThh:mm:ss
     
     // Clean company name (remove spaces, special characters)
-    const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
-    
-    // Include question number if provided
-    const questionPart = questionNumber ? `_Q${questionNumber}` : '';
+    const cleanCompanyName = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
     
     // Special handling for KY3P files
     if (taskType.toLowerCase() === 'ky3p' || 
         taskType.toLowerCase().includes('sp_ky3p') || 
-        (taskType.toLowerCase() === 'form' && extension === 'csv')) {
+        (taskType.toLowerCase() === 'form' && extension === 'csv' && companyName.toLowerCase().includes('security'))) {
       
-      return `spglobal_ky3p_security_assessment_${cleanCompanyName}_${formattedDate}_${formattedTime}.${extension}`;
+      return `spglobal_ky3p_security_assessment_${cleanCompanyName}_${formattedDateTime}.${extension}`;
     }
     
-    // Standard format for all other files
-    return `${taskType}_${taskId}${questionPart}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v${version}.${extension}`;
+    // KYB format
+    if (taskType.toLowerCase() === 'kyb' || taskType.toLowerCase().includes('kyb_form')) {
+      return `kyb_form_${taskId}_${formattedDateTime}.${extension}`;
+    }
+    
+    // Open Banking format
+    if (taskType.toLowerCase() === 'open_banking') {
+      return `open_banking_survey_${cleanCompanyName}_${formattedDateTime}.${extension}`;
+    }
+    
+    // Card format for backward compatibility
+    if (taskType.toLowerCase() === 'card') {
+      return `card_assessment_${cleanCompanyName}_${formattedDateTime}.${extension}`;
+    }
+    
+    // Default format as fallback
+    return `${taskType.toLowerCase()}_${taskId}_${formattedDateTime}.${extension}`;
   }
   
   /**

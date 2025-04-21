@@ -38,10 +38,15 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
       // Wait for the download to complete
       await onDownload(format);
       
-      // Show success toast
+      // Show success toast with task type specific message
+      const taskTypeDisplay = taskType === 'kyb' ? 'KYB Form' :
+                             taskType === 'ky3p' ? 'S&P KY3P Security Assessment' :
+                             taskType === 'open_banking' ? 'Open Banking Survey' :
+                             taskType === 'card' ? 'CARD Assessment' : 'Form';
+                             
       toast({
         title: "Download Started",
-        description: `Your ${format.toUpperCase()} file is being downloaded.`,
+        description: `Your ${taskTypeDisplay} is being downloaded as ${format.toUpperCase()} file.`,
         variant: "default",
       });
     } catch (error) {
@@ -52,7 +57,7 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
         title: "Download Failed",
         description: error instanceof Error ? 
           `Error: ${error.message}` : 
-          "Could not download the file. Please try again later.",
+          "File download failed. Please try again or contact support if the issue persists.",
         variant: "destructive",
       });
     } finally {
