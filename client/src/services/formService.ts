@@ -24,7 +24,9 @@ export interface FormField {
   placeholder?: string;
   helpText?: string;
   help_text?: string;    // Alternative to helpText for compatibility
+  tooltip?: string;      // Tooltip text for field help
   question?: string;
+  questionNumber?: number; // Question number for display
   default?: any;
   options?: { label: string; value: any }[];
   validation?: FormFieldValidation;
