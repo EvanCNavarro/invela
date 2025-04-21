@@ -50,13 +50,15 @@ interface FieldRendererProps {
   template: TaskTemplateWithConfigs;
   form: UseFormReturn<any>;
   onFieldChange?: (value: any) => void;
+  isSubmitted?: boolean; // Add isSubmitted prop to disable form fields
 }
 
 export const FieldRenderer: React.FC<FieldRendererProps> = ({
   field,
   template,
   form,
-  onFieldChange
+  onFieldChange,
+  isSubmitted = false
 }) => {
   // State for tracking field focus
   const [isFocused, setIsFocused] = useState(false);
@@ -294,13 +296,18 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                   {...enhancedFieldProps}
                   value={normalizedValue}
                   placeholder={field.placeholder || ''}
+                  readOnly={isSubmitted}
+                  disabled={isSubmitted}
                   className={cn(
                     "min-h-[120px] bg-white pr-8",
-                    borderClasses[validationState]
+                    borderClasses[validationState],
+                    isSubmitted && "bg-gray-50 cursor-not-allowed"
                   )}
                   onChange={(e) => {
-                    fieldProps.onChange(e);
-                    onFieldChange?.(e.target.value);
+                    if (!isSubmitted) {
+                      fieldProps.onChange(e);
+                      onFieldChange?.(e.target.value);
+                    }
                   }}
                 />
               );
@@ -376,13 +383,18 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                   {...enhancedFieldProps}
                   value={normalizedValue}
                   placeholder={field.placeholder || ''}
+                  readOnly={isSubmitted}
+                  disabled={isSubmitted}
                   className={cn(
                     "bg-white pr-8",
-                    borderClasses[validationState]
+                    borderClasses[validationState],
+                    isSubmitted && "bg-gray-50 cursor-not-allowed"
                   )}
                   onChange={(e) => {
-                    fieldProps.onChange(e);
-                    onFieldChange?.(e.target.value);
+                    if (!isSubmitted) {
+                      fieldProps.onChange(e);
+                      onFieldChange?.(e.target.value);
+                    }
                   }}
                 />
               );
