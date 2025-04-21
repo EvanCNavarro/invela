@@ -112,7 +112,9 @@ export class KY3PFormService extends EnhancedKybFormService {
     }
     
     try {
-      const response = await fetch('/api/ky3p-fields');
+      const response = await fetch('/api/ky3p-fields', {
+        credentials: 'include' // Include session cookies
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -159,7 +161,9 @@ export class KY3PFormService extends EnhancedKybFormService {
     try {
       logger.info('[KY3P Form Service] Loading fields from /api/ky3p-fields endpoint');
       
-      const response = await fetch('/api/ky3p-fields');
+      const response = await fetch('/api/ky3p-fields', {
+        credentials: 'include' // Include session cookies
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -384,7 +388,9 @@ export class KY3PFormService extends EnhancedKybFormService {
     }
     
     try {
-      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses`);
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses`, {
+        credentials: 'include' // Include session cookies
+      });
       
       if (!response.ok) {
         throw new Error(`Failed to load responses: ${response.status}`);
@@ -500,7 +506,9 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       // First try to get the task data for context
       try {
-        const taskResponse = await fetch(`/api/tasks/${this.taskId}`);
+        const taskResponse = await fetch(`/api/tasks/${this.taskId}`, {
+          credentials: 'include' // Include session cookies
+        });
         
         if (taskResponse.ok) {
           const taskInfo = await taskResponse.json();
