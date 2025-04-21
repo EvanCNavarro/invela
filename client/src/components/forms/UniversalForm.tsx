@@ -1201,8 +1201,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [taskId, form, fields, updateField, saveProgress, refreshStatus, toast, onProgress]);
   
-  // State for the clear fields confirmation dialog and clearing progress
-  const [showClearFieldsDialog, setShowClearFieldsDialog] = useState(false);
+  // State for clearing fields progress indicator
   const [isClearing, setIsClearing] = useState(false);
   
   // Enhanced clear fields function using FormClearingService
@@ -1247,143 +1246,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [taskId, taskType, form, formService, fields, refreshStatus, setActiveSection, resetForm, onProgress]);
 
-  // Actual function to perform the clearing operation after confirmation
-  const doClearFields = useCallback(async () => {
-    try {
-      logger.info(`[UniversalForm] Clearing all fields for task ${taskId}`);
-      
-      // Close the dialog and show clearing indicator
-      setShowClearFieldsDialog(false);
-      setIsClearing(true);
-      
-      // Create empty data object
-      const emptyData: Record<string, string> = {};
-      
-      // Set all fields to empty strings
-      fields.forEach(field => {
-        if (field && field.key) {
-          emptyData[field.key] = '';
-        }
-      });
-      
-      // Simple clear logic - use the right endpoint based on task type
-      if (taskId) {
-        try {
-          let endpoint = '';
-          let body = {};
-          
-          // Select the right endpoint based on task type
-          if (taskType === 'open_banking_survey') {
-            // Open Banking endpoint - uses our improved clear mechanism
-            endpoint = `/api/tasks/${taskId}/open-banking-responses/bulk`;
-            body = { responses: emptyData, clearAll: true };
-          } 
-          else if (taskType === 'sp_ky3p_assessment') {
-            // KY3P endpoint
-            endpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
-            body = { responses: emptyData, clearAll: true };
-          }
-          else {
-            // Default KYB endpoint
-            endpoint = '/api/kyb/progress';
-            body = { 
-              taskId, 
-              formData: emptyData,
-              progress: 0,
-              status: 'not_started'
-            };
-          }
-          
-          // Single API call to clear the data
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-          }
-          
-          logger.info(`[UniversalForm] Successfully cleared fields on server using ${endpoint}`);
-          
-          // Reset form state in the UI
-          form.reset(emptyData);
-          form.clearErrors();
-          
-          // Force a refresh of task data
-          const { queryClient } = await import('@/lib/queryClient');
-          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-          
-          // Always navigate to the first section (index 0)
-          if (setActiveSection) {
-            setActiveSection(0);
-          }
-          
-          // Update progress to 0%
-          if (onProgress) {
-            onProgress(0);
-          }
-          
-          // Refresh form status if available
-          if (refreshStatus) {
-            await refreshStatus();
-          }
-        }
-        catch (error) {
-          logger.error('[UniversalForm] Server error when clearing fields:', error);
-          throw error;
-        }
-      }
-      
-      // ALWAYS redirect to first section if we were on the review section
-      // since after clearing fields, the review section will be locked
-      // Review section is always the last section in allSections array
-      const isOnReviewSection = activeSection === allSections.length - 1;
-      
-      if (isOnReviewSection && setActiveSection) {
-        logger.info('[UniversalForm] Was on review section, redirecting to first section after clearing fields');
-        
-        // Redirect IMMEDIATELY without delay to ensure user sees the change
-        // First section is always index 0
-        setActiveSection(0);
-      }
-      
-      // Short delay before showing success message to ensure UI has time to update
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Hide clearing indicator and show success toast
-      setIsClearing(false);
-      
-      // Show success message
-      toast({
-        title: "Fields Cleared",
-        description: "All form fields have been cleared successfully.",
-        variant: "success",
-      });
-      
-      // Reset progress to 0%
-      if (onProgress) {
-        onProgress(0);
-      }
-            
-    } catch (err) {
-      // Hide clearing indicator
-      setIsClearing(false);
-      
-      logger.error('[UniversalForm] Clear fields error:', err);
-      toast({
-        variant: "destructive",
-        title: "Clear Fields Failed",
-        description: err instanceof Error ? err.message : "There was an error clearing the form fields",
-      });
-    }
-  }, [taskId, taskType, fields, form, refreshStatus, toast, onProgress, activeSection, setActiveSection, allSections.length]);
-  
-  // Handle clearing all fields in the form - shows confirmation dialog
-  const handleClearFields = useCallback(() => {
-    setShowClearFieldsDialog(true);
-  }, []);
+  // Old clearing functions removed in favor of the enhanced version that uses FormClearingService
   
   // Helper function to check for completely empty values in form data
   const checkForEmptyValues = useCallback((data: FormData): string[] => {
@@ -2878,27 +2741,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         </div>
       </div>
       
-      {/* Clear Fields Confirmation Dialog */}
-      <AlertDialog open={showClearFieldsDialog} onOpenChange={setShowClearFieldsDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear All Fields</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to clear all fields? This action cannot be undone 
-              and all information entered in this form will be removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={doClearFields}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Yes, Clear Everything
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Old Clear Fields Confirmation Dialog removed in favor of the ClearFieldsButton component */}
       
       {/* Universal Success Modal */}
       <UniversalSuccessModal
