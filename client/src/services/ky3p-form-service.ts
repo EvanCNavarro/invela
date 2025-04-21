@@ -550,7 +550,9 @@ export class KY3PFormService extends EnhancedKybFormService {
         logger.info(`[KY3P Form Service] Fetching from: ${responsesUrl}`);
         
         try {
-          const responsesResponse = await fetch(responsesUrl);
+          const responsesResponse = await fetch(responsesUrl, {
+            credentials: 'include' // Include session cookies
+          });
           logger.info(`[KY3P Form Service] Responses API call status: ${responsesResponse.status}`);
           
           if (responsesResponse.ok) {
@@ -590,7 +592,9 @@ export class KY3PFormService extends EnhancedKybFormService {
           const progressUrl = `/api/ky3p/progress/${this.taskId}`;
           logger.info(`[KY3P Form Service] Trying alternate endpoint: ${progressUrl}`);
           
-          const response = await fetch(progressUrl);
+          const response = await fetch(progressUrl, {
+            credentials: 'include' // Include session cookies
+          });
           logger.info(`[KY3P Form Service] Progress API call status: ${response.status}`);
           
           if (response.ok) {
