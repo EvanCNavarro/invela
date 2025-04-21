@@ -50,6 +50,7 @@ export const DocumentCategory = {
   ISO27001_CERT: 'iso27001_cert',
   PENTEST_REPORT: 'pentest_report',
   BUSINESS_CONTINUITY: 'business_continuity',
+  OPEN_BANKING_SURVEY: 'open_banking_survey',
   OTHER: 'other'
 } as const;
 

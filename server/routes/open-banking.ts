@@ -1408,6 +1408,14 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
           }
         })
         .where(eq(tasks.id, taskId));
+        
+      // Broadcast task status update via WebSocket
+      broadcastMessage('task_updated', {
+        taskId,
+        status: TaskStatus.SUBMITTED,
+        progress: 100,
+        timestamp: new Date().toISOString()
+      });
       
       // Unlock dependent tasks if any
       const unlockedTaskCount = await unlockDependentTasks(taskId);
@@ -1455,8 +1463,6 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       // 3. Update company tabs to unlock dashboard and insights
       try {
         // Use the CompanyTabsService to ensure file vault is unlocked
-        const companyTabsService = new CompanyTabsService(db);
-        
         // Get current tabs
         const [currentCompany] = await db.select()
           .from(companies)
@@ -1489,12 +1495,9 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
           });
           
           // Broadcast the update via WebSocket
-          broadcastMessage('company_updated', {
+          broadcastMessage('company_tabs_updated', {
             companyId,
-            company: {
-              id: companyId,
-              available_tabs: updatedTabs
-            },
+            availableTabs: updatedTabs,
             timestamp: new Date().toISOString(),
             cache_invalidation: true // Important flag to ensure client cache is invalidated
           });
