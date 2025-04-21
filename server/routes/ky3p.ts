@@ -13,7 +13,8 @@ import {
   tasks, 
   users,
   companies,
-  KYBFieldStatus
+  KYBFieldStatus,
+  TaskStatus
 } from '@db/schema';
 import { eq, asc, and, desc, or, ne } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
@@ -21,6 +22,109 @@ import { Logger } from '../utils/logger';
 
 const router = Router();
 const logger = new Logger('KY3PRoutes');
+
+/**
+ * Unlock dependent tasks after KY3P task completion
+ * This is similar to the unlockSecurityTasks function in kyb.ts
+ * but focuses on unlocking CARD and/or Open Banking Survey tasks
+ */
+const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userId?: number) => {
+  try {
+    logger.info('[KY3P API] Looking for dependent tasks to unlock after KY3P submission', {
+      ky3pTaskId,
+      companyId
+    });
+    
+    // Find CARD or Open Banking Survey tasks for this company that might need unlocking
+    const dependentTasks = await db.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.company_id, companyId),
+          or(
+            eq(tasks.task_type, 'company_card'),
+            eq(tasks.task_type, 'open_banking_survey')
+          )
+        )
+      );
+      
+    logger.info('[KY3P API] Found potential dependent tasks to unlock', {
+      count: dependentTasks.length,
+      taskIds: dependentTasks.map(t => t.id),
+      taskTypes: dependentTasks.map(t => t.task_type)
+    });
+    
+    // Check each task to see if it's dependent on the KY3P task that was just completed
+    for (const dependentTask of dependentTasks) {
+      // Check if the task is locked and if the KY3P task is a prerequisite
+      if (dependentTask.metadata?.locked === true || 
+          dependentTask.metadata?.prerequisite_task_id === ky3pTaskId ||
+          dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment') {
+        
+        logger.info('[KY3P API] Unlocking dependent task', {
+          dependentTaskId: dependentTask.id,
+          dependentTaskType: dependentTask.task_type,
+          previousMetadata: {
+            locked: dependentTask.metadata?.locked,
+            prerequisiteTaskId: dependentTask.metadata?.prerequisite_task_id,
+            prerequisiteTaskType: dependentTask.metadata?.prerequisite_task_type
+          }
+        });
+        
+        // Update the dependent task to unlock it
+        await db.update(tasks)
+          .set({
+            status: dependentTask.status === 'locked' ? TaskStatus.NOT_STARTED : dependentTask.status,
+            metadata: {
+              ...dependentTask.metadata,
+              locked: false, // Explicitly unlock the task
+              prerequisite_completed: true,
+              prerequisite_completed_at: new Date().toISOString(),
+              prerequisite_completed_by: userId,
+              unlocked_by: 'ky3p_submission' // Mark how this was unlocked
+            },
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, dependentTask.id));
+          
+        logger.info('[KY3P API] Dependent task unlocked successfully', {
+          dependentTaskId: dependentTask.id,
+          dependentTaskType: dependentTask.task_type
+        });
+        
+        // Broadcast the task update through WebSocket
+        try {
+          const { broadcastTaskUpdate } = await import('../services/websocket.js');
+          await broadcastTaskUpdate(dependentTask.id, {
+            ...dependentTask,
+            status: dependentTask.status === 'locked' ? 'not_started' : dependentTask.status,
+            metadata: {
+              ...dependentTask.metadata,
+              locked: false,
+              prerequisite_completed: true,
+              prerequisite_completed_at: new Date().toISOString(),
+              prerequisite_completed_by: userId,
+              unlocked_by: 'ky3p_submission'
+            }
+          });
+          logger.info('[KY3P API] WebSocket broadcast sent for task unlock', {
+            taskId: dependentTask.id
+          });
+        } catch (wsError) {
+          logger.error('[KY3P API] Failed to broadcast WebSocket update for task unlock:', wsError);
+        }
+      }
+    }
+    
+    return { success: true, count: dependentTasks.length };
+  } catch (error) {
+    logger.error('[KY3P API] Error unlocking dependent tasks:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+};
 
 // Middleware to check if the user has access to the requested task
 async function hasTaskAccess(req, res, next) {
@@ -600,6 +704,10 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     } catch (wsError) {
       logger.error('[KY3P API] Failed to broadcast submission status update:', wsError);
     }
+    
+    // Unlock any dependent tasks (like CARD or Open Banking Survey tasks)
+    await unlockDependentTasks(task.company_id, taskId, req.user?.id);
+    logger.info(`[KY3P API] Checked for dependent tasks to unlock after KY3P submission`);
     
     // Structure the response with completedActions similar to KYB submission
     const completedActions = [
