@@ -155,9 +155,37 @@ export const FormClearingService = {
           
           // Force refresh query cache to ensure data is in sync
           try {
-            const { queryClient } = await import('@/lib/queryClient');
+            const { queryClient, apiRequest } = await import('@/lib/queryClient');
+            
+            // First, make sure to clear the task's savedFormData to prevent version issues
+            try {
+              // Directly update the task to clear its saved form data
+              await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+                savedFormData: null,
+                metadata: {
+                  lastCleared: new Date().toISOString(),
+                  clearedVersion: Math.floor(Math.random() * 1000000), // Add random version to ensure cache busting
+                  previousProgress: 0,
+                  forceClear: true
+                }
+              });
+              logger.info('[FormClearingService] Successfully cleared task savedFormData');
+            } catch (saveError) {
+              logger.error('[FormClearingService] Error clearing task savedFormData:', saveError);
+            }
+            
+            // Invalidate all possible query keys that might contain form data
             queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-            logger.info('[FormClearingService] Invalidated task query cache');
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/kyb/progress'] });
+            queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
+            queryClient.invalidateQueries({ queryKey: ['/api/ky3p/progress'] });
+            queryClient.invalidateQueries({ queryKey: [`/api/ky3p/progress/${taskId}`] });
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks/open-banking'] });
+            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/open-banking-responses`] });
+            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/form-data`] });
+            
+            logger.info('[FormClearingService] Invalidated all query caches for task and form data');
           } catch (cacheError) {
             logger.error('[FormClearingService] Error invalidating cache:', cacheError);
           }
