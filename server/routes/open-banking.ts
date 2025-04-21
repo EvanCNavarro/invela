@@ -28,6 +28,8 @@ import { broadcastMessage } from '../services/websocket';
 import path from 'path';
 import fs from 'fs';
 import { openai } from '../utils/openaiUtils';
+import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
+import { CompanyTabsService } from '../services/companyTabsService';
 
 // Create a logger instance
 const logger = new Logger('OpenBankingRoutes');
@@ -1226,7 +1228,13 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         .set({
           status: TaskStatus.SUBMITTED,
           updated_at: new Date(),
-          progress: 1
+          progress: 100, // Ensure progress is set to 100%
+          metadata: {
+            ...task.metadata,
+            submittedAt: new Date().toISOString(),
+            submitted: true,
+            openBankingFormFile: fileRecord[0].id
+          }
         })
         .where(eq(tasks.id, taskId));
       
@@ -1239,13 +1247,109 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         unlockedTaskCount
       });
       
-      // Return submission result
+      // 1. Generate risk score for the company (random 250-1500)
+      let riskScore = null;
+      try {
+        riskScore = await generateOpenBankingRiskScore(companyId, taskId);
+        logger.info('[OpenBankingRoutes] Generated risk score for company', {
+          companyId,
+          taskId,
+          riskScore
+        });
+      } catch (riskScoreError) {
+        logger.error('[OpenBankingRoutes] Error generating risk score', {
+          error: riskScoreError,
+          companyId,
+          taskId
+        });
+        // Continue with submission even if risk score generation fails
+      }
+      
+      // 2. Mark company as onboarded and set accreditation status
+      try {
+        const updatedCompany = await completeCompanyOnboarding(companyId);
+        logger.info('[OpenBankingRoutes] Company onboarding completed', {
+          companyId,
+          onboardingCompleted: updatedCompany.onboarding_company_completed,
+          accreditationStatus: updatedCompany.accreditation_status
+        });
+      } catch (onboardingError) {
+        logger.error('[OpenBankingRoutes] Error completing company onboarding', {
+          error: onboardingError,
+          companyId
+        });
+        // Continue with submission even if onboarding completion fails
+      }
+      
+      // 3. Update company tabs to unlock dashboard and insights
+      try {
+        // Use the CompanyTabsService to ensure file vault is unlocked
+        const companyTabsService = new CompanyTabsService(db);
+        
+        // Get current tabs
+        const [currentCompany] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, companyId))
+          .limit(1);
+          
+        // Define all tabs that should be available after Open Banking submission
+        // Include file-vault, dashboard, and insights
+        const desiredTabs = ['task-center', 'file-vault', 'dashboard', 'insights'];
+        
+        // Check which tabs need to be added
+        const currentTabs = currentCompany.available_tabs || ['task-center'];
+        const tabsToAdd = desiredTabs.filter(tab => !currentTabs.includes(tab));
+        
+        if (tabsToAdd.length > 0) {
+          // Update available tabs
+          const updatedTabs = [...currentTabs, ...tabsToAdd];
+          
+          await db.update(companies)
+            .set({
+              available_tabs: updatedTabs,
+              updated_at: new Date()
+            })
+            .where(eq(companies.id, companyId));
+          
+          logger.info('[OpenBankingRoutes] Updated company tabs', {
+            companyId,
+            previousTabs: currentTabs,
+            updatedTabs
+          });
+          
+          // Broadcast the update via WebSocket
+          broadcastMessage('company_updated', {
+            companyId,
+            company: {
+              id: companyId,
+              available_tabs: updatedTabs
+            },
+            timestamp: new Date().toISOString(),
+            cache_invalidation: true // Important flag to ensure client cache is invalidated
+          });
+        }
+      } catch (tabsError) {
+        logger.error('[OpenBankingRoutes] Error updating company tabs', {
+          error: tabsError,
+          companyId
+        });
+        // Continue with submission even if tabs update fails
+      }
+      
+      // Return submission result with rich information
       res.json({
         success: true,
         fileId: fileRecord[0].id,
         fileName: effectiveFileName,
         message: 'Form submitted successfully',
-        unlockedTaskCount
+        unlockedTaskCount,
+        riskScore,
+        companyId,
+        additionalUpdates: {
+          tabsUnlocked: true,
+          onboardingCompleted: true,
+          riskScoreGenerated: riskScore !== null
+        }
       });
     } catch (error) {
       logger.error('[OpenBankingRoutes] Error submitting form', { error, taskId });
