@@ -958,7 +958,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       } else {
         // Update form service for KYB or other traditional forms
         if (formService && taskId) {
+          // Update the backend with bulk data
           await formService.bulkUpdate(completeData, taskId);
+          
+          // CRITICAL: Update the form state in React to display the new values
+          if (form && completeData) {
+            // First update each field in local form state
+            Object.entries(completeData).forEach(([key, value]) => {
+              try {
+                // Try to set each field in the form directly
+                form.setValue(key, value);
+              } catch (err) {
+                logger.warn(`[UniversalForm] Could not set form field ${key}:`, err);
+              }
+            });
+            
+            // Force update all fields to make sure they're displayed
+            form.trigger();
+          }
         }
       }
       
