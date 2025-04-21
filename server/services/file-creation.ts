@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { Logger } from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
+import { FileDetectionService } from './file-detection';
 
 const logger = new Logger('FileCreationService');
 
@@ -45,27 +46,8 @@ export class FileCreationService {
     // Clean company name (remove spaces, special characters)
     const cleanCompanyName = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
     
-    // Map task types to standardized assessment names
-    let assessmentType = "";
-    
-    if (taskType.toLowerCase() === 'kyb' || taskType.toLowerCase().includes('kyb_form')) {
-      assessmentType = "kyb_assessment";
-    }
-    else if (taskType.toLowerCase() === 'ky3p' || 
-        taskType.toLowerCase().includes('sp_ky3p') || 
-        (taskType.toLowerCase() === 'form' && extension === 'csv' && companyName.toLowerCase().includes('security'))) {
-      assessmentType = "spglobal_ky3p_assessment";
-    }
-    else if (taskType.toLowerCase() === 'open_banking') {
-      assessmentType = "open_banking_assessment";
-    }
-    else if (taskType.toLowerCase() === 'card') {
-      assessmentType = "card_assessment";
-    }
-    else {
-      // Default for unknown types
-      assessmentType = taskType.toLowerCase().replace(/\s+/g, '_');
-    }
+    // Use FileDetectionService to standardize assessment type name
+    const assessmentType = FileDetectionService.standardizeAssessmentTypeName(taskType);
     
     // Generate unified filename format for all assessment types
     return `${assessmentType}_${cleanCompanyName}_${taskId}_${formattedDateTime}.${extension}`;
@@ -108,13 +90,9 @@ export class FileCreationService {
       // Check if we need to write the file to disk or store in DB directly
       let storagePath: string;
       
-      // Store CSV files directly in the database for immediate access
-      // This applies to all assessment forms (KYB, KY3P, Open Banking)
-      if (type === 'text/csv' && 
-          (name.toLowerCase().includes('kyb_assessment') || 
-           name.toLowerCase().includes('spglobal_ky3p_assessment') ||
-           name.toLowerCase().includes('open_banking_assessment') ||
-           name.toLowerCase().includes('card_assessment'))) {
+      // Store CSV files directly in the database for immediate access using FileDetectionService
+      // This applies to all assessment forms (KYB, KY3P, Open Banking, CARD)
+      if (type === 'text/csv' && FileDetectionService.isFormCsvFile(name, type)) {
         logger.debug('Storing CSV content directly in database', { 
           fileName: name, 
           contentType: type,
