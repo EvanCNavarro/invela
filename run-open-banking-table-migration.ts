@@ -8,7 +8,10 @@
 import { db, pool } from './db';
 import { openBankingFields, openBankingResponses } from './db/schema';
 import { sql } from 'drizzle-orm';
-import { logger } from './server/utils/logger';
+import { Logger } from './server/utils/logger';
+
+// Create a logger instance
+const logger = new Logger('OpenBankingMigration');
 
 async function createOpenBankingTables() {
   try {
