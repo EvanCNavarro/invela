@@ -469,14 +469,14 @@ export class KY3PFormService extends EnhancedKybFormService {
       logger.info(`[KY3P Form Service] Loading progress for task ${effectiveTaskId}`);
       
       // Get the task information first to check if it's already submitted
+      let isSubmitted = false;
       try {
         const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`);
         if (taskResponse.ok) {
           const taskData = await taskResponse.json();
           if (taskData.status === 'submitted') {
+            isSubmitted = true;
             logger.info(`[KY3P Form Service] Task ${effectiveTaskId} is already submitted, still loading form data for display`);
-            // Special handling for submitted tasks, but we continue to load the data
-            // Don't return an empty object, continue with loading the data
           }
         }
       } catch (taskError) {
@@ -484,20 +484,41 @@ export class KY3PFormService extends EnhancedKybFormService {
         logger.warn(`[KY3P Form Service] Could not check task status: ${taskError}`);
       }
       
-      // Use our dedicated KY3P progress endpoint
-      const progress = await this.getProgress();
-      
-      if (progress && progress.formData) {
-        // Store the form data in the service for future reference
-        this.loadFormData(progress.formData);
+      try {
+        // Use our dedicated KY3P progress endpoint
+        const progress = await this.getProgress();
         
-        // Return the form data for the form manager to use
-        return progress.formData;
+        // Log the actual form data keys received
+        logger.info(`[KY3P Form Service] Form data keys received:`, {
+          keys: Object.keys(progress.formData || {}),
+          count: Object.keys(progress.formData || {}).length,
+          hasData: !!progress.formData && Object.keys(progress.formData).length > 0
+        });
+        
+        if (progress && progress.formData) {
+          // Store the form data in the service for future reference
+          this.loadFormData(progress.formData);
+          
+          // For submitted tasks, add any required metadata
+          if (isSubmitted) {
+            // Add submission date if it doesn't exist
+            if (!progress.formData._submissionDate) {
+              progress.formData._submissionDate = new Date().toISOString();
+            }
+          }
+          
+          // Return the form data for the form manager to use
+          return progress.formData;
+        }
+        
+        // If no data was found, return an empty object with submission indicator
+        logger.warn(`[KY3P Form Service] No form data found for task ${effectiveTaskId}`);
+        return isSubmitted ? { _submissionDate: new Date().toISOString() } : {};
+      } catch (progressError) {
+        logger.error('[KY3P Form Service] Error getting progress:', progressError);
+        // If task is submitted, at least return that status for the review screen
+        return isSubmitted ? { _submissionDate: new Date().toISOString() } : {};
       }
-      
-      // If no data was found, return an empty object
-      logger.warn(`[KY3P Form Service] No form data found for task ${effectiveTaskId}`);
-      return {};
     } catch (error) {
       logger.error('[KY3P Form Service] Error loading progress:', error);
       // Just return an empty object to prevent errors from bubbling up to the UI
