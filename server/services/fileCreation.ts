@@ -165,6 +165,12 @@ export class FileCreationService {
         timestamp: timestamp.toISOString()
       });
 
+      // For KY3P assessments, prepend a database marker to the content
+      // This helps the file download handler identify it as inline content
+      if (metadata.taskType === 'sp_ky3p_assessment') {
+        fileContent = `database:${fileContent}`;
+      }
+      
       // Create file record in database
       const [fileRecord] = await db.insert(files)
         .values({
@@ -179,7 +185,12 @@ export class FileCreationService {
           updated_at: timestamp,
           upload_time: timestamp,
           version: 1.0,
-          download_count: 0
+          download_count: 0,
+          metadata: {
+            taskId: metadata.taskId,
+            taskType: metadata.taskType,
+            companyName: metadata.companyName
+          }
         })
         .returning();
 
