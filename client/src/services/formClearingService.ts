@@ -159,47 +159,60 @@ export const FormClearingService = {
             
             // First, make sure to clear the task's savedFormData to prevent version issues
             try {
-              // First, fetch the current task to preserve important metadata
+              // Instead of trying to fetch task data which can be problematic,
+              // Get metadata from the React Query cache to preserve company info
               try {
-                const taskResponse = await fetch(`/api/tasks/${taskId}`);
-                if (taskResponse.ok) {
-                  const taskData = await taskResponse.json();
-                  
-                  // Preserve company name and other essential metadata
-                  const preservedMetadata = {
-                    company_name: taskData.metadata?.company_name || taskData.metadata?.companyName,
-                    companyName: taskData.metadata?.companyName || taskData.metadata?.company_name,
-                    company_id: taskData.metadata?.company_id || taskData.metadata?.companyId,
-                    companyId: taskData.metadata?.companyId || taskData.metadata?.company_id
-                  };
-                  
-                  // Directly update the task to clear its saved form data
-                  await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-                    savedFormData: null,
-                    metadata: {
-                      ...preservedMetadata,
-                      lastCleared: new Date().toISOString(),
-                      clearedVersion: Math.floor(Math.random() * 1000000), // Add random version to ensure cache busting
-                      previousProgress: 0,
-                      forceClear: true
-                    }
-                  });
-                  
-                  logger.info('[FormClearingService] Preserved company metadata during clear operation');
-                } else {
-                  // If we couldn't fetch the task, still try to clear saved form data without preserving metadata
-                  await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-                    savedFormData: null,
-                    metadata: {
-                      lastCleared: new Date().toISOString(),
-                      clearedVersion: Math.floor(Math.random() * 1000000),
-                      previousProgress: 0,
-                      forceClear: true
-                    }
-                  });
+                const { queryClient } = await import('@/lib/queryClient');
+                
+                // Get company name from current company API response in the cache
+                const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
+                
+                // Get task data from the task cache if available
+                const taskData = queryClient.getQueryData<any>([`/api/tasks.json/${taskId}`]) || 
+                                queryClient.getQueryData<any>([`/api/tasks/${taskId}`]);
+                
+                // Build preserved metadata from cached data
+                const preservedMetadata: Record<string, any> = {};
+                
+                // Add company name and ID from company cache
+                if (companyData?.name) {
+                  preservedMetadata.company_name = companyData.name;
+                  preservedMetadata.companyName = companyData.name;
                 }
-              } catch (fetchError) {
-                logger.error('[FormClearingService] Failed to fetch task data to preserve metadata:', fetchError);
+                
+                if (companyData?.id) {
+                  preservedMetadata.company_id = companyData.id;
+                  preservedMetadata.companyId = companyData.id;
+                }
+                
+                // Add any additional metadata from task cache if available
+                if (taskData?.metadata) {
+                  if (taskData.metadata.company_name || taskData.metadata.companyName) {
+                    preservedMetadata.company_name = taskData.metadata.company_name || taskData.metadata.companyName;
+                    preservedMetadata.companyName = taskData.metadata.companyName || taskData.metadata.company_name;
+                  }
+                  
+                  if (taskData.metadata.company_id || taskData.metadata.companyId) {
+                    preservedMetadata.company_id = taskData.metadata.company_id || taskData.metadata.companyId;
+                    preservedMetadata.companyId = taskData.metadata.companyId || taskData.metadata.company_id;
+                  }
+                }
+                
+                // Directly update the task to clear its saved form data
+                await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+                  savedFormData: null,
+                  metadata: {
+                    ...preservedMetadata,
+                    lastCleared: new Date().toISOString(),
+                    clearedVersion: Math.floor(Math.random() * 1000000), // Add random version to ensure cache busting
+                    previousProgress: 0,
+                    forceClear: true
+                  }
+                });
+                
+                logger.info('[FormClearingService] Preserved company metadata during clear operation', preservedMetadata);
+              } catch (cacheError) {
+                logger.error('[FormClearingService] Failed to preserve metadata from cache:', cacheError);
                 
                 // Still try the basic clear operation
                 await apiRequest('PATCH', `/api/tasks/${taskId}`, {
