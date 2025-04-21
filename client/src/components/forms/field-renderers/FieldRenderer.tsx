@@ -317,11 +317,17 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                 <Select
                   value={String(normalizedValue)}
                   onValueChange={(value) => {
-                    fieldProps.onChange(value);
-                    onFieldChange?.(value);
+                    if (!isSubmitted) {
+                      fieldProps.onChange(value);
+                      onFieldChange?.(value);
+                    }
                   }}
+                  disabled={isSubmitted}
                 >
-                  <SelectTrigger className={cn(borderClasses[validationState])}>
+                  <SelectTrigger className={cn(
+                    borderClasses[validationState],
+                    isSubmitted && "bg-gray-50 cursor-not-allowed"
+                  )}>
                     <SelectValue placeholder={field.placeholder || 'Select an option'} />
                     {validationState === 'success' && (
                       <div className="ml-auto mr-1 text-green-500">
@@ -354,13 +360,17 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                 <div className="flex items-center gap-2">
                   <Checkbox
                     checked={Boolean(normalizedValue)}
+                    disabled={isSubmitted}
                     className={cn({
                       'ring-2 ring-red-200': validationState === 'error',
-                      'ring-2 ring-green-200': validationState === 'success'
+                      'ring-2 ring-green-200': validationState === 'success',
+                      'opacity-60 cursor-not-allowed': isSubmitted
                     })}
                     onCheckedChange={(checked) => {
-                      fieldProps.onChange(checked);
-                      onFieldChange?.(checked);
+                      if (!isSubmitted) {
+                        fieldProps.onChange(checked);
+                        onFieldChange?.(checked);
+                      }
                     }}
                   />
                   {validationState === 'success' && (
