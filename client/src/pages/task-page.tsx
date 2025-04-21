@@ -277,7 +277,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       toast({
         title: "Download Complete",
         description: `Your ${taskTypeDisplay} has been downloaded successfully.`,
-        variant: "default",
+        variant: "success",
       });
       
       console.log(`[TaskPage] Download completed successfully`);
