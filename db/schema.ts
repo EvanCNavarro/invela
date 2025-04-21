@@ -438,6 +438,40 @@ export const ky3pResponses = pgTable("ky3p_responses", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Define the 1033 Open Banking Survey tables
+export const openBankingFields = pgTable("open_banking_fields", {
+  id: serial("id").primaryKey(),
+  order: integer("order").notNull(),
+  field_key: text("field_key").notNull(),
+  display_name: text("display_name").notNull(),
+  question: text("question").notNull(),
+  help_text: text("help_text"),
+  demo_autofill: text("demo_autofill"),
+  group: text("group").notNull(),
+  field_type: text("field_type").$type<keyof typeof KYBFieldType>().notNull(),
+  required: boolean("required").notNull().default(true),
+  answer_expectation: text("answer_expectation"),
+  validation_type: text("validation_type"),
+  validation_rules: text("validation_rules"),
+  step_index: integer("step_index").default(0),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const openBankingResponses = pgTable("open_banking_responses", {
+  id: serial("id").primaryKey(),
+  task_id: integer("task_id").references(() => tasks.id).notNull(),
+  field_id: integer("field_id").references(() => openBankingFields.id).notNull(),
+  response_value: text("response_value"),
+  ai_suspicion_level: real("ai_suspicion_level").notNull().default(0),
+  partial_risk_score: integer("partial_risk_score").notNull().default(0),
+  reasoning: text("reasoning"),
+  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default('empty'),
+  version: integer("version").notNull().default(1),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 export const ky3pFieldsRelations = relations(ky3pFields, ({ many }) => ({
   responses: many(ky3pResponses),
 }));
@@ -449,6 +483,21 @@ export const ky3pResponsesRelations = relations(ky3pResponses, ({ one }) => ({
   }),
   task: one(tasks, {
     fields: [ky3pResponses.task_id],
+    references: [tasks.id],
+  }),
+}));
+
+export const openBankingFieldsRelations = relations(openBankingFields, ({ many }) => ({
+  responses: many(openBankingResponses),
+}));
+
+export const openBankingResponsesRelations = relations(openBankingResponses, ({ one }) => ({
+  field: one(openBankingFields, {
+    fields: [openBankingResponses.field_id],
+    references: [openBankingFields.id],
+  }),
+  task: one(tasks, {
+    fields: [openBankingResponses.task_id],
     references: [tasks.id],
   }),
 }));
@@ -635,6 +684,12 @@ export const selectKy3pFieldSchema = createSelectSchema(ky3pFields);
 export const insertKy3pResponseSchema = createInsertSchema(ky3pResponses);
 export const selectKy3pResponseSchema = createSelectSchema(ky3pResponses);
 
+// Open Banking schemas
+export const insertOpenBankingFieldSchema = createInsertSchema(openBankingFields);
+export const selectOpenBankingFieldSchema = createSelectSchema(openBankingFields);
+export const insertOpenBankingResponseSchema = createInsertSchema(openBankingResponses);
+export const selectOpenBankingResponseSchema = createSelectSchema(openBankingResponses);
+
 // Task template configuration tables
 export const taskTemplates = pgTable("task_templates", {
   id: serial("id").primaryKey(),
@@ -688,3 +743,9 @@ export type InsertKy3pField = typeof ky3pFields.$inferInsert;
 export type SelectKy3pField = typeof ky3pFields.$inferSelect;
 export type InsertKy3pResponse = typeof ky3pResponses.$inferInsert;
 export type SelectKy3pResponse = typeof ky3pResponses.$inferSelect;
+
+// Open Banking types
+export type InsertOpenBankingField = typeof openBankingFields.$inferInsert;
+export type SelectOpenBankingField = typeof openBankingFields.$inferSelect;
+export type InsertOpenBankingResponse = typeof openBankingResponses.$inferInsert;
+export type SelectOpenBankingResponse = typeof openBankingResponses.$inferSelect;
