@@ -129,6 +129,24 @@ export default function TaskPage({ params }: TaskPageProps) {
         });
       }
       
+      // Display initial "Download Started" toast
+      const taskTypeDisplay = taskContentType === 'kyb' ? 'KYB Assessment' :
+                           taskContentType === 'ky3p' ? 'S&P KY3P Assessment' :
+                           taskContentType === 'open_banking' ? 'Open Banking Assessment' :
+                           taskContentType === 'card' ? 'CARD Assessment' : 'Form';
+      
+      // Create a unique toast ID
+      const toastId = `download-${format}-${Date.now()}`;
+      downloadStartedToastId = toastId;
+      
+      // Show toast with auto-dismiss feature
+      toast({
+        id: toastId,
+        title: "Download Started",
+        description: `Your ${taskTypeDisplay} is being downloaded as ${format.toUpperCase()} file.`,
+        variant: "default",
+      });
+      
       console.log(`[TaskPage] Fetching file from: /api/files/${fileId}/download?format=${format}`);
       
       // Fix type error: use proper credentials type
@@ -272,10 +290,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       }
       
       // Display success toast to confirm download complete
-      const taskTypeDisplay = taskContentType === 'kyb' ? 'KYB Assessment' :
-                           taskContentType === 'ky3p' ? 'S&P KY3P Assessment' :
-                           taskContentType === 'open_banking' ? 'Open Banking Assessment' :
-                           taskContentType === 'card' ? 'CARD Assessment' : 'Form';
+      // We already have the taskTypeDisplay variable from above
       
       // First dismiss the "Download Started" toast if it exists
       if (downloadStartedToastId) {
@@ -295,7 +310,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       // Dismiss the "Download Started" toast if it exists
       if (downloadStartedToastId) {
-        toast.dismiss(downloadStartedToastId);
+        toastFn.dismiss(downloadStartedToastId);
       }
       
       toast({
