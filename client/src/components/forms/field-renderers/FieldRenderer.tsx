@@ -33,7 +33,11 @@ import { TaskTemplateWithConfigs } from '@/services/taskTemplateService';
 // Helper function to determine component type
 function getFieldComponentType(field: FormFieldType, defaultType = 'single-line'): string {
   // If field has explicit component type, use that
-  if (field.type) return field.type;
+  if (field.type) {
+    // Map database field types to component types
+    if (field.type.toUpperCase() === 'TEXTAREA') return 'multi-line';
+    return field.type;
+  }
   
   // Otherwise infer from field properties
   if (field.options) return 'dropdown';
