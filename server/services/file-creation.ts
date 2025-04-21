@@ -48,6 +48,15 @@ export class FileCreationService {
     // Include question number if provided
     const questionPart = questionNumber ? `_Q${questionNumber}` : '';
     
+    // Special handling for KY3P files
+    if (taskType.toLowerCase() === 'ky3p' || 
+        taskType.toLowerCase().includes('sp_ky3p') || 
+        (taskType.toLowerCase() === 'form' && extension === 'csv')) {
+      
+      return `spglobal_ky3p_security_assessment_${cleanCompanyName}_${formattedDate}_${formattedTime}.${extension}`;
+    }
+    
+    // Standard format for all other files
     return `${taskType}_${taskId}${questionPart}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v${version}.${extension}`;
   }
   
@@ -88,10 +97,26 @@ export class FileCreationService {
       // Check if we need to write the file to disk or store in DB directly
       let storagePath: string;
       
-      // Store KYB CSV files directly in the database for immediate access
-      if (type === 'text/csv' && (name.toLowerCase().includes('kyb_form') || name.toLowerCase().includes('kybform'))) {
-        logger.debug('Storing KYB CSV content directly in database');
-        storagePath = content.toString();
+      // Store CSV files directly in the database for immediate access
+      // This applies to both KYB forms and KY3P assessment forms
+      if (type === 'text/csv' && 
+          (name.toLowerCase().includes('kyb_form') || 
+           name.toLowerCase().includes('kybform') ||
+           name.toLowerCase().includes('ky3p') ||
+           name.toLowerCase().includes('spglobal'))) {
+        logger.debug('Storing CSV content directly in database', { 
+          fileName: name, 
+          contentType: type,
+          fileSize: Buffer.from(content.toString()).length
+        });
+        
+        // Add a database marker prefix to help the file download handler
+        if (name.toLowerCase().includes('ky3p') || name.toLowerCase().includes('spglobal')) {
+          storagePath = `database:${content.toString()}`;
+          logger.debug('Added database prefix marker to KY3P CSV content');
+        } else {
+          storagePath = content.toString();
+        }
       } else {
         // For other files, create a unique path and write to disk
         const uniqueFileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}_${name}`;

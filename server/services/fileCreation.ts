@@ -106,6 +106,11 @@ export class FileCreationService {
     return csv;
   }
 
+  /**
+   * Creates a file for a task - KYB, KY3P or other form task
+   * This method handles special case for KY3P CSV files to ensure
+   * they are properly stored in the database and can be downloaded later.
+   */
   async createTaskFile(
     userId: number,
     companyId: number,
