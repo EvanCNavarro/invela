@@ -680,3 +680,10 @@ export class OpenBankingFormServiceFactory {
 // Create singleton instance for use in the application
 export const openBankingFormService = _instance || (_instance = new OpenBankingFormService());
 export const openBankingFormServiceFactory = OpenBankingFormServiceFactory.getInstance();
+
+// Import component factory for registration (using require to avoid circular dependencies)
+import { componentFactory } from './componentFactory';
+
+// Register Open Banking Form Service with component factory for both task type variations
+componentFactory.registerFormService('open_banking', openBankingFormService);
+componentFactory.registerFormService('open_banking_survey', openBankingFormService);
