@@ -44,15 +44,18 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
                              taskType === 'open_banking' ? 'Open Banking Assessment' :
                              taskType === 'card' ? 'CARD Assessment' : 'Form';
                              
+      // Create a unique ID for the toast so we can dismiss it programmatically
+      const toastId = `download-${format}-${Date.now()}`;
+      
       toast({
+        id: toastId,
         title: "Download Started",
         description: `Your ${taskTypeDisplay} is being downloaded as ${format.toUpperCase()} file.`,
         variant: "default",
-        // Auto-dismiss after 3 seconds as this is just an info notification
-        duration: 3000,
       });
       
-      // Note: The success toast is now handled in the task-page.tsx after download completes
+      // Return the toast ID so task-page.tsx can dismiss it when download completes
+      return toastId;
     } catch (error) {
       console.error('[TaskDownloadMenu] Download error:', error);
       
