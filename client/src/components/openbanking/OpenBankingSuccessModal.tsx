@@ -11,6 +11,11 @@ interface OpenBankingSuccessModalProps {
 
 export function OpenBankingSuccessModal({ open, onOpenChange, companyName }: OpenBankingSuccessModalProps) {
   const [, navigate] = useLocation();
+  
+  console.log(`[OpenBankingSuccessModal] Rendering with:`, {
+    isOpen: open,
+    companyName: companyName || 'Unknown company'
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
