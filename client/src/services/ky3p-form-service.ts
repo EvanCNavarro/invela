@@ -468,6 +468,21 @@ export class KY3PFormService extends EnhancedKybFormService {
     try {
       logger.info(`[KY3P Form Service] Loading progress for task ${effectiveTaskId}`);
       
+      // Get the task information first to check if it's already submitted
+      try {
+        const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`);
+        if (taskResponse.ok) {
+          const taskData = await taskResponse.json();
+          if (taskData.status === 'submitted') {
+            logger.info(`[KY3P Form Service] Task ${effectiveTaskId} is already submitted, returning empty form data`);
+            return {};
+          }
+        }
+      } catch (taskError) {
+        // If we can't get the task, continue with trying to get the progress
+        logger.warn(`[KY3P Form Service] Could not check task status: ${taskError}`);
+      }
+      
       // Use our dedicated KY3P progress endpoint
       const progress = await this.getProgress();
       
@@ -484,6 +499,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       return {};
     } catch (error) {
       logger.error('[KY3P Form Service] Error loading progress:', error);
+      // Just return an empty object to prevent errors from bubbling up to the UI
       return {};
     }
   }
