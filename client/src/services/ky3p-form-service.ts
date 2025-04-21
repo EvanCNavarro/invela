@@ -497,11 +497,10 @@ export class KY3PFormService extends EnhancedKybFormService {
       let formData: Record<string, any> = {};
       let isSubmitted = false;
       let submissionDate = null;
-      let useDirectResponseMapping = false;
       
       // First try to get the task data for context
       try {
-        const taskResponse = await this.traceApiCall(`/api/tasks/${this.taskId}`);
+        const taskResponse = await fetch(`/api/tasks/${this.taskId}`);
         
         if (taskResponse.ok) {
           const taskInfo = await taskResponse.json();
@@ -538,52 +537,28 @@ export class KY3PFormService extends EnhancedKybFormService {
         logger.error(`[KY3P Form Service] Error getting task:`, taskError);
       }
       
-      // For submitted tasks, try to get the responses directly
-      if (isSubmitted) {
-        try {
-          logger.info(`[KY3P Form Service] Task is submitted, using direct response mapping approach`);
+      // If no saved task data or if we need to get the latest responses,
+      // use the KY3P progress endpoint which will fetch from the database
+      try {
+        // The progress endpoint loads all responses from ky3p_responses table
+        const response = await fetch(`/api/ky3p/progress/${this.taskId}`);
+        
+        if (response.ok) {
+          const data = await response.json();
           
-          // For debugging, let's try hard-coding responses based on the database screenshot
-          // This ensures we at least see some data in the UI while debugging
-          formData = this.getMockResponses();
-          useDirectResponseMapping = true;
+          logger.info(`[KY3P Form Service] Progress endpoint returned:`, {
+            taskId: this.taskId,
+            progress: data.progress,
+            status: data.status,
+            formDataKeys: Object.keys(data.formData || {}).length
+          });
           
-          logger.info(`[KY3P Form Service] Created mapping from ${Object.keys(formData).length} responses`);
+          formData = data.formData || {};
           
-          if (submissionDate) {
-            formData._submissionDate = submissionDate;
-          }
-          
-          // Return the mapped data
-          return {
-            formData,
-            progress: 100,
-            status: 'submitted'
-          };
-        } catch (mappingError) {
-          logger.error(`[KY3P Form Service] Error mapping responses:`, mappingError);
-        }
-      }
-      
-      // If we didn't get data from the direct approach, try the progress endpoint
-      if (!useDirectResponseMapping && Object.keys(formData).length === 0) {
-        try {
-          const response = await this.traceApiCall(`/api/ky3p/progress/${this.taskId}`);
-          
-          if (response.ok) {
-            const data = await response.json();
-            
-            logger.info(`[KY3P Form Service] Progress endpoint returned:`, {
-              taskId: this.taskId,
-              progress: data.progress,
-              status: data.status,
-              formDataKeys: Object.keys(data.formData || {}).length
-            });
-            
-            formData = data.formData || {};
-            
-            // If no form data but task is submitted, add submission date
-            if (isSubmitted && Object.keys(formData).length === 0 && submissionDate) {
+          // If the endpoint returned data, use it
+          if (Object.keys(formData).length > 0) {
+            // If task is submitted, add submission date if not already present
+            if (isSubmitted && submissionDate && !formData._submissionDate) {
               formData._submissionDate = submissionDate;
             }
             
@@ -593,32 +568,28 @@ export class KY3PFormService extends EnhancedKybFormService {
               status: data.status || (isSubmitted ? 'submitted' : 'not_started')
             };
           } else {
-            logger.warn(`[KY3P Form Service] Progress endpoint failed: ${response.status}`);
+            logger.warn(`[KY3P Form Service] Progress endpoint returned empty form data for task ${this.taskId}`);
           }
-        } catch (progressError) {
-          logger.error(`[KY3P Form Service] Progress endpoint error:`, progressError);
+        } else {
+          logger.warn(`[KY3P Form Service] Progress endpoint failed with status: ${response.status}`);
         }
+      } catch (progressError) {
+        logger.error(`[KY3P Form Service] Progress endpoint error:`, progressError);
       }
       
-      // If we get here, we need to return at least something
+      // If we couldn't get data from either method but know the task is submitted,
+      // return at least the submission status
       if (isSubmitted) {
-        // For submitted tasks, use our fallback data
-        if (Object.keys(formData).length === 0) {
-          formData = this.getMockResponses();
-          
-          if (submissionDate) {
-            formData._submissionDate = submissionDate;
-          }
-        }
-        
+        logger.info(`[KY3P Form Service] Task ${this.taskId} is submitted, returning minimal data with submission date`);
         return {
-          formData,
+          formData: { _submissionDate: submissionDate || new Date().toISOString() },
           progress: 100,
           status: 'submitted'
         };
       }
       
-      // Final fallback
+      // Final fallback - empty form data with appropriate status
+      logger.info(`[KY3P Form Service] No data found for task ${this.taskId}, returning empty data`);
       return {
         formData: {},
         progress: 0,
@@ -651,25 +622,15 @@ export class KY3PFormService extends EnhancedKybFormService {
     try {
       logger.info(`[KY3P Form Service] Loading progress for task ${effectiveTaskId}`);
       
-      // Directly use our mock responses for this task - skip the API calls for now
-      // This is a temporary solution to ensure we see data in the UI
-      if (effectiveTaskId === 601) {
-        const mockData = this.getMockResponses();
-        
-        this.loadFormData(mockData);
-        
-        logger.info(`[KY3P Form Service] Using direct mapping for KY3P form, loaded ${Object.keys(mockData).length} fields`);
-        
-        // Output the data we're using
-        logger.debug(`[KY3P Form Service] Form data being used:`, mockData);
-        
-        return mockData;
-      }
+      // Show loading state in the UI while we fetch the data
+      // This ensures the form doesn't show "No answer provided" during loading
+      this.loadFormData({ _loading: true });
       
-      // For all other tasks, use the normal flow
+      // Always use the progress API to get the latest data from the database
+      // This ensures we're always showing the most recent responses
       const progress = await this.getProgress();
       
-      // Log the actual form data keys received
+      // Log the data we received for debugging
       logger.info(`[KY3P Form Service] Form data keys received:`, {
         keys: Object.keys(progress.formData || {}),
         count: Object.keys(progress.formData || {}).length,
@@ -677,35 +638,34 @@ export class KY3PFormService extends EnhancedKybFormService {
         status: progress.status
       });
       
-      // Store the form data in the service for future reference and future form operations
+      // Store the form data in the service for future reference
       if (progress.formData && Object.keys(progress.formData).length > 0) {
-        this.loadFormData(progress.formData);
+        // Store the data, removing any _loading flag
+        const formData = { ...progress.formData };
+        delete formData._loading;
+        
+        this.loadFormData(formData);
         
         // Return the form data for the form manager to use
-        return progress.formData;
+        return formData;
       }
       
-      // If we have status but no form data, just include submission status
+      // If the task is submitted but has no form data, at least include the submission date
       if (progress.status === 'submitted') {
         logger.warn(`[KY3P Form Service] Task ${effectiveTaskId} is submitted but no form data found`);
         return { _submissionDate: progress.formData?._submissionDate || new Date().toISOString() };
       }
       
-      // Fallback to empty object if all else fails - this will trigger "No answer provided" in the UI
-      logger.warn(`[KY3P Form Service] No form data or status found for task ${effectiveTaskId}, returning empty object`);
+      // Fallback to empty object if no data found
+      // This will trigger "No answer provided" in the UI which is the correct behavior
+      // when there really is no data in the database
+      logger.warn(`[KY3P Form Service] No form data found for task ${effectiveTaskId}`);
       return {};
     } catch (error) {
       logger.error('[KY3P Form Service] Error loading progress:', error);
       
-      // If this is task 601, use our mock data as fallback
-      if (effectiveTaskId === 601) {
-        const mockData = this.getMockResponses();
-        this.loadFormData(mockData);
-        logger.info(`[KY3P Form Service] Error recovery: Using direct mapping with ${Object.keys(mockData).length} fields`);
-        return mockData;
-      }
-      
       // Just return an empty object to prevent errors from bubbling up to the UI
+      // The form will correctly show "No answer provided" in this case
       return {};
     }
   }
