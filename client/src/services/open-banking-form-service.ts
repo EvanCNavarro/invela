@@ -724,6 +724,5 @@ export class OpenBankingFormServiceFactory {
 }
 
 // Create singleton instance for use in the application
-// Create singleton instance for use in the application
 export const openBankingFormService = _instance || (_instance = new OpenBankingFormService());
 export const openBankingFormServiceFactory = OpenBankingFormServiceFactory.getInstance();
