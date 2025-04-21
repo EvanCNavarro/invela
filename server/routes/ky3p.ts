@@ -344,11 +344,16 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     // Add all responses to the formatted data
     responses.forEach(response => {
       const field = fieldMap.get(response.field_id);
-      if (field && response.response_value) {
-        // Use field_key which is the correct property name from the db schema
-        formattedData[field.field_key] = response.response_value;
+      if (field) {
+        // Always include the field even if response_value is empty
+        // This ensures all answered questions appear in the CSV, even if answered with empty string
+        formattedData[field.field_key] = response.response_value || '';
       }
     });
+    
+    // For debugging, log the number of responses
+    console.log(`[KY3P API] Total responses for task ${taskId}: ${responses.length}`);
+    console.log(`[KY3P API] Total fields added to formattedData: ${Object.keys(formattedData).length}`);
     
     console.log(`[KY3P API] Creating KY3P assessment file for task ${taskId}`);
     
@@ -490,8 +495,14 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         continue;
       }
       
-      // Determine status
-      const status = responseValue ? 'COMPLETE' : 'EMPTY';
+      // Never store null/undefined responses, use empty string instead
+      const sanitizedValue = responseValue !== null && responseValue !== undefined 
+        ? responseValue.toString() 
+        : '';
+      
+      // Determine status - the field is complete if it has any value (even empty string)
+      // This ensures the field appears in the CSV even if the answer is intentionally blank
+      const status = (responseValue !== null && responseValue !== undefined) ? 'COMPLETE' : 'EMPTY';
       
       // Check if response exists
       const [existingResponse] = await db
@@ -510,7 +521,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         responseUpdates.push(
           db.update(ky3pResponses)
             .set({
-              response_value: responseValue as string,
+              response_value: sanitizedValue,
               status,
               version: existingResponse.version + 1,
               updated_at: new Date()
@@ -524,7 +535,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
             .values({
               task_id: taskId,
               field_id: fieldId,
-              response_value: responseValue as string,
+              response_value: sanitizedValue,
               status,
               version: 1,
               created_at: new Date(),
