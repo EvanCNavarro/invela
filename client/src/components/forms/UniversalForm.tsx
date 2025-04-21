@@ -1142,109 +1142,74 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         throw resetError; // Re-throw to be caught by the outer try/catch
       }
       
-      // For KY3P forms, use the bulk endpoint to update all responses at once
-      // This ensures proper task progress calculation in the database
-      if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
-        try {
-          logger.info(`[UniversalForm] Using bulk responses endpoint for task ${taskId} (type: ${taskType})`);
-          
-          // For KY3P form types - use formService.save method directly if available
-          // This prevents conflicts between individual field updates and bulk updates
-          if (formService && typeof (formService as any).save === 'function') {
-            logger.info(`[UniversalForm] Using formService.save() method for bulk update`);
-            
+      // For KY3P, Open Banking, and other form types, leverage the field-by-field approach 
+  // This ensures consistent behavior across form types
+  if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
+    try {
+      logger.info(`[UniversalForm] Auto-filling ${taskType} form for task ${taskId}`);
+      
+      // Enhanced approach: Process each field individually with proper error handling
+      const fields = Array.isArray(fields) ? fields : [];
+      const processingPromises: Promise<void>[] = [];
+      let processedFields = 0;
+      
+      logger.info(`[UniversalForm] Processing ${fields.length} fields for auto-fill`);
+      
+      // Process fields in groups to avoid overwhelming the server
+      const fieldsWithDemoValues = fields.filter(field => {
+        const value = completeData[field.key];
+        return value !== undefined && value !== null && value !== '';
+      });
+      
+      logger.info(`[UniversalForm] Found ${fieldsWithDemoValues.length} fields with demo values`);
+      
+      // Process in batches of 10 fields
+      const batchSize = 10;
+      for (let i = 0; i < fieldsWithDemoValues.length; i += batchSize) {
+        const batch = fieldsWithDemoValues.slice(i, i + batchSize);
+        
+        // Wait for each batch to complete before starting the next
+        await Promise.all(
+          batch.map(async (field) => {
             try {
-              // This will use the service's specialized bulk save method
-              const saveResult = await (formService as any).save({ taskId, includeMetadata: true });
-              
-              if (saveResult) {
-                logger.info(`[UniversalForm] Bulk save via formService succeeded`);
-                
-                // Import queryClient directly to invalidate task data queries
-                const { queryClient } = await import('@/lib/queryClient');
-                queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-                queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-                return; // Early return to prevent the standard approach below
-              } else {
-                logger.warn(`[UniversalForm] Bulk save via formService failed, falling back to manual approach`);
+              const value = completeData[field.key];
+              if (value !== undefined && value !== null) {
+                await updateField(field.key, value);
+                processedFields++;
               }
-            } catch (formServiceError) {
-              logger.error(`[UniversalForm] Error using formService.save():`, formServiceError);
-              // Continue to fallback approach
+            } catch (fieldError) {
+              logger.error(`[UniversalForm] Error updating field ${field.key}:`, fieldError);
             }
-          }
-          
-          // Fallback approach - manually construct and send the bulk request
-          // Using standardized approach for all form types
-          // The server expects: { responses: { field_key1: value1, field_key2: value2, ... } }
-          const responsesToSend: { responses: Record<string, string | number | boolean> } = { 
-            responses: {} 
-          };
-          
-          // Enhanced error logging for debugging
-          console.log(`[UniversalForm] Preparing ${taskType} bulk responses`, {
-            taskId,
-            dataFields: Object.keys(completeData).length,
-            dataFieldSample: Object.keys(completeData).slice(0, 5) 
-          });
-          
-          // Filter out any non-string/non-number values to prevent JSON parsing issues
-          for (const [key, value] of Object.entries(completeData)) {
-            // Skip problematic keys that might cause field ID format errors
-            if (key === 'bulk' || key === 'fieldIdRaw' || key === 'taskIdRaw' || 
-                key === 'responseValue' || key === 'responseValueType') {
-              console.log(`[UniversalForm] Skipping problematic key: ${key}`);
-              continue;
-            }
-            
-            // Only include values that are strings, numbers, or booleans
-            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-              responsesToSend.responses[key] = value;
-              console.log(`[UniversalForm] Added ${key}: ${value.toString().substring(0, 30)}`);
-            } else if (value && typeof value === 'object') {
-              // Handle objects by converting to JSON strings
-              try {
-                responsesToSend.responses[key] = JSON.stringify(value);
-                console.log(`[UniversalForm] Added object ${key} as JSON string`);
-              } catch (jsonError) {
-                console.error(`[UniversalForm] Failed to stringify object for ${key}:`, jsonError);
-              }
-            }
-          }
-          
-          // Log what we're sending for debugging
-          logger.info(`[UniversalForm] Sending bulk responses: ${Object.keys(responsesToSend.responses).length} fields`);
-          
-          // Determine the correct endpoint based on form type
-          let bulkEndpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
-          if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-            bulkEndpoint = `/api/tasks/${taskId}/open-banking-responses/bulk`;
-          }
-          
-          const bulkResponse = await fetch(bulkEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(responsesToSend)
-          });
-          
-          if (bulkResponse.ok) {
-            const result = await bulkResponse.json();
-            logger.info(`[UniversalForm] Bulk update succeeded: ${result.updatedFields || 'unknown'} fields, progress: ${result.progress * 100}%`);
-            
-            // Import queryClient directly to invalidate task data queries
-            const { queryClient } = await import('@/lib/queryClient');
-            queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          } else {
-            const errorText = await bulkResponse.text();
-            logger.warn(`[UniversalForm] Bulk update failed: ${bulkResponse.status}`, errorText);
-          }
-        } catch (bulkError) {
-          logger.error(`[UniversalForm] Bulk update error:`, bulkError);
+          })
+        );
+        
+        // Add a small delay between batches to avoid overwhelming the server
+        if (i + batchSize < fieldsWithDemoValues.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
+      
+      logger.info(`[UniversalForm] Successfully processed ${processedFields} fields for auto-fill`);
+      
+      // If we have a formService with save method, use it to finalize the form data
+      // This helps with progress calculation and status updates
+      if (formService && typeof (formService as any).saveProgress === 'function') {
+        try {
+          logger.info(`[UniversalForm] Calling formService.saveProgress() to finalize data`);
+          await (formService as any).saveProgress(taskId);
+          
+          // Import queryClient directly to invalidate task data queries
+          const { queryClient } = await import('@/lib/queryClient');
+          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        } catch (saveError) {
+          logger.error(`[UniversalForm] Error finalizing form data:`, saveError);
+        }
+      }
+    } catch (autoFillError) {
+      logger.error(`[UniversalForm] Auto-fill error:`, autoFillError);
+    }
+  }
       
       // Save regular progress to server for other form types
       if (saveProgress) {
