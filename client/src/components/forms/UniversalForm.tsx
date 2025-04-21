@@ -125,6 +125,7 @@ interface UniversalFormProps {
   onSubmit?: (data: FormData) => void;
   onCancel?: () => void;
   onProgress?: (progress: number) => void;
+  onSuccess?: () => void; // Callback when form is successfully submitted
   onDownload?: (format: 'json' | 'csv' | 'txt') => void; // Function to handle downloads
 }
 
@@ -143,6 +144,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onSubmit,
   onCancel,
   onProgress,
+  onSuccess,
   onDownload
 }) => {
   // Get user and company data for the consent section
@@ -1945,6 +1947,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             taskId,
             timestamp: new Date().toISOString()
           });
+
+          // Call the onSuccess callback if provided
+          if (onSuccess) {
+            console.log(`[SUBMIT FLOW] 16. Calling onSuccess callback`);
+            onSuccess();
+          }
         } catch (submissionError) {
           // Handle submission error
           logger.error('Form submission failed:', submissionError);
@@ -2154,6 +2162,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           description: 'Your form was successfully saved. All features have been unlocked.',
           variant: 'success',
         });
+        
+        // Call the onSuccess callback in this case as well
+        if (onSuccess) {
+          console.log(`[SUBMIT FLOW] Calling onSuccess callback during verification warning`);
+          onSuccess();
+        }
       }
     } catch (error) {
       logger.error('Form submission error:', error);
@@ -2182,7 +2196,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [overallProgress, saveProgress, onSubmit, toast, checkForEmptyValues, fields, taskType, fileId, taskId, wsService]);
+  }, [overallProgress, saveProgress, onSubmit, onSuccess, toast, checkForEmptyValues, fields, taskType, fileId, taskId, wsService]);
   
   // Handle cancel button click
   const handleCancel = useCallback(() => {
