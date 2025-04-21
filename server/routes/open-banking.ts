@@ -254,35 +254,53 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         ).join(',')
       ).join('\n');
       
-      // Create file record in database
-      const [file] = await db.insert(files)
-        .values({
-          name: generatedFileName,
-          type: 'text/csv',
-          path: `/uploads/open-banking/${taskId}/${generatedFileName}`,
-          size: Buffer.from(csvContent).length,
-          status: 'available',
-          user_id: req.user?.id,
-          company_id: task.company_id || 0,
-          created_at: new Date(),
-          updated_at: new Date(),
-          metadata: {
-            content: Buffer.from(csvContent).toString('base64'),
-            originalName: generatedFileName
-          }
-        })
-        .returning();
+      // Use the standard FileCreationService for consistency across all form types
+      const { FileCreationService } = await import('../services/file-creation');
       
-      // Update task metadata with the file ID
+      // Create file using the FileCreationService
+      const fileCreationResult = await FileCreationService.createFile({
+        name: generatedFileName,
+        content: csvContent,
+        type: 'text/csv',
+        userId: req.user?.id || task.created_by,
+        companyId: task.company_id || 0,
+        metadata: {
+          taskId,
+          taskType: 'open_banking',
+          formVersion: '1.0',
+          submissionDate: new Date().toISOString(),
+          fields: fieldKeys
+        },
+        status: 'uploaded'
+      });
+      
+      // Throw an error if file creation failed
+      if (!fileCreationResult.success) {
+        logger.error('[OpenBankingRoutes] File creation failed', {
+          error: fileCreationResult.error,
+          taskId,
+          fileName: generatedFileName
+        });
+        throw new Error(`Failed to create file: ${fileCreationResult.error}`);
+      }
+      
+      // Use the file ID from the FileCreationService result
+      const fileId = fileCreationResult.fileId;
+      
+      // Update task metadata with the file ID from FileCreationService
       const updatedMetadata = {
         ...task.metadata,
-        openBankingFormFile: file.id
+        openBankingFormFile: fileId, // Use the fileId from FileCreationService
+        submissionDate: new Date().toISOString(), // Add explicit submission date for status determination
+        statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+          .filter((v, i, a) => a.indexOf(v) === i)
       };
       
       // Update task status to submitted and save form data
+      // Use the TaskStatus enum to ensure consistency
       await db.update(tasks)
         .set({
-          status: 'submitted',
+          status: TaskStatus.SUBMITTED, // Use enum value for consistency
           progress: 100,
           metadata: updatedMetadata,
           saved_form_data: formData,
