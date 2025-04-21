@@ -630,11 +630,61 @@ export default function TaskPage({ params }: TaskPageProps) {
                     console.error('[TaskPage] Error updating progress:', err);
                   });
                 }}
+                onSubmit={async (formData) => {
+                  try {
+                    // Create standardized filename with company name
+                    const fileName = `KYB_Form_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+                    
+                    console.log(`[KYB] Starting form submission for task ${task.id}`);
+                    
+                    // Use our new standardized endpoint
+                    const response = await fetch(`/api/tasks/${task.id}/kyb-submit`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        formData,
+                        fileName
+                      }),
+                    });
+                    
+                    if (!response.ok) {
+                      const errorText = await response.text();
+                      throw new Error(`Form submission failed: ${response.status} - ${errorText}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log(`[KYB] Submission successful, file ID: ${result.fileId}`);
+                    
+                    // Store file ID for download functionality
+                    if (result.fileId) {
+                      setFileId(result.fileId);
+                    }
+                    
+                    // Update UI state
+                    setIsSubmitted(true);
+                    
+                    // Show success modal and fire confetti
+                    setShowSuccessModal(true);
+                    fireEnhancedConfetti();
+                    
+                    // Force refresh the task list
+                    fetch('/api/tasks').catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  } catch (error) {
+                    console.error(`[KYB] Error during submission:`, error);
+                    
+                    // Show error toast
+                    toast({
+                      title: "Form Submission Failed",
+                      description: error instanceof Error ? error.message : String(error),
+                      variant: "destructive"
+                    });
+                  }
+                }}
                 onSuccess={() => {
-                  setShowSuccessModal(true);
-                  fireEnhancedConfetti();
-                  
-                  // Fetch updated task data to get the file ID
+                  // This callback is still used for backward compatibility
                   fetch(`/api/tasks/${task.id}`)
                     .then(response => response.json())
                     .then(data => {
