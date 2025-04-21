@@ -800,16 +800,42 @@ a.download = `${taskContentType.toUpperCase()}Form_${task?.id}_${cleanCompanyNam
                         {
                           type: "file_generation",
                           description: "CSV File Generated",
-                          fileId: result.fileId,
+                          fileId: result.fileId, // This is critical for direct file access
                           data: { 
                             details: "The S&P KY3P Security Assessment responses have been saved as a CSV file in your file vault.",
-                            fileId: result.fileId 
+                            fileId: result.fileId, // Required for file download button
+                            buttonText: "Download CSV" // Custom button text
                           }
                         }
                       ];
                       
                       // Update result object to include completedActions
                       result.completedActions = completedActions;
+                    } else {
+                      // Make sure the file actions have the fileId explicitly set
+                      const fileActions = result.completedActions.filter(action => 
+                        action.type === 'file_generation');
+                      
+                      // If server returned file actions but forgot fileId, add it
+                      if (fileActions.length > 0) {
+                        fileActions.forEach(action => {
+                          if (!action.fileId) {
+                            action.fileId = result.fileId;
+                            logger.info('Added missing fileId to file_generation action');
+                          }
+                          
+                          // Make sure data.fileId is also set for the download button
+                          if (action.data && !action.data.fileId) {
+                            action.data.fileId = result.fileId;
+                            logger.info('Added missing fileId to file_generation action data');
+                          }
+                          
+                          // Set a custom button text if none exists
+                          if (action.data && !action.data.buttonText) {
+                            action.data.buttonText = "Download CSV";
+                          }
+                        });
+                      }
                     }
                   }
                   

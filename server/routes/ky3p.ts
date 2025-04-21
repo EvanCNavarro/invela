@@ -424,15 +424,25 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     
     // Add file generation action if the file was created successfully
     if (fileResult.success && fileResult.fileId) {
+      // Log file info for debugging
+      console.log(`[KY3P API] Adding file to completedActions:`, {
+        fileId: fileResult.fileId,
+        fileName: fileResult.fileName
+      });
+      
+      // Add file info to completedActions in the format expected by UniversalSuccessModal
       completedActions.push({
         type: "file_generation",
         description: "CSV File Generated",
-        fileId: fileResult.fileId,
+        fileId: fileResult.fileId, // This is required for the modal to display file
         data: {
           details: `A CSV file containing your S&P KY3P responses has been saved to the File Vault.`,
-          fileId: fileResult.fileId
+          fileId: fileResult.fileId, // This is also needed for the file download button
+          buttonText: "Download CSV" // Optional custom button text
         }
       });
+    } else {
+      console.log(`[KY3P API] File creation failed or no fileId returned:`, fileResult);
     }
     
     res.json({
