@@ -178,6 +178,75 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
       res.status(500).json({ error: 'Failed to fetch responses' });
     }
   });
+  
+  /**
+   * Get Open Banking task progress
+   * This endpoint follows the same pattern as /api/ky3p/progress/:taskId
+   * to ensure compatibility with the UniversalForm component
+   */
+  app.get('/api/open-banking/progress/:taskId', async (req, res) => {
+    const taskId = parseInt(req.params.taskId);
+    
+    try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized access to progress', { taskId });
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required',
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
+      logger.info('[OpenBankingRoutes] Fetching progress for task', { taskId });
+      
+      // Get the task data first
+      const taskData = await db.select().from(tasks)
+        .where(eq(tasks.id, taskId))
+        .limit(1);
+      
+      if (taskData.length === 0) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      
+      const task = taskData[0];
+      
+      // Get all responses for this task
+      const responses = await db.select().from(openBankingResponses)
+        .where(eq(openBankingResponses.task_id, taskId))
+        .orderBy(openBankingResponses.id);
+      
+      // Format responses into a key-value object for the UniversalForm
+      const formData: Record<string, any> = {};
+      
+      // Get all field definitions for mapping
+      const fields = await db.select().from(openBankingFields);
+      const fieldMap = new Map(fields.map(field => [field.id, field]));
+      
+      // Add each response to the form data using field_key as the key
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field) {
+          formData[field.field_key] = response.response_value;
+        }
+      }
+      
+      // Return data in the format expected by the Universal Form
+      res.json({
+        formData,
+        progress: task.progress || 0,
+        status: task.status || 'not_started'
+      });
+    } catch (error) {
+      logger.error('[OpenBankingRoutes] Error fetching progress', { error, taskId });
+      res.status(500).json({ error: 'Failed to fetch progress' });
+    }
+  });
 
   // Save a single field response
   app.post('/api/open-banking/response/:taskId/:fieldId', async (req, res) => {

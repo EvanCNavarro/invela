@@ -377,6 +377,239 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       throw error;
     }
   }
+  
+  /**
+   * Get progress data for the task in the format expected by UniversalForm
+   * This method uses our dedicated progress endpoint for Open Banking tasks
+   */
+  public async getProgress(): Promise<{
+    formData: Record<string, any>;
+    progress: number;
+    status: string;
+  }> {
+    if (!this.taskId) {
+      throw new Error('No task ID provided for getting progress');
+    }
+    
+    try {
+      logger.info(`[OpenBankingFormService] Getting progress for task ${this.taskId}`);
+      
+      const response = await fetch(`/api/open-banking/progress/${this.taskId}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[OpenBankingFormService] Failed to get progress: ${response.status}`, errorText);
+        throw new Error(`Failed to get progress: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      logger.info(`[OpenBankingFormService] Progress loaded successfully:`, {
+        taskId: this.taskId,
+        progress: data.progress,
+        status: data.status,
+        formDataKeys: Object.keys(data.formData || {}).length
+      });
+      
+      // If no form data, use an empty object as fallback
+      return {
+        formData: data.formData || {},
+        progress: data.progress || 0,
+        status: data.status || 'not_started'
+      };
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Error getting progress:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Load progress from the server
+   * This method is used by the FormDataManager to load saved form data
+   */
+  public async loadProgress(taskId?: number): Promise<Record<string, any>> {
+    // Use provided taskId or fall back to the service's taskId
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      throw new Error('No task ID provided for loading progress');
+    }
+    
+    try {
+      logger.info(`[OpenBankingFormService] Loading progress for task ${effectiveTaskId}`);
+      
+      // Use our dedicated Open Banking progress endpoint
+      const progress = await this.getProgress();
+      
+      if (progress && progress.formData) {
+        // Store the form data in the service for future reference
+        this.loadFormData(progress.formData);
+        
+        // Return the form data for the form manager to use
+        return progress.formData;
+      }
+      
+      // If no data was found, return an empty object
+      logger.warn(`[OpenBankingFormService] No form data found for task ${effectiveTaskId}`);
+      return {};
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Error loading progress:', error);
+      return {};
+    }
+  }
+  
+  /**
+   * Save the form's current state
+   * @param options Save options
+   * @returns True if save was successful, false otherwise
+   */
+  public async save(options: { taskId?: number, includeMetadata?: boolean }): Promise<boolean> {
+    if (!this.taskId && !options.taskId) {
+      throw new Error('No task ID provided for saving form');
+    }
+    
+    const effectiveTaskId = options.taskId || this.taskId;
+    
+    try {
+      logger.info(`[OpenBankingFormService] Saving form data for task ${effectiveTaskId}`);
+      
+      // Get current form data
+      const formData = this.getFormData();
+      
+      // Call bulk save API to save all form data at once
+      // This is a more efficient approach than saving individual fields
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          responses: formData
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[OpenBankingFormService] Failed to save form data: ${response.status}`, errorText);
+        return false;
+      }
+      
+      logger.info(`[OpenBankingFormService] Form data saved successfully for task ${effectiveTaskId}`);
+      return true;
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Error saving form data:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Save the current progress 
+   * @param taskId The task ID (optional, will use instance's taskId if not provided)
+   */
+  public async saveProgress(taskId?: number): Promise<void> {
+    await this.save({ taskId, includeMetadata: true });
+  }
+  
+  /**
+   * Submit the form
+   * @param options The submission options
+   * @returns The submission response
+   */
+  public async submit(options: { taskId?: number, fileName?: string, format?: 'json' | 'pdf' | 'csv' }): Promise<{
+    success: boolean;
+    error?: string;
+    details?: string;
+    fileName?: string;
+    fileId?: number;
+  }> {
+    const effectiveTaskId = options.taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      throw new Error('No task ID provided for submitting form');
+    }
+    
+    try {
+      logger.info(`[OpenBankingFormService] Submitting form for task ${effectiveTaskId}`);
+      
+      // First save all form data to ensure everything is up to date
+      const saveResult = await this.save({ taskId: effectiveTaskId, includeMetadata: true });
+      
+      if (!saveResult) {
+        logger.error(`[OpenBankingFormService] Failed to save form data before submission`);
+        return {
+          success: false,
+          error: 'Failed to save form data before submission',
+        };
+      }
+      
+      // Call the submit endpoint
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData: this.getFormData(),
+          fileName: options.fileName
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[OpenBankingFormService] Form submission failed: ${response.status}`, errorText);
+        return {
+          success: false,
+          error: `Form submission failed: ${response.status}`,
+          details: errorText
+        };
+      }
+      
+      const result = await response.json();
+      
+      logger.info(`[OpenBankingFormService] Form submitted successfully:`, {
+        fileId: result.fileId,
+        fileName: result.fileName
+      });
+      
+      return {
+        success: true,
+        fileId: result.fileId,
+        fileName: result.fileName
+      };
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Form submission error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: String(error)
+      };
+    }
+  }
+  
+  /**
+   * Simple validation for the form
+   * @param data The form data to validate
+   * @returns True if the form is valid, or an object with validation errors
+   */
+  public validate(data: Record<string, any>): boolean | Record<string, string> {
+    // Basic form validation logic
+    const errors: Record<string, string> = {};
+    
+    // Get all required fields
+    const requiredFields = this.getFields().filter(field => field.required);
+    
+    for (const field of requiredFields) {
+      const value = data[field.key];
+      
+      // Check if field has a value
+      if (value === undefined || value === null || value === '') {
+        errors[field.key] = 'This field is required';
+      }
+    }
+    
+    // Return true if no errors, otherwise return errors object
+    return Object.keys(errors).length === 0 ? true : errors;
+  }
 }
 
 /**
