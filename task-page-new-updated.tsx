@@ -227,7 +227,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       type = 'card';
     } else if (taskData.task_type === 'security_assessment') {
       type = 'security';
-    } else if (taskData.task_type === 'open_banking_survey') {
+    } else if (taskData.task_type === 'open_banking_survey' || taskData.task_type === 'open_banking') {
       type = 'open_banking';
     }
     
