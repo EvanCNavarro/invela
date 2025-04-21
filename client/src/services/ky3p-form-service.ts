@@ -330,14 +330,23 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
-   * Submit the entire form
+   * Submit the entire form and return the server response
+   * @returns The server response including the file ID for the generated CSV
    */
-  public async submitForm(): Promise<void> {
+  public async submitForm(): Promise<{
+    id: number;
+    status: string;
+    completion_date: string;
+    fileId?: number;
+    [key: string]: any;
+  }> {
     if (!this.taskId) {
       throw new Error('No task ID provided for form submission');
     }
     
     try {
+      logger.info(`[KY3P Form Service] Submitting form for task ${this.taskId}`);
+      
       const response = await fetch(`/api/tasks/${this.taskId}/ky3p-submit`, {
         method: 'POST',
         headers: {
@@ -346,10 +355,20 @@ export class KY3PFormService extends EnhancedKybFormService {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to submit form: ${response.status}`);
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to submit form: ${response.status}`, errorText);
+        throw new Error(`Failed to submit form: ${response.status} - ${errorText}`);
       }
       
-      return response.json();
+      const result = await response.json();
+      
+      logger.info(`[KY3P Form Service] Form successfully submitted:`, {
+        taskId: result.id,
+        status: result.status,
+        fileId: result.fileId
+      });
+      
+      return result;
     } catch (error) {
       logger.error('[KY3P Form Service] Error submitting form:', error);
       throw error;

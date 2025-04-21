@@ -1411,11 +1411,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Add file generation action if applicable
       if (fileId) {
+        // Different message for KY3P assessment (CSV) vs other forms (PDF/JSON)
+        const fileDescription = taskType === 'sp_ky3p_assessment' 
+          ? `S&P KY3P Security Assessment CSV File Created`
+          : `${taskType.toUpperCase()} Form File Created`;
+          
+        const fileDetails = taskType === 'sp_ky3p_assessment'
+          ? "Your S&P KY3P Security Assessment responses have been saved as a CSV file in your file vault."
+          : "The form data has been saved as a document in your file vault.";
+          
         completedActions.push({
           type: "file_generation",
-          description: `${taskType.toUpperCase()} Form File Created`,
+          description: fileDescription,
           data: { 
-            details: "The form data has been saved as a document in your file vault."
+            details: fileDetails,
+            fileId: fileId // Include fileId to allow file download
           }
         });
       }
