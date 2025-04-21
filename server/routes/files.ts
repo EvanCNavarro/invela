@@ -1049,11 +1049,23 @@ router.get("/api/files/:id/download", async (req, res) => {
         
         // If we need to convert the format, parse CSV and convert to the requested format
         if (format !== 'csv' && csvContent.includes(',')) {
-          console.log('[Files] Converting CSV content to:', format);
+          console.log('[Files] Converting CSV content to:', format, 
+            {
+              contentLength: csvContent.length,
+              sampleContent: csvContent.substring(0, 100) + '...',
+              formatRequested: format,
+              fileId
+            }
+          );
           
           try {
             // Parse the CSV content
             const parseCsvRow = (row: string) => {
+              if (!row) {
+                console.warn('[Files] Empty row encountered during CSV parsing');
+                return [];
+              }
+              
               const result: string[] = [];
               let inQuotes = false;
               let currentValue = '';
@@ -1077,8 +1089,44 @@ router.get("/api/files/:id/download", async (req, res) => {
             };
             
             const rows = csvContent.split('\n');
+            console.log('[Files] CSV parsing - row count:', rows.length);
+            
+            if (rows.length === 0) {
+              console.error('[Files] CSV appears to be empty or malformed');
+              return res.status(400).json({ error: "CSV data appears to be empty or malformed" });
+            }
+            
             const headers = parseCsvRow(rows[0]);
-            const dataRows = rows.slice(1).map(row => parseCsvRow(row)).filter(row => row.length > 1);
+            console.log('[Files] CSV parsing - header count:', headers.length, 
+              { 
+                headers: headers.length > 5 ? [...headers.slice(0, 5), '...'] : headers
+              }
+            );
+            
+            if (headers.length === 0) {
+              console.error('[Files] CSV headers could not be parsed correctly');
+              return res.status(400).json({ error: "Could not parse CSV headers" });
+            }
+            
+            const dataRows = rows.slice(1)
+              .map((row, i) => {
+                if (!row.trim()) {
+                  console.log(`[Files] Skipping empty row ${i+1}`);
+                  return [];
+                }
+                const parsed = parseCsvRow(row);
+                if (parsed.length <= 1) {
+                  console.log(`[Files] Row ${i+1} has fewer than 2 values, skipping:`, row.substring(0, 50));
+                }
+                return parsed;
+              })
+              .filter(row => row.length > 1);
+              
+            console.log('[Files] CSV parsing - data row count:', dataRows.length);
+            
+            if (dataRows.length === 0) {
+              console.warn('[Files] CSV contains headers but no data rows');
+            }
             
             // Create structured data object with all fields and responses
             const structuredData = dataRows.map((row, index) => {
@@ -1088,6 +1136,8 @@ router.get("/api/files/:id/download", async (req, res) => {
               });
               return rowData;
             });
+            
+            console.log('[Files] Created structured data with', structuredData.length, 'rows');
             
             // Format the data based on requested format
             let finalContent = '';
@@ -1143,13 +1193,32 @@ router.get("/api/files/:id/download", async (req, res) => {
             }
             
             if (finalContent) {
-              console.log('[Files] Successfully converted content to', format);
+              console.log('[Files] Successfully converted content to', format, {
+                outputSize: finalContent.length
+              });
+              
+              // Add information about the conversion in response headers
+              res.setHeader('X-Conversion-Status', 'success');
+              res.setHeader('X-Conversion-Source-Format', 'csv');
+              res.setHeader('X-Conversion-Target-Format', format);
+              res.setHeader('X-Conversion-Source-Size', csvContent.length.toString());
+              res.setHeader('X-Conversion-Result-Size', finalContent.length.toString());
+              
               return res.send(finalContent);
+            } else {
+              console.warn('[Files] Conversion process completed but produced no content');
+              res.setHeader('X-Conversion-Status', 'empty-result');
             }
           } catch (error: unknown) {
             const conversionError = error as Error;
-            console.error('[Files] Error converting CSV format:', conversionError.message);
+            console.error('[Files] Error converting CSV format:', conversionError.message, conversionError.stack);
+            
+            // Add information about the conversion error in response headers
+            res.setHeader('X-Conversion-Status', 'error');
+            res.setHeader('X-Conversion-Error', conversionError.message.substring(0, 100));
+            
             // Fall back to sending original content if conversion fails
+            console.log('[Files] Falling back to original CSV format due to conversion error');
           }
         }
         
@@ -1212,10 +1281,24 @@ router.get("/api/files/:id/download", async (req, res) => {
         }
       });
     }
-  } catch (error) {
-    console.error("[Files] Error in download endpoint:", error);
+  } catch (error: unknown) {
+    // Cast error to provide better logging
+    const serverError = error as Error;
+    console.error("[Files] Error in download endpoint:", {
+      message: serverError.message,
+      stack: serverError.stack,
+      fileId: req.params.id
+    });
+    
+    // Add detailed error information for debugging
     if (!res.headersSent) {
-      res.status(500).json({ error: "Internal server error" });
+      res.setHeader('X-Error-Type', 'server-error');
+      res.setHeader('X-Error-Details', serverError.message.substring(0, 100));
+      res.status(500).json({ 
+        error: "Internal server error", 
+        details: "There was a problem processing your file download request.",
+        errorId: `file-${req.params.id}-${Date.now()}` // Unique ID for error tracking
+      });
     }
   }
 });
