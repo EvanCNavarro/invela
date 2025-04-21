@@ -116,6 +116,71 @@ Respond with a JSON object containing:
   }
 }
 
+// Helper function to unlock dependent tasks
+async function unlockDependentTasks(taskId: number) {
+  try {
+    logger.info('[OpenBankingRoutes] Checking for dependent tasks to unlock', { taskId });
+    
+    // First, get the task to determine the company
+    const taskData = await db.select().from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (taskData.length === 0) {
+      logger.warn('[OpenBankingRoutes] Task not found when unlocking dependents', { taskId });
+      return 0;
+    }
+    
+    const companyId = taskData[0].company_id;
+    
+    if (!companyId) {
+      logger.warn('[OpenBankingRoutes] Task has no company ID', { taskId });
+      return 0;
+    }
+    
+    // Find all locked tasks for this company that depend on this task
+    const dependentTasks = await db.select().from(tasks)
+      .where(and(
+        eq(tasks.company_id, companyId),
+        eq(tasks.status, TaskStatus.LOCKED),
+        eq(tasks.dependency_task_id, taskId)
+      ));
+    
+    logger.info('[OpenBankingRoutes] Found dependent tasks to unlock', { 
+      taskId,
+      dependentCount: dependentTasks.length,
+      dependentIds: dependentTasks.map(t => t.id)
+    });
+    
+    // Unlock each dependent task
+    for (const depTask of dependentTasks) {
+      await db.update(tasks)
+        .set({
+          status: TaskStatus.NOT_STARTED,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, depTask.id));
+      
+      logger.info('[OpenBankingRoutes] Unlocked dependent task', { taskId: depTask.id });
+      
+      // Broadcast task update via WebSocket
+      broadcastMessage({
+        type: 'task_updated',
+        payload: {
+          taskId: depTask.id,
+          companyId: companyId,
+          status: TaskStatus.NOT_STARTED
+        }
+      });
+    }
+    
+    return dependentTasks.length;
+  } catch (error) {
+    logger.error('[OpenBankingRoutes] Error unlocking dependent tasks', { error, taskId });
+    return 0;
+  }
+}
+
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
 
@@ -449,9 +514,137 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
     }
   });
 
-  // Submit the Open Banking Survey
-  app.post('/api/open-banking/submit/:taskId', async (req, res) => {
+  // Bulk update Open Banking responses (used by the save method in OpenBankingFormService)
+  app.post('/api/tasks/:taskId/open-banking-responses/bulk', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
+    const { responses } = req.body;
+    
+    try {
+      // Check authentication
+      if (!req.isAuthenticated()) {
+        logger.warn('[OpenBankingRoutes] Unauthorized access to bulk update', { taskId });
+        return res.status(401).json({ 
+          error: 'Unauthorized',
+          message: 'Authentication required', 
+          details: {
+            authenticated: false,
+            hasUser: false,
+            hasSession: !!req.session,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+      
+      logger.info('[OpenBankingRoutes] Processing bulk update for task', { 
+        taskId, 
+        responseKeys: Object.keys(responses || {}).length 
+      });
+      
+      if (!responses || typeof responses !== 'object') {
+        return res.status(400).json({ error: 'Invalid responses format' });
+      }
+      
+      // Get all field definitions for mapping keys to IDs
+      const fields = await db.select().from(openBankingFields);
+      const fieldKeyToIdMap = new Map(fields.map(field => [field.field_key, field.id]));
+      
+      // Process each response from the key-value object
+      const processedCount = { updated: 0, created: 0, skipped: 0 };
+      
+      for (const [fieldKey, responseValue] of Object.entries(responses)) {
+        // Skip if field key doesn't exist
+        if (!fieldKeyToIdMap.has(fieldKey)) {
+          logger.warn(`[OpenBankingRoutes] Field not found for key: ${fieldKey}`);
+          processedCount.skipped++;
+          continue;
+        }
+        
+        const fieldId = fieldKeyToIdMap.get(fieldKey);
+        
+        // Check if a response already exists
+        const existingResponse = await db.select()
+          .from(openBankingResponses)
+          .where(and(
+            eq(openBankingResponses.task_id, taskId),
+            eq(openBankingResponses.field_id, fieldId!)
+          ))
+          .limit(1);
+        
+        // Convert response value to string and trim
+        const processedValue = responseValue?.toString().trim() || '';
+        const status = processedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
+        
+        if (existingResponse.length > 0) {
+          // Update existing response
+          await db.update(openBankingResponses)
+            .set({
+              response_value: processedValue,
+              status,
+              version: existingResponse[0].version + 1,
+              updated_at: new Date()
+            })
+            .where(eq(openBankingResponses.id, existingResponse[0].id));
+          
+          processedCount.updated++;
+        } else {
+          // Create new response
+          await db.insert(openBankingResponses)
+            .values({
+              task_id: taskId,
+              field_id: fieldId!,
+              response_value: processedValue,
+              status,
+              version: 1
+            });
+          
+          processedCount.created++;
+        }
+      }
+      
+      // Calculate task progress
+      const totalFields = fields.length;
+      
+      const completedResponses = await db.select().from(openBankingResponses)
+        .where(and(
+          eq(openBankingResponses.task_id, taskId),
+          eq(openBankingResponses.status, KYBFieldStatus.COMPLETE)
+        ));
+      
+      const completedCount = completedResponses.length;
+      const progress = totalFields > 0 ? Math.round((completedCount / totalFields) * 100) / 100 : 0;
+      
+      // Update task progress
+      await db.update(tasks)
+        .set({ 
+          progress, 
+          updated_at: new Date(),
+          status: progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS
+        })
+        .where(eq(tasks.id, taskId));
+      
+      logger.info('[OpenBankingRoutes] Bulk update completed', { 
+        taskId, 
+        stats: processedCount,
+        progress
+      });
+      
+      res.json({ 
+        success: true, 
+        taskId,
+        progress,
+        stats: processedCount,
+        message: `Processed ${processedCount.updated + processedCount.created} responses`
+      });
+    } catch (error) {
+      logger.error('[OpenBankingRoutes] Error processing bulk update', { error, taskId });
+      res.status(500).json({ error: 'Failed to process bulk update' });
+    }
+  });
+
+  // Submit the Open Banking survey form and generate a CSV file
+  app.post('/api/tasks/:taskId/open-banking-submit', async (req, res) => {
+    const taskId = parseInt(req.params.taskId);
+    const { formData, fileName } = req.body;
     
     try {
       // Check authentication
@@ -487,293 +680,117 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
         return res.status(400).json({ error: 'Task is not associated with a company' });
       }
       
-      // Get all responses for this task
+      // Get the company data for context
+      const companyData = await db.select().from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      if (companyData.length === 0) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      const company = companyData[0];
+      
+      // Get all fields to prepare the CSV
+      const fields = await db.select().from(openBankingFields)
+        .orderBy(openBankingFields.order);
+      
+      // Get all existing responses
       const responses = await db.select({
-        id: openBankingResponses.id,
         fieldId: openBankingResponses.field_id,
         responseValue: openBankingResponses.response_value,
-        aiSuspicionLevel: openBankingResponses.ai_suspicion_level,
-        partialRiskScore: openBankingResponses.partial_risk_score
-      }).from(openBankingResponses)
+        fieldKey: openBankingFields.field_key,
+        displayName: openBankingFields.display_name,
+        question: openBankingFields.question,
+        group: openBankingFields.group
+      })
+        .from(openBankingResponses)
+        .leftJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
         .where(eq(openBankingResponses.task_id, taskId));
       
-      // If no responses found, reject submission
-      if (responses.length === 0) {
-        return res.status(400).json({
-          error: 'Cannot submit empty form. Please provide responses to the required fields.'
-        });
-      }
+      // Create CSV content
+      let csvContent = 'Section,Field Name,Question,Response\n';
       
-      // Get all fields to check completion
-      const fields = await db.select().from(openBankingFields);
-      if (fields.length === 0) {
-        return res.status(500).json({
-          error: 'Form field definitions not found. Please contact support.'
-        });
-      }
+      // Sort responses by group and field order
+      const fieldMap = new Map(fields.map(field => [field.id, field]));
       
-      // Check if all required fields have responses
-      const requiredFields = fields.filter(field => field.required);
-      const requiredFieldIds = requiredFields.map(field => field.id);
-      const respondedFieldIds = responses.map(resp => resp.fieldId);
-      
-      const missingRequiredFields = requiredFieldIds.filter(
-        id => !respondedFieldIds.includes(id) || 
-              !responses.find(r => r.fieldId === id)?.responseValue
-      );
-      
-      if (missingRequiredFields.length > 0) {
-        const missingFieldsInfo = await db.select({
-          id: openBankingFields.id,
-          fieldKey: openBankingFields.field_key,
-          displayName: openBankingFields.display_name
-        }).from(openBankingFields)
-          .where(inArray(openBankingFields.id, missingRequiredFields));
+      const sortedResponses = [...responses].sort((a, b) => {
+        const fieldA = fieldMap.get(a.fieldId);
+        const fieldB = fieldMap.get(b.fieldId);
         
-        return res.status(400).json({ 
-          error: 'Required fields are missing responses',
-          missingFields: missingFieldsInfo
-        });
-      }
-      
-      // Calculate risk score from all responses
-      const maxPossibleRiskScore = 1000; // Arbitrary max score
-      let totalRiskScore = 0;
-      
-      responses.forEach(response => {
-        if (response.partialRiskScore) {
-          totalRiskScore += response.partialRiskScore;
+        if (!fieldA || !fieldB) return 0;
+        
+        // Sort by group first, then by order within group
+        if (fieldA.group !== fieldB.group) {
+          return fieldA.group.localeCompare(fieldB.group);
         }
+        
+        return (fieldA.order || 0) - (fieldB.order || 0);
       });
       
-      // Normalize to 0-100 scale
-      const riskScore = Math.min(100, Math.round((totalRiskScore / maxPossibleRiskScore) * 100));
-      
-      logger.info('[OpenBankingRoutes] Calculated risk score', { taskId, riskScore });
-      
-      // Generate CSV file
-      const csvFileName = `open_banking_survey_${task.company_id}_${new Date().toISOString().slice(0, 10)}.csv`;
-      const csvFilePath = path.join(__dirname, '../../temp', csvFileName);
-      
-      // Ensure temp directory exists
-      const tempDir = path.join(__dirname, '../../temp');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
+      // Add each response to the CSV
+      for (const response of sortedResponses) {
+        // Escape quotes in values
+        const section = (response.group || '').replace(/"/g, '""');
+        const fieldName = (response.displayName || '').replace(/"/g, '""');
+        const question = (response.question || '').replace(/"/g, '""');
+        const value = (response.responseValue || '').replace(/"/g, '""');
+        
+        csvContent += `"${section}","${fieldName}","${question}","${value}"\n`;
       }
       
-      // Map the fields and responses for CSV output
-      const fieldMap = new Map(fields.map(f => [f.id, f]));
-      const csvData = responses.map(response => {
-        const field = fieldMap.get(response.fieldId);
-        return {
-          'Field': field?.display_name || '',
-          'Group': field?.group || '',
-          'Question': field?.question || '',
-          'Response': response.responseValue || '',
-          'Suspicion Level': response.aiSuspicionLevel || 0,
-          'Risk Score': response.partialRiskScore || 0
-        };
-      });
+      // Generate a unique filename if none provided
+      const submissionDate = new Date().toISOString().split('T')[0];
+      const effectiveFileName = fileName || 
+        `Open_Banking_Survey_${company.name.replace(/[^a-zA-Z0-9]/g, '_')}_${submissionDate}.csv`;
       
-      // Generate CSV file using a simple approach (without csv-stringify)
-      const headers = Object.keys(csvData[0]).join(',');
-      const rows = csvData.map(row => 
-        Object.values(row).map(value => 
-          typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
-        ).join(',')
-      );
-      
-      // Combine headers and rows
-      const csvContent = [headers, ...rows].join('\n');
-      
-      // Write to file
-      fs.writeFileSync(csvFilePath, csvContent);
-      
-      logger.info('[OpenBankingRoutes] CSV file generated', { taskId, csvFilePath });
-      
-      // Create a file record in the database
-      const userId = req.user?.id || null;
-      
-      if (!userId) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
-      const fileStats = fs.statSync(csvFilePath);
-      const fileBuffer = fs.readFileSync(csvFilePath);
-      
-      // Save file to database
-      const [fileRecord] = await db.insert(files)
+      // Store the file
+      const fileRecord = await db.insert(files)
         .values({
-          name: csvFileName,
-          size: fileStats.size,
-          type: 'text/csv',
-          data: fileBuffer,
-          user_id: userId,
+          name: effectiveFileName,
           company_id: companyId,
-          category: DocumentCategory.OTHER,
-          metadata: {
-            taskId,
-            taskType: 'open_banking_survey',
-            generated: true
-          }
+          task_id: taskId,
+          content_type: 'text/csv',
+          category: DocumentCategory.OPEN_BANKING_SURVEY,
+          contents: csvContent,
+          size: Buffer.from(csvContent).length,
+          user_id: req.user?.id
         })
         .returning();
       
-      // Update task status
+      if (fileRecord.length === 0) {
+        throw new Error('Failed to create file record');
+      }
+      
+      // Mark the task as submitted
       await db.update(tasks)
         .set({
-          status: TaskStatus.COMPLETED,
-          progress: 1,
-          completion_date: new Date(),
-          updated_at: new Date()
+          status: TaskStatus.SUBMITTED,
+          updated_at: new Date(),
+          progress: 1
         })
         .where(eq(tasks.id, taskId));
       
-      // Update company with risk score and onboarding status
-      const companyUpdate = await db.update(companies)
-        .set({
-          risk_score: riskScore,
-          onboarding_company_completed: true,
-          available_tabs: sql`array_append(available_tabs, 'dashboard')`,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, companyId))
-        .returning({
-          id: companies.id,
-          name: companies.name,
-          available_tabs: companies.available_tabs
-        });
+      // Unlock dependent tasks if any
+      const unlockedTaskCount = await unlockDependentTasks(taskId);
       
-      // After updating the company, broadcast a WebSocket event to notify clients
-      if (companyUpdate.length > 0) {
-        broadcastMessage({
-          type: 'company_updated',
-          payload: {
-            company_id: companyId,
-            company_name: companyUpdate[0].name,
-            available_tabs: companyUpdate[0].available_tabs,
-            cache_invalidation: true
-          }
-        });
-      }
+      logger.info('[OpenBankingRoutes] Form submitted successfully', { 
+        taskId, 
+        fileId: fileRecord[0].id,
+        unlockedTaskCount
+      });
       
-      // Unlock dependent tasks
-      await unlockDependentTasks(taskId);
-      
-      // Clean up the temporary file
-      try {
-        fs.unlinkSync(csvFilePath);
-      } catch (error) {
-        logger.warn('[OpenBankingRoutes] Failed to clean up temporary CSV file', { error, csvFilePath });
-      }
-      
-      // Return success response with risk score and file information
+      // Return submission result
       res.json({
         success: true,
-        taskId,
-        riskScore,
-        assessmentFile: fileRecord.id
+        fileId: fileRecord[0].id,
+        fileName: effectiveFileName,
+        message: 'Form submitted successfully',
+        unlockedTaskCount
       });
-      
     } catch (error) {
-      logger.error('[OpenBankingRoutes] Error submitting Open Banking Survey', { error, taskId });
-      res.status(500).json({ error: 'Failed to submit Open Banking Survey' });
+      logger.error('[OpenBankingRoutes] Error submitting form', { error, taskId });
+      res.status(500).json({ error: 'Failed to submit form' });
     }
   });
-
-  logger.info('[OpenBankingRoutes] Routes setup completed');
-}
-
-// Helper function to unlock dependent tasks
-async function unlockDependentTasks(taskId: number) {
-  try {
-    logger.info('[OpenBankingRoutes] Checking for dependent tasks to unlock', { taskId });
-    
-    // Get the current task
-    const currentTask = await db.select({
-      id: tasks.id,
-      company_id: tasks.company_id,
-      task_type: tasks.task_type
-    }).from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
-    
-    if (currentTask.length === 0) {
-      logger.warn('[OpenBankingRoutes] Task not found for unlocking dependents', { taskId });
-      return 0;
-    }
-    
-    const task = currentTask[0];
-    const companyId = task.company_id;
-    
-    if (!companyId) {
-      logger.warn('[OpenBankingRoutes] Task has no company ID, cannot unlock dependents', { taskId });
-      return 0;
-    }
-    
-    // Check if this is an open banking survey task
-    if (task.task_type !== 'open_banking_survey') {
-      logger.info('[OpenBankingRoutes] Not an open banking survey task, no dependents to unlock', { taskId, taskType: task.task_type });
-      return 0;
-    }
-    
-    // Find tasks that explicitly depend on this one via metadata
-    // This handles direct dependencies specified in the task metadata
-    const explicitDependentTasks = await db.select().from(tasks)
-      .where(and(
-        eq(tasks.company_id, companyId),
-        eq(tasks.status, TaskStatus.LOCKED),
-        sql`${tasks.metadata}->>'dependsOn' = ${taskId.toString()}`
-      ));
-    
-    // Also find tasks that depend on the completion of open banking survey by task type
-    // This handles implicit dependencies based on task type
-    const implicitDependentTasks = await db.select().from(tasks)
-      .where(and(
-        eq(tasks.company_id, companyId),
-        eq(tasks.status, TaskStatus.LOCKED),
-        sql`${tasks.metadata}->>'dependsOnType' = 'open_banking_survey'`
-      ));
-    
-    // Combine the lists, removing duplicates
-    const dependentTaskIds = new Set([
-      ...explicitDependentTasks.map(t => t.id),
-      ...implicitDependentTasks.map(t => t.id)
-    ]);
-    
-    const dependentTasks = await db.select().from(tasks)
-      .where(inArray(tasks.id, Array.from(dependentTaskIds)));
-    
-    logger.info('[OpenBankingRoutes] Found dependent tasks', { 
-      count: dependentTasks.length,
-      taskIds: dependentTasks.map(t => t.id).join(',')
-    });
-    
-    // Unlock each dependent task
-    for (const depTask of dependentTasks) {
-      await db.update(tasks)
-        .set({
-          status: TaskStatus.NOT_STARTED,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, depTask.id));
-      
-      logger.info('[OpenBankingRoutes] Unlocked dependent task', { taskId: depTask.id });
-      
-      // Broadcast task update via WebSocket
-      broadcastMessage({
-        type: 'task_updated',
-        payload: {
-          taskId: depTask.id,
-          companyId: companyId,
-          status: TaskStatus.NOT_STARTED
-        }
-      });
-    }
-    
-    return dependentTasks.length;
-  } catch (error) {
-    logger.error('[OpenBankingRoutes] Error unlocking dependent tasks', { error, taskId });
-    return 0;
-  }
 }
