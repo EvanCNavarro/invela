@@ -339,7 +339,8 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     responses.forEach(response => {
       const field = fieldMap.get(response.field_id);
       if (field && response.response_value) {
-        formattedData[field.key] = response.response_value;
+        // Use field_key which is the correct property name from the db schema
+        formattedData[field.field_key] = response.response_value;
       }
     });
     

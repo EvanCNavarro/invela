@@ -47,11 +47,22 @@ export class FileCreationService {
     // Create a field key map for easier lookup
     const fieldMap = new Map();
     if (Array.isArray(fields)) {
+      console.log(`[FileCreation] Processing ${fields.length} fields for CSV generation`);
+      
+      // Log a sample field to debug schema
+      if (fields.length > 0) {
+        console.log('[FileCreation] Sample field structure:', 
+          JSON.stringify(fields[0], null, 2).substring(0, 500)); // Limit output size
+      }
+      
       fields.forEach(field => {
         // Handle different field key properties based on the schema
-        const key = field.key || field.field_key;
+        // KY3P fields use field_key in the database schema
+        const key = field.field_key || field.key;
         if (key) {
           fieldMap.set(key, field);
+        } else {
+          console.warn('[FileCreation] Field missing both field_key and key properties:', field);
         }
       });
     }
@@ -65,9 +76,21 @@ export class FileCreationService {
       
       // Find field metadata if available
       const field = fieldMap.get(key);
+      
+      // Log field data if debugging
+      if (field && process.env.NODE_ENV !== 'production') {
+        console.log(`[FileCreation] Processing field ${key}:`, {
+          fieldKeys: Object.keys(field).join(', '),
+          fieldId: field.id,
+          fieldKey: field.field_key || field.key
+        });
+      }
+      
+      // Handle various field schema possibilities - KY3P fields use group/section differently
       const group = field?.group || '';
-      const section = field?.section || '';
-      // Handle various field schema possibilities
+      // Some schemas use section, others use step_index
+      const section = field?.section || (field?.step_index ? `Step ${field.step_index}` : '');
+      // Ensure we get the question text from various possible field names
       const question = field?.question || field?.display_name || field?.label || key;
       
       // Escape quotes in CSV fields
