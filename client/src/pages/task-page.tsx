@@ -456,7 +456,16 @@ export default function TaskPage({ params }: TaskPageProps) {
     // Update state variables safely in useEffect
     setTaskContentType(processedData.type);
     setDerivedCompanyName(processedData.extractedName);
+    // Use displayNameValue which includes the proper company metadata for all forms
     setDisplayName(processedData.displayNameValue);
+    
+    // Log company name extraction for debugging
+    console.log(`[TaskPage] Company name set for ${processedData.type} form:`, {
+      displayNameValue: processedData.displayNameValue,
+      extractedName: processedData.extractedName,
+      metadataName: task?.metadata?.company?.name || task?.metadata?.companyName,
+      taskTitle: task?.title
+    });
     setShouldRedirect(processedData.shouldRedirect);
     setIsSubmitted(processedData.isSubmitted);
     
