@@ -2775,7 +2775,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                     {/* Review button section */}
                     {activeSection === allSections.length - 1 && (
                       <>
-                        {form.getValues("agreement_confirmation") && overallProgress === 100 ? (
+                        {form.getValues("agreement_confirmation") && overallProgress === 100 && 
+                         taskStatus !== 'submitted' && taskStatus !== 'approved' ? (
                           <Button
                             type="submit"
                             className="bg-primary"
@@ -2795,7 +2796,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent side="top">
-                                <p>{overallProgress < 100 ? "Please complete all required fields" : "Please confirm agreement"}</p>
+                                <p>
+                                  {taskStatus === 'submitted' || taskStatus === 'approved' 
+                                    ? "Form has already been submitted"
+                                    : overallProgress < 100 
+                                      ? "Please complete all required fields" 
+                                      : "Please confirm agreement"}
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -2827,7 +2834,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           setActiveSection(activeSection + 1);
                         }}
                         className="flex items-center gap-1"
-                        disabled={overallProgress < 100}
+                        disabled={overallProgress < 100 || taskStatus === 'submitted' || taskStatus === 'approved'}
                       >
                         Final Review <Eye className="ml-1 h-4 w-4" />
                       </Button>
