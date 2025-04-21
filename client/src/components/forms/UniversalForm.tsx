@@ -1227,8 +1227,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // First submit this empty data directly to the server
       if (taskId) {
         try {
+          let bulkEndpointUsed = false;
+          let result = null;
+          
+          // Use appropriate bulk endpoint based on task type
           if (taskType === 'sp_ky3p_assessment') {
-            // For KY3P forms, use the bulk endpoint to clear all fields
+            // For KY3P forms, use the KY3P bulk endpoint
             logger.info(`[UniversalForm] Using KY3P bulk endpoint to clear all fields for task ${taskId}`);
             const bulkResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
               method: 'POST',
@@ -1239,18 +1243,35 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             });
             
             if (bulkResponse.ok) {
-              const result = await bulkResponse.json();
-              logger.info(`[UniversalForm] KY3P fields cleared: ${result.updatedFields} fields reset`);
-              
-              // Force invalidate task queries to update task center
-              const { queryClient } = await import('@/lib/queryClient');
-              queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-              queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+              result = await bulkResponse.json();
+              bulkEndpointUsed = true;
+              logger.info(`[UniversalForm] KY3P fields cleared: ${result.updatedFields || 0} fields reset`);
             } else {
               logger.warn(`[UniversalForm] Failed to clear KY3P fields on server: ${bulkResponse.status}`);
             }
-          } else {
-            // For KYB forms, use the standard endpoint
+          } else if (taskType === 'open_banking_survey') {
+            // For Open Banking forms, use the Open Banking bulk endpoint
+            logger.info(`[UniversalForm] Using Open Banking bulk endpoint to clear all fields for task ${taskId}`);
+            const bulkResponse = await fetch(`/api/tasks/${taskId}/open-banking-responses/bulk`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ responses: emptyData })
+            });
+            
+            if (bulkResponse.ok) {
+              result = await bulkResponse.json();
+              bulkEndpointUsed = true;
+              logger.info(`[UniversalForm] Open Banking fields cleared: ${result.stats?.updated || 0} fields reset`);
+            } else {
+              logger.warn(`[UniversalForm] Failed to clear Open Banking fields on server: ${bulkResponse.status}`);
+            }
+          }
+          
+          // If no bulk endpoint was used or successful, fall back to standard KYB endpoint
+          if (!bulkEndpointUsed) {
+            // For KYB forms or as fallback, use the standard endpoint
             const response = await fetch('/api/kyb/progress', {
               method: 'POST',
               headers: {
@@ -1265,33 +1286,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             });
             
             if (!response.ok) {
-              logger.warn(`Failed to clear fields on server: ${response.status}`);
+              logger.warn(`[UniversalForm] Failed to clear fields on server: ${response.status}`);
             } else {
               logger.info('[UniversalForm] Successfully cleared fields on server');
             }
           }
+          
+          // Force invalidate task queries to update task center - do this for all task types
+          const { queryClient } = await import('@/lib/queryClient');
+          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          
         } catch (serverError) {
           logger.error('[UniversalForm] Server error when clearing fields:', serverError);
         }
       }
 
-      // Reset all form fields with react-hook-form
+      // Reset form in a single operation instead of field by field
       form.reset(emptyData);
-      
-      // Force reset any fields that might not have been properly cleared
-      fields.forEach(field => {
-        const { key } = field;
-        form.setValue(key, '');
-        form.clearErrors(key);
-        
-        // Update fields individually through our existing update mechanism
-        if (updateField) {
-          updateField(key, '');
-        }
-      });
-      
-      // No need to use setFormState since it's not available
-      // We're using form.reset and manually updating fields instead
+      form.clearErrors();
       
       // Refresh status to reload form from server 
       if (refreshStatus) {
