@@ -53,7 +53,7 @@ type TaskContentType = 'kyb' | 'card' | 'security' | 'ky3p' | 'open_banking' | '
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const { toast, dismiss } = useToast();
+  const { toast } = useToast();
   
   // All state variables defined at the top level
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -116,9 +116,6 @@ export default function TaskPage({ params }: TaskPageProps) {
       throw new Error("No file is available for download. Please contact support.");
     }
     
-    // Create a toast ID for the download started notification
-    let downloadStartedToastId: string | undefined;
-    
     try {
       // If this is a ky3p task but we're using the security form file, log this information
       if (taskContentType === 'ky3p') {
@@ -129,23 +126,14 @@ export default function TaskPage({ params }: TaskPageProps) {
         });
       }
       
-      // Display initial "Download Started" toast
+      // Prepare task type display name for toast notifications
       const taskTypeDisplay = taskContentType === 'kyb' ? 'KYB Assessment' :
                            taskContentType === 'ky3p' ? 'S&P KY3P Assessment' :
                            taskContentType === 'open_banking' ? 'Open Banking Assessment' :
                            taskContentType === 'card' ? 'CARD Assessment' : 'Form';
       
-      // Create a unique toast ID
-      const toastId = `download-${format}-${Date.now()}`;
-      downloadStartedToastId = toastId;
-      
-      // Show toast with auto-dismiss feature
-      toast({
-        id: toastId,
-        title: "Download Started",
-        description: `Your ${taskTypeDisplay} is being downloaded as ${format.toUpperCase()} file.`,
-        variant: "default",
-      });
+      // Skip showing the "Download Started" toast as requested
+      // We'll just show the completion toast once download is finished
       
       console.log(`[TaskPage] Fetching file from: /api/files/${fileId}/download?format=${format}`);
       
@@ -292,10 +280,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       // Display success toast to confirm download complete
       // We already have the taskTypeDisplay variable from above
       
-      // First dismiss the "Download Started" toast if it exists
-      if (downloadStartedToastId) {
-        dismiss(downloadStartedToastId);
-      }
+      // No need to dismiss anything since we're not showing the "Download Started" toast
       
       // Show the success toast
       toast({
@@ -308,10 +293,7 @@ export default function TaskPage({ params }: TaskPageProps) {
     } catch (err) {
       console.error('[TaskPage] Download error:', err);
       
-      // Dismiss the "Download Started" toast if it exists
-      if (downloadStartedToastId) {
-        dismiss(downloadStartedToastId);
-      }
+      // No need to dismiss anything since we're not showing the "Download Started" toast
       
       toast({
         title: "Download Failed",
@@ -319,7 +301,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         variant: "destructive",
       });
     }
-  }, [fileId, taskContentType, toast, dismiss]);
+  }, [fileId, taskContentType, toast]);
   
   // Fetch task data and keep local state to allow updates
   const { data: taskData, isLoading, error } = useQuery<Task>({
