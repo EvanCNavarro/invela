@@ -153,10 +153,10 @@ export class KY3PFormService extends EnhancedKybFormService {
       label: apiField.label,
       description: apiField.description,
       type: apiField.field_type,
-      // Set the group property to match section - this is what EnhancedKybFormService expects
-      group: apiField.section,
-      // Also maintain the section property for our own methods
-      section: apiField.section,
+      // Now we directly use group since we've migrated the database schema
+      group: apiField.group,
+      // Set section to match group for consistency
+      section: apiField.group,
       required: apiField.is_required,
       helpText: apiField.help_text,
       demoAutofill: apiField.demo_autofill,
