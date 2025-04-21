@@ -551,16 +551,34 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // Get current form data
       const formData = this.getFormData();
       
-      // Call bulk save API to save all form data at once
-      // This is a more efficient approach than saving individual fields
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/bulk`, {
+      // Calculate which fields were updated - for timestamp tracking
+      const fieldUpdates = Object.keys(formData);
+      
+      // Get current progress and status to include in the save
+      let progress, status;
+      try {
+        // Try to fetch current progress first
+        const progressData = await this.getProgress();
+        progress = progressData.progress;
+        status = progressData.status;
+      } catch (progressError) {
+        logger.warn('[OpenBankingFormService] Unable to fetch current progress, will calculate on server', progressError);
+        // Progress will be calculated on the server side
+      }
+      
+      // Use the standardized Open Banking progress endpoint
+      const response = await fetch(`/api/open-banking/progress`, {
         method: 'POST',
-        credentials: 'include', // Include session cookies
+        credentials: 'include', 
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          responses: formData
+          taskId: effectiveTaskId,
+          formData,
+          fieldUpdates,
+          progress,
+          status
         }),
       });
       
@@ -570,7 +588,18 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         return false;
       }
       
-      logger.info(`[OpenBankingFormService] Form data saved successfully for task ${effectiveTaskId}`);
+      const result = await response.json();
+      
+      // Update local form data with any server-side changes
+      if (result.savedData && result.savedData.formData) {
+        this.loadFormData(result.savedData.formData);
+      }
+      
+      logger.info(`[OpenBankingFormService] Form data saved successfully for task ${effectiveTaskId}`, {
+        progress: result.savedData?.progress,
+        status: result.savedData?.status
+      });
+      
       return true;
     } catch (error) {
       logger.error('[OpenBankingFormService] Error saving form data:', error);
@@ -654,17 +683,13 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       const wasSavingEnabled = this.autoSaveEnabled;
       this.autoSaveEnabled = false;
       
-      // Call the bulk endpoint to clear all fields at once with special clearAll flag
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/bulk`, {
+      // Use the standardized form clearing endpoint - consistent with KYB/KY3P
+      const response = await fetch(`/api/open-banking/clear/${effectiveTaskId}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          responses: emptyData,
-          clearAll: true // Server will handle this with special transaction & reconciliation skip
-        }),
+        }
       });
       
       if (!response.ok) {

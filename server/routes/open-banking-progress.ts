@@ -105,6 +105,84 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
   });
   
   /**
+   * Clear all field responses for a task
+   */
+  router.post('/api/open-banking/clear/:taskId', requireAuth, async (req, res) => {
+    try {
+      const taskId = parseInt(req.params.taskId);
+      
+      if (isNaN(taskId)) {
+        return res.status(400).json({ error: 'Invalid task ID' });
+      }
+      
+      logger.info(`[Open Banking API] Clearing all field responses for task ${taskId}`);
+      
+      // Verify the user has access to this task
+      const [task] = await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId))
+        .limit(1);
+      
+      if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+      }
+      
+      // Check access - user must be assigned to the task or part of the company
+      if (task.assigned_to !== req.user.id && task.created_by !== req.user.id && task.company_id !== req.user.company_id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Use a transaction to ensure all operations succeed or fail together
+      await db.transaction(async (tx) => {
+        // First get all existing responses for reference
+        const existingResponses = await tx
+          .select()
+          .from(openBankingResponses)
+          .where(eq(openBankingResponses.task_id, taskId));
+        
+        // Delete all responses for this task
+        await tx
+          .delete(openBankingResponses)
+          .where(eq(openBankingResponses.task_id, taskId));
+        
+        // Update the task status and progress
+        await tx
+          .update(tasks)
+          .set({
+            progress: 0,
+            status: TaskStatus.NOT_STARTED,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+        
+        // Clear all timestamps for this task
+        await tx.execute(sql`
+          DELETE FROM open_banking_field_timestamps
+          WHERE task_id = ${taskId}
+        `);
+        
+        logger.info(`[Open Banking API] Cleared ${existingResponses.length} responses for task ${taskId}`);
+      });
+      
+      // Broadcast progress update via WebSocket
+      broadcastProgressUpdate(taskId, 0, TaskStatus.NOT_STARTED);
+      
+      res.json({
+        success: true,
+        message: 'All field responses cleared',
+        taskId
+      });
+    } catch (error) {
+      logger.error('[Open Banking API] Error clearing field responses', error);
+      res.status(500).json({
+        error: 'Failed to clear field responses',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  /**
    * Save progress for a task with timestamp tracking
    */
   router.post('/api/open-banking/progress', requireAuth, async (req, res) => {
