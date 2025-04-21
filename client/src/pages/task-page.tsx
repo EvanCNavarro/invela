@@ -17,6 +17,7 @@ import { OpenBankingSuccessModal } from "@/components/openbanking/OpenBankingSuc
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
+import { queryClient } from '@/lib/queryClient';
 
 interface TaskPageProps {
   params: {
@@ -422,7 +423,6 @@ export default function TaskPage({ params }: TaskPageProps) {
     const extractedName = extractCompanyNameFromTitle(taskData.title);
     
     // Extract company name from current company data (using React Query cache)
-    const { queryClient } = require('@/lib/queryClient');
     const currentCompanyData = queryClient.getQueryData<any>(['/api/companies/current']);
     const currentCompanyName = currentCompanyData?.name;
     
