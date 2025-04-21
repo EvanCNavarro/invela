@@ -187,28 +187,36 @@ export class OpenBankingFormService extends EnhancedKybFormService {
             });
             
             // Map fields to the format expected by the Universal Form
-            const formattedFields = sortedFields.map(field => ({
-              id: field.id,
-              name: field.field_key,
-              key: field.field_key, // Important: add key property for form mapping
-              label: field.display_name,
-              displayName: field.display_name, // Add displayName for consistency
-              description: field.help_text,
-              question: field.question || field.display_name, // Add question for form display
-              type: this.mapFieldType(field.field_type),
-              required: field.is_required || field.required || false,
-              options: this.parseFieldOptions(field),
-              placeholder: field.placeholder || field.display_name,
-              validationType: field.validation_type,
-              validationRules: field.validation_rules
-            }));
+            const formattedFields = sortedFields.map(field => {
+              // Generate a section ID to match this field's section (for proper section organization)
+              const sectionId = `step${stepIndex}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+              
+              return {
+                id: field.id,
+                name: field.field_key,
+                key: field.field_key, // Important: add key property for form mapping
+                label: field.display_name,
+                displayName: field.display_name, // Add displayName for consistency
+                description: field.help_text,
+                question: field.question || field.display_name, // Add question for form display
+                type: this.mapFieldType(field.field_type),
+                required: field.is_required || field.required || false,
+                options: this.parseFieldOptions(field),
+                placeholder: field.placeholder || field.display_name,
+                validationType: field.validation_type,
+                validationRules: field.validation_rules,
+                section: sectionId, // Critical for field-section association
+                group: groupName
+              };
+            });
             
             return {
               id: `step${stepIndex}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`,
               title: groupName,
               order: parseInt(stepIndex),
               fields: formattedFields,
-              collapsed: false
+              collapsed: false,
+              description: `${groupName} related questions`
             };
           });
         })
