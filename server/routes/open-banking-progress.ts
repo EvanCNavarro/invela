@@ -364,11 +364,31 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
       if (!newStatus) {
         // Always advance from not_started if there's any progress at all
         if (progress > 0) {
-          // If progress is complete, mark as ready for submission
-          newStatus = progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS;
+          // If progress is complete (100%), mark as ready for submission
+          newStatus = progress >= 100 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS;
         } else {
           // Only use not_started if there's truly no progress
           newStatus = TaskStatus.NOT_STARTED;
+        }
+      }
+      
+      // Regardless of what status was provided, enforce the progress-status relationship for consistency
+      // This ensures the status is always appropriate for the current progress
+      if (progress > 0 && newStatus === TaskStatus.NOT_STARTED) {
+        newStatus = progress >= 100 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS;
+        logger.info('[Open Banking API] Upgrading task status due to progress:', {
+          from: TaskStatus.NOT_STARTED, 
+          to: newStatus,
+          progress
+        });
+      } else if (progress >= 100 && newStatus === TaskStatus.IN_PROGRESS) {
+        newStatus = TaskStatus.READY_FOR_SUBMISSION;
+        logger.info('[Open Banking API] Upgrading task status to READY_FOR_SUBMISSION due to 100% progress');
+      } else if (progress === 0 && (newStatus === TaskStatus.IN_PROGRESS || newStatus === TaskStatus.READY_FOR_SUBMISSION)) {
+        // If progress is reset to zero, also reset status (unless already submitted)
+        if (newStatus !== TaskStatus.SUBMITTED && newStatus !== TaskStatus.APPROVED) {
+          newStatus = TaskStatus.NOT_STARTED;
+          logger.info('[Open Banking API] Downgrading task status to NOT_STARTED due to 0% progress');
         }
       }
       

@@ -335,11 +335,11 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                       <span className="block w-full bg-secondary h-2 rounded-full">
                         <span
                           className="block bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${task.progress}%` }}
+                          style={{ width: `${task.progress < 1 ? task.progress * 100 : task.progress}%` }}
                         />
                       </span>
                       <span className="block text-xs text-muted-foreground mt-1">
-                        {task.progress}%
+                        {task.progress < 1 ? Math.ceil(task.progress * 100) : task.progress}%
                       </span>
                     </span>
                   </TableCell>
