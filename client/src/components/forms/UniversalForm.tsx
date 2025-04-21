@@ -1800,13 +1800,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             console.warn("[SUBMIT FLOW] Failed to dismiss toast:", e);
           }
           
-          // Single success toast
-          console.log(`[SUBMIT FLOW] 12. Showing success toast notification`);
-          toast({
-            title: "Form Submitted",
-            description: "Your form was submitted successfully.",
-            variant: "success",
-          });
+          // Show toast notification only for OpenBanking (since we won't show a modal)
+          console.log(`[SUBMIT FLOW] 12. Success notification handling`);
+          if (taskType === 'open_banking') {
+            // Skip toast for OpenBanking as it will have its own success modal
+            console.log(`[SUBMIT FLOW] Skipping success toast for OpenBanking - will show modal instead`);
+          } else {
+            // Show toast for other task types
+            toast({
+              title: "Form Submitted",
+              description: "Your form was submitted successfully.",
+              variant: "success",
+            });
+          }
           
           // Show success modal (centralized in one place)
           console.log(`[SUBMIT FLOW] 13. Showing success modal`);
@@ -1839,7 +1845,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           // BUGFIX: Force the form to switch to submitted view mode
           setFormSubmittedLocally(true);
-          setShowSuccessModal(true);
+          
+          // Open success modal only for non-OpenBanking tasks, as OpenBanking has its own modal in the parent component
+          if (taskType !== 'open_banking') {
+            setShowSuccessModal(true);
+            console.log(`[SUBMIT FLOW] Success modal shown for ${taskType} task`);
+          } else {
+            console.log(`[SUBMIT FLOW] Skipping success modal for OpenBanking task - will be handled by parent component`);
+          }
           
           // REMOVED: Confetti effect was too distracting
           console.log(`[SUBMIT FLOW] 14. Confetti effect disabled by request`);
@@ -2058,14 +2071,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // CRITICAL FIX: Set form as locally submitted to transition to read-only mode
         setFormSubmittedLocally(true);
-        setShowSuccessModal(true);
         
-        // Show a warning toast, but make it positive since the data was saved
-        toast({
-          title: 'Form Submitted Successfully',
-          description: 'Your form was successfully saved. All features have been unlocked.',
-          variant: 'success',
-        });
+        // Similar to success case, only show modal for non-OpenBanking tasks
+        if (taskType !== 'open_banking') {
+          setShowSuccessModal(true);
+          console.log(`[SUBMIT FLOW] Recovery success modal shown for ${taskType} task`);
+        } else {
+          console.log(`[SUBMIT FLOW] Skipping recovery success modal for OpenBanking task - will be handled by parent component`);
+        }
+        
+        // Show warning toast only for non-OpenBanking tasks (OpenBanking uses its own modal)
+        if (taskType !== 'open_banking') {
+          // Show a warning toast, but make it positive since the data was saved
+          toast({
+            title: 'Form Submitted Successfully',
+            description: 'Your form was successfully saved. All features have been unlocked.',
+            variant: 'success',
+          });
+        } else {
+          console.log(`[SUBMIT FLOW] Skipping recovery success toast for OpenBanking - will use modal instead`);
+        }
         
         // Call the onSuccess callback in this case as well
         if (onSuccess) {
