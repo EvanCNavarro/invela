@@ -53,7 +53,7 @@ type TaskContentType = 'kyb' | 'card' | 'security' | 'ky3p' | 'open_banking' | '
 
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   
   // All state variables defined at the top level
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -294,7 +294,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       // First dismiss the "Download Started" toast if it exists
       if (downloadStartedToastId) {
-        toast.dismiss(downloadStartedToastId);
+        dismiss(downloadStartedToastId);
       }
       
       // Show the success toast
@@ -310,7 +310,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       // Dismiss the "Download Started" toast if it exists
       if (downloadStartedToastId) {
-        toast.dismiss(downloadStartedToastId);
+        dismiss(downloadStartedToastId);
       }
       
       toast({
@@ -319,7 +319,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         variant: "destructive",
       });
     }
-  }, [fileId, taskContentType, toast]);
+  }, [fileId, taskContentType, toast, dismiss]);
   
   // Fetch task data and keep local state to allow updates
   const { data: taskData, isLoading, error } = useQuery<Task>({
