@@ -86,17 +86,17 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
   switch (normalizedStatus) {
     case 'VALID':
       return {
-        background: 'radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.08), rgba(22, 163, 74, 0.01) 60%, transparent 70%)',
+        backgroundColor: 'rgba(240, 253, 244, 0.5)', // Very soft green
         borderColor: '#dcfce7'
       };
     case 'PENDING':
       return {
-        background: 'radial-gradient(circle at bottom left, rgba(202, 138, 4, 0.08), rgba(202, 138, 4, 0.01) 60%, transparent 70%)',
+        backgroundColor: 'rgba(254, 252, 232, 0.5)', // Very soft yellow
         borderColor: '#fef3c7'
       };
     default:
       return {
-        background: 'radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.01) 60%, transparent 70%)',
+        backgroundColor: 'rgba(254, 242, 242, 0.5)', // Very soft red
         borderColor: '#fee2e2'
       };
   }
@@ -649,9 +649,9 @@ export default function CompanyProfilePage() {
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
                 {/* Risk Score card with Invela blue background gradient */}
                 <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border border-slate-200 text-center drop-shadow-sm md:w-52"
+                  className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
                   style={{ 
-                    background: 'radial-gradient(circle at bottom left, rgba(79, 99, 236, 0.08), rgba(79, 99, 236, 0.01) 60%, transparent 70%)',
+                    backgroundColor: 'rgba(224, 231, 255, 0.5)', // Very soft blue
                     borderColor: '#e0e7ff'
                   }}
                 >
