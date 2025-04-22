@@ -899,85 +899,97 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Add a manual re-render component flag
       setForceRerender(prev => !prev);
       
-      // For KY3P, Open Banking, and other form types, use the bulk update approach
-      if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
-        // Filter out empty or undefined values and get only non-empty field values
-        const validResponses: Record<string, any> = {};
-        let fieldCount = 0;
+      // STANDARDIZED IMPLEMENTATION: Same code path for all form types
+      // Filter out empty or undefined values and get only non-empty field values
+      const validResponses: Record<string, any> = {};
+      let fieldCount = 0;
         
-        for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
-          if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
-            // Add to valid responses
-            validResponses[fieldKey] = fieldValue;
-            fieldCount++;
-            
-            // Update the UI form state immediately
-            form.setValue(fieldKey, fieldValue, {
-              shouldValidate: true,
-              shouldDirty: true,
-              shouldTouch: true
-            });
-          }
-        }
-        
-        // Proceed only if we have valid responses
-        if (fieldCount === 0) {
-          logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
-          throw new Error("No valid demo data available for auto-fill");
-        }
-        
-        // Construct proper endpoint based on form type
-        const endpoint = 
-          taskType === 'sp_ky3p_assessment' 
-            ? `/api/tasks/${taskId}/ky3p-responses/bulk` 
-            : `/api/tasks/${taskId}/${taskType}-responses/bulk`;
-        
-        // Use standardized format for all form types
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            responses: validResponses
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Bulk update failed: ${response.status} - ${errorText}`);
-        }
-        
-        const result = await response.json();
-        
-        // Import queryClient directly to invalidate task data queries
-        const { queryClient } = await import('@/lib/queryClient');
-        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      } else {
-        // Update form service for KYB or other traditional forms
-        if (formService && taskId) {
-          // Update the backend with bulk data
-          await formService.bulkUpdate(completeData, taskId);
-          
-          // CRITICAL: Update the form state in React to display the new values
-          if (form && completeData) {
-            // First update each field in local form state
-            Object.entries(completeData).forEach(([key, value]) => {
-              try {
-                // Try to set each field in the form directly
-                form.setValue(key, value);
-              } catch (err) {
-                logger.warn(`[UniversalForm] Could not set form field ${key}:`, err);
-              }
-            });
-            
-            // Force update all fields to make sure they're displayed
-            form.trigger();
-          }
+      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          // Add to valid responses
+          validResponses[fieldKey] = fieldValue;
+          fieldCount++;
         }
       }
+        
+      // Proceed only if we have valid responses
+      if (fieldCount === 0) {
+        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+        throw new Error("No valid demo data available for auto-fill");
+      }
+      
+      logger.info(`[UniversalForm] Processing ${fieldCount} valid fields for auto-fill`);
+      
+      // STEP 1: First update the UI form state for immediate feedback
+      // This ensures users see immediate visual updates regardless of server processing time
+      for (const [key, value] of Object.entries(validResponses)) {
+        try {
+          form.setValue(key, value, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
+        } catch (err) {
+          logger.warn(`[UniversalForm] Could not set form field ${key}:`, err);
+        }
+      }
+      
+      // Force trigger form validation on all fields
+      await form.trigger();
+      
+      // STEP 2: Use service for backend updates with universal approach
+      if (formService && taskId) {
+        logger.info(`[UniversalForm] Using form service for task type: ${taskType}`);
+        
+        try {
+          // Use the form service's bulkUpdate method which exists on all form services
+          await formService.bulkUpdate(validResponses, taskId);
+          logger.info(`[UniversalForm] Backend update successful via form service`);
+        } catch (err) {
+          logger.error(`[UniversalForm] Error updating backend via form service:`, err);
+          
+          // Fallback to direct API call if form service method fails
+          logger.info(`[UniversalForm] Attempting fallback to direct API call`);
+          
+          // Determine the appropriate endpoint based on form type
+          let endpoint: string;
+          if (taskType === 'sp_ky3p_assessment') {
+            endpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
+          } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+            endpoint = `/api/tasks/${taskId}/${taskType}-responses/bulk`;
+          } else {
+            endpoint = `/api/kyb/bulk-update/${taskId}`;
+          }
+          
+          logger.info(`[UniversalForm] Using fallback endpoint: ${endpoint}`);
+          
+          // Make the direct API call
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              responses: validResponses
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            logger.error(`[UniversalForm] Fallback API call failed: ${response.status}`, errorText);
+            throw new Error(`Auto-fill failed: ${response.status} - ${errorText}`);
+          }
+          
+          logger.info(`[UniversalForm] Fallback API call successful`);
+        }
+      }
+      
+      // STEP 3: Invalidate queries to ensure any cache data is refreshed
+      logger.info(`[UniversalForm] Invalidating queries to refresh cache`);
+      const { queryClient } = await import('@/lib/queryClient');
+      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       
       // Save regular progress
       if (saveProgress) {
