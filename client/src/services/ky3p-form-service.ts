@@ -971,10 +971,57 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Filter out metadata fields before sending to server
       const cleanData = { ...formData };
       Object.keys(cleanData).forEach(key => {
-        if (key.startsWith('_')) {
+        if (key.startsWith('_') || key === 'taskId') {
           delete cleanData[key];
         }
       });
+      
+      // Try to use our batch-update endpoint first
+      try {
+        logger.info(`[KY3P Form Service] Attempting to use batch-update endpoint for task ${effectiveTaskId}`);
+        const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            responses: cleanData // Send the original data with keys
+          }),
+        });
+        
+        if (batchResponse.ok) {
+          logger.info(`[KY3P Form Service] Successfully saved form data using batch-update endpoint`);
+          return true;
+        }
+        
+        logger.warn(`[KY3P Form Service] Batch update failed with status ${batchResponse.status}, falling back to bulk endpoint`);
+      } catch (batchError) {
+        logger.warn(`[KY3P Form Service] Error using batch-update endpoint:`, batchError);
+      }
+      
+      // Fallback to the batch-update helper function
+      try {
+        logger.info(`[KY3P Form Service] Attempting to use batch-update helper function for task ${effectiveTaskId}`);
+        
+        // Dynamically import the helper function that uses batched updates
+        const { batchUpdateKy3pResponses } = await import('@/components/forms/ky3p-batch-update');
+        
+        // Call the helper function with the task ID and clean data
+        const success = await batchUpdateKy3pResponses(Number(effectiveTaskId), cleanData);
+        
+        if (success) {
+          logger.info(`[KY3P Form Service] Successfully saved form data using batch-update helper function`);
+          return true;
+        }
+        
+        logger.warn(`[KY3P Form Service] Batch-update helper function failed, falling back to original API approach`);
+      } catch (helperError) {
+        logger.warn(`[KY3P Form Service] Error using batch-update helper function:`, helperError);
+      }
+      
+      // As a final fallback, use the original bulk API approach
+      logger.info(`[KY3P Form Service] Falling back to original bulk API approach`);
       
       // Create a mapping from field keys to field IDs
       // The backend expects field IDs, not field keys
@@ -983,9 +1030,14 @@ export class KY3PFormService extends EnhancedKybFormService {
       const allFields = await this.getFields();
       
       // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map(
-        allFields.map(field => [field.key, field.id])
-      );
+      const fieldKeyToIdMap = new Map();
+      
+      // Ensure we have valid field IDs for mapping
+      allFields.forEach(field => {
+        if (field.key && field.id !== undefined) {
+          fieldKeyToIdMap.set(field.key, field.id);
+        }
+      });
       
       // Track fields found in the system versus received in the data
       let totalFieldsInData = Object.keys(cleanData).length;
@@ -994,9 +1046,12 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Convert the keys in cleanData to field IDs
       // Only include fields that actually exist in this form service
       for (const [key, value] of Object.entries(cleanData)) {
+        if (key === 'taskId') continue; // Skip taskId field
+        if (value === null || value === undefined || value === '') continue; // Skip empty values
+        
         const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId) {
-          keyToIdResponses[fieldId] = value;
+        if (fieldId !== undefined) {
+          keyToIdResponses[String(fieldId)] = value;
           validFieldsFound++;
         } else {
           // Just log the warning but don't include this field in the mapping
@@ -1009,7 +1064,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Convert to array format with explicit fieldId property
       // This is needed because the backend API expects array format for ky3p-responses/bulk
       const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
-        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
+        fieldId, // Use the string ID directly
         value
       }));
       logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
@@ -1061,7 +1116,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       // First update the local form data
       Object.entries(data).forEach(([key, value]) => {
         // Only update if not a metadata field (starting with _)
-        if (!key.startsWith('_')) {
+        if (!key.startsWith('_') && key !== 'taskId') {
           // Update our local form data
           this.formData[key] = value;
         }
@@ -1070,10 +1125,34 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Filter out metadata fields before sending to server
       const cleanData = { ...data };
       Object.keys(cleanData).forEach(key => {
-        if (key.startsWith('_')) {
+        if (key.startsWith('_') || key === 'taskId') {
           delete cleanData[key];
         }
       });
+
+      // Try the direct batch-update endpoint first
+      logger.info(`[KY3P Form Service] Attempting to use direct batch-update endpoint for task ${effectiveTaskId}`);
+      try {
+        const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            responses: cleanData // Send the original data with keys
+          }),
+        });
+        
+        if (batchResponse.ok) {
+          logger.info(`[KY3P Form Service] Successfully updated form using batch-update endpoint`);
+          return true;
+        }
+        
+        logger.warn(`[KY3P Form Service] Batch update endpoint failed, falling back to helper function`);
+      } catch (batchError) {
+        logger.warn(`[KY3P Form Service] Error using batch-update endpoint:`, batchError);
+      }
 
       // IMPORTANT: Do not use bulk update! Use the batch update pattern instead
       logger.info(`[KY3P Form Service] Redirecting bulk update to batch update pattern for task ${effectiveTaskId} with ${Object.keys(cleanData).length} fields`);
@@ -1100,7 +1179,11 @@ export class KY3PFormService extends EnhancedKybFormService {
         
         let fieldsUpdated = 0;
         const fieldEntries = Object.entries(cleanData).filter(
-          ([_, value]) => value !== null && value !== undefined && value !== ''
+          ([key, value]) => 
+            key !== 'taskId' && 
+            value !== null && 
+            value !== undefined && 
+            value !== ''
         );
         
         // Process each field in sequence with small batches
@@ -1235,9 +1318,14 @@ export class KY3PFormService extends EnhancedKybFormService {
       const allFields = await this.getFields();
       
       // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map(
-        allFields.map(field => [field.key, field.id])
-      );
+      const fieldKeyToIdMap = new Map();
+      
+      // Ensure we have valid field IDs for mapping
+      allFields.forEach(field => {
+        if (field.key && field.id !== undefined) {
+          fieldKeyToIdMap.set(field.key, field.id);
+        }
+      });
       
       // Track fields found in the system versus received in the data
       let totalFieldsInData = Object.keys(cleanData).length;
@@ -1246,9 +1334,12 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Convert the keys in cleanData to field IDs
       // Only include fields that actually exist in this form service
       for (const [key, value] of Object.entries(cleanData)) {
+        if (key === 'taskId') continue; // Skip taskId as it's not a field
+        
         const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId) {
-          keyToIdResponses[fieldId] = value;
+        if (fieldId !== undefined) {
+          // Convert to string to ensure consistency with API expectations
+          keyToIdResponses[String(fieldId)] = value;
           validFieldsFound++;
         } else {
           // Just log the warning but don't include this field in the mapping
