@@ -879,17 +879,24 @@ export class KY3PFormService extends EnhancedKybFormService {
         allFields.map(field => [field.key, field.id])
       );
       
+      // Track fields found in the system versus received in the data
+      let totalFieldsInData = Object.keys(cleanData).length;
+      let validFieldsFound = 0;
+      
       // Convert the keys in cleanData to field IDs
+      // Only include fields that actually exist in this form service
       for (const [key, value] of Object.entries(cleanData)) {
         const fieldId = fieldKeyToIdMap.get(key);
         if (fieldId) {
           keyToIdResponses[fieldId] = value;
+          validFieldsFound++;
         } else {
-          logger.warn(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+          // Just log the warning but don't include this field in the mapping
+          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
         }
       }
       
-      logger.info(`[KY3P Form Service] Mapped ${Object.keys(keyToIdResponses).length} field keys to IDs for save operation`);
+      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for save operation. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
       
       // Using the standardized KYB approach - simpler and more reliable
       // Send to server with proper payload format including 'responses' wrapper
@@ -966,17 +973,24 @@ export class KY3PFormService extends EnhancedKybFormService {
         allFields.map(field => [field.key, field.id])
       );
       
+      // Track fields found in the system versus received in the demo data
+      let totalFieldsInDemoData = Object.keys(cleanData).length;
+      let validFieldsFound = 0;
+      
       // Convert the keys in cleanData to field IDs
+      // Only include fields that actually exist in this form service
       for (const [key, value] of Object.entries(cleanData)) {
         const fieldId = fieldKeyToIdMap.get(key);
         if (fieldId) {
           keyToIdResponses[fieldId] = value;
+          validFieldsFound++;
         } else {
-          logger.warn(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+          // Just log the warning but don't include this field in the mapping
+          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
         }
       }
       
-      logger.info(`[KY3P Form Service] Mapped ${Object.keys(keyToIdResponses).length} field keys to IDs for bulk update`);
+      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
 
       // Use the standardized pattern from KYB service - shorter and more reliable
       // Send to server with proper payload format including 'responses' wrapper
@@ -1069,17 +1083,24 @@ export class KY3PFormService extends EnhancedKybFormService {
         allFields.map(field => [field.key, field.id])
       );
       
+      // Track fields found in the system versus received in the data
+      let totalFieldsInData = Object.keys(cleanData).length;
+      let validFieldsFound = 0;
+      
       // Convert the keys in cleanData to field IDs
+      // Only include fields that actually exist in this form service
       for (const [key, value] of Object.entries(cleanData)) {
         const fieldId = fieldKeyToIdMap.get(key);
         if (fieldId) {
           keyToIdResponses[fieldId] = value;
+          validFieldsFound++;
         } else {
-          logger.warn(`[KY3P Form Service] Field key not found in mapping for submission: ${key}`);
+          // Just log the warning but don't include this field in the mapping
+          logger.debug(`[KY3P Form Service] Field key not found in mapping for submission: ${key}`);
         }
       }
       
-      logger.info(`[KY3P Form Service] Mapped ${Object.keys(keyToIdResponses).length} field keys to IDs for submission`);
+      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for submission. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
       
       // Call the submit endpoint with clean data
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit`, {
