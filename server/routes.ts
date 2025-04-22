@@ -75,6 +75,59 @@ export function registerRoutes(app: Express): Express {
   // Register KYB timestamps route for field-level timestamp support
   app.use('/api/kyb/timestamps', kybTimestampRouter);
   
+  // Critical fix: Add a redirect handler for KY3P tasks that are being queried 
+  // through the KYB endpoint to resolve the form loading issue
+  app.get('/api/kyb/progress/:taskId', requireAuth, async (req, res, next) => {
+    try {
+      const taskId = parseInt(req.params.taskId);
+      
+      if (isNaN(taskId)) {
+        return next(); // Let the original handler process invalid IDs
+      }
+      
+      // First check if this is actually a KY3P task
+      const [task] = await db.select({
+        id: tasks.id,
+        task_type: tasks.task_type
+      })
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+      if (task && task.task_type === 'ky3p') {
+        console.log(`[Routes] Redirecting KY3P task ${taskId} from /api/kyb/progress to /api/ky3p/progress`);
+        
+        // This is a KY3P task, redirect to the proper endpoint
+        // Instead of HTTP redirect, we'll proxy the request to maintain session context
+        const ky3pUrl = `/api/ky3p/progress/${taskId}`;
+        const response = await fetch(`http://localhost:5000${ky3pUrl}`, {
+          headers: {
+            'Cookie': req.headers.cookie || '',
+            'Authorization': req.headers.authorization || '',
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return res.json(data);
+        }
+        
+        // If it failed, let the original handler try
+        console.log(`[Routes] KY3P redirect failed with status ${response.status}, falling back to original handler`);
+      }
+      
+      // Not a KY3P task or redirect failed, continue to the original handler
+      next();
+    } catch (error) {
+      console.error('[Routes] Error in KY3P redirect handler:', error);
+      next(); // Continue to the original handler
+    }
+  }, (req, res, next) => {
+    // This is a passthrough middleware to ensure we don't create double responses
+    // if the redirect handler didn't handle the request
+    next();
+  });
+  
   // Register Company Tabs routes for file vault unlock functionality
   app.use('/api/company-tabs', companyTabsRouter);
   
