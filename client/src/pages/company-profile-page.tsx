@@ -86,18 +86,18 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
   switch (normalizedStatus) {
     case 'VALID':
       return {
-        backgroundColor: 'rgba(240, 253, 244, 0.5)', // Very soft green
-        borderColor: '#dcfce7'
+        backgroundColor: 'rgba(243, 254, 246, 0.5)', // Even softer green matching blue
+        borderColor: '#e2f5e7'
       };
     case 'PENDING':
       return {
-        backgroundColor: 'rgba(254, 252, 232, 0.5)', // Very soft yellow
-        borderColor: '#fef3c7'
+        backgroundColor: 'rgba(255, 253, 237, 0.5)', // Even softer yellow matching blue
+        borderColor: '#fef7d3'
       };
     default:
       return {
-        backgroundColor: 'rgba(254, 242, 242, 0.5)', // Very soft red
-        borderColor: '#fee2e2'
+        backgroundColor: 'rgba(254, 245, 245, 0.5)', // Even softer red matching blue
+        borderColor: '#fee7e7'
       };
   }
 };
@@ -109,15 +109,15 @@ const getAccreditationTextStyle = (status: string | null | undefined): React.CSS
   switch (normalizedStatus) {
     case 'VALID':
       return {
-        color: '#16a34a'
+        color: '#22c55e' // Slightly softer green
       };
     case 'PENDING':
       return {
-        color: '#ca8a04'
+        color: '#eab308' // Slightly softer yellow
       };
     default:
       return {
-        color: '#ef4444'
+        color: '#f87171' // Slightly softer red
       };
   }
 };
@@ -651,8 +651,8 @@ export default function CompanyProfilePage() {
                 <div 
                   className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
                   style={{ 
-                    backgroundColor: 'rgba(224, 231, 255, 0.5)', // Very soft blue
-                    borderColor: '#e0e7ff'
+                    backgroundColor: 'rgba(236, 241, 255, 0.5)', // Even softer blue that matches other colors
+                    borderColor: '#e5edff'
                   }}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
