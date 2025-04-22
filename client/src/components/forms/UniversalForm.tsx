@@ -1148,16 +1148,32 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Clear saved form data in task metadata to prevent reloading
           try {
             // Make sure the task.savedFormData is also cleared
-            const { apiRequest } = await import('@/lib/queryClient'); 
-            await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-              savedFormData: null,  // Explicitly set to null
-              metadata: {
-                lastCleared: new Date().toISOString()
-              }
-            });
-            logger.info(`[UniversalForm] Successfully cleared task savedFormData`);
+            // Split this into two separate API calls to avoid potential data structure issues
+            const { apiRequest } = await import('@/lib/queryClient');
+            
+            // First, update only the metadata
+            try {
+              await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+                metadata: {
+                  lastCleared: new Date().toISOString()
+                }
+              });
+              logger.info(`[UniversalForm] Successfully updated task metadata with clearing timestamp`);
+            } catch (metadataErr) {
+              logger.error(`[UniversalForm] Error updating task metadata:`, metadataErr);
+            }
+            
+            // Then, separately clear the savedFormData
+            try {
+              await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+                savedFormData: null  // Explicitly set to null
+              });
+              logger.info(`[UniversalForm] Successfully cleared task savedFormData`);
+            } catch (formDataErr) {
+              logger.error(`[UniversalForm] Error clearing task savedFormData:`, formDataErr);
+            }
           } catch (err) {
-            logger.error(`[UniversalForm] Error clearing task savedFormData:`, err);
+            logger.error(`[UniversalForm] Error during task data clearing:`, err);
           }
         }
       });
