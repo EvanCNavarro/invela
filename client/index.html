@@ -5,44 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <!-- Prevent DOMException when Vite HMR is connecting -->
-    <script>
-      // This script runs before Vite to patch global error handling
-      (function() {
-        // Capture the original console methods
-        const originalError = console.error;
-        const originalDebug = console.debug;
-        
-        // Patch console.error to filter out specific Vite connection errors
-        console.error = function(...args) {
-          // Check if this is the Vite DOMException we want to suppress
-          if (args.length > 0 && 
-              args[0] instanceof DOMException && 
-              args[0].name === 'DOMException') {
-            // Silently capture the error but don't display it
-            console.debug('[Error Interceptor] Suppressed DOMException');
-            return;
-          }
-          
-          // Otherwise, pass through to original handler
-          return originalError.apply(console, args);
-        };
-        
-        // Create a global error handler for unhandled rejections
-        window.addEventListener('unhandledrejection', function(event) {
-          // Check if this is a Vite connection error
-          if (event.reason && 
-              (event.reason.message && event.reason.message.includes('vite')) || 
-              (event.reason.stack && event.reason.stack.includes('vite'))) {
-            // Prevent it from showing in the console
-            event.preventDefault();
-            console.debug('[Error Interceptor] Suppressed unhandled rejection from Vite');
-          }
-        });
-
-        console.debug('[Error Interceptor] Installed');
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>
