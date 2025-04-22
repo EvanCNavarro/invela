@@ -1268,20 +1268,34 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       requestBodyPreview: JSON.stringify(req.body).substring(0, 200)
     });
     
-    // Special handling for requests with 'fieldIdRaw': 'bulk' pattern - used to identify malformed requests
+    // Special handling for requests with 'fieldIdRaw': 'bulk' pattern
     if (req.body && req.body.fieldIdRaw === 'bulk') {
-      logger.warn(`[KY3P API] Detected malformed bulk request with fieldIdRaw=bulk pattern`, {
+      // Get the referrer and user agent to help track down where this is coming from
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      const referrer = req.headers['referer'] || 'unknown';
+      const origin = req.headers['origin'] || 'unknown';
+      
+      // Log with more detailed information to track down the source
+      logger.info(`[KY3P API] Detected legacy bulk request with fieldIdRaw=bulk pattern - converting to new format`, {
         taskIdRaw: req.body.taskIdRaw,
         fieldIdRaw: req.body.fieldIdRaw,
-        responseValue: req.body.responseValue,
-        responseValueType: typeof req.body.responseValue
+        headers: {
+          userAgent: userAgent.substring(0, 100),
+          referrer,
+          origin
+        },
+        timestamp: new Date().toISOString(),
+        requestBody: JSON.stringify(req.body).substring(0, 200)
       });
       
-      return res.status(400).json({
-        message: 'Invalid field ID format',
-        hint: 'Request should be in format: { responses: [...] }',
-        error: 'malformed_request_structure'
-      });
+      // Instead of rejecting, convert the request to the proper format if possible
+      // For a legacy 'bulk' request, use the clearAll flag which will clear all form fields
+      req.body = {
+        clearAll: true,
+        responses: [] // Empty responses array indicates we're just clearing
+      };
+      
+      logger.info(`[KY3P API] Converted malformed bulk request to valid format with clearAll flag`);
     }
     
     // Validate response object
