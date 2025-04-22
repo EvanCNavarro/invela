@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Wand2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { KY3PFormService } from '@/services/ky3p-form-service';
 import getLogger from '@/utils/logger';
+import { useWebSocket } from '@/hooks/use-websocket';
 
 const logger = getLogger('DemoAutofillButton', { 
   levels: { debug: true, info: true, warn: true, error: true } 
@@ -31,6 +32,51 @@ export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
   className = "",
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Build WebSocket URL
+  const getWebSocketUrl = () => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws`;
+  };
+  
+  // Initialize WebSocket connection with our hook
+  const { 
+    isConnected,
+    sendMessage,
+    addMessageHandler
+  } = useWebSocket(getWebSocketUrl(), {
+    autoReconnect: true,
+    reconnectInterval: 5000,
+    onConnect: () => {
+      logger.info('WebSocket connection established for DemoAutofillButton');
+    },
+    onDisconnect: () => {
+      logger.info('WebSocket connection closed for DemoAutofillButton');
+    },
+    onError: (error) => {
+      logger.error('WebSocket error:', error);
+    }
+  });
+  
+  // Register message handler for task updates
+  useEffect(() => {
+    // If this component unmounts, this cleanup function will remove the handler
+    return addMessageHandler('task_updated', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        // If this is a task update for our current task, trigger a refresh
+        if (data.payload?.taskId === taskId) {
+          logger.info('Received task_updated for current task, refreshing UI');
+          if (onSuccess) {
+            onSuccess();
+          }
+        }
+      } catch (error) {
+        logger.warn('Error processing task_updated message:', error);
+      }
+    });
+  }, [addMessageHandler, taskId, onSuccess]);
 
   const handleDemoAutofill = async () => {
     if (!taskId) {
@@ -95,14 +141,36 @@ export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
         try {
           const updateEvent = {
             type: 'task_updated',
-            taskId: taskId,
-            timestamp: new Date().toISOString()
+            payload: {
+              taskId: taskId,
+              timestamp: new Date().toISOString()
+            }
           };
           
-          // Try to find the WebSocket connection if it exists in the window object
-          if (window.formSocket) {
-            window.formSocket.send(JSON.stringify(updateEvent));
+          // Use our WebSocket hook to send the message
+          if (isConnected) {
+            sendMessage(updateEvent);
             logger.info('Sent WebSocket update event');
+          } else {
+            // Send via server API if websocket isn't connected
+            fetch('/api/broadcast/task-update', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                taskId,
+                type: 'task_updated',
+                timestamp: new Date().toISOString()
+              }),
+            }).then(response => {
+              if (response.ok) {
+                logger.info('Sent broadcast via API');
+              }
+            }).catch(error => {
+              logger.warn('Failed to send broadcast via API:', error);
+            });
           }
         } catch (wsError) {
           logger.warn('Could not send WebSocket update:', wsError);
