@@ -11,6 +11,8 @@ import {
   Building2Icon,
   ShieldIcon,
   Landmark,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,9 +29,11 @@ import {
 import React, { useState, useMemo } from "react";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { cn } from "@/lib/utils";
+import { useCurrentCompany } from "@/hooks/use-current-company";
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
+  const { company } = useCurrentCompany();
   const [location, setLocation] = useLocation();
   const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -42,20 +46,18 @@ export function TopNav() {
     let textColor = "text-white";
     let companyName = "Unknown Company";
     
-    if (user?.company_id) {
-      // Get company name if available
-      if (user.company) {
-        companyName = user.company.name || companyName;
-      }
+    if (company) {
+      // Get company name from the current company data
+      companyName = company.name || companyName;
       
       // Set color and icon based on company ID or name
       // Company ID 1 is Invela (blue with shield)
-      if (user.company_id === 1 || companyName === "Invela") {
+      if (company.id === 1 || companyName === "Invela") {
         icon = ShieldIcon;
         bgColor = "bg-blue-600";
       } 
       // Banks are purple with landmark icon
-      else if (companyName.toLowerCase().includes("bank")) {
+      else if (company.category === "Bank" || companyName.toLowerCase().includes("bank")) {
         icon = Landmark;
         bgColor = "bg-purple-600";
       }
@@ -67,7 +69,7 @@ export function TopNav() {
     }
     
     return { icon, bgColor, textColor, companyName };
-  }, [user]);
+  }, [company]);
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -113,14 +115,19 @@ export function TopNav() {
 
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-                <div className={cn("w-8 h-8 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
-                  {React.createElement(companyProfile.icon, { className: "h-4 w-4" })}
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className={cn("w-6 h-6 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
+                  {React.createElement(companyProfile.icon, { className: "h-3 w-3" })}
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium leading-tight">{user?.full_name}</p>
+                  <p className="text-xs font-medium leading-tight">{user?.full_name}</p>
                   <p className="text-xs text-muted-foreground leading-tight">{companyProfile.companyName}</p>
                 </div>
+                {isDropdownOpen ? (
+                  <ChevronUp className="h-3.5 w-3.5 text-gray-500 ml-0.5" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 text-gray-500 ml-0.5" />
+                )}
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -133,8 +140,8 @@ export function TopNav() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-3 flex items-start gap-3">
-                <div className={cn("w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
-                  {React.createElement(companyProfile.icon, { className: "h-5 w-5" })}
+                <div className={cn("w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
+                  {React.createElement(companyProfile.icon, { className: "h-4 w-4" })}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{user?.full_name}</p>
