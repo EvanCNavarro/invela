@@ -535,7 +535,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       let successCount = 0;
       let failCount = 0;
       
-      // Process ALL fields, not just the first 5
+      // Process ALL fields one by one
       const demoDataEntries = Object.entries(demoData);
       
       logger.info(`[KY3P Form Service] Processing all ${demoDataEntries.length} fields one by one`);
@@ -571,6 +571,27 @@ export class KY3PFormService extends EnhancedKybFormService {
               if (singleResponse.ok) {
                 logger.info(`[KY3P Form Service] Successfully saved field ${key} (ID: ${numericFieldId})`);
                 successCount++;
+                
+                // Broadcast field update via dedicated endpoint for individual field update notifcation
+                try {
+                  await fetch(`/api/broadcast/field-update`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      taskId,
+                      fieldId: numericFieldId,
+                      fieldKey: key,
+                      value,
+                      timestamp: new Date().toISOString()
+                    }),
+                  });
+                } catch (broadcastErr) {
+                  // Just log the error, don't fail the whole operation
+                  logger.warn(`[KY3P Form Service] Failed to broadcast field update: ${key}`, broadcastErr);
+                }
               } else {
                 logger.error(`[KY3P Form Service] Failed to save field ${key}: ${singleResponse.status}`);
                 failCount++;
