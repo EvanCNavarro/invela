@@ -31,6 +31,21 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Convert field ID to proper numeric format
+   * This ensures compatibility with the server-side API which expects numeric IDs
+   */
+  private ensureNumericFieldId(fieldId: any, key?: string): number | null {
+    const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
+    
+    if (isNaN(numericFieldId)) {
+      logger.warn(`[KY3P Form Service] Invalid field ID format (not a number): ${fieldId}${key ? ` for key ${key}` : ''}`);
+      return null;
+    }
+    
+    return numericFieldId;
+  }
+  
+  /**
    * COMPLETE OVERRIDE of initialize method from EnhancedKybFormService
    * to prevent inheriting the KYB section logic
    */
