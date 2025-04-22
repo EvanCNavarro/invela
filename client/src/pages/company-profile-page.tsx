@@ -515,21 +515,9 @@ export default function CompanyProfilePage() {
         showBreadcrumbs
       >
         <div className="space-y-6">
-          {/* Modern, sleek navigation breadcrumb */}
+          {/* Navigation and back button completely removed per requirements */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
-              <Button 
-                onClick={handleBackClick}
-                variant="secondary"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Network
-              </Button>
-            </div>
-
-            {/* Company actions removed per requirements */}
+            {/* Empty div to maintain spacing */}
           </div>
           
           {/* Modern company profile header with enhanced aesthetics */}
@@ -555,13 +543,10 @@ export default function CompanyProfilePage() {
                   <div className="flex items-center flex-wrap gap-2">
                     <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
                     
-                    {/* Category badge with slightly rounded corners */}
+                    {/* Category badge with grayscale styling */}
                     {company.category && (
                       <div 
-                        className="rounded-md px-3 py-0.5 text-xs font-semibold text-white"
-                        style={{ 
-                          backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
-                        }}
+                        className="rounded-md px-3 py-0.5 text-xs font-semibold text-white bg-gray-600"
                       >
                         {company.category}
                       </div>
@@ -598,14 +583,14 @@ export default function CompanyProfilePage() {
                 </div>
               </div>
               
-              {/* Enhanced metrics cards with better visual treatment */}
+              {/* Enhanced metrics cards - same size, no hover, black titles */}
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
-                {/* Risk Score card with improved visual treatment */}
-                <div className="flex flex-col justify-between p-4 rounded-lg bg-gradient-to-br from-slate-50 to-white border border-slate-200 text-center drop-shadow-sm md:w-56 hover:shadow-md transition-shadow duration-300">
+                {/* Risk Score card with standardized styling */}
+                <div className="flex flex-col justify-between p-4 rounded-lg bg-white border border-slate-200 text-center drop-shadow-sm md:w-52">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <Award className="h-5 w-5 text-slate-700" />
-                    <div className="text-sm text-slate-700 font-medium">
-                      RISK SCORE:
+                    <Award className="h-5 w-5 text-black" />
+                    <div className="text-sm text-black font-medium">
+                      RISK SCORE
                     </div>
                   </div>
                   <div className="text-4xl font-bold text-gray-900 mt-1">
@@ -613,28 +598,19 @@ export default function CompanyProfilePage() {
                   </div>
                 </div>
                 
-                {/* Accreditation status with improved status indicator */}
-                <div className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-44 hover:shadow-md transition-shadow duration-300"
-                  style={{
-                    backgroundColor: company.accreditationStatus === 'VALID' 
-                      ? 'rgba(240, 253, 244, 1)' 
-                      : 'rgba(254, 242, 242, 1)',
-                    borderColor: company.accreditationStatus === 'VALID' 
-                      ? 'rgba(132, 204, 22, 0.4)' 
-                      : 'rgba(239, 68, 68, 0.4)'
-                  }}
-                >
+                {/* Accreditation status with reduced colors and standardized sizing */}
+                <div className="flex flex-col justify-between p-4 rounded-lg bg-white border border-slate-200 text-center drop-shadow-sm md:w-52">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <BadgeCheck className="h-5 w-5 text-slate-700" />
-                    <div className="text-sm text-slate-700 font-medium">
-                      ACCREDITATION:
+                    <BadgeCheck className="h-5 w-5 text-black" />
+                    <div className="text-sm text-black font-medium">
+                      ACCREDITATION
                     </div>
                   </div>
                   <div 
                     className={
                       company.accreditationStatus === 'VALID' 
-                        ? 'bg-green-100 text-green-600 mt-1 font-semibold text-lg rounded-md py-1 flex items-center justify-center' 
-                        : 'bg-red-100 text-red-500 mt-1 font-semibold text-lg rounded-md py-1 flex items-center justify-center'
+                        ? 'text-green-600 mt-1 font-semibold text-lg py-1 flex items-center justify-center' 
+                        : 'text-red-500 mt-1 font-semibold text-lg py-1 flex items-center justify-center'
                     }
                   >
                     {company.accreditationStatus === 'VALID' ? (
