@@ -124,10 +124,10 @@ export default function TaskPage({ params }: TaskPageProps) {
           // Handle task update messages
           if (message.type === 'task_updated' && 
               message.payload && 
-              message.payload.id === taskId) {
+              (message.payload.id === taskId || message.payload.taskId === taskId)) {
             
             logger.info('[TaskPage] Task update received via WebSocket:', {
-              taskId: message.payload.id,
+              taskId: message.payload.id || message.payload.taskId,
               status: message.payload.status,
               progress: message.payload.progress
             });
