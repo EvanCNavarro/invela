@@ -1728,4 +1728,75 @@ router.post('/api/tasks/:taskId/open-banking-submit', requireAuth, async (req, r
   }
 });
 
+// Emergency endpoint to directly unlock a specific Open Banking task
+// This is a temporary endpoint to fix an issue with task 614
+router.post('/api/tasks/unlock-open-banking/:taskId', requireAuth, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    
+    // Only allow admin users or specific users to access this endpoint
+    if (!req.user || req.user.id !== 276) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    
+    // Get the task to verify it exists and get company ID
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    console.log(`[Tasks] Emergency unlock for Open Banking task ${taskId}`);
+    
+    // Update the task status
+    const updatedTask = await db.update(tasks)
+      .set({
+        status: 'not_started',
+        metadata: sql`jsonb_set(
+          jsonb_set(
+            jsonb_set(
+              COALESCE(metadata, '{}'::jsonb),
+              '{locked}', 'false'
+            ),
+            '{prerequisite_completed}', 'true'
+          ),
+          '{prerequisite_completed_at}', to_jsonb(now())
+        )`,
+        updated_at: new Date()
+      })
+      .where(eq(tasks.id, taskId))
+      .returning();
+      
+    if (updatedTask.length === 0) {
+      return res.status(500).json({ error: 'Failed to update task' });
+    }
+    
+    console.log(`[Tasks] Task ${taskId} unlocked successfully`);
+    
+    // Broadcast the update via WebSocket
+    broadcastTaskUpdate({
+      id: taskId,
+      status: 'not_started',
+      metadata: {
+        locked: false,
+        prerequisite_completed: true,
+        prerequisite_completed_at: new Date().toISOString()
+      }
+    });
+    
+    res.json({
+      success: true,
+      task: updatedTask[0]
+    });
+  } catch (error) {
+    console.error('[Tasks] Error unlocking Open Banking task:', error);
+    res.status(500).json({
+      error: 'Failed to unlock task',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;

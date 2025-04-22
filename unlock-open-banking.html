@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlock Open Banking Task</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    button {
+      background-color: #0366d6;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0253b3;
+    }
+    pre {
+      background-color: #f6f8fa;
+      padding: 15px;
+      border-radius: 6px;
+      overflow: auto;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Emergency Unlock for Open Banking Task</h1>
+  <p>This page will help you unlock the Open Banking Survey task (ID: 614) directly.</p>
+  
+  <div>
+    <button id="unlockButton">Unlock Open Banking Task</button>
+  </div>
+  
+  <pre id="output">Results will appear here...</pre>
+
+  <script>
+    const unlockButton = document.getElementById('unlockButton');
+    const output = document.getElementById('output');
+    
+    unlockButton.addEventListener('click', async () => {
+      try {
+        output.textContent = 'Sending unlock request...';
+        
+        const response = await fetch('/api/tasks/unlock-open-banking/614', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          output.textContent = `Success! Task unlocked.\n\nDetails:\n${JSON.stringify(result, null, 2)}`;
+          
+          // Delay reload to allow WebSocket broadcast to process
+          setTimeout(() => {
+            window.location.href = '/task-center';
+          }, 2000);
+        } else {
+          output.textContent = `Error: ${result.error}\n\nDetails:\n${JSON.stringify(result, null, 2)}`;
+        }
+      } catch (error) {
+        output.textContent = `Failed to send request: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
