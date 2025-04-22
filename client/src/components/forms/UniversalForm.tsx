@@ -2773,7 +2773,7 @@ const handleDemoAutoFill = useCallback(async () => {
                           template={template || undefined}
                           onFieldChange={handleFieldChange}
                           startingQuestionNumber={previousSectionsFieldCount + 1} // Pass the starting number
-                          isSubmitted={taskStatus === 'submitted' || taskStatus === 'approved'} // Disable form fields if task is submitted
+                          isSubmitted={isSubmitted} // Disable form fields if task is submitted (using consistent isSubmitted check)
                         />
                       </div>
                     );
@@ -2790,7 +2790,7 @@ const handleDemoAutoFill = useCallback(async () => {
                         setActiveSection(activeSection - 1);
                       }
                     }}
-                    disabled={activeSection === 0 || taskStatus === 'submitted' || taskStatus === 'approved'}
+                    disabled={activeSection === 0 || isSubmitted}
                     className="flex items-center gap-1"
                   >
                     <ArrowLeft className="h-4 w-4" />
@@ -2815,7 +2815,7 @@ const handleDemoAutoFill = useCallback(async () => {
                     {activeSection === allSections.length - 1 && (
                       <>
                         {form.getValues("agreement_confirmation") && overallProgress === 100 && 
-                         taskStatus !== 'submitted' && taskStatus !== 'approved' ? (
+                         !isSubmitted ? (
                           <Button
                             type="submit"
                             className="bg-primary"
@@ -2836,7 +2836,7 @@ const handleDemoAutoFill = useCallback(async () => {
                               </TooltipTrigger>
                               <TooltipContent side="top">
                                 <p>
-                                  {taskStatus === 'submitted' || taskStatus === 'approved' 
+                                  {isSubmitted
                                     ? "Form has already been submitted"
                                     : overallProgress < 100 
                                       ? "Please complete all required fields" 
@@ -2857,7 +2857,7 @@ const handleDemoAutoFill = useCallback(async () => {
                           e.preventDefault(); // Prevent any form submission
                           setActiveSection(activeSection + 1);
                         }}
-                        disabled={taskStatus === 'submitted' || taskStatus === 'approved'}
+                        disabled={isSubmitted}
                         className="flex items-center gap-1"
                       >
                         Next <ArrowRight className="ml-1 h-4 w-4" />
@@ -2873,7 +2873,7 @@ const handleDemoAutoFill = useCallback(async () => {
                           setActiveSection(activeSection + 1);
                         }}
                         className="flex items-center gap-1"
-                        disabled={overallProgress < 100 || taskStatus === 'submitted' || taskStatus === 'approved'}
+                        disabled={overallProgress < 100 || isSubmitted}
                       >
                         Final Review <Eye className="ml-1 h-4 w-4" />
                       </Button>
