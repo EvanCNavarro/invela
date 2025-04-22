@@ -376,13 +376,13 @@ export function registerRoutes(app: Express): Express {
         website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
         legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
         hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
-        employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
+        num_employees: sql<number>`COALESCE(${companies.num_employees}, 0)`,
         products_services: sql<string>`COALESCE(${companies.products_services}, '')`,
-        incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
-        investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
+        incorporation_year: sql<number>`COALESCE(${companies.incorporation_year}, 0)`,
+        investors: sql<string>`COALESCE(${companies.investors}, '')`,
         funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
-        key_partners: sql<string>`COALESCE(${companies.key_partners}, '')`,
-        leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
+        key_clients_partners: sql<string>`COALESCE(${companies.key_clients_partners}, '')`,
+        founders_and_leadership: sql<string>`COALESCE(${companies.founders_and_leadership}, '')`,
         has_relationship: sql<boolean>`
           CASE 
             WHEN ${companies.id} = ${req.user.company_id} THEN true
@@ -424,13 +424,13 @@ export function registerRoutes(app: Express): Express {
         websiteUrl: company.website_url || 'N/A',
         legalStructure: company.legal_structure || 'N/A',
         hqAddress: company.hq_address || 'N/A',
-        numEmployees: company.employee_count || 'N/A',
+        numEmployees: company.num_employees || 'N/A',
         productsServices: company.products_services ? [company.products_services] : [],
         incorporationYear: company.incorporation_year || 'N/A',
-        investors: company.investors_info || 'No investor information available',
+        investors: company.investors || 'No investor information available',
         fundingStage: company.funding_stage || null,
-        keyClientsPartners: company.key_partners ? [company.key_partners] : [],
-        foundersAndLeadership: company.leadership_team || 'No leadership information available',
+        keyClientsPartners: company.key_clients_partners ? [company.key_clients_partners] : [],
+        foundersAndLeadership: company.founders_and_leadership || 'No leadership information available',
         riskScore: company.risk_score
       }));
 
@@ -566,8 +566,8 @@ export function registerRoutes(app: Express): Express {
       const transformedCompany = {
         ...company,
         websiteUrl: company.website_url,
-        numEmployees: company.employee_count,
-        incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
+        numEmployees: company.num_employees,
+        incorporationYear: company.incorporation_year,
         risk_score: company.risk_score,       // Keep the original property
         riskScore: company.risk_score,        // Add the frontend expected property name
         chosen_score: company.chosen_score,   // Keep the original property
