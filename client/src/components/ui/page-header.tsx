@@ -20,7 +20,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className={cn(
-      "flex flex-col space-y-2",
+      "flex flex-col space-y-1",
       className
     )}>
       <div className="flex items-center justify-between">
@@ -46,7 +46,7 @@ export function PageHeader({
         )}
       </div>
       {meta && (
-        <div className="mt-2">
+        <div className="mt-1">
           {meta}
         </div>
       )}
