@@ -7,11 +7,12 @@
 import express from 'express';
 import { db } from '@db';
 import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
-import { eq, count, and } from 'drizzle-orm';
+import { eq, count, and, sql } from 'drizzle-orm';
 import { getWebSocketServer, broadcastMessage } from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 
+// Create a router without any prefix - the prefix is added in server/routes.ts
 const router = express.Router();
 const logger = new Logger('KY3P API');
 
@@ -45,7 +46,7 @@ router.get('/fields/demo', async (req, res) => {
     const fields = await db
       .select()
       .from(ky3pFields)
-      .where(db.sql`demo_autofill IS NOT NULL`);
+      .where(sql`demo_autofill IS NOT NULL`);
     
     logger.info(`Returning ${fields.length} KY3P fields with demo data`);
     return res.json(fields);
