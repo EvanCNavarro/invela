@@ -28,7 +28,7 @@ export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
   taskId,
   taskType,
   onSuccess,
-  variant = "outline",
+  variant = "default",
   className = "",
 }) => {
   const [isLoading, setIsLoading] = useState(false);
