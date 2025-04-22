@@ -64,6 +64,25 @@ export class KY3PFormService implements FormServiceInterface {
         this.logger('Already initialized, skipping');
         return true;
       }
+      
+      if (!this.taskId || this.taskId <= 0) {
+        this.logger('Warning: Invalid task ID, will use actual ID from URL');
+        // Extract the actual task ID from URL
+        const urlMatch = window.location.pathname.match(/\/task-center\/task\/(\d+)/);
+        if (urlMatch && urlMatch[1]) {
+          const actualTaskId = parseInt(urlMatch[1], 10);
+          this.logger(`Found actual task ID from URL: ${actualTaskId}`);
+          this.taskId = actualTaskId;
+        } else {
+          this.logger('Could not determine task ID from URL, falling back to checking task center');
+          const taskCenterMatch = window.location.pathname.match(/\/task-center\/task\/(\d+)/);
+          if (taskCenterMatch && taskCenterMatch[1]) {
+            const taskCenterId = parseInt(taskCenterMatch[1], 10);
+            this.logger(`Found task ID from task center URL: ${taskCenterId}`);
+            this.taskId = taskCenterId;
+          }
+        }
+      }
 
       // Load fields from API
       await this.loadFields();
@@ -101,8 +120,27 @@ export class KY3PFormService implements FormServiceInterface {
         throw new Error(`Failed to load field responses: ${fieldResponsesResponse.status}`);
       }
       
-      const fieldDefinitions: KY3PField[] = await fieldDefinitionsResponse.json();
-      const fieldResponses: KY3PResponse[] = await fieldResponsesResponse.json();
+      // Safely parse responses with error handling
+      let fieldDefinitions: KY3PField[] = [];
+      let fieldResponses: KY3PResponse[] = [];
+      
+      try {
+        const fieldDefsText = await fieldDefinitionsResponse.text();
+        this.logger('Field definitions raw response:', fieldDefsText);
+        fieldDefinitions = JSON.parse(fieldDefsText);
+      } catch (parseError) {
+        this.logger('Error parsing field definitions:', parseError);
+        fieldDefinitions = [];
+      }
+      
+      try {
+        const fieldRespText = await fieldResponsesResponse.text();
+        this.logger('Field responses raw response:', fieldRespText);
+        fieldResponses = JSON.parse(fieldRespText);
+      } catch (parseError) {
+        this.logger('Error parsing field responses:', parseError);
+        fieldResponses = []
+      }
       
       this.logger(`Loaded ${fieldDefinitions.length} field definitions and ${fieldResponses.length} responses`);
       
@@ -509,6 +547,7 @@ export class KY3PFormService implements FormServiceInterface {
  */
 export class KY3PFormServiceFactory {
   private static instance: KY3PFormServiceFactory;
+  private serviceInstances: Map<string, KY3PFormService> = new Map();
   
   private constructor() {}
   
@@ -519,8 +558,34 @@ export class KY3PFormServiceFactory {
     return KY3PFormServiceFactory.instance;
   }
   
+  /**
+   * Create a new form service instance
+   */
   public createService(taskId: number, companyId: number): KY3PFormService {
     return new KY3PFormService(taskId, companyId);
+  }
+
+  /**
+   * Get an existing service instance or create a new one
+   * This is the method that componentFactory.getIsolatedFormService expects
+   */
+  public getServiceInstance(companyId: number | string, taskId: number | string): KY3PFormService {
+    // Create a unique key for this combination
+    const instanceKey = `${companyId}_${taskId}`;
+    
+    // If we have an existing instance, return it
+    if (this.serviceInstances.has(instanceKey)) {
+      return this.serviceInstances.get(instanceKey)!;
+    }
+    
+    // Otherwise, create a new one and store it
+    const numericCompanyId = typeof companyId === 'string' ? parseInt(companyId, 10) : companyId;
+    const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+    
+    const service = this.createService(numericTaskId, numericCompanyId);
+    this.serviceInstances.set(instanceKey, service);
+    
+    return service;
   }
 }
 
