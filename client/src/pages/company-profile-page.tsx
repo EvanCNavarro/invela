@@ -3,18 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
+import { companyTypeColors } from "@/components/network/types";
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { useState } from "react";
 
 interface CompanyProfileData {
@@ -393,26 +395,80 @@ export default function CompanyProfilePage() {
     <DashboardLayout>
       <PageTemplate
         showBreadcrumbs
-        headerActions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBackClick}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Network
-          </Button>
-        }
       >
         <div className="space-y-6">
-          <div className="flex items-center gap-6">
-            <div className="relative w-20 h-20 rounded-lg shadow-lg">
-              <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+          {/* Back button on the left */}
+          <div className="flex items-center justify-start mb-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackClick}
+              className="border border-gray-200"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Network
+            </Button>
+          </div>
+          
+          {/* Company header with centered logo in a square box */}
+          <div className="flex flex-col md:flex-row items-center gap-6 bg-white p-6 rounded-lg shadow-sm">
+            <div className="relative w-24 h-24 min-w-24 rounded-md shadow-md flex items-center justify-center overflow-hidden bg-slate-100">
+              <div className="flex items-center justify-center w-full h-full">
+                <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+              </div>
             </div>
-            <PageHeader
-              title={company.name}
-              description={company.description || "No description available"}
-            />
+            
+            <div className="flex flex-col items-center md:items-start space-y-2">
+              <h1 className="text-2xl font-bold">{company.name}</h1>
+              <p className="text-muted-foreground text-sm text-center md:text-left">
+                {company.description || "No description available"}
+              </p>
+              
+              {/* Metadata chips for company type */}
+              <div className="flex items-center gap-2 mt-2">
+                {company.category && (
+                  <Badge 
+                    className="px-2 py-1"
+                    style={{ 
+                      backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default,
+                      color: 'white'
+                    }}
+                  >
+                    {company.category}
+                  </Badge>
+                )}
+                
+                {company.accreditationStatus === 'VALID' && (
+                  <Badge variant="outline" className="flex items-center gap-1 border-green-500 text-green-600">
+                    <BadgeCheck className="h-3 w-3" />
+                    Accredited
+                  </Badge>
+                )}
+                
+                {company.revenueTier && (
+                  <Badge variant="outline" className="px-2 py-1">
+                    {company.revenueTier}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            <div className="ml-auto flex-shrink-0 flex items-center justify-center md:justify-end space-x-2 mt-4 md:mt-0">
+              <div className="flex flex-col items-center md:items-end rounded-md bg-slate-50 px-4 py-2 md:mr-2">
+                <span className="text-sm text-muted-foreground">Risk Score</span>
+                <span className="text-2xl font-bold">
+                  {company.riskScore || company.risk_score || 0}
+                </span>
+              </div>
+              {company.accreditationStatus && (
+                <div className="flex flex-col items-center md:items-end bg-green-50 px-4 py-2 rounded-md border border-green-100">
+                  <span className="text-sm text-muted-foreground">Status</span>
+                  <span className="font-medium text-green-600">
+                    {company.accreditationStatus}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
