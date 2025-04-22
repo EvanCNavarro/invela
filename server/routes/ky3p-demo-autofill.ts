@@ -13,7 +13,7 @@ import {
   tasks,
   companies
 } from '@db/schema';
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, and, asc, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate } from '../services/websocket';
@@ -83,7 +83,7 @@ async function handleKy3pDemoAutofill(req, res) {
     })
       .from(ky3pFields)
       .where(and(
-        ky3pFields.demo_autofill.notNull(),
+        sql`${ky3pFields.demo_autofill} IS NOT NULL`,
         ky3pFields.demo_autofill.ne('')
       ))
       .orderBy(asc(ky3pFields.id));
