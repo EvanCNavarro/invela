@@ -9,6 +9,7 @@ export interface Company {
   onboarding_company_completed?: boolean;
   risk_score?: number;
   riskScore?: number;
+  chosen_score?: number;
   isDemo?: boolean;
 }
 

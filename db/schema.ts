@@ -107,6 +107,7 @@ export const companies = pgTable("companies", {
   exit_strategy_history: text("exit_strategy_history"),
   certifications_compliance: text("certifications_compliance"),
   risk_score: integer("risk_score"),
+  chosen_score: integer("chosen_score"),
   accreditation_status: text("accreditation_status"),
   onboarding_company_completed: boolean("onboarding_company_completed").notNull().default(true),
   registry_date: timestamp("registry_date").notNull().defaultNow(),
