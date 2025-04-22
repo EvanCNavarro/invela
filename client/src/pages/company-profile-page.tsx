@@ -573,24 +573,24 @@ export default function CompanyProfilePage() {
                   </p>
                 </div>
                 
-                {/* Company metadata badges with enhanced styling */}
+                {/* Company metadata badges with slightly rounded corners */}
                 <div className="flex flex-wrap items-center gap-2">
                   {company.revenueTier && (
-                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                    <div className="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
                       <DollarSign className="h-3.5 w-3.5" />
                       {company.revenueTier}
                     </div>
                   )}
                   
                   {company.legalStructure && (
-                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                    <div className="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
                       <Building2 className="h-3.5 w-3.5" />
                       {company.legalStructure}
                     </div>
                   )}
                   
                   {company.fundingStage && (
-                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                    <div className="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
                       <Briefcase className="h-3.5 w-3.5" />
                       {company.fundingStage}
                     </div>
@@ -625,16 +625,18 @@ export default function CompanyProfilePage() {
                   }}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <BadgeIcon className="h-4 w-4 text-gray-500" />
-                    <div className="text-xs text-gray-600 font-medium">
-                      Accreditation
+                    <BadgeCheck className="h-5 w-5 text-slate-700" />
+                    <div className="text-sm text-slate-700 font-medium">
+                      ACCREDITATION:
                     </div>
                   </div>
-                  <div className={
-                    company.accreditationStatus === 'VALID' 
-                      ? 'text-green-600 mt-1 font-semibold text-lg flex items-center justify-center' 
-                      : 'text-red-500 mt-1 font-semibold text-lg flex items-center justify-center'
-                  }>
+                  <div 
+                    className={
+                      company.accreditationStatus === 'VALID' 
+                        ? 'bg-green-100 text-green-600 mt-1 font-semibold text-lg rounded-md py-1 flex items-center justify-center' 
+                        : 'bg-red-100 text-red-500 mt-1 font-semibold text-lg rounded-md py-1 flex items-center justify-center'
+                    }
+                  >
                     {company.accreditationStatus === 'VALID' ? (
                       <><CheckCircle className="w-5 h-5 mr-1.5" /> VALID</>
                     ) : (
