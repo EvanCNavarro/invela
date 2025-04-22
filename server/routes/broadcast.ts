@@ -97,4 +97,62 @@ router.get('/api/broadcast/status', (req, res) => {
   }
 });
 
+/**
+ * Broadcast a field update via WebSocket
+ * This is used by the individual field update functionality to notify 
+ * all clients when a specific field has been updated
+ */
+router.post('/api/broadcast/field-update', requireAuth, (req, res) => {
+  try {
+    const { taskId, fieldId, fieldKey, value, timestamp } = req.body;
+    
+    if (!taskId || !fieldId) {
+      return res.status(400).json({ error: 'Missing required parameters (taskId and fieldId)' });
+    }
+    
+    const messageTimestamp = timestamp || new Date().toISOString();
+    
+    logger.info(`Broadcasting field update for task ${taskId}, field ${fieldId} (${fieldKey})`, {
+      taskId,
+      fieldId,
+      fieldKey,
+      valueType: typeof value,
+      timestamp: messageTimestamp
+    });
+    
+    // Broadcast the message to all clients
+    const messageSent = broadcastMessage('field_updated', {
+      taskId,
+      fieldId,
+      fieldKey,
+      value,
+      timestamp: messageTimestamp,
+      source: 'api'
+    });
+    
+    if (messageSent) {
+      logger.info(`Successfully broadcasted field update for task ${taskId}, field ${fieldId}`);
+      return res.json({
+        success: true,
+        message: 'Field update broadcasted successfully',
+        taskId,
+        fieldId,
+        timestamp: messageTimestamp
+      });
+    } else {
+      logger.warn(`Failed to broadcast field update - no WebSocket server available`);
+      return res.status(503).json({
+        success: false,
+        message: 'WebSocket server not available'
+      });
+    }
+  } catch (error) {
+    logger.error('Error broadcasting field update:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error broadcasting field update message'
+    });
+  }
+});
+
 export default router;

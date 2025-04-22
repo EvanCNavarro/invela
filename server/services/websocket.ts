@@ -117,23 +117,39 @@ export function getWebSocketServer(): WebSocketServer | null {
 export function broadcast(type: string, data: any) {
   if (!wss) {
     console.warn('[WebSocket] Cannot broadcast, server not initialized');
-    return;
+    return false;
   }
   
   const message = JSON.stringify({ 
     type, 
-    payload: data  // Changed from 'data' to 'payload' to match client expectations
+    payload: data  // Using 'payload' to match client expectations
   });
   let clientCount = 0;
   
+  // Add timestamp if not provided
+  if (data && !data.timestamp) {
+    data.timestamp = new Date().toISOString();
+  }
+  
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-      clientCount++;
+      try {
+        client.send(message);
+        clientCount++;
+      } catch (err) {
+        console.error('[WebSocket] Error sending message to client:', err);
+      }
     }
   });
   
-  console.log(`[WebSocket] Broadcast "${type}" sent to ${clientCount} clients`);
+  console.log(`[WebSocket] Broadcast "${type}" sent to ${clientCount} clients`, {
+    type,
+    dataKeys: data ? Object.keys(data) : [],
+    timestamp: data?.timestamp || new Date().toISOString(),
+    clientCount
+  });
+  
+  return clientCount > 0;
 }
 
 /**
