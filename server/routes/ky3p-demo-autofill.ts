@@ -22,10 +22,10 @@ const router = Router();
 const logger = new Logger('KY3PDemoAutofill');
 
 /**
- * API endpoint to auto-fill all KY3P form fields with demo data
- * This directly inserts the data into the responses table
+ * Helper function to handle the KY3P demo auto-fill logic
+ * This is reused by both endpoint formats to avoid code duplication
  */
-router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, res) => {
+async function handleKy3pDemoAutofill(req, res) {
   const taskId = parseInt(req.params.taskId, 10);
   if (!req.user || !req.user.id) {
     return res.status(401).json({ message: 'Authentication required' });
@@ -83,48 +83,38 @@ router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, re
     })
       .from(ky3pFields)
       .where(and(
-        ky3pFields.demo_autofill.isNotNull(),
-        ky3pFields.demo_autofill.notEquals('')
+        ky3pFields.demo_autofill.notNull(),
+        ky3pFields.demo_autofill.ne('')
       ))
       .orderBy(asc(ky3pFields.id));
     
-    logger.info(`Found ${fields.length} KY3P fields with demo values`);
+    logger.info(`Found ${fields.length} KY3P fields with demo values for task ${taskId}`);
     
-    // Clear existing responses first
+    // First delete any existing responses for this task
     await db.delete(ky3pResponses)
       .where(eq(ky3pResponses.task_id, taskId));
     
-    logger.info('Cleared existing responses for task', { taskId });
+    logger.info(`Cleared existing responses for task ${taskId}`);
     
-    // Insert demo values for each field
-    let insertCount = 0;
-    const insertPromises = fields.map(async (field) => {
-      try {
-        await db.insert(ky3pResponses).values({
-          task_id: taskId,
+    // Insert all demo data
+    const insertPromises = fields.map(field => {
+      return db.insert(ky3pResponses)
+        .values({
           field_id: field.id,
-          response_value: field.demo_autofill || '',
+          field_key: field.field_key,
+          task_id: taskId,
+          value: field.demo_autofill || '',
           created_at: new Date(),
           updated_at: new Date(),
-          created_by: req.user!.id
+          created_by: req.user.id,
+          updated_by: req.user.id
         });
-        insertCount++;
-      } catch (insertError) {
-        logger.error('Error inserting demo response', {
-          taskId,
-          fieldId: field.id,
-          error: insertError instanceof Error ? insertError.message : 'Unknown error'
-        });
-      }
     });
     
     await Promise.all(insertPromises);
+    const insertCount = insertPromises.length;
     
-    logger.info('Demo auto-fill completed successfully', {
-      taskId,
-      fieldsWithDemo: fields.length,
-      insertedResponses: insertCount
-    });
+    logger.info(`Successfully inserted ${insertCount} KY3P responses for task ${taskId}`);
     
     // Update task progress based on response count
     const progress = Math.min(Math.round((insertCount / 120) * 100), 100);
@@ -177,6 +167,24 @@ router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, re
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
+}
+
+/**
+ * API endpoint to auto-fill all KY3P form fields with demo data
+ * Original URL format: /api/tasks/:taskId/ky3p-demo-autofill
+ * This directly inserts the data into the responses table
+ */
+router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, res) => {
+  return handleKy3pDemoAutofill(req, res);
+});
+
+/**
+ * API endpoint to auto-fill all KY3P form fields with demo data
+ * New URL format: /api/ky3p/demo-autofill/:taskId  
+ * This matches the pattern used by other form types
+ */
+router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  return handleKy3pDemoAutofill(req, res);
 });
 
 export default router;

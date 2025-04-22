@@ -894,7 +894,7 @@ const handleDemoAutoFill = useCallback(async () => {
     // First handle KY3P tasks specifically (simplify the process)
     if (isKy3pTask) {
       // Use the dedicated server-side auto-fill endpoint
-      const serverEndpoint = `/api/tasks/${taskId}/ky3p-demo-autofill`;
+      const serverEndpoint = `/api/ky3p/demo-autofill/${taskId}`;
       
       logger.info(`[UniversalForm] Using direct server-side KY3P auto-fill: ${serverEndpoint}`);
       
