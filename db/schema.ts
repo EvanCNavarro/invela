@@ -102,7 +102,8 @@ export const companies = pgTable("companies", {
   num_employees: integer("num_employees"),
   revenue: text("revenue"),
   revenue_tier: text("revenue_tier"),
-  active_consents: integer("active_consents"),
+  // active_consents column removed as it doesn't exist in the actual database
+  // active_consents: integer("active_consents"),
   key_clients_partners: text("key_clients_partners"),
   investors: text("investors"),
   funding_stage: text("funding_stage"),
