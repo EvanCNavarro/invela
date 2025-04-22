@@ -856,53 +856,17 @@ const handleDemoAutoFill = useCallback(async () => {
       duration: 3000,
     });
     
-    // Get demo data from the form service if available, otherwise use API directly
-    let demoData: Record<string, any> = {};
-    
-    // Map task types to their database equivalents if needed
-    const taskTypeMap: Record<string, string> = {
-      'kyb': 'company_kyb',
-      'card': 'company_card',
-      'security': 'security_assessment',
-      'ky3p': 'sp_ky3p_assessment',
-      'sp_ky3p_assessment': 'sp_ky3p_assessment',
-      'open_banking': 'open_banking_survey',
-      'open_banking_survey': 'open_banking_survey'
-    };
-    
-    // Use mapped task type for consistency
-    const dbTaskType = taskTypeMap[taskType] || taskType;
-    
-    // Check if this is a KY3P task (either via ky3p or sp_ky3p_assessment task type)
+    // Check if this is a KY3P task
     const isKy3pTask = taskType === 'ky3p' || taskType === 'sp_ky3p_assessment';
     
-    if (isKy3pTask && formService && 'getDemoData' in formService) {
-      // Use KY3P form service's method to get demo data
-      logger.info(`[UniversalForm] Using KY3P form service's getDemoData method for task ${taskId}`);
+    // First handle KY3P tasks specifically (simplify the process)
+    if (isKy3pTask) {
+      // Use the dedicated server-side auto-fill endpoint
+      const serverEndpoint = `/api/tasks/${taskId}/ky3p-demo-autofill`;
+      
+      logger.info(`[UniversalForm] Using direct server-side KY3P auto-fill: ${serverEndpoint}`);
+      
       try {
-        // Cast to any to access the getDemoData method
-        demoData = await (formService as any).getDemoData(taskId);
-        logger.info(`[UniversalForm] Got ${Object.keys(demoData).length} demo fields from KY3P form service`);
-      } catch (error) {
-        logger.error(`[UniversalForm] Error getting demo data from KY3P form service:`, error);
-        
-        // Show error toast
-        toast({
-          variant: "destructive",
-          title: "Auto-Fill Failed",
-          description: error instanceof Error ? error.message : "Could not load demo data from service",
-        });
-        return false;
-      }
-    } else {
-      // Fallback to direct API call
-      let endpoint;
-      if (isKy3pTask) {
-        // Use our new POST endpoint for KY3P that triggers the server-side auto-fill
-        const serverEndpoint = `/api/tasks/${taskId}/ky3p-demo-autofill`;
-        
-        logger.info(`[UniversalForm] Using direct server-side KY3P auto-fill: ${serverEndpoint}`);
-        
         // Call the server-side auto-fill which populates the database directly
         const autofillResponse = await fetch(serverEndpoint, {
           method: 'POST',
@@ -919,167 +883,71 @@ const handleDemoAutoFill = useCallback(async () => {
               title: "Auto-Fill Restricted",
               description: "Auto-fill is only available for demo companies.",
             });
+            return false;
           } else {
-            toast({
-              variant: "destructive",
-              title: "Auto-Fill Failed",
-              description: "Could not perform server-side auto-fill.",
-            });
+            throw new Error(`Server returned ${autofillResponse.status}: ${autofillResponse.statusText}`);
           }
-          return false;
         }
         
         const result = await autofillResponse.json();
-        logger.info(`[UniversalForm] KY3P server-side auto-fill completed`, result);
+        logger.info(`[UniversalForm] KY3P server-side auto-fill completed with ${result.responsesInserted || 0} responses`);
         
-        // Show success message
-        toast({
-          variant: "default",
-          title: "Auto-Fill Successful",
-          description: `Successfully inserted ${result.responsesInserted || 120} demo responses.`,
-        });
+        // Force query invalidation to refresh data from server
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
         
-        logger.info(`[UniversalForm] Auto-fill successful, refreshing data`);
+        // Wait for queries to be invalidated
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Refresh the task data from the server without triggering form save
+        // COMPLETELY RESET THE FORM to force full refresh from server
+        if (formService) {
+          logger.info('[UniversalForm] Forcing form service to reload data from server');
+          // Clear any cached data in the form service
+          if (typeof formService.clearCache === 'function') {
+            formService.clearCache();
+          }
+          
+          // Reset form without saving (hard reset)
+          if (resetForm) {
+            resetForm(true);
+          }
+          
+          // Force form to refetch all data
+          if (typeof formService.loadFormStructure === 'function') {
+            await formService.loadFormStructure();
+          }
+          
+          // Reload all form data from the server
+          if (typeof formService.loadFormData === 'function') {
+            await formService.loadFormData(taskId);
+          }
+        }
+        
+        // Refresh all section statuses
         if (refreshStatus) {
           refreshStatus();
         }
         
-        // Force query invalidation
-        const { queryClient } = await import('@/lib/queryClient');
-        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-        queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
-        
-        // Add a delay for the UI to update
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Refresh the form without saving
-        if (resetForm) {
-          // Hard reset form state without saving
-          resetForm(true);
-        }
+        // Force a React component re-render by toggling force rerender state
+        setForceRerender(prev => !prev);
         
         // Show success message
         toast({
           title: "Auto-Fill Complete",
-          description: "Demo data has been successfully stored in the database.",
+          description: `Successfully filled all KY3P fields with demo data (${result.responsesInserted || 120} responses)`,
           variant: "success",
         });
         
         return true;
-      } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-        endpoint = `/api/open-banking/demo-autofill/${taskId}`;
-      } else {
-        endpoint = `/api/kyb/demo-autofill/${taskId}`;
-      }
-      
-      // Only executed for non-KY3P forms
-      if (!isKy3pTask) {
-        logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint}`);
-        const demoDataResponse = await fetch(endpoint);
-        
-        if (!demoDataResponse.ok) {
-          if (demoDataResponse.status === 403) {
-            toast({
-              variant: "destructive",
-              title: "Auto-Fill Restricted",
-              description: "Auto-fill is only available for demo companies.",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Auto-Fill Failed",
-              description: "Could not load demo data from server.",
-            });
-          }
-          return false;
-        }
-        
-        demoData = await demoDataResponse.json();
-      }
-    }
-    
-    logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields for auto-fill`);
-    
-    // Combine demo data with existing form data for a more complete set
-    const currentValues = form.getValues();
-    const completeData = {
-      ...currentValues,
-      ...demoData,
-    };
-    
-    // Reset the form first to clear any existing fields
-    if (resetForm) {
-      resetForm();
-    }
-    
-    // Add a small delay to allow the form to reset
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Different handling based on form type
-    if (taskType === 'ky3p' && formService && 'bulkUpdate' in formService) {
-      // For KY3P forms, use the form service's bulkUpdate method
-      logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId}`);
-      
-      // Filter out empty values to get valid responses for bulk update
-      const validResponses: Record<string, any> = {};
-      let fieldCount = 0;
-      
-      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
-        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
-          // Add to valid responses
-          validResponses[fieldKey] = fieldValue;
-          fieldCount++;
-          
-          // Update the UI form state immediately
-          form.setValue(fieldKey, fieldValue, {
-            shouldValidate: true,
-            shouldDirty: true,
-            shouldTouch: true
-          });
-        }
-      }
-      
-      if (fieldCount === 0) {
-        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
-        toast({
-          variant: "warning",
-          title: "No Data Available",
-          description: "No valid demo data was found for this form type.",
-        });
-        return false;
-      }
-      
-      try {
-        logger.info(`[UniversalForm] Using batched update implementation for KY3P task ${taskId} with ${fieldCount} fields`);
-        
-        // Import the batch update function from the correct file
-        const { batchUpdateKy3pResponses } = await import('./ky3p-batch-update');
-        
-        // Use our implementation that updates fields in batches (similar to KYB)
-        const updateSuccess = await batchUpdateKy3pResponses(Number(taskId), validResponses);
-        
-        if (!updateSuccess) {
-          throw new Error("Batch update failed");
-        }
-        
-        logger.info(`[UniversalForm] KY3P form service bulk update completed successfully`);
-        
-        // Force query refresh
-        const { queryClient } = await import('@/lib/queryClient');
-        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-        
-        // Add a delay for UI reconciliation
-        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
-        logger.error('[UniversalForm] Error during KY3P bulk update:', error);
+        logger.error('[UniversalForm] Error during KY3P server-side auto-fill:', error);
         
         toast({
           variant: "destructive",
           title: "Auto-Fill Failed",
-          description: "Could not update form with demo data. Please try again or contact support.",
+          description: error instanceof Error ? error.message : "Failed to auto-fill form. Please try again.",
         });
         
         return false;
