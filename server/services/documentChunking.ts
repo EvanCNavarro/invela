@@ -32,6 +32,31 @@ export async function createDocumentChunks(
 
     if (mimeType === 'application/pdf') {
       content = await extractTextFromFirstPages(filePath);
+    } else if (mimeType === 'text/csv' || mimeType === 'application/vnd.ms-excel' || filePath.toLowerCase().endsWith('.csv')) {
+      // Special handling for CSV files - format with proper structure
+      const csvData = fs.readFileSync(filePath, 'utf8');
+      const lines = csvData.split('\n').filter(line => line.trim().length > 0);
+      
+      if (lines.length <= 1) {
+        throw new DocumentChunkingError('CSV file contains no data rows');
+      }
+      
+      // Extract headers and format content in a more readable way
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      content = 'Document Content:\n\n';
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        content += `Row ${i}:\n`;
+        
+        for (let j = 0; j < Math.min(headers.length, values.length); j++) {
+          const value = values[j]?.trim().replace(/"/g, '') || '';
+          if (value) {
+            content += `${headers[j]}: ${value}\n`;
+          }
+        }
+        content += '\n';
+      }
     } else {
       content = fs.readFileSync(filePath, 'utf8');
     }
@@ -119,7 +144,14 @@ export async function processChunk(
     });
 
     // Pass complete field information to OpenAI
-    const result = await analyzeDocument(chunk.content, fields);
+    // Ensure fields have the required ai_search_instructions property
+    const fieldsWithInstructions = fields.map(field => ({
+      field_key: field.field_key,
+      question: field.question,
+      ai_search_instructions: field.ai_search_instructions || 'Extract this information from the document'
+    }));
+    
+    const result = await analyzeDocument(chunk.content, fieldsWithInstructions);
 
     console.log('[DocumentChunking] Chunk analysis complete:', {
       chunkIndex: chunk.index,
