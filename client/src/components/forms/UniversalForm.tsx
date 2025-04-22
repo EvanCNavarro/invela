@@ -928,9 +928,9 @@ const handleDemoAutoFill = useCallback(async () => {
     // Add a small delay to allow the form to reset
     await new Promise(resolve => setTimeout(resolve, 50));
     
-    // For KY3P and Open Banking forms, use the bulk update approach
+    // For KY3P and Open Banking forms, use the form service's bulkUpdate method
     if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
-      logger.info(`[UniversalForm] Using bulk update API for ${taskType}`);
+      logger.info(`[UniversalForm] Using form service bulkUpdate for ${taskType}`);
       
       // Filter out empty values to get valid responses for bulk update
       const validResponses: Record<string, any> = {};
@@ -961,35 +961,36 @@ const handleDemoAutoFill = useCallback(async () => {
         return false;
       }
       
-      // Construct proper endpoint based on form type
-      const endpoint = 
-        taskType === 'sp_ky3p_assessment' 
-          ? `/api/tasks/${taskId}/ky3p-responses/bulk` 
-          : `/api/tasks/${taskId}/${taskType}-responses/bulk`;
-      
-      logger.info(`[UniversalForm] Sending bulk update to ${endpoint} with ${fieldCount} fields`);
-      
-      // Send the bulk update request
       try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            responses: validResponses
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          logger.error(`[UniversalForm] Bulk update failed: ${response.status}`, errorText);
-          throw new Error(`Bulk update failed: ${response.status} - ${errorText}`);
+        // Use the form service's bulkUpdate method directly rather than making our own fetch call
+        if (taskType === 'sp_ky3p_assessment' && formService && 'bulkUpdate' in formService) {
+          logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+          
+          const success = await (formService as any).bulkUpdate(validResponses, taskId);
+          
+          if (!success) {
+            throw new Error('The KY3P form service bulkUpdate method failed');
+          }
+          
+          logger.info(`[UniversalForm] KY3P form service bulk update successful`);
+        } 
+        else if ((taskType === 'open_banking' || taskType === 'open_banking_survey') && formService && 'bulkUpdate' in formService) {
+          logger.info(`[UniversalForm] Using Open Banking form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+          
+          const success = await (formService as any).bulkUpdate(validResponses, taskId);
+          
+          if (!success) {
+            throw new Error('The Open Banking form service bulkUpdate method failed');
+          }
+          
+          logger.info(`[UniversalForm] Open Banking form service bulk update successful`);
         }
-        
-        const result = await response.json();
-        logger.info(`[UniversalForm] Bulk update successful:`, result);
+        else {
+          // Fallback to direct API call as a last resort
+          logger.warn(`[UniversalForm] No bulkUpdate method found in form service, using direct API call instead`);
+          
+          throw new Error('Form service does not support bulkUpdate method. Please check implementation.');
+        }
         
         // Force query refresh
         const { queryClient } = await import('@/lib/queryClient');
@@ -997,7 +998,14 @@ const handleDemoAutoFill = useCallback(async () => {
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       } catch (error) {
         logger.error('[UniversalForm] Error during bulk update:', error);
-        throw error;
+        
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: "Could not update form with demo data. Please try again or contact support.",
+        });
+        
+        return false;
       }
     } else {
       // For KYB forms, we need a more reliable approach with better timing
