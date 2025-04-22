@@ -37,6 +37,7 @@ import { router as wsTestRouter } from './routes/websocket-test';
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
+import broadcastRouter from './routes/broadcast';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -283,6 +284,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register submission status API - reliable form submission status checking
   app.use('/api/submissions', submissionsRouter);
+  
+  // Register broadcast router for demo auto-fill WebSocket functionality
+  app.use(broadcastRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
