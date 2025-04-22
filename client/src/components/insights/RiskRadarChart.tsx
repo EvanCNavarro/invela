@@ -93,8 +93,10 @@ export function RiskRadarChart({ className }: RiskRadarChartProps) {
   const displayCompany = selectedCompanyId === company?.id ? company : selectedCompany;
   const isLoading = isCompanyLoading || (isSelectedCompanyLoading && selectedCompanyId !== company?.id);
 
-  // Extract risk clusters data
-  const riskClusters = displayCompany?.risk_clusters;
+  // Extract risk clusters data - ensuring we handle both Company and CompanyWithRiskClusters types
+  const riskClusters = displayCompany ? 
+    ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
+    undefined;
 
   // Configure ApexCharts options
   const chartOptions = {
