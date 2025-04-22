@@ -474,112 +474,93 @@ export class KY3PFormService extends EnhancedKybFormService {
    * @returns Object with success status, error message, and updated count
    */
   /**
-   * Bulk update KY3P form responses with demo data
-   * This method follows the exact same pattern as KYB bulk update
+   * Bulk update KY3P responses with demo data
+   * This is called from the DemoAutofillButton in the form 
+   * 
+   * @param taskId Task ID
+   * @param formData Optional form data
+   * @returns Success status, error message, and count of updated fields
    */
   async bulkUpdateResponses(
     taskId: number, 
     formData?: Record<string, any>
   ): Promise<{ success: boolean; error?: string; updatedCount: number }> {
     try {
-      // Fetch the demo data first
-      const demoData = await this.getDemoData(taskId);
-      
-      // Then use the proper bulk update endpoint
-      const success = await this.bulkUpdate(demoData, taskId);
-      
-      if (success) {
-        return { 
-          success: true, 
-          updatedCount: Object.keys(demoData).length 
-        };
-      } else {
-        return { 
-          success: false, 
-          error: 'Bulk update failed',
-          updatedCount: 0 
-        };
-      }
-    } catch (error: any) {
-      logger.error('[KY3P Form Service] Error during bulk update:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Unknown error',
-        updatedCount: 0 
-      };
-    }
-  }
-  
-  /**
-   * Bulk update method that exactly follows KYB's implementation
-   */
-  public async bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean> {
-    if (!taskId) {
-      throw new Error('No task ID provided for bulk update');
-    }
-    
-    try {
-      logger.info(`[KY3P Form Service] Performing bulk update for task ${taskId}`);
-      
-      // Send to server with proper payload format including 'responses' wrapper
-      const response = await fetch(`/api/kyb/bulk-update/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: data
-        }),
+      // Get the demo data
+      const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
+        credentials: 'include'
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Bulk update failed: ${response.status} ${errorText}`);
-        return false;
+        const error = `Failed to fetch demo data: ${response.statusText}`;
+        return { success: false, error, updatedCount: 0 };
       }
       
-      const result = await response.json();
-      logger.info(`[KY3P Form Service] Bulk update successful:`, result);
+      const demoData = await response.json();
       
-      // Update progress via task update endpoint
-      try {
-        await fetch(`/api/tasks/${taskId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            progress: 100 // Set to 100% after bulk update
-          }),
-        });
-      } catch (progressError) {
-        logger.warn('[KY3P Form Service] Failed to update progress:', progressError);
+      if (Object.keys(demoData).length === 0) {
+        return { 
+          success: false, 
+          error: 'No demo data available', 
+          updatedCount: 0 
+        };
       }
       
-      // Broadcast the update
-      try {
-        await fetch(`/api/broadcast/task-update`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            taskId,
-            type: 'task_updated',
-            timestamp: new Date().toISOString()
-          }),
-        });
-      } catch (broadcastError) {
-        logger.warn('[KY3P Form Service] Failed to broadcast task update:', broadcastError);
+      // Use the KYB bulk-update endpoint directly - this is what WORKS
+      const bulkResponse = await fetch(`/api/kyb/bulk-update/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          responses: demoData
+        })
+      });
+      
+      if (!bulkResponse.ok) {
+        const error = `Bulk update failed: ${bulkResponse.statusText}`;
+        return { success: false, error, updatedCount: 0 };
       }
       
-      return true;
-    } catch (error) {
-      logger.error('[KY3P Form Service] Error in bulk update:', error);
-      return false;
+      const updateCount = Object.keys(demoData).length;
+      
+      // Update task progress
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          progress: 100
+        })
+      });
+      
+      // Broadcast update
+      await fetch(`/api/broadcast/task-update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          taskId,
+          type: 'task_updated',
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      return {
+        success: true,
+        updatedCount: updateCount
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.message || 'Unknown error',
+        updatedCount: 0
+      };
     }
   }
   
