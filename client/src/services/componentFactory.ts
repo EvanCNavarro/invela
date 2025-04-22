@@ -3,7 +3,7 @@ import { FormServiceInterface } from './formService';
 import { getFieldComponentType } from '@/utils/formUtils';
 import { TaskTemplateWithConfigs } from './taskTemplateService';
 import { enhancedKybServiceFactory } from './enhanced-kyb-service';
-import { ky3pFormServiceFactory } from './ky3p-form-service-new';
+import { ky3pFormServiceFactory } from './ky3p-form-service';
 import { openBankingFormServiceFactory } from './open-banking-form-service';
 import getLogger from '@/utils/logger';
 
