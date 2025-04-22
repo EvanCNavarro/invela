@@ -84,7 +84,7 @@ async function handleKy3pDemoAutofill(req, res) {
       .from(ky3pFields)
       .where(and(
         sql`${ky3pFields.demo_autofill} IS NOT NULL`,
-        ky3pFields.demo_autofill.ne('')
+        sql`${ky3pFields.demo_autofill} != ''`
       ))
       .orderBy(asc(ky3pFields.id));
     
