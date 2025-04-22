@@ -45,10 +45,7 @@ export function RiskMeter({
   // Define mutation for updating the chosen score
   const updateScoreMutation = useMutation({
     mutationFn: async (newScore: number) => {
-      return apiRequest(`/api/companies/${companyId}/score`, {
-        method: 'PATCH',
-        body: JSON.stringify({ chosen_score: newScore })
-      });
+      return apiRequest('PATCH', `/api/companies/${companyId}/score`, { chosen_score: newScore });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
