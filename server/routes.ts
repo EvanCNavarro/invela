@@ -377,11 +377,11 @@ export function registerRoutes(app: Express): Express {
         legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
         hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
         employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
-        products_services: sql<string[]>`COALESCE(${companies.products_services}, '{}')::text[]`,
+        products_services: sql<string>`COALESCE(${companies.products_services}, '')`,
         incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
         investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
         funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
-        key_partners: sql<string[]>`COALESCE(${companies.key_partners}, '{}')::text[]`,
+        key_partners: sql<string>`COALESCE(${companies.key_partners}, '')`,
         leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
         has_relationship: sql<boolean>`
           CASE 
@@ -425,11 +425,11 @@ export function registerRoutes(app: Express): Express {
         legalStructure: company.legal_structure || 'N/A',
         hqAddress: company.hq_address || 'N/A',
         numEmployees: company.employee_count || 'N/A',
-        productsServices: company.products_services || [],
+        productsServices: company.products_services ? [company.products_services] : [],
         incorporationYear: company.incorporation_year || 'N/A',
         investors: company.investors_info || 'No investor information available',
         fundingStage: company.funding_stage || null,
-        keyClientsPartners: company.key_partners || [],
+        keyClientsPartners: company.key_partners ? [company.key_partners] : [],
         foundersAndLeadership: company.leadership_team || 'No leadership information available',
         riskScore: company.risk_score
       }));
