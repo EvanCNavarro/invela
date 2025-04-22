@@ -980,55 +980,19 @@ const handleDemoAutoFill = useCallback(async () => {
       }
       
       try {
-        logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+        logger.info(`[UniversalForm] Using fixed KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
         
-        // Get the field definitions to convert field keys to field IDs
-        const allFields = await (formService as any).getFields();
+        // Import the fixed bulk update function
+        const { bulkUpdateKy3pResponses } = await import('./fix-ky3p-bulk-update');
         
-        // Create a map of field key to field ID for quick lookup
-        const fieldKeyToIdMap = new Map(
-          allFields.map((field: any) => [field.key, field.id])
-        );
+        // Use our fixed implementation that properly handles the field ID conversion
+        const updateSuccess = await bulkUpdateKy3pResponses(Number(taskId), validResponses);
         
-        // Convert validResponses to array format with explicit fieldId property
-        const responsesArray = [];
-        
-        for (const [key, value] of Object.entries(validResponses)) {
-          const fieldId = fieldKeyToIdMap.get(key);
-          if (fieldId !== undefined) {
-            // Ensure field ID is a number
-            const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
-            
-            if (!isNaN(numericFieldId)) {
-              responsesArray.push({
-                fieldId: numericFieldId,
-                value: value
-              });
-            }
-          }
+        if (!updateSuccess) {
+          throw new Error("Bulk update failed");
         }
         
-        logger.info(`[UniversalForm] Converted ${responsesArray.length} fields to array format for KY3P bulk update`);
-        
-        // Make the API call directly for maximum control
-        const response = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            responses: responsesArray // Using array format with explicit fieldId property
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          logger.error(`[UniversalForm] Failed to perform bulk update: ${response.status}`, errorText);
-          throw new Error(`Failed to update form data: ${errorText}`);
-        }
-        
-        logger.info(`[UniversalForm] KY3P form service bulk update successful via direct API call`);
+        logger.info(`[UniversalForm] KY3P form service bulk update completed successfully`);
         
         // Force query refresh
         const { queryClient } = await import('@/lib/queryClient');
