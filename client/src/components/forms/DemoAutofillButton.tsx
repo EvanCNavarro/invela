@@ -1,73 +1,62 @@
-/**
- * Demo Auto-fill Button Component for KY3P forms
- * 
- * This component adds a button to the form to auto-fill it with demo data.
- * It uses the bulkUpdateResponses method of the KY3PFormService to 
- * fetch demo data from the server and populate the form.
- */
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Wand2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { KY3PFormService } from '@/services/ky3p-form-service';
+import { useKY3PFormService } from '@/services/ky3p-form-service';
 import getLogger from '@/utils/logger';
 
-const logger = getLogger('DemoAutofill');
+const logger = getLogger('DemoAutofillButton', { 
+  levels: { debug: true, info: true, warn: true, error: true } 
+});
 
 interface DemoAutofillButtonProps {
   taskId: number;
   taskType: string;
   onSuccess?: () => void;
+  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link";
+  className?: string;
 }
 
-export function DemoAutofillButton({ taskId, taskType, onSuccess }: DemoAutofillButtonProps) {
-  const [loading, setLoading] = useState(false);
+/**
+ * DemoAutofillButton component for the KY3P form
+ * 
+ * This button triggers the demo data autofill functionality,
+ * populating all form fields with predefined demo values.
+ */
+export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
+  taskId,
+  taskType,
+  onSuccess,
+  variant = "outline",
+  className = "",
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const formService = useKY3PFormService();
 
-  // Only show the button for KY3P tasks
-  if (taskType !== 'ky3p') {
-    return null;
-  }
-
-  const handleClick = async () => {
-    if (!taskId) {
+  const handleDemoAutofill = async () => {
+    if (!formService || !taskId) {
       toast({
+        title: "Error",
+        description: "Cannot initialize form service or task ID is missing",
         variant: "destructive",
-        title: "Auto-fill Failed",
-        description: "No task ID available for demo auto-fill",
       });
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
+    
     try {
-      logger.info(`Starting demo auto-fill for task ${taskId}`);
+      logger.info('Starting demo autofill for task:', taskId);
       
-      toast({
-        title: "Auto-fill Started",
-        description: "Fetching and applying demo data to form...",
-        duration: 5000,
-      });
-
-      // Initialize the KY3P form service
-      const formService = new KY3PFormService(undefined, taskId);
-
-      // Initialize form service in case it's needed
-      try {
-        await formService.initialize();
-      } catch (initError) {
-        // Continue anyway - initialization isn't critical for bulkUpdateResponses
-        logger.warn('Form service initialization failed but continuing with auto-fill:', initError);
-      }
-
-      // Use the bulkUpdateResponses method with empty form data and useDemoData=true
-      // This will trigger fetching demo data from the API
-      const success = await formService.bulkUpdateResponses(taskId, {}, true);
+      // Use the new bulk update method from KY3PFormService
+      const result = await formService.bulkUpdateResponses(taskId);
       
-      if (success) {
-        logger.info(`Demo auto-fill successful for task ${taskId}`);
+      if (result.success) {
+        logger.info('Demo autofill successful:', result);
         toast({
-          title: "Auto-fill Complete",
-          description: "Successfully populated the form with demo data. You may need to refresh the form to see all changes.",
+          title: "Demo Data Loaded",
+          description: `${result.updatedCount} fields have been populated with demo data.`,
+          variant: "default",
         });
         
         // Call the onSuccess callback if provided
@@ -75,34 +64,35 @@ export function DemoAutofillButton({ taskId, taskType, onSuccess }: DemoAutofill
           onSuccess();
         }
       } else {
-        logger.error(`Demo auto-fill failed for task ${taskId}`);
+        logger.error('Demo autofill failed:', result.error);
         toast({
-          variant: "destructive",
           title: "Auto-fill Failed",
-          description: "Failed to apply demo data. Please try again later.",
+          description: result.error || "Failed to load demo data. Please try again.",
+          variant: "destructive",
         });
       }
     } catch (error) {
-      logger.error('Error during demo auto-fill:', error);
+      logger.error('Error during demo autofill:', error);
       toast({
+        title: "Error",
+        description: "An unexpected error occurred while loading demo data",
         variant: "destructive",
-        title: "Auto-fill Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <Button
-      onClick={handleClick}
-      variant="outline"
+      variant={variant}
       size="sm"
-      disabled={loading}
-      className="ml-2"
+      onClick={handleDemoAutofill}
+      disabled={isLoading}
+      className={`flex items-center justify-center ${className}`}
     >
-      {loading ? "Loading..." : "Demo Auto-fill"}
+      <Wand2 className="mr-2 h-4 w-4" />
+      {isLoading ? "Loading..." : "Demo Auto-Fill"}
     </Button>
   );
-}
+};
