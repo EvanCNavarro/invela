@@ -499,7 +499,9 @@ export class KY3PFormService extends EnhancedKybFormService {
       logger.info(`[KY3P Form Service] Converted to ${responsesArray.length} array format responses for submission`);
       
       // Call the submit endpoint with clean data in array format
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit`, {
+      // Use the standardized endpoint for KY3P submission with proper file generation
+      logger.info(`[KY3P Form Service] Using standardized KY3P submit endpoint with enhanced file generation`);
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit-standard`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
