@@ -112,52 +112,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return path === '' ? 'dashboard' : path;
   };
 
+  // All routes are now accessible by default - we've removed the locking logic
   const isRouteAccessible = () => {
-    if (isLoadingCompany || !currentCompany) return true; // Wait for company data
-    
-    // Ensure we always have available_tabs as an array
-    const availableTabs = currentCompany.available_tabs || ['task-center'];
+    // Log the current tab and available tabs for debugging purposes only
+    const availableTabs = currentCompany?.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
     
-    // Log current tab and available tabs for debugging
     console.log('[DashboardLayout] Checking route access:', {
       currentTab,
       availableTabs,
       isLoadingCompany
     });
 
-    // Check if the current tab is accessible based on available tabs
-    // Task center is always accessible
-    const isAccessible = currentTab === 'task-center' || availableTabs.includes(currentTab);
+    // Always return true - all tabs are accessible
+    console.log(`[DashboardLayout] Tab "${currentTab}" accessible: true`);
     
-    // If trying to access file-vault but it's not available, refresh company data
-    // This handles cases where the database was updated but the UI hasn't caught up
-    if (currentTab === 'file-vault' && !isAccessible) {
-      console.log('[DashboardLayout] User requested file-vault but not in available tabs, refreshing data');
-      
-      // Refresh company data to get latest tab permissions
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-    }
-    
-    // Log current access state
-    console.log(`[DashboardLayout] Tab "${currentTab}" accessible: ${isAccessible}`);
-    
-    return isAccessible;
+    return true;
   };
 
-  useEffect(() => {
-    // Skip navigation if company data is not yet loaded
-    if (isLoadingCompany || !currentCompany) {
-      console.log('[DashboardLayout] Waiting for company data...');
-      return;
-    }
-
-    const currentTab = getCurrentTab();
-    if (currentTab !== 'task-center' && !isRouteAccessible()) {
-      console.log('[DashboardLayout] Route not accessible, redirecting to task-center');
-      navigate('/task-center');
-    }
-  }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
+  // We no longer need to redirect users - all tabs are accessible
+  // This effect has been removed as part of removing the locking logic
   
   // Override tab visibility on route change to prevent any flickering issues
   useEffect(() => {
@@ -187,19 +161,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     };
   }, [location, queryClient]);
 
-  if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4 px-4">
-          <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
-          <h1 className="text-2xl font-semibold">Section Locked</h1>
-          <p className="text-muted-foreground max-w-md">
-            Complete tasks in the Task Center to unlock more features.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // We've removed the locked section screen
+  // All sections are now accessible by default
 
   return (
     <div className="min-h-screen bg-[#FAFCFD] relative">
