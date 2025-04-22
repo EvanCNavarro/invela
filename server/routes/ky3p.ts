@@ -1369,6 +1369,43 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
 });
 
 /**
+ * Debug endpoint to diagnose bulk update issues
+ */
+router.post('/api/ky3p/debug-bulk', async (req, res) => {
+  try {
+    // Log the full request body for debugging
+    console.log('[DEBUG] KY3P Bulk Update Debug Endpoint:', {
+      bodyKeys: Object.keys(req.body),
+      hasResponses: req.body && req.body.responses ? 'yes' : 'no',
+      bodyType: typeof req.body,
+      responsesType: req.body.responses ? typeof req.body.responses : 'not present',
+      isResponsesArray: req.body.responses ? Array.isArray(req.body.responses) : 'not present',
+      responsesLength: req.body.responses ? 
+        (Array.isArray(req.body.responses) ? req.body.responses.length : Object.keys(req.body.responses).length) : 
+        'not present',
+      sampleData: req.body.responses ? 
+        (Array.isArray(req.body.responses) ? 
+          req.body.responses.slice(0, 2) : 
+          Object.entries(req.body.responses).slice(0, 2)) : 
+        'not present',
+      fullBody: JSON.stringify(req.body).substring(0, 1000) // Limit to avoid huge logs
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Debug info logged to server console',
+      requestInfo: {
+        bodyKeys: Object.keys(req.body),
+        hasResponses: req.body && req.body.responses ? true : false
+      }
+    });
+  } catch (error) {
+    logger.error('[KY3P Debug] Error processing debug request:', error);
+    res.status(500).json({ message: 'Error processing debug request' });
+  }
+});
+
+/**
  * Endpoint to provide demo data for auto-filling KY3P forms
  */
 router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
