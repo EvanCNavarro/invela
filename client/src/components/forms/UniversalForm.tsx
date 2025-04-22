@@ -364,8 +364,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           'kyb': 'company_kyb',
           'card': 'company_card',
           'security': 'security_assessment',
-          'ky3p': 'sp_ky3p_assessment',
-          'sp_ky3p_assessment': 'sp_ky3p_assessment', // Make sure both names map correctly
+          'ky3p': 'ky3p', // Standardize on 'ky3p' type
+          'sp_ky3p_assessment': 'ky3p', // Map the old type to the new standard
           'open_banking': 'open_banking_survey', // Map open_banking to open_banking_survey
           'open_banking_survey': 'open_banking_survey' // Make sure both names map correctly
         };
@@ -946,7 +946,7 @@ const handleDemoAutoFill = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 50));
     
     // Different handling based on form type
-    if (taskType === 'sp_ky3p_assessment' && formService && 'bulkUpdate' in formService) {
+    if (taskType === 'ky3p' && formService && 'bulkUpdate' in formService) {
       // For KY3P forms, use the form service's bulkUpdate method
       logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId}`);
       
@@ -1130,7 +1130,7 @@ const handleDemoAutoFill = useCallback(async () => {
         // Support both Open Banking and KY3P form services
         if (
           (taskType === 'open_banking' || taskType === 'open_banking_survey' || 
-           taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') && 
+           taskType === 'ky3p') && 
           formService && 'bulkUpdate' in formService
         ) {
           const formTypeDisplay = taskType.includes('ky3p') ? 'KY3P' : 'Open Banking';

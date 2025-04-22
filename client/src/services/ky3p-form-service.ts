@@ -16,7 +16,7 @@ let _instance: KY3PFormService | null = null;
 
 export class KY3PFormService extends EnhancedKybFormService {
   // Override the form type to match the task type in the database
-  protected readonly formType = 'sp_ky3p_assessment';
+  protected readonly formType = 'ky3p';
   
   // Cache for KY3P fields by template ID
   private static ky3pFieldsCache: Record<number, any[]> = {};
