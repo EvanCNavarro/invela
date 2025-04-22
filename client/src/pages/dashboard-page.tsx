@@ -339,8 +339,8 @@ export default function DashboardPage() {
                 )}
               </div>
               
-              {/* Risk Radar - Full width at bottom for FinTech */}
-              {visibleWidgets.riskRadar && companyData?.category === 'FinTech' && (
+              {/* Risk Radar - Different variants based on company category */}
+              {visibleWidgets.riskRadar && (
                 <div className="col-span-3">
                   <Widget
                     title="Risk Radar"
@@ -349,11 +349,21 @@ export default function DashboardPage() {
                     onVisibilityToggle={() => toggleWidget('riskRadar')}
                     isVisible={visibleWidgets.riskRadar}
                   >
-                    <RiskRadarChart 
-                      companyId={companyData?.id || 0} 
-                      showDropdown={false}
-                      className="shadow-none border-none p-2"
-                    />
+                    {companyData?.category === 'FinTech' ? (
+                      // FinTech only sees their own data, no dropdown
+                      <RiskRadarChart 
+                        companyId={companyData?.id || 0} 
+                        showDropdown={false}
+                        className="shadow-none border-none p-2"
+                      />
+                    ) : (
+                      // Bank/Invela can view any company in network
+                      <RiskRadarChart 
+                        companyId={companyData?.id || 0} 
+                        showDropdown={true}
+                        className="shadow-none border-none p-2"
+                      />
+                    )}
                   </Widget>
                 </div>
               )}

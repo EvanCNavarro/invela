@@ -40,4 +40,12 @@ export const riskBucketColors: Record<RiskBucket, string> = {
   critical: '#4C2F54' // Reverted to match legacy key colors in legend
 };
 
-export const centerNodeColor = '#4965EC';
+// Color-coding for company types
+export const companyTypeColors: Record<string, string> = {
+  'Bank': '#7B74A8',  // Purple for banks
+  'Invela': '#4965EC', // Blue for Invela
+  'FinTech': '#48BB78', // Green for FinTechs
+  'Default': '#4965EC' // Default blue
+};
+
+export const centerNodeColor = '#4965EC'; // This will be replaced by company type color in the visualization

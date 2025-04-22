@@ -10,7 +10,8 @@ import {
   NetworkVisualizationData, 
   RiskBucket, 
   centerNodeColor, 
-  riskBucketColors 
+  riskBucketColors,
+  companyTypeColors
 } from './types';
 import { Loader2 } from 'lucide-react';
 
@@ -87,12 +88,13 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .attr('stroke-width', 1.5);
     });
 
-    // Draw center node
+    // Draw center node with color based on company type
+    const centerCompanyColor = companyTypeColors[data.center.category] || companyTypeColors['Default'];
     g.append('circle')
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', 25)
-      .attr('fill', centerNodeColor)
+      .attr('fill', centerCompanyColor)
       .attr('stroke', '#000')
       .attr('stroke-width', 2)
       .attr('class', 'center-node')
@@ -115,7 +117,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       const angle = index * angleStep;
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
-      const nodeColor = riskBucketColors[node.riskBucket];
+      // Use company type color for the node if available, otherwise use risk bucket color
+      const nodeColor = companyTypeColors[node.category] || riskBucketColors[node.riskBucket];
       // Add border only for accredited companies
       const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent';
 
@@ -288,28 +291,34 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
   return (
     <Card className={className}>
-      <CardHeader className="flex items-center justify-between pb-2 space-y-0 border-b">
-        <NetworkFiltersComponent 
-          filters={filters} 
-          onFiltersChange={setFilters} 
-        />
+      <CardHeader className="pb-2 space-y-2 border-b">
+        <div className="flex items-center justify-between">
+          <div className="text-base font-semibold">Network Visualization</div>
+        </div>
         
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
-            <span className="text-xs">Low</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-[#B3B8C6] border border-black"></span>
-            <span className="text-xs">Medium</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-[#7B74A8] border border-black"></span>
-            <span className="text-xs">High</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
-            <span className="text-xs">Critical</span>
+        <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-y-0 sm:space-x-4">
+          <NetworkFiltersComponent 
+            filters={filters} 
+            onFiltersChange={setFilters} 
+          />
+          
+          <div className="flex items-center self-start space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
+              <span className="text-xs">Low</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-[#B3B8C6] border border-black"></span>
+              <span className="text-xs">Medium</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-[#7B74A8] border border-black"></span>
+              <span className="text-xs">High</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
+              <span className="text-xs">Critical</span>
+            </div>
           </div>
         </div>
       </CardHeader>
