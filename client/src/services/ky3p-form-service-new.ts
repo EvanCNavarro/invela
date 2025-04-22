@@ -111,14 +111,14 @@ export class KY3PFormService implements FormServiceInterface {
     try {
       this.logger(`Loading fields for task ${this.taskId}...`);
       
-      // First load field definitions - Use direct SQL endpoint
+      // First load field definitions - Use direct SQL endpoint with proper quoting for the "group" column
       const fieldDefinitionsResponse = await fetch('/api/debug/sql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          query: 'SELECT * FROM ky3p_fields ORDER BY "order"'
+          query: 'SELECT id, field_key, display_name, "group", field_type, is_required, help_text, demo_autofill, "order", step_index FROM ky3p_fields ORDER BY "order"'
         })
       });
       
