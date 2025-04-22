@@ -515,43 +515,42 @@ export default function CompanyProfilePage() {
         showBreadcrumbs
       >
         <div className="space-y-6">
-          {/* Back button on the left */}
-          <div className="flex items-center justify-start mb-6">
-            <Button
-              variant="outline"
-              size="sm"
+          {/* Back button with cleaner, more minimal design */}
+          <div className="flex items-center justify-start mb-4">
+            <button
               onClick={handleBackClick}
-              className="border border-gray-200"
+              className="group flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-300 rounded-md px-2 py-1 transition-colors"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-1.5 h-4 w-4 text-gray-500 group-hover:text-gray-700" />
               Back to Network
-            </Button>
+            </button>
           </div>
           
-          {/* Company header with neuomorphic logo and evenly spaced elements */}
-          <div className="flex flex-col md:flex-row items-stretch gap-6 bg-white p-6 rounded-lg border border-gray-100">
-            {/* Neuomorphic logo container */}
-            <div className="relative w-24 h-24 min-w-24 rounded-xl flex items-center justify-center overflow-hidden 
-                bg-gray-50 border border-gray-100 shadow-[8px_8px_16px_0px_rgba(209,213,219,0.8),-8px_-8px_16px_0px_rgba(255,255,255,0.8)]">
-              <div className="flex items-center justify-center w-full h-full">
+          {/* Company header - cleaner, more minimal design matching the screenshot */}
+          <div className="flex flex-row items-start gap-4 p-6 bg-white rounded-lg">
+            {/* Logo container - simplified neuomorphic style */}
+            <div className="relative w-20 h-20 min-w-20 rounded-lg flex items-center justify-center overflow-hidden 
+                bg-slate-50 border border-slate-100 shadow-md">
+              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-blue-500">
                 <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
               </div>
             </div>
             
-            {/* Company info with evenly spaced elements */}
-            <div className="flex-1 flex flex-col justify-between py-1 space-y-3">
-              <div>
-                <h1 className="text-2xl font-bold leading-tight">{company.name}</h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                  {company.description || "No description available"}
-                </p>
-              </div>
+            {/* Company info - cleaner spacing */}
+            <div className="flex-1 flex flex-col justify-between gap-1.5">
+              {/* Company name in larger font */}
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
               
-              {/* Metadata chips as rounded boxes */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Description in subdued color */}
+              <p className="text-gray-500 text-sm font-normal">
+                {company.description || "No description available"}
+              </p>
+              
+              {/* Metadata chip - simplified to match screenshot exactly */}
+              <div className="flex items-center mt-0.5">
                 {company.category && (
                   <div 
-                    className="rounded-full px-3 py-1 text-xs font-medium text-white"
+                    className="rounded-md px-3 py-0.5 text-xs font-semibold text-white"
                     style={{ 
                       backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
                     }}
@@ -559,72 +558,83 @@ export default function CompanyProfilePage() {
                     {company.category}
                   </div>
                 )}
-                
-                {company.revenueTier && (
-                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700">
-                    {company.revenueTier}
-                  </div>
-                )}
-                
-                {company.legalStructure && (
-                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
-                    {company.legalStructure}
-                  </div>
-                )}
               </div>
             </div>
             
-            {/* Right side boxes - Risk Score and Accreditation Status */}
-            <div className="flex-shrink-0 flex flex-col md:flex-row items-stretch gap-3 mt-3 md:mt-0">
-              {/* S&P Business Data Access Risk Score */}
-              <div className="flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-slate-50 to-gray-100 border border-gray-200 text-center md:min-w-36">
-                <div className="text-xs text-slate-500 font-medium">S&P Business Data Access Risk Score</div>
-                <div className="text-3xl font-bold mt-2">
+            {/* Right side cards with standardized dimensions */}
+            <div className="flex flex-row gap-3 items-stretch">
+              {/* S&P Business Data Access Risk Score - cleaner, more minimal */}
+              <div className="flex flex-col justify-between p-4 rounded-lg bg-slate-50 text-center w-56">
+                <div className="text-xs text-gray-500 font-medium">
+                  S&P Business Data Access Risk Score
+                </div>
+                <div className="text-4xl font-bold mt-2 text-gray-900">
                   {company.riskScore || company.risk_score || 0}
                 </div>
               </div>
               
-              {/* Accreditation status */}
-              <div className="flex flex-col justify-between p-4 rounded-xl border text-center md:min-w-36"
+              {/* Accreditation status - cleaner, simpler */}
+              <div className="flex flex-col justify-between p-4 rounded-lg text-center w-44"
                 style={{
-                  backgroundColor: company.accreditationStatus === 'VALID' ? 'rgba(22, 163, 74, 0.05)' : 'rgba(239, 68, 68, 0.05)',
-                  borderColor: company.accreditationStatus === 'VALID' ? 'rgba(22, 163, 74, 0.2)' : 'rgba(239, 68, 68, 0.2)'
+                  backgroundColor: company.accreditationStatus === 'VALID' 
+                    ? 'rgba(240, 253, 244, 1)' 
+                    : 'rgba(254, 242, 242, 1)'
                 }}
               >
-                <div className="text-xs text-slate-500 font-medium">Accreditation</div>
-                <div className={`flex items-center justify-center gap-1 mt-2 text-lg font-medium ${
-                  company.accreditationStatus === 'VALID' ? 'text-green-600' : 'text-red-500'
-                }`}>
+                <div className="text-xs text-gray-500 font-medium">
+                  Accreditation
+                </div>
+                <div className={
+                  company.accreditationStatus === 'VALID' 
+                    ? 'text-green-600 mt-2 font-semibold text-base flex items-center justify-center' 
+                    : 'text-red-500 mt-2 font-semibold text-base flex items-center justify-center'
+                }>
                   {company.accreditationStatus === 'VALID' ? (
-                    <><CheckCircle className="w-4 h-4" /> VALID</>
+                    <>VALID</>
                   ) : (
-                    <><AlertCircle className="w-4 h-4" /> INVALID</>
+                    <><AlertCircle className="w-4 h-4 mr-1" /> INVALID</>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="files">Files</TabsTrigger>
-              <TabsTrigger value="risk">Risk</TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview">
-              {renderOverviewTab()}
-            </TabsContent>
-            <TabsContent value="users">
-              {renderUsersTab()}
-            </TabsContent>
-            <TabsContent value="files">
-              {renderFilesTab()}
-            </TabsContent>
-            <TabsContent value="risk">
-              {renderRiskTab()}
-            </TabsContent>
-          </Tabs>
+          {/* Tab navigation with cleaner styling */}
+          <div className="mt-1">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="border-b border-gray-200">
+                <TabsList className="bg-transparent h-10 mb-0 p-0">
+                  <TabsTrigger value="overview" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Users
+                  </TabsTrigger>
+                  <TabsTrigger value="files" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Files
+                  </TabsTrigger>
+                  <TabsTrigger value="risk" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Risk
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <div className="pt-6">
+                <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderOverviewTab()}
+                </TabsContent>
+                <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderUsersTab()}
+                </TabsContent>
+                <TabsContent value="files" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderFilesTab()}
+                </TabsContent>
+                <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderRiskTab()}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
         </div>
       </PageTemplate>
     </DashboardLayout>
