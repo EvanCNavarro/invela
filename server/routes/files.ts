@@ -32,6 +32,7 @@ async function getCompanyName(companyId: number): Promise<string> {
 interface Field {
   field_key: string;
   question: string;
+  ai_search_instructions?: string;
   [key: string]: any; // For any additional properties
 }
 
@@ -404,6 +405,12 @@ router.post("/api/documents/:id/process", async (req, res) => {
     const fileId = parseInt(req.params.id);
     const { fields } = req.body;
 
+    console.log('[Document Processing] Processing request received:', {
+      fileId,
+      fieldsCount: fields?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+
     // Validate fields structure
     if (!fields?.length) {
       console.log('[Document Processing] No fields provided');
@@ -442,58 +449,160 @@ router.post("/api/documents/:id/process", async (req, res) => {
     });
 
     if (!fileRecord) {
+      console.log('[Document Processing] File not found:', { fileId });
       return res.status(404).json({ error: "File not found" });
     }
 
-    const filePath = path.join(uploadDir, fileRecord.path);
-    const chunks = await createDocumentChunks(filePath, fileRecord.type);
+    console.log('[Document Processing] File found:', {
+      fileId,
+      fileName: fileRecord.name,
+      fileType: fileRecord.type,
+      fileSize: fileRecord.size,
+      timestamp: new Date().toISOString()
+    });
 
-    // Initialize metadata with field information
-    const initialMetadata = {
-      status: 'processing',
-      fields: fields.map((f: Field) => ({
-        field_key: f.field_key,
-        question: f.question
-      })),
-      chunks: {
-        total: chunks.length,
-        processed: 0
-      },
-      answers: [],
-      aggregatedAnswers: [],
-      answersFound: 0,
-      timestamps: {
-        started: new Date().toISOString(),
-        lastUpdate: new Date().toISOString()
-      }
-    };
-
+    // Set file as processing even before chunking
     await db.update(files)
       .set({
         status: 'processing',
-        metadata: initialMetadata
+        metadata: {
+          ...fileRecord.metadata,
+          status: 'processing',
+          processingStarted: new Date().toISOString()
+        }
       })
       .where(eq(files.id, fileId));
 
-    // Send initial response
-    res.json({
-      status: 'processing',
-      totalChunks: chunks.length,
-      fields: fields.map((f: Field) => f.field_key)
-    });
+    const filePath = path.join(uploadDir, fileRecord.path);
+    
+    // Verify file exists
+    if (!fs.existsSync(filePath)) {
+      console.error('[Document Processing] File not found on disk:', { filePath });
+      
+      await db.update(files)
+        .set({
+          status: 'error',
+          metadata: {
+            ...fileRecord.metadata,
+            status: 'error',
+            error: 'File not found on disk',
+            timestamp: new Date().toISOString()
+          }
+        })
+        .where(eq(files.id, fileId));
+        
+      return res.status(404).json({ error: "File not found on disk" });
+    }
 
-    // Start background processing
-    processDocument(fileId, chunks, fields, initialMetadata).catch(error => {
-      console.error('[Document Processing] Background processing error:', {
+    try {
+      // Create document chunks
+      const chunks = await createDocumentChunks(filePath, fileRecord.type);
+
+      // Initialize metadata with field information
+      const initialMetadata = {
+        status: 'processing',
+        fields: fields.map((f: Field) => ({
+          field_key: f.field_key,
+          question: f.question
+        })),
+        chunks: {
+          total: chunks.length,
+          processed: 0
+        },
+        answers: [],
+        aggregatedAnswers: [],
+        answersFound: 0,
+        timestamps: {
+          started: new Date().toISOString(),
+          lastUpdate: new Date().toISOString()
+        }
+      };
+
+      await db.update(files)
+        .set({
+          status: 'processing',
+          metadata: initialMetadata
+        })
+        .where(eq(files.id, fileId));
+
+      // Send initial response
+      res.json({
+        status: 'processing',
+        totalChunks: chunks.length,
+        fields: fields.map((f: Field) => f.field_key)
+      });
+
+      // Start background processing
+      processDocument(fileId, chunks, fields, initialMetadata).catch(error => {
+        console.error('[Document Processing] Background processing error:', {
+          fileId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        
+        // Update the file status to error when processing fails
+        db.update(files)
+          .set({
+            status: 'error',
+            metadata: {
+              ...initialMetadata,
+              status: 'error',
+              error: error instanceof Error ? error.message : 'Unknown error',
+              timestamp: new Date().toISOString()
+            }
+          })
+          .where(eq(files.id, fileId))
+          .then(() => {
+            console.log('[Document Processing] Updated file status to error:', { fileId });
+          })
+          .catch(updateError => {
+            console.error('[Document Processing] Failed to update file status:', {
+              fileId,
+              error: updateError instanceof Error ? updateError.message : 'Unknown error'
+            });
+          });
+      });
+    } catch (chunkingError) {
+      console.error('[Document Processing] Chunking error:', {
         fileId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: chunkingError instanceof Error ? chunkingError.message : 'Unknown chunking error',
         timestamp: new Date().toISOString()
       });
-    });
-
+      
+      // Update file status to error
+      await db.update(files)
+        .set({
+          status: 'error',
+          metadata: {
+            ...fileRecord.metadata,
+            status: 'error',
+            error: chunkingError instanceof Error ? chunkingError.message : 'Unknown chunking error',
+            timestamp: new Date().toISOString()
+          }
+        })
+        .where(eq(files.id, fileId));
+      
+      // If response hasn't been sent yet
+      if (!res.headersSent) {
+        return res.status(500).json({ 
+          error: "Failed to process document", 
+          detail: chunkingError instanceof Error ? chunkingError.message : 'Unknown chunking error'
+        });
+      }
+    }
   } catch (error) {
-    console.error('[Document Processing] Process initiation error:', error);
-    res.status(500).json({ error: "Failed to start processing" });
+    console.error('[Document Processing] Process initiation error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: "Failed to start processing",
+        detail: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 });
 
