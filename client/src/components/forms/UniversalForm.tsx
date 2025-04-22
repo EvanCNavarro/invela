@@ -2294,12 +2294,32 @@ const handleDemoAutoFill = useCallback(async () => {
       {/* Clearing Fields Indicator */}
       <ClearingFieldsIndicator isClearing={isClearing} />
       
-      {/* Gray header box with title, subtitle, and download button */}
+      {/* Gray header box with title, subtitle, and action buttons */}
       <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
         <div className="flex flex-col mb-5">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">{headerTitle}</h2>
-            <p className="text-sm text-gray-500">{headerSubtitle}</p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">{headerTitle}</h2>
+              <p className="text-sm text-gray-500">{headerSubtitle}</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              {/* Add DemoAutofillButton for KY3P forms */}
+              {taskType === 'ky3p' && taskId && (
+                <React.Suspense fallback={<Button variant="outline" size="sm" disabled>Loading...</Button>}>
+                  {React.createElement(React.lazy(() => import('./DemoAutofillButton').then(mod => ({ 
+                    default: mod.DemoAutofillButton 
+                  }))), { 
+                    taskId,
+                    taskType,
+                    onSuccess: () => {
+                      // Refresh form data when auto-fill completes
+                      loadFormData();
+                    }
+                  })}
+                </React.Suspense>
+              )}
+              {/* Clear Fields button is added separately */}
+            </div>
           </div>
           
           {isSubmitted ? (
