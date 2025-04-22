@@ -1319,8 +1319,11 @@ const handleDemoAutoFill = useCallback(async () => {
     });
     
     try {
-      // Verify form is complete before submitting
-      if (overallProgress < 100) {
+      // Verify form is complete before submitting - but only for forms with required fields
+      // For KY3P and Open Banking forms, where all fields are non-required, always allow submission
+      const isKY3POrOpenBanking = taskType === 'ky3p' || taskType === 'open_banking';
+      
+      if (overallProgress < 100 && !isKY3POrOpenBanking) {
         console.log(`[SUBMIT FLOW] 2a. INCOMPLETE: Form has ${overallProgress}% progress, stopping submission`);
         logger.warn(`SUBMISSION FLOW STOPPED: Form incomplete (${overallProgress}%)`);
         toast({
