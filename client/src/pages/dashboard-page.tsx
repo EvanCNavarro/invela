@@ -61,6 +61,7 @@ const OTHER_DEFAULT_WIDGETS = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation(); // wouter hook for navigation
   // Initially set to a common subset of widgets
   const [visibleWidgets, setVisibleWidgets] = useState({
     quickActions: true,
@@ -189,7 +190,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-4 space-y-8">
+        <div className="mt-2 space-y-4">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (
@@ -234,7 +235,7 @@ export default function DashboardPage() {
                           <Button 
                             variant="outline" 
                             className="w-full font-medium flex items-center justify-center gap-2"
-                            onClick={() => window.location.href = `/network/company/${companyData?.id}`}
+                            onClick={() => setLocation(`/network/company/${companyData?.id}`)}
                           >
                             <User className="h-4 w-4" />
                             View Company Profile
@@ -242,7 +243,7 @@ export default function DashboardPage() {
                           <Button 
                             variant="outline" 
                             className="w-full font-medium flex items-center justify-center gap-2"
-                            onClick={() => window.location.href = '/insights'}
+                            onClick={() => setLocation('/insights')}
                           >
                             <BarChart3 className="h-4 w-4" />
                             View Insights
@@ -260,7 +261,7 @@ export default function DashboardPage() {
                           <Button 
                             variant="outline" 
                             className="w-full font-medium flex items-center justify-center gap-2"
-                            onClick={() => window.location.href = `/network/company/${companyData?.id}`}
+                            onClick={() => setLocation(`/network/company/${companyData?.id}`)}
                           >
                             <User className="h-4 w-4" />
                             View Company Profile
@@ -268,7 +269,7 @@ export default function DashboardPage() {
                           <Button 
                             variant="outline" 
                             className="w-full font-medium flex items-center justify-center gap-2"
-                            onClick={() => window.location.href = '/insights'}
+                            onClick={() => setLocation('/insights')}
                           >
                             <BarChart3 className="h-4 w-4" />
                             View Insights
