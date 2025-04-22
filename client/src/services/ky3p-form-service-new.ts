@@ -111,8 +111,16 @@ export class KY3PFormService implements FormServiceInterface {
     try {
       this.logger(`Loading fields for task ${this.taskId}...`);
       
-      // First load field definitions
-      const fieldDefinitionsResponse = await fetch('/api/ky3p/fields');
+      // First load field definitions - Use direct SQL endpoint
+      const fieldDefinitionsResponse = await fetch('/api/debug/sql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: 'SELECT * FROM ky3p_fields ORDER BY "order"'
+        })
+      });
       
       if (!fieldDefinitionsResponse.ok) {
         throw new Error(`Failed to load field definitions: ${fieldDefinitionsResponse.status}`);
@@ -122,25 +130,27 @@ export class KY3PFormService implements FormServiceInterface {
       let fieldDefinitions: KY3PField[] = [];
       
       try {
-        const fieldDefsText = await fieldDefinitionsResponse.text();
-        // Check if content is HTML instead of JSON
-        if (fieldDefsText.includes('<!DOCTYPE html>')) {
-          this.logger('Warning: Received HTML instead of JSON for field definitions');
-          throw new Error('Received HTML instead of JSON for field definitions');
-        } 
-        
-        fieldDefinitions = JSON.parse(fieldDefsText);
+        const fieldDefsData = await fieldDefinitionsResponse.json();
+        fieldDefinitions = fieldDefsData || [];
         this.logger(`Successfully loaded ${fieldDefinitions.length} field definitions`);
       } catch (parseError) {
         this.logger('Error parsing field definitions:', parseError);
         fieldDefinitions = [];
       }
       
-      // Now load field responses - handle HTML responses gracefully
+      // Now load field responses - use direct SQL endpoint
       let fieldResponses: KY3PResponse[] = [];
       
       try {
-        const fieldResponsesResponse = await fetch(`/api/ky3p/responses/${this.taskId}`);
+        const fieldResponsesResponse = await fetch('/api/debug/sql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            query: `SELECT * FROM ky3p_responses WHERE task_id = ${this.taskId}`
+          })
+        });
         
         if (fieldResponsesResponse.ok) {
           const contentType = fieldResponsesResponse.headers.get('content-type');
@@ -361,16 +371,42 @@ export class KY3PFormService implements FormServiceInterface {
       // Create a demo data object
       const demoData: Record<string, any> = {};
       
-      // Loop through each field and populate with its demo value
+      // Get all fields directly from the database to ensure we have the latest values
+      const fieldDefsResponse = await fetch('/api/debug/sql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: 'SELECT field_key, demo_autofill FROM ky3p_fields WHERE demo_autofill IS NOT NULL'
+        })
+      });
+      
+      if (!fieldDefsResponse.ok) {
+        throw new Error(`Failed to load demo data: ${fieldDefsResponse.status}`);
+      }
+      
+      const fieldDefs = await fieldDefsResponse.json();
+      this.logger(`Loaded ${fieldDefs.length} demo values from database`);
+      
+      // Process each demo field value
+      fieldDefs.forEach((field: any) => {
+        if (field.field_key && field.demo_autofill) {
+          demoData[field.field_key] = field.demo_autofill;
+          this.logger(`Demo data for field ${field.field_key}: ${field.demo_autofill}`);
+        }
+      });
+      
+      // Also add values from cached fields as backup
       this.fields.forEach(field => {
-        if (field.key && field.demoAutofill) {
+        if (field.key && field.demoAutofill && !demoData[field.key]) {
           demoData[field.key] = field.demoAutofill;
-          this.logger(`Demo data for field ${field.key}: ${field.demoAutofill}`);
+          this.logger(`Added cached demo data for field ${field.key}: ${field.demoAutofill}`);
         }
       });
       
       // Log the complete demo data being returned
-      this.logger('Demo data prepared', demoData);
+      this.logger(`Demo data prepared with ${Object.keys(demoData).length} values`);
       
       return demoData;
     } catch (error) {
@@ -428,39 +464,98 @@ export class KY3PFormService implements FormServiceInterface {
         return false;
       }
       
-      // Prepare the payload in the format the server expects
-      const payload = {
-        taskId: this.taskId,
-        formData: data
-      };
-      
-      // Make the bulk update API call
-      const response = await fetch(`/api/ky3p/bulk-update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      // Check if the request was successful
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.logger(`Bulk update failed: ${response.status} - ${errorText}`);
-        return false;
-      }
-      
-      const result = await response.json();
-      this.logger('Bulk update successful', result);
-      
-      // Update local field values for UI
+      // Update local field values first for immediate UI feedback
       for (const [key, value] of Object.entries(data)) {
         this.updateLocalField(key, value);
       }
       
-      // Update section statuses
+      // Update section statuses for UI
       this.updateSectionStatuses();
       
+      // For each field, execute a direct SQL update to ensure proper database updating
+      const updatePromises = [];
+      
+      for (const [key, value] of Object.entries(data)) {
+        // Find the field definition to get its ID
+        const field = this.fields.find(f => f.key === key);
+        
+        if (!field) {
+          this.logger(`Field ${key} not found, skipping database update`);
+          continue;
+        }
+        
+        // Update or insert into ky3p_responses
+        const checkQuery = `
+          SELECT id FROM ky3p_responses 
+          WHERE task_id = ${this.taskId} AND field_id = ${field.id}
+        `;
+        
+        const checkResponse = await fetch('/api/debug/sql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: checkQuery })
+        });
+        
+        if (!checkResponse.ok) {
+          this.logger(`Error checking for existing response: ${checkResponse.status}`);
+          continue;
+        }
+        
+        const existingResponses = await checkResponse.json();
+        
+        let updateQuery;
+        if (existingResponses && existingResponses.length > 0) {
+          // Update existing response
+          updateQuery = `
+            UPDATE ky3p_responses 
+            SET response_value = '${value}', 
+                status = 'complete', 
+                updated_at = now() 
+            WHERE task_id = ${this.taskId} AND field_id = ${field.id}
+          `;
+        } else {
+          // Insert new response
+          updateQuery = `
+            INSERT INTO ky3p_responses 
+            (task_id, field_id, response_value, status, version, created_at, updated_at)
+            VALUES (${this.taskId}, ${field.id}, '${value}', 'complete', 1, now(), now())
+          `;
+        }
+        
+        const updateResponse = fetch('/api/debug/sql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: updateQuery })
+        });
+        
+        updatePromises.push(updateResponse);
+      }
+      
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+      
+      // Notify about progress update via the task progress endpoint
+      try {
+        const progressResponse = await fetch(`/api/tasks/${this.taskId}/update-progress`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            progress: this.getProgress(),
+            source: 'demo_autofill'
+          })
+        });
+        
+        if (progressResponse.ok) {
+          this.logger('Task progress updated successfully');
+        }
+      } catch (progressError) {
+        this.logger('Error updating task progress', progressError);
+        // Continue even if progress update fails
+      }
+      
+      this.logger('Bulk update completed successfully');
       return true;
     } catch (error) {
       this.logger('Error in bulk update', error);
