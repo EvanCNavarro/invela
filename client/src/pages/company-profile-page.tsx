@@ -86,17 +86,17 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
   switch (normalizedStatus) {
     case 'VALID':
       return {
-        backgroundColor: 'rgba(243, 254, 246, 0.4)', // Glassmorphic green
+        backgroundColor: 'rgba(243, 254, 246, 0.5)', // Even softer green matching blue
         borderColor: '#e2f5e7'
       };
     case 'PENDING':
       return {
-        backgroundColor: 'rgba(255, 253, 237, 0.4)', // Glassmorphic yellow
+        backgroundColor: 'rgba(255, 253, 237, 0.5)', // Even softer yellow matching blue
         borderColor: '#fef7d3'
       };
     default:
       return {
-        backgroundColor: 'rgba(254, 245, 245, 0.4)', // Glassmorphic red
+        backgroundColor: 'rgba(254, 245, 245, 0.5)', // Even softer red matching blue
         borderColor: '#fee7e7'
       };
   }
@@ -649,13 +649,10 @@ export default function CompanyProfilePage() {
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
                 {/* Risk Score card with Invela blue background gradient */}
                 <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52 backdrop-blur-sm"
+                  className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
                   style={{ 
-                    backgroundColor: 'rgba(236, 241, 255, 0.4)', // Glassmorphic blue
-                    borderColor: '#e5edff',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
+                    backgroundColor: 'rgba(236, 241, 255, 0.5)', // Even softer blue that matches other colors
+                    borderColor: '#e5edff'
                   }}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -671,13 +668,8 @@ export default function CompanyProfilePage() {
                 
                 {/* Accreditation status with color-coded background */}
                 <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52 backdrop-blur-sm"
-                  style={{
-                    ...getAccreditationBoxStyle(company.accreditationStatus),
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)'
-                  }}
+                  className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
+                  style={getAccreditationBoxStyle(company.accreditationStatus)}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <BadgeCheck className="h-5 w-5 text-black" />
@@ -686,7 +678,7 @@ export default function CompanyProfilePage() {
                     </div>
                   </div>
                   <div 
-                    className="text-4xl font-bold py-2" 
+                    className="text-lg font-semibold py-2"
                     style={getAccreditationTextStyle(company.accreditationStatus)}
                   >
                     {getAccreditationStatusLabel(company.accreditationStatus)}
