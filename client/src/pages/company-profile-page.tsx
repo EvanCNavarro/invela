@@ -37,6 +37,16 @@ interface CompanyProfileData {
   risk_score?: number;
   chosenScore?: number;
   chosen_score?: number;
+  accreditationStatus?: string;
+  revenueTier?: string;
+  risk_clusters?: {
+    financial: number;
+    operational: number;
+    compliance: number;
+    strategic: number;
+    reputational: number;
+    cybersecurity: number;
+  };
 }
 
 interface CompanyUser {
@@ -82,11 +92,27 @@ export default function CompanyProfilePage() {
 
   const { data: users = [] } = useQuery<CompanyUser[]>({
     queryKey: ["/api/companies", companyId, "users"],
+    queryFn: async () => {
+      // Only show users associated with this company
+      const response = await fetch(`/api/companies/${companyId}/users`);
+      if (!response.ok) {
+        throw new Error("Error fetching company users");
+      }
+      return response.json();
+    },
     enabled: activeTab === "users"
   });
 
   const { data: files = [] } = useQuery<CompanyFile[]>({
     queryKey: ["/api/companies", companyId, "files"],
+    queryFn: async () => {
+      // Only show files uploaded by users of this company
+      const response = await fetch(`/api/companies/${companyId}/files`);
+      if (!response.ok) {
+        throw new Error("Error fetching company files");
+      }
+      return response.json();
+    },
     enabled: activeTab === "files"
   });
 
@@ -347,6 +373,19 @@ export default function CompanyProfilePage() {
     </div>
   );
 
+  // Default risk clusters if none are provided in the company data
+  const defaultRiskClusters = {
+    financial: 550,
+    operational: 480,
+    compliance: 620,
+    strategic: 500,
+    reputational: 450,
+    cybersecurity: 580
+  };
+
+  // Use company's risk clusters or fallback to defaults
+  const riskClusters = company.risk_clusters || defaultRiskClusters;
+  
   const renderRiskTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -366,28 +405,113 @@ export default function CompanyProfilePage() {
               canAdjust={company.category === "Bank" || company.category === "Invela"}
             />
           </CardContent>
+          <CardFooter className="flex justify-center border-t pt-4">
+            <div className="text-sm text-muted-foreground text-center">
+              {company.category === "Bank" || company.category === "Invela" ? 
+                "As a regulatory institution, you can adjust this risk score." :
+                "Risk score is determined by objective criteria and data analysis."
+              }
+            </div>
+          </CardFooter>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Risk Factors</CardTitle>
+            <CardTitle>Risk Categories</CardTitle>
+            <p className="text-sm text-muted-foreground">Breakdown of risk factors by category</p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Company Age</div>
-              <p>{companyAge ? `${companyAge} years` : 'N/A'}</p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Market Presence</div>
-              <p>{company.category || 'N/A'}</p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Employee Count</div>
-              <p>{company.numEmployees || 'N/A'}</p>
-            </div>
+          <CardContent className="min-h-[300px] flex items-center justify-center">
+            <RiskRadarChart 
+              data={[
+                { name: 'Financial', value: riskClusters.financial },
+                { name: 'Operational', value: riskClusters.operational },
+                { name: 'Compliance', value: riskClusters.compliance },
+                { name: 'Strategic', value: riskClusters.strategic },
+                { name: 'Reputational', value: riskClusters.reputational },
+                { name: 'Cybersecurity', value: riskClusters.cybersecurity }
+              ]}
+            />
           </CardContent>
         </Card>
       </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Risk Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2 bg-slate-50 p-4 rounded-md">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                Critical Risk Areas
+              </h4>
+              <ul className="pl-5 text-sm space-y-1">
+                {Object.entries(riskClusters).filter(([_, value]) => value > 700).length > 0 ? (
+                  Object.entries(riskClusters)
+                    .filter(([_, value]) => value > 700)
+                    .map(([key, value]) => (
+                      <li key={key} className="list-disc">
+                        <span className="capitalize">{key}</span>: {value} points
+                      </li>
+                    ))
+                ) : (
+                  <li className="text-muted-foreground">No critical risk areas found</li>
+                )}
+              </ul>
+            </div>
+            
+            <div className="space-y-2 bg-slate-50 p-4 rounded-md">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                Moderate Risk Areas
+              </h4>
+              <ul className="pl-5 text-sm space-y-1">
+                {Object.entries(riskClusters).filter(([_, value]) => value >= 500 && value <= 700).map(([key, value]) => (
+                  <li key={key} className="list-disc">
+                    <span className="capitalize">{key}</span>: {value} points
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="space-y-2 bg-slate-50 p-4 rounded-md">
+              <h4 className="font-medium flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                Low Risk Areas
+              </h4>
+              <ul className="pl-5 text-sm space-y-1">
+                {Object.entries(riskClusters).filter(([_, value]) => value < 500).map(([key, value]) => (
+                  <li key={key} className="list-disc">
+                    <span className="capitalize">{key}</span>: {value} points
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col items-start border-t pt-4 space-y-2">
+          <h4 className="font-medium">Risk Factors Considered</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full text-sm">
+            <div>
+              <div className="text-muted-foreground">Company Age</div>
+              <p>{companyAge ? `${companyAge} years` : 'N/A'}</p>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Market Presence</div>
+              <p>{company.category || 'N/A'}</p>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Employee Count</div>
+              <p>{company.numEmployees || 'N/A'}</p>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Legal Structure</div>
+              <p>{company.legalStructure || 'N/A'}</p>
+            </div>
+          </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 
