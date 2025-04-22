@@ -1419,12 +1419,13 @@ class EnhancedKybServiceFactory {
   /**
    * Get the current active instance or create a default one
    * This is provided for backward compatibility with existing code
-   * @deprecated Use getInstance with specific company and task IDs instead
+   * Note: This used to show deprecation warnings, but we've updated it to use
+   * the app-level instance to avoid confusing end users with console warnings
    */
   getDefaultInstance(): EnhancedKybFormService {
-    // Instead of just warning, let's use app-level context IDs
-    // This prevents showing warning messages that confuse users
-    return this.getInstance('app', 'global');
+    // Use the app-level instance without showing any warnings
+    // This provides a consistent experience for users
+    return this.getAppInstance();
   }
   
   /**

@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Fix for Vite WebSocket connection issues in Replit environment -->
+    <script>
+      // This script runs before Vite initializes to patch WebSocket
+      (function() {
+        // Capture the original WebSocket constructor
+        const OriginalWebSocket = window.WebSocket;
+        
+        // Override the WebSocket constructor to handle the 'undefined' port issue
+        window.WebSocket = function(url, protocols) {
+          // Only fix URLs for Vite HMR (hot module replacement)
+          if (url && typeof url === 'string' && 
+              (url.includes('localhost:undefined') || url.endsWith(':undefined/')) && 
+              url.includes('vite')) {
+            // Replace the invalid URL with one that will work in the Replit environment
+            const fixedUrl = url.replace(/localhost:undefined/, 'localhost:5000');
+            console.log(`[WebSocket Fix] Fixed Vite WebSocket URL: ${url} → ${fixedUrl}`);
+            return new OriginalWebSocket(fixedUrl, protocols);
+          }
+          
+          // For all other WebSocket connections, use the original behavior
+          return new OriginalWebSocket(url, protocols);
+        };
+        
+        // Copy over static properties
+        Object.keys(OriginalWebSocket).forEach(key => {
+          window.WebSocket[key] = OriginalWebSocket[key];
+        });
+        
+        // Copy prototype
+        window.WebSocket.prototype = OriginalWebSocket.prototype;
+        
+        // Fix the constructor
+        window.WebSocket.prototype.constructor = window.WebSocket;
+        
+        console.log('[WebSocket Fix] Installed Vite WebSocket port fix');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
