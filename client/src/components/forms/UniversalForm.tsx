@@ -825,376 +825,182 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   }, [onDownload, fileId, taskType, toast]);
   
     // Handle demo auto-fill functionality
-  const handleDemoAutoFill = useCallback(async () => {
-    if (!taskId) {
-      toast({
-        variant: "destructive",
-        title: "Auto-Fill Failed",
-        description: "No task ID available for auto-fill",
-      });
+const handleDemoAutoFill = useCallback(async () => {
+  if (!taskId) {
+    toast({
+      variant: "destructive",
+      title: "Auto-Fill Failed",
+      description: "No task ID available for auto-fill",
+    });
+    return false;
+  }
+  
+  try {
+    logger.info(`[UniversalForm] Starting demo auto-fill for task ${taskId}`);
+    
+    // Get demo data from server
+    const demoDataResponse = await fetch(`/api/tasks/${taskId}/${taskType}-demo`);
+    
+    if (!demoDataResponse.ok) {
+      if (demoDataResponse.status === 403) {
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Restricted",
+          description: "Auto-fill is only available for demo companies.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: "Could not load demo data from server.",
+        });
+      }
       return false;
     }
     
-    try {
-      logger.info(`[UniversalForm] Starting demo auto-fill for task ${taskId}`);
+    const demoData = await demoDataResponse.json();
+    logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields from server`);
+    
+    // Combine demo data with existing form data for a more complete set
+    const currentValues = form.getValues();
+    const completeData = {
+      ...currentValues,
+      ...demoData,
+    };
+    
+    // Reset the form first to clear any existing fields
+    if (resetForm) {
+      resetForm();
+    }
+    
+    // Add a small delay to allow the form to reset
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // For KY3P and Open Banking forms, use the bulk update approach
+    if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
+      logger.info(`[UniversalForm] Using bulk update API for ${taskType}`);
       
-      // Show loading toast
-      toast({
-        title: "Auto-Fill In Progress",
-        description: "Loading demo data...",
-        duration: 3000,
-      });
-      
-      // Make API call to get demo data based on form type
-      let endpoint;
-      if (taskType === 'sp_ky3p_assessment') {
-        endpoint = `/api/ky3p/demo-autofill/${taskId}`;
-      } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-        endpoint = `/api/open-banking/demo-autofill/${taskId}`;
-      } else {
-        endpoint = `/api/kyb/demo-autofill/${taskId}`;
-      }
-      
-      logger.info(`[UniversalForm] Using demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
-      const response = await fetch(endpoint);
-      
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-      }
-      
-      const demoData = await response.json();
-      
-      // Log the demo data received from the server
-      console.log('[UniversalForm] Demo data received from server:', demoData);
-      console.log('[UniversalForm] Demo data keys:', Object.keys(demoData));
-      console.log('[UniversalForm] Demo data sample values:', 
-        Object.entries(demoData).slice(0, 3).map(([k, v]) => `${k}: ${v}`));
-        
-      // Check if we actually received any data
-      if (Object.keys(demoData).length === 0) {
-        throw new Error('Server returned empty demo data. Please try again later.');
-      }
-      
-      // Create a data object with all fields 
-      const completeData: Record<string, any> = {};
-      
-      // First ensure all fields have a value, even if empty
-      fields.forEach(field => {
-        completeData[field.key] = '';
-      });
-      
-      // Then apply any demo data that's available
-      Object.entries(demoData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          completeData[key] = value;
-        }
-      });
-      
-      // Clear previous values to avoid conflicts
-      form.reset({});
-      
-      // Wait for state updates to process
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
-      // Add a manual re-render component flag
-      setForceRerender(prev => !prev);
-      
-      // STANDARDIZED IMPLEMENTATION: Same code path for all form types
-      // Filter out empty or undefined values and get only non-empty field values
+      // Filter out empty values to get valid responses for bulk update
       const validResponses: Record<string, any> = {};
       let fieldCount = 0;
-        
+      
       for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
         if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
           // Add to valid responses
           validResponses[fieldKey] = fieldValue;
           fieldCount++;
-        }
-      }
-        
-      // Proceed only if we have valid responses
-      if (fieldCount === 0) {
-        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
-        throw new Error("No valid demo data available for auto-fill");
-      }
-      
-      logger.info(`[UniversalForm] Processing ${fieldCount} valid fields for auto-fill`);
-      
-      // STEP 1: First reset the form to ensure no stale data
-      form.reset({});
-      
-      // Wait a short time to ensure form is reset
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Then update the UI form state for immediate feedback
-      // This ensures users see immediate visual updates regardless of server processing time
-      logger.info(`[UniversalForm] Setting ${Object.keys(validResponses).length} field values in form`);
-      for (const [key, value] of Object.entries(validResponses)) {
-        try {
-          logger.debug(`[UniversalForm] Setting field ${key} to value: ${value}`);
-          form.setValue(key, value, {
+          
+          // Update the UI form state
+          form.setValue(fieldKey, fieldValue, {
             shouldValidate: true,
-            shouldDirty: true, 
+            shouldDirty: true,
             shouldTouch: true
           });
-        } catch (err) {
-          logger.warn(`[UniversalForm] Could not set form field ${key}:`, err);
         }
       }
       
-      // Force trigger form validation on all fields
-      await form.trigger();
-      
-      // Force update to ensure UI reflects the changes
-      setForceRerender(prev => !prev);
-      
-      // STEP 2: Use direct API call approach for all forms for consistency
-      if (taskId) {
-        logger.info(`[UniversalForm] Using direct API approach for task type: ${taskType}`);
-        
-        try {
-          // Determine the appropriate endpoint based on form type
-          let endpoint: string;
-          if (taskType === 'sp_ky3p_assessment') {
-            endpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
-          } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-            endpoint = `/api/tasks/${taskId}/${taskType}-responses/bulk`;
-          } else {
-            endpoint = `/api/kyb/bulk-update/${taskId}`;
-          }
-          
-          logger.info(`[UniversalForm] Using bulk update endpoint: ${endpoint}`);
-          
-          // Make the direct API call - more reliable than going through service
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              responses: validResponses
-            }),
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            logger.error(`[UniversalForm] API call failed: ${response.status}`, errorText);
-            throw new Error(`Auto-fill failed: ${response.status} - ${errorText}`);
-          }
-          
-          const result = await response.json();
-          logger.info(`[UniversalForm] API call successful with result:`, result);
-          
-          // After server update is complete, update form again to ensure sync
-          // This double update ensures form field values match what's in the database
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Re-apply values to form to ensure UI is synced with server
-          for (const [key, value] of Object.entries(validResponses)) {
-            try {
-              form.setValue(key, value, {
-                shouldValidate: true,
-                shouldDirty: true,
-                shouldTouch: true
-              });
-            } catch (err) {
-              logger.warn(`[UniversalForm] Could not re-sync field ${key}:`, err);
-            }
-          }
-          
-          // Final form validation trigger
-          await form.trigger();
-          
-          // Force re-render to ensure UI updates
-          setForceRerender(prev => !prev);
-        } catch (err) {
-          logger.error(`[UniversalForm] Error during server update:`, err);
-          
-          // Still fallback to form service as last resort
-          if (formService) {
-            try {
-              logger.info(`[UniversalForm] Attempting fallback to form service methods`);
-              
-              // Check if bulkUpdate exists on this form service
-              if (typeof formService.bulkUpdate === 'function') {
-                logger.info(`[UniversalForm] Using formService.bulkUpdate method`);
-                await formService.bulkUpdate(validResponses, taskId);
-                logger.info(`[UniversalForm] Form service bulkUpdate successful`);
-              } 
-              // Try to use individual update methods as an alternative
-              else if (typeof formService.updateFormData === 'function') {
-                logger.info(`[UniversalForm] Fallback to individual field updates`);
-                
-                // Update each field individually
-                for (const [key, value] of Object.entries(validResponses)) {
-                  try {
-                    formService.updateFormData(key, value);
-                    logger.info(`[UniversalForm] Updated field ${key} successfully`);
-                  } catch (fieldErr) {
-                    logger.warn(`[UniversalForm] Could not update field ${key}:`, fieldErr);
-                  }
-                }
-                
-                // Then try to save progress if the method exists
-                if (typeof formService.saveProgress === 'function' && taskId) {
-                  await formService.saveProgress(taskId);
-                  logger.info(`[UniversalForm] Saved progress after individual field updates`);
-                }
-              } else {
-                // No update methods available on this form service
-                logger.error(`[UniversalForm] Form service lacks update methods`);
-                throw new Error('Form service has no update methods');
-              }
-            } catch (serviceErr) {
-              logger.error(`[UniversalForm] Form service fallback failed:`, serviceErr);
-              throw err; // Re-throw the original error
-            }
-          } else {
-            throw err; // No fallback available, re-throw
-          }
-        }
+      if (fieldCount === 0) {
+        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+        toast({
+          variant: "warning",
+          title: "No Data Available",
+          description: "No valid demo data was found for this form type.",
+        });
+        return false;
       }
       
-      // STEP 3: Invalidate queries to ensure any cache data is refreshed
-      logger.info(`[UniversalForm] Invalidating queries to refresh cache`);
-      const { queryClient } = await import('@/lib/queryClient');
-      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      // Construct proper endpoint based on form type
+      const endpoint = 
+        taskType === 'sp_ky3p_assessment' 
+          ? `/api/tasks/${taskId}/ky3p-responses/bulk` 
+          : `/api/tasks/${taskId}/${taskType}-responses/bulk`;
       
-      // Save regular progress
-      if (saveProgress) {
-        await saveProgress();
-      }
+      logger.info(`[UniversalForm] Sending bulk update to ${endpoint} with ${fieldCount} fields`);
       
-      // Show success message
-      toast({
-        title: "Auto-Fill Complete",
-        description: "Demo data has been loaded successfully.",
-        variant: "success",
-      });
-      
-      // Refresh status and update the section/tab UI with progress information
+      // Send the bulk update request
       try {
-        logger.info(`[UniversalForm] Starting post-autofill UI synchronization`);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            responses: validResponses
+          }),
+        });
         
-        // CRITICAL FIX: Update the task status and progress properly
-        // Don't attempt to directly update the metadata property as it's causing errors
-        try {
-          const { queryClient } = await import('@/lib/queryClient');
-          
-          // First, make the direct request to update task progress via the proper endpoint
-          const progressResponse = await fetch(`/api/tasks/${taskId}/update-progress`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              progress: 100,
-              status: 'in_progress',
-            }),
-          });
-          
-          if (!progressResponse.ok) {
-            throw new Error(`Failed to update task progress: ${progressResponse.status}`);
-          }
-          
-          // Get the updated task data from the server to ensure we're working with fresh data
-          await queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-          
-          logger.info(`[UniversalForm] Updated task progress to 100% via dedicated progress endpoint`);
-        } catch (metaErr) {
-          logger.warn(`[UniversalForm] Error updating task progress:`, metaErr);
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`[UniversalForm] Bulk update failed: ${response.status}`, errorText);
+          throw new Error(`Bulk update failed: ${response.status} - ${errorText}`);
         }
         
-        // Invalidate queries to ensure UI gets updated data
+        const result = await response.json();
+        logger.info(`[UniversalForm] Bulk update successful:`, result);
+        
+        // Force query refresh
         const { queryClient } = await import('@/lib/queryClient');
         queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/kyb/progress'] });
-        queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
+      } catch (error) {
+        logger.error('[UniversalForm] Error during bulk update:', error);
+        throw error;
+      }
+    } else {
+      // For other form types, use individual field updates
+      logger.info(`[UniversalForm] Using individual field updates for ${taskType}`);
+      
+      let fieldsUpdated = 0;
+      
+      for (const fieldName in completeData) {
+        const fieldValue = completeData[fieldName];
         
-        // First ensure the UI progress bar is updated immediately
-        if (onProgress) {
-          logger.info(`[UniversalForm] Setting progress bar to 100%`);
-          onProgress(100);
-        }
-        
-        // Then trigger refresh status to update sections
-        await refreshStatus();
-        
-        // Force form state reconciliation
-        if (formService) {
-          // Force reload fields and sections if methods exist
-          if (typeof formService.getFields === 'function') {
-            formService.getFields(); 
-          }
+        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+          form.setValue(fieldName, fieldValue, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
           
-          if (typeof formService.getSections === 'function') {
-            formService.getSections();
+          if (typeof updateField === 'function') {
+            await updateField(fieldName, fieldValue);
+            fieldsUpdated++;
+            await new Promise(resolve => setTimeout(resolve, 10));
           }
-          
-          // Force-set task progress and status if methods exist
-          if (typeof formService.setTaskProgress === 'function') {
-            formService.setTaskProgress(100);
-          }
-          
-          if (typeof formService.setTaskStatus === 'function') {
-            formService.setTaskStatus('in_progress');
-          }
-          
-          // Alternatively use the calculateProgress method which all services should have
-          if (typeof formService.calculateProgress === 'function') {
-            const calculatedProgress = formService.calculateProgress();
-            logger.info(`[UniversalForm] Calculated progress after refresh: ${calculatedProgress}%`);
-          }
-        }
-        
-        // CRITICAL: Force a re-render BEFORE trying to navigate to fix section visibility
-        setForceRerender(prev => !prev);
-        
-        // Wait a short time to allow re-render to complete
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Now set the active section to ensure UI visibility
-        if (sections && sections.length > 0) {
-          const firstSection = sections[0];
-          if (firstSection && firstSection.id) {
-            logger.info(`[UniversalForm] Setting active section to first section: ${firstSection.title}`);
-            setActiveSection(firstSection.id);
-          }
-        } else {
-          logger.warn(`[UniversalForm] No sections available to set active`);
-        }
-        
-        // Trigger a final form validation
-        await form.trigger();
-        
-        // Force another re-render to ensure all UI updates are applied
-        setForceRerender(prev => !prev);
-        
-        logger.info(`[UniversalForm] Post-autofill UI synchronization complete`);
-      } catch (err) {
-        logger.error(`[UniversalForm] Error updating UI after auto-fill:`, err);
-        
-        // Still make basic UI updates even if the optimized approach fails
-        await refreshStatus();
-        if (onProgress) {
-          onProgress(100);
         }
       }
-      
-      return true;
-    } catch (err) {
-      logger.error('[UniversalForm] Auto-fill error:', err);
-      toast({
-        variant: "destructive",
-        title: "Auto-Fill Failed",
-        description: err instanceof Error ? err.message : "There was an error loading demo data",
-      });
-      return false;
     }
-  }, [toast, taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, logger]);
+    
+    // Save progress
+    if (saveProgress) {
+      await saveProgress();
+    }
+    
+    // Show success message
+    toast({
+      title: "Auto-Fill Complete",
+      description: "Demo data has been loaded successfully.",
+      variant: "success",
+    });
+    
+    // Refresh status and set progress to 100%
+    refreshStatus();
+    if (onProgress) {
+      onProgress(100);
+    }
+    
+    return true;
+  } catch (err) {
+    logger.error('[UniversalForm] Auto-fill error:', err);
+    toast({
+      variant: "destructive",
+      title: "Auto-Fill Failed",
+      description: err instanceof Error ? err.message : "There was an error loading demo data",
+    });
+    return false;
+  }
+}, [toast, taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, logger]);
   
   // State for clearing fields progress indicator
   const [isClearing, setIsClearing] = useState(false);

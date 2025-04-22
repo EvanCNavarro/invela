@@ -11,6 +11,7 @@ import { Logger } from '../utils/logger';
 import { standardFormSubmission, TaskStatus } from '../utils/form-standardization';
 import { FileCreationService } from '../services/file-creation';
 import { CompanyTabsService } from '../services/company-tabs';
+import { isCompanyDemo } from '../utils/demo-helpers';
 
 const logger = new Logger('TasksRoutes');
 
