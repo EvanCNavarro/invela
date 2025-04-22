@@ -89,12 +89,14 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .attr('stroke-width', 1.5);
     });
 
-    // Draw center node with navbar purple color
+    // Draw center node with color based on company type
+    // Use companyTypeColors for the center node (Bank=purple, Invela=blue, FinTech=green)
+    const centerCompanyColor = companyTypeColors[data.center.category] || companyTypeColors['Default'];
     g.append('circle')
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', 25)
-      .attr('fill', centerUserPurple)
+      .attr('fill', centerCompanyColor)
       .attr('stroke', '#000')
       .attr('stroke-width', 2)
       .attr('class', 'center-node')

@@ -42,10 +42,10 @@ export const riskBucketColors: Record<RiskBucket, string> = {
 
 // Color-coding for company types
 export const companyTypeColors: Record<string, string> = {
-  'Bank': '#7B74A8',  // Purple for banks
-  'Invela': '#4965EC', // Blue for Invela
+  'Bank': '#8A4FE0',  // Purple for banks (matches Bank avatar in navbar)
+  'Invela': '#4965EC', // Blue for Invela 
   'FinTech': '#48BB78', // Green for FinTechs
-  'Default': '#7B74A8' // Default to purple 
+  'Default': '#8A4FE0' // Default to Bank purple
 };
 
 // Navbar user icon purple color for center node - exact match with Bank avatar
