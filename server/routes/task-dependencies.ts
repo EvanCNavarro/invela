@@ -22,25 +22,36 @@ interface DependencyRule {
 
 // Define task dependencies
 const DEPENDENCY_RULES: DependencyRule[] = [
-  // Original rule
+  // KYB Form submission unlocks KY3P Assessment
+  {
+    prerequisiteType: 'company_kyb',
+    prerequisiteStatus: 'submitted',
+    dependentType: 'ky3p'
+  },
+  // Legacy KYB type (used in older versions)
+  {
+    prerequisiteType: 'kyb',
+    prerequisiteStatus: 'submitted',
+    dependentType: 'ky3p'
+  },
+  // KY3P submission unlocks Open Banking Survey
+  {
+    prerequisiteType: 'ky3p',
+    prerequisiteStatus: 'submitted',
+    dependentType: 'open_banking_survey'
+  },
+  // Original/legacy naming for KY3P type
   {
     prerequisiteType: 'sp_ky3p_assessment',
     prerequisiteStatus: 'submitted',
     dependentType: 'open_banking_survey'
   },
-  // Additional rule for ky3p type (used in newer versions)
-  {
-    prerequisiteType: 'ky3p',
-    prerequisiteStatus: 'submitted',
-    dependentType: 'open_banking_survey'
-  },
-  // Additional rule for company_card type (Open Banking variation)
+  // Support for company_card (alternate name for Open Banking)
   {
     prerequisiteType: 'ky3p',
     prerequisiteStatus: 'submitted',
     dependentType: 'company_card'
-  },
-  // Add more dependency rules as needed
+  }
 ];
 
 /**
