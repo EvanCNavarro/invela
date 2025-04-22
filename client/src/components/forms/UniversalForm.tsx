@@ -920,13 +920,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       logger.info(`[UniversalForm] Processing ${fieldCount} valid fields for auto-fill`);
       
-      // STEP 1: First update the UI form state for immediate feedback
+      // STEP 1: First reset the form to ensure no stale data
+      form.reset({});
+      
+      // Wait a short time to ensure form is reset
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Then update the UI form state for immediate feedback
       // This ensures users see immediate visual updates regardless of server processing time
+      logger.info(`[UniversalForm] Setting ${Object.keys(validResponses).length} field values in form`);
       for (const [key, value] of Object.entries(validResponses)) {
         try {
+          logger.debug(`[UniversalForm] Setting field ${key} to value: ${value}`);
           form.setValue(key, value, {
             shouldValidate: true,
-            shouldDirty: true,
+            shouldDirty: true, 
             shouldTouch: true
           });
         } catch (err) {
@@ -937,20 +945,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Force trigger form validation on all fields
       await form.trigger();
       
-      // STEP 2: Use service for backend updates with universal approach
-      if (formService && taskId) {
-        logger.info(`[UniversalForm] Using form service for task type: ${taskType}`);
+      // Force update to ensure UI reflects the changes
+      setForceRerender(prev => !prev);
+      
+      // STEP 2: Use direct API call approach for all forms for consistency
+      if (taskId) {
+        logger.info(`[UniversalForm] Using direct API approach for task type: ${taskType}`);
         
         try {
-          // Use the form service's bulkUpdate method which exists on all form services
-          await formService.bulkUpdate(validResponses, taskId);
-          logger.info(`[UniversalForm] Backend update successful via form service`);
-        } catch (err) {
-          logger.error(`[UniversalForm] Error updating backend via form service:`, err);
-          
-          // Fallback to direct API call if form service method fails
-          logger.info(`[UniversalForm] Attempting fallback to direct API call`);
-          
           // Determine the appropriate endpoint based on form type
           let endpoint: string;
           if (taskType === 'sp_ky3p_assessment') {
@@ -961,9 +963,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             endpoint = `/api/kyb/bulk-update/${taskId}`;
           }
           
-          logger.info(`[UniversalForm] Using fallback endpoint: ${endpoint}`);
+          logger.info(`[UniversalForm] Using bulk update endpoint: ${endpoint}`);
           
-          // Make the direct API call
+          // Make the direct API call - more reliable than going through service
           const response = await fetch(endpoint, {
             method: 'POST',
             credentials: 'include',
@@ -977,11 +979,51 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           if (!response.ok) {
             const errorText = await response.text();
-            logger.error(`[UniversalForm] Fallback API call failed: ${response.status}`, errorText);
+            logger.error(`[UniversalForm] API call failed: ${response.status}`, errorText);
             throw new Error(`Auto-fill failed: ${response.status} - ${errorText}`);
           }
           
-          logger.info(`[UniversalForm] Fallback API call successful`);
+          const result = await response.json();
+          logger.info(`[UniversalForm] API call successful with result:`, result);
+          
+          // After server update is complete, update form again to ensure sync
+          // This double update ensures form field values match what's in the database
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Re-apply values to form to ensure UI is synced with server
+          for (const [key, value] of Object.entries(validResponses)) {
+            try {
+              form.setValue(key, value, {
+                shouldValidate: true,
+                shouldDirty: true,
+                shouldTouch: true
+              });
+            } catch (err) {
+              logger.warn(`[UniversalForm] Could not re-sync field ${key}:`, err);
+            }
+          }
+          
+          // Final form validation trigger
+          await form.trigger();
+          
+          // Force re-render to ensure UI updates
+          setForceRerender(prev => !prev);
+        } catch (err) {
+          logger.error(`[UniversalForm] Error during server update:`, err);
+          
+          // Still fallback to form service as last resort
+          if (formService) {
+            try {
+              logger.info(`[UniversalForm] Attempting fallback to form service bulkUpdate`);
+              await formService.bulkUpdate(validResponses, taskId);
+              logger.info(`[UniversalForm] Form service fallback successful`);
+            } catch (serviceErr) {
+              logger.error(`[UniversalForm] Form service fallback also failed:`, serviceErr);
+              throw err; // Re-throw the original error
+            }
+          } else {
+            throw err; // No fallback available, re-throw
+          }
         }
       }
       
@@ -1003,10 +1045,51 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: "success",
       });
       
-      // Refresh status and set progress to 100%
-      refreshStatus();
-      if (onProgress) {
-        onProgress(100);
+      // Refresh status and update the section/tab UI with progress information
+      // First ensure the form's data is correctly synced with all sections
+      try {
+        // Force recalculate progress
+        if (formService) {
+          logger.info(`[UniversalForm] Recalculating form progress after auto-fill`);
+          const updatedProgress = formService.calculateProgress();
+          logger.info(`[UniversalForm] Calculated progress: ${updatedProgress}%`);
+          
+          // Update the UI progress bar immediately
+          if (onProgress) {
+            onProgress(updatedProgress);
+          }
+          
+          // Ensure section tabs reflect proper progress status
+          await refreshStatus();
+          
+          // Update active section to first complete section
+          try {
+            // Try to find first section with fields to navigate user there
+            const firstSectionWithFields = sections.find(s => 
+              fields.some(f => f.section === s.id)
+            );
+            
+            if (firstSectionWithFields) {
+              logger.info(`[UniversalForm] Navigating to first section with fields: ${firstSectionWithFields.title}`);
+              setActiveSection(firstSectionWithFields.id);
+            }
+          } catch (err) {
+            logger.warn(`[UniversalForm] Error navigating to first section:`, err);
+          }
+        } else {
+          // No form service, just set to 100% as fallback
+          if (onProgress) {
+            onProgress(100);
+          }
+          await refreshStatus();
+        }
+      } catch (err) {
+        logger.error(`[UniversalForm] Error updating progress and status:`, err);
+        // Still make sure we refresh status in case of error
+        await refreshStatus();
+        if (onProgress) {
+          onProgress(100); // Fallback to 100%
+        }
       }
       
       return true;
