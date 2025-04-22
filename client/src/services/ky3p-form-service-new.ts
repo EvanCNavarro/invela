@@ -21,14 +21,18 @@ export interface KY3PResponse {
 
 export interface KY3PField {
   id: number;
-  key: string;
+  key?: string;
+  field_key?: string; // Database uses field_key, frontend code uses key
   display_name: string;
   question: string;
-  type: string;
+  type?: string;
+  field_type?: string; // Database uses field_type
   group: string;
   is_required: boolean;
   help_text?: string;
   demo_autofill?: string;
+  order?: number;
+  step_index?: number;
 }
 
 export class KY3PFormService implements FormServiceInterface {
@@ -38,6 +42,7 @@ export class KY3PFormService implements FormServiceInterface {
   private taskId: number | null = null;
   private companyId: number | null = null;
   private logger: (message: string, context?: any) => void;
+  private autoSaveEnabled: boolean = true;
 
   constructor(taskId: number, companyId: number) {
     this.taskId = taskId;
@@ -183,22 +188,35 @@ export class KY3PFormService implements FormServiceInterface {
       
       // Convert fields to our internal format
       this.fields = fieldDefinitions.map(field => {
-        const response = responsesLookup[field.key];
+        // Handle field key differences between DB (field_key) and frontend (key)
+        const fieldKey = field.key || field.field_key;
+        
+        if (!fieldKey) {
+          this.logger(`Warning: Field ${field.id} has no key property, skipping`, field);
+          return null;
+        }
+        
+        // Get response using the field key
+        const response = responsesLookup[fieldKey];
+        
+        // Determine field type - database uses field_type, frontend uses type
+        const fieldType = field.type || field.field_type || 'TEXT';
         
         return {
           id: field.id,
-          key: field.key,
+          key: fieldKey,
           label: field.display_name,
           description: field.question,
-          type: field.type,
+          type: fieldType.toLowerCase(),
           section: this.getSectionIdFromGroup(field.group),
           required: field.is_required,
-          value: response?.response || '',
+          value: response?.response || response?.response_value || '',
           status: response?.status || 'incomplete',
           helpText: field.help_text || '',
           demoAutofill: field.demo_autofill || '',
           // Additional properties
-          order: 0, // Will be set during section generation
+          order: field.order || 0, // Use order from DB if available, otherwise it will be set during section generation
+          stepIndex: field.step_index || 0,
           validation: {
             type: 'string',
             rules: field.is_required ? { required: true } : {}
@@ -232,6 +250,15 @@ export class KY3PFormService implements FormServiceInterface {
   private generateSections(): void {
     try {
       this.logger('Generating sections from field data...');
+      
+      // Filter out any null fields (from failed mapping)
+      this.fields = this.fields.filter(field => field !== null);
+      
+      if (this.fields.length === 0) {
+        this.logger('No valid fields to generate sections from');
+        this.sections = [];
+        return;
+      }
       
       // Group fields by section
       const sectionMap = new Map<string, FormField[]>();
@@ -552,6 +579,90 @@ export class KY3PFormService implements FormServiceInterface {
     this.logger('resetFormData called');
     // Not implemented for KY3P forms
     return false;
+  }
+  
+  /**
+   * Save progress - FormServiceInterface implementation
+   */
+  async saveProgress(): Promise<boolean> {
+    this.logger('saveProgress called');
+    // KY3P forms save progress automatically on field update
+    return true;
+  }
+  
+  /**
+   * Load progress - FormServiceInterface implementation
+   */
+  async loadProgress(): Promise<boolean> {
+    this.logger('loadProgress called');
+    // Progress is automatically loaded during initialize()
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    return true;
+  }
+  
+  /**
+   * Save form - FormServiceInterface implementation
+   */
+  async save(): Promise<boolean> {
+    this.logger('save called');
+    // KY3P forms are saved in real-time per field
+    return true;
+  }
+  
+  /**
+   * Submit form - FormServiceInterface implementation
+   */
+  async submit(): Promise<boolean> {
+    this.logger('submit called');
+    try {
+      if (!this.taskId) {
+        this.logger('Cannot submit form - no taskId available');
+        return false;
+      }
+      
+      // Call the submission endpoint
+      const response = await fetch(`/api/ky3p/tasks/${this.taskId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger(`Form submission failed: ${response.status} - ${errorText}`);
+        return false;
+      }
+      
+      const result = await response.json();
+      this.logger('Form submission successful', result);
+      return true;
+    } catch (error) {
+      this.logger('Error submitting form', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Validate form - FormServiceInterface implementation
+   */
+  validate(): { valid: boolean; errors: Record<string, string> } {
+    this.logger('validate called');
+    
+    const errors: Record<string, string> = {};
+    let valid = true;
+    
+    // Check required fields
+    for (const field of this.fields) {
+      if (field.required && (!field.value || field.value.trim() === '')) {
+        errors[field.key] = 'This field is required';
+        valid = false;
+      }
+    }
+    
+    return { valid, errors };
   }
 
   /**
