@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'wouter';
 
 export function AuthFooter() {
   const currentYear = new Date().getFullYear();
@@ -9,21 +8,21 @@ export function AuthFooter() {
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex flex-wrap justify-center gap-6">
           <span>© {currentYear} Invela. All rights reserved.</span>
-          <Link href="/landing/legal/privacy-policy" className="hover:text-primary hover:underline">
+          <span className="text-muted-foreground">
             Privacy Policy
-          </Link>
-          <Link href="/landing/legal/terms-of-use" className="hover:text-primary hover:underline">
+          </span>
+          <span className="text-muted-foreground">
             Terms of Use
-          </Link>
-          <Link href="/landing/legal/compliance" className="hover:text-primary hover:underline">
+          </span>
+          <span className="text-muted-foreground">
             Compliance Information
-          </Link>
-          <Link href="/landing/legal" className="hover:text-primary hover:underline">
+          </span>
+          <span className="text-muted-foreground">
             Legal
-          </Link>
-          <Link href="/landing/site-map" className="hover:text-primary hover:underline">
+          </span>
+          <span className="text-muted-foreground">
             Site Map
-          </Link>
+          </span>
         </div>
       </div>
     </footer>
