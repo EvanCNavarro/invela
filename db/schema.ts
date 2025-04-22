@@ -108,6 +108,14 @@ export const companies = pgTable("companies", {
   certifications_compliance: text("certifications_compliance"),
   risk_score: integer("risk_score"),
   chosen_score: integer("chosen_score"),
+  risk_clusters: jsonb("risk_clusters").$type<{
+    "PII Data": number,
+    "Account Data": number,
+    "Data Transfers": number,
+    "Certifications Risk": number,
+    "Security Risk": number,
+    "Financial Risk": number
+  }>(),
   accreditation_status: text("accreditation_status"),
   onboarding_company_completed: boolean("onboarding_company_completed").notNull().default(true),
   registry_date: timestamp("registry_date").notNull().defaultNow(),
