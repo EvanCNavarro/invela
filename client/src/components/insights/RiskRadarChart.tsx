@@ -137,12 +137,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Process category names to add line breaks for single-word-per-line
+  // Format category names to add line breaks with exactly one word per line
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
-      // Put each word on its own line
+      if (!category) return '';
+      // Split by spaces and join with line breaks
       const words = category.split(' ');
-      return words.join('\n');
+      if (words.length <= 1) return category;
+      
+      // Return with each word on its own line
+      return words.map(word => word.trim()).join('\n');
     });
   };
 
