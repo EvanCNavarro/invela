@@ -63,7 +63,8 @@ export class KY3PFormService extends EnhancedKybFormService {
       id: field.id,
       key: field.field_key || field.key,
       label: field.display_name || field.label,
-      description: field.question || field.description,
+      description: field.description || '', // Keep description separate
+      question: field.question || '', // Map question to question directly for the bold display
       type: field.field_type || field.type,
       required: field.is_required || field.required || false,
       section: sectionId,
