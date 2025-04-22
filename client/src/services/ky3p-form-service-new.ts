@@ -106,48 +106,79 @@ export class KY3PFormService implements FormServiceInterface {
     try {
       this.logger(`Loading fields for task ${this.taskId}...`);
       
-      // Fetch both field definitions and responses
-      const [fieldDefinitionsResponse, fieldResponsesResponse] = await Promise.all([
-        fetch('/api/ky3p/fields'),
-        fetch(`/api/ky3p/responses/${this.taskId}`)
-      ]);
+      // First load field definitions
+      const fieldDefinitionsResponse = await fetch('/api/ky3p/fields');
       
       if (!fieldDefinitionsResponse.ok) {
         throw new Error(`Failed to load field definitions: ${fieldDefinitionsResponse.status}`);
       }
       
-      if (!fieldResponsesResponse.ok) {
-        throw new Error(`Failed to load field responses: ${fieldResponsesResponse.status}`);
-      }
-      
-      // Safely parse responses with error handling
+      // Safely parse field definitions with error handling
       let fieldDefinitions: KY3PField[] = [];
-      let fieldResponses: KY3PResponse[] = [];
       
       try {
         const fieldDefsText = await fieldDefinitionsResponse.text();
-        this.logger('Field definitions raw response:', fieldDefsText);
+        // Check if content is HTML instead of JSON
+        if (fieldDefsText.includes('<!DOCTYPE html>')) {
+          this.logger('Warning: Received HTML instead of JSON for field definitions');
+          throw new Error('Received HTML instead of JSON for field definitions');
+        } 
+        
         fieldDefinitions = JSON.parse(fieldDefsText);
+        this.logger(`Successfully loaded ${fieldDefinitions.length} field definitions`);
       } catch (parseError) {
         this.logger('Error parsing field definitions:', parseError);
         fieldDefinitions = [];
       }
       
+      // Now load field responses - handle HTML responses gracefully
+      let fieldResponses: KY3PResponse[] = [];
+      
       try {
-        const fieldRespText = await fieldResponsesResponse.text();
-        this.logger('Field responses raw response:', fieldRespText);
-        fieldResponses = JSON.parse(fieldRespText);
-      } catch (parseError) {
-        this.logger('Error parsing field responses:', parseError);
-        fieldResponses = []
+        const fieldResponsesResponse = await fetch(`/api/ky3p/responses/${this.taskId}`);
+        
+        if (fieldResponsesResponse.ok) {
+          const contentType = fieldResponsesResponse.headers.get('content-type');
+          const fieldRespText = await fieldResponsesResponse.text();
+          
+          // If the response contains HTML, it's probably an error page, not a JSON response
+          if (fieldRespText.includes('<!DOCTYPE html>')) {
+            this.logger('Field responses raw response:', fieldRespText.substring(0, 200) + '...');
+            this.logger('Error parsing field responses: Received HTML instead of JSON');
+            fieldResponses = [];
+          } else if (contentType && contentType.includes('application/json')) {
+            // It's a valid JSON response
+            fieldResponses = JSON.parse(fieldRespText);
+            this.logger(`Successfully loaded ${fieldResponses.length} field responses`);
+          } else {
+            // Try to parse it anyway
+            try {
+              fieldResponses = JSON.parse(fieldRespText);
+              this.logger(`Parsed ${fieldResponses.length} responses from non-JSON response`);
+            } catch (jsonError) {
+              this.logger('Error parsing field responses:', jsonError);
+              fieldResponses = [];
+            }
+          }
+        } else {
+          this.logger(`Failed to load field responses: ${fieldResponsesResponse.status}. Continuing with empty responses.`);
+          fieldResponses = [];
+        }
+      } catch (error) {
+        this.logger('Error fetching field responses:', error);
+        fieldResponses = [];
       }
       
       this.logger(`Loaded ${fieldDefinitions.length} field definitions and ${fieldResponses.length} responses`);
       
-      // Map responses to a lookup object
+      // Map responses to a lookup object - handle different field naming conventions
       const responsesLookup: Record<string, KY3PResponse> = {};
       fieldResponses.forEach(response => {
-        responsesLookup[response.fieldKey] = response;
+        // Handle different field naming between frontend and backend
+        const fieldKey = response.fieldKey || response.field_key;
+        if (fieldKey) {
+          responsesLookup[fieldKey] = response;
+        }
       });
       
       // Convert fields to our internal format
