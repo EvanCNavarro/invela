@@ -10,6 +10,7 @@ import {
   NetworkVisualizationData, 
   RiskBucket, 
   centerNodeColor, 
+  centerUserPurple,
   riskBucketColors,
   companyTypeColors
 } from './types';
@@ -88,13 +89,12 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .attr('stroke-width', 1.5);
     });
 
-    // Draw center node with color based on company type
-    const centerCompanyColor = companyTypeColors[data.center.category] || companyTypeColors['Default'];
+    // Draw center node with navbar purple color
     g.append('circle')
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', 25)
-      .attr('fill', centerCompanyColor)
+      .attr('fill', centerUserPurple)
       .attr('stroke', '#000')
       .attr('stroke-width', 2)
       .attr('class', 'center-node')
@@ -292,9 +292,6 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-2 space-y-2 border-b">
-        <div className="flex items-center justify-between">
-          <div className="text-base font-semibold">Network Visualization</div>
-        </div>
         
         <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-y-0 sm:space-x-4">
           <NetworkFiltersComponent 
