@@ -645,7 +645,27 @@ export function registerRoutes(app: Express): Express {
       }
 
       // Get company details along with relationship check
-      const [company] = await db.select()
+      // Explicitly select fields to avoid issues with non-existent columns
+      const [company] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        description: companies.description,
+        category: companies.category,
+        is_demo: companies.is_demo,
+        revenue_tier: companies.revenue_tier,
+        onboarding_company_completed: companies.onboarding_company_completed,
+        risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        accreditation_status: companies.accreditation_status,
+        website_url: companies.website_url,
+        num_employees: companies.num_employees,
+        incorporation_year: companies.incorporation_year,
+        available_tabs: companies.available_tabs,
+        logo_id: companies.logo_id,
+        created_at: companies.created_at,
+        updated_at: companies.updated_at,
+        risk_clusters: companies.risk_clusters
+      })
         .from(companies)
         .where(
           and(
