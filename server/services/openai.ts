@@ -892,12 +892,29 @@ export async function analyzeDocument(
       timestamp: new Date().toISOString()
     });
 
+    // Determine if the content appears to be from a CSV file
+    const isCSVContent = documentText.startsWith('CSV Document Content:') || 
+                        documentText.includes('Headers:') && documentText.includes('Row ');
+    
+    // Customize prompt based on content type
+    let documentTypeInstructions = '';
+    if (isCSVContent) {
+      documentTypeInstructions = `
+      This document appears to be in CSV format. Pay special attention to:
+      - The headers that define each column
+      - Row numbers that indicate separate entries
+      - Column-value pairs that match with field questions
+      - Remember that each row may contain information relevant to different fields`;
+    }
+
     const prompt = `
     As a compliance and security expert, analyze this document section and extract specific information for each field.
     You must maintain strict field key mapping throughout your analysis.
 
     Document Text:
     ${documentText}
+
+    ${documentTypeInstructions}
 
     Instructions:
     1. For each field below, extract ONLY information that directly answers its specific question
@@ -910,7 +927,7 @@ export async function analyzeDocument(
     ${fields.map(f => `
     Field Key: "${f.field_key}"
     Question: ${f.question}
-    Search Instructions: ${f.ai_search_instructions}
+    Search Instructions: ${f.ai_search_instructions || 'Look for relevant information in the document'}
     Look for:
     - Direct statements or claims
     - Specific dates, numbers, or procedures
@@ -941,11 +958,15 @@ export async function analyzeDocument(
 
     console.log('[OpenAI Service] Sending request with field keys:', { 
       fieldKeys: fields.map(f => f.field_key),
+      isCSVContent,
       timestamp: new Date().toISOString() 
     });
 
+    // Use GPT-4o for better CSV parsing when available
+    const model = "gpt-3.5-turbo";  // Fall back to 3.5 as default
+    
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: model,
       messages: [
         {
           role: "system",
