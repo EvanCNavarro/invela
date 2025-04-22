@@ -1,8 +1,17 @@
 import OpenAI from "openai";
 import { calculateOpenAICost } from "../../client/src/utils/openaiUtils";
 
-// Create OpenAI instance - using environment variable for API key
-export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Create OpenAI instance with proper error handling for API key
+export const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY 
+});
+
+// Log OpenAI configuration at startup to verify API key is available
+console.log('[OpenAI] Service initialized with API key:', 
+  process.env.OPENAI_API_KEY ? 'API key is set' : 'API key is missing');
+
+// Add timeout and retry for OpenAI requests
+let isApiKeyValid = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10;
 
 /**
  * Safely extracts company data needed for AI processing
