@@ -439,8 +439,20 @@ export function registerRoutes(app: Express): Express {
       console.error("[Companies] Error details:", {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        query: 'SELECT query for companies endpoint'
       });
+      
+      // Log more detailed error information
+      if (error instanceof Error) {
+        console.error(`[Companies] DETAILED ERROR: ${error.message}`);
+        console.error(error.stack);
+        
+        // Check for SQL syntax error
+        if (error.message.includes('syntax error')) {
+          console.error('[Companies] SQL SYNTAX ERROR DETECTED in companies query');
+        }
+      }
 
       // Check if it's a database error
       if (error instanceof Error && error.message.includes('relation')) {
