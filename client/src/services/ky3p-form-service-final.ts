@@ -574,6 +574,22 @@ export class KY3PFormService extends EnhancedKybFormService {
    * @param taskId Optional task ID to specify which task to retrieve demo data for
    * @returns Record of field keys to values for demo auto-fill
    */
+  /**
+   * Check if a field key exists in the form service
+   * @param fieldKey The field key to check
+   * @returns True if the field key exists, false otherwise
+   */
+  public hasField(fieldKey: string): boolean {
+    return this.fields.some(field => field.key === fieldKey);
+  }
+  
+  /**
+   * Get demo data for auto-filling the form, filtered to only include keys that 
+   * match our known field keys
+   * 
+   * @param taskId Optional task ID to specify which task to retrieve demo data for
+   * @returns Record of field keys to values for demo auto-fill
+   */
   public async getDemoData(taskId?: number): Promise<Record<string, any>> {
     const effectiveTaskId = taskId || this.taskId;
     
@@ -599,12 +615,28 @@ export class KY3PFormService extends EnhancedKybFormService {
         throw new Error(`Failed to get demo data: ${response.status} - ${errorText}`);
       }
       
-      const demoData = await response.json();
-      const fieldCount = Object.keys(demoData).length;
+      // Process the raw demo data from the server
+      const rawDemoData = await response.json();
       
-      logger.info(`[KY3P Form Service] Successfully fetched ${fieldCount} demo fields from server`);
+      // Filter out fields that don't exist in our fields array
+      const filteredDemoData: Record<string, any> = {};
+      let skippedFields = 0;
       
-      return demoData;
+      // Only include fields that exist in our form service
+      for (const [key, value] of Object.entries(rawDemoData)) {
+        if (this.hasField(key)) {
+          filteredDemoData[key] = value;
+        } else {
+          logger.warn(`[KY3P Form Service] Skipping demo field key that doesn't exist in our form: ${key}`);
+          skippedFields++;
+        }
+      }
+      
+      const fieldCount = Object.keys(filteredDemoData).length;
+      
+      logger.info(`[KY3P Form Service] Successfully fetched and filtered demo fields: ${fieldCount} valid, ${skippedFields} skipped`);
+      
+      return filteredDemoData;
     } catch (error) {
       logger.error('[KY3P Form Service] Error retrieving demo data:', error);
       throw error;
