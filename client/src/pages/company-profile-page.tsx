@@ -518,29 +518,18 @@ export default function CompanyProfilePage() {
           {/* Modern, sleek navigation breadcrumb */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <button
+              <Button 
                 onClick={handleBackClick}
-                className="group flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-full px-3 py-1.5 transition-all duration-200 ease-in-out hover:bg-blue-50"
-                aria-label="Back to Network"
+                variant="secondary"
+                size="sm"
+                className="flex items-center gap-2"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" />
                 Back to Network
-              </button>
-              
-              {/* Optional simple breadcrumb */}
-              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-                <span>Network</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-                <span className="font-medium text-gray-900">{company.name}</span>
-              </div>
-            </div>
-
-            {/* Optional company actions */}
-            <div className="hidden md:flex">
-              <Button variant="outline" size="sm" className="text-xs gap-1.5">
-                <Star className="h-3.5 w-3.5" /> <span>Favorite</span>
               </Button>
             </div>
+
+            {/* Company actions removed per requirements */}
           </div>
           
           {/* Modern company profile header with enhanced aesthetics */}
@@ -557,16 +546,7 @@ export default function CompanyProfilePage() {
                   <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
                 </div>
                 
-                {/* Category indicator dot */}
-                {company.category && (
-                  <div 
-                    className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white"
-                    style={{ 
-                      backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
-                    }}
-                    aria-label={`Company category: ${company.category}`}
-                  ></div>
-                )}
+                {/* Category indicator dot removed per requirements */}
               </div>
               
               {/* Company information with better information hierarchy */}
@@ -575,10 +555,10 @@ export default function CompanyProfilePage() {
                   <div className="flex items-center flex-wrap gap-2">
                     <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
                     
-                    {/* Category badge moved inline with title for better visibility */}
+                    {/* Category badge with slightly rounded corners */}
                     {company.category && (
                       <div 
-                        className="rounded-full px-3 py-0.5 text-xs font-semibold text-white"
+                        className="rounded-md px-3 py-0.5 text-xs font-semibold text-white"
                         style={{ 
                           backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
                         }}
@@ -623,9 +603,9 @@ export default function CompanyProfilePage() {
                 {/* Risk Score card with improved visual treatment */}
                 <div className="flex flex-col justify-between p-4 rounded-lg bg-gradient-to-br from-slate-50 to-white border border-slate-200 text-center drop-shadow-sm md:w-56 hover:shadow-md transition-shadow duration-300">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <Shield className="h-4 w-4 text-gray-500" />
-                    <div className="text-xs text-gray-600 font-medium">
-                      S&P Business Data Access Risk Score
+                    <Award className="h-5 w-5 text-slate-700" />
+                    <div className="text-sm text-slate-700 font-medium">
+                      RISK SCORE:
                     </div>
                   </div>
                   <div className="text-4xl font-bold text-gray-900 mt-1">
