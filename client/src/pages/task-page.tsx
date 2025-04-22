@@ -966,7 +966,9 @@ export default function TaskPage({ params }: TaskPageProps) {
                   taskType="ky3p"
                   taskStatus={task.status}
                   companyName={displayName}
+                  fileId={fileId}  
                   initialData={task.savedFormData}
+                  onDownload={handleDownload}
                   onProgress={(progress) => {
                     updateTaskProgress(progress, task);
                     
