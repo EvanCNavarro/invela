@@ -112,30 +112,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       }
     });
 
-    // Check if Security Assessment or KY3P task is locked (needs KYB to be completed)
-    if ((task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p') && 
-        !isKybCompleted(task.company_id)) {
-      console.log(`[TaskTable] ${task.task_type} task locked - KYB not completed`);
-      return; // Prevent navigation
-    }
-
-    // Check if CARD or Open Banking task is locked (needs both KYB and Security Assessment or KY3P to be completed)
-    if ((task.task_type === 'company_card' || task.task_type === 'open_banking' || task.task_type === 'open_banking_survey') && 
-        (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) {
-      console.log('[TaskTable] CARD/Open Banking Survey task locked - prerequisite tasks not completed');
-      return; // Prevent navigation
-    }
-    
-    // Also check explicitly for locked status in metadata
-    if (task.metadata?.locked === true || task.metadata?.prerequisite_completed === false) {
-      console.log('[TaskTable] Task explicitly locked in metadata:', {
-        taskId: task.id, 
-        taskType: task.task_type,
-        locked: task.metadata?.locked,
-        prerequisiteCompleted: task.metadata?.prerequisite_completed
-      });
-      return; // Prevent navigation
-    }
+    // All locking logic has been removed - all tasks are now accessible regardless of dependencies
 
     // Navigate to form pages for KYB, Security, KY3P, CARD, and Open Banking tasks (including submitted tasks)
     if (task.task_type === 'company_kyb' || 
@@ -264,25 +241,11 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
               const isSecurityTask = task.task_type === 'security_assessment';
               const isKy3pTask = task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p';
               
-              // Check locked status based on task type and prerequisites
-              const isLocked = 
-                ((isSecurityTask || isKy3pTask) && !isKybCompleted(task.company_id)) || 
-                ((isCardTask || isOpenBankingTask) && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
-                // Also check if metadata explicitly marks task as locked
-                (task.metadata?.locked === true) ||
-                // Check prerequisite relationship in metadata
-                (task.metadata?.prerequisite_completed === false);
-
-              // Get tooltip content based on task type
-              const tooltipContent = isLocked ? (
-                isSecurityTask ? 
-                  "Complete the KYB form to unlock this Security Assessment task" :
-                isKy3pTask ? 
-                  "Complete the KYB form to unlock this S&P KY3P Security Assessment task" :
-                (isCardTask || isOpenBankingTask) ? 
-                  "Complete both KYB and Security Assessment tasks to unlock this Open Banking Survey task" :
-                  "This task is locked due to dependencies"
-              ) : null;
+              // All tasks are now unlocked - removed dependency checking
+              const isLocked = false;
+              
+              // No tooltips needed since all tasks are unlocked
+              const tooltipContent = null;
 
               return (
                 <TableRow 
