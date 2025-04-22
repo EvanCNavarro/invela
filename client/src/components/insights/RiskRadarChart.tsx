@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Card,
@@ -14,14 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCurrentCompany } from '@/hooks/use-current-company';
+import { useCurrentCompany, type Company } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { Shield } from 'lucide-react';
 
-// Import ApexCharts (without SSR)
-import ReactApexChart from 'react-apexcharts';
+// Import these dynamically to prevent SSR issues
+let ReactApexChart: any = null;
 
 // Define the risk cluster data type
 interface RiskClusters {
@@ -33,14 +34,17 @@ interface RiskClusters {
   'Financial Risk': number;
 }
 
-// Define the company type
-interface Company {
+// Define the company type to extend the existing Company type from hooks
+interface CompanyWithRiskClusters {
   id: number;
   name: string;
   category: string;
   risk_score: number;
   chosen_score?: number;
   risk_clusters?: RiskClusters;
+  isDemo?: boolean;
+  status?: string;
+  description?: string;
 }
 
 interface RiskRadarChartProps {
@@ -50,7 +54,20 @@ interface RiskRadarChartProps {
 export function RiskRadarChart({ className }: RiskRadarChartProps) {
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
   const queryClient = useQueryClient();
+
+  // Load ApexCharts components only on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('react-apexcharts').then((mod) => {
+        ReactApexChart = mod.default;
+        setChartComponentLoaded(true);
+      }).catch(err => {
+        console.error("Error loading ApexCharts:", err);
+      });
+    }
+  }, []);
 
   // Set the selected company ID once the current company is loaded
   useEffect(() => {
@@ -61,13 +78,13 @@ export function RiskRadarChart({ className }: RiskRadarChartProps) {
 
   // Fetch network companies if the current company is a Bank or Invela
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
-  const { data: networkCompanies, isLoading: isNetworkLoading } = useQuery<Company[]>({
+  const { data: networkCompanies, isLoading: isNetworkLoading } = useQuery<CompanyWithRiskClusters[]>({
     queryKey: ['/api/companies/network'],
     enabled: isBankOrInvela && !!company,
   });
 
   // Fetch selected company data
-  const { data: selectedCompany, isLoading: isSelectedCompanyLoading } = useQuery<Company>({
+  const { data: selectedCompany, isLoading: isSelectedCompanyLoading } = useQuery<CompanyWithRiskClusters>({
     queryKey: ['/api/companies', selectedCompanyId],
     enabled: !!selectedCompanyId && selectedCompanyId !== company?.id,
   });
@@ -195,13 +212,18 @@ export function RiskRadarChart({ className }: RiskRadarChartProps) {
       </CardHeader>
       <CardContent>
         <div className="h-[400px] w-full">
-          {typeof window !== 'undefined' && (
+          {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
               height="400"
             />
+          )}
+          {!chartComponentLoaded && (
+            <div className="h-full w-full flex items-center justify-center">
+              <Skeleton className="h-[400px] w-full rounded-md" />
+            </div>
           )}
         </div>
       </CardContent>
