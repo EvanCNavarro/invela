@@ -271,7 +271,13 @@ export default function DashboardPage() {
                         )}
                         <span className="text-sm font-medium">{companyData?.name}</span>
                       </div>
-                      <RiskMeter score={companyData?.riskScore || companyData?.risk_score || 0} />
+                      <RiskMeter 
+                        score={companyData?.riskScore || companyData?.risk_score || 0}
+                        chosenScore={companyData?.chosenScore || companyData?.chosen_score}
+                        companyId={companyData?.id || 0}
+                        companyType={companyData?.category || "FinTech"}
+                        canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
+                      />
                     </div>
                   )}
                 </Widget>
