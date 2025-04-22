@@ -1,5 +1,5 @@
 /**
- * S&P KY3P Security Assessment Form Service
+ * S&P KY3P Security Assessment Form Service - Final Fixed Version
  * 
  * This service extends the EnhancedKybFormService to provide specialized 
  * functionality for the S&P KY3P Security Assessment form.
@@ -11,9 +11,6 @@ import getLogger from '@/utils/logger';
 
 const logger = getLogger('KY3PFormService');
 
-// Singleton instance for backwards compatibility
-let _instance: KY3PFormService | null = null;
-
 export class KY3PFormService extends EnhancedKybFormService {
   // Override the form type to match the task type in the database
   protected readonly formType = 'sp_ky3p_assessment';
@@ -21,8 +18,20 @@ export class KY3PFormService extends EnhancedKybFormService {
   // Cache for KY3P fields by template ID
   private static ky3pFieldsCache: Record<number, any[]> = {};
   
+  // Field data for internal use
+  protected formData: Record<string, any> = {};
+  protected taskId?: number;
+  
   constructor(companyId?: number, taskId?: number) {
-    super(companyId, taskId);
+    super();
+    
+    if (companyId) {
+      this.companyId = companyId;
+    }
+    
+    if (taskId) {
+      this.taskId = taskId;
+    }
     
     logger.info(
       '[KY3P Form Service] Initializing KY3P Form Service',
@@ -62,7 +71,6 @@ export class KY3PFormService extends EnhancedKybFormService {
       defaultValue: field.default_value || field.defaultValue || '',
       placeholder: field.placeholder || '',
       helpText: field.help_text || field.helpText || '',
-      group: field.group || '',
       options: field.options || [],
       demoAutofill: field.demo_autofill || field.demoAutofill || '',
       disabled: field.disabled || false,
@@ -78,19 +86,11 @@ export class KY3PFormService extends EnhancedKybFormService {
    * to prevent inheriting the KYB section logic
    */
   async initialize(templateId: number): Promise<void> {
-    if (this.initialized && this.templateId === templateId) {
-      logger.info('[KY3P Form Service] Already initialized with template:', templateId);
-      return; // Already initialized with this template
-    }
-
+    logger.info(`[KY3P Form Service] Initializing with template ID: ${templateId}`);
+    
     try {
+      // Set template ID
       this.templateId = templateId;
-      logger.info(`[KY3P Form Service] Initializing with template ID: ${templateId}`);
-      
-      // CLEAR PREVIOUS STATE to ensure fresh initialization
-      this.fields = [];
-      this.sections = [];
-      this.initialized = false;
       
       // Fetch KY3P fields from the server or cache
       const fields = await this.getKybFields(); // This calls our overridden method that fetches KY3P fields
@@ -105,7 +105,6 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Group fields by group name (formerly section) without any expected/hardcoded groups
       const groupedFields = this.groupFieldsByGroup(fields);
       logger.info(`[KY3P Form Service] Field grouping result: ${Object.keys(groupedFields).length} groups found`);
-      logger.info(`[KY3P Form Service] Groups found: ${Object.keys(groupedFields).join(', ')}`);
       
       // Create sections directly from the groups without any normalization or injecting empty KYB sections
       this.sections = Object.entries(groupedFields).map(([sectionName, sectionFields], index) => {
@@ -175,18 +174,6 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Cache fields for future use
       if (this.templateId) {
         KY3PFormService.ky3pFieldsCache[this.templateId] = fields;
-      }
-      
-      // Log some sample fields for debugging
-      if (fields.length > 0) {
-        logger.info('[KY3P Form Service] Sample KY3P fields:', 
-          fields.slice(0, 3).map((f: any) => ({ 
-            id: f.id, 
-            key: f.field_key, 
-            displayName: f.display_name, 
-            group: f.group
-          }))
-        );
       }
       
       return fields;
@@ -529,24 +516,32 @@ export class KY3PFormService extends EnhancedKybFormService {
       };
     }
   }
-}
-
-// Forward declaration of factory class to avoid reference error
-class KY3PFormServiceFactory {
-  private static instance: KY3PFormServiceFactory;
-  private constructor() {}
   
-  public static getInstance(): KY3PFormServiceFactory {
-    if (!KY3PFormServiceFactory.instance) {
-      KY3PFormServiceFactory.instance = new KY3PFormServiceFactory();
+  /**
+   * Simple validation for the form
+   * @param data The form data to validate
+   * @returns True if the form is valid, or an object with validation errors
+   */
+  public validate(data: Record<string, any>): boolean | Record<string, string> {
+    // Basic form validation logic
+    const errors: Record<string, string> = {};
+    
+    // Get all required fields
+    const requiredFields = this.fields.filter(field => field.required);
+    
+    for (const field of requiredFields) {
+      const value = data[field.key];
+      
+      // Check if field has a value
+      if (value === undefined || value === null || value === '') {
+        errors[field.key] = 'This field is required';
+      }
     }
-    return KY3PFormServiceFactory.instance;
+    
+    // Return true if no errors, otherwise return errors object
+    return Object.keys(errors).length === 0 ? true : errors;
   }
 }
-
-// Create singleton instance for use in the application
-export const ky3pFormService = new KY3PFormService();
-export const ky3pFormServiceFactory = KY3PFormServiceFactory.getInstance();
 
 /**
  * Factory class for creating isolated KY3P form service instances
@@ -582,3 +577,7 @@ export class KY3PFormServiceFactory {
     return this.instances.get(key)!;
   }
 }
+
+// Create singleton instance for use in the application
+export const ky3pFormService = new KY3PFormService();
+export const ky3pFormServiceFactory = KY3PFormServiceFactory.getInstance();
