@@ -417,6 +417,146 @@ router.get('/api/ky3p/progress/:taskId', requireAuth, async (req, res) => {
 });
 
 /**
+ * Save a KY3P response for a field using field key - USED BY DEMO AUTO-FILL
+ * This endpoint allows saving data by field key instead of field ID
+ * which is more reliable for demo auto-fill operations
+ */
+router.post('/api/tasks/:taskId/ky3p-field/:fieldKey', requireAuth, hasTaskAccess, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    const fieldKey = req.params.fieldKey;
+    const { value } = req.body;
+    
+    logger.debug(`[KY3P API] Processing field update by key:`, {
+      taskId,
+      fieldKey,
+      valueType: typeof value,
+      valueSnippet: typeof value === 'object' 
+        ? JSON.stringify(value).substring(0, 50) + '...' 
+        : String(value).substring(0, 50) + '...',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Lookup the field by key to get the field ID
+    const [field] = await db
+      .select()
+      .from(ky3pFields)
+      .where(eq(ky3pFields.field_key, fieldKey))
+      .limit(1);
+    
+    if (!field) {
+      logger.error(`[KY3P API] Field key "${fieldKey}" not found in database`);
+      return res.status(404).json({
+        message: 'Field not found',
+        details: `No field with key "${fieldKey}" exists in the database`
+      });
+    }
+    
+    const fieldId = field.id;
+    
+    // Determine response status
+    let status: keyof typeof KYBFieldStatus = 'EMPTY';
+    if (value !== null && value !== undefined && value !== '') {
+      status = 'COMPLETE';
+    }
+    
+    // Check if a response already exists for this field
+    const [existingResponse] = await db
+      .select()
+      .from(ky3pResponses)
+      .where(
+        and(
+          eq(ky3pResponses.task_id, taskId),
+          eq(ky3pResponses.field_id, fieldId)
+        )
+      )
+      .limit(1);
+    
+    if (existingResponse) {
+      // Update existing response
+      await db.update(ky3pResponses)
+        .set({
+          response_value: value,
+          status,
+          updated_at: new Date()
+        })
+        .where(eq(ky3pResponses.id, existingResponse.id));
+    } else {
+      // Create new response
+      await db.insert(ky3pResponses)
+        .values({
+          task_id: taskId,
+          field_id: fieldId,
+          response_value: value,
+          status,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+    }
+    
+    // Update task progress if not already submitted
+    const [currentTask] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (currentTask && currentTask.status !== 'submitted') {
+      // Calculate progress based on total number of fields and completed fields
+      const [{ total }] = await db
+        .select({ total: db.fn.count() })
+        .from(ky3pFields);
+      
+      const [{ completed }] = await db
+        .select({ completed: db.fn.count() })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.status, 'COMPLETE')
+          )
+        );
+      
+      const progress = Math.min(Math.round((completed / total) * 100), 99);
+      const newStatus = progress > 0 ? 'in_progress' : 'not_started';
+      
+      // Update task progress
+      await db.update(tasks)
+        .set({
+          progress,
+          status: newStatus,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // Broadcast the update
+      try {
+        const { broadcastTaskUpdate } = await import('../services/websocket.js');
+        await broadcastTaskUpdate(taskId);
+        
+        const { broadcastProgressUpdate } = await import('../utils/progress');
+        await broadcastProgressUpdate(taskId, progress);
+      } catch (wsError) {
+        logger.error('[KY3P API] Failed to broadcast WebSocket update for progress:', wsError);
+      }
+    }
+    
+    return res.status(200).json({ 
+      success: true, 
+      fieldKey,
+      fieldId,
+      message: 'Response saved successfully' 
+    });
+  } catch (error) {
+    logger.error('[KY3P API] Error saving response by field key:', error);
+    return res.status(500).json({ 
+      message: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
  * Save a KY3P response for a field
  */
 router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAccess, async (req, res) => {

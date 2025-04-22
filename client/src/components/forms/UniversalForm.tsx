@@ -929,8 +929,73 @@ const handleDemoAutoFill = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 50));
     
     // Different handling based on form type
-    if (taskType === 'kyb' || taskType === 'company_kyb' || taskType === 'sp_ky3p_assessment') {
-      // For KYB and KY3P forms, we use a batched approach for reliability
+    if (taskType === 'sp_ky3p_assessment') {
+      // For KY3P forms, use a completely custom direct approach that doesn't rely on updateField
+      logger.info(`[UniversalForm] Using direct endpoint approach for KY3P form task ${taskId}`);
+      
+      // 1. First update the UI with all values
+      const validEntries = Object.entries(completeData).filter(
+        ([_, value]) => value !== null && value !== undefined && value !== ''
+      );
+      
+      // Update UI form first for immediate feedback
+      for (const [key, value] of validEntries) {
+        form.setValue(key, value, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+      }
+      
+      try {
+        // 2. If we have a form service but issues with field mapping, use direct API approach
+        // This avoids the field ID mapping issues in KY3P form service
+        const { apiRequest, queryClient } = await import('@/lib/queryClient');
+        
+        logger.info(`[UniversalForm] KY3P form - Using direct API approach with ${validEntries.length} fields`);
+        
+        // Process in smaller batches to avoid overwhelming the server
+        const batchSize = 3;
+        let successCount = 0;
+        
+        for (let i = 0; i < validEntries.length; i += batchSize) {
+          const batch = validEntries.slice(i, i + batchSize);
+          
+          // Process fields one-by-one to ensure maximum reliability
+          for (const [fieldKey, fieldValue] of batch) {
+            try {
+              // Use a direct fetch to the field-specific endpoint
+              // This is the most reliable approach for KY3P forms
+              await apiRequest('POST', `/api/tasks/${taskId}/ky3p-field/${fieldKey}`, {
+                value: fieldValue
+              });
+              
+              successCount++;
+            } catch (fieldError) {
+              logger.error(`[UniversalForm] KY3P Direct API error for field ${fieldKey}:`, fieldError);
+              // Continue with other fields even if one fails
+            }
+          }
+          
+          // Add delay between batches to prevent rate limiting
+          logger.info(`[UniversalForm] KY3P Processed batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(validEntries.length/batchSize)}: ${successCount} successes`);
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        
+        // Invalidate queries to ensure latest data is shown
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/ky3p/progress'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/ky3p/progress/${taskId}`] });
+        
+        logger.info(`[UniversalForm] KY3P direct API approach completed: ${successCount} of ${validEntries.length} fields updated`);
+      } catch (error) {
+        logger.error('[UniversalForm] KY3P direct API approach failed:', error);
+        throw new Error('Failed to update form data');
+      }
+    }
+    else if (taskType === 'kyb' || taskType === 'company_kyb') {
+      // For KYB forms, use the proven batched approach
       logger.info(`[UniversalForm] Using enhanced individual field updates for ${taskType}`);
       
       let fieldsUpdated = 0;
