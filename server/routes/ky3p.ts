@@ -36,7 +36,83 @@ router.get('/fields', async (req, res) => {
 });
 
 /**
- * Get responses for a specific task
+ * Get all KY3P fields with demo autofill data
+ */
+router.get('/fields/demo', async (req, res) => {
+  try {
+    logger.info('Fetching KY3P fields with demo data');
+    
+    const fields = await db
+      .select()
+      .from(ky3pFields)
+      .where(db.sql`demo_autofill IS NOT NULL`);
+    
+    logger.info(`Returning ${fields.length} KY3P fields with demo data`);
+    return res.json(fields);
+  } catch (error) {
+    logger.error('Error fetching KY3P fields with demo data', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error fetching KY3P demo fields' 
+    });
+  }
+});
+
+/**
+ * Get responses for a specific task (using query parameter)
+ */
+router.get('/responses', requireAuth, async (req, res) => {
+  try {
+    const taskId = parseInt(req.query.taskId as string);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid task ID' 
+      });
+    }
+    
+    logger.info(`Fetching KY3P responses for task ${taskId} (via query param)`);
+    
+    // Verify the task belongs to the user's company
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (!task) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Task not found' 
+      });
+    }
+    
+    if (task.company_id !== req.user?.company_id) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'You do not have permission to access this task' 
+      });
+    }
+    
+    const responses = await db
+      .select()
+      .from(ky3pResponses)
+      .where(eq(ky3pResponses.taskId, taskId));
+    
+    logger.info(`Returning ${responses.length} KY3P responses for task ${taskId}`);
+    return res.json(responses);
+  } catch (error) {
+    logger.error('Error fetching KY3P responses', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error fetching KY3P responses' 
+    });
+  }
+});
+
+/**
+ * Get responses for a specific task (using path parameter)
  */
 router.get('/responses/:taskId', requireAuth, async (req, res) => {
   try {
@@ -391,5 +467,88 @@ async function updateTaskProgress(taskId: number): Promise<{ progress: number, s
     throw error;
   }
 }
+
+/**
+ * Submit a completed KY3P assessment task
+ */
+router.post('/tasks/:taskId/submit', requireAuth, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid task ID' 
+      });
+    }
+    
+    logger.info(`Submitting KY3P task ${taskId}`);
+    
+    // Verify the task belongs to the user's company
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (!task) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Task not found' 
+      });
+    }
+    
+    if (task.company_id !== req.user?.company_id) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'You do not have permission to access this task' 
+      });
+    }
+    
+    // Get progress information
+    const { progress, status } = await updateTaskProgress(taskId);
+    
+    // Check if task is ready for submission
+    if (progress < 100) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Task is only ${progress}% complete. All required fields must be completed before submission.` 
+      });
+    }
+    
+    // Update task status to submitted
+    await db
+      .update(tasks)
+      .set({ 
+        status: 'submitted',
+        updatedAt: new Date()
+      })
+      .where(eq(tasks.id, taskId));
+    
+    // Broadcast status update via WebSocket
+    broadcastMessage('task_updated', {
+      id: taskId,
+      status: 'submitted',
+      progress: 100,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.json({
+      success: true,
+      message: 'Task successfully submitted',
+      task: {
+        id: taskId,
+        status: 'submitted',
+        progress: 100
+      }
+    });
+  } catch (error) {
+    logger.error('Error submitting KY3P task', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error submitting KY3P task' 
+    });
+  }
+});
 
 export default router;
