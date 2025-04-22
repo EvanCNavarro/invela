@@ -42,7 +42,7 @@ export function TopNav() {
   const companyProfile = useMemo(() => {
     // Default to FinTech (green) if we can't determine the type
     let icon = UserIcon;
-    let bgColor = "bg-emerald-500";
+    let bgColor = "bg-gradient-to-br from-emerald-400 to-emerald-600";
     let textColor = "text-white";
     let companyName = "Unknown Company";
     let companyType = "FinTech"; // Default company type
@@ -64,15 +64,15 @@ export function TopNav() {
       if (companyType === "Invela" || company.id === 1) {
         // Invela company (blue with shield)
         icon = ShieldIcon;
-        bgColor = "bg-blue-600";
+        bgColor = "bg-gradient-to-br from-blue-500 to-blue-700";
       } else if (companyType === "Bank") {
         // Bank (purple with landmark icon)
         icon = Landmark;
-        bgColor = "bg-purple-600";
+        bgColor = "bg-gradient-to-br from-purple-500 to-purple-700";
       } else {
         // FinTech (green with user icon)
         icon = UserIcon;
-        bgColor = "bg-emerald-500";
+        bgColor = "bg-gradient-to-br from-emerald-400 to-emerald-600";
       }
     }
     
@@ -124,7 +124,7 @@ export function TopNav() {
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
-                <div className={cn("w-6 h-6 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
+                <div className={cn("w-6 h-6 flex items-center justify-center rounded-md shadow-sm", companyProfile.bgColor, companyProfile.textColor)}>
                   {React.createElement(companyProfile.icon, { className: "h-3.5 w-3.5" })}
                 </div>
                 <div className="hidden md:block">
@@ -148,7 +148,7 @@ export function TopNav() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-3 flex items-start gap-3">
-                <div className={cn("w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
+                <div className={cn("w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-md shadow-sm", companyProfile.bgColor, companyProfile.textColor)}>
                   {React.createElement(companyProfile.icon, { className: "h-4 w-4" })}
                 </div>
                 <div className="min-w-0">
