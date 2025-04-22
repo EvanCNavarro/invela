@@ -140,11 +140,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Process category names to add line breaks for single-word-per-line
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
-      // Replace spaces with line breaks for multi-word categories
-      if (category.includes(' ')) {
-        return category.split(' ').join('\n');
-      }
-      return category;
+      // Put each word on its own line
+      const words = category.split(' ');
+      return words.join('\n');
     });
   };
 
@@ -261,7 +259,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 320, // Even larger chart size
+        size: 240, // Smaller size that fits better
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -269,7 +267,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           strokeWidth: 1,
           connectorColors: '#e2e8f0',
           fill: {
-            colors: ['#f8fafc', '#ffffff']
+            colors: ['transparent', 'transparent'] // Transparent background
           }
         }
       }
@@ -357,7 +355,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center p-4">
-          <Skeleton className="h-[550px] w-full rounded-md" />
+          <Skeleton className="h-[500px] w-full rounded-md" />
         </CardContent>
       </Card>
     );
@@ -401,18 +399,18 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </div>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="h-[550px] w-full bg-white rounded-md">
+        <div className="h-[500px] w-full rounded-md">
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="550"
+              height="500"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="h-[550px] w-full rounded-md" />
+              <Skeleton className="h-[500px] w-full rounded-md" />
             </div>
           )}
         </div>
