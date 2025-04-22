@@ -980,12 +980,13 @@ const handleDemoAutoFill = useCallback(async () => {
       }
       
       try {
-        logger.info(`[UniversalForm] Using fixed KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+        logger.info(`[UniversalForm] Using fixed KY3P bulk update implementation for task ${taskId} with ${fieldCount} fields`);
         
-        // Import the fixed bulk update function
+        // Import the fixed bulk update function - this directly calls the KYB endpoint 
+        // without any field key to ID conversion (that's what was breaking it)
         const { bulkUpdateKy3pResponses } = await import('./fix-ky3p-bulk-update');
         
-        // Use our fixed implementation that properly handles the field ID conversion
+        // Use our fixed implementation that passes the data DIRECTLY without field ID conversion
         const updateSuccess = await bulkUpdateKy3pResponses(Number(taskId), validResponses);
         
         if (!updateSuccess) {
