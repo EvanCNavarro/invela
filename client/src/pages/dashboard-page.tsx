@@ -206,26 +206,45 @@ export default function DashboardPage() {
                             className="w-full font-medium"
                             onClick={() => setOpenFinTechModal(true)}
                           />
-                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => window.location.href = `/network/company/${companyData?.id}`}
+                          >
                             <User className="h-4 w-4" />
                             View Company Profile
                           </Button>
-                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => window.location.href = '/insights'}
+                          >
                             <BarChart3 className="h-4 w-4" />
                             View Insights
                           </Button>
                         </>
                       ) : (
                         <>
-                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                          >
                             <FileText className="h-4 w-4" />
                             View Documentation
                           </Button>
-                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => window.location.href = `/network/company/${companyData?.id}`}
+                          >
                             <User className="h-4 w-4" />
                             View Company Profile
                           </Button>
-                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => window.location.href = '/insights'}
+                          >
                             <BarChart3 className="h-4 w-4" />
                             View Insights
                           </Button>
@@ -237,60 +256,62 @@ export default function DashboardPage() {
               )}
 
               {/* Middle section - 2x2 grid */}
-              {visibleWidgets.companyScore && companyData && (
-                <div className="col-span-2">
-                  <Widget
-                    title="Company Score"
-                    icon={<AlertTriangle className="h-5 w-5" />}
-                    onVisibilityToggle={() => toggleWidget('companyScore')}
-                    isVisible={visibleWidgets.companyScore}
-                  >
-                    <div className="space-y-1">
-                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData?.logoId ? (
-                          <img
-                            src={`/api/companies/${companyData.id}/logo`}
-                            alt={`${companyData.name} logo`}
-                            className="w-6 h-6 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              console.debug(`Failed to load logo for company: ${companyData.name}`);
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">
-                              {companyData?.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium">{companyData?.name}</span>
+              <div className="col-span-3 grid grid-cols-2 gap-4">
+                {visibleWidgets.companyScore && companyData && (
+                  <div>
+                    <Widget
+                      title="Company Score"
+                      icon={<AlertTriangle className="h-5 w-5" />}
+                      onVisibilityToggle={() => toggleWidget('companyScore')}
+                      isVisible={visibleWidgets.companyScore}
+                    >
+                      <div className="space-y-1">
+                        <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                          {companyData?.logoId ? (
+                            <img
+                              src={`/api/companies/${companyData.id}/logo`}
+                              alt={`${companyData.name} logo`}
+                              className="w-6 h-6 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                console.debug(`Failed to load logo for company: ${companyData.name}`);
+                              }}
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-xs font-medium text-primary">
+                                {companyData?.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-sm font-medium">{companyData?.name}</span>
+                        </div>
+                        <RiskMeter 
+                          score={companyData?.riskScore || companyData?.risk_score || 0}
+                          chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
+                          companyId={companyData?.id || 0}
+                          companyType={companyData?.category || "FinTech"}
+                          canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
+                        />
                       </div>
-                      <RiskMeter 
-                        score={companyData?.riskScore || companyData?.risk_score || 0}
-                        chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
-                        companyId={companyData?.id || 0}
-                        companyType={companyData?.category || "FinTech"}
-                        canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
-                      />
-                    </div>
-                  </Widget>
-                </div>
-              )}
+                    </Widget>
+                  </div>
+                )}
 
-              {/* Network Visualization - Side by side with Company Score */}
-              {visibleWidgets.networkVisualization && companyData?.category !== 'FinTech' && (
-                <div className="col-span-1">
-                  <Widget
-                    title="Network Visualization"
-                    icon={<Globe className="h-5 w-5" />}
-                    onVisibilityToggle={() => toggleWidget('networkVisualization')}
-                    isVisible={visibleWidgets.networkVisualization}
-                  >
-                    <NetworkVisualization className="shadow-none border-none" />
-                  </Widget>
-                </div>
-              )}
+                {/* Network Visualization - Side by side with Company Score */}
+                {visibleWidgets.networkVisualization && companyData?.category !== 'FinTech' && (
+                  <div>
+                    <Widget
+                      title="Network Visualization"
+                      icon={<Globe className="h-5 w-5" />}
+                      onVisibilityToggle={() => toggleWidget('networkVisualization')}
+                      isVisible={visibleWidgets.networkVisualization}
+                    >
+                      <NetworkVisualization className="shadow-none border-none" />
+                    </Widget>
+                  </div>
+                )}
+              </div>
               
               {/* Risk Radar - Full width at bottom for FinTech */}
               {visibleWidgets.riskRadar && companyData?.category === 'FinTech' && (
