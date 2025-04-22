@@ -24,6 +24,18 @@ export interface FormSubmitResponse {
 }
 
 /**
+ * Response from synchronizing form data
+ */
+export interface SyncFormDataResponse {
+  success: boolean;
+  formData: FormData;
+  progress: number;
+  status: string;
+  taskId: number;
+  syncDirection: 'none' | 'to_task' | 'to_fields';
+}
+
+/**
  * Interface for all form services 
  * This ensures consistent API across different form types
  */
@@ -99,6 +111,14 @@ export interface FormServiceInterface {
    * @param taskId The task ID to save progress for
    */
   saveProgress(taskId?: number): Promise<void>;
+  
+  /**
+   * Synchronize form data between task.savedFormData and field responses
+   * This prevents inconsistencies when navigating between forms
+   * @param taskId The task ID to synchronize data for
+   * @returns Promise resolving to the synchronized data and metadata
+   */
+  syncFormData(taskId: number): Promise<SyncFormDataResponse>;
   
   /**
    * Save the form
