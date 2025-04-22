@@ -1077,68 +1077,77 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
-      // Create a mapping from field keys to field IDs
-      // The backend expects field IDs, not field keys
-      // We need to map our field.key values to field.id values
-      const keyToIdResponses: Record<string, any> = {};
-      const allFields = await this.getFields();
-      
-      // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map(
-        allFields.map(field => [field.key, field.id])
-      );
-      
-      // Track fields found in the system versus received in the demo data
-      let totalFieldsInDemoData = Object.keys(cleanData).length;
-      let validFieldsFound = 0;
-      
-      // Convert the keys in cleanData to field IDs
-      // Only include fields that actually exist in this form service
-      for (const [key, value] of Object.entries(cleanData)) {
-        const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId) {
-          // Convert to numeric ID if needed
-          const numericFieldId = this.ensureNumericFieldId(fieldId, key);
-          if (numericFieldId !== null) {
-            keyToIdResponses[numericFieldId] = value;
-            validFieldsFound++;
-          }
+      // Import and use our fixed implementation that directly uses the KYB endpoint
+      // This provides a consistent approach that works for both KYB and KY3P
+      try {
+        // Dynamically import the helper function
+        const { bulkUpdateKy3pResponses } = await import('@/components/forms/fix-ky3p-bulk-update');
+        
+        // Call the helper function with the task ID and clean data
+        const success = await bulkUpdateKy3pResponses(Number(effectiveTaskId), cleanData);
+        
+        if (success) {
+          logger.info(`[KY3P Form Service] Bulk update completed successfully using fixed implementation`);
+          return true;
         } else {
-          // Just log the warning but don't include this field in the mapping
-          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+          logger.error(`[KY3P Form Service] Bulk update failed using fixed implementation`);
+          return false;
         }
+      } catch (bulkUpdateError: any) {
+        logger.error(`[KY3P Form Service] Error in bulk update helper:`, bulkUpdateError);
+        
+        // If the fixed implementation fails, try the original approach as a fallback
+        logger.warn(`[KY3P Form Service] Falling back to direct KYB endpoint for bulk update`);
+        
+        // Use the KYB bulk-update endpoint directly - this is what WORKS
+        const response = await fetch(`/api/kyb/bulk-update/${effectiveTaskId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            responses: cleanData // Send the cleaned data with field keys intact
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`[KY3P Form Service] Bulk update failed: ${response.status}`, errorText);
+          return false;
+        }
+        
+        logger.info(`[KY3P Form Service] Bulk update successful using fallback approach`);
+        
+        // Update progress to 100%
+        await fetch(`/api/tasks/${effectiveTaskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            progress: 100,
+            status: 'in_progress'
+          })
+        });
+        
+        // Broadcast update via WebSocket for UI refresh
+        await fetch('/api/broadcast/task-update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            taskId: effectiveTaskId,
+            type: 'task_updated',
+            timestamp: new Date().toISOString()
+          })
+        });
+        
+        return true;
       }
-      
-      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
-
-      // Convert the object with keys as field IDs to array format with explicit fieldId property
-      // This is needed because the backend API expects a different format
-      const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
-        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
-        value
-      }));
-      logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
-
-      // Use the standardized pattern but with array format - using the proper endpoint
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: arrayFormatResponses // Using array format with explicit fieldId property
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to perform bulk update: ${response.status}`, errorText);
-        return false;
-      }
-      
-      logger.info(`[KY3P Form Service] Bulk update successful for task ${effectiveTaskId}`);
-      return true;
     } catch (error) {
       logger.error('[KY3P Form Service] Error during bulk update:', error);
       return false;
