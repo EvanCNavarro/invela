@@ -86,18 +86,18 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
   switch (normalizedStatus) {
     case 'VALID':
       return {
-        background: 'radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.15), rgba(22, 163, 74, 0.02) 60%, transparent 70%)',
-        borderColor: '#bbf7d0'
+        background: 'radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.08), rgba(22, 163, 74, 0.01) 60%, transparent 70%)',
+        borderColor: '#dcfce7'
       };
     case 'PENDING':
       return {
-        background: 'radial-gradient(circle at bottom left, rgba(202, 138, 4, 0.15), rgba(202, 138, 4, 0.02) 60%, transparent 70%)',
-        borderColor: '#fde68a'
+        background: 'radial-gradient(circle at bottom left, rgba(202, 138, 4, 0.08), rgba(202, 138, 4, 0.01) 60%, transparent 70%)',
+        borderColor: '#fef3c7'
       };
     default:
       return {
-        background: 'radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.02) 60%, transparent 70%)',
-        borderColor: '#fecaca'
+        background: 'radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.01) 60%, transparent 70%)',
+        borderColor: '#fee2e2'
       };
   }
 };
@@ -651,8 +651,8 @@ export default function CompanyProfilePage() {
                 <div 
                   className="flex flex-col justify-between p-4 rounded-lg border border-slate-200 text-center drop-shadow-sm md:w-52"
                   style={{ 
-                    background: 'radial-gradient(circle at bottom left, rgba(79, 99, 236, 0.15), rgba(79, 99, 236, 0.02) 60%, transparent 70%)',
-                    borderColor: '#c7d2fe'
+                    background: 'radial-gradient(circle at bottom left, rgba(79, 99, 236, 0.08), rgba(79, 99, 236, 0.01) 60%, transparent 70%)',
+                    borderColor: '#e0e7ff'
                   }}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
