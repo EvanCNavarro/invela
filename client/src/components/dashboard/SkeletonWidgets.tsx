@@ -164,11 +164,23 @@ export function SkeletonRiskRadarWidget() {
 export function DashboardSkeleton() {
   return (
     <div className="grid grid-cols-3 gap-4">
-      <SkeletonUpdatesWidget />
-      <SkeletonAnnouncementsWidget />
-      <SkeletonQuickActionsWidget />
-      <SkeletonCompanyScoreWidget />
-      <SkeletonNetworkVisualizationWidget />
+      {/* Quick Actions takes full width at the top */}
+      <div className="col-span-3">
+        <SkeletonQuickActionsWidget />
+      </div>
+      
+      {/* Two widgets in the middle */}
+      <div className="col-span-2">
+        <SkeletonCompanyScoreWidget />
+      </div>
+      <div className="col-span-1">
+        <SkeletonCompanyScoreWidget />
+      </div>
+      
+      {/* Network Visualization at the bottom */}
+      <div className="col-span-3">
+        <SkeletonNetworkVisualizationWidget />
+      </div>
     </div>
   );
 }
@@ -179,11 +191,23 @@ export function DashboardSkeleton() {
 export function FinTechDashboardSkeleton() {
   return (
     <div className="grid grid-cols-3 gap-4">
-      <SkeletonUpdatesWidget />
-      <SkeletonAnnouncementsWidget />
-      <SkeletonQuickActionsWidget />
-      <SkeletonCompanyScoreWidget />
-      <SkeletonRiskRadarWidget />
+      {/* Quick Actions takes full width at the top */}
+      <div className="col-span-3">
+        <SkeletonQuickActionsWidget />
+      </div>
+      
+      {/* Two widgets in the middle */}
+      <div className="col-span-2">
+        <SkeletonCompanyScoreWidget />
+      </div>
+      <div className="col-span-1">
+        <SkeletonCompanyScoreWidget />
+      </div>
+      
+      {/* Risk Radar at the bottom */}
+      <div className="col-span-3">
+        <SkeletonRiskRadarWidget />
+      </div>
     </div>
   );
 }
