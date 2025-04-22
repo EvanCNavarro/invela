@@ -148,7 +148,7 @@ const unlockDependentTasks = async (companyId: number, ky3pTaskId: number, userI
       else if (
         dependentTask.metadata?.locked === true || 
         dependentTask.metadata?.prerequisite_task_id === ky3pTaskId ||
-        dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment'
+        dependentTask.metadata?.prerequisite_task_type === 'sp_ky3p_assessment' || dependentTask.metadata?.prerequisite_task_type === 'ky3p'
       ) {
         logger.info('[KY3P API] Unlocking dependent task based on prerequisites', {
           dependentTaskId: dependentTask.id,
