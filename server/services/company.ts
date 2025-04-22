@@ -139,7 +139,7 @@ async function createCompanyInternal(
       .values({
         title: `2. S&P KY3P Security Assessment: ${newCompany.name}`,
         description: `Complete S&P KY3P Security Assessment for ${newCompany.name}`,
-        task_type: 'sp_ky3p_assessment', // Updated task type for KY3P assessment
+        task_type: 'ky3p', // Standardized task type for KY3P assessment
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'medium',
@@ -211,7 +211,7 @@ async function createCompanyInternal(
           created_by_id: createdById,
           locked: true, // Task is initially locked
           prerequisite_task_id: securityTask.id, // S&P KY3P Security Assessment task is a prerequisite
-          prerequisite_task_type: 'sp_ky3p_assessment'
+          prerequisite_task_type: 'ky3p'
         }
       })
       .returning();

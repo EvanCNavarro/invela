@@ -26,7 +26,7 @@ export async function addKy3pTemplate() {
       .values({
         name: 'S&P KY3P Security Assessment',
         description: 'S&P KY3P Security Assessment form for third-party risk evaluation',
-        task_type: 'sp_ky3p_assessment',
+        task_type: 'ky3p',
         component_type: 'form',
         status: 'active',
       })
