@@ -5,10 +5,10 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -256,7 +256,7 @@ export default function CompanyProfilePage() {
           {company.fundingStage && (
             <div>
               <div className="text-sm font-medium text-muted-foreground">Funding Stage</div>
-              <Badge variant="outline">{company.fundingStage}</Badge>
+              <UiBadge variant="outline">{company.fundingStage}</UiBadge>
             </div>
           )}
         </CardContent>
@@ -515,85 +515,152 @@ export default function CompanyProfilePage() {
         showBreadcrumbs
       >
         <div className="space-y-6">
-          {/* Back button with cleaner, more minimal design */}
-          <div className="flex items-center justify-start mb-4">
-            <button
-              onClick={handleBackClick}
-              className="group flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-300 rounded-md px-2 py-1 transition-colors"
-            >
-              <ArrowLeft className="mr-1.5 h-4 w-4 text-gray-500 group-hover:text-gray-700" />
-              Back to Network
-            </button>
-          </div>
-          
-          {/* Company header - cleaner, more minimal design matching the screenshot */}
-          <div className="flex flex-row items-start gap-4 p-6 bg-white rounded-lg">
-            {/* Logo container - simplified neuomorphic style */}
-            <div className="relative w-20 h-20 min-w-20 rounded-lg flex items-center justify-center overflow-hidden 
-                bg-slate-50 border border-slate-100 shadow-md">
-              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-blue-500">
-                <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+          {/* Modern, sleek navigation breadcrumb */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleBackClick}
+                className="group flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-full px-3 py-1.5 transition-all duration-200 ease-in-out hover:bg-blue-50"
+                aria-label="Back to Network"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Network
+              </button>
+              
+              {/* Optional simple breadcrumb */}
+              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
+                <span>Network</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+                <span className="font-medium text-gray-900">{company.name}</span>
               </div>
             </div>
+
+            {/* Optional company actions */}
+            <div className="hidden md:flex">
+              <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                <Star className="h-3.5 w-3.5" /> <span>Favorite</span>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Modern company profile header with enhanced aesthetics */}
+          <div className="relative mb-6 overflow-hidden bg-gradient-to-r from-white to-slate-50 rounded-xl shadow-sm border border-slate-100">
+            {/* Optional decorative elements */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full -mr-20 -mt-20 opacity-30"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-50 rounded-full -ml-12 -mb-12 opacity-30"></div>
             
-            {/* Company info - cleaner spacing */}
-            <div className="flex-1 flex flex-col justify-between gap-1.5">
-              {/* Company name in larger font */}
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
-              
-              {/* Description in subdued color */}
-              <p className="text-gray-500 text-sm font-normal">
-                {company.description || "No description available"}
-              </p>
-              
-              {/* Metadata chip - simplified to match screenshot exactly */}
-              <div className="flex items-center mt-0.5">
+            <div className="relative z-10 flex flex-col md:flex-row items-start gap-6 p-6">
+              {/* Logo container with enhanced neuomorphic style */}
+              <div className="relative w-24 h-24 min-w-24 rounded-xl flex items-center justify-center overflow-hidden 
+                  bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-[5px_5px_15px_0px_rgba(148,163,184,0.1),-5px_-5px_15px_0px_rgba(255,255,255,0.7)]">
+                <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-blue-500">
+                  <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+                </div>
+                
+                {/* Category indicator dot */}
                 {company.category && (
                   <div 
-                    className="rounded-md px-3 py-0.5 text-xs font-semibold text-white"
+                    className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white"
                     style={{ 
                       backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
                     }}
-                  >
-                    {company.category}
-                  </div>
+                    aria-label={`Company category: ${company.category}`}
+                  ></div>
                 )}
               </div>
-            </div>
-            
-            {/* Right side cards with standardized dimensions */}
-            <div className="flex flex-row gap-3 items-stretch">
-              {/* S&P Business Data Access Risk Score - cleaner, more minimal */}
-              <div className="flex flex-col justify-between p-4 rounded-lg bg-slate-50 text-center w-56">
-                <div className="text-xs text-gray-500 font-medium">
-                  S&P Business Data Access Risk Score
+              
+              {/* Company information with better information hierarchy */}
+              <div className="flex-1 flex flex-col justify-between py-1 space-y-3">
+                <div>
+                  <div className="flex items-center flex-wrap gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
+                    
+                    {/* Category badge moved inline with title for better visibility */}
+                    {company.category && (
+                      <div 
+                        className="rounded-full px-3 py-0.5 text-xs font-semibold text-white"
+                        style={{ 
+                          backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
+                        }}
+                      >
+                        {company.category}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <p className="text-gray-600 text-sm font-normal mt-1.5 max-w-2xl">
+                    {company.description || "No description available"}
+                  </p>
                 </div>
-                <div className="text-4xl font-bold mt-2 text-gray-900">
-                  {company.riskScore || company.risk_score || 0}
+                
+                {/* Company metadata badges with enhanced styling */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {company.revenueTier && (
+                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                      <DollarSign className="h-3.5 w-3.5" />
+                      {company.revenueTier}
+                    </div>
+                  )}
+                  
+                  {company.legalStructure && (
+                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                      <Building2 className="h-3.5 w-3.5" />
+                      {company.legalStructure}
+                    </div>
+                  )}
+                  
+                  {company.fundingStage && (
+                    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                      <Briefcase className="h-3.5 w-3.5" />
+                      {company.fundingStage}
+                    </div>
+                  )}
                 </div>
               </div>
               
-              {/* Accreditation status - cleaner, simpler */}
-              <div className="flex flex-col justify-between p-4 rounded-lg text-center w-44"
-                style={{
-                  backgroundColor: company.accreditationStatus === 'VALID' 
-                    ? 'rgba(240, 253, 244, 1)' 
-                    : 'rgba(254, 242, 242, 1)'
-                }}
-              >
-                <div className="text-xs text-gray-500 font-medium">
-                  Accreditation
+              {/* Enhanced metrics cards with better visual treatment */}
+              <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
+                {/* Risk Score card with improved visual treatment */}
+                <div className="flex flex-col justify-between p-4 rounded-lg bg-gradient-to-br from-slate-50 to-white border border-slate-200 text-center drop-shadow-sm md:w-56 hover:shadow-md transition-shadow duration-300">
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <Shield className="h-4 w-4 text-gray-500" />
+                    <div className="text-xs text-gray-600 font-medium">
+                      S&P Business Data Access Risk Score
+                    </div>
+                  </div>
+                  <div className="text-4xl font-bold text-gray-900 mt-1">
+                    {company.riskScore || company.risk_score || 0}
+                  </div>
                 </div>
-                <div className={
-                  company.accreditationStatus === 'VALID' 
-                    ? 'text-green-600 mt-2 font-semibold text-base flex items-center justify-center' 
-                    : 'text-red-500 mt-2 font-semibold text-base flex items-center justify-center'
-                }>
-                  {company.accreditationStatus === 'VALID' ? (
-                    <>VALID</>
-                  ) : (
-                    <><AlertCircle className="w-4 h-4 mr-1" /> INVALID</>
-                  )}
+                
+                {/* Accreditation status with improved status indicator */}
+                <div className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-44 hover:shadow-md transition-shadow duration-300"
+                  style={{
+                    backgroundColor: company.accreditationStatus === 'VALID' 
+                      ? 'rgba(240, 253, 244, 1)' 
+                      : 'rgba(254, 242, 242, 1)',
+                    borderColor: company.accreditationStatus === 'VALID' 
+                      ? 'rgba(132, 204, 22, 0.4)' 
+                      : 'rgba(239, 68, 68, 0.4)'
+                  }}
+                >
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <BadgeIcon className="h-4 w-4 text-gray-500" />
+                    <div className="text-xs text-gray-600 font-medium">
+                      Accreditation
+                    </div>
+                  </div>
+                  <div className={
+                    company.accreditationStatus === 'VALID' 
+                      ? 'text-green-600 mt-1 font-semibold text-lg flex items-center justify-center' 
+                      : 'text-red-500 mt-1 font-semibold text-lg flex items-center justify-center'
+                  }>
+                    {company.accreditationStatus === 'VALID' ? (
+                      <><CheckCircle className="w-5 h-5 mr-1.5" /> VALID</>
+                    ) : (
+                      <><AlertCircle className="w-5 h-5 mr-1.5" /> INVALID</>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
