@@ -6,7 +6,7 @@
 
 import { componentFactory } from './componentFactory';
 import { ky3pFormServiceFactory } from './ky3p-form-service-new';
-import KY3PFormService from './ky3p-form-service-new';
+import { KY3PFormService } from './ky3p-form-service-new';
 import getLogger from '@/utils/logger';
 
 // Create a logger
