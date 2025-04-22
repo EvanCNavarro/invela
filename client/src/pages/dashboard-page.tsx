@@ -35,6 +35,10 @@ import { cn } from "@/lib/utils";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { NetworkVisualization } from "@/components/network";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import { 
+  DashboardSkeleton, 
+  FinTechDashboardSkeleton 
+} from "@/components/dashboard/SkeletonWidgets";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -55,7 +59,8 @@ export default function DashboardPage() {
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user,
-    ...getOptimizedQueryOptions("/api/companies/current")
+    ...getOptimizedQueryOptions("/api/companies/current"),
+    refetchInterval: false
   });
 
   const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
@@ -175,6 +180,13 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          ) : isLoading ? (
+            // Show appropriate skeleton based on company type
+            companyData?.category === 'FinTech' ? (
+              <FinTechDashboardSkeleton />
+            ) : (
+              <DashboardSkeleton />
+            )
           ) : (
             <div className="grid grid-cols-3 gap-4">
               {visibleWidgets.updates && (
@@ -256,41 +268,35 @@ export default function DashboardPage() {
                   onVisibilityToggle={() => toggleWidget('companyScore')}
                   isVisible={visibleWidgets.companyScore}
                 >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center min-h-[200px]">
-                      <p className="text-sm text-muted-foreground">Loading company data...</p>
+                  <div className="space-y-1">
+                    <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                      {companyData?.logoId ? (
+                        <img
+                          src={`/api/companies/${companyData.id}/logo`}
+                          alt={`${companyData.name} logo`}
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            console.debug(`Failed to load logo for company: ${companyData.name}`);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary">
+                            {companyData?.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-sm font-medium">{companyData?.name}</span>
                     </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData?.logoId ? (
-                          <img
-                            src={`/api/companies/${companyData.id}/logo`}
-                            alt={`${companyData.name} logo`}
-                            className="w-6 h-6 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              console.debug(`Failed to load logo for company: ${companyData.name}`);
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">
-                              {companyData?.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium">{companyData?.name}</span>
-                      </div>
-                      <RiskMeter 
-                        score={companyData?.riskScore || companyData?.risk_score || 0}
-                        chosenScore={companyData?.chosenScore || companyData?.chosen_score}
-                        companyId={companyData?.id || 0}
-                        companyType={companyData?.category || "FinTech"}
-                        canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
-                      />
-                    </div>
-                  )}
+                    <RiskMeter 
+                      score={companyData?.riskScore || companyData?.risk_score || 0}
+                      chosenScore={companyData?.chosenScore || companyData?.chosen_score}
+                      companyId={companyData?.id || 0}
+                      companyType={companyData?.category || "FinTech"}
+                      canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
+                    />
+                  </div>
                 </Widget>
               )}
 

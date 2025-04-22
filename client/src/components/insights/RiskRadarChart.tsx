@@ -62,9 +62,11 @@ interface RelationshipData {
 
 interface RiskRadarChartProps {
   className?: string;
+  companyId?: number;
+  showDropdown?: boolean;
 }
 
-export function RiskRadarChart({ className }: RiskRadarChartProps) {
+export function RiskRadarChart({ className, companyId, showDropdown = true }: RiskRadarChartProps) {
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
@@ -82,12 +84,14 @@ export function RiskRadarChart({ className }: RiskRadarChartProps) {
     }
   }, []);
 
-  // Set the selected company ID once the current company is loaded
+  // Set the selected company ID once the current company is loaded or if a specific companyId is provided
   useEffect(() => {
-    if (company && !selectedCompanyId) {
+    if (companyId) {
+      setSelectedCompanyId(companyId);
+    } else if (company && !selectedCompanyId) {
       setSelectedCompanyId(company.id);
     }
-  }, [company, selectedCompanyId]);
+  }, [company, selectedCompanyId, companyId]);
 
   // Fetch network companies if the current company is a Bank or Invela
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
