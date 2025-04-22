@@ -21,38 +21,8 @@ interface DependencyRule {
 }
 
 // Define task dependencies
-const DEPENDENCY_RULES: DependencyRule[] = [
-  // KYB Form submission unlocks KY3P Assessment
-  {
-    prerequisiteType: 'company_kyb',
-    prerequisiteStatus: 'submitted',
-    dependentType: 'ky3p'
-  },
-  // Legacy KYB type (used in older versions)
-  {
-    prerequisiteType: 'kyb',
-    prerequisiteStatus: 'submitted',
-    dependentType: 'ky3p'
-  },
-  // KY3P submission unlocks Open Banking Survey
-  {
-    prerequisiteType: 'ky3p',
-    prerequisiteStatus: 'submitted',
-    dependentType: 'open_banking_survey'
-  },
-  // Original/legacy naming for KY3P type
-  {
-    prerequisiteType: 'sp_ky3p_assessment',
-    prerequisiteStatus: 'submitted',
-    dependentType: 'open_banking_survey'
-  },
-  // Support for company_card (alternate name for Open Banking)
-  {
-    prerequisiteType: 'ky3p',
-    prerequisiteStatus: 'submitted',
-    dependentType: 'company_card'
-  }
-];
+// Empty dependency rules - all tasks will be unlocked by default
+const DEPENDENCY_RULES: DependencyRule[] = [];
 
 /**
  * Check and unlock dependent tasks for a given company
