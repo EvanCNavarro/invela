@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 import { RiskFlowVisualization } from "@/components/insights/RiskFlowVisualization";
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 
 const visualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
@@ -121,6 +122,14 @@ export default function InsightsPage() {
           
           {selectedVisualization === "risk_flow" && (
             <RiskFlowVisualization />
+          )}
+          
+          {selectedVisualization === "risk_radar" && (
+            <div className="flex items-center justify-center h-full">
+              <div className="w-full max-w-5xl">
+                <RiskRadarChart />
+              </div>
+            </div>
           )}
         </Widget>
       </div>
