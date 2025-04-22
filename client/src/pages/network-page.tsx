@@ -281,7 +281,7 @@ export default function NetworkPage() {
             actions={
               <InviteButton
                 variant="fintech"
-                pulse={true}
+                pulse={false}
                 onClick={() => setOpenFinTechModal(true)}
               />
             }
