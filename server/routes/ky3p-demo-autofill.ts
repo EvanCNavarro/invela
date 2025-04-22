@@ -63,6 +63,7 @@ router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, re
       .from(companies)
       .where(eq(companies.id, task.company_id));
       
+    // In the DB schema it's 'is_demo', but we need to verify both naming conventions for compatibility
     if (!company || company.is_demo !== true) {
       logger.error('Company is not marked as demo', { 
         companyId: task.company_id,
