@@ -1319,11 +1319,8 @@ const handleDemoAutoFill = useCallback(async () => {
     });
     
     try {
-      // Verify form is complete before submitting - but only for forms with required fields
-      // For KY3P and Open Banking forms, where all fields are non-required, always allow submission
-      const isKY3POrOpenBanking = taskType === 'ky3p' || taskType === 'open_banking';
-      
-      if (overallProgress < 100 && !isKY3POrOpenBanking) {
+      // Verify form is complete before submitting
+      if (overallProgress < 100) {
         console.log(`[SUBMIT FLOW] 2a. INCOMPLETE: Form has ${overallProgress}% progress, stopping submission`);
         logger.warn(`SUBMISSION FLOW STOPPED: Form incomplete (${overallProgress}%)`);
         toast({
@@ -2583,10 +2580,7 @@ const handleDemoAutoFill = useCallback(async () => {
                   activeSection={activeSection}
                   onSectionChange={(index) => {
                     // Only allow access to the review section if the form is complete
-                  // For KY3P and Open Banking forms, always allow review since fields are non-required
-                  const isKY3POrOpenBankingForm = taskType === 'ky3p' || taskType === 'open_banking';
-                  
-                  if (index === allSections.length - 1 && overallProgress < 100 && !isKY3POrOpenBankingForm) {
+                  if (index === allSections.length - 1 && overallProgress < 100) {
                     toast({
                       title: "Form incomplete",
                       description: "Please complete all required fields before proceeding to review.",
@@ -2861,7 +2855,7 @@ const handleDemoAutoFill = useCallback(async () => {
                                 <p>
                                   {isSubmitted
                                     ? "Form has already been submitted"
-                                    : (overallProgress < 100 && !(taskType === 'ky3p' || taskType === 'open_banking'))
+                                    : overallProgress < 100 
                                       ? "Please complete all required fields" 
                                       : "Please confirm agreement"}
                                 </p>
@@ -2896,7 +2890,7 @@ const handleDemoAutoFill = useCallback(async () => {
                           setActiveSection(activeSection + 1);
                         }}
                         className="flex items-center gap-1"
-                        disabled={(overallProgress < 100 && !(taskType === 'ky3p' || taskType === 'open_banking')) || isSubmitted}
+                        disabled={overallProgress < 100 || isSubmitted}
                       >
                         Final Review <Eye className="ml-1 h-4 w-4" />
                       </Button>
