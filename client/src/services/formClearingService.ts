@@ -201,12 +201,15 @@ export const FormClearingService = {
                 // Directly update the task to clear its saved form data
                 await apiRequest('PATCH', `/api/tasks/${taskId}`, {
                   savedFormData: null,
+                  status: 'not_started', // Explicitly set status to not_started
+                  progress: 0, // Explicitly set progress to 0
                   metadata: {
                     ...preservedMetadata,
                     lastCleared: new Date().toISOString(),
                     clearedVersion: Math.floor(Math.random() * 1000000), // Add random version to ensure cache busting
                     previousProgress: 0,
-                    forceClear: true
+                    forceClear: true,
+                    forceTaskStatus: 'not_started' // Signal to server that status should remain not_started
                   }
                 });
                 
@@ -217,11 +220,14 @@ export const FormClearingService = {
                 // Still try the basic clear operation
                 await apiRequest('PATCH', `/api/tasks/${taskId}`, {
                   savedFormData: null,
+                  status: 'not_started', // Explicitly set status to not_started
+                  progress: 0, // Explicitly set progress to 0
                   metadata: {
                     lastCleared: new Date().toISOString(),
                     clearedVersion: Math.floor(Math.random() * 1000000),
                     previousProgress: 0,
-                    forceClear: true
+                    forceClear: true,
+                    forceTaskStatus: 'not_started' // Signal to server that status should remain not_started
                   }
                 });
               }
