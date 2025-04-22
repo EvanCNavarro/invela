@@ -905,23 +905,34 @@ const handleDemoAutoFill = useCallback(async () => {
         if (formService) {
           logger.info('[UniversalForm] Forcing form service to reload data from server');
           // Clear any cached data in the form service
-          if (typeof formService.clearCache === 'function') {
-            formService.clearCache();
+          try {
+            // Safely attempt to call clearCache if it exists
+            const anyFormService = formService as any;
+            if (typeof anyFormService.clearCache === 'function') {
+              anyFormService.clearCache();
+            }
+          } catch (e) {
+            logger.warn('[UniversalForm] Error calling clearCache:', e);
           }
           
-          // Reset form without saving (hard reset)
+          // Reset form with empty data to force full refresh
           if (resetForm) {
-            resetForm(true);
+            resetForm({});
           }
           
-          // Force form to refetch all data
-          if (typeof formService.loadFormStructure === 'function') {
-            await formService.loadFormStructure();
-          }
-          
-          // Reload all form data from the server
-          if (typeof formService.loadFormData === 'function') {
-            await formService.loadFormData(taskId);
+          // Force form to refetch all data if method exists
+          try {
+            const anyFormService = formService as any;
+            if (typeof anyFormService.loadFormStructure === 'function') {
+              await anyFormService.loadFormStructure();
+            }
+            
+            // Reload all form data from the server if method exists
+            if (typeof anyFormService.loadFormData === 'function') {
+              await anyFormService.loadFormData();
+            }
+          } catch (e) {
+            logger.warn('[UniversalForm] Error reloading form data:', e);
           }
         }
         
@@ -957,8 +968,23 @@ const handleDemoAutoFill = useCallback(async () => {
       // For KYB forms, we use a batched approach for reliability
       logger.info(`[UniversalForm] Using enhanced individual field updates for ${taskType}`);
       
+      // Get demo data from API
+      const demoDataResponse = await fetch(`/api/kyb/demo-autofill/${taskId}`);
+      if (!demoDataResponse.ok) {
+        throw new Error(`Failed to get demo data: ${demoDataResponse.status}`);
+      }
+      const demoData = await demoDataResponse.json();
+      logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields for KYB auto-fill`);
+      
+      // Combine with current form values
+      const currentValues = form.getValues();
+      const fullData = {
+        ...currentValues,
+        ...demoData,
+      };
+      
       let fieldsUpdated = 0;
-      const fieldEntries = Object.entries(completeData).filter(
+      const fieldEntries = Object.entries(fullData).filter(
         ([_, fieldValue]) => fieldValue !== null && fieldValue !== undefined && fieldValue !== ''
       );
       
@@ -1001,11 +1027,30 @@ const handleDemoAutoFill = useCallback(async () => {
     else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
       logger.info(`[UniversalForm] Using form service bulkUpdate for ${taskType}`);
       
+      // Get Open Banking demo data
+      const endpoint = `/api/open-banking/demo-autofill/${taskId}`;
+      logger.info(`[UniversalForm] Using Open Banking demo auto-fill endpoint: ${endpoint}`);
+      
+      const demoDataResponse = await fetch(endpoint);
+      if (!demoDataResponse.ok) {
+        throw new Error(`Failed to get Open Banking demo data: ${demoDataResponse.status}`);
+      }
+      
+      const demoData = await demoDataResponse.json();
+      logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} Open Banking demo fields`);
+      
+      // Combine with current form values
+      const currentValues = form.getValues();
+      const fullData = {
+        ...currentValues,
+        ...demoData,
+      };
+      
       // Filter out empty values to get valid responses for bulk update
       const validResponses: Record<string, any> = {};
       let fieldCount = 0;
       
-      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+      for (const [fieldKey, fieldValue] of Object.entries(fullData)) {
         if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
           // Add to valid responses
           validResponses[fieldKey] = fieldValue;

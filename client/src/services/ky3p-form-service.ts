@@ -114,6 +114,34 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Clear all cached data and force reload on next request
+   * Used for demo auto-fill to ensure full refresh
+   */
+  clearCache(): void {
+    logger.info('[KY3P Form Service] Clearing all cached data');
+    // Clear instance cache
+    this.formData = {};
+    
+    // Clear static cache
+    if (this.templateId) {
+      delete KY3PFormService.ky3pFieldsCache[this.templateId];
+    }
+    
+    // Reset initialization flags
+    this.initialized = false;
+    
+    // Clear any local storage caches
+    try {
+      if (this.taskId) {
+        localStorage.removeItem(`ky3p_fields_cache_${this.taskId}`);
+        localStorage.removeItem(`ky3p_form_data_${this.taskId}`);
+      }
+    } catch (e) {
+      // Ignore local storage errors
+    }
+  }
+
+  /**
    * Override getKybFields to use KY3P fields instead
    * This is the main method called by the EnhancedKybFormService
    */
