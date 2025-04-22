@@ -478,7 +478,7 @@ export class KY3PFormService extends EnhancedKybFormService {
     formData?: Record<string, any>
   ): Promise<{ success: boolean; error?: string; updatedCount: number }> {
     try {
-      logger.info(`[KY3P Form Service] Bulk updating KY3P responses for task ${taskId}`);
+      logger.info(`[KY3P Form Service] Updating responses one by one for task ${taskId}`);
       
       // Step 1: Fetch demo data from the demo-autofill endpoint
       logger.info(`[KY3P Form Service] Fetching demo data from API`);
@@ -531,12 +531,17 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Built field key to ID map with ${fieldKeyToIdMap.size} entries`);
       
-      // Step 4: Filter out empty values and prepare responses array
-      const responsesArray = [];
-      let validCount = 0;
-      let invalidCount = 0;
+      // Step 4: Process each field individually using saveField method
+      let successCount = 0;
+      let failCount = 0;
       
-      for (const [key, value] of Object.entries(demoData)) {
+      // Only process first 5 fields for an initial test (to avoid overwhelming the system)
+      const demoDataEntries = Object.entries(demoData);
+      const firstFiveFields = demoDataEntries.slice(0, 5);
+      
+      logger.info(`[KY3P Form Service] Processing the first 5 fields one by one (total fields: ${demoDataEntries.length})`);
+      
+      for (const [key, value] of firstFiveFields) {
         if (value === undefined || value === null || value === '') {
           continue;
         }
@@ -548,81 +553,59 @@ export class KY3PFormService extends EnhancedKybFormService {
           const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
           
           if (!isNaN(numericFieldId)) {
-            responsesArray.push({
-              fieldId: numericFieldId, // Numeric field ID is required by the API
-              value: value
-            });
-            validCount++;
+            try {
+              logger.info(`[KY3P Form Service] Saving field ${key} (ID: ${numericFieldId})`);
+              
+              // Use the single field update endpoint
+              const singleResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  fieldId: numericFieldId,
+                  value: value
+                }),
+              });
+              
+              if (singleResponse.ok) {
+                logger.info(`[KY3P Form Service] Successfully saved field ${key} (ID: ${numericFieldId})`);
+                successCount++;
+              } else {
+                logger.error(`[KY3P Form Service] Failed to save field ${key}: ${singleResponse.status}`);
+                failCount++;
+              }
+            } catch (fieldError) {
+              logger.error(`[KY3P Form Service] Error saving field ${key}:`, fieldError);
+              failCount++;
+            }
           } else {
             logger.warn(`[KY3P Form Service] Invalid field ID for key ${key}: ${fieldId}`);
-            invalidCount++;
+            failCount++;
           }
         } else {
           logger.warn(`[KY3P Form Service] Field key not found in mapping: ${key}`);
-          invalidCount++;
+          failCount++;
         }
       }
       
-      logger.info(`[KY3P Form Service] Prepared ${validCount} responses for bulk update (${invalidCount} invalid/not found)`);
+      logger.info(`[KY3P Form Service] Processed fields individually: ${successCount} succeeded, ${failCount} failed`);
       
-      if (responsesArray.length === 0) {
-        const error = 'No valid responses found for bulk update';
-        logger.warn(`[KY3P Form Service] ${error}`);
-        return { success: false, error, updatedCount: 0 };
-      }
-      
-      // Step 5: Double-check the format of the request body - must be correctly structured for the endpoint
-      // Ensure we have an array of objects with numeric fieldId values
-      const requestBody = {
-        responses: responsesArray.map(item => ({
-          fieldId: Number(item.fieldId), // Ensure fieldId is a number with explicit conversion
-          value: item.value
-        }))
-      };
-      
-      // Log first 3 items for debugging
-      const firstThreeItems = requestBody.responses.slice(0, 3);
-      logger.info(`[KY3P Form Service] Request body sample (first 3 items):`, JSON.stringify(firstThreeItems));
-      logger.info(`[KY3P Form Service] Total responses to send: ${requestBody.responses.length}`);
-      
-      // Step 6: Make the API call with the properly formatted data
-      const response = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(requestBody),
-      });
-      
-      if (!response.ok) {
-        let errorText = '';
-        try {
-          // Try to parse as JSON first
-          const errorJson = await response.json();
-          errorText = JSON.stringify(errorJson);
-          logger.error(`[KY3P Form Service] Bulk update failed with JSON response:`, errorJson);
-        } catch {
-          // Fallback to text if not JSON
-          errorText = await response.text();
-          logger.error(`[KY3P Form Service] Bulk update failed with text response:`, errorText);
-        }
-        const error = `Failed to perform bulk update: ${response.status} - ${errorText}`;
+      if (successCount === 0) {
+        const error = 'Could not save any fields individually';
         logger.error(`[KY3P Form Service] ${error}`);
         return { success: false, error, updatedCount: 0 };
       }
       
-      const result = await response.json();
-      logger.info(`[KY3P Form Service] KY3P bulk update successful:`, result);
-      
       return { 
         success: true, 
-        updatedCount: validCount,
+        updatedCount: successCount,
       };
       
     } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error during KY3P bulk update';
-      logger.error('[KY3P Form Service] Error during KY3P bulk update:', error);
+      const errorMessage = error?.message || 'Unknown error during KY3P update';
+      logger.error('[KY3P Form Service] Error during update:', error);
       return { 
         success: false, 
         error: errorMessage,
