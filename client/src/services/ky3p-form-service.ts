@@ -762,16 +762,27 @@ export class KY3PFormService extends EnhancedKybFormService {
         return minimalData;
       }
       
-      // For normal operation, use the progress API
-      const progress = await this.getProgress();
-      
-      // Log the data we received for debugging
-      logger.info(`[KY3P Form Service] Form data keys received:`, {
-        keys: Object.keys(progress.formData || {}),
-        count: Object.keys(progress.formData || {}).length,
-        hasData: !!progress.formData && Object.keys(progress.formData).length > 0,
-        status: progress.status
-      });
+      // For normal operation, use the progress API with enhanced error handling
+      let progress;
+      try {
+        progress = await this.getProgress();
+        
+        // Log the data we received for debugging
+        logger.info(`[KY3P Form Service] Form data keys received:`, {
+          keys: Object.keys(progress.formData || {}),
+          count: Object.keys(progress.formData || {}).length,
+          hasData: !!progress.formData && Object.keys(progress.formData).length > 0,
+          status: progress.status
+        });
+      } catch (progressError) {
+        // Handle error without letting it propagate
+        logger.error(`[KY3P Form Service] Error in getProgress call, using empty data:`, progressError);
+        progress = {
+          formData: {},
+          progress: 0,
+          status: 'not_started'
+        };
+      }
       
       // Store the form data in the service for future reference
       if (progress.formData && Object.keys(progress.formData).length > 0) {
