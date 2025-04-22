@@ -1570,8 +1570,9 @@ router.post('/api/tasks/:taskId/kyb-submit', requireAuth, async (req, res) => {
   }
 });
 
-// Universal KY3P form submission endpoint
-router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, async (req, res) => {
+// Universal KY3P form submission endpoint with standardized file creation
+router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, res) => {
+  console.log('[Tasks Routes] Using standardized KY3P submit endpoint with enhanced file generation');
   try {
     const taskId = Number(req.params.taskId);
     const { formData, fileName } = req.body;
