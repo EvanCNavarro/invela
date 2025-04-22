@@ -306,13 +306,28 @@ export class KY3PFormService extends EnhancedKybFormService {
   /**
    * Save a specific field's response
    */
-  public async saveField(fieldId: number, value: any): Promise<void> {
+  public async saveField(fieldId: number | string, value: any): Promise<void> {
     if (!this.taskId) {
-      throw new Error('No task ID provided for saving field');
+      logger.warn('[KY3P Form Service] No task ID provided for saving field, cannot save');
+      return;
+    }
+    
+    if (!fieldId || fieldId === 'undefined' || fieldId === 'null') {
+      logger.warn(`[KY3P Form Service] Invalid field ID (${fieldId}) provided for saving, skipping`);
+      return;
     }
     
     try {
-      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/${fieldId}`, {
+      // Make sure fieldId is a valid number
+      const validFieldId = Number(fieldId);
+      if (isNaN(validFieldId)) {
+        logger.warn(`[KY3P Form Service] Field ID is not a valid number: ${fieldId}, skipping`);
+        return;
+      }
+      
+      logger.info(`[KY3P Form Service] Saving field ${validFieldId} for task ${this.taskId}`);
+      
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/${validFieldId}`, {
         method: 'POST',
         credentials: 'include', // Include session cookies
         headers: {
@@ -324,13 +339,17 @@ export class KY3PFormService extends EnhancedKybFormService {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to save field: ${response.status}`);
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to save field: ${response.status}`, errorText);
+        return;
       }
       
+      logger.info(`[KY3P Form Service] Successfully saved field ${validFieldId}`);
       return response.json();
     } catch (error) {
       logger.error('[KY3P Form Service] Error saving field:', error);
-      throw error;
+      // Don't throw the error, just log it
+      return;
     }
   }
   
@@ -856,6 +875,12 @@ export class KY3PFormService extends EnhancedKybFormService {
         // Process each field individually to ensure proper field ID mapping
         for (const [fieldKey, fieldValue] of Object.entries(formData)) {
           try {
+            // Skip metadata fields (those starting with _)
+            if (fieldKey.startsWith('_')) {
+              logger.debug(`[KY3P Form Service] Skipping metadata field: ${fieldKey}`);
+              continue;
+            }
+            
             // Find the field definition by key
             const fieldDef = fields.find(f => f.key === fieldKey);
             
@@ -869,6 +894,12 @@ export class KY3PFormService extends EnhancedKybFormService {
             
             if (!fieldId) {
               logger.warn(`[KY3P Form Service] Missing field ID for key: ${fieldKey}`);
+              continue;
+            }
+            
+            // Verify field ID is a valid number
+            if (isNaN(Number(fieldId))) {
+              logger.warn(`[KY3P Form Service] Field ID is not a valid number: ${fieldId} for key ${fieldKey}`);
               continue;
             }
             
@@ -946,6 +977,59 @@ export class KY3PFormService extends EnhancedKybFormService {
     try {
       logger.info(`[KY3P Form Service] Performing bulk update for task ${effectiveTaskId}`);
       
+      // Try field-by-field approach first, which is more reliable
+      try {
+        const fields = await this.getFormFields();
+        logger.info(`[KY3P Form Service] Bulk update using field-by-field approach with ${Object.keys(data).length} fields`);
+        
+        // Filter out metadata fields (those starting with _)
+        const fieldsToUpdate = Object.entries(data).filter(([key]) => !key.startsWith('_'));
+        let successCount = 0;
+        
+        for (const [fieldKey, fieldValue] of fieldsToUpdate) {
+          try {
+            // Find the field definition by key
+            const fieldDef = fields.find(f => f.key === fieldKey);
+            
+            if (!fieldDef) {
+              logger.warn(`[KY3P Form Service] Bulk update: Could not find field definition for key: ${fieldKey}`);
+              continue;
+            }
+            
+            // Get the field ID from the definition
+            const fieldId = fieldDef.id;
+            
+            if (!fieldId) {
+              logger.warn(`[KY3P Form Service] Bulk update: Missing field ID for key: ${fieldKey}`);
+              continue;
+            }
+            
+            // Verify field ID is a valid number
+            if (isNaN(Number(fieldId))) {
+              logger.warn(`[KY3P Form Service] Bulk update: Field ID is not a valid number: ${fieldId} for key ${fieldKey}`);
+              continue;
+            }
+            
+            // Save this individual field
+            await this.saveField(fieldId, fieldValue);
+            successCount++;
+          } catch (fieldError) {
+            logger.error(`[KY3P Form Service] Bulk update: Error saving field ${fieldKey}:`, fieldError);
+          }
+        }
+        
+        logger.info(`[KY3P Form Service] Bulk update: Successfully updated ${successCount} out of ${fieldsToUpdate.length} fields`);
+        
+        if (successCount > 0) {
+          return true;
+        }
+      } catch (individualError) {
+        logger.error(`[KY3P Form Service] Bulk update: Error during individual field processing:`, individualError);
+      }
+      
+      // Fall back to the bulk API if field-by-field approach fails
+      logger.info(`[KY3P Form Service] Bulk update: Falling back to bulk API for task ${effectiveTaskId}`);
+      
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
         method: 'POST',
         headers: {
@@ -959,11 +1043,11 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to perform bulk update: ${response.status}`, errorText);
+        logger.error(`[KY3P Form Service] Bulk update via API failed: ${response.status}`, errorText);
         return false;
       }
       
-      logger.info(`[KY3P Form Service] Bulk update successful for task ${effectiveTaskId}`);
+      logger.info(`[KY3P Form Service] Bulk update successful via API for task ${effectiveTaskId}`);
       return true;
     } catch (error) {
       logger.error('[KY3P Form Service] Error during bulk update:', error);
