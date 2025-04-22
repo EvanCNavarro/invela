@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -18,6 +18,10 @@ import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
 import { queryClient } from '@/lib/queryClient';
+import createLogger from '@/utils/logger';
+
+// Create a logger instance for this component
+const logger = createLogger('TaskPage');
 
 interface TaskPageProps {
   params: {
@@ -75,6 +79,85 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // The url for fetching tasks
   const apiEndpoint = taskId ? `/api/tasks.json/${taskId}` : '/api/tasks';
+  
+  // WebSocket connection for real-time updates
+  const webSocketRef = useRef<WebSocket | null>(null);
+  const webSocketReconnectTimerRef = useRef<number | null>(null);
+  
+  // Function to initialize WebSocket connection for real-time updates
+  const setupWebSocket = useCallback(() => {
+    if (!taskId) return;
+    
+    try {
+      // Close existing connection if any
+      if (webSocketRef.current) {
+        try {
+          webSocketRef.current.close();
+        } catch (e) {
+          // Ignore errors when closing
+        }
+      }
+      
+      // Clear any pending reconnect timer
+      if (webSocketReconnectTimerRef.current !== null) {
+        window.clearTimeout(webSocketReconnectTimerRef.current);
+        webSocketReconnectTimerRef.current = null;
+      }
+      
+      // Setup WebSocket connection
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      logger.info(`[TaskPage] Connecting to WebSocket: ${wsUrl}`);
+      
+      const socket = new WebSocket(wsUrl);
+      webSocketRef.current = socket;
+      
+      socket.onopen = () => {
+        logger.info('[TaskPage] WebSocket connection established');
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          logger.info('[TaskPage] WebSocket message received:', message);
+          
+          // Handle task update messages
+          if (message.type === 'task_updated' && 
+              message.payload && 
+              message.payload.id === taskId) {
+            
+            logger.info('[TaskPage] Task update received via WebSocket:', {
+              taskId: message.payload.id,
+              status: message.payload.status,
+              progress: message.payload.progress
+            });
+            
+            // Refresh task data to get the latest state
+            refetch();
+          }
+        } catch (e) {
+          logger.error('[TaskPage] Error processing WebSocket message:', e);
+        }
+      };
+      
+      socket.onclose = (event) => {
+        logger.warn(`[TaskPage] WebSocket connection closed: ${event.code}`, event);
+        
+        // Schedule reconnection
+        webSocketReconnectTimerRef.current = window.setTimeout(() => {
+          logger.info('[TaskPage] Attempting to reconnect WebSocket...');
+          setupWebSocket();
+        }, 3000);
+      };
+      
+      socket.onerror = (error) => {
+        logger.error('[TaskPage] WebSocket error:', error);
+      };
+      
+    } catch (err) {
+      logger.error('[TaskPage] Error setting up WebSocket:', err);
+    }
+  }, [taskId]);
   
   // Function to extract company name from task title
   const extractCompanyNameFromTitle = useCallback((title: string): string => {
@@ -134,6 +217,27 @@ export default function TaskPage({ params }: TaskPageProps) {
       timestamp: new Date().toISOString()
     });
   }, [params.taskSlug, parsedId, taskId, apiEndpoint]);
+  
+  // Setup WebSocket connection when component mounts or taskId changes
+  useEffect(() => {
+    setupWebSocket();
+    
+    // Cleanup function to close the WebSocket connection when component unmounts
+    return () => {
+      if (webSocketRef.current) {
+        try {
+          webSocketRef.current.close();
+        } catch (e) {
+          // Ignore errors when closing
+        }
+      }
+      
+      if (webSocketReconnectTimerRef.current !== null) {
+        window.clearTimeout(webSocketReconnectTimerRef.current);
+        webSocketReconnectTimerRef.current = null;
+      }
+    };
+  }, [setupWebSocket]);
   
   // Handle back button click
   const handleBackClick = useCallback(() => {
@@ -345,7 +449,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   }, [fileId, taskContentType, toast]);
   
   // Fetch task data and keep local state to allow updates
-  const { data: taskData, isLoading, error } = useQuery<Task>({
+  const { data: taskData, isLoading, error, refetch } = useQuery<Task>({
     queryKey: [apiEndpoint, taskId, params.taskSlug],
     queryFn: async () => {
       try {
