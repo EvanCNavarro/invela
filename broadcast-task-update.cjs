@@ -1,11 +1,11 @@
 /**
- * Broadcast a task update via WebSocket to notify clients
+ * Broadcast a task update via WebSocket to notify clients (CommonJS version)
  * 
  * This script sends a WebSocket broadcast to inform clients that
  * the task status has changed, so they can update their UI accordingly
  */
 
-import { WebSocket } from 'ws';
+const WebSocket = require('ws');
 
 // Constants
 const TASK_ID = 614;
