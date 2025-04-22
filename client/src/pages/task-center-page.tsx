@@ -74,6 +74,32 @@ export default function TaskCenterPage() {
 
   // Use a ref to track and update timestamps without triggering re-renders
   const taskTimestampRef = useRef<Record<number, number>>({});
+  // Track if dependency check has been run
+  const dependencyCheckRef = useRef<boolean>(false);
+  
+  // Function to process task dependencies
+  const checkTaskDependencies = async () => {
+    if (dependencyCheckRef.current) {
+      return; // Only run once per session
+    }
+    
+    console.log('[TaskCenter] Running automatic dependency check');
+    try {
+      // Call the API with the dependency check parameter
+      await fetch('/api/tasks?check_dependencies=true');
+      console.log('[TaskCenter] Dependency check completed successfully');
+      
+      // Set the ref to true to avoid running again
+      dependencyCheckRef.current = true;
+      
+      // Invalidate the tasks query to refresh the list
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      }, 1000);
+    } catch (error) {
+      console.error('[TaskCenter] Error checking dependencies:', error);
+    }
+  };
   
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
@@ -91,6 +117,26 @@ export default function TaskCenterPage() {
         taskTimestampRef.current[task.id] = now;
       });
       
+      // Check for dependency relationships that need processing
+      if (!dependencyCheckRef.current) {
+        // Look for ky3p task in submitted status and open_banking task in locked status
+        const ky3pTask = data.find(task => 
+          (task.task_type === 'ky3p' || task.task_type === 'sp_ky3p_assessment') && 
+          task.status.toLowerCase() === 'submitted'
+        );
+        
+        const openBankingTask = data.find(task => 
+          task.task_type === 'company_card' && 
+          task.status.toLowerCase() === 'locked'
+        );
+        
+        // If we have a submitted KY3P and locked Open Banking, run the dependency check
+        if (ky3pTask && openBankingTask) {
+          console.log('[TaskCenter] Potential dependency detected, running check');
+          checkTaskDependencies();
+        }
+      }
+      
       return data;
     }
   });
@@ -103,6 +149,36 @@ export default function TaskCenterPage() {
   const isCompanyOnboarded = currentCompany?.onboarding_company_completed ?? false;
 
   const isLoading = isTasksLoading || isCompanyLoading;
+
+  // Effect to run the dependency check on first mount
+  useEffect(() => {
+    // Run the dependency check only once on mount
+    if (!dependencyCheckRef.current && tasks.length > 0) {
+      console.log('[TaskCenter] Performing automatic dependency check on mount');
+      
+      // Check for a KY3P task in submitted status
+      const ky3pTask = tasks.find(task => 
+        (task.task_type === 'ky3p' || task.task_type === 'sp_ky3p_assessment') && 
+        task.status.toLowerCase() === 'submitted'
+      );
+      
+      // Check for an Open Banking task that might be locked
+      const openBankingTask = tasks.find(task => 
+        task.task_type === 'company_card'
+      );
+      
+      // If we have both a KY3P task and an Open Banking task, run dependency check
+      if (ky3pTask && openBankingTask) {
+        console.log('[TaskCenter] Found qualifying tasks for dependency check', {
+          ky3pTaskId: ky3pTask.id,
+          ky3pStatus: ky3pTask.status,
+          openBankingTaskId: openBankingTask.id,
+          openBankingStatus: openBankingTask.status
+        });
+        checkTaskDependencies();
+      }
+    }
+  }, [tasks, checkTaskDependencies]); // Re-run when tasks change
 
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
