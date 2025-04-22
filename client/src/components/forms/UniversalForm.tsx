@@ -948,28 +948,48 @@ const handleDemoAutoFill = useCallback(async () => {
         throw error;
       }
     } else {
-      // For other form types, use individual field updates
-      logger.info(`[UniversalForm] Using individual field updates for ${taskType}`);
+      // For KYB forms, we need a more reliable approach with better timing
+      logger.info(`[UniversalForm] Using enhanced individual field updates for ${taskType}`);
       
       let fieldsUpdated = 0;
+      const fieldEntries = Object.entries(completeData).filter(
+        ([_, fieldValue]) => fieldValue !== null && fieldValue !== undefined && fieldValue !== ''
+      );
       
-      for (const fieldName in completeData) {
-        const fieldValue = completeData[fieldName];
+      // First, update all form values in the UI
+      for (const [fieldName, fieldValue] of fieldEntries) {
+        form.setValue(fieldName, fieldValue, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+      }
+      
+      // Wait for form values to be updated in UI
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Apply server-side updates in batches of 5 with longer delays
+      // This approach reduces the chance of race conditions
+      const batchSize = 5;
+      for (let i = 0; i < fieldEntries.length; i += batchSize) {
+        const batch = fieldEntries.slice(i, i + batchSize);
         
-        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
-          form.setValue(fieldName, fieldValue, {
-            shouldValidate: true,
-            shouldDirty: true,
-            shouldTouch: true
-          });
-          
+        // Process each batch in parallel for speed, but with controlled timing
+        await Promise.all(batch.map(async ([fieldName, fieldValue]) => {
           if (typeof updateField === 'function') {
             await updateField(fieldName, fieldValue);
             fieldsUpdated++;
-            await new Promise(resolve => setTimeout(resolve, 10));
           }
-        }
+        }));
+        
+        // Add a substantial delay between batches
+        logger.info(`[UniversalForm] Processed batch ${i/batchSize + 1} of ${Math.ceil(fieldEntries.length/batchSize)}`);
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
+      
+      // Add final delay for form reconciliation
+      logger.info(`[UniversalForm] All batches complete. Updated ${fieldsUpdated} fields. Waiting for final reconciliation.`);
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
     
     // Save progress
