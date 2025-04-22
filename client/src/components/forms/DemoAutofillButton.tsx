@@ -179,17 +179,41 @@ export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
         // Call the onSuccess callback if provided
         if (onSuccess) {
           logger.info('Calling onSuccess callback to refresh form');
+          
+          // Multiple UI refresh steps to ensure everything updates:
+          
+          // Step 1: Call the provided callback right away
           onSuccess();
           
-          // Small delay to ensure UI refresh
+          // Step 2: Small delay for initial UI refresh
           setTimeout(() => {
-            // Force a form reload by dispatching a custom event
+            // Dispatch a form:refresh event for components listening for it
             const refreshEvent = new CustomEvent('form:refresh', { 
               detail: { taskId, timestamp: new Date().toISOString() } 
             });
             window.dispatchEvent(refreshEvent);
             logger.info('Dispatched form:refresh event');
+            
+            // Force task query invalidation through a custom event
+            const taskInvalidateEvent = new CustomEvent('task:invalidate', {
+              detail: { taskId, timestamp: new Date().toISOString() }
+            });
+            window.dispatchEvent(taskInvalidateEvent);
+            logger.info('Dispatched task:invalidate event');
           }, 500);
+          
+          // Step 3: Additional refresh after a longer delay
+          setTimeout(() => {
+            // Call onSuccess one more time to ensure UI is fully updated
+            onSuccess();
+            
+            // Dispatch another refresh event with a different timestamp
+            const finalRefreshEvent = new CustomEvent('form:refresh', { 
+              detail: { taskId, timestamp: new Date().toISOString(), final: true } 
+            });
+            window.dispatchEvent(finalRefreshEvent);
+            logger.info('Dispatched final form:refresh event after delay');
+          }, 2000);
         }
       } else {
         logger.error('Demo autofill failed:', result.error);
