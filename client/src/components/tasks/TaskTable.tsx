@@ -113,7 +113,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
     });
 
     // Check if Security Assessment or KY3P task is locked (needs KYB to be completed)
-    if ((task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment') && 
+    if ((task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p') && 
         !isKybCompleted(task.company_id)) {
       console.log(`[TaskTable] ${task.task_type} task locked - KYB not completed`);
       return; // Prevent navigation
