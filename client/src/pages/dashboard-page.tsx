@@ -114,7 +114,15 @@ export default function DashboardPage() {
               <DropdownMenuContent align="end" className="w-56" sideOffset={4}>
                 <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                {Object.entries(visibleWidgets)
+                  // Only show Risk Radar option for FinTech companies
+                  .filter(([key]) => {
+                    if (key === 'riskRadar') {
+                      return companyData?.category === 'FinTech';
+                    }
+                    return true;
+                  })
+                  .map(([key, isVisible]) => (
                   <DropdownMenuItem
                     key={key}
                     onSelect={(event) => {
