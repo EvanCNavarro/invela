@@ -372,6 +372,9 @@ export function registerRoutes(app: Express): Express {
         logo_id: companies.logo_id,
         accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
         risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        risk_clusters: companies.risk_clusters,
+        is_demo: companies.is_demo,
         onboarding_company_completed: sql<boolean>`COALESCE(${companies.onboarding_company_completed}, false)`,
         website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
         legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
@@ -392,6 +395,17 @@ export function registerRoutes(app: Express): Express {
               OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
             ) THEN true
             ELSE false
+          END
+        `,
+        relationship_type: sql<string>`
+          CASE 
+            WHEN ${companies.id} = ${req.user.company_id} THEN 'self'
+            ELSE (
+              SELECT r.relationship_type FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+              OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+              LIMIT 1
+            )
           END
         `
       })
@@ -419,20 +433,83 @@ export function registerRoutes(app: Express): Express {
       });
 
       // Transform the data to match frontend expectations
-      const transformedCompanies = networkCompanies.map(company => ({
-        ...company,
-        websiteUrl: company.website_url || 'N/A',
-        legalStructure: company.legal_structure || 'N/A',
-        hqAddress: company.hq_address || 'N/A',
-        numEmployees: company.num_employees || 'N/A',
-        productsServices: company.products_services ? [company.products_services] : [],
-        incorporationYear: company.incorporation_year || 'N/A',
-        investors: company.investors || 'No investor information available',
-        fundingStage: company.funding_stage || null,
-        keyClientsPartners: company.key_clients_partners ? [company.key_clients_partners] : [],
-        foundersAndLeadership: company.founders_and_leadership || 'No leadership information available',
-        riskScore: company.risk_score
-      }));
+      const transformedCompanies = networkCompanies.map(company => {
+        // Process products_services correctly - database stores it as text, but frontend expects array
+        let productsServices = [];
+        if (company.products_services) {
+          try {
+            // If it's already a valid JSON string, parse it
+            if (company.products_services.startsWith('[') && company.products_services.endsWith(']')) {
+              productsServices = JSON.parse(company.products_services);
+            } else {
+              // Otherwise treat it as a single item
+              productsServices = [company.products_services];
+            }
+          } catch (e) {
+            // If parsing fails, make it a single item array
+            productsServices = [company.products_services];
+            console.log('[Companies] Failed to parse products_services as JSON:', {
+              companyId: company.id, 
+              value: company.products_services,
+              error: e instanceof Error ? e.message : String(e)
+            });
+          }
+        }
+        
+        // Process key_clients_partners correctly - database stores it as text, but frontend expects array
+        let keyClientsPartners = [];
+        if (company.key_clients_partners) {
+          try {
+            // If it's already a valid JSON string, parse it
+            if (company.key_clients_partners.startsWith('[') && company.key_clients_partners.endsWith(']')) {
+              keyClientsPartners = JSON.parse(company.key_clients_partners);
+            } else {
+              // Otherwise treat it as a single item
+              keyClientsPartners = [company.key_clients_partners];
+            }
+          } catch (e) {
+            // If parsing fails, make it a single item array
+            keyClientsPartners = [company.key_clients_partners];
+            console.log('[Companies] Failed to parse key_clients_partners as JSON:', {
+              companyId: company.id, 
+              value: company.key_clients_partners,
+              error: e instanceof Error ? e.message : String(e)
+            });
+          }
+        }
+        
+        return {
+          id: company.id,
+          name: company.name,
+          category: company.category,
+          description: company.description,
+          logo_id: company.logo_id,
+          accreditation_status: company.accreditation_status,
+          risk_score: company.risk_score,
+          riskScore: company.risk_score, // Add frontend-friendly version
+          chosen_score: company.chosen_score, 
+          chosenScore: company.chosen_score, // Add frontend-friendly version
+          risk_clusters: company.risk_clusters,
+          riskClusters: company.risk_clusters, // Add frontend-friendly version
+          is_demo: company.is_demo,
+          isDemo: company.is_demo, // Add frontend-friendly version
+          onboarding_company_completed: company.onboarding_company_completed,
+          websiteUrl: company.website_url || 'N/A',
+          legalStructure: company.legal_structure || 'N/A',
+          hqAddress: company.hq_address || 'N/A',
+          numEmployees: company.num_employees || 'N/A',
+          productsServices: productsServices,
+          incorporationYear: company.incorporation_year || 'N/A',
+          investors: company.investors || 'No investor information available',
+          fundingStage: company.funding_stage || null,
+          keyClientsPartners: keyClientsPartners,
+          foundersAndLeadership: company.founders_and_leadership || 'No leadership information available',
+          has_relationship: company.has_relationship,
+          hasRelationship: company.has_relationship, // Add frontend-friendly version
+          relationship_type: company.relationship_type,
+          relationshipType: company.relationship_type // Add frontend-friendly version
+        };
+      });
 
       res.json(transformedCompanies);
     } catch (error) {
@@ -584,6 +661,9 @@ export function registerRoutes(app: Express): Express {
         riskScore: company.risk_score,        // Add the frontend expected property name
         chosen_score: company.chosen_score,   // Keep the original property
         chosenScore: company.chosen_score,    // Add camelCase version for frontend
+        risk_clusters: company.risk_clusters, // Keep the original property
+        riskClusters: company.risk_clusters,  // Add frontend-friendly version
+        is_demo: company.is_demo,             // Keep the original property
         isDemo: company.is_demo               // Add camelCase version for frontend
       };
 
