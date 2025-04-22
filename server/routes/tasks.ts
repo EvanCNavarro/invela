@@ -580,6 +580,33 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Import the demo helpers
+import { generateDemoData } from '../utils/demo-helpers';
+
+// Helper to check if the company is a demo company
+async function isCompanyDemo(companyId: number): Promise<boolean> {
+  try {
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, companyId)
+    });
+    
+    if (!company) {
+      return false;
+    }
+    
+    // Check if it's a demo company based on name (case insensitive)
+    const namePattern = /(DevTest|DevelopmentTesting|demo)/i;
+    return namePattern.test(company.name);
+  } catch (error) {
+    logger.error('Error checking company demo status', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      companyId
+    });
+    return false;
+  }
+}
+
 // Unified demo data endpoint for all form types
 router.get("/api/tasks/:taskId/:taskType-demo", requireAuth, async (req, res) => {
   try {
@@ -649,15 +676,28 @@ router.get("/api/tasks/:taskId/:taskType-demo", requireAuth, async (req, res) =>
       where: eq(companies.id, task.company_id)
     });
     
+    // Map the task type from client-provided value to internal task_type
+    let internalTaskType = task.task_type;
+    
+    // Normalize task types for consistent demo data generation
+    if (taskType === 'kyb' && (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB')) {
+      internalTaskType = 'company_kyb';
+    } else if (taskType === 'ky3p' && (task.task_type === 'sp_ky3p_assessment' || task.task_type === 'security_assessment')) {
+      internalTaskType = 'sp_ky3p_assessment';
+    } else if (taskType === 'open_banking' && task.task_type === 'open_banking') {
+      internalTaskType = 'open_banking';
+    }
+    
     // Generate demo data based on the task type and company name
     const demoData = generateDemoData(
-      task.task_type, 
+      internalTaskType, 
       company?.name || 'Demo Company'
     );
     
     logger.info('Generated demo data for task', { 
       taskId: parsedTaskId, 
-      taskType: task.task_type,
+      originalTaskType: taskType,
+      internalTaskType,
       dataFields: Object.keys(demoData).length
     });
     
