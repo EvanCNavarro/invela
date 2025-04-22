@@ -21,6 +21,7 @@ import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
+import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 import filesRouter from './routes/files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
@@ -310,6 +311,7 @@ export function registerRoutes(app: Express): Express {
   app.use(cardRouter);
   app.use(securityRouter);
   app.use(ky3pRouter);
+  app.use(ky3pDemoAutofillRouter);
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
