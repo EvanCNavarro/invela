@@ -232,19 +232,19 @@ enum DocumentCategory {
 
 // Function to convert local enum to DB type
 function toDBDocumentCategory(category: DocumentCategory): keyof typeof DBDocumentCategory {
-  // Safer conversion by value matching
+  // Convert to lowercase values as defined in the schema
   switch(category) {
     case DocumentCategory.SOC2_AUDIT:
-      return 'SOC2_AUDIT';
+      return 'soc2_audit';
     case DocumentCategory.ISO27001_CERT:
-      return 'ISO27001_CERT';  
+      return 'iso27001_cert';  
     case DocumentCategory.PENTEST_REPORT:
-      return 'PENTEST_REPORT';
+      return 'pentest_report';
     case DocumentCategory.BUSINESS_CONTINUITY:
-      return 'BUSINESS_CONTINUITY';
+      return 'business_continuity';
     case DocumentCategory.OTHER:
     default:
-      return 'OTHER';
+      return 'other';
   }
 }
 
