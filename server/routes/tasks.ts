@@ -580,6 +580,103 @@ router.get("/api/tasks/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Unified demo data endpoint for all form types
+router.get("/api/tasks/:taskId/:taskType-demo", requireAuth, async (req, res) => {
+  try {
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      logger.warn('Unauthenticated user attempted to access demo data');
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to use this feature'
+      });
+    }
+    
+    const { taskId, taskType } = req.params;
+    const parsedTaskId = parseInt(taskId);
+    
+    if (isNaN(parsedTaskId)) {
+      return res.status(400).json({ error: "Invalid task ID" });
+    }
+    
+    logger.info('Demo data requested', { taskId: parsedTaskId, taskType, userId: req.user.id });
+    
+    // Get the task to retrieve company information
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, parsedTaskId)
+    });
+    
+    if (!task) {
+      logger.error('Task not found for demo data', { taskId: parsedTaskId, taskType });
+      return res.status(404).json({ 
+        error: 'Task not found',
+        message: 'Could not find the specified task'
+      });
+    }
+    
+    // Security check: Verify user belongs to company that owns the task
+    if (req.user.company_id !== task.company_id) {
+      logger.error('Security violation: User attempted to access task from another company', {
+        userId: req.user.id,
+        userCompanyId: req.user.company_id,
+        taskId: task.id,
+        taskCompanyId: task.company_id
+      });
+      
+      return res.status(403).json({
+        error: 'Access denied',
+        message: 'You do not have permission to access this task'
+      });
+    }
+    
+    // Check if this is a demo company
+    const isDemo = await isCompanyDemo(task.company_id);
+    
+    if (!isDemo) {
+      logger.warn('Non-demo company attempted to use demo features', { 
+        taskId: parsedTaskId, 
+        companyId: task.company_id
+      });
+      
+      return res.status(403).json({
+        error: 'Not a demo company',
+        message: 'Auto-fill is only available for demo companies'
+      });
+    }
+    
+    // Get company data for personalization
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, task.company_id)
+    });
+    
+    // Generate demo data based on the task type and company name
+    const demoData = generateDemoData(
+      task.task_type, 
+      company?.name || 'Demo Company'
+    );
+    
+    logger.info('Generated demo data for task', { 
+      taskId: parsedTaskId, 
+      taskType: task.task_type,
+      dataFields: Object.keys(demoData).length
+    });
+    
+    // Return the demo data as JSON
+    return res.status(200).json(demoData);
+  } catch (error) {
+    logger.error('Error generating demo data', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return res.status(500).json({ 
+      error: 'Server error',
+      message: 'An unexpected error occurred while generating demo data'
+    });
+  }
+});
+
 // Special JSON endpoint with .json extension to prevent Vite conflicts 
 router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
   try {
