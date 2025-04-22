@@ -1001,6 +1001,155 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
 });
 
 /**
+ * Batch update endpoint for KY3P responses
+ * This follows the same pattern as the KYB batch-update endpoint
+ */
+router.post('/api/ky3p/batch-update/:taskId', requireAuth, hasTaskAccess, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ message: 'Invalid task ID' });
+    }
+    
+    logger.info(`[KY3P API] Received batch update request for task ${taskId}`, {
+      requestBody: typeof req.body === 'object' ? 'object' : typeof req.body,
+      requestFormat: req.body && req.body.responses ? 'responses object format' : 'direct format'
+    });
+    
+    // Extract responses from request body
+    const responses = req.body.responses || req.body;
+    
+    if (!responses || typeof responses !== 'object') {
+      return res.status(400).json({ message: 'Invalid request format' });
+    }
+    
+    // Process each field response one by one - using batch processing
+    const fieldUpdates = [];
+    let processedCount = 0;
+    
+    for (const [fieldKey, fieldValue] of Object.entries(responses)) {
+      // Skip metadata fields
+      if (fieldKey.startsWith('_')) continue;
+      
+      try {
+        // Find the field by its key
+        const [field] = await db
+          .select()
+          .from(ky3pFields)
+          .where(eq(ky3pFields.field_key, fieldKey))
+          .limit(1);
+        
+        if (!field) {
+          logger.warn(`[KY3P API] Field not found in batch update: ${fieldKey}`);
+          continue;
+        }
+        
+        // Check if a response already exists
+        const [existingResponse] = await db
+          .select()
+          .from(ky3pResponses)
+          .where(
+            and(
+              eq(ky3pResponses.task_id, taskId),
+              eq(ky3pResponses.field_id, field.id)
+            )
+          )
+          .limit(1);
+        
+        if (existingResponse) {
+          // Update existing response
+          await db
+            .update(ky3pResponses)
+            .set({
+              response_value: String(fieldValue),
+              status: KYBFieldStatus.COMPLETED,
+              updated_at: new Date()
+            })
+            .where(eq(ky3pResponses.id, existingResponse.id));
+        } else {
+          // Create new response
+          await db
+            .insert(ky3pResponses)
+            .values({
+              task_id: taskId,
+              field_id: field.id,
+              response_value: String(fieldValue),
+              status: KYBFieldStatus.COMPLETED,
+              created_at: new Date(),
+              updated_at: new Date(),
+              version: 1
+            });
+        }
+        
+        processedCount++;
+        fieldUpdates.push(fieldKey);
+      } catch (fieldError) {
+        logger.error(`[KY3P API] Error updating field ${fieldKey} in batch:`, fieldError);
+      }
+    }
+    
+    // Update task progress
+    try {
+      const totalFields = await db
+        .select({ count: count() })
+        .from(ky3pFields)
+        .where(ne(ky3pFields.field_type, 'section'));
+      
+      const completedFields = await db
+        .select({ count: count() })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            ne(ky3pResponses.status, KYBFieldStatus.EMPTY)
+          )
+        );
+      
+      const totalFieldCount = totalFields[0]?.count || 0;
+      const completedFieldCount = completedFields[0]?.count || 0;
+      
+      const progress = totalFieldCount > 0 
+        ? Math.min(100, Math.round((completedFieldCount / totalFieldCount) * 100)) 
+        : 0;
+      
+      await db
+        .update(tasks)
+        .set({
+          progress,
+          status: progress > 0 ? TaskStatus.IN_PROGRESS : TaskStatus.NOT_STARTED,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // Broadcast task update
+      const { broadcastTaskUpdate } = await import('../services/websocket.js');
+      await broadcastTaskUpdate(taskId);
+      
+      // Also broadcast progress update
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      await broadcastProgressUpdate(taskId, progress);
+    } catch (progressError) {
+      logger.error('[KY3P API] Error updating task progress in batch update:', progressError);
+    }
+    
+    logger.info(`[KY3P API] Batch update successful for task ${taskId}:`, {
+      processedCount,
+      fieldKeys: fieldUpdates.slice(0, 10).join(', ') + (fieldUpdates.length > 10 ? '...' : '')
+    });
+    
+    return res.json({
+      success: true,
+      processedCount,
+      message: `Successfully processed ${processedCount} field updates`
+    });
+  } catch (error) {
+    logger.error('[KY3P API] Error in batch update endpoint:', error);
+    res.status(500).json({ message: 'Error processing batch update' });
+  }
+});
+
+/**
  * Special bulk update endpoint that handles mixed request formats
  * This fixes client issues with direct /bulk requests
  */

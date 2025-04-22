@@ -982,10 +982,10 @@ const handleDemoAutoFill = useCallback(async () => {
       try {
         logger.info(`[UniversalForm] Using batched update implementation for KY3P task ${taskId} with ${fieldCount} fields`);
         
-        // Import the fixed batch update function - updates fields individually in batches like KYB
-        const { batchUpdateKy3pResponses } = await import('./fix-ky3p-bulk-update');
+        // Import the batch update function from the correct file
+        const { batchUpdateKy3pResponses } = await import('./ky3p-batch-update');
         
-        // Use our fixed implementation that updates fields in batches (not bulk)
+        // Use our implementation that updates fields in batches (similar to KYB)
         const updateSuccess = await batchUpdateKy3pResponses(Number(taskId), validResponses);
         
         if (!updateSuccess) {
