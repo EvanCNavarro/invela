@@ -63,6 +63,7 @@ router.post('/api/tasks/:taskId/open-banking-demo-autofill', requireAuth, async 
       .from(companies)
       .where(eq(companies.id, task.company_id));
       
+    // In the DB schema it's 'is_demo', but we need to verify both naming conventions for compatibility
     if (!company || company.is_demo !== true) {
       logger.error('Company is not marked as demo', { 
         companyId: task.company_id,
@@ -214,6 +215,23 @@ router.get('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, r
       
       return res.status(403).json({
         message: 'You do not have permission to access this task'
+      });
+    }
+    
+    // Verify this is a demo company
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+      
+    // In the DB schema it's 'is_demo', but we need to verify this is a demo company
+    if (!company || company.is_demo !== true) {
+      logger.error('Company is not marked as demo for data retrieval', { 
+        companyId: task.company_id,
+        isDemo: company?.is_demo
+      });
+      
+      return res.status(403).json({
+        message: 'Auto-fill is only available for demo companies'
       });
     }
     
