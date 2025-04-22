@@ -47,6 +47,19 @@ interface CompanyWithRiskClusters {
   description?: string;
 }
 
+// Define relationship type for network companies
+interface RelationshipData {
+  id: number;
+  companyId: number;
+  relatedCompanyId: number;
+  relatedCompanyName: string;
+  relatedCompanyCategory?: string;
+  relatedCompanyRiskScore?: number;
+  relatedCompanyChosenScore?: number;
+  relatedCompanyRiskClusters?: RiskClusters;
+  relationshipType: string;
+}
+
 interface RiskRadarChartProps {
   className?: string;
 }
@@ -78,9 +91,20 @@ export function RiskRadarChart({ className }: RiskRadarChartProps) {
 
   // Fetch network companies if the current company is a Bank or Invela
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
-  const { data: networkCompanies, isLoading: isNetworkLoading } = useQuery<CompanyWithRiskClusters[]>({
-    queryKey: ['/api/companies/network'],
-    enabled: isBankOrInvela && !!company,
+  const { data: networkCompanies, isLoading: isNetworkLoading } = useQuery<RelationshipData[]>({
+    queryKey: ['/api/relationships', company?.id],
+    select: (data) => {
+      // Transform relationship data into CompanyWithRiskClusters format
+      return data?.map(relationship => ({
+        id: relationship.relatedCompanyId,
+        name: relationship.relatedCompanyName,
+        category: relationship.relatedCompanyCategory || 'FinTech',
+        risk_score: relationship.relatedCompanyRiskScore || 0,
+        chosen_score: relationship.relatedCompanyChosenScore,
+        risk_clusters: relationship.relatedCompanyRiskClusters
+      } as CompanyWithRiskClusters)) || [];
+    },
+    enabled: isBankOrInvela && !!company?.id,
   });
 
   // Fetch selected company data
@@ -184,7 +208,7 @@ export function RiskRadarChart({ className }: RiskRadarChartProps) {
               S&P Business Data Access Risk Breakdown
             </CardTitle>
             <CardDescription>
-              Detailed breakdown of risk factors for {displayCompany.name}
+              Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
             </CardDescription>
           </div>
 
