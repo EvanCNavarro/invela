@@ -45,7 +45,10 @@ export const companyTypeColors: Record<string, string> = {
   'Bank': '#7B74A8',  // Purple for banks
   'Invela': '#4965EC', // Blue for Invela
   'FinTech': '#48BB78', // Green for FinTechs
-  'Default': '#4965EC' // Default blue
+  'Default': '#7B74A8' // Default to purple 
 };
+
+// Navbar user icon purple color for center node
+export const centerUserPurple = '#7B74A8';
 
 export const centerNodeColor = '#4965EC'; // This will be replaced by company type color in the visualization
