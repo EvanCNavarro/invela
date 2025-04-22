@@ -32,6 +32,9 @@ interface CompanyProfileData {
   legalStructure: string;
   hqAddress: string;
   riskScore: number;
+  risk_score?: number;
+  chosenScore?: number;
+  chosen_score?: number;
 }
 
 interface CompanyUser {
@@ -131,7 +134,13 @@ export default function CompanyProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RiskMeter score={company.riskScore} />
+            <RiskMeter 
+              score={company.riskScore || company.risk_score || 0}
+              chosenScore={company.chosenScore || company.chosen_score}
+              companyId={company.id || 0}
+              companyType={company.category || "FinTech"}
+              canAdjust={company.category === "Bank" || company.category === "Invela"}
+            />
           </CardContent>
         </Card>
 
@@ -278,8 +287,8 @@ export default function CompanyProfilePage() {
         variant="user"
         open={openUserModal}
         onOpenChange={setOpenUserModal}
-        companyId={parseInt(companyId)}
-        companyName={company?.name || ""}
+        companyId={parseInt(companyId || "0")}
+        companyName={company.name}
       />
     </div>
   );
@@ -347,7 +356,13 @@ export default function CompanyProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RiskMeter score={company.riskScore} />
+            <RiskMeter 
+              score={company.riskScore || company.risk_score || 0}
+              chosenScore={company.chosenScore || company.chosen_score}
+              companyId={company.id || 0}
+              companyType={company.category || "FinTech"}
+              canAdjust={company.category === "Bank" || company.category === "Invela"}
+            />
           </CardContent>
         </Card>
 
