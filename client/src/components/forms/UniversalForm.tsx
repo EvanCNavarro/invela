@@ -1014,11 +1014,40 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Still fallback to form service as last resort
           if (formService) {
             try {
-              logger.info(`[UniversalForm] Attempting fallback to form service bulkUpdate`);
-              await formService.bulkUpdate(validResponses, taskId);
-              logger.info(`[UniversalForm] Form service fallback successful`);
+              logger.info(`[UniversalForm] Attempting fallback to form service methods`);
+              
+              // Check if bulkUpdate exists on this form service
+              if (typeof formService.bulkUpdate === 'function') {
+                logger.info(`[UniversalForm] Using formService.bulkUpdate method`);
+                await formService.bulkUpdate(validResponses, taskId);
+                logger.info(`[UniversalForm] Form service bulkUpdate successful`);
+              } 
+              // Try to use individual update methods as an alternative
+              else if (typeof formService.updateFormData === 'function') {
+                logger.info(`[UniversalForm] Fallback to individual field updates`);
+                
+                // Update each field individually
+                for (const [key, value] of Object.entries(validResponses)) {
+                  try {
+                    formService.updateFormData(key, value);
+                    logger.info(`[UniversalForm] Updated field ${key} successfully`);
+                  } catch (fieldErr) {
+                    logger.warn(`[UniversalForm] Could not update field ${key}:`, fieldErr);
+                  }
+                }
+                
+                // Then try to save progress if the method exists
+                if (typeof formService.saveProgress === 'function' && taskId) {
+                  await formService.saveProgress(taskId);
+                  logger.info(`[UniversalForm] Saved progress after individual field updates`);
+                }
+              } else {
+                // No update methods available on this form service
+                logger.error(`[UniversalForm] Form service lacks update methods`);
+                throw new Error('Form service has no update methods');
+              }
             } catch (serviceErr) {
-              logger.error(`[UniversalForm] Form service fallback also failed:`, serviceErr);
+              logger.error(`[UniversalForm] Form service fallback failed:`, serviceErr);
               throw err; // Re-throw the original error
             }
           } else {
@@ -1046,49 +1075,99 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
       
       // Refresh status and update the section/tab UI with progress information
-      // First ensure the form's data is correctly synced with all sections
       try {
-        // Force recalculate progress
+        logger.info(`[UniversalForm] Starting post-autofill UI synchronization`);
+        
+        // CRITICAL FIX: Update the task metadata manually to ensure it's got
+        // the autoFill progress set properly
+        try {
+          const { apiRequest } = await import('@/lib/queryClient');
+          await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+            status: 'in_progress',
+            progress: 100, // Auto-fill should always set progress to 100%
+            metadata: {
+              lastAutoFilled: new Date().toISOString()
+            }
+          });
+          logger.info(`[UniversalForm] Updated task metadata with auto-fill status`);
+        } catch (metaErr) {
+          logger.warn(`[UniversalForm] Error updating task metadata:`, metaErr);
+        }
+        
+        // Invalidate queries to ensure UI gets updated data
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/kyb/progress'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
+        
+        // First ensure the UI progress bar is updated immediately
+        if (onProgress) {
+          logger.info(`[UniversalForm] Setting progress bar to 100%`);
+          onProgress(100);
+        }
+        
+        // Then trigger refresh status to update sections
+        await refreshStatus();
+        
+        // Force form state reconciliation
         if (formService) {
-          logger.info(`[UniversalForm] Recalculating form progress after auto-fill`);
-          const updatedProgress = formService.calculateProgress();
-          logger.info(`[UniversalForm] Calculated progress: ${updatedProgress}%`);
-          
-          // Update the UI progress bar immediately
-          if (onProgress) {
-            onProgress(updatedProgress);
+          // Force reload fields and sections if methods exist
+          if (typeof formService.getFields === 'function') {
+            formService.getFields(); 
           }
           
-          // Ensure section tabs reflect proper progress status
-          await refreshStatus();
+          if (typeof formService.getSections === 'function') {
+            formService.getSections();
+          }
           
-          // Update active section to first complete section
-          try {
-            // Try to find first section with fields to navigate user there
-            const firstSectionWithFields = sections.find(s => 
-              fields.some(f => f.section === s.id)
-            );
-            
-            if (firstSectionWithFields) {
-              logger.info(`[UniversalForm] Navigating to first section with fields: ${firstSectionWithFields.title}`);
-              setActiveSection(firstSectionWithFields.id);
-            }
-          } catch (err) {
-            logger.warn(`[UniversalForm] Error navigating to first section:`, err);
+          // Force-set task progress and status if methods exist
+          if (typeof formService.setTaskProgress === 'function') {
+            formService.setTaskProgress(100);
+          }
+          
+          if (typeof formService.setTaskStatus === 'function') {
+            formService.setTaskStatus('in_progress');
+          }
+          
+          // Alternatively use the calculateProgress method which all services should have
+          if (typeof formService.calculateProgress === 'function') {
+            const calculatedProgress = formService.calculateProgress();
+            logger.info(`[UniversalForm] Calculated progress after refresh: ${calculatedProgress}%`);
+          }
+        }
+        
+        // CRITICAL: Force a re-render BEFORE trying to navigate to fix section visibility
+        setForceRerender(prev => !prev);
+        
+        // Wait a short time to allow re-render to complete
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Now set the active section to ensure UI visibility
+        if (sections && sections.length > 0) {
+          const firstSection = sections[0];
+          if (firstSection && firstSection.id) {
+            logger.info(`[UniversalForm] Setting active section to first section: ${firstSection.title}`);
+            setActiveSection(firstSection.id);
           }
         } else {
-          // No form service, just set to 100% as fallback
-          if (onProgress) {
-            onProgress(100);
-          }
-          await refreshStatus();
+          logger.warn(`[UniversalForm] No sections available to set active`);
         }
+        
+        // Trigger a final form validation
+        await form.trigger();
+        
+        // Force another re-render to ensure all UI updates are applied
+        setForceRerender(prev => !prev);
+        
+        logger.info(`[UniversalForm] Post-autofill UI synchronization complete`);
       } catch (err) {
-        logger.error(`[UniversalForm] Error updating progress and status:`, err);
-        // Still make sure we refresh status in case of error
+        logger.error(`[UniversalForm] Error updating UI after auto-fill:`, err);
+        
+        // Still make basic UI updates even if the optimized approach fails
         await refreshStatus();
         if (onProgress) {
-          onProgress(100); // Fallback to 100%
+          onProgress(100);
         }
       }
       
