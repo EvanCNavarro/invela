@@ -515,148 +515,111 @@ export default function CompanyProfilePage() {
         showBreadcrumbs
       >
         <div className="space-y-6">
-          {/* Back button integrated with the modern page layout */}
-          <div className="bg-gray-50 pt-6 pb-1 -mx-6">
-            <div className="max-w-screen-2xl mx-auto px-6">
-              <button
-                onClick={handleBackClick}
-                className="group flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 
-                focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-300 
-                rounded-md px-3 py-1.5 transition-colors hover:bg-white/50"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4 text-gray-500 group-hover:text-gray-700" />
-                Back to Network
-              </button>
-            </div>
+          {/* Back button with cleaner, more minimal design */}
+          <div className="flex items-center justify-start mb-4">
+            <button
+              onClick={handleBackClick}
+              className="group flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-gray-300 rounded-md px-2 py-1 transition-colors"
+            >
+              <ArrowLeft className="mr-1.5 h-4 w-4 text-gray-500 group-hover:text-gray-700" />
+              Back to Network
+            </button>
           </div>
           
-          {/* Enhanced visually appealing header with proper separation and spacing */}
-          <div className="bg-gray-50 border-b border-gray-200 py-6 px-0 mb-6 -mx-6">
-            <div className="max-w-screen-2xl mx-auto px-6">
-              <div className="flex flex-row items-center gap-5">
-                {/* Logo container - clean white box with subtle shadow */}
-                <div className="relative w-20 h-20 min-w-20 rounded-lg flex items-center justify-center overflow-hidden 
-                    bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
-                  <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-blue-500">
-                    <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
-                  </div>
-                </div>
-                
-                {/* Company info - improved spacing and typography */}
-                <div className="flex-1 flex flex-col justify-center gap-1">
-                  {/* Company name with better typography */}
-                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{company.name}</h1>
-                  
-                  {/* Description with proper line height */}
-                  <p className="text-gray-500 text-sm font-normal leading-5 max-w-2xl">
-                    {company.description || "No description available"}
-                  </p>
-                  
-                  {/* Category badge with proper styling */}
-                  <div className="flex items-center mt-1.5">
-                    {company.category && (
-                      <div 
-                        className="rounded-md px-3 py-0.5 text-xs font-medium text-white"
-                        style={{ 
-                          backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
-                        }}
-                      >
-                        {company.category}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Standardized status cards */}
-                <div className="flex flex-row gap-4 items-stretch">
-                  {/* S&P Business Data Access Risk Score - polished design */}
-                  <div className="flex flex-col justify-between px-5 py-3 rounded-lg bg-white shadow-sm border border-gray-100 text-center w-56">
-                    <div className="text-xs text-gray-500 font-medium mb-1">
-                      S&P Business Data Access Risk Score
-                    </div>
-                    <div className="text-4xl font-bold text-gray-900 mt-1">
-                      {company.riskScore || company.risk_score || 0}
-                    </div>
-                  </div>
-                  
-                  {/* Accreditation status with improved visual appeal */}
-                  <div className="flex flex-col justify-between px-5 py-3 rounded-lg shadow-sm text-center w-44 border"
-                    style={{
-                      backgroundColor: company.accreditationStatus === 'VALID' 
-                        ? 'rgba(240, 253, 244, 1)' 
-                        : 'rgba(254, 242, 242, 1)',
-                      borderColor: company.accreditationStatus === 'VALID' 
-                        ? 'rgba(22, 163, 74, 0.2)' 
-                        : 'rgba(239, 68, 68, 0.2)'
+          {/* Company header - cleaner, more minimal design matching the screenshot */}
+          <div className="flex flex-row items-start gap-4 p-6 bg-white rounded-lg">
+            {/* Logo container - simplified neuomorphic style */}
+            <div className="relative w-20 h-20 min-w-20 rounded-lg flex items-center justify-center overflow-hidden 
+                bg-slate-50 border border-slate-100 shadow-md">
+              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-blue-500">
+                <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+              </div>
+            </div>
+            
+            {/* Company info - cleaner spacing */}
+            <div className="flex-1 flex flex-col justify-between gap-1.5">
+              {/* Company name in larger font */}
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
+              
+              {/* Description in subdued color */}
+              <p className="text-gray-500 text-sm font-normal">
+                {company.description || "No description available"}
+              </p>
+              
+              {/* Metadata chip - simplified to match screenshot exactly */}
+              <div className="flex items-center mt-0.5">
+                {company.category && (
+                  <div 
+                    className="rounded-md px-3 py-0.5 text-xs font-semibold text-white"
+                    style={{ 
+                      backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
                     }}
                   >
-                    <div className="text-xs text-gray-500 font-medium mb-1">
-                      Accreditation
-                    </div>
-                    <div className={
-                      company.accreditationStatus === 'VALID' 
-                        ? 'text-green-600 mt-1 font-semibold text-base flex items-center justify-center' 
-                        : 'text-red-500 mt-1 font-semibold text-base flex items-center justify-center'
-                    }>
-                      {company.accreditationStatus === 'VALID' ? (
-                        <>VALID</>
-                      ) : (
-                        <><AlertCircle className="w-4 h-4 mr-1.5" /> INVALID</>
-                      )}
-                    </div>
+                    {company.category}
                   </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Right side cards with standardized dimensions */}
+            <div className="flex flex-row gap-3 items-stretch">
+              {/* S&P Business Data Access Risk Score - cleaner, more minimal */}
+              <div className="flex flex-col justify-between p-4 rounded-lg bg-slate-50 text-center w-56">
+                <div className="text-xs text-gray-500 font-medium">
+                  S&P Business Data Access Risk Score
+                </div>
+                <div className="text-4xl font-bold mt-2 text-gray-900">
+                  {company.riskScore || company.risk_score || 0}
+                </div>
+              </div>
+              
+              {/* Accreditation status - cleaner, simpler */}
+              <div className="flex flex-col justify-between p-4 rounded-lg text-center w-44"
+                style={{
+                  backgroundColor: company.accreditationStatus === 'VALID' 
+                    ? 'rgba(240, 253, 244, 1)' 
+                    : 'rgba(254, 242, 242, 1)'
+                }}
+              >
+                <div className="text-xs text-gray-500 font-medium">
+                  Accreditation
+                </div>
+                <div className={
+                  company.accreditationStatus === 'VALID' 
+                    ? 'text-green-600 mt-2 font-semibold text-base flex items-center justify-center' 
+                    : 'text-red-500 mt-2 font-semibold text-base flex items-center justify-center'
+                }>
+                  {company.accreditationStatus === 'VALID' ? (
+                    <>VALID</>
+                  ) : (
+                    <><AlertCircle className="w-4 h-4 mr-1" /> INVALID</>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Integrated tab navigation - sleek and modern */}
-          <div className="bg-white">
+          {/* Tab navigation with cleaner styling */}
+          <div className="mt-1">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="border-b border-gray-200">
-                <div className="max-w-screen-2xl mx-auto px-6">
-                  <TabsList className="bg-transparent h-12 mb-0 p-0">
-                    <TabsTrigger 
-                      value="overview" 
-                      className="rounded-none border-0 h-12 px-5 text-sm font-medium text-gray-600
-                      data-[state=active]:border-b-2 data-[state=active]:border-blue-600 
-                      data-[state=active]:shadow-none data-[state=active]:text-blue-700
-                      transition-colors duration-200"
-                    >
-                      Overview
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="users" 
-                      className="rounded-none border-0 h-12 px-5 text-sm font-medium text-gray-600
-                      data-[state=active]:border-b-2 data-[state=active]:border-blue-600 
-                      data-[state=active]:shadow-none data-[state=active]:text-blue-700
-                      transition-colors duration-200"
-                    >
-                      Users
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="files" 
-                      className="rounded-none border-0 h-12 px-5 text-sm font-medium text-gray-600
-                      data-[state=active]:border-b-2 data-[state=active]:border-blue-600 
-                      data-[state=active]:shadow-none data-[state=active]:text-blue-700
-                      transition-colors duration-200"
-                    >
-                      Files
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="risk" 
-                      className="rounded-none border-0 h-12 px-5 text-sm font-medium text-gray-600
-                      data-[state=active]:border-b-2 data-[state=active]:border-blue-600 
-                      data-[state=active]:shadow-none data-[state=active]:text-blue-700
-                      transition-colors duration-200"
-                    >
-                      Risk
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+                <TabsList className="bg-transparent h-10 mb-0 p-0">
+                  <TabsTrigger value="overview" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Users
+                  </TabsTrigger>
+                  <TabsTrigger value="files" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Files
+                  </TabsTrigger>
+                  <TabsTrigger value="risk" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                    Risk
+                  </TabsTrigger>
+                </TabsList>
               </div>
               
-              <div className="pt-8 px-6 max-w-screen-2xl mx-auto">
+              <div className="pt-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   {renderOverviewTab()}
                 </TabsContent>
