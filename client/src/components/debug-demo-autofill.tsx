@@ -33,7 +33,7 @@ export function DebugDemoAutofill({ taskId, taskType }: DebugDemoAutofillProps) 
       logger.info(`[DEBUG] Starting demo auto-fill debug for task ${taskId}`);
       
       // Only works for KY3P tasks
-      if (taskType !== 'sp_ky3p_assessment' && taskType !== 'ky3p') {
+      if (taskType !== 'ky3p') {
         toast({
           variant: "destructive",
           title: "Debug Failed",
