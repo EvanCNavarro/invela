@@ -87,7 +87,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      (task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment') && 
+      (task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p') && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
@@ -142,6 +142,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         task.task_type === 'company_card' ||
         task.task_type === 'security_assessment' ||
         task.task_type === 'sp_ky3p_assessment' ||
+        task.task_type === 'ky3p' ||
         task.task_type === 'open_banking' ||
         task.task_type === 'open_banking_survey') {
       
@@ -156,7 +157,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         formType = 'card';
       } else if (task.task_type === 'security_assessment') {
         formType = 'security';
-      } else if (task.task_type === 'sp_ky3p_assessment') {
+      } else if (task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p') {
         formType = 'ky3p';
       } else if (task.task_type === 'open_banking' || task.task_type === 'open_banking_survey') {
         formType = 'open_banking';
@@ -261,7 +262,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
               const isCardTask = task.task_type === 'company_card';
               const isOpenBankingTask = task.task_type === 'open_banking' || task.task_type === 'open_banking_survey';
               const isSecurityTask = task.task_type === 'security_assessment';
-              const isKy3pTask = task.task_type === 'sp_ky3p_assessment';
+              const isKy3pTask = task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p';
               
               // Check locked status based on task type and prerequisites
               const isLocked = 
