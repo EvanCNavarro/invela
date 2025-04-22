@@ -1007,8 +1007,12 @@ export class KY3PFormService extends EnhancedKybFormService {
       for (const [key, value] of Object.entries(cleanData)) {
         const fieldId = fieldKeyToIdMap.get(key);
         if (fieldId) {
-          keyToIdResponses[fieldId] = value;
-          validFieldsFound++;
+          // Convert to numeric ID if needed
+          const numericFieldId = this.ensureNumericFieldId(fieldId, key);
+          if (numericFieldId !== null) {
+            keyToIdResponses[numericFieldId] = value;
+            validFieldsFound++;
+          }
         } else {
           // Just log the warning but don't include this field in the mapping
           logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
@@ -1017,23 +1021,23 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
 
-      // Convert responses to array format if needed for compatibility
+      // Convert the object with keys as field IDs to array format with explicit fieldId property
+      // This is needed because the backend API expects a different format
       const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
-        fieldId: parseInt(fieldId),
+        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
         value
       }));
       logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
 
-      // Use the dedicated bulk update endpoint that properly handles both array and object formats
-      // This endpoint was specifically created to handle the format mismatch issues
-      const response = await fetch(`/api/ky3p-bulk-update/${effectiveTaskId}`, {
+      // Use the standardized pattern but with array format - using the proper endpoint
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
+          responses: arrayFormatResponses // Using array format with explicit fieldId property
         }),
       });
       
