@@ -12,6 +12,7 @@ import { standardFormSubmission, TaskStatus } from '../utils/form-standardizatio
 import { FileCreationService } from '../services/file-creation';
 import { CompanyTabsService } from '../services/company-tabs';
 import { isCompanyDemo } from '../utils/demo-helpers';
+import { processDependencies, unlockOpenBankingTasks } from './task-dependencies';
 
 const logger = new Logger('TasksRoutes');
 
@@ -1607,61 +1608,29 @@ router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, 
       convertToCSV: convertKy3pToCSV
     });
     
-    // Add code to unlock Open Banking Survey tasks after KY3P submission
+    // Process task dependencies to automatically unlock related tasks
     try {
-      console.log(`[Tasks Routes] Unlocking Open Banking Survey tasks after KY3P submission for company ${task.company_id}`);
+      logger.info('[Tasks] Processing dependencies after KY3P submission', {
+        taskId,
+        companyId: task.company_id
+      });
       
-      // Find Open Banking Survey tasks for this company that might need unlocking
-      const openBankingTasks = await db.select()
-        .from(tasks)
-        .where(
-          and(
-            eq(tasks.company_id, task.company_id),
-            eq(tasks.task_type, 'open_banking_survey'),
-            or(
-              eq(tasks.status, 'locked'),
-              isNull(tasks.status)
-            )
-          )
-        );
-        
-      console.log(`[Tasks Routes] Found ${openBankingTasks.length} Open Banking Survey tasks to unlock`);
+      // Process general dependencies using the rules system
+      await processDependencies(task.company_id);
       
-      for (const obTask of openBankingTasks) {
-        // Update each Open Banking Survey task to unlock it
-        await db.update(tasks)
-          .set({
-            status: 'not_started',
-            metadata: sql`jsonb_set(
-              jsonb_set(
-                jsonb_set(
-                  COALESCE(metadata, '{}'::jsonb),
-                  '{locked}', 'false'
-                ),
-                '{prerequisite_completed}', 'true'
-              ),
-              '{prerequisite_completed_at}', to_jsonb(now())
-            )`,
-            updated_at: new Date()
-          })
-          .where(eq(tasks.id, obTask.id));
-          
-        console.log(`[Tasks Routes] Unlocked Open Banking Survey task ${obTask.id}`);
-        
-        // Broadcast task update via WebSocket
-        broadcastTaskUpdate(obTask.id, {
-          status: 'not_started',
-          metadata: {
-            locked: false,
-            prerequisite_completed: true,
-            prerequisite_completed_at: new Date().toISOString()
-          }
-        });
-      }
+      // For extra reliability, also directly unlock Open Banking tasks
+      await unlockOpenBankingTasks(task.company_id);
       
-      console.log(`[Tasks Routes] Successfully unlocked Open Banking Survey tasks for company ${task.company_id}`);
+      logger.info('[Tasks] Successfully processed dependencies after KY3P submission', {
+        taskId,
+        companyId: task.company_id
+      });
     } catch (unlockError) {
-      console.error('[Tasks Routes] Error unlocking Open Banking Survey tasks:', unlockError);
+      logger.error('[Tasks] Error processing dependencies after KY3P submission', {
+        taskId,
+        companyId: task.company_id,
+        error: unlockError instanceof Error ? unlockError.message : 'Unknown error'
+      });
     }
     
     // Return the standardized response
@@ -1748,9 +1717,39 @@ router.post('/api/tasks/unlock-open-banking/:taskId', requireAuth, async (req, r
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    console.log(`[Tasks] Emergency unlock for Open Banking task ${taskId}`);
+    logger.info('[Tasks] Emergency unlock requested for Open Banking task', { 
+      taskId, 
+      companyId: task.company_id 
+    });
     
-    // Update the task status
+    // Use the central task dependency processor instead of direct updates
+    if (task.company_id) {
+      // Process all dependencies for this company
+      await processDependencies(task.company_id);
+      
+      // For extra reliability, also directly unlock Open Banking tasks
+      await unlockOpenBankingTasks(task.company_id);
+      
+      // Verify the task was actually unlocked
+      const [verifyTask] = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (verifyTask && verifyTask.status === 'not_started') {
+        logger.info('[Tasks] Task successfully unlocked via dependency processor', { taskId });
+        
+        return res.json({
+          success: true,
+          task: verifyTask,
+          method: 'dependency_processor'
+        });
+      }
+    }
+    
+    // Fallback to direct unlock if the dependency processor didn't handle it
+    logger.info('[Tasks] Falling back to direct task unlock', { taskId });
+    
+    // Update the task status directly
     const updatedTask = await db.update(tasks)
       .set({
         status: 'not_started',
@@ -1773,7 +1772,7 @@ router.post('/api/tasks/unlock-open-banking/:taskId', requireAuth, async (req, r
       return res.status(500).json({ error: 'Failed to update task' });
     }
     
-    console.log(`[Tasks] Task ${taskId} unlocked successfully`);
+    logger.info('[Tasks] Task unlocked successfully via direct update', { taskId });
     
     // Broadcast the update via WebSocket
     broadcastTaskUpdate({
