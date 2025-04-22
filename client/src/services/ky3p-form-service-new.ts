@@ -5,9 +5,11 @@
  * demo autofill capabilities and comprehensive logging for debugging.
  */
 
-import { getWebSocketService } from '../lib/webSocketClient';
+// Import WebSocket service from the correct path
+import { getWebSocketService } from '@/lib/webSocketClient';
 import { ky3pFields } from '@db/schema';
-import type { FormField, FormSection, FormStatus } from '../types/form';
+import type { FormField, FormSection, FormStatus } from '@/types/form';
+import type { FormServiceInterface, FormData } from '@/services/formService';
 
 // Type definitions
 export interface KY3PResponse {
@@ -29,7 +31,7 @@ export interface KY3PField {
   demo_autofill?: string;
 }
 
-export class KY3PFormService {
+export class KY3PFormService implements FormServiceInterface {
   private fields: FormField[] = [];
   private sections: FormSection[] = [];
   private initialized = false;
@@ -408,6 +410,82 @@ export class KY3PFormService {
   }
 
   /**
+   * Load form data from the server - FormServiceInterface implementation
+   */
+  async loadFormData(): Promise<FormData> {
+    this.logger('loadFormData called');
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    return {
+      fields: this.fields,
+      sections: this.sections
+    };
+  }
+
+  /**
+   * Update form data - FormServiceInterface implementation
+   */
+  async updateFormData(key: string, value: any): Promise<boolean> {
+    this.logger(`updateFormData called for ${key}`);
+    return this.updateField(key, value);
+  }
+
+  /**
+   * Get form data - FormServiceInterface implementation
+   */
+  getFormData(): FormData {
+    this.logger('getFormData called');
+    return {
+      fields: this.fields,
+      sections: this.sections
+    };
+  }
+  
+  /**
+   * Calculate progress - FormServiceInterface implementation
+   */
+  calculateProgress(): number {
+    this.logger('calculateProgress called');
+    return this.getProgress();
+  }
+
+  /**
+   * Set form template - FormServiceInterface implementation
+   */
+  setTemplate(templateId: number): void {
+    this.logger(`setTemplate called with templateId: ${templateId}`);
+    // KY3P doesn't use templates in the same way, so this is a no-op
+  }
+
+  /**
+   * Save current form data - FormServiceInterface implementation
+   */
+  async saveFormData(): Promise<boolean> {
+    this.logger('saveFormData called');
+    // KY3P saves data in real-time per field, so this is a no-op
+    return true;
+  }
+
+  /**
+   * Check if form has unsaved changes - FormServiceInterface implementation
+   */
+  hasUnsavedChanges(): boolean {
+    this.logger('hasUnsavedChanges called');
+    // KY3P saves data in real-time per field, so this always returns false
+    return false;
+  }
+
+  /**
+   * Reset form data - FormServiceInterface implementation
+   */
+  async resetFormData(): Promise<boolean> {
+    this.logger('resetFormData called');
+    // Not implemented for KY3P forms
+    return false;
+  }
+
+  /**
    * Get the current progress of the form
    */
   getProgress(): number {
@@ -426,4 +504,28 @@ export class KY3PFormService {
   }
 }
 
+/**
+ * Factory class for creating KY3P form service instances
+ */
+export class KY3PFormServiceFactory {
+  private static instance: KY3PFormServiceFactory;
+  
+  private constructor() {}
+  
+  public static getInstance(): KY3PFormServiceFactory {
+    if (!KY3PFormServiceFactory.instance) {
+      KY3PFormServiceFactory.instance = new KY3PFormServiceFactory();
+    }
+    return KY3PFormServiceFactory.instance;
+  }
+  
+  public createService(taskId: number, companyId: number): KY3PFormService {
+    return new KY3PFormService(taskId, companyId);
+  }
+}
+
+// Create singleton instance for service registration
+const ky3pFormServiceFactory = KY3PFormServiceFactory.getInstance();
+
+export { ky3pFormServiceFactory };
 export default KY3PFormService;
