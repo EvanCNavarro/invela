@@ -495,6 +495,7 @@ export function registerRoutes(app: Express): Express {
         name: company.name,
         onboardingCompleted: company.onboarding_company_completed,
         riskScore: company.risk_score,
+        chosenScore: company.chosen_score,
         isDemo: company.is_demo
       });
 
@@ -502,9 +503,11 @@ export function registerRoutes(app: Express): Express {
       // Also include isDemo for frontend usage (camelCase)
       const transformedCompany = {
         ...company,
-        risk_score: company.risk_score, // Keep the original property
-        riskScore: company.risk_score,  // Add the frontend expected property name
-        isDemo: company.is_demo         // Add camelCase version for frontend
+        risk_score: company.risk_score,       // Keep the original property
+        riskScore: company.risk_score,        // Add the frontend expected property name
+        chosen_score: company.chosen_score,   // Keep the original property
+        chosenScore: company.chosen_score,    // Add camelCase version for frontend
+        isDemo: company.is_demo               // Add camelCase version for frontend
       };
       
       // Update the cache with the transformed data
@@ -565,9 +568,11 @@ export function registerRoutes(app: Express): Express {
         websiteUrl: company.website_url,
         numEmployees: company.employee_count,
         incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
-        risk_score: company.risk_score, // Keep the original property
-        riskScore: company.risk_score,  // Add the frontend expected property name
-        isDemo: company.is_demo         // Add camelCase version for frontend
+        risk_score: company.risk_score,       // Keep the original property
+        riskScore: company.risk_score,        // Add the frontend expected property name
+        chosen_score: company.chosen_score,   // Keep the original property
+        chosenScore: company.chosen_score,    // Add camelCase version for frontend
+        isDemo: company.is_demo               // Add camelCase version for frontend
       };
 
       res.json(transformedCompany);
@@ -629,6 +634,91 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       return res.status(500).json({ 
         message: "Internal server error", 
         code: "SERVER_ERROR" 
+      });
+    }
+  });
+  
+  // Update a company's chosen risk score
+  app.patch("/api/companies/:id/score", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+      
+      // Ensure the user belongs to this company or has a relationship with it
+      const userCompanyId = req.user.company_id;
+      if (companyId !== userCompanyId) {
+        // Check if there's a relationship between the companies
+        const relationshipCheck = await db.select()
+          .from(relationships)
+          .where(
+            or(
+              and(
+                eq(relationships.company_id, userCompanyId),
+                eq(relationships.related_company_id, companyId)
+              ),
+              and(
+                eq(relationships.company_id, companyId),
+                eq(relationships.related_company_id, userCompanyId)
+              )
+            )
+          );
+        
+        if (!relationshipCheck || relationshipCheck.length === 0) {
+          return res.status(403).json({
+            message: "Unauthorized to update this company's score",
+            code: "UNAUTHORIZED"
+          });
+        }
+      }
+      
+      // Extract and validate the chosen_score value
+      const { chosen_score } = req.body;
+      
+      if (chosen_score === undefined || chosen_score === null) {
+        return res.status(400).json({
+          message: "Missing chosen_score value",
+          code: "MISSING_VALUE"
+        });
+      }
+      
+      const scoreValue = parseInt(chosen_score);
+      if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 1500) {
+        return res.status(400).json({
+          message: "Invalid score value (must be between 0 and 1500)",
+          code: "INVALID_VALUE"
+        });
+      }
+      
+      // Update the company's chosen score
+      await db.update(companies)
+        .set({
+          chosen_score: scoreValue,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId));
+      
+      // Invalidate the cache for this company
+      invalidateCompanyCache(companyId);
+      
+      console.log(`[Company Score] Updated chosen_score for company ${companyId} to ${scoreValue}`);
+      
+      // Return the updated score
+      return res.json({
+        message: "Score updated successfully",
+        companyId,
+        chosen_score: scoreValue
+      });
+    } catch (error) {
+      console.error("[Company Score] Error updating company score:", error);
+      return res.status(500).json({
+        message: "Error updating company score",
+        code: "SERVER_ERROR"
       });
     }
   });
