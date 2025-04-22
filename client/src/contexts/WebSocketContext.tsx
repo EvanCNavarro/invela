@@ -108,14 +108,30 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           console.log(`[WebSocket] Connection closed: ${event.code} ${event.reason}`);
           setConnected(false);
           
-          // Attempt to reconnect after a delay
-          setTimeout(() => {
-            connectWebSocket();
-          }, 3000);
+          // Only attempt to reconnect for appropriate close codes
+          // 1000 = Normal closure (don't reconnect)
+          // 1001 = Going away (client navigated away)
+          // 1006 = Abnormal closure (should attempt reconnection)
+          if (event.code !== 1000 && event.code !== 1001) {
+            console.log(`[WebSocket] Scheduling reconnection attempt in 3 seconds...`);
+            setTimeout(() => {
+              connectWebSocket();
+            }, 3000);
+          } else {
+            console.log(`[WebSocket] Not reconnecting due to clean closure code: ${event.code}`);
+          }
         };
 
         socket.onerror = (error) => {
           console.error('[WebSocket] Connection error:', error);
+          console.error('%c[WebSocket] Error:', 'color: #F44336', {
+            error,
+            connectionId: `ws_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`,
+            timestamp: new Date().toISOString(),
+          });
+          
+          // Don't immediately try to reconnect on error
+          // The onclose handler will be called after an error and handle reconnection
         };
 
         // Set up a ping interval to keep the connection alive
