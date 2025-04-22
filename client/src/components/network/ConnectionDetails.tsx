@@ -60,12 +60,30 @@ export function ConnectionDetails({ node, centerNode, onClose, position }: Conne
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Revenue Tier</p>
-            <p className="font-medium">{node.revenueTier || 'Not Specified'}</p>
+            <p className="font-medium">{node.revenueTier || 'Enterprise'}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Category</p>
             <p className="font-medium">{node.category || 'Not Specified'}</p>
           </div>
+          
+          {/* Only show Consents section for FinTech companies */}
+          {node.category === 'FinTech' && (
+            <>
+              <div>
+                <p className="text-xs text-muted-foreground">Consents</p>
+                <p className="font-medium">
+                  {formatConsentsNumber(getActiveConsents(node))}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Denied</p>
+                <p className="font-medium">
+                  {formatConsentsNumber(getDeniedConsents(node))}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="pt-2 border-t">

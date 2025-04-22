@@ -11,6 +11,7 @@ export interface NetworkNode {
   accreditationStatus: string;
   revenueTier: string;
   category: string;
+  activeConsents?: number; // Number of active consents for FinTechs
 }
 
 export interface NetworkCenter {

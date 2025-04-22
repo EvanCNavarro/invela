@@ -101,6 +101,8 @@ export const companies = pgTable("companies", {
   founders_and_leadership: text("founders_and_leadership"),
   num_employees: integer("num_employees"),
   revenue: text("revenue"),
+  revenue_tier: text("revenue_tier"),
+  active_consents: integer("active_consents"),
   key_clients_partners: text("key_clients_partners"),
   investors: text("investors"),
   funding_stage: text("funding_stage"),
