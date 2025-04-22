@@ -211,14 +211,14 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             .attr('stroke', `url(#${hoveredLineGradientId})`)
             .attr('stroke-width', 1.8);
             
-          // Enhanced tooltip with improved styling
+          // Enhanced tooltip with improved positioning
           const tooltip = g.append('g')
             .attr('class', 'node-tooltip')
-            .attr('transform', `translate(${x}, ${y - 40})`);
+            .attr('transform', `translate(${x}, ${y - 35})`);
           
           // Calculate tooltip width based on text length - ensure enough space for both name and risk
           const tooltipWidth = Math.max(node.name.length * 7, 150);
-          const tooltipHeight = 50; // Taller tooltip to fit both lines of text
+          const tooltipHeight = 40; // Compact tooltip height
           
           // Add drop shadow for the tooltip
           const dropShadow = defs.append('filter')
@@ -227,7 +227,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             
           dropShadow.append('feGaussianBlur')
             .attr('in', 'SourceAlpha')
-            .attr('stdDeviation', 2)
+            .attr('stdDeviation', 1.5)
             .attr('result', 'blur');
             
           dropShadow.append('feOffset')
@@ -247,7 +247,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             .attr('rx', 6)
             .attr('ry', 6)
             .attr('x', -tooltipWidth/2)
-            .attr('y', -40)
+            .attr('y', -30)
             .attr('width', tooltipWidth)
             .attr('height', tooltipHeight)
             .attr('fill', 'white')
@@ -257,28 +257,29 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           
           // Triangle pointer at the bottom
           tooltip.append('path')
-            .attr('d', 'M-8,6 L0,14 L8,6')
+            .attr('d', 'M-8,10 L0,18 L8,10')
             .attr('fill', 'white')
             .attr('stroke', '#e2e8f0')
             .attr('stroke-width', 1);
             
-          // Company name text
+          // Company name text - positioned at top of tooltip with proper centering
           tooltip.append('text')
             .attr('text-anchor', 'middle')
-            .attr('dy', -10)
+            .attr('dy', -12)
             .attr('fill', '#1e293b')
-            .style('font-size', '13px')
+            .style('font-size', '14px')
             .style('font-weight', '600')
             .text(node.name);
           
-          // Risk level text
+          // Risk level text - correctly formatted as "Low Risk" instead of "Risk: Low"
+          // With adjusted spacing for better readability
           tooltip.append('text')
             .attr('text-anchor', 'middle')
-            .attr('dy', 8)
+            .attr('dy', 7)
             .attr('fill', '#64748b')
-            .style('font-size', '11px')
-            .style('font-weight', '400')
-            .text(`Risk: ${node.riskBucket.charAt(0).toUpperCase() + node.riskBucket.slice(1)}`);
+            .style('font-size', '12px')
+            .style('font-weight', '500')
+            .text(`${node.riskBucket.charAt(0).toUpperCase() + node.riskBucket.slice(1)} Risk`);
         })
         .on('mouseout', function() {
           const isSelected = selectedNode && selectedNode.id === node.id;
