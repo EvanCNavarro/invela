@@ -6,6 +6,7 @@ import { kybService } from './kybService';
 import { enhancedKybService, enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { ky3pFormService, ky3pFormServiceFactory } from './ky3p-form-service-final';
 import { openBankingFormService, openBankingFormServiceFactory } from './open-banking-form-service';
+import { registerKY3PFormService } from './register-ky3p-form-service';
 
 /**
  * Register all form services with ComponentFactory
@@ -54,22 +55,23 @@ export function registerServices(): void {
     // componentFactory.registerFormService('security', securityService);
     // componentFactory.registerFormService('security_assessment', securityService);
     
-    // Register KY3P form service
-    console.log('[Service Registration] Registering KY3P form service for type: sp_ky3p_assessment');
+    // Register legacy KY3P services for backward compatibility
+    console.log('[Service Registration] Registering legacy KY3P form services for backward compatibility');
     componentFactory.registerFormService('sp_ky3p_assessment', ky3pFormService);
-    
-    // Also register KY3P form service for the client-side type name (ky3p)
-    console.log('[Service Registration] Registering KY3P form service for client type: ky3p');
     componentFactory.registerFormService('ky3p', ky3pFormService);
     
-    // Make sure to register for legacy task types to maintain backward compatibility
-    console.log('[Service Registration] Registering KY3P form service for legacy type: security');
-    componentFactory.registerFormService('security', ky3pFormService);
-    
-    console.log('[Service Registration] Registering KY3P form service for legacy type: security_assessment');
-    componentFactory.registerFormService('security_assessment', ky3pFormService);
-    
-    console.log('[Service Registration] KY3PFormServiceFactory initialized and ready for isolated service creation');
+    // Register enhanced KY3P form service with factory
+    console.log('[Service Registration] Registering enhanced KY3P form service via factory');
+    try {
+      registerKY3PFormService();
+      console.log('[Service Registration] Enhanced KY3P form service registration completed');
+    } catch (ky3pRegError) {
+      console.error('[Service Registration] Error registering enhanced KY3P form service:', ky3pRegError);
+      console.log('[Service Registration] Falling back to legacy KY3P service');
+      // Make sure to register for legacy task types to maintain backward compatibility
+      componentFactory.registerFormService('security', ky3pFormService);
+      componentFactory.registerFormService('security_assessment', ky3pFormService);
+    }
     
     // Register Open Banking form service
     console.log('[Service Registration] Registering Open Banking form service for type: open_banking_survey');
