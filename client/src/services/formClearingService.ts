@@ -216,10 +216,28 @@ export const FormClearingService = {
                   logger.warn(`[FormClearingService] Failed to update task progress: ${progressResponse.status}`);
                 }
                 
-                // Then attempt to clear form data with a separate, simpler request
-                await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-                  savedFormData: null
-                });
+                // Use a separate endpoint to clear savedFormData
+                try {
+                  // Create a dedicated endpoint request to clear savedFormData
+                  const clearResponse = await fetch(`/api/tasks/${taskId}/clear-form-data`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      action: 'CLEAR_SAVED_FORM_DATA',
+                      timestamp: new Date().toISOString()
+                    }),
+                  });
+                  
+                  if (!clearResponse.ok) {
+                    logger.warn(`[FormClearingService] Failed to clear saved form data: ${clearResponse.status}`);
+                  } else {
+                    logger.info(`[FormClearingService] Successfully cleared saved form data via dedicated endpoint`);
+                  }
+                } catch (clearError) {
+                  logger.error('[FormClearingService] Error clearing saved form data:', clearError);
+                }
                 
                 logger.info('[FormClearingService] Preserved company metadata during clear operation', preservedMetadata);
               } catch (cacheError) {
@@ -243,10 +261,23 @@ export const FormClearingService = {
                     logger.warn(`[FormClearingService] Fallback progress update failed: ${progressResponse.status}`);
                   }
                   
-                  // Then clear form data separately
-                  await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-                    savedFormData: null
+                  // Use dedicated clear form data endpoint
+                  const clearResponse = await fetch(`/api/tasks/${taskId}/clear-form-data`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      action: 'CLEAR_SAVED_FORM_DATA',
+                      timestamp: new Date().toISOString()
+                    }),
                   });
+                  
+                  if (!clearResponse.ok) {
+                    logger.warn(`[FormClearingService] Fallback clear form data request failed: ${clearResponse.status}`);
+                  } else {
+                    logger.info(`[FormClearingService] Fallback clear operation succeeded via dedicated endpoint`);
+                  }
                 } catch (fallbackError) {
                   logger.error('[FormClearingService] Fallback operation failed:', fallbackError);
                 }
