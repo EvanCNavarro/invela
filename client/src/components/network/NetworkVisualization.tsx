@@ -183,10 +183,32 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           // Create a more visible tooltip
           d3.select(this).attr('stroke-width', 3.5);
           
-          // Highlight the connection on hover
+          // Highlight the connection on hover but maintain gradient
+          // Create a darker gradient for the hovered line
+          const hoveredLineGradientId = `hovered-line-gradient-${index}`;
+          if (!defs.select(`#${hoveredLineGradientId}`).node()) {
+            const hoveredGradient = defs.append('linearGradient')
+              .attr('id', hoveredLineGradientId)
+              .attr('gradientUnits', 'userSpaceOnUse')
+              .attr('x1', 0)
+              .attr('y1', 0)
+              .attr('x2', x)
+              .attr('y2', y);
+              
+            hoveredGradient.append('stop')
+              .attr('offset', '0%')
+              .attr('stop-color', centerCompanyColor)
+              .attr('stop-opacity', 0.6);
+              
+            hoveredGradient.append('stop')
+              .attr('offset', '100%')
+              .attr('stop-color', riskBucketColors[node.riskBucket])
+              .attr('stop-opacity', 0.8);
+          }
+          
           g.selectAll('line')
             .filter((_, i) => i === index)
-            .attr('stroke', '#4b5563')
+            .attr('stroke', `url(#${hoveredLineGradientId})`)
             .attr('stroke-width', 1.8);
             
           // Enhanced tooltip with improved styling
@@ -194,8 +216,9 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             .attr('class', 'node-tooltip')
             .attr('transform', `translate(${x}, ${y - 40})`);
           
-          // Calculate tooltip width based on text length
-          const tooltipWidth = Math.max(node.name.length * 7, 100);
+          // Calculate tooltip width based on text length - ensure enough space for both name and risk
+          const tooltipWidth = Math.max(node.name.length * 7, 150);
+          const tooltipHeight = 50; // Taller tooltip to fit both lines of text
           
           // Add drop shadow for the tooltip
           const dropShadow = defs.append('filter')
@@ -224,9 +247,9 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             .attr('rx', 6)
             .attr('ry', 6)
             .attr('x', -tooltipWidth/2)
-            .attr('y', -30)
+            .attr('y', -40)
             .attr('width', tooltipWidth)
-            .attr('height', 36)
+            .attr('height', tooltipHeight)
             .attr('fill', 'white')
             .attr('stroke', '#e2e8f0')
             .attr('stroke-width', 1)
@@ -263,9 +286,10 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           
           // Only reset the line if not selected
           if (!isSelected) {
+            // Return to original gradient line
             g.selectAll('line')
               .filter((_, i) => i === index)
-              .attr('stroke', '#94a3b8')
+              .attr('stroke', `url(#line-gradient-${index})`)
               .attr('stroke-width', 1.5);
           }
           
@@ -313,8 +337,13 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
     // Clear selection when clicking on background
     svg.on('click', () => {
-      // Reset all lines to default
-      g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
+      // Reset all lines to their original gradients
+      filteredNodes.forEach((node, index) => {
+        g.selectAll('line')
+          .filter((_, i) => i === index)
+          .attr('stroke', `url(#line-gradient-${index})`)
+          .attr('stroke-width', 1.5);
+      });
       
       // Reset center node to default style
       g.select('.center-node')
@@ -348,8 +377,13 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           const g = svg.select('g');
           
           if (g.node()) {
-            // Reset connection lines
-            g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
+            // Reset all lines to their original gradients
+            filteredNodes.forEach((node, index) => {
+              g.selectAll('line')
+                .filter((_, i) => i === index)
+                .attr('stroke', `url(#line-gradient-${index})`)
+                .attr('stroke-width', 1.5);
+            });
             
             // Reset center node to default style
             g.select('.center-node')
@@ -438,8 +472,13 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
                     if (svgRef.current) {
                       const svg = d3.select(svgRef.current);
                       const g = svg.select('g');
-                      // Reset connection lines
-                      g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
+                      // Reset all lines to their original gradients
+                      filteredNodes.forEach((node, index) => {
+                        g.selectAll('line')
+                          .filter((_, i) => i === index)
+                          .attr('stroke', `url(#line-gradient-${index})`)
+                          .attr('stroke-width', 1.5);
+                      });
                       
                       // Reset node styles safely
                       // Center node gets its standard style
