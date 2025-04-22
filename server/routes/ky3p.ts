@@ -1960,6 +1960,177 @@ router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
 });
 
 /**
+ * Apply demo data for KY3P form - completely standalone solution that bypasses form service
+ * This endpoint handles both retrieving and applying demo data in one request
+ */
+router.post('/api/ky3p/apply-demo-data/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Check authentication
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Get taskId and parse it
+    const taskId = parseInt(req.params.taskId);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID format' });
+    }
+    
+    // Get the task to verify access
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Verify user has access to this task
+    if (task.assigned_to !== req.user.id && 
+        task.created_by !== req.user.id && 
+        task.company_id !== req.user.company_id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get company information
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id))
+      .limit(1);
+      
+    // Get all KY3P fields with their demo_autofill data
+    const fields = await db.select()
+      .from(ky3pFields);
+      
+    logger.info('[KY3P API] Applying demo data for task', { 
+      taskId, 
+      userId: req.user.id,
+      fieldCount: fields.length,
+      company: company?.name
+    });
+    
+    let successCount = 0;
+    let errorCount = 0;
+    const demoData: Record<string, any> = {};
+    
+    // Process each field
+    for (const field of fields) {
+      if (!field.demo_autofill) continue;
+      
+      try {
+        // Add to the demo data object for client-side display
+        let demoValue = field.demo_autofill;
+        
+        // Replace company name placeholder if needed
+        if (typeof demoValue === 'string' && demoValue.includes('{{COMPANY_NAME}}') && company) {
+          demoValue = demoValue.replace('{{COMPANY_NAME}}', company.name);
+        }
+        
+        demoData[field.field_key] = demoValue;
+        
+        // Save the response
+        const [existingResponse] = await db.select()
+          .from(ky3pResponses)
+          .where(
+            and(
+              eq(ky3pResponses.task_id, taskId),
+              eq(ky3pResponses.field_id, field.id)
+            )
+          )
+          .limit(1);
+          
+        // Determine status
+        const status: keyof typeof KYBFieldStatus = 'COMPLETE';
+        
+        if (existingResponse) {
+          // Update existing response
+          await db.update(ky3pResponses)
+            .set({
+              response_value: demoValue,
+              status,
+              updated_at: new Date()
+            })
+            .where(eq(ky3pResponses.id, existingResponse.id));
+        } else {
+          // Create new response
+          await db.insert(ky3pResponses)
+            .values({
+              task_id: taskId,
+              field_id: field.id,
+              response_value: demoValue,
+              status,
+              created_at: new Date(),
+              updated_at: new Date()
+            });
+        }
+        
+        successCount++;
+      } catch (error) {
+        errorCount++;
+        logger.error('[KY3P API] Error applying demo data for field:', { 
+          fieldKey: field.field_key, 
+          error
+        });
+      }
+    }
+    
+    // Calculate progress
+    const [{ total }] = await db
+      .select({ total: db.fn.count() })
+      .from(ky3pFields);
+      
+    const [{ completed }] = await db
+      .select({ completed: db.fn.count() })
+      .from(ky3pResponses)
+      .where(
+        and(
+          eq(ky3pResponses.task_id, taskId),
+          eq(ky3pResponses.status, 'COMPLETE')
+        )
+      );
+      
+    const progress = Math.min(Math.round((completed / total) * 100), 99);
+    
+    // Update task status
+    await db.update(tasks)
+      .set({
+        progress,
+        status: progress > 0 ? 'in_progress' : 'not_started',
+        updated_at: new Date()
+      })
+      .where(eq(tasks.id, taskId));
+      
+    // Broadcast updates
+    try {
+      const { broadcastTaskUpdate } = await import('../services/websocket.js');
+      await broadcastTaskUpdate(taskId);
+      
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      await broadcastProgressUpdate(taskId, progress);
+    } catch (wsError) {
+      logger.error('[KY3P API] Error broadcasting update:', wsError);
+    }
+    
+    // Return successful response with demo data
+    return res.status(200).json({
+      success: true,
+      message: `Applied demo data to ${successCount} fields`,
+      data: demoData,
+      progress,
+      successCount,
+      errorCount
+    });
+  } catch (error) {
+    logger.error('[KY3P API] Error in apply-demo-data endpoint:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
  * Test endpoint to manually force-unlock a company card task (Open Banking Survey)
  * This is for debugging purposes to test task dependency chain
  */
