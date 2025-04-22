@@ -35,26 +35,52 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     enabled: true
   });
 
-  // Filter nodes based on selected filters
+  // Filter nodes based on selected filters with improved logic
   const filteredNodes = React.useMemo(() => {
     if (!data) return [];
 
     return data.nodes.filter(node => {
-      // If no risk bucket filters, show all risk levels
+      // If no risk bucket filters are selected, show all risk levels
       const matchesRiskBucket = filters.riskBuckets.length === 0 || 
         filters.riskBuckets.includes(node.riskBucket);
       
-      // If no accreditation status filters, show all statuses
+      // If no accreditation status filters are selected, show all statuses
       const matchesAccreditationStatus = filters.accreditationStatus.length === 0 || 
         filters.accreditationStatus.includes(node.accreditationStatus);
       
+      // Both conditions must be true for the node to be included
       return matchesRiskBucket && matchesAccreditationStatus;
     });
   }, [data, filters]);
 
-  // D3 visualization
+  // D3 visualization - redraw whenever filtered nodes change
   useEffect(() => {
-    if (!svgRef.current || !data || filteredNodes.length === 0) return;
+    if (!svgRef.current || !data) return;
+    
+    // If no nodes match the filter criteria, show a message
+    if (filteredNodes.length === 0 && data.nodes.length > 0) {
+      // Clear previous visualization
+      d3.select(svgRef.current).selectAll('*').remove();
+      
+      // Add "No results" message
+      const svg = d3.select(svgRef.current);
+      const width = svgRef.current.clientWidth;
+      const height = svgRef.current.clientHeight;
+      
+      svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', height / 2)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#64748b')
+        .style('font-size', '16px')
+        .style('font-weight', '500')
+        .text('No companies match the selected filters');
+      
+      return;
+    }
+    
+    // Don't proceed if we have no nodes to display
+    if (filteredNodes.length === 0) return;
 
     // Clear previous visualization
     d3.select(svgRef.current).selectAll('*').remove();
