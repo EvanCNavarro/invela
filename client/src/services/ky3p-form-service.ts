@@ -500,7 +500,12 @@ export class KY3PFormService extends EnhancedKybFormService {
     status: string;
   }> {
     if (!this.taskId) {
-      throw new Error('No task ID provided for getting progress');
+      logger.warn('[KY3P Form Service] No task ID provided for getting progress, returning empty data');
+      return {
+        formData: {},
+        progress: 0,
+        status: 'not_started'
+      };
     }
     
     try {
@@ -690,7 +695,8 @@ export class KY3PFormService extends EnhancedKybFormService {
     const effectiveTaskId = taskId || this.taskId;
     
     if (!effectiveTaskId) {
-      throw new Error('No task ID provided for loading progress');
+      logger.warn('[KY3P Form Service] No task ID provided for loading progress, returning empty data');
+      return {};
     }
     
     try {
@@ -823,7 +829,8 @@ export class KY3PFormService extends EnhancedKybFormService {
    */
   public async save(options: { taskId?: number, includeMetadata?: boolean }): Promise<boolean> {
     if (!this.taskId && !options.taskId) {
-      throw new Error('No task ID provided for saving form');
+      logger.warn('[KY3P Form Service] No task ID provided for saving form, cannot save');
+      return false;
     }
     
     const effectiveTaskId = options.taskId || this.taskId;
@@ -930,7 +937,8 @@ export class KY3PFormService extends EnhancedKybFormService {
    */
   public async bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean> {
     if (!this.taskId && !taskId) {
-      throw new Error('No task ID provided for bulk update');
+      logger.warn('[KY3P Form Service] No task ID provided for bulk update, cannot update');
+      return false;
     }
     
     const effectiveTaskId = taskId || this.taskId;
@@ -986,7 +994,11 @@ export class KY3PFormService extends EnhancedKybFormService {
     const effectiveTaskId = options.taskId || this.taskId;
     
     if (!effectiveTaskId) {
-      throw new Error('No task ID provided for submitting form');
+      logger.warn('[KY3P Form Service] No task ID provided for submitting form, cannot submit');
+      return {
+        success: false,
+        error: 'No task ID provided for form submission'
+      };
     }
     
     try {
