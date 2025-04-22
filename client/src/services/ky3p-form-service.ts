@@ -928,6 +928,18 @@ export class KY3PFormService extends EnhancedKybFormService {
       if (fallbackMethod) {
         logger.info(`[KY3P Form Service] Using fallback bulk API approach for task ${effectiveTaskId}`);
         
+        // Ensure we're always sending the responses in the expected format
+        // The API expects { responses: { field_key1: value1, field_key2: value2 } }
+        const requestBody = {
+          responses: { ...formData } // Create a clean copy to ensure proper format
+        };
+        
+        logger.debug(`[KY3P Form Service] Sending bulk update with request body structure:`, {
+          requestBodyKeys: Object.keys(requestBody),
+          responseKeys: Object.keys(requestBody.responses).slice(0, 3),
+          hasResponses: !!requestBody.responses
+        });
+        
         // Call bulk save API to save all form data at once
         // This is a more efficient approach than saving individual fields
         const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
@@ -936,9 +948,7 @@ export class KY3PFormService extends EnhancedKybFormService {
             'Content-Type': 'application/json',
           },
           credentials: 'include', // Include session cookies
-          body: JSON.stringify({
-            responses: formData
-          }),
+          body: JSON.stringify(requestBody),
         });
         
         if (!response.ok) {
@@ -1030,15 +1040,25 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Fall back to the bulk API if field-by-field approach fails
       logger.info(`[KY3P Form Service] Bulk update: Falling back to bulk API for task ${effectiveTaskId}`);
       
+      // Ensure we're always sending the responses in the expected format
+      // The API expects { responses: { field_key1: value1, field_key2: value2 } }
+      const requestBody = {
+        responses: { ...data } // Create a clean copy to ensure proper format
+      };
+      
+      logger.debug(`[KY3P Form Service] Sending bulk update with request body structure:`, {
+        requestBodyKeys: Object.keys(requestBody),
+        responseKeys: Object.keys(requestBody.responses).slice(0, 3),
+        hasResponses: !!requestBody.responses
+      });
+            
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: data
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
