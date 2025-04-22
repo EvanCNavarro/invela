@@ -137,6 +137,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
+  // Process category names to add line breaks for single-word-per-line
+  const formatCategoryNames = (categories: string[]): string[] => {
+    return categories.map(category => {
+      // Replace spaces with line breaks for multi-word categories
+      if (category.includes(' ')) {
+        return category.split(' ').join('\n');
+      }
+      return category;
+    });
+  };
+
   // Configure ApexCharts options with enhanced styling
   const chartOptions = {
     chart: {
@@ -171,19 +182,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: 6,
+      size: 8, // Increased marker size
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
       strokeWidth: 3,
       hover: {
-        size: 8,
+        size: 10, // Increased hover size
       }
     },
     grid: {
-      show: true,
+      show: false, // Removed horizontal lines in the background
       padding: {
-        top: 10,
-        bottom: 10
+        top: 20,
+        bottom: 20
       }
     },
     yaxis: {
@@ -200,19 +211,21 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     xaxis: {
-      categories: riskClusters ? Object.keys(riskClusters) : [],
+      categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: '13px',
+          fontSize: '14px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
-        }
+        },
+        rotate: 0,
+        offsetY: 5
       }
     },
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: '13px',
+        fontSize: '14px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
@@ -229,7 +242,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     tooltip: {
       theme: 'light',
       style: {
-        fontSize: '13px'
+        fontSize: '14px'
       },
       y: {
         title: {
@@ -248,7 +261,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 140,
+        size: 320, // Even larger chart size
+        offsetY: 0,
+        offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
           strokeWidth: 1,
@@ -261,15 +276,44 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     responsive: [
       {
-        breakpoint: 768,
+        breakpoint: 1200,
         options: {
           chart: {
-            height: 380
+            height: 550
           },
           plotOptions: {
             radar: {
-              size: 120
+              size: 280
             }
+          }
+        }
+      },
+      {
+        breakpoint: 992,
+        options: {
+          chart: {
+            height: 500
+          },
+          plotOptions: {
+            radar: {
+              size: 240
+            }
+          }
+        }
+      },
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 450
+          },
+          plotOptions: {
+            radar: {
+              size: 200
+            }
+          },
+          markers: {
+            size: 7
           }
         }
       },
@@ -277,15 +321,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 576,
         options: {
           chart: {
-            height: 320
+            height: 400
           },
           plotOptions: {
             radar: {
-              size: 100
+              size: 160
             }
           },
           markers: {
-            size: 5
+            size: 6
           }
         }
       }
@@ -303,30 +347,28 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // If we're still loading or don't have risk clusters data, show a skeleton
   if (isLoading || !riskClusters) {
     return (
-      <Card className={cn("w-full shadow-md border border-slate-200", className)}>
-        <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
-          <CardTitle className="flex items-center gap-2 text-slate-800">
-            <Shield className="h-5 w-5 text-primary" />
+      <Card className={cn("w-full", className)}>
+        <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
+          <CardTitle className="text-slate-800">
             S&P Business Data Access Risk Breakdown
           </CardTitle>
           <CardDescription className="text-slate-500">
             Detailed breakdown of risk factors for this company
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center p-6">
-          <Skeleton className="h-[400px] w-full rounded-md" />
+        <CardContent className="flex flex-col items-center p-4">
+          <Skeleton className="h-[550px] w-full rounded-md" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={cn("w-full shadow-md border border-slate-200", className)}>
-      <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
+    <Card className={cn("w-full", className)}>
+      <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <CardTitle className="flex items-center gap-2 text-slate-800">
-              <Shield className="h-5 w-5 text-primary" />
+            <CardTitle className="text-slate-800">
               S&P Business Data Access Risk Breakdown
             </CardTitle>
             <CardDescription className="text-slate-500">
@@ -358,31 +400,21 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="h-[450px] w-full bg-white rounded-md">
+      <CardContent className="p-4">
+        <div className="h-[550px] w-full bg-white rounded-md">
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="450"
+              height="550"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="h-[450px] w-full rounded-md" />
+              <Skeleton className="h-[550px] w-full rounded-md" />
             </div>
           )}
-        </div>
-        
-        {/* Add risk category legend */}
-        <div className="mt-6 flex flex-wrap gap-4 justify-center">
-          {riskClusters && Object.entries(riskClusters).map(([category, value], index) => (
-            <div key={category} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-primary opacity-80"></div>
-              <span className="text-sm font-medium text-slate-700">{category}: {value}</span>
-            </div>
-          ))}
         </div>
       </CardContent>
     </Card>
