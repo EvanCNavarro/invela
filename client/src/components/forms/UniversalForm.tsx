@@ -962,17 +962,29 @@ const handleDemoAutoFill = useCallback(async () => {
       }
       
       try {
-        // Use the form service's bulkUpdate method directly rather than making our own fetch call
-        if (taskType === 'sp_ky3p_assessment' && formService && 'bulkUpdate' in formService) {
-          logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+        // For KY3P forms, use the direct bulk update endpoint instead of the form service
+        if (taskType === 'sp_ky3p_assessment') {
+          logger.info(`[UniversalForm] Using direct bulk update endpoint for KY3P task ${taskId} with ${fieldCount} fields`);
           
-          const success = await (formService as any).bulkUpdate(validResponses, taskId);
+          // Use the dedicated endpoint directly to avoid any issues with the form service
+          const response = await fetch(`/api/ky3p-bulk-update/${taskId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              responses: validResponses
+            }),
+          });
           
-          if (!success) {
-            throw new Error('The KY3P form service bulkUpdate method failed');
+          if (!response.ok) {
+            const errorText = await response.text();
+            logger.error(`[UniversalForm] KY3P demo auto-fill failed: ${response.status}`, errorText);
+            throw new Error(`Failed to auto-fill KY3P form: ${errorText}`);
           }
           
-          logger.info(`[UniversalForm] KY3P form service bulk update successful`);
+          logger.info(`[UniversalForm] KY3P direct bulk update successful`);
         } 
         else if ((taskType === 'open_banking' || taskType === 'open_banking_survey') && formService && 'bulkUpdate' in formService) {
           logger.info(`[UniversalForm] Using Open Banking form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
