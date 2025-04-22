@@ -45,30 +45,38 @@ export function TopNav() {
     let bgColor = "bg-emerald-500";
     let textColor = "text-white";
     let companyName = "Unknown Company";
+    let companyType = "FinTech"; // Default company type
     
     if (company) {
       // Get company name from the current company data
       companyName = company.name || companyName;
       
-      // Set color and icon based on company ID or name
-      // Company ID 1 is Invela (blue with shield)
-      if (company.id === 1 || companyName === "Invela") {
+      // Determine company type from category or name
+      if (company.category) {
+        companyType = company.category;
+      } else if (company.id === 1 || companyName === "Invela") {
+        companyType = "Invela";
+      } else if (companyName.toLowerCase().includes("bank")) {
+        companyType = "Bank";
+      }
+      
+      // Set color and icon based on company type
+      if (companyType === "Invela" || company.id === 1) {
+        // Invela company (blue with shield)
         icon = ShieldIcon;
         bgColor = "bg-blue-600";
-      } 
-      // Banks are purple with landmark icon
-      else if (company.category === "Bank" || companyName.toLowerCase().includes("bank")) {
+      } else if (companyType === "Bank") {
+        // Bank (purple with landmark icon)
         icon = Landmark;
         bgColor = "bg-purple-600";
-      }
-      // All other companies (FinTechs) are green with user icon
-      else {
+      } else {
+        // FinTech (green with user icon)
         icon = UserIcon;
         bgColor = "bg-emerald-500";
       }
     }
     
-    return { icon, bgColor, textColor, companyName };
+    return { icon, bgColor, textColor, companyName, companyType };
   }, [company]);
 
   const handleLogout = () => {
@@ -115,18 +123,18 @@ export function TopNav() {
 
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
                 <div className={cn("w-6 h-6 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
-                  {React.createElement(companyProfile.icon, { className: "h-3 w-3" })}
+                  {React.createElement(companyProfile.icon, { className: "h-3.5 w-3.5" })}
                 </div>
                 <div className="hidden md:block">
                   <p className="text-xs font-medium leading-tight">{user?.full_name}</p>
                   <p className="text-xs text-muted-foreground leading-tight">{companyProfile.companyName}</p>
                 </div>
                 {isDropdownOpen ? (
-                  <ChevronUp className="h-3.5 w-3.5 text-gray-500 ml-0.5" />
+                  <ChevronUp className="h-3.5 w-3.5 text-gray-500 ml-1" />
                 ) : (
-                  <ChevronDown className="h-3.5 w-3.5 text-gray-500 ml-0.5" />
+                  <ChevronDown className="h-3.5 w-3.5 text-gray-500 ml-1" />
                 )}
               </div>
             </DropdownMenuTrigger>
