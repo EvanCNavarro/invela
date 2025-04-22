@@ -856,38 +856,62 @@ const handleDemoAutoFill = useCallback(async () => {
       duration: 3000,
     });
     
-    // Make API call to get demo data based on form type
-    let endpoint;
-    if (taskType === 'sp_ky3p_assessment') {
-      endpoint = `/api/ky3p/demo-autofill/${taskId}`;
-    } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-      endpoint = `/api/open-banking/demo-autofill/${taskId}`;
-    } else {
-      endpoint = `/api/kyb/demo-autofill/${taskId}`;
-    }
+    // Get demo data from the form service if available, otherwise use API directly
+    let demoData: Record<string, any> = {};
     
-    logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
-    const demoDataResponse = await fetch(endpoint);
-    
-    if (!demoDataResponse.ok) {
-      if (demoDataResponse.status === 403) {
-        toast({
-          variant: "destructive",
-          title: "Auto-Fill Restricted",
-          description: "Auto-fill is only available for demo companies.",
-        });
-      } else {
+    if (taskType === 'sp_ky3p_assessment' && formService && 'getDemoData' in formService) {
+      // Use KY3P form service's method to get demo data
+      logger.info(`[UniversalForm] Using KY3P form service's getDemoData method for task ${taskId}`);
+      try {
+        // Cast to any to access the getDemoData method
+        demoData = await (formService as any).getDemoData(taskId);
+        logger.info(`[UniversalForm] Got ${Object.keys(demoData).length} demo fields from KY3P form service`);
+      } catch (error) {
+        logger.error(`[UniversalForm] Error getting demo data from KY3P form service:`, error);
+        
+        // Show error toast
         toast({
           variant: "destructive",
           title: "Auto-Fill Failed",
-          description: "Could not load demo data from server.",
+          description: error instanceof Error ? error.message : "Could not load demo data from service",
         });
+        return false;
       }
-      return false;
+    } else {
+      // Fallback to direct API call
+      let endpoint;
+      if (taskType === 'sp_ky3p_assessment') {
+        endpoint = `/api/ky3p/demo-autofill/${taskId}`;
+      } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+        endpoint = `/api/open-banking/demo-autofill/${taskId}`;
+      } else {
+        endpoint = `/api/kyb/demo-autofill/${taskId}`;
+      }
+      
+      logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
+      const demoDataResponse = await fetch(endpoint);
+      
+      if (!demoDataResponse.ok) {
+        if (demoDataResponse.status === 403) {
+          toast({
+            variant: "destructive",
+            title: "Auto-Fill Restricted",
+            description: "Auto-fill is only available for demo companies.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Auto-Fill Failed",
+            description: "Could not load demo data from server.",
+          });
+        }
+        return false;
+      }
+      
+      demoData = await demoDataResponse.json();
     }
     
-    const demoData = await demoDataResponse.json();
-    logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields from server`);
+    logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields for auto-fill`);
     
     // Combine demo data with existing form data for a more complete set
     const currentValues = form.getValues();

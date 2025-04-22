@@ -567,6 +567,49 @@ export class KY3PFormService extends EnhancedKybFormService {
     // Return true if no errors, otherwise return errors object
     return Object.keys(errors).length === 0 ? true : errors;
   }
+  
+  /**
+   * Get demo data for auto-filling the form
+   * 
+   * @param taskId Optional task ID to specify which task to retrieve demo data for
+   * @returns Record of field keys to values for demo auto-fill
+   */
+  public async getDemoData(taskId?: number): Promise<Record<string, any>> {
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      logger.error('[KY3P Form Service] No task ID provided for demo data retrieval');
+      throw new Error('Task ID is required to retrieve demo data');
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Fetching demo auto-fill data for task ${effectiveTaskId}`);
+      
+      // Use the specific endpoint for KY3P demo auto-fill
+      const response = await fetch(`/api/ky3p/demo-autofill/${effectiveTaskId}`, {
+        credentials: 'include', // Include session cookies
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to get demo data: ${response.status}`, errorText);
+        throw new Error(`Failed to get demo data: ${response.status} - ${errorText}`);
+      }
+      
+      const demoData = await response.json();
+      const fieldCount = Object.keys(demoData).length;
+      
+      logger.info(`[KY3P Form Service] Successfully fetched ${fieldCount} demo fields from server`);
+      
+      return demoData;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error retrieving demo data:', error);
+      throw error;
+    }
+  }
 }
 
 /**
