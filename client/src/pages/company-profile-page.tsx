@@ -422,14 +422,8 @@ export default function CompanyProfilePage() {
           </CardHeader>
           <CardContent className="min-h-[300px] flex items-center justify-center">
             <RiskRadarChart 
-              data={[
-                { name: 'Financial', value: riskClusters.financial },
-                { name: 'Operational', value: riskClusters.operational },
-                { name: 'Compliance', value: riskClusters.compliance },
-                { name: 'Strategic', value: riskClusters.strategic },
-                { name: 'Reputational', value: riskClusters.reputational },
-                { name: 'Cybersecurity', value: riskClusters.cybersecurity }
-              ]}
+              companyId={company.id}
+              showDropdown={false}
             />
           </CardContent>
         </Card>
@@ -534,64 +528,80 @@ export default function CompanyProfilePage() {
             </Button>
           </div>
           
-          {/* Company header with centered logo in a square box */}
-          <div className="flex flex-col md:flex-row items-center gap-6 bg-white p-6 rounded-lg shadow-sm">
-            <div className="relative w-24 h-24 min-w-24 rounded-md shadow-md flex items-center justify-center overflow-hidden bg-slate-100">
+          {/* Company header with neuomorphic logo and evenly spaced elements */}
+          <div className="flex flex-col md:flex-row items-stretch gap-6 bg-white p-6 rounded-lg border border-gray-100">
+            {/* Neuomorphic logo container */}
+            <div className="relative w-24 h-24 min-w-24 rounded-xl flex items-center justify-center overflow-hidden 
+                bg-gray-50 border border-gray-100 shadow-[8px_8px_16px_0px_rgba(209,213,219,0.8),-8px_-8px_16px_0px_rgba(255,255,255,0.8)]">
               <div className="flex items-center justify-center w-full h-full">
                 <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
               </div>
             </div>
             
-            <div className="flex flex-col items-center md:items-start space-y-2">
-              <h1 className="text-2xl font-bold">{company.name}</h1>
-              <p className="text-muted-foreground text-sm text-center md:text-left">
-                {company.description || "No description available"}
-              </p>
+            {/* Company info with evenly spaced elements */}
+            <div className="flex-1 flex flex-col justify-between py-1 space-y-3">
+              <div>
+                <h1 className="text-2xl font-bold leading-tight">{company.name}</h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  {company.description || "No description available"}
+                </p>
+              </div>
               
-              {/* Metadata chips for company type */}
-              <div className="flex items-center gap-2 mt-2">
+              {/* Metadata chips as rounded boxes */}
+              <div className="flex flex-wrap items-center gap-2">
                 {company.category && (
-                  <Badge 
-                    className="px-2 py-1"
+                  <div 
+                    className="rounded-full px-3 py-1 text-xs font-medium text-white"
                     style={{ 
-                      backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default,
-                      color: 'white'
+                      backgroundColor: companyTypeColors[company.category] || companyTypeColors.Default
                     }}
                   >
                     {company.category}
-                  </Badge>
-                )}
-                
-                {company.accreditationStatus === 'VALID' && (
-                  <Badge variant="outline" className="flex items-center gap-1 border-green-500 text-green-600">
-                    <BadgeCheck className="h-3 w-3" />
-                    Accredited
-                  </Badge>
+                  </div>
                 )}
                 
                 {company.revenueTier && (
-                  <Badge variant="outline" className="px-2 py-1">
+                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700">
                     {company.revenueTier}
-                  </Badge>
+                  </div>
+                )}
+                
+                {company.legalStructure && (
+                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+                    {company.legalStructure}
+                  </div>
                 )}
               </div>
             </div>
             
-            <div className="ml-auto flex-shrink-0 flex items-center justify-center md:justify-end space-x-2 mt-4 md:mt-0">
-              <div className="flex flex-col items-center md:items-end rounded-md bg-slate-50 px-4 py-2 md:mr-2">
-                <span className="text-sm text-muted-foreground">Risk Score</span>
-                <span className="text-2xl font-bold">
+            {/* Right side boxes - Risk Score and Accreditation Status */}
+            <div className="flex-shrink-0 flex flex-col md:flex-row items-stretch gap-3 mt-3 md:mt-0">
+              {/* S&P Business Data Access Risk Score */}
+              <div className="flex flex-col justify-between p-4 rounded-xl bg-gradient-to-br from-slate-50 to-gray-100 border border-gray-200 text-center md:min-w-36">
+                <div className="text-xs text-slate-500 font-medium">S&P Business Data Access Risk Score</div>
+                <div className="text-3xl font-bold mt-2">
                   {company.riskScore || company.risk_score || 0}
-                </span>
-              </div>
-              {company.accreditationStatus && (
-                <div className="flex flex-col items-center md:items-end bg-green-50 px-4 py-2 rounded-md border border-green-100">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <span className="font-medium text-green-600">
-                    {company.accreditationStatus}
-                  </span>
                 </div>
-              )}
+              </div>
+              
+              {/* Accreditation status */}
+              <div className="flex flex-col justify-between p-4 rounded-xl border text-center md:min-w-36"
+                style={{
+                  backgroundColor: company.accreditationStatus === 'VALID' ? 'rgba(22, 163, 74, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+                  borderColor: company.accreditationStatus === 'VALID' ? 'rgba(22, 163, 74, 0.2)' : 'rgba(239, 68, 68, 0.2)'
+                }}
+              >
+                <div className="text-xs text-slate-500 font-medium">Accreditation</div>
+                <div className={`flex items-center justify-center gap-1 mt-2 text-lg font-medium ${
+                  company.accreditationStatus === 'VALID' ? 'text-green-600' : 'text-red-500'
+                }`}>
+                  {company.accreditationStatus === 'VALID' ? (
+                    <><CheckCircle className="w-4 h-4" /> VALID</>
+                  ) : (
+                    <><AlertCircle className="w-4 h-4" /> INVALID</>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
