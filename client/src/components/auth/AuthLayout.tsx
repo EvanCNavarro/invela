@@ -14,7 +14,7 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, isLogin, isRegistrationValidated = false }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Header with back button aligned to content - width changes with form */}
+      {/* Header with spacing - no back button */}
       <div className="w-full flex justify-center pt-8">
         <motion.div 
           className={`w-full px-4 mb-4 transition-all duration-350 ease-out`}
@@ -24,12 +24,7 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
           layout
           transition={{ duration: 0.35, ease: "easeInOut" }}
         >
-          <Link href="/landing">
-            <span className="inline-flex items-center text-muted-foreground hover:text-foreground gap-1.5 font-medium text-base px-3 py-2 rounded-md transition-all duration-200 hover:bg-gray-100">
-              <ArrowLeft className="h-5 w-5" />
-              Back to Website
-            </span>
-          </Link>
+          {/* Back button removed as requested */}
         </motion.div>
       </div>
       
