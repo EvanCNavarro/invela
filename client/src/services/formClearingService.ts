@@ -101,12 +101,64 @@ export const FormClearingService = {
             
             logger.info(`[FormClearingService] Using FAST_DELETE operation for Open Banking (${taskType})`);
           } 
-          else if (taskType === 'sp_ky3p_assessment') {
+          else if (taskType === 'sp_ky3p_assessment' || taskType === 'ky3p') {
             // KY3P endpoint
             endpoint = `/api/tasks/${taskId}/ky3p-responses/bulk`;
-            body = { responses: emptyData, clearAll: true };
             
-            logger.info(`[FormClearingService] Using bulk update with clearAll for KY3P`);
+            // Convert to the expected format - array of objects with fieldId and value
+            logger.info(`[FormClearingService] Fetching KY3P fields to build field mapping`);
+            try {
+              const fieldsResponse = await fetch(`/api/ky3p/fields`, {
+                credentials: 'include'
+              });
+              
+              if (!fieldsResponse.ok) {
+                throw new Error(`Failed to fetch KY3P fields: ${fieldsResponse.statusText}`);
+              }
+              
+              const fields = await fieldsResponse.json();
+              logger.info(`[FormClearingService] Retrieved ${fields.length} KY3P field definitions`);
+              
+              // Build mapping from field_key (string) to field ID (number)
+              const fieldKeyToIdMap = new Map();
+              for (const field of fields) {
+                const fieldKey = field.field_key;
+                const fieldId = field.id;
+                
+                if (fieldKey && fieldId) {
+                  fieldKeyToIdMap.set(fieldKey, fieldId);
+                }
+              }
+              
+              // Create array format responses with empty string values
+              const responsesArray = [];
+              
+              for (const key of Object.keys(emptyData)) {
+                const fieldId = fieldKeyToIdMap.get(key);
+                
+                if (fieldId !== undefined) {
+                  // Ensure field ID is a number
+                  const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
+                  
+                  if (!isNaN(numericFieldId)) {
+                    responsesArray.push({
+                      fieldId: numericFieldId,
+                      value: '' // Empty string for clear
+                    });
+                  }
+                }
+              }
+              
+              // Properly structured request body for bulk update
+              body = { responses: responsesArray, clearAll: true };
+              logger.info(`[FormClearingService] Using standardized bulk update with array format for KY3P with ${responsesArray.length} fields`);
+            } catch (error) {
+              logger.error('[FormClearingService] Error preparing KY3P field mapping:', error);
+              
+              // Fallback to a simpler approach that directly uses the clearAll flag
+              body = { clearAll: true };
+              logger.info(`[FormClearingService] Using simplified clearAll flag for KY3P after mapping error`);
+            }
           }
           else {
             // Default KYB endpoint
