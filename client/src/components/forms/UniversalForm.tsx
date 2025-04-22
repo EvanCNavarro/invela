@@ -859,7 +859,24 @@ const handleDemoAutoFill = useCallback(async () => {
     // Get demo data from the form service if available, otherwise use API directly
     let demoData: Record<string, any> = {};
     
-    if (taskType === 'sp_ky3p_assessment' && formService && 'getDemoData' in formService) {
+    // Map task types to their database equivalents if needed
+    const taskTypeMap: Record<string, string> = {
+      'kyb': 'company_kyb',
+      'card': 'company_card',
+      'security': 'security_assessment',
+      'ky3p': 'sp_ky3p_assessment',
+      'sp_ky3p_assessment': 'sp_ky3p_assessment',
+      'open_banking': 'open_banking_survey',
+      'open_banking_survey': 'open_banking_survey'
+    };
+    
+    // Use mapped task type for consistency
+    const dbTaskType = taskTypeMap[taskType] || taskType;
+    
+    // Check if this is a KY3P task (either via ky3p or sp_ky3p_assessment task type)
+    const isKy3pTask = taskType === 'ky3p' || taskType === 'sp_ky3p_assessment';
+    
+    if (isKy3pTask && formService && 'getDemoData' in formService) {
       // Use KY3P form service's method to get demo data
       logger.info(`[UniversalForm] Using KY3P form service's getDemoData method for task ${taskId}`);
       try {
@@ -880,7 +897,7 @@ const handleDemoAutoFill = useCallback(async () => {
     } else {
       // Fallback to direct API call
       let endpoint;
-      if (taskType === 'sp_ky3p_assessment') {
+      if (isKy3pTask) {
         endpoint = `/api/ky3p/demo-autofill/${taskId}`;
       } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
         endpoint = `/api/open-banking/demo-autofill/${taskId}`;
