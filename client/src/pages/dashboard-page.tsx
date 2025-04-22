@@ -16,7 +16,10 @@ import {
   Globe,
   Shield,
   AlertTriangle,
-  LayoutGrid
+  LayoutGrid,
+  User,
+  BarChart3,
+  FileText
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -189,38 +192,44 @@ export default function DashboardPage() {
                   <Widget
                     title="Quick Actions"
                     icon={<Zap className="h-5 w-5" />}
-                    size="full"
+                    size="triple"
                     onVisibilityToggle={() => toggleWidget('quickActions')}
                     isVisible={visibleWidgets.quickActions}
                   >
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-4">
                       {/* Only show Invite FinTech button if user is not a FinTech company */}
-                      {companyData?.category !== 'FinTech' && (
-                        <InviteButton
-                          variant="fintech"
-                          pulse={false}
-                          className="w-full font-medium"
-                          onClick={() => setOpenFinTechModal(true)}
-                        />
-                      )}
-                      <Button variant="outline" className="w-full font-medium">
-                        Add User
-                      </Button>
-                      <Button variant="outline" className="w-full font-medium">
-                        Set Risk Tracker
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full font-medium"
-                        onClick={toggleDrawer}
-                      >
-                        {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
-                      </Button>
-                      {/* Show this button only when we're hiding the Invite FinTech button */}
-                      {companyData?.category === 'FinTech' && (
-                        <Button variant="outline" className="w-full font-medium">
-                          View Documentation
-                        </Button>
+                      {companyData?.category !== 'FinTech' ? (
+                        <>
+                          <InviteButton
+                            variant="fintech"
+                            pulse={false}
+                            className="w-full font-medium"
+                            onClick={() => setOpenFinTechModal(true)}
+                          />
+                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                            <User className="h-4 w-4" />
+                            View Company Profile
+                          </Button>
+                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            View Insights
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            View Documentation
+                          </Button>
+                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                            <User className="h-4 w-4" />
+                            View Company Profile
+                          </Button>
+                          <Button variant="outline" className="w-full font-medium flex items-center justify-center gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            View Insights
+                          </Button>
+                        </>
                       )}
                     </div>
                   </Widget>
@@ -269,44 +278,12 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Bottom section - Visualization widgets */}
-              {(visibleWidgets.networkVisualization || visibleWidgets.riskRadar) && (
-                <div className="col-span-1">
-                  {companyData?.category === 'FinTech' ? (
-                    <Widget
-                      title="Risk Assessment"
-                      icon={<AlertTriangle className="h-5 w-5" />}
-                      onVisibilityToggle={() => {}}
-                      isVisible={true}
-                    >
-                      <div className="p-4 flex flex-col items-center justify-center h-full">
-                        <div className="text-2xl font-bold mb-2">{companyData?.riskScore || companyData?.risk_score || 0}</div>
-                        <div className="text-sm text-muted-foreground">Current Risk Score</div>
-                      </div>
-                    </Widget>
-                  ) : (
-                    <Widget
-                      title="Network Stats"
-                      icon={<Activity className="h-5 w-5" />}
-                      onVisibilityToggle={() => {}}
-                      isVisible={true}
-                    >
-                      <div className="p-4 flex flex-col items-center justify-center h-full">
-                        <div className="text-2xl font-bold mb-2">82</div>
-                        <div className="text-sm text-muted-foreground">Connected Companies</div>
-                      </div>
-                    </Widget>
-                  )}
-                </div>
-              )}
-              
-              {/* Full width at the bottom - Network or Risk visualization */}
+              {/* Network Visualization - Side by side with Company Score */}
               {visibleWidgets.networkVisualization && companyData?.category !== 'FinTech' && (
-                <div className="col-span-3">
+                <div className="col-span-1">
                   <Widget
                     title="Network Visualization"
                     icon={<Globe className="h-5 w-5" />}
-                    size="full"
                     onVisibilityToggle={() => toggleWidget('networkVisualization')}
                     isVisible={visibleWidgets.networkVisualization}
                   >
@@ -315,12 +292,13 @@ export default function DashboardPage() {
                 </div>
               )}
               
+              {/* Risk Radar - Full width at bottom for FinTech */}
               {visibleWidgets.riskRadar && companyData?.category === 'FinTech' && (
                 <div className="col-span-3">
                   <Widget
                     title="Risk Radar"
                     icon={<Shield className="h-5 w-5" />}
-                    size="full"
+                    size="triple"
                     onVisibilityToggle={() => toggleWidget('riskRadar')}
                     isVisible={visibleWidgets.riskRadar}
                   >
