@@ -942,20 +942,17 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             });
             
             // Import and use task dependency processors
-            const { processDependencies, unlockOpenBankingTasks } = require('./routes/task-dependencies');
+            const { unlockAllTasks } = require('./routes/task-dependencies');
             
-            // Process all dependencies for this company
-            await processDependencies(companyId);
-            
-            // For extra reliability, directly unlock Open Banking tasks 
-            await unlockOpenBankingTasks(companyId);
+            // Unlock ALL tasks for this company regardless of dependencies
+            await unlockAllTasks(companyId);
             
             // Clear task cache to ensure updated task status is returned
             tasksCache.delete(cacheKey);
             
-            console.log('[Tasks] Successfully processed Open Banking dependencies');
+            console.log('[Tasks] Successfully unlocked all tasks for company:', companyId);
           } catch (depError) {
-            console.error('[Tasks] Error processing Open Banking dependencies:', {
+            console.error('[Tasks] Error unlocking all tasks:', {
               userId,
               companyId,
               error: depError instanceof Error ? depError.message : 'Unknown error'
