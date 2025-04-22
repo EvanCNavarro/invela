@@ -683,7 +683,7 @@ router.get("/api/tasks/:taskId/:taskType-demo", requireAuth, async (req, res) =>
     if (taskType === 'kyb' && (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB')) {
       internalTaskType = 'company_kyb';
     } else if (taskType === 'ky3p' && (task.task_type === 'sp_ky3p_assessment' || task.task_type === 'security_assessment')) {
-      internalTaskType = 'sp_ky3p_assessment';
+      internalTaskType = 'ky3p';
     } else if (taskType === 'open_banking' && task.task_type === 'open_banking') {
       internalTaskType = 'open_banking';
     }
