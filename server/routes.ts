@@ -370,7 +370,7 @@ export function registerRoutes(app: Express): Express {
         category: sql<string>`COALESCE(${companies.category}, '')`,
         description: sql<string>`COALESCE(${companies.description}, '')`,
         logo_id: companies.logo_id,
-        accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
+        accreditation_status: companies.accreditation_status,
         risk_score: companies.risk_score,
         chosen_score: companies.chosen_score,
         risk_clusters: companies.risk_clusters,
@@ -484,7 +484,7 @@ export function registerRoutes(app: Express): Express {
           category: company.category,
           description: company.description,
           logo_id: company.logo_id,
-          accreditation_status: company.accreditation_status,
+          accreditation_status: company.accreditation_status || null,
           risk_score: company.risk_score,
           riskScore: company.risk_score, // Add frontend-friendly version
           chosen_score: company.chosen_score, 
