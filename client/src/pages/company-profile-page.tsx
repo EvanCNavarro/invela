@@ -66,6 +66,39 @@ interface CompanyFile {
   uploadedBy: string;
 }
 
+// Helper function to determine the actual status based on the detailed status value
+const getAccreditationStatus = (status: string | null | undefined): 'VALID' | 'PENDING' | 'INVALID' => {
+  if (!status) return 'INVALID';
+
+  const validStatuses = ['PROVISIONALLY_APPROVED', 'APPROVED'];
+  const pendingStatuses = ['IN_REVIEW', 'PENDING'];
+  const invalidStatuses = ['EXPIRED', 'REVOKED', 'SUSPENDED', 'AWAITING_INVITATION', 'NULL'];
+
+  if (validStatuses.includes(status)) return 'VALID';
+  if (pendingStatuses.includes(status)) return 'PENDING';
+  return 'INVALID';
+};
+
+// Helper function to get the appropriate class based on the status
+const getAccreditationStatusClass = (status: string | null | undefined): string => {
+  const normalizedStatus = getAccreditationStatus(status);
+  
+  switch (normalizedStatus) {
+    case 'VALID':
+      return 'text-green-600 mt-1 font-semibold text-lg py-1 flex items-center justify-center shadow-[0px_0px_12px_rgba(22,163,74,0.3)]';
+    case 'PENDING':
+      return 'text-yellow-600 mt-1 font-semibold text-lg py-1 flex items-center justify-center shadow-[0px_0px_12px_rgba(217,119,6,0.3)]'; 
+    default:
+      return 'text-red-500 mt-1 font-semibold text-lg py-1 flex items-center justify-center shadow-[0px_0px_12px_rgba(239,68,68,0.3)]';
+  }
+};
+
+// Helper function to get the appropriate label based on the status
+const getAccreditationStatusLabel = (status: string | null | undefined): React.ReactNode => {
+  const normalizedStatus = getAccreditationStatus(status);
+  return normalizedStatus;
+};
+
 export default function CompanyProfilePage() {
   const params = useParams();
   const companyId = params.companySlug;
@@ -585,7 +618,7 @@ export default function CompanyProfilePage() {
               
               {/* Enhanced metrics cards - same size, no hover, black titles */}
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
-                {/* Risk Score card with standardized styling */}
+                {/* Risk Score card with standardized styling and blue aura */}
                 <div className="flex flex-col justify-between p-4 rounded-lg bg-white border border-slate-200 text-center drop-shadow-sm md:w-52">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <Award className="h-5 w-5 text-black" />
@@ -593,7 +626,7 @@ export default function CompanyProfilePage() {
                       RISK SCORE
                     </div>
                   </div>
-                  <div className="text-4xl font-bold text-gray-900 mt-1">
+                  <div className="text-4xl font-bold text-gray-900 mt-1 shadow-[0px_0px_12px_rgba(79,99,236,0.3)]">
                     {company.riskScore || company.risk_score || 0}
                   </div>
                 </div>
@@ -608,16 +641,10 @@ export default function CompanyProfilePage() {
                   </div>
                   <div 
                     className={
-                      company.accreditationStatus === 'VALID' 
-                        ? 'text-green-600 mt-1 font-semibold text-lg py-1 flex items-center justify-center' 
-                        : 'text-red-500 mt-1 font-semibold text-lg py-1 flex items-center justify-center'
+                      getAccreditationStatusClass(company.accreditationStatus)
                     }
                   >
-                    {company.accreditationStatus === 'VALID' ? (
-                      <><CheckCircle className="w-5 h-5 mr-1.5" /> VALID</>
-                    ) : (
-                      <><AlertCircle className="w-5 h-5 mr-1.5" /> INVALID</>
-                    )}
+                    {getAccreditationStatusLabel(company.accreditationStatus)}
                   </div>
                 </div>
               </div>
