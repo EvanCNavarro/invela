@@ -1051,16 +1051,14 @@ export class KY3PFormService extends EnhancedKybFormService {
    */
   public async bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean> {
     if (!this.taskId && !taskId) {
-      logger.warn('[KY3P Form Service] No task ID provided for bulk update, cannot update');
+      logger.warn('[KY3P Form Service] No task ID provided for update, cannot update');
       return false;
     }
     
     const effectiveTaskId = taskId || this.taskId;
     
     try {
-      logger.info(`[KY3P Form Service] Performing bulk update for task ${effectiveTaskId}`);
-      
-      // First update the local form data - this follows the KYB implementation pattern
+      // First update the local form data
       Object.entries(data).forEach(([key, value]) => {
         // Only update if not a metadata field (starting with _)
         if (!key.startsWith('_')) {
@@ -1077,79 +1075,102 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
-      // Import and use our fixed implementation that directly uses the KYB endpoint
-      // This provides a consistent approach that works for both KYB and KY3P
+      // IMPORTANT: Do not use bulk update! Use the batch update pattern instead
+      logger.info(`[KY3P Form Service] Redirecting bulk update to batch update pattern for task ${effectiveTaskId} with ${Object.keys(cleanData).length} fields`);
+      
       try {
-        // Dynamically import the helper function
-        const { bulkUpdateKy3pResponses } = await import('@/components/forms/fix-ky3p-bulk-update');
+        // Dynamically import the helper function that uses batched updates
+        const { batchUpdateKy3pResponses } = await import('@/components/forms/ky3p-batch-update');
         
-        // Call the helper function with the task ID and clean data
-        const success = await bulkUpdateKy3pResponses(Number(effectiveTaskId), cleanData);
+        // Call the helper function with the task ID and clean data - this does batch updates
+        const success = await batchUpdateKy3pResponses(Number(effectiveTaskId), cleanData);
         
         if (success) {
-          logger.info(`[KY3P Form Service] Bulk update completed successfully using fixed implementation`);
+          logger.info(`[KY3P Form Service] Batch update completed successfully`);
           return true;
         } else {
-          logger.error(`[KY3P Form Service] Bulk update failed using fixed implementation`);
+          logger.error(`[KY3P Form Service] Batch update failed`);
           return false;
         }
-      } catch (bulkUpdateError: any) {
-        logger.error(`[KY3P Form Service] Error in bulk update helper:`, bulkUpdateError);
+      } catch (batchUpdateError: any) {
+        logger.error(`[KY3P Form Service] Error in batch update helper:`, batchUpdateError);
         
-        // If the fixed implementation fails, try the original approach as a fallback
-        logger.warn(`[KY3P Form Service] Falling back to direct KYB endpoint for bulk update`);
+        // Fallback to direct KYB endpoint and update each field individually
+        logger.warn(`[KY3P Form Service] Falling back to manual field updates via KYB endpoint`);
         
-        // Use the KYB bulk-update endpoint directly - this is what WORKS
-        const response = await fetch(`/api/kyb/bulk-update/${effectiveTaskId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            responses: cleanData // Send the cleaned data with field keys intact
-          })
-        });
+        let fieldsUpdated = 0;
+        const fieldEntries = Object.entries(cleanData).filter(
+          ([_, value]) => value !== null && value !== undefined && value !== ''
+        );
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          logger.error(`[KY3P Form Service] Bulk update failed: ${response.status}`, errorText);
-          return false;
+        // Process each field in sequence with small batches
+        const batchSize = 5;
+        for (let i = 0; i < fieldEntries.length; i += batchSize) {
+          const batch = fieldEntries.slice(i, i + batchSize);
+          
+          await Promise.all(batch.map(async ([fieldKey, fieldValue]) => {
+            try {
+              // Use the KYB endpoint for individual field
+              const response = await fetch(`/api/kyb/responses/${effectiveTaskId}/${fieldKey}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  value: fieldValue
+                })
+              });
+              
+              if (response.ok) {
+                fieldsUpdated++;
+              }
+            } catch (fieldError) {
+              logger.error(`[KY3P Form Service] Error updating field ${fieldKey}:`, fieldError);
+            }
+          }));
+          
+          // Add a delay between batches
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
         
-        logger.info(`[KY3P Form Service] Bulk update successful using fallback approach`);
+        logger.info(`[KY3P Form Service] Updated ${fieldsUpdated} out of ${fieldEntries.length} fields using fallback approach`);
         
-        // Update progress to 100%
-        await fetch(`/api/tasks/${effectiveTaskId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            progress: 100,
-            status: 'in_progress'
-          })
-        });
+        // Update progress to 100% if at least some fields were updated
+        if (fieldsUpdated > 0) {
+          await fetch(`/api/tasks/${effectiveTaskId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              progress: 100,
+              status: 'in_progress'
+            })
+          });
+          
+          // Broadcast update via WebSocket for UI refresh
+          await fetch('/api/broadcast/task-update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              taskId: effectiveTaskId,
+              type: 'task_updated',
+              timestamp: new Date().toISOString()
+            })
+          });
+          
+          return true;
+        }
         
-        // Broadcast update via WebSocket for UI refresh
-        await fetch('/api/broadcast/task-update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            taskId: effectiveTaskId,
-            type: 'task_updated',
-            timestamp: new Date().toISOString()
-          })
-        });
-        
-        return true;
+        return false;
       }
     } catch (error) {
-      logger.error('[KY3P Form Service] Error during bulk update:', error);
+      logger.error('[KY3P Form Service] Error during form update:', error);
       return false;
     }
   }
