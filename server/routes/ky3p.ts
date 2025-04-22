@@ -1042,7 +1042,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       
       return res.status(400).json({
         message: 'Invalid field ID format',
-        hint: 'Request should be in format: { responses: { field_key1: value1, field_key2: value2, ... } }',
+        hint: 'Request should be in format: { responses: [...] }',
         error: 'malformed_request_structure'
       });
     }
@@ -1050,157 +1050,201 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     // Validate response object
     const { responses } = req.body;
     
-    if (!responses || typeof responses !== 'object') {
+    if (!responses) {
       return res.status(400).json({ 
-        message: 'Invalid request: responses object is required',
-        hint: 'Request should be in format: { responses: { field_key1: value1, field_key2: value2, ... } }'
+        message: 'Invalid request: responses is required',
+        hint: 'Request should include a responses property that is either an object or array'
       });
     }
     
-    logger.info(`[KY3P API] Processing bulk responses update for task ${taskId}`, {
-      responseCount: Object.keys(responses).length,
-      taskId,
-      firstKeys: Object.keys(responses).slice(0, 3),
-      firstValues: Object.values(responses).slice(0, 3).map(v => 
-        typeof v === 'object' ? JSON.stringify(v).slice(0, 50) : String(v).slice(0, 50)
-      )
-    });
-    
-    // Get all fields to match field_key to field_id
+    // Get all fields for field type validation and ID mapping
     const fields = await db.select().from(ky3pFields);
-    const fieldKeyToIdMap = new Map(fields.map(field => [field.field_key, field.id]));
     
-    // Store all response updates to process
-    const responseUpdates = [];
+    // Create useful maps for field lookup
+    const fieldKeyToIdMap = new Map(fields.map(field => [field.field_key, field.id]));
+    const fieldIdToTypeMap = new Map(fields.map(field => [field.id, field.field_type]));
     
     // Import the safe type conversion utility
     const { safeTypeConversion } = await import('../utils/form-standardization');
     
-    // Process each response
-    for (const [fieldKey, responseValue] of Object.entries(responses)) {
-      // We'll validate and process values for each field
-      let fieldId: number | undefined;
-      let sanitizedValue: any;
-      let finalValue: string;
-      let status: keyof typeof KYBFieldStatus;
+    // Store all response updates to process
+    const responseUpdates = [];
+    
+    // Handle array format (from KY3P form service)
+    if (Array.isArray(responses)) {
+      logger.info(`[KY3P API] Processing bulk responses in array format for task ${taskId}`, {
+        responseCount: responses.length,
+        taskId,
+        format: 'array',
+        sampleResponses: responses.slice(0, 3).map(r => 
+          JSON.stringify({ 
+            fieldId: r.fieldId, 
+            valuePreview: typeof r.value === 'object' ? '[Object]' : String(r.value).slice(0, 20) 
+          }).slice(0, 100)
+        )
+      });
       
-      try {
-        // Get field ID from the map
-        const rawFieldId = fieldKeyToIdMap.get(fieldKey);
+      for (const response of responses) {
+        const fieldId = Number(response.fieldId);
         
-        if (!rawFieldId) {
-          logger.warn(`[KY3P API] Field key not found: ${fieldKey}`);
-          continue;
-        }
-        
-        // Validate that field ID is a proper number
-        fieldId = Number(rawFieldId);
         if (isNaN(fieldId)) {
-          logger.error(`[KY3P API] Invalid field ID for key ${fieldKey}: ${rawFieldId}`);
+          logger.error(`[KY3P API] Invalid field ID in array format: ${response.fieldId}`);
           continue;
         }
         
-        // Find the field definition to get its type
-        const fieldDefinition = fields.find(field => field.field_key === fieldKey);
+        const fieldDef = fields.find(f => f.id === fieldId);
+        if (!fieldDef) {
+          logger.error(`[KY3P API] Field ID not found in database: ${fieldId}`);
+          continue;
+        }
         
-        // Log detailed field info to debug type issues
-        logger.debug(`[KY3P API] Processing field:`, {
-          fieldKey,
-          fieldId,
-          fieldDefinition: fieldDefinition ? {
-            id: fieldDefinition.id,
-            field_key: fieldDefinition.field_key,
-            field_type: fieldDefinition.field_type,
-            display_name: fieldDefinition.display_name
-          } : null,
-          valueType: typeof responseValue,
-          valuePreview: typeof responseValue === 'object' 
-            ? JSON.stringify(responseValue).substring(0, 100) 
-            : String(responseValue).substring(0, 100)
-        });
+        const fieldType = fieldDef.field_type || 'TEXT';
+        const responseValue = response.value;
         
-        const fieldType = fieldDefinition?.field_type || 'TEXT';
-        
-        // Use the safe type conversion utility with enhanced logging
-        sanitizedValue = safeTypeConversion(responseValue, fieldType, {
-          fieldKey,
-          fieldName: fieldDefinition?.display_name,
+        // Convert and validate value
+        const sanitizedValue = safeTypeConversion(responseValue, fieldType, {
+          fieldKey: fieldDef.field_key,
+          fieldName: fieldDef.display_name,
           formType: 'ky3p'
         });
         
-        // Always store as string in database for consistency - this prevents type errors
-        finalValue = String(sanitizedValue);
+        // Store as string for consistency
+        const finalValue = String(sanitizedValue);
         
-        // Determine status based on whether there's a non-empty value
-        status = (finalValue !== null && finalValue !== undefined && finalValue.trim() !== '') 
+        // Determine status based on value
+        const status = (finalValue !== null && finalValue !== undefined && finalValue.trim() !== '') 
           ? 'COMPLETE' 
           : 'EMPTY';
           
-        // Log the conversion result
-        logger.debug(`[KY3P API] Value conversion result:`, {
-          fieldKey,
-          originalType: typeof responseValue,
-          convertedType: typeof sanitizedValue,
-          fieldType,
-          fieldId,
-          finalValue: finalValue.substring(0, 50) + (finalValue.length > 50 ? '...' : ''),
-          status
-        });
-      } catch (fieldError) {
-        // Log but continue processing other fields
-        logger.error(`[KY3P API] Error processing field ${fieldKey}:`, fieldError);
-        continue;
-      }
-      
-      // Check if response exists
-      const [existingResponse] = await db
-        .select()
-        .from(ky3pResponses)
-        .where(
-          and(
-            eq(ky3pResponses.task_id, taskId),
-            eq(ky3pResponses.field_id, fieldId)
+        // Check if response exists
+        const [existingResponse] = await db
+          .select()
+          .from(ky3pResponses)
+          .where(
+            and(
+              eq(ky3pResponses.task_id, taskId),
+              eq(ky3pResponses.field_id, fieldId)
+            )
           )
-        )
-        .limit(1);
-      
-      // Skip updates if any required values are missing (prevents database errors)
-      if (!fieldId || !finalValue || !status) {
-        logger.warn(`[KY3P API] Missing required values for field update:`, {
-          fieldKey,
-          fieldId: fieldId || 'MISSING',
-          hasValue: !!finalValue,
-          hasStatus: !!status
-        });
-        continue;
+          .limit(1);
+        
+        // Prepare update query
+        if (existingResponse) {
+          responseUpdates.push(
+            db.update(ky3pResponses)
+              .set({
+                response_value: finalValue,
+                status,
+                version: existingResponse.version + 1,
+                updated_at: new Date()
+              })
+              .where(eq(ky3pResponses.id, existingResponse.id))
+          );
+        } else {
+          responseUpdates.push(
+            db.insert(ky3pResponses)
+              .values({
+                task_id: taskId,
+                field_id: fieldId,
+                response_value: finalValue,
+                status,
+                version: 1,
+                created_at: new Date(),
+                updated_at: new Date()
+              })
+          );
+        }
       }
+    } 
+    // Handle object format (backward compatibility)
+    else if (typeof responses === 'object') {
+      logger.info(`[KY3P API] Processing bulk responses in object format for task ${taskId}`, {
+        responseCount: Object.keys(responses).length,
+        taskId,
+        format: 'object',
+        firstKeys: Object.keys(responses).slice(0, 3),
+        firstValues: Object.values(responses).slice(0, 3).map(v => 
+          typeof v === 'object' ? JSON.stringify(v).slice(0, 50) : String(v).slice(0, 50)
+        )
+      });
       
-      if (existingResponse) {
-        // Update existing
-        responseUpdates.push(
-          db.update(ky3pResponses)
-            .set({
-              response_value: finalValue,
-              status,
-              version: existingResponse.version + 1,
-              updated_at: new Date()
-            })
-            .where(eq(ky3pResponses.id, existingResponse.id))
-        );
-      } else {
-        // Create new
-        responseUpdates.push(
-          db.insert(ky3pResponses)
-            .values({
-              task_id: taskId,
-              field_id: fieldId,
-              response_value: finalValue,
-              status,
-              version: 1,
-              created_at: new Date(),
-              updated_at: new Date()
-            })
-        );
+      for (const [fieldKey, responseValue] of Object.entries(responses)) {
+        try {
+          const rawFieldId = fieldKeyToIdMap.get(fieldKey);
+          
+          if (!rawFieldId) {
+            logger.warn(`[KY3P API] Field key not found: ${fieldKey}`);
+            continue;
+          }
+          
+          const fieldId = Number(rawFieldId);
+          if (isNaN(fieldId)) {
+            logger.error(`[KY3P API] Invalid field ID for key ${fieldKey}: ${rawFieldId}`);
+            continue;
+          }
+          
+          // Find the field definition to get its type
+          const fieldDefinition = fields.find(field => field.field_key === fieldKey);
+          const fieldType = fieldDefinition?.field_type || 'TEXT';
+          
+          // Use the safe type conversion utility with enhanced logging
+          const sanitizedValue = safeTypeConversion(responseValue, fieldType, {
+            fieldKey,
+            fieldName: fieldDefinition?.display_name,
+            formType: 'ky3p'
+          });
+          
+          // Always store as string in database for consistency
+          const finalValue = String(sanitizedValue);
+          
+          // Determine status based on value
+          const status = (finalValue !== null && finalValue !== undefined && finalValue.trim() !== '') 
+            ? 'COMPLETE' 
+            : 'EMPTY';
+          
+          // Check if response exists
+          const [existingResponse] = await db
+            .select()
+            .from(ky3pResponses)
+            .where(
+              and(
+                eq(ky3pResponses.task_id, taskId),
+                eq(ky3pResponses.field_id, fieldId)
+              )
+            )
+            .limit(1);
+          
+          // Prepare update query
+          if (existingResponse) {
+            responseUpdates.push(
+              db.update(ky3pResponses)
+                .set({
+                  response_value: finalValue,
+                  status,
+                  version: existingResponse.version + 1,
+                  updated_at: new Date()
+                })
+                .where(eq(ky3pResponses.id, existingResponse.id))
+            );
+          } else {
+            responseUpdates.push(
+              db.insert(ky3pResponses)
+                .values({
+                  task_id: taskId,
+                  field_id: fieldId,
+                  response_value: finalValue,
+                  status,
+                  version: 1,
+                  created_at: new Date(),
+                  updated_at: new Date()
+                })
+            );
+          }
+        } catch (fieldError) {
+          // Log but continue processing other fields
+          logger.error(`[KY3P API] Error processing field ${fieldKey}:`, fieldError);
+          continue;
+        }
       }
     }
     
