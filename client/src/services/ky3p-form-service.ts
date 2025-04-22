@@ -571,12 +571,19 @@ export class KY3PFormService extends EnhancedKybFormService {
         return { success: false, error, updatedCount: 0 };
       }
       
-      // Step 5: Log the exact request body for debugging
+      // Step 5: Double-check the format of the request body - must be correctly structured for the endpoint
+      // Ensure we have an array of objects with numeric fieldId values
       const requestBody = {
-        responses: responsesArray
+        responses: responsesArray.map(item => ({
+          fieldId: Number(item.fieldId), // Ensure fieldId is a number with explicit conversion
+          value: item.value
+        }))
       };
       
-      logger.info(`[KY3P Form Service] Request body preview:`, JSON.stringify(requestBody).substring(0, 200) + '...');
+      // Log first 3 items for debugging
+      const firstThreeItems = requestBody.responses.slice(0, 3);
+      logger.info(`[KY3P Form Service] Request body sample (first 3 items):`, JSON.stringify(firstThreeItems));
+      logger.info(`[KY3P Form Service] Total responses to send: ${requestBody.responses.length}`);
       
       // Step 6: Make the API call with the properly formatted data
       const response = await fetch(`/api/tasks/${taskId}/ky3p-responses/bulk`, {
@@ -589,7 +596,17 @@ export class KY3PFormService extends EnhancedKybFormService {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText = '';
+        try {
+          // Try to parse as JSON first
+          const errorJson = await response.json();
+          errorText = JSON.stringify(errorJson);
+          logger.error(`[KY3P Form Service] Bulk update failed with JSON response:`, errorJson);
+        } catch {
+          // Fallback to text if not JSON
+          errorText = await response.text();
+          logger.error(`[KY3P Form Service] Bulk update failed with text response:`, errorText);
+        }
         const error = `Failed to perform bulk update: ${response.status} - ${errorText}`;
         logger.error(`[KY3P Form Service] ${error}`);
         return { success: false, error, updatedCount: 0 };
