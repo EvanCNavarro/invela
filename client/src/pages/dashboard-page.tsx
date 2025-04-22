@@ -14,6 +14,7 @@ import {
   Bell,
   Zap,
   Globe,
+  Shield,
   AlertTriangle,
   LayoutGrid
 } from "lucide-react";
@@ -33,13 +34,15 @@ import { InviteModal } from "@/components/playground/InviteModal";
 import { cn } from "@/lib/utils";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { NetworkVisualization } from "@/components/network";
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 
 const DEFAULT_WIDGETS = {
   updates: true,
   announcements: true,
   quickActions: true,
   companyScore: true,
-  networkVisualization: true
+  networkVisualization: true,
+  riskRadar: true
 };
 
 export default function DashboardPage() {
@@ -66,12 +69,20 @@ export default function DashboardPage() {
     setDrawerOpen(prev => !prev);
   };
 
-  // If company is a FinTech, hide the network visualization widget
+  // Toggle widgets based on company type
   useEffect(() => {
     if (companyData?.category === 'FinTech') {
       setVisibleWidgets(prev => ({
         ...prev,
-        networkVisualization: false
+        networkVisualization: false,
+        riskRadar: true
+      }));
+    } else {
+      // For non-FinTech companies (Bank, Invela)
+      setVisibleWidgets(prev => ({
+        ...prev,
+        networkVisualization: true,
+        riskRadar: false
       }));
     }
   }, [companyData?.category]);
@@ -292,6 +303,22 @@ export default function DashboardPage() {
                   isVisible={visibleWidgets.networkVisualization}
                 >
                   <NetworkVisualization className="shadow-none border-none" />
+                </Widget>
+              )}
+              
+              {visibleWidgets.riskRadar && companyData && (
+                <Widget
+                  title="Risk Radar"
+                  icon={<Shield className="h-5 w-5" />}
+                  size="triple"
+                  onVisibilityToggle={() => toggleWidget('riskRadar')}
+                  isVisible={visibleWidgets.riskRadar}
+                >
+                  <RiskRadarChart 
+                    companyId={companyData.id} 
+                    showDropdown={false}
+                    className="shadow-none border-none p-2"
+                  />
                 </Widget>
               )}
             </div>
