@@ -342,17 +342,20 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Saving field ${validFieldId} for task ${this.taskId}`);
       
-      // Use the dedicated bulk update endpoint with a single field
-      const response = await fetch(`/api/ky3p-bulk-update/${this.taskId}`, {
+      // Use the correct bulk update endpoint with the proper format - single field in array
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/bulk`, {
         method: 'POST',
         credentials: 'include', // Include session cookies
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          responses: {
-            [validFieldId]: value
-          }
+          responses: [
+            {
+              fieldId: validFieldId,
+              value: value
+            }
+          ]
         }),
       });
       
