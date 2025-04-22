@@ -849,8 +849,25 @@ const handleDemoAutoFill = useCallback(async () => {
   try {
     logger.info(`[UniversalForm] Starting demo auto-fill for task ${taskId}`);
     
-    // Get demo data from server
-    const demoDataResponse = await fetch(`/api/tasks/${taskId}/${taskType}-demo`);
+    // Show loading toast
+    toast({
+      title: "Auto-Fill In Progress",
+      description: "Loading demo data...",
+      duration: 3000,
+    });
+    
+    // Make API call to get demo data based on form type
+    let endpoint;
+    if (taskType === 'sp_ky3p_assessment') {
+      endpoint = `/api/ky3p/demo-autofill/${taskId}`;
+    } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+      endpoint = `/api/open-banking/demo-autofill/${taskId}`;
+    } else {
+      endpoint = `/api/kyb/demo-autofill/${taskId}`;
+    }
+    
+    logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
+    const demoDataResponse = await fetch(endpoint);
     
     if (!demoDataResponse.ok) {
       if (demoDataResponse.status === 403) {
