@@ -263,8 +263,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 240, // Smaller size that fits better
-        offsetY: 0,
+        size: 220, // Even smaller size to ensure all clusters are visible
+        offsetY: -20, // Move chart up to make bottom clusters visible
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -285,7 +285,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 280
+              size: 260,
+              offsetY: -30 // Move up to ensure bottom clusters are visible
             }
           }
         }
@@ -298,7 +299,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 240
+              size: 220,
+              offsetY: -25 // Move up to ensure bottom clusters are visible
             }
           }
         }
@@ -311,7 +313,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 200
+              size: 180,
+              offsetY: -20 // Move up to ensure bottom clusters are visible
             }
           },
           markers: {
@@ -327,7 +330,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 160
+              size: 150,
+              offsetY: -15 // Move up to ensure bottom clusters are visible
             }
           },
           markers: {
@@ -402,19 +406,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="h-[500px] w-full rounded-md">
+      <CardContent className="p-4 pb-8">
+        <div className="h-[520px] w-full rounded-md">
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="500"
+              height="520"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="h-[500px] w-full rounded-md" />
+              <Skeleton className="h-[520px] w-full rounded-md" />
             </div>
           )}
         </div>
