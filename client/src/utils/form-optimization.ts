@@ -300,7 +300,7 @@ class BatchUpdateManagerImpl<T = any> {
    * @param delay The delay in milliseconds before processing the batch (default: 300ms)
    * @param initialValues Optional initial values to populate the queue with
    */
-  constructor(delay = 300, initialValues?: Record<string, T>) {
+  constructor(delay = 1500, initialValues?: Record<string, T>) {
     this._delay = delay;
     
     // Initialize with any provided values
