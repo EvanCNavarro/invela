@@ -126,7 +126,7 @@ export function generateDemoData(taskType: string, companyName: string = 'Demo C
       ...financialFields,
       ...operationsFields,
     };
-  } else if (taskType === 'sp_ky3p_assessment') {
+  } else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
     return {
       ...baseData,
       'dataProtectionPolicy': 'Yes, compliant with GDPR, CCPA, and industry standards',

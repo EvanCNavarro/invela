@@ -686,7 +686,7 @@ router.post('/api/tasks/ky3p', requireAuth, async (req, res) => {
       .values({
         title: finalTitle,
         description: 'Complete the S&P KY3P Security Assessment form.',
-        task_type: 'sp_ky3p_assessment', // New task type for KY3P assessments
+        task_type: 'ky3p', // Standardized task type for KY3P assessments
         task_scope: 'company',
         status: 'not_started',
         priority: 'medium',
@@ -870,7 +870,7 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
       companyId,
       formattedData,
       {
-        taskType: 'sp_ky3p_assessment',
+        taskType: 'ky3p',
         taskId,
         companyName: company.name,
         additionalData: {
