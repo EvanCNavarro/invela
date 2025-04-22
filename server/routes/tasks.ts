@@ -1607,6 +1607,63 @@ router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, 
       convertToCSV: convertKy3pToCSV
     });
     
+    // Add code to unlock Open Banking Survey tasks after KY3P submission
+    try {
+      console.log(`[Tasks Routes] Unlocking Open Banking Survey tasks after KY3P submission for company ${task.company_id}`);
+      
+      // Find Open Banking Survey tasks for this company that might need unlocking
+      const openBankingTasks = await db.select()
+        .from(tasks)
+        .where(
+          and(
+            eq(tasks.company_id, task.company_id),
+            eq(tasks.task_type, 'open_banking_survey'),
+            or(
+              eq(tasks.status, 'locked'),
+              isNull(tasks.status)
+            )
+          )
+        );
+        
+      console.log(`[Tasks Routes] Found ${openBankingTasks.length} Open Banking Survey tasks to unlock`);
+      
+      for (const obTask of openBankingTasks) {
+        // Update each Open Banking Survey task to unlock it
+        await db.update(tasks)
+          .set({
+            status: 'not_started',
+            metadata: sql`jsonb_set(
+              jsonb_set(
+                jsonb_set(
+                  COALESCE(metadata, '{}'::jsonb),
+                  '{locked}', 'false'
+                ),
+                '{prerequisite_completed}', 'true'
+              ),
+              '{prerequisite_completed_at}', to_jsonb(now())
+            )`,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, obTask.id));
+          
+        console.log(`[Tasks Routes] Unlocked Open Banking Survey task ${obTask.id}`);
+        
+        // Broadcast task update via WebSocket
+        broadcastTaskUpdate(obTask.id, {
+          status: 'not_started',
+          metadata: {
+            locked: false,
+            prerequisite_completed: true,
+            prerequisite_completed_at: new Date().toISOString()
+          }
+        });
+      }
+      
+      console.log(`[Tasks Routes] Successfully unlocked Open Banking Survey tasks for company ${task.company_id}`);
+    } catch (unlockError) {
+      console.error('[Tasks Routes] Error unlocking Open Banking Survey tasks:', unlockError);
+    }
+    
     // Return the standardized response
     res.json(result);
   } catch (error) {
