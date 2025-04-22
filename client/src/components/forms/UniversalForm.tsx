@@ -898,34 +898,91 @@ const handleDemoAutoFill = useCallback(async () => {
       // Fallback to direct API call
       let endpoint;
       if (isKy3pTask) {
-        endpoint = `/api/ky3p/demo-autofill/${taskId}`;
+        // Use our new POST endpoint for KY3P that triggers the server-side auto-fill
+        const serverEndpoint = `/api/tasks/${taskId}/ky3p-demo-autofill`;
+        
+        logger.info(`[UniversalForm] Using direct server-side KY3P auto-fill: ${serverEndpoint}`);
+        
+        // Call the server-side auto-fill which populates the database directly
+        const autofillResponse = await fetch(serverEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}) // No data needed, server handles everything
+        });
+        
+        if (!autofillResponse.ok) {
+          if (autofillResponse.status === 403) {
+            toast({
+              variant: "destructive",
+              title: "Auto-Fill Restricted",
+              description: "Auto-fill is only available for demo companies.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Auto-Fill Failed",
+              description: "Could not perform server-side auto-fill.",
+            });
+          }
+          return false;
+        }
+        
+        const result = await autofillResponse.json();
+        logger.info(`[UniversalForm] KY3P server-side auto-fill completed`, result);
+        
+        // Show success message
+        toast({
+          variant: "default",
+          title: "Auto-Fill Successful",
+          description: `Successfully inserted ${result.responsesInserted || 120} demo responses.`,
+        });
+        
+        // Refresh form data to get the newly inserted values
+        if (form && resetForm) {
+          // Reset form first to clear any fields
+          resetForm();
+          
+          // Allow time for resetForm to complete
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Refresh form status
+          if (refreshStatus) {
+            refreshStatus();
+          }
+        }
+        return true;
       } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
         endpoint = `/api/open-banking/demo-autofill/${taskId}`;
       } else {
         endpoint = `/api/kyb/demo-autofill/${taskId}`;
       }
       
-      logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
-      const demoDataResponse = await fetch(endpoint);
-      
-      if (!demoDataResponse.ok) {
-        if (demoDataResponse.status === 403) {
-          toast({
-            variant: "destructive",
-            title: "Auto-Fill Restricted",
-            description: "Auto-fill is only available for demo companies.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Auto-Fill Failed",
-            description: "Could not load demo data from server.",
-          });
+      // Only executed for non-KY3P forms
+      if (!isKy3pTask) {
+        logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint}`);
+        const demoDataResponse = await fetch(endpoint);
+        
+        if (!demoDataResponse.ok) {
+          if (demoDataResponse.status === 403) {
+            toast({
+              variant: "destructive",
+              title: "Auto-Fill Restricted",
+              description: "Auto-fill is only available for demo companies.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Auto-Fill Failed",
+              description: "Could not load demo data from server.",
+            });
+          }
+          return false;
         }
-        return false;
+        
+        demoData = await demoDataResponse.json();
       }
-      
-      demoData = await demoDataResponse.json();
     }
     
     logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields for auto-fill`);

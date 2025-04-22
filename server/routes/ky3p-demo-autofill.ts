@@ -16,6 +16,7 @@ import {
 import { eq, and, asc } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
+import { broadcastTaskUpdate } from '../services/websocket';
 
 const router = Router();
 const logger = new Logger('KY3PDemoAutofill');
@@ -148,8 +149,14 @@ router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, re
       status
     });
     
-    // Broadcast the update to WebSocket clients
-    // This will be handled by the task-progress route
+    // Broadcast the update to WebSocket clients for real-time UI updates
+    broadcastTaskUpdate({
+      taskId,
+      status,
+      progress,
+      source: 'ky3p_demo_autofill',
+      timestamp: new Date().toISOString()
+    });
     
     return res.json({
       success: true,
