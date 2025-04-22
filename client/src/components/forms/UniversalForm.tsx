@@ -647,9 +647,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               is_demo: company.is_demo
             })}`);
             
-            if (company.isDemo === true || company.is_demo === true) {
+            // ONLY consider isDemo flag (direct boolean property) as valid indicator
+            if (company.isDemo === true) {
               logger.info(`[UniversalForm] Current company from hook is a demo company: ${company.name}`);
               setIsCompanyDemo(true);
+              return;
+            } else {
+              // If isDemo is explicitly false, respect that
+              logger.info(`[UniversalForm] Current company is NOT a demo company: ${company.name}`);
+              setIsCompanyDemo(false);
               return;
             }
           }
@@ -661,14 +667,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             const currentCompany = await companyResponse.json();
             logger.info(`[UniversalForm] API response: ${JSON.stringify({
               name: currentCompany.name,
-              isDemo: currentCompany.isDemo,
-              is_demo: currentCompany.is_demo
+              isDemo: currentCompany.isDemo
             })}`);
             
-            // Check if isDemo flag is present
-            if (currentCompany && (currentCompany.isDemo === true || currentCompany.is_demo === true)) {
+            // Check if isDemo flag is present - ONLY use the standard isDemo property
+            if (currentCompany && currentCompany.isDemo === true) {
               logger.info(`[UniversalForm] Current company is a demo company: ${currentCompany.name}`);
               setIsCompanyDemo(true);
+              return;
+            } else {
+              // If we got company data but isDemo is not true, set to false
+              setIsCompanyDemo(false);
               return;
             }
           }
@@ -687,14 +696,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   const companyData = await companyResponse.json();
                   logger.info(`[UniversalForm] Company data from API: ${JSON.stringify({
                     name: companyData.name,
-                    isDemo: companyData.isDemo,
-                    is_demo: companyData.is_demo
+                    isDemo: companyData.isDemo
                   })}`);
                   
-                  // Use the is_demo flag or isDemo flag from the company data
-                  const isDemoFromApi = companyData.is_demo === true || companyData.isDemo === true;
-                  setIsCompanyDemo(isDemoFromApi);
-                  logger.info(`[UniversalForm] Company demo status from API: ${isDemoFromApi}`);
+                  // ONLY use the standard isDemo property
+                  setIsCompanyDemo(companyData.isDemo === true);
+                  logger.info(`[UniversalForm] Company demo status from API: ${companyData.isDemo === true}`);
                   return;
                 }
               } catch (companyError) {
@@ -702,34 +709,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               }
             }
             
-            // Final fallback: check company name for demo indicators
-            const companyName = taskMetadata.company_name || taskMetadata.companyName;
-            if (companyName && 
-                (companyName.includes('DevTest') || 
-                 companyName.includes('DevelopmentTesting') || 
-                 companyName.toLowerCase().includes('demo') ||
-                 companyName.includes('Example'))) {  // Added 'Example' as indicator
-              logger.info(`[UniversalForm] Company name "${companyName}" indicates this is a demo company`);
-              setIsCompanyDemo(true);
-              return;
-            }
+            // No more relying on company name indicators
+            // Because we only want to enable demo features for companies with isDemo=true
           }
           
-          // Default to true for development purposes
-          // This makes the demo autofill button always available
-          // IMPORTANT: For production, this should be changed back to false
-          setIsCompanyDemo(true);
-          logger.info('[UniversalForm] No demo indicators found, but setting isCompanyDemo to true for development');
+          // If all checks failed, default to false
+          // This makes demo autofill button ONLY available for TRUE demo companies
+          setIsCompanyDemo(false);
+          logger.info('[UniversalForm] No demo indicators found, setting isCompanyDemo to false');
           
         } catch (error) {
           logger.error(`[UniversalForm] Error during demo status check:`, error);
-          // Default to true for development
-          setIsCompanyDemo(true);
-          logger.info('[UniversalForm] Error occurred, but still setting isCompanyDemo to true for development');
+          // In case of error, default to NOT being a demo company for security
+          setIsCompanyDemo(false);
+          logger.info('[UniversalForm] Error occurred, setting isCompanyDemo to false for security');
         }
       };
       
       fetchCompanyDemoStatus();
+    } else {
+      // Without a taskId, set isCompanyDemo to false to prevent showing demo buttons
+      logger.info(`[UniversalForm] No task ID available for company check, setting demo status to false`);
+      setIsCompanyDemo(false);
     }
   }, [taskId, taskMetadata, company]);
   
