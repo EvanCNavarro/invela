@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Wand2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useKY3PFormService } from '@/services/ky3p-form-service';
+import { KY3PFormService } from '@/services/ky3p-form-service';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('DemoAutofillButton', { 
@@ -31,17 +31,19 @@ export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
   className = "",
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const formService = useKY3PFormService();
 
   const handleDemoAutofill = async () => {
-    if (!formService || !taskId) {
+    if (!taskId) {
       toast({
         title: "Error",
-        description: "Cannot initialize form service or task ID is missing",
+        description: "Task ID is missing",
         variant: "destructive",
       });
       return;
     }
+    
+    // Create a new instance of KY3PFormService
+    const formService = new KY3PFormService(undefined, taskId);
 
     setIsLoading(true);
     
