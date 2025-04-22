@@ -133,7 +133,7 @@ async function createCompanyInternal(
       duration: Date.now() - startTime
     });
 
-    // Create S&P KY3P Security Assessment task (locked until KYB is completed)
+    // Create S&P KY3P Security Assessment task
     console.log('[Company Service] Creating S&P KY3P Security Assessment task for company:', newCompany.id);
     const [securityTask] = await tx.insert(tasks)
       .values({
@@ -164,9 +164,11 @@ async function createCompanyInternal(
           created_at: new Date().toISOString(),
           last_updated: new Date().toISOString(),
           created_by_id: createdById,
-          locked: true, // Task is initially locked
-          prerequisite_task_id: kybTask.id, // KYB task is a prerequisite
-          prerequisite_for: ['company_card'], // This task is a prerequisite for CARD
+          locked: false, // Tasks are never locked now
+          prerequisite_completed: true, // Always mark prerequisites as completed
+          prerequisite_completed_at: new Date().toISOString(),
+          prerequisite_task_id: kybTask.id, // Reference only, not used for locking
+          prerequisite_for: ['company_card'], // Reference only, not used for locking
           prerequisite_task_type: 'company_kyb'
         }
       })
@@ -178,7 +180,7 @@ async function createCompanyInternal(
       duration: Date.now() - startTime
     });
 
-    // Create Open Banking Survey task (locked until Security Assessment is completed)
+    // Create Open Banking Survey task
     console.log('[Company Service] Creating Open Banking Survey task for company:', newCompany.id);
     const [cardTask] = await tx.insert(tasks)
       .values({
@@ -209,8 +211,10 @@ async function createCompanyInternal(
           created_at: new Date().toISOString(),
           last_updated: new Date().toISOString(),
           created_by_id: createdById,
-          locked: true, // Task is initially locked
-          prerequisite_task_id: securityTask.id, // S&P KY3P Security Assessment task is a prerequisite
+          locked: false, // Tasks are never locked now
+          prerequisite_completed: true, // Always mark prerequisites as completed
+          prerequisite_completed_at: new Date().toISOString(),
+          prerequisite_task_id: securityTask.id, // Reference only, not used for locking
           prerequisite_task_type: 'ky3p'
         }
       })
