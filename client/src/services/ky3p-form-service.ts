@@ -868,6 +868,29 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
       
+      // Create a mapping from field keys to field IDs
+      // The backend expects field IDs, not field keys
+      // We need to map our field.key values to field.id values
+      const keyToIdResponses: Record<string, any> = {};
+      const allFields = await this.getFields();
+      
+      // Create a map of field key to field ID for quick lookup
+      const fieldKeyToIdMap = new Map(
+        allFields.map(field => [field.key, field.id])
+      );
+      
+      // Convert the keys in cleanData to field IDs
+      for (const [key, value] of Object.entries(cleanData)) {
+        const fieldId = fieldKeyToIdMap.get(key);
+        if (fieldId) {
+          keyToIdResponses[fieldId] = value;
+        } else {
+          logger.warn(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+        }
+      }
+      
+      logger.info(`[KY3P Form Service] Mapped ${Object.keys(keyToIdResponses).length} field keys to IDs for save operation`);
+      
       // Using the standardized KYB approach - simpler and more reliable
       // Send to server with proper payload format including 'responses' wrapper
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
@@ -877,7 +900,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          responses: cleanData // Direct format matching KYB service implementation
+          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
         }),
       });
       
@@ -932,6 +955,29 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
+      // Create a mapping from field keys to field IDs
+      // The backend expects field IDs, not field keys
+      // We need to map our field.key values to field.id values
+      const keyToIdResponses: Record<string, any> = {};
+      const allFields = await this.getFields();
+      
+      // Create a map of field key to field ID for quick lookup
+      const fieldKeyToIdMap = new Map(
+        allFields.map(field => [field.key, field.id])
+      );
+      
+      // Convert the keys in cleanData to field IDs
+      for (const [key, value] of Object.entries(cleanData)) {
+        const fieldId = fieldKeyToIdMap.get(key);
+        if (fieldId) {
+          keyToIdResponses[fieldId] = value;
+        } else {
+          logger.warn(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+        }
+      }
+      
+      logger.info(`[KY3P Form Service] Mapped ${Object.keys(keyToIdResponses).length} field keys to IDs for bulk update`);
+
       // Use the standardized pattern from KYB service - shorter and more reliable
       // Send to server with proper payload format including 'responses' wrapper
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
@@ -941,7 +987,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          responses: cleanData // Direct format matching KYB service implementation
+          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
         }),
       });
       
@@ -1012,6 +1058,29 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
       
+      // Create a mapping from field keys to field IDs
+      // The backend expects field IDs, not field keys
+      // We need to map our field.key values to field.id values
+      const keyToIdResponses: Record<string, any> = {};
+      const allFields = await this.getFields();
+      
+      // Create a map of field key to field ID for quick lookup
+      const fieldKeyToIdMap = new Map(
+        allFields.map(field => [field.key, field.id])
+      );
+      
+      // Convert the keys in cleanData to field IDs
+      for (const [key, value] of Object.entries(cleanData)) {
+        const fieldId = fieldKeyToIdMap.get(key);
+        if (fieldId) {
+          keyToIdResponses[fieldId] = value;
+        } else {
+          logger.warn(`[KY3P Form Service] Field key not found in mapping for submission: ${key}`);
+        }
+      }
+      
+      logger.info(`[KY3P Form Service] Mapped ${Object.keys(keyToIdResponses).length} field keys to IDs for submission`);
+      
       // Call the submit endpoint with clean data
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit`, {
         method: 'POST',
@@ -1020,7 +1089,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          formData: cleanData,
+          formData: keyToIdResponses,
           fileName: options.fileName
         }),
       });
