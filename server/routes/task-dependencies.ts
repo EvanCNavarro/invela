@@ -287,7 +287,91 @@ export async function unlockOpenBankingTasks(companyId: number) {
   }
 }
 
+/**
+ * Unlock ALL tasks for a company regardless of dependencies
+ * This function directly unlocks every task for a company without checking prerequisites
+ */
+export async function unlockAllTasks(companyId: number) {
+  logger.info('[TaskDependencies] Unlocking ALL tasks for company', { companyId });
+  
+  try {
+    // Find all tasks for this company
+    const companyTasks = await db.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.company_id, companyId),
+          or(
+            eq(tasks.status, 'locked'),
+            eq(tasks.status, 'not_started'),
+            isNull(tasks.status)
+          )
+        )
+      );
+    
+    if (companyTasks.length === 0) {
+      logger.info('[TaskDependencies] No tasks found to unlock', { companyId });
+      return;
+    }
+    
+    logger.info('[TaskDependencies] Found tasks to unlock', { 
+      companyId, 
+      count: companyTasks.length,
+      taskIds: companyTasks.map(t => t.id),
+      taskTypes: companyTasks.map(t => t.task_type)
+    });
+    
+    // Unlock each task
+    for (const task of companyTasks) {
+      await db.update(tasks)
+        .set({
+          status: 'not_started',
+          metadata: sql`jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                COALESCE(metadata, '{}'::jsonb),
+                '{locked}', 'false'
+              ),
+              '{prerequisite_completed}', 'true'
+            ),
+            '{prerequisite_completed_at}', to_jsonb(now())
+          )`,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, task.id));
+        
+      logger.info('[TaskDependencies] Unlocked task', { 
+        companyId, 
+        taskId: task.id,
+        taskType: task.task_type
+      });
+      
+      // Broadcast the update via WebSocket
+      broadcastTaskUpdate({
+        id: task.id,
+        status: 'not_started',
+        metadata: {
+          locked: false,
+          prerequisite_completed: true,
+          prerequisite_completed_at: new Date().toISOString()
+        }
+      });
+    }
+    
+    logger.info('[TaskDependencies] Successfully unlocked all tasks', { 
+      companyId, 
+      count: companyTasks.length 
+    });
+  } catch (error) {
+    logger.error('[TaskDependencies] Error unlocking all tasks', {
+      companyId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
 export default {
   processDependencies,
-  unlockOpenBankingTasks
+  unlockOpenBankingTasks,
+  unlockAllTasks
 };
