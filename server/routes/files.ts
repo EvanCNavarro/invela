@@ -495,15 +495,32 @@ router.post("/api/documents/:id/process", async (req, res) => {
     }
 
     try {
-      // Create document chunks
-      const chunks = await createDocumentChunks(filePath, fileRecord.type);
+      console.log('[Document Processing] Starting document chunking for:', {
+        fileId,
+        fileName: fileRecord.name,
+        fileType: fileRecord.type,
+        isCSV: fileRecord.type === 'text/csv' || fileRecord.name.toLowerCase().endsWith('.csv'),
+        timestamp: new Date().toISOString()
+      });
+      
+      // Create document chunks with special handling for CSV files
+      const chunks = await createDocumentChunks(filePath, fileRecord.type || 
+               (fileRecord.name.toLowerCase().endsWith('.csv') ? 'text/csv' : 'text/plain'));
+      
+      console.log('[Document Processing] Chunking complete:', {
+        fileId,
+        totalChunks: chunks.length,
+        firstChunkPreview: chunks.length > 0 ? chunks[0].content.substring(0, 100) + '...' : 'No chunks created',
+        timestamp: new Date().toISOString()
+      });
 
-      // Initialize metadata with field information
+      // Initialize metadata with complete field information
       const initialMetadata = {
         status: 'processing',
         fields: fields.map((f: Field) => ({
           field_key: f.field_key,
-          question: f.question
+          question: f.question,
+          ai_search_instructions: f.ai_search_instructions || 'Extract this information from the document'
         })),
         chunks: {
           total: chunks.length,
@@ -515,7 +532,9 @@ router.post("/api/documents/:id/process", async (req, res) => {
         timestamps: {
           started: new Date().toISOString(),
           lastUpdate: new Date().toISOString()
-        }
+        },
+        fileType: fileRecord.type || 
+               (fileRecord.name.toLowerCase().endsWith('.csv') ? 'text/csv' : 'text/plain')
       };
 
       await db.update(files)
