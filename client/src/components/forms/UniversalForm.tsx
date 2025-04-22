@@ -929,8 +929,71 @@ const handleDemoAutoFill = useCallback(async () => {
     await new Promise(resolve => setTimeout(resolve, 50));
     
     // Different handling based on form type
-    if (taskType === 'sp_ky3p_assessment' || taskType === 'kyb' || taskType === 'company_kyb') {
-      // For KY3P and KYB forms, we use a batched approach for reliability
+    if (taskType === 'sp_ky3p_assessment' && formService && 'bulkUpdate' in formService) {
+      // For KY3P forms, use the form service's bulkUpdate method
+      logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId}`);
+      
+      // Filter out empty values to get valid responses for bulk update
+      const validResponses: Record<string, any> = {};
+      let fieldCount = 0;
+      
+      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          // Add to valid responses
+          validResponses[fieldKey] = fieldValue;
+          fieldCount++;
+          
+          // Update the UI form state
+          form.setValue(fieldKey, fieldValue, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
+        }
+      }
+      
+      if (fieldCount === 0) {
+        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+        toast({
+          variant: "warning",
+          title: "No Data Available",
+          description: "No valid demo data was found for this form type.",
+        });
+        return false;
+      }
+      
+      try {
+        logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+        
+        const success = await (formService as any).bulkUpdate(validResponses, taskId);
+        
+        if (!success) {
+          throw new Error('The KY3P form service bulkUpdate method failed');
+        }
+        
+        logger.info(`[UniversalForm] KY3P form service bulk update successful`);
+        
+        // Force query refresh
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        
+        // Add a delay for UI reconciliation
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        logger.error('[UniversalForm] Error during KY3P bulk update:', error);
+        
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: "Could not update form with demo data. Please try again or contact support.",
+        });
+        
+        return false;
+      }
+    }
+    else if (taskType === 'kyb' || taskType === 'company_kyb') {
+      // For KYB forms, we use a batched approach for reliability
       logger.info(`[UniversalForm] Using enhanced individual field updates for ${taskType}`);
       
       let fieldsUpdated = 0;
