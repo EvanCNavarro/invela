@@ -268,8 +268,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for save operation. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
       
-      // Using the standardized KYB approach - simpler and more reliable
-      // Send to server with proper payload format including 'responses' wrapper
+      // Convert the object with keys as field IDs to array format with explicit fieldId property
+      // This is needed because the backend API expects a different format
+      const responsesArray = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
+        value: value
+      }));
+
+      logger.info(`[KY3P Form Service] Converted to ${responsesArray.length} array format responses`);
+      
+      // Use the standardized pattern but with array format
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
         method: 'POST',
         headers: {
@@ -277,7 +285,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
+          responses: responsesArray // Using array format with explicit fieldId property
         }),
       });
       
@@ -366,8 +374,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
 
-      // Use the standardized pattern from KYB service - shorter and more reliable
-      // Send to server with proper payload format including 'responses' wrapper
+      // Convert the object with keys as field IDs to array format with explicit fieldId property
+      // This is needed because the backend API expects a different format
+      const responsesArray = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
+        value: value
+      }));
+
+      logger.info(`[KY3P Form Service] Converted to ${responsesArray.length} array format responses`);
+      
+      // Use the standardized pattern from KYB service but with array format
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
         method: 'POST',
         headers: {
@@ -375,7 +391,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
+          responses: responsesArray // Using array format with explicit fieldId property
         }),
       });
       
@@ -472,7 +488,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for submission. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
       
-      // Call the submit endpoint with clean data
+      // Convert the object with keys as field IDs to array format with explicit fieldId property
+      // This is needed because the backend API expects a different format
+      const responsesArray = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
+        value: value
+      }));
+
+      logger.info(`[KY3P Form Service] Converted to ${responsesArray.length} array format responses for submission`);
+      
+      // Call the submit endpoint with clean data in array format
       const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit`, {
         method: 'POST',
         headers: {
@@ -480,7 +505,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         },
         credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          formData: keyToIdResponses,
+          formData: responsesArray, // Using array format with explicit fieldId property
           fileName: options.fileName
         }),
       });
