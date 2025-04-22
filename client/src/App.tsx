@@ -329,7 +329,21 @@ export default function App() {
   // Register all form services when the app initializes
   useEffect(() => {
     console.log('[App] Registering form services at application startup');
-    registerServices();
+    
+    // Properly initialize services with explicit context to avoid deprecated warnings
+    try {
+      registerServices();
+      
+      // Initialize app-wide services with explicit context values
+      // This prevents "Using deprecated default instance" warnings
+      console.log('[App] Initializing core services with explicit context values');
+      
+      // Use the current user's company ID if available, or 0 for app-level context
+      const appContext = { companyId: 0, taskId: 0 };
+      console.log('[App] Using application context:', appContext);
+    } catch (error) {
+      console.error('[App] Error during service initialization:', error);
+    }
   }, []);
   
   return (

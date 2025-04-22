@@ -59,8 +59,18 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         
         console.log('[WebSocket] Connecting to:', wsUrl);
-        const socket = new WebSocket(wsUrl);
-        socketRef.current = socket;
+        
+        // Safely create WebSocket connection with error handling
+        let socket: WebSocket;
+        try {
+          socket = new WebSocket(wsUrl);
+          socketRef.current = socket;
+        } catch (connectionError) {
+          console.error('[WebSocket] Failed to establish connection:', connectionError);
+          // Don't attempt to connect again if there's a connection error
+          // This prevents the DOMException from repeatedly occurring
+          return () => {};
+        }
 
         socket.onopen = () => {
           console.log('[WebSocket] Connection established');

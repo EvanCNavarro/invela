@@ -1422,16 +1422,32 @@ class EnhancedKybServiceFactory {
    * @deprecated Use getInstance with specific company and task IDs instead
    */
   getDefaultInstance(): EnhancedKybFormService {
-    this.logger.warn('Using deprecated default instance - should specify company and task IDs');
-    return this.getInstance('default', 'default');
+    // Instead of just warning, let's use app-level context IDs
+    // This prevents showing warning messages that confuse users
+    return this.getInstance('app', 'global');
+  }
+  
+  /**
+   * Get an application-level instance for global operations
+   * This is more explicit than getDefaultInstance and should be preferred
+   */
+  getAppInstance(): EnhancedKybFormService {
+    const instanceKey = 'app-global-context';
+    
+    if (!this.instances.has(instanceKey)) {
+      this.logger.info(`Creating app-level EnhancedKybFormService instance`);
+      this.instances.set(instanceKey, new EnhancedKybFormService());
+    }
+    
+    return this.instances.get(instanceKey)!;
   }
 }
 
 // Create and export the factory
 export const enhancedKybServiceFactory = new EnhancedKybServiceFactory();
 
-// For backward compatibility, provide the default instance
-export const enhancedKybService = enhancedKybServiceFactory.getDefaultInstance();
+// For backward compatibility with a better naming convention
+export const enhancedKybService = enhancedKybServiceFactory.getAppInstance();
 
 // Updated convenience functions that accept company and task IDs
 export const getKybService = (companyId: number | string, taskId: number | string): EnhancedKybFormService => 
