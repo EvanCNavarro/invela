@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
@@ -43,16 +44,30 @@ import {
   FinTechDashboardSkeleton 
 } from "@/components/dashboard/SkeletonWidgets";
 
-const DEFAULT_WIDGETS = {
+// Create separate default widget sets based on company type
+const FINTECH_DEFAULT_WIDGETS = {
+  quickActions: true,
+  companyScore: true,
+  networkVisualization: false,
+  riskRadar: true
+};
+
+const OTHER_DEFAULT_WIDGETS = {
   quickActions: true,
   companyScore: true,
   networkVisualization: true,
-  riskRadar: true
+  riskRadar: false
 };
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  // Initially set to a common subset of widgets
+  const [visibleWidgets, setVisibleWidgets] = useState({
+    quickActions: true,
+    companyScore: true,
+    networkVisualization: false,
+    riskRadar: false
+  });
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -64,7 +79,9 @@ export default function DashboardPage() {
     refetchInterval: false
   });
 
-  const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
+  type WidgetKey = 'quickActions' | 'companyScore' | 'networkVisualization' | 'riskRadar';
+  
+  const toggleWidget = (widgetId: WidgetKey) => {
     setVisibleWidgets(prev => ({
       ...prev,
       [widgetId]: !prev[widgetId]
@@ -127,7 +144,7 @@ export default function DashboardPage() {
                     key={key}
                     onSelect={(event) => {
                       event.preventDefault();
-                      toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                      toggleWidget(key as 'quickActions' | 'companyScore' | 'networkVisualization' | 'riskRadar');
                     }}
                     className="flex items-center gap-2"
                   >
@@ -172,7 +189,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-12 space-y-8">
+        <div className="mt-4 space-y-8">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (
