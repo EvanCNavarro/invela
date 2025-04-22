@@ -723,6 +723,101 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
   
+  // Get a specific company with risk clusters data
+  app.get("/api/companies/:id", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+      
+      // Fetch the company data
+      const companyData = await db.select({
+        id: companies.id,
+        name: companies.name,
+        description: companies.description,
+        category: companies.category,
+        riskScore: companies.risk_score,
+        chosenScore: companies.chosen_score,
+        riskClusters: companies.risk_clusters,
+        onboardingCompleted: companies.onboarding_company_completed,
+        isDemo: companies.is_demo,
+      })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+      
+      if (!companyData || companyData.length === 0) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "NOT_FOUND"
+        });
+      }
+      
+      // Return the company data
+      return res.json(companyData[0]);
+    } catch (error) {
+      console.error("[Companies] Error fetching company data:", error);
+      return res.status(500).json({
+        message: "Error fetching company data",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+  
+  // Get network companies for the current user's company
+  app.get("/api/companies/network", requireAuth, async (req, res) => {
+    try {
+      const userCompanyId = req.user.company_id;
+      
+      // Find all relationships where this company is either the source or target
+      const companyRelationships = await db.select({
+        relatedCompanyId: relationships.related_company_id,
+        companyId: relationships.company_id,
+      })
+      .from(relationships)
+      .where(
+        or(
+          eq(relationships.company_id, userCompanyId),
+          eq(relationships.related_company_id, userCompanyId)
+        )
+      );
+      
+      if (!companyRelationships || companyRelationships.length === 0) {
+        return res.json([]);
+      }
+      
+      // Extract the IDs of all related companies
+      const relatedCompanyIds = companyRelationships.map(rel => 
+        rel.companyId === userCompanyId ? rel.relatedCompanyId : rel.companyId
+      );
+      
+      // Fetch data for all related companies
+      const networkCompanies = await db.select({
+        id: companies.id,
+        name: companies.name,
+        category: companies.category,
+        risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        risk_clusters: companies.risk_clusters,
+      })
+      .from(companies)
+      .where(inArray(companies.id, relatedCompanyIds));
+      
+      return res.json(networkCompanies);
+    } catch (error) {
+      console.error("[Companies] Error fetching network companies:", error);
+      return res.status(500).json({
+        message: "Error fetching network companies",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+  
   // Check if a company is a demo company - accept either companyId or taskId
   app.get("/api/companies/is-demo", requireAuth, async (req, res) => {
     try {

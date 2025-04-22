@@ -33,6 +33,7 @@ const visualizationTypes = [
   { value: "relationship_distribution", label: "Company Type Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_flow", label: "Risk Flow Visualization" },
+  { value: "risk_radar", label: "Risk Radar Chart" },
 ];
 
 export default function InsightsPage() {
