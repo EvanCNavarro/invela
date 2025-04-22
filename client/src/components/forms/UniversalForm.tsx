@@ -928,99 +928,9 @@ const handleDemoAutoFill = useCallback(async () => {
     // Add a small delay to allow the form to reset
     await new Promise(resolve => setTimeout(resolve, 50));
     
-    // For KY3P and Open Banking forms, use the form service's bulkUpdate method
-    if (taskType === 'sp_ky3p_assessment' || taskType === 'open_banking' || taskType === 'open_banking_survey') {
-      logger.info(`[UniversalForm] Using form service bulkUpdate for ${taskType}`);
-      
-      // Filter out empty values to get valid responses for bulk update
-      const validResponses: Record<string, any> = {};
-      let fieldCount = 0;
-      
-      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
-        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
-          // Add to valid responses
-          validResponses[fieldKey] = fieldValue;
-          fieldCount++;
-          
-          // Update the UI form state
-          form.setValue(fieldKey, fieldValue, {
-            shouldValidate: true,
-            shouldDirty: true,
-            shouldTouch: true
-          });
-        }
-      }
-      
-      if (fieldCount === 0) {
-        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
-        toast({
-          variant: "warning",
-          title: "No Data Available",
-          description: "No valid demo data was found for this form type.",
-        });
-        return false;
-      }
-      
-      try {
-        // For KY3P forms, use the direct bulk update endpoint instead of the form service
-        if (taskType === 'sp_ky3p_assessment') {
-          logger.info(`[UniversalForm] Using direct bulk update endpoint for KY3P task ${taskId} with ${fieldCount} fields`);
-          
-          // Use the dedicated endpoint directly to avoid any issues with the form service
-          const response = await fetch(`/api/ky3p-bulk-update/${taskId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              responses: validResponses
-            }),
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            logger.error(`[UniversalForm] KY3P demo auto-fill failed: ${response.status}`, errorText);
-            throw new Error(`Failed to auto-fill KY3P form: ${errorText}`);
-          }
-          
-          logger.info(`[UniversalForm] KY3P direct bulk update successful`);
-        } 
-        else if ((taskType === 'open_banking' || taskType === 'open_banking_survey') && formService && 'bulkUpdate' in formService) {
-          logger.info(`[UniversalForm] Using Open Banking form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
-          
-          const success = await (formService as any).bulkUpdate(validResponses, taskId);
-          
-          if (!success) {
-            throw new Error('The Open Banking form service bulkUpdate method failed');
-          }
-          
-          logger.info(`[UniversalForm] Open Banking form service bulk update successful`);
-        }
-        else {
-          // Fallback to direct API call as a last resort
-          logger.warn(`[UniversalForm] No bulkUpdate method found in form service, using direct API call instead`);
-          
-          throw new Error('Form service does not support bulkUpdate method. Please check implementation.');
-        }
-        
-        // Force query refresh
-        const { queryClient } = await import('@/lib/queryClient');
-        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      } catch (error) {
-        logger.error('[UniversalForm] Error during bulk update:', error);
-        
-        toast({
-          variant: "destructive",
-          title: "Auto-Fill Failed",
-          description: "Could not update form with demo data. Please try again or contact support.",
-        });
-        
-        return false;
-      }
-    } else {
-      // For KYB forms, we need a more reliable approach with better timing
+    // Different handling based on form type
+    if (taskType === 'sp_ky3p_assessment' || taskType === 'kyb' || taskType === 'company_kyb') {
+      // For KY3P and KYB forms, we use a batched approach for reliability
       logger.info(`[UniversalForm] Using enhanced individual field updates for ${taskType}`);
       
       let fieldsUpdated = 0;
@@ -1062,6 +972,83 @@ const handleDemoAutoFill = useCallback(async () => {
       // Add final delay for form reconciliation
       logger.info(`[UniversalForm] All batches complete. Updated ${fieldsUpdated} fields. Waiting for final reconciliation.`);
       await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    // For Open Banking forms, use the form service's bulkUpdate method
+    else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+      logger.info(`[UniversalForm] Using form service bulkUpdate for ${taskType}`);
+      
+      // Filter out empty values to get valid responses for bulk update
+      const validResponses: Record<string, any> = {};
+      let fieldCount = 0;
+      
+      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          // Add to valid responses
+          validResponses[fieldKey] = fieldValue;
+          fieldCount++;
+          
+          // Update the UI form state
+          form.setValue(fieldKey, fieldValue, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
+        }
+      }
+      
+      if (fieldCount === 0) {
+        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+        toast({
+          variant: "warning",
+          title: "No Data Available",
+          description: "No valid demo data was found for this form type.",
+        });
+        return false;
+      }
+      
+      try {
+        if ((taskType === 'open_banking' || taskType === 'open_banking_survey') && formService && 'bulkUpdate' in formService) {
+          logger.info(`[UniversalForm] Using Open Banking form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+          
+          const success = await (formService as any).bulkUpdate(validResponses, taskId);
+          
+          if (!success) {
+            throw new Error('The Open Banking form service bulkUpdate method failed');
+          }
+          
+          logger.info(`[UniversalForm] Open Banking form service bulk update successful`);
+        }
+        else {
+          // Fallback to direct API call as a last resort
+          logger.warn(`[UniversalForm] No bulkUpdate method found in form service, using direct API call instead`);
+          
+          throw new Error('Form service does not support bulkUpdate method. Please check implementation.');
+        }
+        
+        // Force query refresh
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      } catch (error) {
+        logger.error('[UniversalForm] Error during bulk update:', error);
+        
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: "Could not update form with demo data. Please try again or contact support.",
+        });
+        
+        return false;
+      }
+    } else {
+      // No other form types to handle
+      logger.warn(`[UniversalForm] Unsupported form type: ${taskType}. No auto-fill implementation available.`);
+      toast({
+        variant: "warning",
+        title: "Auto-Fill Unavailable",
+        description: `No auto-fill implementation is available for ${taskType} forms.`,
+      });
+      return false;
     }
     
     // Save progress
