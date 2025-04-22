@@ -531,17 +531,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Built field key to ID map with ${fieldKeyToIdMap.size} entries`);
       
-      // Step 4: Process each field individually using saveField method
+      // Step 4: Process ALL fields individually 
       let successCount = 0;
       let failCount = 0;
       
-      // Only process first 5 fields for an initial test (to avoid overwhelming the system)
+      // Process ALL fields, not just the first 5
       const demoDataEntries = Object.entries(demoData);
-      const firstFiveFields = demoDataEntries.slice(0, 5);
       
-      logger.info(`[KY3P Form Service] Processing the first 5 fields one by one (total fields: ${demoDataEntries.length})`);
+      logger.info(`[KY3P Form Service] Processing all ${demoDataEntries.length} fields one by one`);
       
-      for (const [key, value] of firstFiveFields) {
+      for (const [key, value] of demoDataEntries) {
         if (value === undefined || value === null || value === '') {
           continue;
         }
@@ -596,6 +595,82 @@ export class KY3PFormService extends EnhancedKybFormService {
         const error = 'Could not save any fields individually';
         logger.error(`[KY3P Form Service] ${error}`);
         return { success: false, error, updatedCount: 0 };
+      }
+      
+      // Update the task progress on the server side
+      try {
+        // Calculate progress based on how many fields were populated
+        const progress = Math.min(Math.round((successCount / fieldKeyToIdMap.size) * 100), 100);
+        logger.info(`[KY3P Form Service] Updating task progress to ${progress}%`);
+        
+        // Update task progress
+        const progressUpdateResponse = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            progress: progress
+          }),
+        });
+        
+        if (progressUpdateResponse.ok) {
+          logger.info(`[KY3P Form Service] Successfully updated task progress to ${progress}%`);
+        } else {
+          logger.warn(`[KY3P Form Service] Failed to update task progress: ${progressUpdateResponse.status}`);
+        }
+      } catch (progressError) {
+        logger.error(`[KY3P Form Service] Error updating task progress:`, progressError);
+      }
+      
+      // Save task form data to ensure it's accessible for future sessions
+      try {
+        logger.info(`[KY3P Form Service] Saving form data to task`);
+        const formDataResponse = await this.loadResponses();
+        
+        // Update the task with the form data
+        const saveResponse = await fetch(`/api/tasks/${taskId}/save-form-data`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            formData: formDataResponse
+          }),
+        });
+        
+        if (saveResponse.ok) {
+          logger.info(`[KY3P Form Service] Successfully saved form data to task`);
+        } else {
+          logger.warn(`[KY3P Form Service] Failed to save form data: ${saveResponse.status}`);
+        }
+      } catch (saveError) {
+        logger.error(`[KY3P Form Service] Error saving form data:`, saveError);
+      }
+      
+      // Manual WebSocket broadcast to ensure UI updates
+      try {
+        // Directly call the WebSocket broadcast endpoint
+        const broadcastResponse = await fetch(`/api/broadcast/task-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            taskId: taskId,
+            type: 'task_updated',
+            timestamp: new Date().toISOString()
+          }),
+        });
+        
+        if (broadcastResponse.ok) {
+          logger.info(`[KY3P Form Service] Broadcast notification sent successfully`);
+        }
+      } catch (broadcastError) {
+        logger.warn(`[KY3P Form Service] Failed to broadcast task update:`, broadcastError);
       }
       
       return { 

@@ -50,20 +50,78 @@ export const DemoAutofillButton: React.FC<DemoAutofillButtonProps> = ({
     try {
       logger.info('Starting demo autofill for task:', taskId);
       
-      // Use the new bulk update method from KY3PFormService
+      // Use the individual field update method from KY3PFormService
       const result = await formService.bulkUpdateResponses(taskId);
       
       if (result.success) {
         logger.info('Demo autofill successful:', result);
+        
+        // Show success toast
         toast({
           title: "Demo Data Loaded",
           description: `${result.updatedCount} fields have been populated with demo data.`,
           variant: "default",
         });
         
+        // Force a refresh of the tasks to update progress
+        try {
+          const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          
+          if (response.ok) {
+            logger.info('Successfully refreshed task data');
+          }
+        } catch (refreshError) {
+          logger.warn('Failed to refresh task data:', refreshError);
+        }
+        
+        // Force a UI cache invalidation by refreshing tasks
+        try {
+          const refreshResponse = await fetch('/api/tasks', {
+            method: 'GET',
+            credentials: 'include',
+          });
+          
+          if (refreshResponse.ok) {
+            logger.info('Successfully refreshed tasks list');
+          }
+        } catch (listRefreshError) {
+          logger.warn('Failed to refresh tasks list:', listRefreshError);
+        }
+        
+        // Broadcast a WebSocket event to update the UI for all clients
+        try {
+          const updateEvent = {
+            type: 'task_updated',
+            taskId: taskId,
+            timestamp: new Date().toISOString()
+          };
+          
+          // Try to find the WebSocket connection if it exists in the window object
+          if (window.formSocket) {
+            window.formSocket.send(JSON.stringify(updateEvent));
+            logger.info('Sent WebSocket update event');
+          }
+        } catch (wsError) {
+          logger.warn('Could not send WebSocket update:', wsError);
+        }
+        
         // Call the onSuccess callback if provided
         if (onSuccess) {
+          logger.info('Calling onSuccess callback to refresh form');
           onSuccess();
+          
+          // Small delay to ensure UI refresh
+          setTimeout(() => {
+            // Force a form reload by dispatching a custom event
+            const refreshEvent = new CustomEvent('form:refresh', { 
+              detail: { taskId, timestamp: new Date().toISOString() } 
+            });
+            window.dispatchEvent(refreshEvent);
+            logger.info('Dispatched form:refresh event');
+          }, 500);
         }
       } else {
         logger.error('Demo autofill failed:', result.error);
