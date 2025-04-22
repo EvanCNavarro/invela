@@ -475,7 +475,7 @@ export class KY3PFormService extends EnhancedKybFormService {
    */
   /**
    * Bulk update KY3P responses with demo data
-   * This is called from the DemoAutofillButton in the form 
+   * This is called from the form's Demo Auto-Fill button 
    * 
    * @param taskId Task ID
    * @param formData Optional form data
@@ -486,17 +486,22 @@ export class KY3PFormService extends EnhancedKybFormService {
     formData?: Record<string, any>
   ): Promise<{ success: boolean; error?: string; updatedCount: number }> {
     try {
-      // Get the demo data
+      // Get the demo data from our endpoint
       const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
         credentials: 'include'
       });
       
       if (!response.ok) {
-        const error = `Failed to fetch demo data: ${response.statusText}`;
-        return { success: false, error, updatedCount: 0 };
+        logger.error(`[KY3P Form Service] Failed to fetch demo data: ${response.status} ${response.statusText}`);
+        return { 
+          success: false, 
+          error: `Failed to fetch demo data: ${response.statusText}`, 
+          updatedCount: 0 
+        };
       }
       
       const demoData = await response.json();
+      logger.info(`[KY3P Form Service] Retrieved ${Object.keys(demoData).length} demo fields`);
       
       if (Object.keys(demoData).length === 0) {
         return { 
@@ -506,56 +511,38 @@ export class KY3PFormService extends EnhancedKybFormService {
         };
       }
       
-      // Use the KYB bulk-update endpoint directly - this is what WORKS
-      const bulkResponse = await fetch(`/api/kyb/bulk-update/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          responses: demoData
-        })
-      });
-      
-      if (!bulkResponse.ok) {
-        const error = `Bulk update failed: ${bulkResponse.statusText}`;
-        return { success: false, error, updatedCount: 0 };
+      // Call the helper function from fix-ky3p-bulk-update.ts that uses the KYB endpoint
+      try {
+        // Dynamically import the helper function
+        const { bulkUpdateKy3pResponses } = await import('@/components/forms/fix-ky3p-bulk-update');
+        
+        // Call the helper function
+        const success = await bulkUpdateKy3pResponses(taskId, demoData);
+        
+        if (success) {
+          logger.info(`[KY3P Form Service] Bulk update completed successfully with ${Object.keys(demoData).length} fields`);
+          return {
+            success: true,
+            updatedCount: Object.keys(demoData).length
+          };
+        } else {
+          logger.error('[KY3P Form Service] Bulk update failed');
+          return {
+            success: false,
+            error: 'Bulk update operation failed',
+            updatedCount: 0
+          };
+        }
+      } catch (bulkUpdateError: any) {
+        logger.error('[KY3P Form Service] Error during bulk update:', bulkUpdateError);
+        return {
+          success: false,
+          error: bulkUpdateError?.message || 'Error during bulk update',
+          updatedCount: 0
+        };
       }
-      
-      const updateCount = Object.keys(demoData).length;
-      
-      // Update task progress
-      await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          progress: 100
-        })
-      });
-      
-      // Broadcast update
-      await fetch(`/api/broadcast/task-update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          taskId,
-          type: 'task_updated',
-          timestamp: new Date().toISOString()
-        })
-      });
-      
-      return {
-        success: true,
-        updatedCount: updateCount
-      };
     } catch (error: any) {
+      logger.error('[KY3P Form Service] Unexpected error:', error);
       return {
         success: false,
         error: error?.message || 'Unknown error',
