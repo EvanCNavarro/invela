@@ -5,12 +5,14 @@
  * and provides an interface to the Universal Form component.
  */
 import { EnhancedKybFormService } from './enhanced-kyb-service';
+import { SyncFormDataResponse } from './form-service.interface';
 
 // Simple console-based logger
 const logger = {
   info: (message: string, ...args: any[]) => console.log(`INFO: ${message}`, ...args),
   error: (message: string, ...args: any[]) => console.error(`ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`WARN: ${message}`, ...args),
+  debug: (message: string, ...args: any[]) => console.debug(`DEBUG: ${message}`, ...args),
 };
 
 // Singleton instance
@@ -657,6 +659,66 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Synchronize form data between task.savedFormData and individual field responses
+   * This prevents inconsistencies when navigating between forms
+   * @param taskId The task ID to synchronize
+   * @returns Promise<SyncFormDataResponse> The synchronized form data response
+   */
+  public async syncFormData(taskId: number): Promise<SyncFormDataResponse> {
+    try {
+      // Check if taskId is provided
+      if (!taskId) {
+        logger.error('[OpenBankingFormService] Missing taskId in syncFormData');
+        throw new Error('Task ID is required for synchronization');
+      }
+      
+      logger.info(`[OpenBankingFormService] Synchronizing form data for task: ${taskId}`);
+      
+      // Call the standardized synchronization endpoint
+      const response = await fetch(`/api/tasks/${taskId}/sync-form-data`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Check for errors
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[OpenBankingFormService] Error synchronizing form data: ${errorText}`);
+        throw new Error(`Failed to synchronize Open Banking form data: ${response.status} ${response.statusText}`);
+      }
+      
+      // Parse response
+      const result = await response.json();
+      
+      // Update local form data if data was synchronized
+      if (result.success && result.formData && result.syncDirection !== 'none') {
+        logger.info(`[OpenBankingFormService] Updating local form data with synchronized data (direction: ${result.syncDirection})`);
+        this.loadFormData(result.formData);
+      } else {
+        logger.info(`[OpenBankingFormService] No synchronization needed (direction: ${result.syncDirection})`);
+      }
+      
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`[OpenBankingFormService] Error in syncFormData: ${errorMessage}`);
+      
+      // Return a failed response
+      return {
+        success: false,
+        formData: {},
+        progress: 0,
+        status: 'error',
+        taskId,
+        syncDirection: 'none'
+      };
+    }
+  }
+
+  /**
    * Load progress from the server
    * This method is used by the FormDataManager to load saved form data
    */
@@ -670,6 +732,28 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     
     try {
       logger.info(`[OpenBankingFormService] Loading progress for task ${effectiveTaskId}`);
+      
+      // First, synchronize form data to ensure we have consistent state
+      try {
+        logger.info(`[OpenBankingFormService] Synchronizing form data before loading progress for task ${effectiveTaskId}`);
+        const syncResult = await this.syncFormData(effectiveTaskId);
+        
+        if (syncResult.success) {
+          logger.info(`[OpenBankingFormService] Form data synchronized successfully before loading (direction: ${syncResult.syncDirection})`);
+          
+          // If we synchronized data and the direction was not 'none',
+          // we can use the synchronized form data directly
+          if (syncResult.syncDirection !== 'none' && Object.keys(syncResult.formData).length > 0) {
+            logger.info(`[OpenBankingFormService] Using synchronized data from server (${Object.keys(syncResult.formData).length} fields)`);
+            return syncResult.formData;
+          }
+        } else {
+          logger.warn(`[OpenBankingFormService] Form data synchronization failed before loading, continuing with normal load`);
+        }
+      } catch (syncError) {
+        logger.error(`[OpenBankingFormService] Error during pre-load synchronization: ${syncError}`);
+        // Continue with normal loading even if sync fails
+      }
       
       // Get the task information first to check if it's already submitted
       try {
