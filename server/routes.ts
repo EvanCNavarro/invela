@@ -931,34 +931,32 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           tasksCache.delete(cacheKey);
         }
         
-        // Check if we need to process task dependencies (like unlocking Open Banking Survey)
-        // This is triggered by manual request using ?check_dependencies=true or automatically
-        if (req.query.check_dependencies === 'true' || req.query.process_open_banking === 'true') {
-          try {
-            console.log('[Tasks] Processing Open Banking dependencies from task list request', {
-              userId,
-              companyId,
-              requestedBy: 'query_parameter'
-            });
-            
-            // Import and use task dependency processors
-            const { unlockAllTasks } = require('./routes/task-dependencies');
-            
-            // Unlock ALL tasks for this company regardless of dependencies
-            await unlockAllTasks(companyId);
-            
-            // Clear task cache to ensure updated task status is returned
-            tasksCache.delete(cacheKey);
-            
-            console.log('[Tasks] Successfully unlocked all tasks for company:', companyId);
-          } catch (depError) {
+        // Always process task dependencies and ensure all tasks are unlocked
+        // This makes the dependency chain optional rather than enforced
+        try {
+          console.log('[Tasks] Automatically unlocking all tasks for company', {
+            userId,
+            companyId,
+            requestedBy: 'automatic_task_unlock'
+          });
+          
+          // Import and use task dependency processors
+          const { unlockAllTasks } = require('./routes/task-dependencies');
+          
+          // Unlock ALL tasks for this company regardless of dependencies
+          await unlockAllTasks(companyId);
+          
+          // Clear task cache to ensure updated task status is returned
+          tasksCache.delete(cacheKey);
+          
+          console.log('[Tasks] Successfully unlocked all tasks for company:', companyId);
+        } catch (depError) {
             console.error('[Tasks] Error unlocking all tasks:', {
               userId,
               companyId,
               error: depError instanceof Error ? depError.message : 'Unknown error'
             });
           }
-        }
       } catch (unlockError) {
         console.error('[Tasks] Error in dynamic task unlocking:', unlockError);
         // Continue with regular task fetching even if dynamic unlocking fails
