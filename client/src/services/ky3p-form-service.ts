@@ -913,9 +913,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for save operation. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
       
-      // Using the standardized KYB approach - simpler and more reliable
-      // Send to server with proper payload format including 'responses' wrapper
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
+      // Convert responses to array format if needed for compatibility
+      const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+        fieldId: parseInt(fieldId),
+        value
+      }));
+      logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
+      
+      // Use the dedicated bulk update endpoint that properly handles both array and object formats
+      // This endpoint was specifically created to handle the format mismatch issues
+      const response = await fetch(`/api/ky3p-bulk-update/${effectiveTaskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1007,9 +1014,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
 
-      // Use the standardized pattern from KYB service - shorter and more reliable
-      // Send to server with proper payload format including 'responses' wrapper
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
+      // Convert responses to array format if needed for compatibility
+      const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+        fieldId: parseInt(fieldId),
+        value
+      }));
+      logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
+
+      // Use the dedicated bulk update endpoint that properly handles both array and object formats
+      // This endpoint was specifically created to handle the format mismatch issues
+      const response = await fetch(`/api/ky3p-bulk-update/${effectiveTaskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
