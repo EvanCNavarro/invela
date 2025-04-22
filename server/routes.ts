@@ -1526,7 +1526,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
           revenueTier,
           category: rel.relatedCompany.category || 'Other',
-          activeConsents: rel.relatedCompany.activeConsents || null,
+          // activeConsents field removed as it doesn't exist in the database schema
           isDemo: rel.relatedCompany.isDemo
         };
       });
