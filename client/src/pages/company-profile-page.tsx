@@ -127,17 +127,9 @@ const getAccreditationTextStyle = (status: string | null | undefined): React.CSS
 
 // Helper function to get the appropriate label based on the status
 const getAccreditationStatusLabel = (status: string | null | undefined): React.ReactNode => {
-  // Display the actual status if available, otherwise show the normalized status
-  if (!status) return 'NOT AVAILABLE';
-  
-  // Format the status value for display
-  const formattedStatus = status
-    .replace(/_/g, ' ')  // Replace underscores with spaces
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-    
-  return formattedStatus;
+  // Display the normalized status category (VALID, PENDING, INVALID)
+  const normalizedStatus = getAccreditationStatus(status);
+  return normalizedStatus;
 };
 
 export default function CompanyProfilePage() {
