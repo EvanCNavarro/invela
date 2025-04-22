@@ -73,6 +73,9 @@ const getAccreditationStatus = (status: string | null | undefined): 'VALID' | 'P
   const validStatuses = ['PROVISIONALLY_APPROVED', 'APPROVED'];
   const pendingStatuses = ['IN_REVIEW', 'PENDING'];
   const invalidStatuses = ['EXPIRED', 'REVOKED', 'SUSPENDED', 'AWAITING_INVITATION', 'NULL'];
+  
+  // Handle case where status might be "NULL" as a string instead of actual null
+  if (status === 'NULL') return 'INVALID';
 
   if (validStatuses.includes(status)) return 'VALID';
   if (pendingStatuses.includes(status)) return 'PENDING';
@@ -124,8 +127,17 @@ const getAccreditationTextStyle = (status: string | null | undefined): React.CSS
 
 // Helper function to get the appropriate label based on the status
 const getAccreditationStatusLabel = (status: string | null | undefined): React.ReactNode => {
-  const normalizedStatus = getAccreditationStatus(status);
-  return normalizedStatus;
+  // Display the actual status if available, otherwise show the normalized status
+  if (!status) return 'NOT AVAILABLE';
+  
+  // Format the status value for display
+  const formattedStatus = status
+    .replace(/_/g, ' ')  // Replace underscores with spaces
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+    
+  return formattedStatus;
 };
 
 export default function CompanyProfilePage() {
