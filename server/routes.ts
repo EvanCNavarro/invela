@@ -926,6 +926,38 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           // Clear task cache to ensure updated task status is returned
           tasksCache.delete(cacheKey);
         }
+        
+        // Check if we need to process task dependencies (like unlocking Open Banking Survey)
+        // This is triggered by manual request using ?check_dependencies=true or automatically
+        if (req.query.check_dependencies === 'true' || req.query.process_open_banking === 'true') {
+          try {
+            console.log('[Tasks] Processing Open Banking dependencies from task list request', {
+              userId,
+              companyId,
+              requestedBy: 'query_parameter'
+            });
+            
+            // Import and use task dependency processors
+            const { processDependencies, unlockOpenBankingTasks } = require('./routes/task-dependencies');
+            
+            // Process all dependencies for this company
+            await processDependencies(companyId);
+            
+            // For extra reliability, directly unlock Open Banking tasks 
+            await unlockOpenBankingTasks(companyId);
+            
+            // Clear task cache to ensure updated task status is returned
+            tasksCache.delete(cacheKey);
+            
+            console.log('[Tasks] Successfully processed Open Banking dependencies');
+          } catch (depError) {
+            console.error('[Tasks] Error processing Open Banking dependencies:', {
+              userId,
+              companyId,
+              error: depError instanceof Error ? depError.message : 'Unknown error'
+            });
+          }
+        }
       } catch (unlockError) {
         console.error('[Tasks] Error in dynamic task unlocking:', unlockError);
         // Continue with regular task fetching even if dynamic unlocking fails
