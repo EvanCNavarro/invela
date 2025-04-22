@@ -987,102 +987,70 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
-      // Instead of doing a bulk update with field ID conversion, let's use the KYB-style batched approach
-      // Process fields individually to minimize mapping errors
-      logger.info(`[KY3P Form Service] Using individual field updates for task ${effectiveTaskId} with ${Object.keys(cleanData).length} fields`);
-      
-      let successCount = 0;
-      let failCount = 0;
-      
-      // Process in batches for better reliability
-      const batchSize = 5;
-      const fieldEntries = Object.entries(cleanData);
-      
-      for (let i = 0; i < fieldEntries.length; i += batchSize) {
-        const batch = fieldEntries.slice(i, i + batchSize);
-        
-        // Process each batch in parallel
-        await Promise.all(batch.map(async ([fieldKey, fieldValue]) => {
-          try {
-            // Update each field individually using the field key directly
-            const result = await this.updateSingleField(fieldKey, fieldValue, effectiveTaskId);
-            if (result) {
-              successCount++;
-            } else {
-              failCount++;
-            }
-          } catch (fieldError) {
-            logger.error(`[KY3P Form Service] Error updating field ${fieldKey}:`, fieldError);
-            failCount++;
-          }
-        }));
-        
-        // Add a delay between batches to prevent overloading the server
-        logger.info(`[KY3P Form Service] Processed batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(fieldEntries.length/batchSize)}: ${successCount} successes, ${failCount} failures`);
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      
-      logger.info(`[KY3P Form Service] Bulk update completed: ${successCount} successes, ${failCount} failures`);
-      
-      // Consider successful if at least some fields were updated
-      return successCount > 0;
-    } catch (error) {
-      logger.error('[KY3P Form Service] Error during bulk update:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Update a single field - helper method for bulkUpdate
-   * @param fieldKey The field key (not ID)
-   * @param fieldValue The field value
-   * @param taskId Optional task ID override
-   * @returns True if successful, false otherwise
-   */
-  private async updateSingleField(fieldKey: string, fieldValue: any, taskId?: number): Promise<boolean> {
-    const effectiveTaskId = taskId || this.taskId;
-    if (!effectiveTaskId) return false;
-    
-    try {
-      // Fetch field ID from field key
+      // Create a mapping from field keys to field IDs
+      // The backend expects field IDs, not field keys
+      // We need to map our field.key values to field.id values
+      const keyToIdResponses: Record<string, any> = {};
       const allFields = await this.getFields();
-      const field = allFields.find(f => f.key === fieldKey);
       
-      if (!field || !field.id) {
-        logger.warn(`[KY3P Form Service] Field key not found for individual update: ${fieldKey}`);
-        return false;
+      // Create a map of field key to field ID for quick lookup
+      const fieldKeyToIdMap = new Map(
+        allFields.map(field => [field.key, field.id])
+      );
+      
+      // Track fields found in the system versus received in the demo data
+      let totalFieldsInDemoData = Object.keys(cleanData).length;
+      let validFieldsFound = 0;
+      
+      // Convert the keys in cleanData to field IDs
+      // Only include fields that actually exist in this form service
+      for (const [key, value] of Object.entries(cleanData)) {
+        const fieldId = fieldKeyToIdMap.get(key);
+        if (fieldId) {
+          // Convert to numeric ID if needed
+          const numericFieldId = this.ensureNumericFieldId(fieldId, key);
+          if (numericFieldId !== null) {
+            keyToIdResponses[numericFieldId] = value;
+            validFieldsFound++;
+          }
+        } else {
+          // Just log the warning but don't include this field in the mapping
+          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+        }
       }
       
-      const fieldId = this.ensureNumericFieldId(field.id, fieldKey);
-      if (fieldId === null) {
-        logger.error(`[KY3P Form Service] Invalid field ID for key ${fieldKey}`);
-        return false;
-      }
-      
-      // Use individual field update endpoint
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses`, {
+      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
+
+      // Convert the object with keys as field IDs to array format with explicit fieldId property
+      // This is needed because the backend API expects a different format
+      const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+        fieldId: parseInt(fieldId, 10), // Ensure field ID is numeric
+        value
+      }));
+      logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
+
+      // Use the standardized pattern but with array format - using the proper endpoint
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        credentials: 'include', // Include session cookies
         body: JSON.stringify({
-          taskId: effectiveTaskId,
-          fieldId: fieldId,
-          responseValue: fieldValue
+          responses: arrayFormatResponses // Using array format with explicit fieldId property
         }),
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to update field ${fieldKey}: ${response.status}`, errorText);
+        logger.error(`[KY3P Form Service] Failed to perform bulk update: ${response.status}`, errorText);
         return false;
       }
       
-      logger.debug(`[KY3P Form Service] Successfully updated field ${fieldKey}`);
+      logger.info(`[KY3P Form Service] Bulk update successful for task ${effectiveTaskId}`);
       return true;
     } catch (error) {
-      logger.error(`[KY3P Form Service] Error updating individual field ${fieldKey}:`, error);
+      logger.error('[KY3P Form Service] Error during bulk update:', error);
       return false;
     }
   }
