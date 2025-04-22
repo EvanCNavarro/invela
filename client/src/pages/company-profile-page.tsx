@@ -86,17 +86,17 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
   switch (normalizedStatus) {
     case 'VALID':
       return {
-        backgroundImage: 'linear-gradient(to bottom right, #f0fdf4, #dcfce7)',
+        background: 'radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.15), rgba(22, 163, 74, 0.02) 60%, transparent 70%)',
         borderColor: '#bbf7d0'
       };
     case 'PENDING':
       return {
-        backgroundImage: 'linear-gradient(to bottom right, #fefce8, #fef9c3)',
+        background: 'radial-gradient(circle at bottom left, rgba(202, 138, 4, 0.15), rgba(202, 138, 4, 0.02) 60%, transparent 70%)',
         borderColor: '#fde68a'
       };
     default:
       return {
-        backgroundImage: 'linear-gradient(to bottom right, #fef2f2, #fee2e2)',
+        background: 'radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.02) 60%, transparent 70%)',
         borderColor: '#fecaca'
       };
   }
@@ -648,7 +648,13 @@ export default function CompanyProfilePage() {
               {/* Enhanced metrics cards - same size, no hover, black titles with gradient backgrounds */}
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
                 {/* Risk Score card with Invela blue background gradient */}
-                <div className="flex flex-col justify-between p-4 rounded-lg border border-slate-200 text-center drop-shadow-sm md:w-52 bg-gradient-to-br from-blue-50 to-indigo-50">
+                <div 
+                  className="flex flex-col justify-between p-4 rounded-lg border border-slate-200 text-center drop-shadow-sm md:w-52"
+                  style={{ 
+                    background: 'radial-gradient(circle at bottom left, rgba(79, 99, 236, 0.15), rgba(79, 99, 236, 0.02) 60%, transparent 70%)',
+                    borderColor: '#c7d2fe'
+                  }}
+                >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <Award className="h-5 w-5 text-black" />
                     <div className="text-sm text-black font-medium">
