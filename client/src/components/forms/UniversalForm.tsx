@@ -939,19 +939,34 @@ const handleDemoAutoFill = useCallback(async () => {
           description: `Successfully inserted ${result.responsesInserted || 120} demo responses.`,
         });
         
-        // Refresh form data to get the newly inserted values
-        if (form && resetForm) {
-          // Reset form first to clear any fields
-          resetForm();
-          
-          // Allow time for resetForm to complete
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // Refresh form status
-          if (refreshStatus) {
-            refreshStatus();
-          }
+        logger.info(`[UniversalForm] Auto-fill successful, refreshing data`);
+        
+        // Refresh the task data from the server without triggering form save
+        if (refreshStatus) {
+          refreshStatus();
         }
+        
+        // Force query invalidation
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
+        
+        // Add a delay for the UI to update
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Refresh the form without saving
+        if (resetForm) {
+          // Hard reset form state without saving
+          resetForm(true);
+        }
+        
+        // Show success message
+        toast({
+          title: "Auto-Fill Complete",
+          description: "Demo data has been successfully stored in the database.",
+          variant: "success",
+        });
+        
         return true;
       } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
         endpoint = `/api/open-banking/demo-autofill/${taskId}`;
