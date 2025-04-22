@@ -71,14 +71,23 @@ export function generateDemoData(taskType: string, companyName: string = 'Demo C
   
   // Add task-specific fields based on task type
   if (taskType === 'company_kyb' || taskType === 'company_onboarding_KYB') {
-    return {
-      ...baseData,
+    // Specific sections mapping to ensure 100% coverage
+    
+    // Company Profile section fields (8 fields)
+    const companyProfileFields = {
+      'legalEntityName': companyName,
+      'registrationNumber': '12-3456789',
+      'incorporationDate': '5/12/2010',
+      'businessType': 'Corporation',
+      'jurisdiction': 'Delaware, United States',
+      'registeredAddress': '123 Corporate Plaza, Suite 500, New York, NY 10001',
+      'companyPhone': '+1 (555) 123-4567',
       'priorNames': 'TechDemo Inc. (2010-2015)',
-      'marketCapitalization': '$120,000,000',
-      'lifetimeCustomerValue': '$45,000,000',
-      'annualRecurringRevenue': '$28,500,000',
-      'monthlyRecurringRevenue': '$2,375,000',
-      'licenses': 'Financial Services License #12345, Electronic Money Institution License #67890',
+    };
+    
+    // Governance & Leadership section fields (10 fields)
+    const governanceFields = {
+      'contactEmail': 'contact@demofintech.com',
       'goodStanding': 'Yes',
       'corporateRegistration': 'Active and in good standing',
       'externalAudit': 'Annual audit by PricewaterhouseCoopers (PWC)',
@@ -87,6 +96,19 @@ export function generateDemoData(taskType: string, companyName: string = 'Demo C
       'governmentOwnership': 'No',
       'ultimateBeneficialOwners': 'Jane Smith (35%), Venture Capital Firm XYZ (40%), Angel Investors (25%)',
       'directorsAndOfficers': 'Jane Smith (CEO, Director), John Davis (CFO, Director), Sarah Johnson (COO, Director), Michael Anderson (Independent Director)',
+      'licenses': 'Financial Services License #12345, Electronic Money Institution License #67890',
+    };
+    
+    // Financial Profile section fields (4 fields)
+    const financialFields = {
+      'marketCapitalization': '$120,000,000',
+      'lifetimeCustomerValue': '$45,000,000',
+      'annualRecurringRevenue': '$28,500,000',
+      'monthlyRecurringRevenue': '$2,375,000',
+    };
+    
+    // Operations & Compliance section fields (8 fields)
+    const operationsFields = {
       'investigationsIncidents': 'None in the last 5 years',
       'financialStatements': 'Audited statements available for past 3 fiscal years',
       'operationalPolicies': 'Comprehensive policy framework covering AML, KYC, data protection, and information security',
@@ -95,6 +117,14 @@ export function generateDemoData(taskType: string, companyName: string = 'Demo C
       'sanctionsCheck': 'Regular screening against OFAC, UN, and EU sanctions lists',
       'dueDiligence': 'Enhanced due diligence procedures for high-risk customers',
       'regulatoryActions': 'None in the last 5 years',
+    };
+    
+    // Combine all sections
+    return {
+      ...companyProfileFields,
+      ...governanceFields,
+      ...financialFields,
+      ...operationsFields,
     };
   } else if (taskType === 'sp_ky3p_assessment') {
     return {
