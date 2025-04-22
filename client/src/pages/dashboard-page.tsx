@@ -181,12 +181,8 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : isLoading ? (
-            // Show appropriate skeleton based on company type
-            companyData?.category === 'FinTech' ? (
-              <FinTechDashboardSkeleton />
-            ) : (
-              <DashboardSkeleton />
-            )
+            // Show appropriate skeleton based on current loading state
+            <DashboardSkeleton />
           ) : (
             <div className="grid grid-cols-3 gap-4">
               {visibleWidgets.updates && (
@@ -291,7 +287,7 @@ export default function DashboardPage() {
                     </div>
                     <RiskMeter 
                       score={companyData?.riskScore || companyData?.risk_score || 0}
-                      chosenScore={companyData?.chosenScore || companyData?.chosen_score}
+                      chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
                       companyId={companyData?.id || 0}
                       companyType={companyData?.category || "FinTech"}
                       canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
@@ -321,7 +317,7 @@ export default function DashboardPage() {
                   isVisible={visibleWidgets.riskRadar}
                 >
                   <RiskRadarChart 
-                    companyId={companyData.id} 
+                    companyId={companyData?.id || 0} 
                     showDropdown={false}
                     className="shadow-none border-none p-2"
                   />

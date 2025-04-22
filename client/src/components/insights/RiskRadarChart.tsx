@@ -216,8 +216,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             </CardDescription>
           </div>
 
-          {/* Only show company selector for Bank or Invela users */}
-          {isBankOrInvela && networkCompanies && (
+          {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
+          {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
             <div className="min-w-[200px]">
               <Select 
                 value={selectedCompanyId?.toString()} 
@@ -227,9 +227,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                   <SelectValue placeholder="Select a company" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={company.id.toString()}>{company.name} (You)</SelectItem>
-                  {networkCompanies
-                    .filter(c => c.id !== company.id)
+                  <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
+                  {Array.isArray(networkCompanies) && networkCompanies
+                    .filter(c => c.id !== (company?.id || 0))
                     .map(c => (
                       <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                     ))
