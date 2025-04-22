@@ -1,0 +1,65 @@
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest29", extractedName: "DevTest29", metadataName: undefined, taskTitle: "2. S&P KY3P Security Assessment: DevTest29"}
+Agreement confirmation initialized to TRUE
+[UniversalForm] [UniversalForm] Current company is a demo company: DevTest29
+[TaskTemplateService] Successfully fetched template: 
+Object {templateId: 48, templateName: "S&P KY3P Security Assessment", taskType: "sp_ky3p_assessment", configCount: 10}
+[UniversalForm] Template loaded: ID=48, Name=S&P KY3P Security Assessment
+[ComponentFactory] Looking up form service for task type: ky3p 
+Object {found: true, serviceType: "KY3PFormService", timestamp: "2025-04-22T04:22:41.599Z"}
+[UniversalForm] Found form service: KY3PFormService
+[KY3P Service] getFormData called
+[UniversalForm] Initializing form structure with form service
+[UniversalForm] Initializing form service with template ID: 48
+[KY3P Service] Starting initialization...
+[KY3P Service] Loading fields for task 613...
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}
+[DashboardLayout] Tab "task-center" accessible: true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "2. S&P KY3P Security Assessment: DevTest29"
+[TaskPage] Extracted company name (colon split): "DevTest29"
+[TaskPage] Found current company name from API: "DevTest29"
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest29", extractedName: "DevTest29", metadataName: undefined, currentCompanyName: "DevTest29", taskTitle: "2. S&P KY3P Security Assessment: DevTest29"}
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest29", extractedName: "DevTest29", metadataName: undefined, taskTitle: "2. S&P KY3P Security Assessment: DevTest29"}
+[WebSocket] Received message: 
+Object {type: "task_updated", payload: {…}}
+[KY3P Service] Error parsing field definitions: 
+SyntaxError {}
+[WebSocket] Received message: 
+Object {type: "task_updated", payload: {…}}
+[KY3P Service] Field responses raw response: <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style data-vite-theme="" data-inject-first="">:root {
+    --background: 0 0% 100%;
+--foreground: 20 14.3% 4.1%;
+--muted: 60 4.8% 95.9%;
+--muted-foregroun...
+[KY3P Service] Error parsing field responses: Received HTML instead of JSON
+[KY3P Service] Loaded 0 field definitions and 0 responses
+[KY3P Service] Field loading completed
+[KY3P Service] Generating sections from field data...
+[KY3P Service] No valid fields to generate sections from
+[KY3P Service] Initialization completed successfully
+[UniversalForm] Form service initialization completed
+[UniversalForm] No fields returned from form service (empty array or null)
+[UniversalForm] No sections returned from form service (empty array or null)
+[KY3P Service] getFormData called
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}
+[DashboardLayout] Tab "task-center" accessible: true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "2. S&P KY3P Security Assessment: DevTest29"
+[TaskPage] Extracted company name (colon split): "DevTest29"
+[TaskPage] Found current company name from API: "DevTest29"
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest29", extractedName: "DevTest29", metadataName: undefined, currentCompanyName: "DevTest29", taskTitle: "2. S&P KY3P Security Assessment: DevTest29"}
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest29", extractedName: "DevTest29", metadataName: undefined, taskTitle: "2. S&P KY3P Security Assessment: DevTest29"}
+[WebSocket] Received message: 
+Object {type: "task_updated", payload: {…}}
