@@ -117,8 +117,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       const angle = index * angleStep;
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
-      // Use company type color for the node if available, otherwise use risk bucket color
-      const nodeColor = companyTypeColors[node.category] || riskBucketColors[node.riskBucket];
+      // Use risk bucket color for all nodes for consistent risk-based coloring
+      const nodeColor = riskBucketColors[node.riskBucket];
       // Add border only for accredited companies
       const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent';
 
