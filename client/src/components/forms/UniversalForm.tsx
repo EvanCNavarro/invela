@@ -2313,7 +2313,8 @@ const handleDemoAutoFill = useCallback(async () => {
                     taskType,
                     onSuccess: () => {
                       // Refresh form data when auto-fill completes
-                      loadFormData();
+                      // Use fetchData instead of loadFormData
+                      fetchData();
                     }
                   })}
                 </React.Suspense>

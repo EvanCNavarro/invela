@@ -465,44 +465,53 @@ export class KY3PFormService extends EnhancedKybFormService {
    * This is a fallback mechanism for when the API endpoints aren't working
    */
   /**
-   * Bulk update all field responses
+   * Bulk update all field responses for KY3P forms
+   * When called by the DemoAutofillButton, this method will fetch and apply demo values
+   * 
    * @param taskId Task ID
-   * @param formData Form data
+   * @param formData Optional form data (used only if provided)
    * @param useDemoData If true, fetch demo data when formData is empty
+   * @returns Object with success status, error message, and updated count
    */
-  async bulkUpdateResponses(taskId: number, formData: Record<string, any>, useDemoData: boolean = false): Promise<boolean> {
+  async bulkUpdateResponses(
+    taskId: number, 
+    formData?: Record<string, any>
+  ): Promise<{ success: boolean; error?: string; updatedCount: number }> {
     try {
       logger.info(`[KY3P Form Service] Bulk updating KY3P responses for task ${taskId}`);
       
-      // Step 1: Get demo data if formData is empty and useDemoData is true
-      let demoData = formData;
-      if (Object.keys(formData).length === 0 && useDemoData) {
-        logger.info(`[KY3P Form Service] Form data is empty, fetching demo data from API`);
-        try {
-          const demoResponse = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
-            credentials: 'include'
-          });
-          
-          if (!demoResponse.ok) {
-            throw new Error(`Failed to fetch demo data: ${demoResponse.statusText}`);
-          }
-          
-          demoData = await demoResponse.json();
-          logger.info(`[KY3P Form Service] Retrieved demo data with ${Object.keys(demoData).length} fields`);
-        } catch (error) {
-          logger.error('[KY3P Form Service] Error fetching demo data:', error);
-          return false;
-        }
+      // Step 1: Fetch demo data from the demo-autofill endpoint
+      logger.info(`[KY3P Form Service] Fetching demo data from API`);
+      const demoResponse = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
+        credentials: 'include'
+      });
+      
+      if (!demoResponse.ok) {
+        const error = `Failed to fetch demo data: ${demoResponse.statusText}`;
+        logger.error(`[KY3P Form Service] ${error}`);
+        return { success: false, error, updatedCount: 0 };
+      }
+      
+      const demoData = await demoResponse.json();
+      const demoFieldCount = Object.keys(demoData).length;
+      logger.info(`[KY3P Form Service] Retrieved demo data with ${demoFieldCount} fields`);
+      
+      if (demoFieldCount === 0) {
+        const error = 'No demo data available for this task type';
+        logger.error(`[KY3P Form Service] ${error}`);
+        return { success: false, error, updatedCount: 0 };
       }
       
       // Step 2: Get all KY3P fields to build field key to ID mapping
       logger.info(`[KY3P Form Service] Fetching KY3P fields to build field mapping`);
-      const fieldsResponse = await fetch(`/api/ky3p/fields`, {
+      const fieldsResponse = await fetch(`/api/ky3p-fields`, {
         credentials: 'include'
       });
       
       if (!fieldsResponse.ok) {
-        throw new Error(`Failed to fetch KY3P fields: ${fieldsResponse.statusText}`);
+        const error = `Failed to fetch KY3P fields: ${fieldsResponse.statusText}`;
+        logger.error(`[KY3P Form Service] ${error}`);
+        return { success: false, error, updatedCount: 0 };
       }
       
       const fields = await fieldsResponse.json();
@@ -557,8 +566,9 @@ export class KY3PFormService extends EnhancedKybFormService {
       logger.info(`[KY3P Form Service] Prepared ${validCount} responses for bulk update (${invalidCount} invalid/not found)`);
       
       if (responsesArray.length === 0) {
-        logger.warn('[KY3P Form Service] No valid responses found for bulk update');
-        return false;
+        const error = 'No valid responses found for bulk update';
+        logger.warn(`[KY3P Form Service] ${error}`);
+        return { success: false, error, updatedCount: 0 };
       }
       
       // Step 5: Log the exact request body for debugging
@@ -580,18 +590,27 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to perform bulk update: ${response.status}`, errorText);
-        throw new Error(`Failed to update form data: ${errorText}`);
+        const error = `Failed to perform bulk update: ${response.status} - ${errorText}`;
+        logger.error(`[KY3P Form Service] ${error}`);
+        return { success: false, error, updatedCount: 0 };
       }
       
       const result = await response.json();
       logger.info(`[KY3P Form Service] KY3P bulk update successful:`, result);
       
-      return true;
+      return { 
+        success: true, 
+        updatedCount: validCount,
+      };
       
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error during KY3P bulk update';
       logger.error('[KY3P Form Service] Error during KY3P bulk update:', error);
-      return false;
+      return { 
+        success: false, 
+        error: errorMessage,
+        updatedCount: 0 
+      };
     }
   }
   
