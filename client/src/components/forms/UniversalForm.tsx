@@ -2303,23 +2303,7 @@ const handleDemoAutoFill = useCallback(async () => {
               <p className="text-sm text-gray-500">{headerSubtitle}</p>
             </div>
             <div className="flex items-center space-x-2">
-              {/* Add DemoAutofillButton for KY3P forms */}
-              {taskType === 'ky3p' && taskId && (
-                <React.Suspense fallback={<Button variant="outline" size="sm" disabled>Loading...</Button>}>
-                  {React.createElement(React.lazy(() => import('./DemoAutofillButton').then(mod => ({ 
-                    default: mod.DemoAutofillButton 
-                  }))), { 
-                    taskId,
-                    taskType,
-                    onSuccess: () => {
-                      // Refresh form data when auto-fill completes
-                      // Use fetchData instead of loadFormData
-                      fetchData();
-                    }
-                  })}
-                </React.Suspense>
-              )}
-              {/* Clear Fields button is added separately */}
+              {/* Demo Auto-Fill and Clear Fields buttons are managed elsewhere */}
             </div>
           </div>
           
