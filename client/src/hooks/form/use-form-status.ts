@@ -112,9 +112,17 @@ export function useFormStatus({
       // Log for debugging
       logger.debug(`Processing section "${section.title}" with ${sectionFields.length} fields`);
       
-      // For MVP, count all fields regardless of required status since validation isn't fully implemented
-      // We'll temporarily ignore the requiredOnly flag to ensure field counts appear
-      const relevantFields = sectionFields;
+      // Only count required fields if requiredOnly is true
+      const relevantFields = requiredOnly 
+        ? sectionFields.filter(field => field.required === true || field.is_required === true)
+        : sectionFields;
+        
+      // For KY3P and Open Banking forms, since we set all fields to non-required, 
+      // if there are no required fields, treat the entire form as completed
+      if (requiredOnly && relevantFields.length === 0 && sectionFields.length > 0) {
+        logger.debug(`Section "${section.title}" has no required fields but ${sectionFields.length} total fields - marking as complete`);
+        completedSections[section.id] = true;
+      }
       
       // Add debugging for relevant fields
       logger.debug(`Section "${section.title}" has ${relevantFields.length} relevant fields`);
@@ -304,14 +312,24 @@ export function useFormStatus({
       }
     });
     
-    // Calculate overall progress
-    const overallProgress = totalFields > 0 
-      ? Math.round((totalFilledFields / totalFields) * 100) 
-      : 0;
+    // Calculate overall progress - if using requiredOnly and there are no required fields, set to 100%
+    let overallProgress = 0;
+    
+    if (requiredOnly && totalFields === 0) {
+      // If we're only counting required fields and there are none, the form is 100% complete
+      overallProgress = 100;
+      logger.debug(`No required fields found in form, setting progress to 100%`);
+    } else {
+      // Normal progress calculation
+      overallProgress = totalFields > 0 
+        ? Math.round((totalFilledFields / totalFields) * 100) 
+        : 0;
+    }
     
     logger.debug(`Overall form progress: ${overallProgress}%`, {
       totalFields,
       totalFilledFields,
+      requiredOnly,
       completedSectionCount: Object.values(completedSections).filter(Boolean).length
     });
     
