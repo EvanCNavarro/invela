@@ -210,7 +210,7 @@ export default function DashboardPage() {
                     {companyData?.category !== 'FinTech' && (
                       <InviteButton
                         variant="fintech"
-                        pulse={true}
+                        pulse={false}
                         className="w-full font-medium"
                         onClick={() => setOpenFinTechModal(true)}
                       />
