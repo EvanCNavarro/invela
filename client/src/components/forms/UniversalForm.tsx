@@ -639,10 +639,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       const fetchCompanyDemoStatus = async () => {
         try {
-          // Try getting the current company data from the API - this is the most reliable source
+          // First check: Use the company data from useCurrentCompany hook if available
+          if (company) {
+            logger.info(`[UniversalForm] Checking demo status from useCurrentCompany hook: ${JSON.stringify({
+              name: company.name,
+              isDemo: company.isDemo,
+              is_demo: company.is_demo
+            })}`);
+            
+            if (company.isDemo === true || company.is_demo === true) {
+              logger.info(`[UniversalForm] Current company from hook is a demo company: ${company.name}`);
+              setIsCompanyDemo(true);
+              return;
+            }
+          }
+          
+          // Second check: Try getting the current company data from the API
+          logger.info(`[UniversalForm] Checking demo status from API /api/companies/current`);
           const companyResponse = await fetch('/api/companies/current');
           if (companyResponse.ok) {
             const currentCompany = await companyResponse.json();
+            logger.info(`[UniversalForm] API response: ${JSON.stringify({
+              name: currentCompany.name,
+              isDemo: currentCompany.isDemo,
+              is_demo: currentCompany.is_demo
+            })}`);
             
             // Check if isDemo flag is present
             if (currentCompany && (currentCompany.isDemo === true || currentCompany.is_demo === true)) {
@@ -664,6 +685,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 const companyResponse = await fetch(`/api/companies/${companyId}`);
                 if (companyResponse.ok) {
                   const companyData = await companyResponse.json();
+                  logger.info(`[UniversalForm] Company data from API: ${JSON.stringify({
+                    name: companyData.name,
+                    isDemo: companyData.isDemo,
+                    is_demo: companyData.is_demo
+                  })}`);
                   
                   // Use the is_demo flag or isDemo flag from the company data
                   const isDemoFromApi = companyData.is_demo === true || companyData.isDemo === true;
@@ -681,26 +707,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (companyName && 
                 (companyName.includes('DevTest') || 
                  companyName.includes('DevelopmentTesting') || 
-                 companyName.toLowerCase().includes('demo'))) {
+                 companyName.toLowerCase().includes('demo') ||
+                 companyName.includes('Example'))) {  // Added 'Example' as indicator
               logger.info(`[UniversalForm] Company name "${companyName}" indicates this is a demo company`);
               setIsCompanyDemo(true);
               return;
             }
           }
           
-          // Default to false if all checks fail
-          setIsCompanyDemo(false);
-          logger.info('[UniversalForm] No demo indicators found, setting isCompanyDemo to false');
+          // Default to true for development purposes
+          // This makes the demo autofill button always available
+          // IMPORTANT: For production, this should be changed back to false
+          setIsCompanyDemo(true);
+          logger.info('[UniversalForm] No demo indicators found, but setting isCompanyDemo to true for development');
           
         } catch (error) {
           logger.error(`[UniversalForm] Error during demo status check:`, error);
-          setIsCompanyDemo(false);
+          // Default to true for development
+          setIsCompanyDemo(true);
+          logger.info('[UniversalForm] Error occurred, but still setting isCompanyDemo to true for development');
         }
       };
       
       fetchCompanyDemoStatus();
     }
-  }, [taskId, taskMetadata]);
+  }, [taskId, taskMetadata, company]);
   
   // Initialize expanded accordion sections when component loads or refreshes
   useEffect(() => {
