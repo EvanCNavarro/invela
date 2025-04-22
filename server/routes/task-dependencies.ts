@@ -22,10 +22,23 @@ interface DependencyRule {
 
 // Define task dependencies
 const DEPENDENCY_RULES: DependencyRule[] = [
+  // Original rule
   {
     prerequisiteType: 'sp_ky3p_assessment',
     prerequisiteStatus: 'submitted',
     dependentType: 'open_banking_survey'
+  },
+  // Additional rule for ky3p type (used in newer versions)
+  {
+    prerequisiteType: 'ky3p',
+    prerequisiteStatus: 'submitted',
+    dependentType: 'open_banking_survey'
+  },
+  // Additional rule for company_card type (Open Banking variation)
+  {
+    prerequisiteType: 'ky3p',
+    prerequisiteStatus: 'submitted',
+    dependentType: 'company_card'
   },
   // Add more dependency rules as needed
 ];
@@ -149,15 +162,62 @@ export async function unlockOpenBankingTasks(companyId: number) {
   logger.info('[TaskDependencies] Directly unlocking Open Banking tasks', { companyId });
   
   try {
-    // Find any Open Banking Survey tasks that need unlocking
+    // FIRST PRIORITY: Try to unlock task ID 614 directly (based on user reports)
+    const specificTask = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, 614));
+    
+    if (specificTask.length > 0) {
+      logger.info('[TaskDependencies] Found specific Open Banking task ID 614', { 
+        taskType: specificTask[0].task_type,
+        status: specificTask[0].status
+      });
+      
+      // Unlock task 614 regardless of its current type or status
+      await db.update(tasks)
+        .set({
+          status: 'not_started',
+          metadata: sql`jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                COALESCE(metadata, '{}'::jsonb),
+                '{locked}', 'false'
+              ),
+              '{prerequisite_completed}', 'true'
+            ),
+            '{prerequisite_completed_at}', to_jsonb(now())
+          )`,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, 614));
+        
+      logger.info('[TaskDependencies] Unlocked specific task ID 614');
+      
+      // Broadcast the update via WebSocket
+      broadcastTaskUpdate({
+        id: 614,
+        status: 'not_started',
+        metadata: {
+          locked: false,
+          prerequisite_completed: true,
+          prerequisite_completed_at: new Date().toISOString()
+        }
+      });
+    }
+    
+    // SECOND PRIORITY: Find any Open Banking tasks that need unlocking (both open_banking_survey and company_card types)
     const openBankingTasks = await db.select()
       .from(tasks)
       .where(
         and(
           eq(tasks.company_id, companyId),
-          eq(tasks.task_type, 'open_banking_survey'),
+          or(
+            eq(tasks.task_type, 'open_banking_survey'),
+            eq(tasks.task_type, 'company_card')
+          ),
           or(
             eq(tasks.status, 'locked'),
+            eq(tasks.status, 'not_started'),
             isNull(tasks.status)
           )
         )
