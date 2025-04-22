@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { createDemoAutoFillHandler } from './fixed-universal-demo-autofill';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -836,18 +835,314 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [onDownload, fileId, taskType, toast]);
   
-  // Import the fixed demo autofill handler
-  const { demoFillLoading, handleDemoAutoFill } = createDemoAutoFillHandler({
-    taskId,
-    taskType,
-    form,
-    resetForm,
-    updateField,
-    refreshStatus,
-    saveProgress,
-    onProgress,
-    formService
-  });
+    // Handle demo auto-fill functionality
+const handleDemoAutoFill = useCallback(async () => {
+  if (!taskId) {
+    toast({
+      variant: "destructive",
+      title: "Auto-Fill Failed",
+      description: "No task ID available for auto-fill",
+    });
+    return false;
+  }
+  
+  try {
+    logger.info(`[UniversalForm] Starting demo auto-fill for task ${taskId}`);
+    
+    // Show loading toast
+    toast({
+      title: "Auto-Fill In Progress",
+      description: "Loading demo data...",
+      duration: 3000,
+    });
+    
+    // Get demo data from the form service if available, otherwise use API directly
+    let demoData: Record<string, any> = {};
+    
+    if (taskType === 'sp_ky3p_assessment' && formService && 'getDemoData' in formService) {
+      // Use KY3P form service's method to get demo data
+      logger.info(`[UniversalForm] Using KY3P form service's getDemoData method for task ${taskId}`);
+      try {
+        // Cast to any to access the getDemoData method
+        demoData = await (formService as any).getDemoData(taskId);
+        logger.info(`[UniversalForm] Got ${Object.keys(demoData).length} demo fields from KY3P form service`);
+      } catch (error) {
+        logger.error(`[UniversalForm] Error getting demo data from KY3P form service:`, error);
+        
+        // Show error toast
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: error instanceof Error ? error.message : "Could not load demo data from service",
+        });
+        return false;
+      }
+    } else {
+      // Fallback to direct API call
+      let endpoint;
+      if (taskType === 'sp_ky3p_assessment') {
+        endpoint = `/api/ky3p/demo-autofill/${taskId}`;
+      } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+        endpoint = `/api/open-banking/demo-autofill/${taskId}`;
+      } else {
+        endpoint = `/api/kyb/demo-autofill/${taskId}`;
+      }
+      
+      logger.info(`[UniversalForm] Using form-specific demo auto-fill endpoint: ${endpoint} for task type: ${taskType}`);
+      const demoDataResponse = await fetch(endpoint);
+      
+      if (!demoDataResponse.ok) {
+        if (demoDataResponse.status === 403) {
+          toast({
+            variant: "destructive",
+            title: "Auto-Fill Restricted",
+            description: "Auto-fill is only available for demo companies.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Auto-Fill Failed",
+            description: "Could not load demo data from server.",
+          });
+        }
+        return false;
+      }
+      
+      demoData = await demoDataResponse.json();
+    }
+    
+    logger.info(`[UniversalForm] Retrieved ${Object.keys(demoData).length} demo fields for auto-fill`);
+    
+    // Combine demo data with existing form data for a more complete set
+    const currentValues = form.getValues();
+    const completeData = {
+      ...currentValues,
+      ...demoData,
+    };
+    
+    // Reset the form first to clear any existing fields
+    if (resetForm) {
+      resetForm();
+    }
+    
+    // Add a small delay to allow the form to reset
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Different handling based on form type
+    if (taskType === 'sp_ky3p_assessment' && formService && 'bulkUpdate' in formService) {
+      // For KY3P forms, use the form service's bulkUpdate method
+      logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId}`);
+      
+      // Filter out empty values to get valid responses for bulk update
+      const validResponses: Record<string, any> = {};
+      let fieldCount = 0;
+      
+      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          // Add to valid responses
+          validResponses[fieldKey] = fieldValue;
+          fieldCount++;
+          
+          // Update the UI form state
+          form.setValue(fieldKey, fieldValue, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
+        }
+      }
+      
+      if (fieldCount === 0) {
+        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+        toast({
+          variant: "warning",
+          title: "No Data Available",
+          description: "No valid demo data was found for this form type.",
+        });
+        return false;
+      }
+      
+      try {
+        logger.info(`[UniversalForm] Using KY3P form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+        
+        const success = await (formService as any).bulkUpdate(validResponses, taskId);
+        
+        if (!success) {
+          throw new Error('The KY3P form service bulkUpdate method failed');
+        }
+        
+        logger.info(`[UniversalForm] KY3P form service bulk update successful`);
+        
+        // Force query refresh
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        
+        // Add a delay for UI reconciliation
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        logger.error('[UniversalForm] Error during KY3P bulk update:', error);
+        
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: "Could not update form with demo data. Please try again or contact support.",
+        });
+        
+        return false;
+      }
+    }
+    else if (taskType === 'kyb' || taskType === 'company_kyb') {
+      // For KYB forms, we use a batched approach for reliability
+      logger.info(`[UniversalForm] Using enhanced individual field updates for ${taskType}`);
+      
+      let fieldsUpdated = 0;
+      const fieldEntries = Object.entries(completeData).filter(
+        ([_, fieldValue]) => fieldValue !== null && fieldValue !== undefined && fieldValue !== ''
+      );
+      
+      // First, update all form values in the UI
+      for (const [fieldName, fieldValue] of fieldEntries) {
+        form.setValue(fieldName, fieldValue, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+      }
+      
+      // Wait for form values to be updated in UI
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Apply server-side updates in batches of 5 with longer delays
+      // This approach reduces the chance of race conditions
+      const batchSize = 5;
+      for (let i = 0; i < fieldEntries.length; i += batchSize) {
+        const batch = fieldEntries.slice(i, i + batchSize);
+        
+        // Process each batch in parallel for speed, but with controlled timing
+        await Promise.all(batch.map(async ([fieldName, fieldValue]) => {
+          if (typeof updateField === 'function') {
+            await updateField(fieldName, fieldValue);
+            fieldsUpdated++;
+          }
+        }));
+        
+        // Add a substantial delay between batches
+        logger.info(`[UniversalForm] Processed batch ${i/batchSize + 1} of ${Math.ceil(fieldEntries.length/batchSize)}`);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Add final delay for form reconciliation
+      logger.info(`[UniversalForm] All batches complete. Updated ${fieldsUpdated} fields. Waiting for final reconciliation.`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    // For Open Banking forms, use the form service's bulkUpdate method
+    else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+      logger.info(`[UniversalForm] Using form service bulkUpdate for ${taskType}`);
+      
+      // Filter out empty values to get valid responses for bulk update
+      const validResponses: Record<string, any> = {};
+      let fieldCount = 0;
+      
+      for (const [fieldKey, fieldValue] of Object.entries(completeData)) {
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          // Add to valid responses
+          validResponses[fieldKey] = fieldValue;
+          fieldCount++;
+          
+          // Update the UI form state
+          form.setValue(fieldKey, fieldValue, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true
+          });
+        }
+      }
+      
+      if (fieldCount === 0) {
+        logger.warn(`[UniversalForm] No valid responses found for auto-fill`);
+        toast({
+          variant: "warning",
+          title: "No Data Available",
+          description: "No valid demo data was found for this form type.",
+        });
+        return false;
+      }
+      
+      try {
+        if ((taskType === 'open_banking' || taskType === 'open_banking_survey') && formService && 'bulkUpdate' in formService) {
+          logger.info(`[UniversalForm] Using Open Banking form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+          
+          const success = await (formService as any).bulkUpdate(validResponses, taskId);
+          
+          if (!success) {
+            throw new Error('The Open Banking form service bulkUpdate method failed');
+          }
+          
+          logger.info(`[UniversalForm] Open Banking form service bulk update successful`);
+        }
+        else {
+          // Fallback to direct API call as a last resort
+          logger.warn(`[UniversalForm] No bulkUpdate method found in form service, using direct API call instead`);
+          
+          throw new Error('Form service does not support bulkUpdate method. Please check implementation.');
+        }
+        
+        // Force query refresh
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      } catch (error) {
+        logger.error('[UniversalForm] Error during bulk update:', error);
+        
+        toast({
+          variant: "destructive",
+          title: "Auto-Fill Failed",
+          description: "Could not update form with demo data. Please try again or contact support.",
+        });
+        
+        return false;
+      }
+    } else {
+      // No other form types to handle
+      logger.warn(`[UniversalForm] Unsupported form type: ${taskType}. No auto-fill implementation available.`);
+      toast({
+        variant: "warning",
+        title: "Auto-Fill Unavailable",
+        description: `No auto-fill implementation is available for ${taskType} forms.`,
+      });
+      return false;
+    }
+    
+    // Save progress
+    if (saveProgress) {
+      await saveProgress();
+    }
+    
+    // Show success message
+    toast({
+      title: "Auto-Fill Complete",
+      description: "Demo data has been loaded successfully.",
+      variant: "success",
+    });
+    
+    // Refresh status and set progress to 100%
+    refreshStatus();
+    if (onProgress) {
+      onProgress(100);
+    }
+    
+    return true;
+  } catch (err) {
+    logger.error('[UniversalForm] Auto-fill error:', err);
+    toast({
+      variant: "destructive",
+      title: "Auto-Fill Failed",
+      description: err instanceof Error ? err.message : "There was an error loading demo data",
+    });
+    return false;
+  }
+}, [toast, taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, logger]);
   
   // State for clearing fields progress indicator
   const [isClearing, setIsClearing] = useState(false);
