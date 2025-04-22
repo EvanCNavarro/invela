@@ -1110,16 +1110,22 @@ const handleDemoAutoFill = useCallback(async () => {
       }
       
       try {
-        if ((taskType === 'open_banking' || taskType === 'open_banking_survey') && formService && 'bulkUpdate' in formService) {
-          logger.info(`[UniversalForm] Using Open Banking form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
+        // Support both Open Banking and KY3P form services
+        if (
+          (taskType === 'open_banking' || taskType === 'open_banking_survey' || 
+           taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') && 
+          formService && 'bulkUpdate' in formService
+        ) {
+          const formTypeDisplay = taskType.includes('ky3p') ? 'KY3P' : 'Open Banking';
+          logger.info(`[UniversalForm] Using ${formTypeDisplay} form service's bulkUpdate method for task ${taskId} with ${fieldCount} fields`);
           
           const success = await (formService as any).bulkUpdate(validResponses, taskId);
           
           if (!success) {
-            throw new Error('The Open Banking form service bulkUpdate method failed');
+            throw new Error(`The ${formTypeDisplay} form service bulkUpdate method failed`);
           }
           
-          logger.info(`[UniversalForm] Open Banking form service bulk update successful`);
+          logger.info(`[UniversalForm] ${formTypeDisplay} form service bulk update successful`);
         }
         else {
           // Fallback to direct API call as a last resort
