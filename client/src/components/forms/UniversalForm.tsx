@@ -195,6 +195,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // BUGFIX: State to force form into submitted mode after successful submission
   const [formSubmittedLocally, setFormSubmittedLocally] = useState(false);
   
+  // BUGFIX: Enhanced check for submitted tasks coming from server
+  const [taskSubmittedChecked, setTaskSubmittedChecked] = useState(false);
+  
   // We'll use React Hook Form for all form state management
   
   // Use our new form data manager hook to handle form data
@@ -738,6 +741,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     ) {
       // For completed or submitted tasks, also navigate to the review section
       logger.info('[UniversalForm] Task is completed/submitted, navigating to review section');
+      
+      // BUGFIX: Force the form into read-only mode when task is submitted
+      if (taskStatus === 'submitted' && !taskSubmittedChecked) {
+        logger.info('[UniversalForm] Task is submitted, forcing read-only mode');
+        setFormSubmittedLocally(true);
+        setTaskSubmittedChecked(true);
+      }
+      
       setTimeout(() => {
         setActiveSection(allSections.length - 1);
         setInitialLoadComplete(true);
@@ -746,7 +757,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // If we don't need to auto-navigate, still mark initial load as complete
       setInitialLoadComplete(true);
     }
-  }, [taskStatus, allSections, activeSection, overallProgress, setActiveSection, initialLoadComplete]);
+  }, [taskStatus, allSections, activeSection, overallProgress, setActiveSection, initialLoadComplete, taskSubmittedChecked, setFormSubmittedLocally]);
 
   // Handle field change events with improved status synchronization
   const handleFieldChange = useCallback((name: string, value: any) => {
