@@ -662,6 +662,29 @@ export function useFormDataManager({
         const stack = new Error().stack;
         logger.info(`[TIMESTAMP-SYNC] loadProgress called from: ${stack?.split('\n')[2] || 'unknown'}`);
         
+        // Synchronize form data between task.savedFormData and individual field responses
+        // This prevents inconsistencies when navigating between forms
+        if (typeof formService.syncFormData === 'function') {
+          try {
+            logger.info(`[FormSync] Synchronizing form data before loading for task ${taskId}`);
+            const syncResult = await formService.syncFormData(taskId);
+            
+            if (syncResult.success) {
+              logger.info(`[FormSync] Data synchronized successfully with direction: ${syncResult.syncDirection}`);
+              
+              // If data was synchronized, log details about the scope of changes
+              if (syncResult.syncDirection !== 'none') {
+                logger.info(`[FormSync] Synchronized ${Object.keys(syncResult.formData).length} fields`);
+              }
+            } else {
+              logger.warn(`[FormSync] Failed to synchronize form data: ${syncResult.syncDirection}`);
+            }
+          } catch (syncError) {
+            logger.error(`[FormSync] Error during form data synchronization: ${syncError}`);
+            // Continue with normal loading even if sync fails
+          }
+        }
+        
         // Check if service supports timestamped data
         const supportsTimestamps = typeof formService.getTimestampedFormData === 'function';
         
@@ -769,9 +792,32 @@ export function useFormDataManager({
     }
     
     // Expose a method to force reload data that can be called from parent components
-    const reloadData = () => {
+    const reloadData = async () => {
       loadingKey = Date.now(); // Update the loading key to cancel any in-progress loads
       dataLoadedRef.current = false; // Reset the loaded flag
+      
+      // Synchronize form data before reloading to ensure we have the latest consistent data
+      if (formService && taskId && typeof formService.syncFormData === 'function') {
+        try {
+          logger.info(`[FormSync] Synchronizing form data before reload for task ${taskId}`);
+          const syncResult = await formService.syncFormData(taskId);
+          
+          if (syncResult.success) {
+            logger.info(`[FormSync] Data synchronized successfully during reload with direction: ${syncResult.syncDirection}`);
+            
+            // If data was synchronized, log details about the scope of changes
+            if (syncResult.syncDirection !== 'none') {
+              logger.info(`[FormSync] Synchronized ${Object.keys(syncResult.formData).length} fields during reload`);
+            }
+          } else {
+            logger.warn(`[FormSync] Failed to synchronize form data during reload: ${syncResult.syncDirection}`);
+          }
+        } catch (syncError) {
+          logger.error(`[FormSync] Error during form data synchronization for reload: ${syncError}`);
+          // Continue with normal loading even if sync fails
+        }
+      }
+      
       loadSavedData(); // Start a new load
     };
     
@@ -792,19 +838,51 @@ export function useFormDataManager({
   }, [fields, formService, taskId, defaultValues, form, onDataChange]);
   
   // Function to reset the form with new data
-  const resetForm = useCallback((data?: FormData) => {
-    const resetData = data || defaultValues;
-    logger.info(`Resetting form with ${Object.keys(resetData).length} fields`);
+  const resetForm = useCallback(async (data?: FormData) => {
+    // Start with provided data or default values
+    let finalResetData = data || defaultValues;
+    logger.info(`Resetting form with ${Object.keys(finalResetData).length} fields`);
+    
+    // Synchronize form data between task.savedFormData and individual field responses
+    // This prevents inconsistencies during form resets
+    if (formService && taskId && typeof formService.syncFormData === 'function') {
+      try {
+        logger.info(`[FormSync] Synchronizing form data before reset for task ${taskId}`);
+        const syncResult = await formService.syncFormData(taskId);
+        
+        if (syncResult.success) {
+          logger.info(`[FormSync] Data synchronized successfully during reset with direction: ${syncResult.syncDirection}`);
+          
+          // If data was synchronized, merge with reset data
+          if (syncResult.syncDirection !== 'none' && Object.keys(syncResult.formData).length > 0) {
+            logger.info(`[FormSync] Merging synchronized data into reset data`);
+            // Only merge synchronized data if we're resetting to defaults
+            if (!data) {
+              finalResetData = {
+                ...finalResetData,
+                ...syncResult.formData
+              };
+              logger.info(`[FormSync] Reset data updated with synchronized fields`);
+            }
+          }
+        } else {
+          logger.warn(`[FormSync] Failed to synchronize form data during reset: ${syncResult.syncDirection}`);
+        }
+      } catch (syncError) {
+        logger.error(`[FormSync] Error during form data synchronization for reset: ${syncError}`);
+        // Continue with normal reset even if sync fails
+      }
+    }
     
     // Reset the form
-    form.reset(resetData);
+    form.reset(finalResetData);
     
     // Update local state
-    setFormData(resetData);
+    setFormData(finalResetData);
     
     // Update form service if available
     if (formService) {
-      Object.entries(resetData).forEach(([key, value]) => {
+      Object.entries(finalResetData).forEach(([key, value]) => {
         // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
         if (updateFieldRef.current) {
           // Use the update field function with isSaving flag since this is during a form reset
@@ -818,7 +896,7 @@ export function useFormDataManager({
     
     // Notify parent component if callback provided
     if (onDataChange) {
-      onDataChange(resetData);
+      onDataChange(finalResetData);
     }
   }, [form, defaultValues, formService, onDataChange, taskId]);
   
