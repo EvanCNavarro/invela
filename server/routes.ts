@@ -941,7 +941,9 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           });
           
           // Import and use task dependency processors
-          const { unlockAllTasks } = require('./routes/task-dependencies');
+          // Use dynamic import to handle the ESM module properly
+          const taskDependencies = await import('./routes/task-dependencies');
+          const unlockAllTasks = taskDependencies.unlockAllTasks;
           
           // Unlock ALL tasks for this company regardless of dependencies
           await unlockAllTasks(companyId);
