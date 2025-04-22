@@ -198,38 +198,58 @@ export const FormClearingService = {
                   }
                 }
                 
-                // Directly update the task to clear its saved form data
+                // Use the dedicated progress endpoint to avoid HTML parsing issues
+                // First update progress and status through the dedicated endpoint
+                const progressResponse = await fetch(`/api/tasks/${taskId}/update-progress`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    progress: 0,
+                    status: 'not_started',
+                    forceClear: true
+                  }),
+                });
+                
+                if (!progressResponse.ok) {
+                  logger.warn(`[FormClearingService] Failed to update task progress: ${progressResponse.status}`);
+                }
+                
+                // Then attempt to clear form data with a separate, simpler request
                 await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-                  savedFormData: null,
-                  status: 'not_started', // Explicitly set status to not_started
-                  progress: 0, // Explicitly set progress to 0
-                  metadata: {
-                    ...preservedMetadata,
-                    lastCleared: new Date().toISOString(),
-                    clearedVersion: Math.floor(Math.random() * 1000000), // Add random version to ensure cache busting
-                    previousProgress: 0,
-                    forceClear: true,
-                    forceTaskStatus: 'not_started' // Signal to server that status should remain not_started
-                  }
+                  savedFormData: null
                 });
                 
                 logger.info('[FormClearingService] Preserved company metadata during clear operation', preservedMetadata);
               } catch (cacheError) {
                 logger.error('[FormClearingService] Failed to preserve metadata from cache:', cacheError);
                 
-                // Still try the basic clear operation
-                await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-                  savedFormData: null,
-                  status: 'not_started', // Explicitly set status to not_started
-                  progress: 0, // Explicitly set progress to 0
-                  metadata: {
-                    lastCleared: new Date().toISOString(),
-                    clearedVersion: Math.floor(Math.random() * 1000000),
-                    previousProgress: 0,
-                    forceClear: true,
-                    forceTaskStatus: 'not_started' // Signal to server that status should remain not_started
+                // Fall back to the progress endpoint without relying on the cache
+                try {
+                  // First update progress and status through the dedicated endpoint
+                  const progressResponse = await fetch(`/api/tasks/${taskId}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      progress: 0,
+                      status: 'not_started',
+                    }),
+                  });
+                  
+                  if (!progressResponse.ok) {
+                    logger.warn(`[FormClearingService] Fallback progress update failed: ${progressResponse.status}`);
                   }
-                });
+                  
+                  // Then clear form data separately
+                  await apiRequest('PATCH', `/api/tasks/${taskId}`, {
+                    savedFormData: null
+                  });
+                } catch (fallbackError) {
+                  logger.error('[FormClearingService] Fallback operation failed:', fallbackError);
+                }
               }
               logger.info('[FormClearingService] Successfully cleared task savedFormData');
             } catch (saveError) {

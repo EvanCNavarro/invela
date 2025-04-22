@@ -1078,20 +1078,33 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       try {
         logger.info(`[UniversalForm] Starting post-autofill UI synchronization`);
         
-        // CRITICAL FIX: Update the task metadata manually to ensure it's got
-        // the autoFill progress set properly
+        // CRITICAL FIX: Update the task status and progress properly
+        // Don't attempt to directly update the metadata property as it's causing errors
         try {
-          const { apiRequest } = await import('@/lib/queryClient');
-          await apiRequest('PATCH', `/api/tasks/${taskId}`, {
-            status: 'in_progress',
-            progress: 100, // Auto-fill should always set progress to 100%
-            metadata: {
-              lastAutoFilled: new Date().toISOString()
-            }
+          const { queryClient } = await import('@/lib/queryClient');
+          
+          // First, make the direct request to update task progress via the proper endpoint
+          const progressResponse = await fetch(`/api/tasks/${taskId}/update-progress`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              progress: 100,
+              status: 'in_progress',
+            }),
           });
-          logger.info(`[UniversalForm] Updated task metadata with auto-fill status`);
+          
+          if (!progressResponse.ok) {
+            throw new Error(`Failed to update task progress: ${progressResponse.status}`);
+          }
+          
+          // Get the updated task data from the server to ensure we're working with fresh data
+          await queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+          
+          logger.info(`[UniversalForm] Updated task progress to 100% via dedicated progress endpoint`);
         } catch (metaErr) {
-          logger.warn(`[UniversalForm] Error updating task metadata:`, metaErr);
+          logger.warn(`[UniversalForm] Error updating task progress:`, metaErr);
         }
         
         // Invalidate queries to ensure UI gets updated data
