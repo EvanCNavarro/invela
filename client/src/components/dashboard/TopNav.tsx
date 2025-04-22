@@ -8,6 +8,9 @@ import {
   UserIcon,
   EyeIcon,
   EyeOffIcon,
+  Building2Icon,
+  ShieldIcon,
+  Landmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,14 +24,50 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
+import { cn } from "@/lib/utils";
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [location, setLocation] = useLocation();
   const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Determine company type and set appropriate icon and color
+  const companyProfile = useMemo(() => {
+    // Default to FinTech (green) if we can't determine the type
+    let icon = UserIcon;
+    let bgColor = "bg-emerald-500";
+    let textColor = "text-white";
+    let companyName = "Unknown Company";
+    
+    if (user?.company_id) {
+      // Get company name if available
+      if (user.company) {
+        companyName = user.company.name || companyName;
+      }
+      
+      // Set color and icon based on company ID or name
+      // Company ID 1 is Invela (blue with shield)
+      if (user.company_id === 1 || companyName === "Invela") {
+        icon = ShieldIcon;
+        bgColor = "bg-blue-600";
+      } 
+      // Banks are purple with landmark icon
+      else if (companyName.toLowerCase().includes("bank")) {
+        icon = Landmark;
+        bgColor = "bg-purple-600";
+      }
+      // All other companies (FinTechs) are green with user icon
+      else {
+        icon = UserIcon;
+        bgColor = "bg-emerald-500";
+      }
+    }
+    
+    return { icon, bgColor, textColor, companyName };
+  }, [user]);
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -74,24 +113,34 @@ export function TopNav() {
 
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-8 w-8 cursor-pointer bg-white shrink-0">
-                <AvatarFallback className="text-sm">
-                  {user?.full_name?.[0]?.toUpperCase() ?? 'U'}
-                </AvatarFallback>
-              </Avatar>
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className={cn("w-8 h-8 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
+                  {React.createElement(companyProfile.icon, { className: "h-4 w-4" })}
+                </div>
+                <div className="hidden md:block">
+                  <p className="text-sm font-medium leading-tight">{user?.full_name}</p>
+                  <p className="text-xs text-muted-foreground leading-tight">{companyProfile.companyName}</p>
+                </div>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56"
+              className="w-72"
               sideOffset={4}
               onCloseAutoFocus={(event) => {
                 event.preventDefault();
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium truncate">{user?.full_name}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <div className="p-3 flex items-start gap-3">
+                <div className={cn("w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-md", companyProfile.bgColor, companyProfile.textColor)}>
+                  {React.createElement(companyProfile.icon, { className: "h-5 w-5" })}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{user?.full_name}</p>
+                  <p className="text-xs text-muted-foreground truncate mb-1">{user?.email}</p>
+                  <p className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-sm inline-block">{companyProfile.companyName}</p>
+                </div>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem
