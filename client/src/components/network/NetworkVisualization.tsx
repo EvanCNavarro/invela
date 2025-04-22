@@ -74,28 +74,62 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     const numberOfNodes = filteredNodes.length;
     const angleStep = (2 * Math.PI) / numberOfNodes;
 
-    // Draw lines from center to each node
-    filteredNodes.forEach((_, index) => {
+    // Draw center node with color based on company type
+    // Use companyTypeColors for the center node (Bank=purple, Invela=blue, FinTech=green)
+    const centerCompanyColor = companyTypeColors[data.center.category] || companyTypeColors['Default'];
+    
+    // Add defs for gradients
+    const defs = svg.append('defs');
+    
+    // Draw lines from center to each node with subtle gradient
+    filteredNodes.forEach((node, index) => {
       const angle = index * angleStep;
       const x2 = radius * Math.cos(angle);
       const y2 = radius * Math.sin(angle);
-
+      
+      // Create subtle gradient effect for each line
+      const lineGradientId = `line-gradient-${index}`;
+      
+      const gradient = defs.append('linearGradient')
+        .attr('id', lineGradientId)
+        .attr('gradientUnits', 'userSpaceOnUse')
+        .attr('x1', 0)
+        .attr('y1', 0)
+        .attr('x2', x2)
+        .attr('y2', y2);
+        
+      gradient.append('stop')
+        .attr('offset', '0%')
+        .attr('stop-color', centerCompanyColor)
+        .attr('stop-opacity', 0.3);
+        
+      gradient.append('stop')
+        .attr('offset', '100%')
+        .attr('stop-color', riskBucketColors[node.riskBucket])
+        .attr('stop-opacity', 0.5);
+      
       g.append('line')
         .attr('x1', 0)
         .attr('y1', 0)
         .attr('x2', x2)
         .attr('y2', y2)
-        .attr('stroke', '#94a3b8') // Darkened from #e5e7eb to #94a3b8
+        .attr('stroke', `url(#${lineGradientId})`)
         .attr('stroke-width', 1.5);
     });
-
-    // Draw center node with color based on company type
-    // Use companyTypeColors for the center node (Bank=purple, Invela=blue, FinTech=green)
-    const centerCompanyColor = companyTypeColors[data.center.category] || companyTypeColors['Default'];
+    // Add a white background circle for better visibility
     g.append('circle')
       .attr('cx', 0)
       .attr('cy', 0)
-      .attr('r', 25)
+      .attr('r', 30)
+      .attr('fill', '#ffffff')
+      .attr('stroke', '#e5e7eb')
+      .attr('stroke-width', 1.5);
+    
+    // Main center node with company type color
+    g.append('circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', 28)
       .attr('fill', centerCompanyColor)
       .attr('stroke', '#000')
       .attr('stroke-width', 2)
@@ -104,14 +138,16 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       .append('title')
       .text(data.center.name);
 
-    // Add center node label
+    // Add center node label with improved styling
     g.append('text')
       .attr('x', 0)
       .attr('y', 0)
       .attr('text-anchor', 'middle')
       .attr('dy', '.35em')
       .attr('fill', 'white')
-      .style('font-size', '10px')
+      .style('font-size', '13px')
+      .style('font-weight', '600')
+      .style('pointer-events', 'none')
       .text(data.center.name.substring(0, 6));
 
     // Draw outer nodes
@@ -124,6 +160,15 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       // Add border only for accredited companies
       const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent';
 
+      // Draw white background circle for outer nodes
+      g.append('circle')
+        .attr('cx', x)
+        .attr('cy', y)
+        .attr('r', 17)
+        .attr('fill', 'white')
+        .attr('stroke', '#e5e7eb')
+        .attr('stroke-width', 1);
+      
       // Capture the node element for click handling
       const nodeElement = g.append('circle')
         .attr('cx', x)
@@ -144,29 +189,73 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             .attr('stroke', '#4b5563')
             .attr('stroke-width', 1.8);
             
-          // Enhanced tooltip
+          // Enhanced tooltip with improved styling
           const tooltip = g.append('g')
             .attr('class', 'node-tooltip')
-            .attr('transform', `translate(${x}, ${y - 30})`);
+            .attr('transform', `translate(${x}, ${y - 40})`);
           
+          // Calculate tooltip width based on text length
+          const tooltipWidth = Math.max(node.name.length * 7, 100);
+          
+          // Add drop shadow for the tooltip
+          const dropShadow = defs.append('filter')
+            .attr('id', `drop-shadow-${index}`)
+            .attr('height', '130%');
+            
+          dropShadow.append('feGaussianBlur')
+            .attr('in', 'SourceAlpha')
+            .attr('stdDeviation', 2)
+            .attr('result', 'blur');
+            
+          dropShadow.append('feOffset')
+            .attr('in', 'blur')
+            .attr('dx', 0)
+            .attr('dy', 1)
+            .attr('result', 'offsetBlur');
+            
+          const feMerge = dropShadow.append('feMerge');
+          feMerge.append('feMergeNode')
+            .attr('in', 'offsetBlur');
+          feMerge.append('feMergeNode')
+            .attr('in', 'SourceGraphic');
+          
+          // Draw tooltip background with shadow
           tooltip.append('rect')
-            .attr('rx', 4)
-            .attr('ry', 4)
-            .attr('x', -node.name.length * 3 - 8)
-            .attr('y', -20)
-            .attr('width', node.name.length * 6 + 16)
-            .attr('height', 26)
+            .attr('rx', 6)
+            .attr('ry', 6)
+            .attr('x', -tooltipWidth/2)
+            .attr('y', -30)
+            .attr('width', tooltipWidth)
+            .attr('height', 36)
+            .attr('fill', 'white')
+            .attr('stroke', '#e2e8f0')
+            .attr('stroke-width', 1)
+            .attr('filter', `url(#drop-shadow-${index})`);
+          
+          // Triangle pointer at the bottom
+          tooltip.append('path')
+            .attr('d', 'M-8,6 L0,14 L8,6')
             .attr('fill', 'white')
             .attr('stroke', '#e2e8f0')
             .attr('stroke-width', 1);
             
+          // Company name text
           tooltip.append('text')
             .attr('text-anchor', 'middle')
-            .attr('dy', -4)
+            .attr('dy', -10)
             .attr('fill', '#1e293b')
-            .style('font-size', '12px')
-            .style('font-weight', 'bold')
+            .style('font-size', '13px')
+            .style('font-weight', '600')
             .text(node.name);
+          
+          // Risk level text
+          tooltip.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', 8)
+            .attr('fill', '#64748b')
+            .style('font-size', '11px')
+            .style('font-weight', '400')
+            .text(`Risk: ${node.riskBucket.charAt(0).toUpperCase() + node.riskBucket.slice(1)}`);
         })
         .on('mouseout', function() {
           const isSelected = selectedNode && selectedNode.id === node.id;
