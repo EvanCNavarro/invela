@@ -373,7 +373,51 @@ router.get('/api/ky3p/progress/:taskId', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
-    logger.debug('Retrieved responses:', { 
+    // Check database directly with raw SQL query for debugging
+    const rawResult = await db.execute(`
+      SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId}
+    `);
+    
+    logger.info('[KY3P API] Raw response count from database:', {
+      taskId,
+      countFromRawQuery: rawResult.rows[0]?.count || 0,
+      countFromRegularQuery: responses.length,
+      joinCondition: 'ky3pResponses.field_id = ky3pFields.id',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Additional debug query to check field mapping
+    try {
+      const fieldResults = await db.execute(`
+        SELECT r.id, r.field_id, f.field_key, r.response_value 
+        FROM ky3p_responses r 
+        LEFT JOIN ky3p_fields f ON r.field_id = f.id
+        WHERE r.task_id = ${taskId}
+        LIMIT 10
+      `);
+      
+      logger.info('[KY3P API] Sample fields from raw query:', {
+        sampleCount: fieldResults.rows.length,
+        firstFewSamples: fieldResults.rows.slice(0, 3),
+        timestamp: new Date().toISOString()
+      });
+      
+      // Check for missing field keys
+      const missingFieldKeys = fieldResults.rows.filter(row => !row.field_key);
+      if (missingFieldKeys.length > 0) {
+        logger.warn('[KY3P API] Found responses with no matching field_key:', {
+          count: missingFieldKeys.length,
+          examples: missingFieldKeys.slice(0, 3).map(row => ({ 
+            responseId: row.id, 
+            fieldId: row.field_id 
+          }))
+        });
+      }
+    } catch (debugError) {
+      logger.error('[KY3P API] Error in debug query:', debugError);
+    }
+    
+    logger.debug('Retrieved responses from regular query:', { 
       responseCount: responses.length, 
       timestamp: new Date().toISOString()
     });
