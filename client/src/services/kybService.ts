@@ -1149,6 +1149,66 @@ export class KybFormService implements FormServiceInterface {
   }
 
   /**
+   * Synchronize form data between task.savedFormData and individual field responses
+   * This prevents inconsistencies when navigating between forms
+   * @param taskId The task ID to synchronize
+   * @returns Promise<SyncFormDataResponse> The synchronized form data
+   */
+  async syncFormData(taskId: number): Promise<SyncFormDataResponse> {
+    try {
+      // Check if taskId is provided
+      if (!taskId) {
+        console.error('[FormSync] Missing taskId in syncFormData');
+        throw new Error('Task ID is required');
+      }
+      
+      console.debug(`[FormSync] Synchronizing form data for task: ${taskId}`);
+      
+      // Call the synchronization endpoint
+      const response = await fetch(`/api/tasks/${taskId}/sync-form-data`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Check for errors
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[FormSync] Error synchronizing form data: ${errorText}`);
+        throw new Error(`Failed to synchronize form data: ${response.status} ${response.statusText}`);
+      }
+      
+      // Parse response
+      const result = await response.json();
+      
+      // Update local form data if data was synchronized
+      if (result.success && result.formData && result.syncDirection !== 'none') {
+        console.debug(`[FormSync] Updating local form data with synchronized data (direction: ${result.syncDirection})`);
+        this.loadFormData(result.formData);
+      } else {
+        console.debug(`[FormSync] No synchronization needed (direction: ${result.syncDirection})`);
+      }
+      
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`[FormSync] Error in syncFormData: ${errorMessage}`);
+      
+      // Return a failed response
+      return {
+        success: false,
+        formData: {},
+        progress: 0,
+        status: 'error',
+        taskId,
+        syncDirection: 'none'
+      };
+    }
+  }
+
+  /**
    * Validate form data
    */
   validate(data: FormData): boolean | Record<string, string> {
@@ -1223,3 +1283,4 @@ export const saveKybProgress = (taskId: number, progress: number, formData: Reco
 export const getKybProgress = (taskId: number): Promise<KybProgressResponse> => kybService.getKybProgress(taskId);
 export const submitKybForm = (taskId: number, formData: Record<string, any>, fileName?: string) => kybService.submitKybForm(taskId, formData, fileName);
 export const getTaskStatus = (): string => kybService.getTaskStatus();
+export const syncKybFormData = (taskId: number): Promise<SyncFormDataResponse> => kybService.syncFormData(taskId);
