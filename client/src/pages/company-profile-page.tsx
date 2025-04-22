@@ -79,17 +79,29 @@ const getAccreditationStatus = (status: string | null | undefined): 'VALID' | 'P
   return 'INVALID';
 };
 
-// Helper function to get the appropriate class based on the status
-const getAccreditationStatusClass = (status: string | null | undefined): string => {
+// Helper function to get the appropriate style object based on the status
+const getAccreditationStatusStyle = (status: string | null | undefined): React.CSSProperties => {
   const normalizedStatus = getAccreditationStatus(status);
   
   switch (normalizedStatus) {
     case 'VALID':
-      return 'text-green-600 mt-1 font-semibold text-lg py-1 flex items-center justify-center shadow-[0px_0px_12px_rgba(22,163,74,0.3)]';
+      return {
+        backgroundImage: 'linear-gradient(to bottom right, #f0fdf4, #dcfce7)',
+        color: '#16a34a',
+        border: '1px solid #bbf7d0'
+      };
     case 'PENDING':
-      return 'text-yellow-600 mt-1 font-semibold text-lg py-1 flex items-center justify-center shadow-[0px_0px_12px_rgba(217,119,6,0.3)]'; 
+      return {
+        backgroundImage: 'linear-gradient(to bottom right, #fefce8, #fef9c3)',
+        color: '#ca8a04',
+        border: '1px solid #fde68a'
+      };
     default:
-      return 'text-red-500 mt-1 font-semibold text-lg py-1 flex items-center justify-center shadow-[0px_0px_12px_rgba(239,68,68,0.3)]';
+      return {
+        backgroundImage: 'linear-gradient(to bottom right, #fef2f2, #fee2e2)',
+        color: '#ef4444',
+        border: '1px solid #fecaca'
+      };
   }
 };
 
@@ -618,21 +630,21 @@ export default function CompanyProfilePage() {
               
               {/* Enhanced metrics cards - same size, no hover, black titles */}
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
-                {/* Risk Score card with standardized styling and blue aura */}
-                <div className="flex flex-col justify-between p-4 rounded-lg bg-white border border-slate-200 text-center drop-shadow-sm md:w-52">
+                {/* Risk Score card with Invela blue background gradient */}
+                <div className="flex flex-col justify-between p-4 rounded-lg border border-slate-200 text-center drop-shadow-sm md:w-52">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <Award className="h-5 w-5 text-black" />
                     <div className="text-sm text-black font-medium">
                       RISK SCORE
                     </div>
                   </div>
-                  <div className="text-4xl font-bold text-gray-900 mt-1 shadow-[0px_0px_12px_rgba(79,99,236,0.3)]">
+                  <div className="text-4xl font-bold text-gray-900 mt-1 py-2 rounded-md bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
                     {company.riskScore || company.risk_score || 0}
                   </div>
                 </div>
                 
-                {/* Accreditation status with reduced colors and standardized sizing */}
-                <div className="flex flex-col justify-between p-4 rounded-lg bg-white border border-slate-200 text-center drop-shadow-sm md:w-52">
+                {/* Accreditation status with color-coded background */}
+                <div className="flex flex-col justify-between p-4 rounded-lg border border-slate-200 text-center drop-shadow-sm md:w-52">
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <BadgeCheck className="h-5 w-5 text-black" />
                     <div className="text-sm text-black font-medium">
@@ -640,9 +652,8 @@ export default function CompanyProfilePage() {
                     </div>
                   </div>
                   <div 
-                    className={
-                      getAccreditationStatusClass(company.accreditationStatus)
-                    }
+                    className="text-lg font-semibold py-2 rounded-md"
+                    style={getAccreditationStatusStyle(company.accreditationStatus)}
                   >
                     {getAccreditationStatusLabel(company.accreditationStatus)}
                   </div>
