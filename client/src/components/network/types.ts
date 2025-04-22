@@ -48,7 +48,7 @@ export const companyTypeColors: Record<string, string> = {
   'Default': '#7B74A8' // Default to purple 
 };
 
-// Navbar user icon purple color for center node
-export const centerUserPurple = '#7B74A8';
+// Navbar user icon purple color for center node - exact match with Bank avatar
+export const centerUserPurple = '#8A4FE0';
 
 export const centerNodeColor = '#4965EC'; // This will be replaced by company type color in the visualization
