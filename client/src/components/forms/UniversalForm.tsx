@@ -300,9 +300,75 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     };
     
+    // Add a handler for task updates (used for auto-fill and other task status changes)
+    const handleTaskUpdate = async (data: any) => {
+      // Only process messages for the current task
+      if ((Number(data.taskId) !== Number(taskId)) && (Number(data.id) !== Number(taskId))) {
+        logger.debug(`[WebSocket Handler] Ignoring task update for task ${data.taskId || data.id} (current task is ${taskId})`);
+        return;
+      }
+      
+      logger.info(`[WebSocket Handler] Processing task update for task ${data.taskId || data.id}: Status=${data.status}, Source=${data.source || 'unknown'}`);
+      
+      // Check if this is an auto-fill operation
+      if (data.source === 'ky3p_demo_autofill') {
+        logger.info(`[WebSocket Handler] KY3P auto-fill operation completed for task ${data.taskId || data.id}`);
+        
+        try {
+          // Force query invalidation to refresh data from server
+          const { queryClient } = await import('@/lib/queryClient');
+          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
+          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          
+          // Also invalidate KY3P specific endpoints
+          queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/ky3p-responses`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/ky3p/progress/${taskId}`] });
+          
+          // COMPLETELY RESET THE FORM to force full refresh from server
+          if (formService) {
+            logger.info('[WebSocket Handler] Forcing form service to reload data from server');
+            try {
+              // Safely attempt to call clearCache if it exists
+              const anyFormService = formService as any;
+              if (typeof anyFormService.loadResponses === 'function') {
+                logger.info('[WebSocket Handler] Explicitly calling loadResponses to reload form data');
+                await anyFormService.loadResponses();
+              }
+            } catch (e) {
+              logger.warn('[WebSocket Handler] Error during form service data refresh:', e);
+            }
+            
+            // Reset form with empty data to force full refresh
+            if (resetForm) {
+              logger.info('[WebSocket Handler] Resetting form to force full refresh');
+              resetForm({});
+            }
+          }
+          
+          // Refresh all section statuses
+          if (refreshStatus) {
+            refreshStatus();
+          }
+          
+          // Force a React component re-render
+          setForceRerender(prev => !prev);
+          
+          // Show toast notification about successful auto-fill from WebSocket
+          toast({
+            title: "Auto-Fill Data Received",
+            description: "Form data has been refreshed with the latest server changes",
+            variant: "success",
+          });
+        } catch (error) {
+          logger.error('[WebSocket Handler] Error processing auto-fill update:', error);
+        }
+      }
+    };
+    
     // Subscribe to field update messages
     let fieldUpdateUnsubscribe: (() => void) | null = null;
     let submissionStatusUnsubscribe: (() => void) | null = null;
+    let taskUpdateUnsubscribe: (() => void) | null = null;
     
     // Field updates subscription
     wsService.subscribe('field_update', handleFieldUpdate)
@@ -322,6 +388,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         logger.error('Error subscribing to submission status updates:', error);
       });
       
+    // Task updates subscription (for auto-fill operations)
+    wsService.subscribe('task_updated', handleTaskUpdate)
+      .then(unsub => {
+        taskUpdateUnsubscribe = unsub;
+      })
+      .catch(error => {
+        logger.error('Error subscribing to task updates:', error);
+      });
+      
     // Clean up subscriptions when component unmounts
     return () => {
       if (fieldUpdateUnsubscribe) {
@@ -330,8 +405,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (submissionStatusUnsubscribe) {
         submissionStatusUnsubscribe();
       }
+      if (taskUpdateUnsubscribe) {
+        taskUpdateUnsubscribe();
+      }
     };
-  }, [taskId, updateField, toast]);
+  }, [taskId, updateField, toast, resetForm, formService, refreshStatus, setForceRerender]);
 
   // Update sections when main form sections change to include the Review & Submit section
   useEffect(() => {
