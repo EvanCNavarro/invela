@@ -930,8 +930,12 @@ const handleDemoAutoFill = useCallback(async () => {
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
         queryClient.invalidateQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
         
-        // Wait for queries to be invalidated
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Also invalidate KY3P specific endpoints
+        queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/ky3p-responses`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/ky3p/progress/${taskId}`] });
+        
+        // Wait longer for queries to be invalidated (increase from 300ms to 500ms)
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // COMPLETELY RESET THE FORM to force full refresh from server
         if (formService) {
@@ -943,12 +947,19 @@ const handleDemoAutoFill = useCallback(async () => {
             if (typeof anyFormService.clearCache === 'function') {
               anyFormService.clearCache();
             }
+            
+            // VERY IMPORTANT: Call loadResponses explicitly if it exists
+            if (typeof anyFormService.loadResponses === 'function') {
+              logger.info('[UniversalForm] Explicitly calling loadResponses to reload form data');
+              await anyFormService.loadResponses();
+            }
           } catch (e) {
-            logger.warn('[UniversalForm] Error calling clearCache:', e);
+            logger.warn('[UniversalForm] Error during form service cache/data refresh:', e);
           }
           
           // Reset form with empty data to force full refresh
           if (resetForm) {
+            logger.info('[UniversalForm] Resetting form with empty data to force full refresh');
             resetForm({});
           }
           
@@ -956,12 +967,21 @@ const handleDemoAutoFill = useCallback(async () => {
           try {
             const anyFormService = formService as any;
             if (typeof anyFormService.loadFormStructure === 'function') {
+              logger.info('[UniversalForm] Calling formService.loadFormStructure()');
               await anyFormService.loadFormStructure();
             }
             
             // Reload all form data from the server if method exists
             if (typeof anyFormService.loadFormData === 'function') {
+              logger.info('[UniversalForm] Calling formService.loadFormData()');
               await anyFormService.loadFormData();
+            }
+            
+            // Explicitly reload fields if getFields method exists
+            if (typeof anyFormService.getFields === 'function') {
+              logger.info('[UniversalForm] Explicitly reloading fields with formService.getFields()');
+              const updatedFields = await anyFormService.getFields();
+              logger.info(`[UniversalForm] Reloaded ${updatedFields.length} fields`);
             }
           } catch (e) {
             logger.warn('[UniversalForm] Error reloading form data:', e);

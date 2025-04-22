@@ -142,7 +142,8 @@ async function handleKy3pDemoAutofill(req, res) {
     
     // Broadcast the update to WebSocket clients for real-time UI updates
     broadcastTaskUpdate({
-      taskId,
+      id: taskId, // IMPORTANT: Must use 'id' not 'taskId' for WebSocket broadcast
+      taskId, // Keep taskId for backwards compatibility
       status,
       progress,
       source: 'ky3p_demo_autofill',
