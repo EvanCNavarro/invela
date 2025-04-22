@@ -1436,6 +1436,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           category: sql<string>`COALESCE(${companies.category}, '')`,
           accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
           riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`,
+          revenueTier: companies.revenue_tier,
+          activeConsents: companies.active_consents,
           isDemo: companies.is_demo
         }
       })
@@ -1471,8 +1473,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
       // 4. Transform into the expected format
       const nodes = networkRelationships.map(rel => {
-        // Get revenue tier from metadata or use default
-        const revenueTier = (rel.metadata?.revenueTier as string) || 'Unknown';
+        // Get revenue tier from either the company record or metadata, or use default
+        const revenueTier = rel.relatedCompany.revenueTier || (rel.metadata?.revenueTier as string) || 'Enterprise';
         
         // Create node for the visualization
         return {
@@ -1486,6 +1488,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
           revenueTier,
           category: rel.relatedCompany.category || 'Other',
+          activeConsents: rel.relatedCompany.activeConsents || null,
           isDemo: rel.relatedCompany.isDemo
         };
       });
