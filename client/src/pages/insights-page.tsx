@@ -119,7 +119,9 @@ export default function InsightsPage() {
           )}
           
           {selectedVisualization === "risk_radar" && (
-            <RiskRadarChart className="bg-transparent shadow-none border-none" />
+            <div className="flex items-center justify-center h-[430px]">
+              <RiskRadarChart className="bg-transparent shadow-none border-none w-full h-full" />
+            </div>
           )}
         </Widget>
       </div>
