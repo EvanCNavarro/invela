@@ -493,7 +493,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </CardHeader>
       )}
       <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-6" : "", "h-full flex-grow")}>
-        <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-[350px] aspect-square mx-auto" : "h-[520px]")}>
+        <div className={cn(
+          "w-full rounded-md flex-grow", 
+          // If on dashboard (border-none) use 350px height, if on insights page (bg-transparent) use 600px (shorter), otherwise use 520px
+          className?.includes("border-none") 
+            ? "h-[350px] aspect-square mx-auto" 
+            : className?.includes("bg-transparent") 
+              ? "h-[600px] mx-auto" 
+              : "h-[520px]"
+        )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
