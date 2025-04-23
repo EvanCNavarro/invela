@@ -165,7 +165,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         enabled: true,
         blur: 3,
         opacity: 0.2
-      }
+      },
+      parentHeightOffset: 0,
+      width: '100%',
+      height: '100%',
     },
     colors: ['#4965EC'], // Matching brand primary color from network viz
     fill: {
@@ -431,13 +434,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           className?.includes("border-none") ? "h-full flex items-center justify-center" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
-            <ReactApexChart 
-              options={chartOptions} 
-              series={series} 
-              type="radar" 
-              height={className?.includes("border-none") ? "100%" : "520"}
-              width="100%"
-            />
+            <div style={{ width: '100%', height: '100%' }}>
+              <ReactApexChart 
+                options={chartOptions} 
+                series={series} 
+                type="radar" 
+                height={className?.includes("border-none") ? "100%" : "520"}
+                width="100%"
+              />
+            </div>
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
