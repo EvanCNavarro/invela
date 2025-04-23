@@ -293,10 +293,10 @@ export default function DashboardPage() {
               <div className="col-span-3 grid gap-4">
                 {/* FinTech layout - 1:3 ratio grid */}
                 {companyData?.category === 'FinTech' && (visibleWidgets.companyScore || visibleWidgets.riskRadar) && (
-                  <div className="grid grid-cols-4 gap-4 h-[600px] w-full">
+                  <div className="grid grid-cols-4 gap-4 h-[450px]">
                     {/* Company Score (1/4 width) for FinTech */}
                     {visibleWidgets.companyScore && companyData && (
-                      <div className="col-span-1 h-full w-full">
+                      <div className="col-span-1">
                         <CompanyScoreWidget 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companyScore')}
@@ -307,7 +307,7 @@ export default function DashboardPage() {
 
                     {/* Risk Radar (3/4 width) for FinTech */}
                     {visibleWidgets.riskRadar && companyData && (
-                      <div className="col-span-3 h-full w-full">
+                      <div className="col-span-3 h-full">
                         <RiskRadarWidget
                           companyId={companyData?.id || 0}
                           onToggle={() => toggleWidget('riskRadar')}
@@ -347,7 +347,7 @@ export default function DashboardPage() {
               
               {/* Risk Radar - Only for Bank/Invela companies as full width */}
               {visibleWidgets.riskRadar && companyData?.category !== 'FinTech' && companyData && (
-                <div className="col-span-3 h-[600px] w-full">
+                <div className="col-span-3 h-[400px]">
                   <RiskRadarWidget
                     companyId={companyData?.id || 0}
                     onToggle={() => toggleWidget('riskRadar')}
