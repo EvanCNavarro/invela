@@ -110,7 +110,11 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className={cn("p-4", className?.includes('h-full') ? 'h-[calc(100%-48px)]' : '')}>
+      <div className={cn(
+        "p-4", 
+        className?.includes('h-full') ? 'h-[calc(100%-48px)]' : '',
+        title === 'Risk Radar' ? 'p-0 pt-2' : ''
+      )}>
         {children}
       </div>
     </Card>

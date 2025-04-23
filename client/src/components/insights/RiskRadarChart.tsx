@@ -190,12 +190,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: isCompactView ? 6 : 8, // Adjusted marker size for compact view
+      size: 8, // Larger markers for better visibility
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: isCompactView ? 2 : 3,
+      strokeWidth: 3,
       hover: {
-        size: isCompactView ? 8 : 10, // Adjusted hover size for compact view
+        size: 12, // Larger hover size
       }
     },
     grid: {
@@ -269,9 +269,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: isCompactView ? '100%' : 220, // Use full available width for compact view
-        offsetY: isCompactView ? 0 : -20, // Centered for compact view
-        offsetX: 0,
+        size: 280, // Much larger radar chart
+        offsetY: 0, // Center vertically
+        offsetX: 0, // Center horizontally
         polygons: {
           strokeColors: '#e2e8f0',
           strokeWidth: 1,
@@ -426,21 +426,21 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </CardHeader>
       )}
       <CardContent className={cn(
-        "p-4 pb-8", 
-        className?.includes("border-none") ? "pt-0 px-0 pb-0" : ""
+        "p-0", 
+        className?.includes("border-none") ? "pt-2" : "p-4 pb-8"
       )}>
         <div className={cn(
           "w-full rounded-md mx-auto", 
-          className?.includes("border-none") ? "h-full flex items-center justify-center" : "h-[520px]"
+          className?.includes("border-none") ? "h-[400px]" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
-            <div style={{ width: '100%', height: '100%' }}>
+            <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <ReactApexChart 
                 options={chartOptions} 
                 series={series} 
                 type="radar" 
-                height={className?.includes("border-none") ? "100%" : "520"}
-                width="100%"
+                height="400"
+                width="500"
               />
             </div>
           )}
