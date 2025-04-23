@@ -48,7 +48,7 @@ export function Widget({
 }: WidgetProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
+      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60 h-full flex flex-col",
       size === 'single' ? 'col-span-1' : 
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
@@ -112,7 +112,7 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className={cn("p-4", className?.includes("flex-col") && "flex-grow")}>
+      <div className={cn("p-4 flex-grow", className?.includes("p-0") && "p-0")}>
         {children}
       </div>
     </Card>

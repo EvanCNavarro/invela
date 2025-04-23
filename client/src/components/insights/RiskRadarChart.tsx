@@ -432,7 +432,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   }
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn("w-full h-full flex flex-col", className)}>
       {/* Only show header with title/description if NOT in condensed view (border-none class indicates dashboard widget) */}
       {!className?.includes("border-none") && (
         <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
@@ -472,8 +472,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-0" : "")}>
-        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "min-h-[350px] h-full" : "h-[520px]")}>
+      <CardContent className={cn("p-4 pb-6 flex-grow flex", className?.includes("border-none") ? "p-0" : "")}>
+        <div className={cn("w-full rounded-md flex flex-grow", className?.includes("border-none") ? "min-h-[350px] h-full" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
@@ -481,6 +481,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               type="radar" 
               height={className?.includes("border-none") ? "100%" : "520"}
               width="100%"
+              className="flex-grow"
             />
           )}
           {!chartComponentLoaded && (
