@@ -110,7 +110,7 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className="p-4">
+      <div className={cn("p-4", className?.includes('h-full') ? 'h-[calc(100%-48px)]' : '')}>
         {children}
       </div>
     </Card>
