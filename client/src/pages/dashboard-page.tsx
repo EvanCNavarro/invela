@@ -194,7 +194,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-2 space-y-4">
+        <div className="mt-2 space-y-4 h-full">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (
