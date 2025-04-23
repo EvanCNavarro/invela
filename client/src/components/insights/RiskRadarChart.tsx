@@ -197,12 +197,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: 7, // Reduced marker size
+      size: 5, // Smaller markers for compact widget
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: 2.5, // Slightly thinner stroke for better appearance
+      strokeWidth: 2, // Thinner stroke for better appearance at smaller size
       hover: {
-        size: 9, // Smaller hover size to match reduced chart size
+        size: 7, // Smaller hover size
       }
     },
     grid: {
@@ -255,19 +255,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: '13px',
+        fontSize: '11px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
       background: {
         enabled: true,
-        borderRadius: 4,
-        padding: 3,
+        borderRadius: 3,
+        padding: 2,
         opacity: 0.9,
         borderWidth: 1,
         borderColor: '#e2e8f0',
       },
-      offsetY: -8
+      offsetY: -6
     },
     tooltip: {
       theme: 'light',
@@ -291,7 +291,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 260, // Further reduced size for better spacing
+        size: 220, // Further reduced size for compact widget
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -310,8 +310,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 240, // Smaller for large screens
-              offsetY: 0
+              size: 200
             }
           }
         }
@@ -321,9 +320,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 220, // Smaller for medium screens
-              offsetY: 0
+              size: 180
             }
+          },
+          markers: {
+            size: 6
           }
         }
       },
@@ -332,12 +333,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 200, // Smaller for tablets
-              offsetY: 0
+              size: 160
             }
           },
           markers: {
-            size: 6
+            size: 5
           },
           dataLabels: {
             enabled: false // Turn off data labels on smaller screens
@@ -345,7 +345,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           xaxis: {
             labels: {
               style: {
-                fontSize: '12px'
+                fontSize: '11px'
               }
             }
           }
@@ -356,24 +356,23 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 180, // Even smaller for mobile
-              offsetY: 0
+              size: 140
             }
           },
           markers: {
-            size: 5
+            size: 4
           },
           yaxis: {
             labels: {
               style: {
-                fontSize: '10px'
+                fontSize: '9px'
               }
             }
           },
           xaxis: {
             labels: {
               style: {
-                fontSize: '11px'
+                fontSize: '10px'
               }
             }
           }
@@ -402,9 +401,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             Detailed breakdown of risk factors for this company
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center p-4">
-          <div className="aspect-square w-full max-w-[450px] mx-auto">
-            <Skeleton className="w-full h-full rounded-md aspect-square" />
+        <CardContent className="flex flex-col items-center p-2">
+          <div className="w-full h-[340px] mx-auto">
+            <Skeleton className="w-full h-full rounded-md" />
           </div>
         </CardContent>
       </Card>
@@ -455,17 +454,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       <CardContent className="p-0">
         <div 
           className={cn(
-            "rounded-md flex flex-col items-center justify-center p-4",
-            // Make the chart container square
-            className?.includes("border-none") ? "aspect-square w-full" : "aspect-square w-full max-w-[450px] mx-auto"
+            "rounded-md flex flex-col items-center justify-center p-2",
+            // Make a more reasonably sized chart container
+            className?.includes("border-none") ? "w-full h-[340px]" : "w-full h-[340px] mx-auto"
           )}
         >
           {chartComponentLoaded && ReactApexChart ? (
             <div id="apexRadarChart" className="w-full h-full" style={{ 
               overflow: "visible",
               position: "relative",
-              maxWidth: "100%", // Use full width of parent
-              aspectRatio: "1/1" // Ensure the container itself is square
+              maxWidth: "100%",
+              height: "100%"
             }}>
               <ReactApexChart 
                 options={{
@@ -486,8 +485,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               />
             </div>
           ) : (
-            <div className="aspect-square w-full flex items-center justify-center">
-              <Skeleton className="w-full h-full rounded-md aspect-square" />
+            <div className="w-full h-full flex items-center justify-center">
+              <Skeleton className="w-full h-full rounded-md" />
             </div>
           )}
         </div>
