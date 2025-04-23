@@ -342,12 +342,15 @@ export default function DashboardPage() {
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
                           headerClassName="pb-1" /* Reduce padding below header */
+                          className="h-auto min-h-[360px] flex flex-col"
                         >
-                          <RiskRadarChart 
-                            companyId={companyData?.id || 0} 
-                            showDropdown={false}
-                            className="shadow-none border-none p-0"
-                          />
+                          <div className="flex-grow">
+                            <RiskRadarChart 
+                              companyId={companyData?.id || 0} 
+                              showDropdown={false}
+                              className="shadow-none border-none h-full p-0"
+                            />
+                          </div>
                         </Widget>
                       </div>
                     )}
