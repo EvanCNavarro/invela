@@ -334,7 +334,7 @@ export default function DashboardPage() {
 
                     {/* Network Visualization for Bank/Invela */}
                     {visibleWidgets.networkVisualization && (
-                      <div className="h-[300px]">
+                      <div className="h-[400px]">
                         <NetworkVisualizationWidget
                           onToggle={() => toggleWidget('networkVisualization')}
                           isVisible={visibleWidgets.networkVisualization}

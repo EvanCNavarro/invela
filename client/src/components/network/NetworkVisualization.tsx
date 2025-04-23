@@ -473,11 +473,11 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       </CardHeader>
       <CardContent className="p-0 relative overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[400px]">
+          <div className="flex items-center justify-center h-[500px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-[400px] space-y-2">
+          <div className="flex flex-col items-center justify-center h-[500px] space-y-2">
             <div className="text-destructive font-medium">Failed to load network data</div>
             <div className="text-xs text-muted-foreground max-w-md">
               {error instanceof Error ? error.message : 'Check console for details'}
@@ -486,7 +486,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         ) : (
           <>
             <div className="relative">
-              <svg ref={svgRef} width="100%" height="400" className="bg-muted/20 rounded-b-lg"></svg>
+              <svg ref={svgRef} width="100%" height="500" className="bg-muted/20 rounded-b-lg"></svg>
               {selectedNode && data && (
                 <ConnectionDetails 
                   node={selectedNode} 
