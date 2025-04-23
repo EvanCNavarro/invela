@@ -26,6 +26,7 @@ interface WidgetProps {
   onEdit?: () => void;
   className?: string;
   headerClassName?: string;
+  contentClassName?: string;
   size?: 'single' | 'double' | 'triple';
   actions?: Array<{
     label: string;
@@ -43,6 +44,7 @@ export function Widget({
   onEdit,
   className,
   headerClassName,
+  contentClassName,
   size = 'single',
   actions = []
 }: WidgetProps) {
