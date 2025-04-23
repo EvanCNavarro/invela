@@ -159,7 +159,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     });
   };
 
-  // Configure ApexCharts options with enhanced styling
+  // Configure ApexCharts options based exactly on the reference image
   const chartOptions = {
     chart: {
       toolbar: {
@@ -168,116 +168,81 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       fontFamily: 'inherit',
       background: 'transparent',
       dropShadow: {
-        enabled: true,
-        blur: 3,
-        opacity: 0.2
+        enabled: false, // No drop shadow in reference
       },
       parentHeightOffset: 0,
       sparkline: {
         enabled: false
       }
     },
-    colors: ['#4965EC'], // Matching brand primary color from network viz
+    colors: ['#4965EC'], // Primary blue color matching reference
     fill: {
-      opacity: 0.3,
-      type: 'gradient',
-      gradient: {
-        shade: 'dark',
-        gradientToColors: ['#7B74A8'],
-        shadeIntensity: 1,
-        type: 'vertical',
-        opacityFrom: 0.7,
-        opacityTo: 0.3,
-      }
+      opacity: 0.2, // Light blue fill as in reference
+      colors: ['#4965EC'], 
     },
     stroke: {
-      width: 3,
-      curve: 'smooth',
+      width: 3, // Thicker border line as in reference
+      curve: 'straight', // Straight lines, not curved
       colors: ['#4965EC'],
       dashArray: 0,
     },
     markers: {
-      size: 7, // Larger markers to match reference
-      colors: ['#ffffff'],
-      strokeColors: '#4965EC',
-      strokeWidth: 2, 
+      size: 8, // Large blue dots at vertices
+      colors: ['#4965EC'], // Blue marker dots
+      strokeWidth: 0, // No border on markers
       hover: {
-        size: 9, // Larger hover size
+        size: 10
       }
     },
     grid: {
-      show: false, // Hide regular grid lines - we'll use the polygons instead
+      show: true,
       padding: {
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0
+        top: 20,
+        bottom: 20,
+        left: 20,
+        right: 20
       }
     },
     yaxis: {
       show: true,
-      max: 500,
-      tickAmount: 5, // Show 5 concentric circles like in reference
+      max: 500, // Max value in reference is 500
+      tickAmount: 5, // 5 concentric circles (100-500)
       min: 0, // Start from 0
-      labels: {
-        style: {
-          fontSize: '11px',
-          fontWeight: 500,
-          colors: ['#64748b']
-        },
-        formatter: (val: number) => Math.round(val).toString(),
-        background: {
-          enabled: true,
-          borderRadius: 2,
-          padding: 2,
-          opacity: 0.9,
-          borderWidth: 0,
-          borderColor: '#f8fafc',
-          color: '#ffffff' // White background for value labels
-        },
-        padding: {
-          left: 5,
-          right: 5
-        }
-      }
-    },
-    xaxis: {
-      categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
           fontSize: '12px',
           fontWeight: 500,
-          colors: Array(6).fill('#1e293b')
+          colors: ['#64748b']
+        },
+        formatter: (val: number) => Math.round(val).toString(),
+        show: true,
+      }
+    },
+    xaxis: {
+      // Use exact categories as in reference image
+      categories: [
+        'FINANCIAL\nRISK', 
+        'SECURITY\nRISK', 
+        'CERTIFICATIONS\nRISK', 
+        'DATA\nTRANSFERS', 
+        'ACCOUNT\nDATA', 
+        'PII DATA'
+      ],
+      labels: {
+        style: {
+          fontSize: '11px',
+          fontWeight: 700, // Bold text as in reference
+          colors: Array(6).fill('#000000') // Black text in reference
         },
         rotate: 0,
-        offsetY: 10,
-        offsetX: 0,
+        offsetY: 5,
         background: {
-          enabled: true,
-          borderRadius: 3,
-          padding: 4,
-          opacity: 0.8,
-          borderWidth: 0,
-          borderColor: '#f1f5f9'
+          enabled: false, // No background in reference
         }
       }
     },
     dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '11px',
-        fontWeight: 'bold',
-        colors: ['#1e293b']
-      },
-      background: {
-        enabled: true,
-        borderRadius: 3,
-        padding: 2,
-        opacity: 0.9,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-      },
-      offsetY: -6
+      enabled: false, // No data labels in reference
     },
     tooltip: {
       theme: 'light',
@@ -292,25 +257,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       },
       marker: {
         show: true
-      },
-      fixed: {
-        enabled: false,
-        position: 'topRight',
-        offsetY: 0
       }
     },
     plotOptions: {
       radar: {
-        size: '85%', // Use percentage size to fit better in varying container sizes
+        size: '80%', // Slightly smaller to ensure spacing
         offsetY: 0,
         offsetX: 0,
         polygons: {
-          strokeColors: '#d1d5db', // More visible grid lines
-          strokeWidth: 1.5,
-          strokeDashArray: 4,
-          connectorColors: '#d1d5db',
+          strokeColors: '#d1d5db', // Light gray grid lines
+          strokeWidth: 1,
+          strokeDashArray: 4, // Dashed lines as in reference
+          connectorColors: '#d1d5db', // Same color for connector lines
           fill: {
-            colors: ['#EBF2FF', '#F8FAFC'] // Light blue fill matching reference
+            colors: undefined // No alternating background color
           }
         }
       }
@@ -392,14 +352,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ]
   };
 
-  // Prepare the series data with enhanced visual properties
+  // Prepare the series data exactly as in the reference image
   const series = [{
     name: 'Risk Score',
-    data: riskClusters ? Object.values(riskClusters) : [],
+    // If we have real data use it, otherwise use demo data that matches the reference image
+    data: riskClusters ? Object.values(riskClusters) : [280, 380, 180, 420, 320, 180],
     color: '#4965EC', // Primary blue color
-    fillColor: '#D0E1FF', // Lighter blue fill
-    opacity: 0.8, // More opaque like reference
-    lineWidth: 2.5 // Slightly thinner line width to match reference
+    fillColor: '#D0E1FF', // Light blue fill
+    opacity: 0.2, // Light opacity as in reference
   }];
 
   // If we're still loading or don't have risk clusters data, show a skeleton
@@ -424,88 +384,89 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   }
 
   return (
-    <Card className={cn("w-full", className)}>
-      {/* Show title and description only for full-width version with dropdown (Bank/Invela) */}
-      {showDropdown && (
-        <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <CardTitle className="text-slate-800">
-                S&P Business Data Access Risk Breakdown
-              </CardTitle>
-              <CardDescription className="text-slate-500">
-                Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
-              </CardDescription>
-            </div>
-
-            {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
-            {isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
-              <div className="min-w-[220px]">
-                <Select 
-                  value={selectedCompanyId?.toString()} 
-                  onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
-                >
-                  <SelectTrigger className="bg-white border-slate-300">
-                    <SelectValue placeholder="Select a company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
-                    {Array.isArray(networkCompanies) && networkCompanies
-                      // Filter out FinTech companies and current company
-                      .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
-                      .map(c => (
-                        <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+    <Card className={cn("w-full rounded-xl bg-white p-4", className)}>
+      {/* Header that matches the reference exactly */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
           </div>
-        </CardHeader>
-      )}
-      <CardContent className="p-0">
-        <div 
-          className={cn(
-            "rounded-md flex flex-col items-center justify-center p-0",
-            // Make a more reasonably sized chart container
-            className?.includes("border-none") ? "w-full h-full" : "w-full h-[260px] mx-auto"
-          )}
-        >
-          {chartComponentLoaded && ReactApexChart ? (
-            <div id="apexRadarChart" className="w-full h-full" style={{ 
-              overflow: "visible",
-              position: "relative",
-              maxWidth: "100%",
-              height: "300px", // Set a specific height to ensure the chart has enough space
-              minHeight: "300px"
-            }}>
-              <ReactApexChart 
-                options={{
-                  ...chartOptions,
-                  chart: {
-                    ...chartOptions.chart,
-                    height: "100%",
-                    width: "100%",
-                    redrawOnWindowResize: true,
-                    redrawOnParentResize: true,
-                    offsetX: 0, // Center the chart
-                    parentHeightOffset: 0 // Ensure full height is used
-                  }
-                }} 
-                series={series} 
-                type="radar" 
-                height="100%"
-                width="100%"
-              />
-            </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Skeleton className="w-full h-full rounded-md" />
-            </div>
-          )}
+          <div>
+            <h3 className="text-lg font-semibold">Analysis</h3>
+            <p className="text-sm text-gray-500">Vendor risk across six key metrics.</p>
+          </div>
         </div>
-      </CardContent>
+        
+        {/* Three dots menu */}
+        <div className="text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="5" r="1"/>
+            <circle cx="12" cy="12" r="1"/>
+            <circle cx="12" cy="19" r="1"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Only show company selector if dropdown is enabled and we have network companies */}
+      {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
+        <div className="mb-4">
+          <Select 
+            value={selectedCompanyId?.toString()} 
+            onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+          >
+            <SelectTrigger className="bg-white border-slate-300">
+              <SelectValue placeholder="Select a company" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
+              {Array.isArray(networkCompanies) && networkCompanies
+                .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
+                .map(c => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                ))
+              }
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      
+      <div className="w-full h-[400px] flex items-center justify-center">
+        {chartComponentLoaded && ReactApexChart ? (
+          <ReactApexChart 
+            options={{
+              ...chartOptions,
+              chart: {
+                ...chartOptions.chart,
+                height: "100%",
+                width: "100%",
+                redrawOnWindowResize: true,
+                redrawOnParentResize: true,
+                offsetX: 0, // Center the chart
+                parentHeightOffset: 0 // Ensure full height is used
+              }
+            }} 
+            series={series} 
+            type="radar" 
+            height="100%"
+            width="100%"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Skeleton className="w-full h-full rounded-md" />
+          </div>
+        )}
+      </div>
+      
+      {/* Small company badge in the top-left as in reference image */}
+      <div className="absolute top-20 left-12 z-10">
+        <div className="flex items-center gap-1 bg-white border border-blue-100 rounded-md py-1 px-2 text-xs font-semibold text-blue-900">
+          <span className="w-2 h-2 bg-blue-900 rounded-sm"></span>
+          <span>COMPANY<br/>ACCREDITATION<br/>SCORE</span>
+        </div>
+      </div>
     </Card>
   );
 }
