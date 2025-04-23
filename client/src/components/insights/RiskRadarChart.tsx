@@ -415,7 +415,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center p-0">
-          <div className="w-full h-[260px] mx-auto">
+          <div className="w-full h-full mx-auto">
             <Skeleton className="w-full h-full rounded-md" />
           </div>
         </CardContent>
@@ -469,7 +469,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           className={cn(
             "rounded-md flex flex-col items-center justify-center p-0",
             // Make a more reasonably sized chart container
-            className?.includes("border-none") ? "w-full h-[260px]" : "w-full h-[260px] mx-auto"
+            className?.includes("border-none") ? "w-full h-full" : "w-full h-[260px] mx-auto"
           )}
         >
           {chartComponentLoaded && ReactApexChart ? (
