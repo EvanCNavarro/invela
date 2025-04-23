@@ -217,7 +217,7 @@ export default function DashboardPage() {
             // Show appropriate skeleton based on current loading state
             <DashboardSkeleton />
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 flex-grow h-full">
               {/* Quick Actions - Full width at the top */}
               {visibleWidgets.quickActions && (
                 <div className="col-span-3">
