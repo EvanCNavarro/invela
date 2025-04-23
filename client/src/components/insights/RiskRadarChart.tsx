@@ -314,7 +314,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? "70%" : 200, // Reduced from 80% to 70%
+        size: className?.includes("border-none") ? "60%" : 200, // Further reduced from 70% to 60%
         offsetY: className?.includes("border-none") ? 0 : -20, // No offset needed with proper container
         offsetX: 0,
         polygons: {
@@ -336,8 +336,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 180 : 300,
-              offsetY: className?.includes("border-none") ? 5 : -20
+              size: className?.includes("border-none") ? "60%" : 300,
+              offsetY: className?.includes("border-none") ? 0 : -20
             }
           }
         }
@@ -350,8 +350,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 190 : 260,
-              offsetY: className?.includes("border-none") ? 5 : -20
+              size: className?.includes("border-none") ? "60%" : 260,
+              offsetY: className?.includes("border-none") ? 0 : -20
             }
           }
         }
