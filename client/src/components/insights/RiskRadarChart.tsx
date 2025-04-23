@@ -150,9 +150,6 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     });
   };
 
-  // Determine if this is the compact view based on the className
-  const isCompactView = className?.includes("border-none") || false;
-
   // Configure ApexCharts options with enhanced styling
   const chartOptions = {
     chart: {
@@ -165,10 +162,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         enabled: true,
         blur: 3,
         opacity: 0.2
-      },
-      parentHeightOffset: 0,
-      width: '100%',
-      height: '100%',
+      }
     },
     colors: ['#4965EC'], // Matching brand primary color from network viz
     fill: {
@@ -184,34 +178,34 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     stroke: {
-      width: isCompactView ? 2 : 3,
+      width: 3,
       curve: 'smooth',
       colors: ['#4965EC'],
       dashArray: 0,
     },
     markers: {
-      size: 8, // Larger markers for better visibility
+      size: 8, // Consistent marker size across all views
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
       strokeWidth: 3,
       hover: {
-        size: 12, // Larger hover size
+        size: 10, // Consistent hover size across all views
       }
     },
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: isCompactView ? 10 : 20,
-        bottom: isCompactView ? 10 : 20
+        top: 20,
+        bottom: 20
       }
     },
     yaxis: {
       show: true,
       max: 500,
-      tickAmount: isCompactView ? 4 : 5,
+      tickAmount: 5,
       labels: {
         style: {
-          fontSize: isCompactView ? '10px' : '12px',
+          fontSize: '12px',
           fontWeight: 500,
           colors: ['#64748b']
         },
@@ -222,16 +216,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: isCompactView ? '11px' : '14px',
+          fontSize: '14px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: isCompactView ? 2 : 5
+        offsetY: 5
       }
     },
     dataLabels: {
-      enabled: !isCompactView, // Disable data labels in compact view
+      enabled: true,
       style: {
         fontSize: '14px',
         fontWeight: 'bold',
@@ -250,7 +244,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     tooltip: {
       theme: 'light',
       style: {
-        fontSize: isCompactView ? '12px' : '14px'
+        fontSize: '14px'
       },
       y: {
         title: {
@@ -269,9 +263,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 280, // Much larger radar chart
-        offsetY: 0, // Center vertically
-        offsetX: 0, // Center horizontally
+        size: 220,
+        offsetY: -20, // Move chart up to make bottom clusters visible
+        offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
           strokeWidth: 1,
@@ -360,25 +354,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   if (isLoading || !riskClusters) {
     return (
       <Card className={cn("w-full", className)}>
-        {/* Only show header in full view, not in dashboard widget */}
-        {!className?.includes("border-none") && (
-          <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
-            <CardTitle className="text-slate-800">
-              S&P Business Data Access Risk Breakdown
-            </CardTitle>
-            <CardDescription className="text-slate-500">
-              Detailed breakdown of risk factors for this company
-            </CardDescription>
-          </CardHeader>
-        )}
-        <CardContent className={cn(
-          "flex flex-col items-center p-4",
-          className?.includes("border-none") ? "pt-4 px-2 pb-0" : ""
-        )}>
-          <Skeleton className={cn(
-            "w-full rounded-md", 
-            className?.includes("border-none") ? "h-[350px]" : "h-[500px]"
-          )} />
+        <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
+          <CardTitle className="text-slate-800">
+            S&P Business Data Access Risk Breakdown
+          </CardTitle>
+          <CardDescription className="text-slate-500">
+            Detailed breakdown of risk factors for this company
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center p-4">
+          <Skeleton className="h-[500px] w-full rounded-md" />
         </CardContent>
       </Card>
     );
@@ -386,9 +371,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
 
   return (
     <Card className={cn("w-full", className)}>
-      {/* Show header only for full view (e.g., on insights page or for Bank/Invela), not for FinTech dashboard */}
-      {!className?.includes("border-none") && (
-        <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
+      {/* Show title and description only for full-width version with dropdown (Bank/Invela) */}
+      {showDropdown && (
+        <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <CardTitle className="text-slate-800">
@@ -400,7 +385,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             </div>
 
             {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
-            {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
+            {isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
               <div className="min-w-[220px]">
                 <Select 
                   value={selectedCompanyId?.toString()} 
@@ -425,24 +410,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn(
-        "p-0", 
-        className?.includes("border-none") ? "pt-2" : "p-4 pb-8"
+      <CardContent className={cn("p-4 pb-8", 
+        !showDropdown ? "pt-6" : "", // Add more top padding when no header for FinTech version
+        className?.includes("border-none") ? "p-2" : ""
       )}>
-        <div className={cn(
-          "w-full rounded-md mx-auto", 
-          className?.includes("border-none") ? "h-[400px]" : "h-[520px]"
+        <div className={cn("w-full rounded-md flex items-center justify-center", 
+          className?.includes("border-none") ? "h-[350px]" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
-            <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <ReactApexChart 
-                options={chartOptions} 
-                series={series} 
-                type="radar" 
-                height="400"
-                width="500"
-              />
-            </div>
+            <ReactApexChart 
+              options={chartOptions} 
+              series={series} 
+              type="radar" 
+              height={className?.includes("border-none") ? "350" : "520"}
+            />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
