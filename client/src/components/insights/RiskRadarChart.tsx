@@ -301,7 +301,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 240, // Larger size for better visibility
+        size: 220, // Adjusted size for better fit in container
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -414,8 +414,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             Detailed breakdown of risk factors for this company
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center p-2">
-          <div className="w-full h-[300px] mx-auto">
+        <CardContent className="flex flex-col items-center p-0">
+          <div className="w-full h-[260px] mx-auto">
             <Skeleton className="w-full h-full rounded-md" />
           </div>
         </CardContent>
@@ -467,9 +467,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       <CardContent className="p-0">
         <div 
           className={cn(
-            "rounded-md flex flex-col items-center justify-center p-2",
+            "rounded-md flex flex-col items-center justify-center p-0",
             // Make a more reasonably sized chart container
-            className?.includes("border-none") ? "w-full h-[300px]" : "w-full h-[300px] mx-auto"
+            className?.includes("border-none") ? "w-full h-[260px]" : "w-full h-[260px] mx-auto"
           )}
         >
           {chartComponentLoaded && ReactApexChart ? (
