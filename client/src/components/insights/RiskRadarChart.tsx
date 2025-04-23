@@ -459,7 +459,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </CardHeader>
       )}
       <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-0" : "")}>
-        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "min-h-[280px] h-full max-h-[95vh]" : "h-[520px]")}>
+        <div className={cn("w-full rounded-md h-full", className?.includes("border-none") ? "h-full max-h-full" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
