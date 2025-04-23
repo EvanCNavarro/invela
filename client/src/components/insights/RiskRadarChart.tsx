@@ -314,7 +314,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 130,
+        size: 190,
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -333,7 +333,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 100,
+              size: 160,
               offsetY: 0
             }
           }
