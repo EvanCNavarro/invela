@@ -314,7 +314,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 250,
+        size: 200,
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -333,7 +333,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 250,
+              size: 170,
               offsetY: 0
             }
           }
@@ -411,19 +411,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </CardHeader>
       )}
       <CardContent className="p-4">
-        <div className="w-full" style={{ height: '350px' }}>
+        <div className="w-full" style={{ height: '450px' }}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="350"
+              height="450"
               width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[350px] rounded-md" />
+              <Skeleton className="w-full h-[450px] rounded-md" />
             </div>
           )}
         </div>
