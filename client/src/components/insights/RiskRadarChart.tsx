@@ -206,14 +206,21 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     yaxis: {
       show: true,
       max: 500,
-      tickAmount: 5,
+      tickAmount: 4, // Reduced number of ticks for better spacing
       labels: {
         style: {
           fontSize: '12px',
           fontWeight: 500,
           colors: ['#64748b']
         },
-        formatter: (val: number) => Math.round(val).toString()
+        formatter: (val: number) => Math.round(val).toString(),
+        background: {
+          enabled: false
+        },
+        padding: {
+          left: 10,
+          right: 10
+        }
       }
     },
     xaxis: {
@@ -222,10 +229,18 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         style: {
           fontSize: '14px',
           fontWeight: 600,
-          colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
+          colors: Array(6).fill('#1e293b')
         },
         rotate: 0,
-        offsetY: 5
+        offsetY: 8,
+        background: {
+          enabled: true,
+          borderRadius: 2,
+          padding: 4,
+          opacity: 0.9,
+          borderWidth: 1,
+          borderColor: '#f1f5f9'
+        }
       }
     },
     dataLabels: {
@@ -267,7 +282,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 450, // Much larger fixed size in pixels
+        size: 350, // Reduced size for better spacing
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -286,7 +301,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 400, // Larger fixed size for each breakpoint
+              size: 320, // Updated sizes for better scaling
               offsetY: 0
             }
           }
@@ -297,7 +312,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 350,
+              size: 300,
               offsetY: 0
             }
           }
@@ -308,12 +323,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 300,
+              size: 250,
               offsetY: 0
             }
           },
           markers: {
             size: 7
+          },
+          dataLabels: {
+            enabled: false // Turn off data labels on smaller screens
           }
         }
       },
@@ -322,7 +340,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 250,
+              size: 220,
               offsetY: 0
             }
           },
@@ -333,7 +351,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             show: true,
             labels: {
               style: {
-                fontSize: '10px' // Smaller font size on mobile
+                fontSize: '10px'
+              }
+            }
+          },
+          xaxis: {
+            labels: {
+              style: {
+                fontSize: '12px'
               }
             }
           }
@@ -363,7 +388,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center p-4">
-          <Skeleton className="h-[500px] w-full rounded-md" />
+          <Skeleton className="h-[450px] w-full rounded-md" />
         </CardContent>
       </Card>
     );
@@ -413,13 +438,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       <CardContent className="p-0">
         <div 
           className={cn(
-            "w-full rounded-md flex flex-col items-center justify-center",
-            className?.includes("border-none") ? "h-[700px]" : "h-[700px]" // Same height for both variants
+            "w-full rounded-md flex flex-col items-center justify-center p-4",
+            className?.includes("border-none") ? "h-[500px]" : "h-[550px]" // Reduced height
           )}
         >
           {chartComponentLoaded && ReactApexChart ? (
             <div id="apexRadarChart" className="w-full h-full" style={{ 
-              minHeight: "700px", 
+              minHeight: "450px", 
               overflow: "visible",
               position: "relative"
             }}>
@@ -428,7 +453,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                   ...chartOptions,
                   chart: {
                     ...chartOptions.chart,
-                    height: "700", // Force a large fixed height
+                    height: "100%", // Use percentage instead of fixed value
                     width: "100%",
                     redrawOnWindowResize: true,
                     redrawOnParentResize: true
@@ -436,13 +461,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 }} 
                 series={series} 
                 type="radar" 
-                height={700} // Use fixed height value
+                height="100%" // Use percentage instead of fixed value
                 width="100%"
               />
             </div>
           ) : (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[700px] rounded-md" />
+              <Skeleton className="w-full h-[450px] rounded-md" />
             </div>
           )}
         </div>
