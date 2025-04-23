@@ -69,7 +69,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       
       svg.append('text')
         .attr('x', width / 2)
-        .attr('y', height / 2)
+        .attr('y', height / 3)
         .attr('text-anchor', 'middle')
         .attr('fill', '#64748b')
         .style('font-size', '16px')
@@ -89,8 +89,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
     const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(width, height) * 0.4;
+    const centerY = height / 3; // Position it higher in the visualization
+    const radius = Math.min(width, height) * 0.45; // Slightly larger radius for better visibility
 
     // Set up the visualization container
     const g = svg.append('g')
@@ -473,11 +473,11 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       </CardHeader>
       <CardContent className="p-0 relative overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[600px]">
+          <div className="flex items-center justify-center h-[700px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-[600px] space-y-2">
+          <div className="flex flex-col items-center justify-center h-[700px] space-y-2">
             <div className="text-destructive font-medium">Failed to load network data</div>
             <div className="text-xs text-muted-foreground max-w-md">
               {error instanceof Error ? error.message : 'Check console for details'}
@@ -486,7 +486,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         ) : (
           <>
             <div className="relative">
-              <svg ref={svgRef} width="100%" height="600" className="bg-muted/20 rounded-b-lg"></svg>
+              <svg ref={svgRef} width="100%" height="700" className="bg-muted/20 rounded-b-lg"></svg>
               {selectedNode && data && (
                 <ConnectionDetails 
                   node={selectedNode} 
