@@ -184,12 +184,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: 8, // Consistent marker size across all views
+      size: className?.includes("border-none") ? 6 : 8, // Smaller markers for compact view
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: 3,
+      strokeWidth: className?.includes("border-none") ? 2 : 3,
       hover: {
-        size: 10, // Consistent hover size across all views
+        size: className?.includes("border-none") ? 8 : 10, // Smaller hover for compact view
       }
     },
     grid: {
@@ -216,30 +216,30 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: '14px',
+          fontSize: className?.includes("border-none") ? '11px' : '14px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: 5
+        offsetY: className?.includes("border-none") ? 3 : 5
       }
     },
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: '14px',
+        fontSize: className?.includes("border-none") ? '12px' : '14px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
       background: {
         enabled: true,
         borderRadius: 4,
-        padding: 4,
+        padding: className?.includes("border-none") ? 3 : 4,
         opacity: 0.9,
         borderWidth: 1,
         borderColor: '#e2e8f0',
       },
-      offsetY: -5
+      offsetY: className?.includes("border-none") ? -3 : -5
     },
     tooltip: {
       theme: 'light',
@@ -263,8 +263,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 220,
-        offsetY: -20, // Move chart up to make bottom clusters visible
+        size: className?.includes("border-none") ? 140 : 220,
+        offsetY: className?.includes("border-none") ? -10 : -20, // Adjust offset based on size
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -408,18 +408,18 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </div>
       </CardHeader>
       <CardContent className={cn("p-4 pb-8", className?.includes("border-none") ? "p-2" : "")}>
-        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")}>
+        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[280px]" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height={className?.includes("border-none") ? "350" : "520"}
+              height={className?.includes("border-none") ? "280" : "520"}
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[280px]" : "h-[520px]")} />
             </div>
           )}
         </div>
