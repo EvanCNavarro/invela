@@ -289,7 +289,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 'auto' : 200, // Auto size for dashboard widget
+        size: className?.includes("border-none") ? 140 : 200, // Increased size for better visibility
         offsetY: className?.includes("border-none") ? 0 : -20, // No offset for widget version
         offsetX: 0,
         polygons: {
@@ -307,12 +307,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1920, // Large desktops
         options: {
           chart: {
-            height: className?.includes("border-none") ? '100%' : 500
+            height: className?.includes("border-none") ? 280 : 500
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 'auto' : 300,
-              offsetY: className?.includes("border-none") ? 0 : -20
+              size: className?.includes("border-none") ? 180 : 300,
+              offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -321,12 +321,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1366, // Medium desktops
         options: {
           chart: {
-            height: className?.includes("border-none") ? '100%' : 480
+            height: className?.includes("border-none") ? 270 : 480
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 'auto' : 260,
-              offsetY: className?.includes("border-none") ? 0 : -20
+              size: className?.includes("border-none") ? 190 : 260,
+              offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -335,11 +335,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1200, // Small desktops
         options: {
           chart: {
-            height: className?.includes("border-none") ? '100%' : 450
+            height: className?.includes("border-none") ? 260 : 450
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 'auto' : 220,
+              size: className?.includes("border-none") ? 160 : 220,
               offsetY: className?.includes("border-none") ? 0 : -15
             }
           }
@@ -349,11 +349,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 992, // Tablets
         options: {
           chart: {
-            height: className?.includes("border-none") ? '100%' : 420
+            height: className?.includes("border-none") ? 250 : 420
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 'auto' : 200,
+              size: className?.includes("border-none") ? 140 : 200,
               offsetY: className?.includes("border-none") ? 0 : -15
             }
           },
@@ -366,11 +366,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 768, // Large phones
         options: {
           chart: {
-            height: className?.includes("border-none") ? '100%' : 400
+            height: className?.includes("border-none") ? 240 : 400
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 'auto' : 180,
+              size: className?.includes("border-none") ? 130 : 180,
               offsetY: className?.includes("border-none") ? 0 : -10
             }
           },
@@ -383,11 +383,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 576, // Small phones
         options: {
           chart: {
-            height: className?.includes("border-none") ? '100%' : 380
+            height: className?.includes("border-none") ? 230 : 380
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 'auto' : 150,
+              size: className?.includes("border-none") ? 120 : 150,
               offsetY: className?.includes("border-none") ? 0 : -5
             }
           },
@@ -426,81 +426,61 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     );
   }
 
-  // For dashboard widget mode, we use a highly simplified structure
-  if (className?.includes("border-none")) {
-    return (
-      <div className="w-full h-full">
-        {chartComponentLoaded && ReactApexChart && (
-          <ReactApexChart 
-            options={chartOptions} 
-            series={series} 
-            type="radar" 
-            height="100%"
-            width="100%"
-          />
-        )}
-        {!chartComponentLoaded && (
-          <div className="h-full w-full flex items-center justify-center">
-            <Skeleton className="w-full h-full rounded-md" />
-          </div>
-        )}
-      </div>
-    );
-  }
-  
-  // For standalone page mode, use the full card with header
   return (
     <Card className={cn("w-full h-full", className)}>
-      <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <CardTitle className="text-slate-800">
-              S&P Business Data Access Risk Breakdown
-            </CardTitle>
-            <CardDescription className="text-slate-500">
-              Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
-            </CardDescription>
-          </div>
-
-          {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
-          {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
-            <div className="min-w-[220px]">
-              <Select 
-                value={selectedCompanyId?.toString()} 
-                onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
-              >
-                <SelectTrigger className="bg-white border-slate-300">
-                  <SelectValue placeholder="Select a company" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
-                  {Array.isArray(networkCompanies) && networkCompanies
-                    // Filter out FinTech companies and current company
-                    .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
-                    .map(c => (
-                      <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                    ))
-                  }
-                </SelectContent>
-              </Select>
+      {/* Only show header with title/description if NOT in condensed view (border-none class indicates dashboard widget) */}
+      {!className?.includes("border-none") && (
+        <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <CardTitle className="text-slate-800">
+                S&P Business Data Access Risk Breakdown
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
+              </CardDescription>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 pb-6 h-full flex-grow">
-        <div className="w-full rounded-md flex-grow h-[520px]">
+
+            {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
+            {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
+              <div className="min-w-[220px]">
+                <Select 
+                  value={selectedCompanyId?.toString()} 
+                  onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                >
+                  <SelectTrigger className="bg-white border-slate-300">
+                    <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
+                    {Array.isArray(networkCompanies) && networkCompanies
+                      // Filter out FinTech companies and current company
+                      .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
+                      .map(c => (
+                        <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+      )}
+      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "px-0 py-0" : "", "h-full flex-grow")}>
+        <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-full" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="520"
+              height={className?.includes("border-none") ? "100%" : "520"}
               width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[520px] rounded-md" />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-full" : "h-[520px]")} />
             </div>
           )}
         </div>

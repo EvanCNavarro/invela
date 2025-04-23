@@ -26,7 +26,6 @@ interface WidgetProps {
   onEdit?: () => void;
   className?: string;
   headerClassName?: string;
-  contentClassName?: string;
   size?: 'single' | 'double' | 'triple';
   actions?: Array<{
     label: string;
@@ -44,7 +43,6 @@ export function Widget({
   onEdit,
   className,
   headerClassName,
-  contentClassName,
   size = 'single',
   actions = []
 }: WidgetProps) {
@@ -116,7 +114,7 @@ export function Widget({
         )}
       </div>
       <div className={cn(
-        contentClassName || "p-4", 
+        "p-4", 
         (className?.includes("flex-col") || className?.includes("h-full")) && "flex-grow h-full",
         "overflow-hidden" // Prevent content overflow
       )}>
