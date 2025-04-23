@@ -70,15 +70,18 @@ interface CompanyFile {
 const getAccreditationStatus = (status: string | null | undefined): 'VALID' | 'PENDING' | 'INVALID' => {
   if (!status) return 'INVALID';
 
+  // Normalize status to uppercase for case-insensitive comparison
+  const normalizedStatus = status.toUpperCase();
+
   const validStatuses = ['PROVISIONALLY_APPROVED', 'APPROVED'];
   const pendingStatuses = ['IN_REVIEW', 'PENDING'];
   const invalidStatuses = ['EXPIRED', 'REVOKED', 'SUSPENDED', 'AWAITING_INVITATION', 'NULL'];
   
   // Handle case where status might be "NULL" as a string instead of actual null
-  if (status === 'NULL') return 'INVALID';
+  if (normalizedStatus === 'NULL') return 'INVALID';
 
-  if (validStatuses.includes(status)) return 'VALID';
-  if (pendingStatuses.includes(status)) return 'PENDING';
+  if (validStatuses.includes(normalizedStatus)) return 'VALID';
+  if (pendingStatuses.includes(normalizedStatus)) return 'PENDING';
   return 'INVALID';
 };
 
