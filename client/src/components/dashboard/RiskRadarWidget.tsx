@@ -16,13 +16,13 @@ export function RiskRadarWidget({ companyId, onToggle, isVisible }: RiskRadarWid
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       headerClassName="pb-1" /* Reduce padding below header */
-      className="h-full w-full flex flex-col"
+      className="h-full flex flex-col"
     >
-      <div className="flex-grow w-full h-full">
+      <div className="flex-grow">
         <RiskRadarChart 
           companyId={companyId} 
           showDropdown={false}
-          className="shadow-none border-none h-full w-full p-0"
+          className="shadow-none border-none h-full p-0"
         />
       </div>
     </Widget>
