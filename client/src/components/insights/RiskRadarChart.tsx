@@ -353,7 +353,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // If we're still loading or don't have risk clusters data, show a skeleton
   if (isLoading || !riskClusters) {
     return (
-      <Card className={cn("w-full h-full", className)}>
+      <Card className={cn("w-full h-full flex flex-col", className)}>
         <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
           <CardTitle className="text-slate-800">
             S&P Business Data Access Risk Breakdown
@@ -362,15 +362,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             Detailed breakdown of risk factors for this company
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center p-4 h-full">
-          <Skeleton className="h-full w-full rounded-md flex-1" />
+        <CardContent className="p-4 pb-0 h-full">
+          <div className="h-full w-full flex items-center justify-center">
+            <Skeleton className="h-full w-full rounded-md" />
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={cn("w-full h-full", className)}>
+    <Card className={cn("w-full h-full flex flex-col", className)}>
       {/* Only show header with title/description if NOT in condensed view (border-none class indicates dashboard widget) */}
       {!className?.includes("border-none") && (
         <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
@@ -410,20 +412,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className="p-4">
-        <div className="w-full" style={{ height: '450px' }}>
+      <CardContent className="p-4 pb-0 h-full">
+        <div className="w-full h-full">
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="450"
+              height="100%"
               width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[450px] rounded-md" />
+              <Skeleton className="w-full h-full rounded-md" />
             </div>
           )}
         </div>
