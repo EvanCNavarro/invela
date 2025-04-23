@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
+import { CompanyScoreWidget } from "@/components/dashboard/CompanyScoreWidget";
+import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { Button } from "@/components/ui/button";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -294,66 +296,22 @@ export default function DashboardPage() {
                     {/* Company Score (1/4 width) for FinTech */}
                     {visibleWidgets.companyScore && companyData && (
                       <div className="col-span-1 h-full">
-                        <Widget
-                          title="Company Score"
-                          icon={<AlertTriangle className="h-5 w-5" />}
-                          onVisibilityToggle={() => toggleWidget('companyScore')}
+                        <CompanyScoreWidget 
+                          companyData={companyData}
+                          onToggle={() => toggleWidget('companyScore')}
                           isVisible={visibleWidgets.companyScore}
-                          className="h-full"
-                          headerClassName="pb-2" /* Reduce padding below header */
-                        >
-                          <div className="space-y-1">
-                            <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                              {companyData?.logoId ? (
-                                <img
-                                  src={`/api/companies/${companyData.id}/logo`}
-                                  alt={`${companyData.name} logo`}
-                                  className="w-6 h-6 object-contain"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    console.debug(`Failed to load logo for company: ${companyData.name}`);
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-xs font-medium text-primary">
-                                    {companyData?.name.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                              <span className="text-sm font-medium">{companyData?.name}</span>
-                            </div>
-                            <RiskMeter 
-                              score={companyData?.riskScore || companyData?.risk_score || 0}
-                              chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
-                              companyId={companyData?.id || 0}
-                              companyType={companyData?.category || "FinTech"}
-                              canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
-                            />
-                          </div>
-                        </Widget>
+                        />
                       </div>
                     )}
 
                     {/* Risk Radar (3/4 width) for FinTech */}
-                    {visibleWidgets.riskRadar && (
+                    {visibleWidgets.riskRadar && companyData && (
                       <div className="col-span-3 h-full">
-                        <Widget
-                          title="Risk Radar"
-                          icon={<Shield className="h-5 w-5" />}
-                          onVisibilityToggle={() => toggleWidget('riskRadar')}
+                        <RiskRadarWidget
+                          companyId={companyData?.id || 0}
+                          onToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
-                          headerClassName="pb-1" /* Reduce padding below header */
-                          className="h-full flex flex-col"
-                        >
-                          <div className="flex-grow">
-                            <RiskRadarChart 
-                              companyId={companyData?.id || 0} 
-                              showDropdown={false}
-                              className="shadow-none border-none h-full p-0"
-                            />
-                          </div>
-                        </Widget>
+                        />
                       </div>
                     )}
                   </div>
@@ -364,43 +322,12 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Company Score for Bank/Invela */}
                     {visibleWidgets.companyScore && companyData && (
-                      <div>
-                        <Widget
-                          title="Company Score"
-                          icon={<AlertTriangle className="h-5 w-5" />}
-                          onVisibilityToggle={() => toggleWidget('companyScore')}
+                      <div className="h-[300px]">
+                        <CompanyScoreWidget 
+                          companyData={companyData}
+                          onToggle={() => toggleWidget('companyScore')}
                           isVisible={visibleWidgets.companyScore}
-                        >
-                          <div className="space-y-1">
-                            <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                              {companyData?.logoId ? (
-                                <img
-                                  src={`/api/companies/${companyData.id}/logo`}
-                                  alt={`${companyData.name} logo`}
-                                  className="w-6 h-6 object-contain"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    console.debug(`Failed to load logo for company: ${companyData.name}`);
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-xs font-medium text-primary">
-                                    {companyData?.name.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                              <span className="text-sm font-medium">{companyData?.name}</span>
-                            </div>
-                            <RiskMeter 
-                              score={companyData?.riskScore || companyData?.risk_score || 0}
-                              chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
-                              companyId={companyData?.id || 0}
-                              companyType={companyData?.category || "FinTech"}
-                              canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
-                            />
-                          </div>
-                        </Widget>
+                        />
                       </div>
                     )}
 
@@ -422,21 +349,13 @@ export default function DashboardPage() {
               </div>
               
               {/* Risk Radar - Only for Bank/Invela companies as full width */}
-              {visibleWidgets.riskRadar && companyData?.category !== 'FinTech' && (
-                <div className="col-span-3">
-                  <Widget
-                    title="Risk Radar"
-                    icon={<Shield className="h-5 w-5" />}
-                    size="triple"
-                    onVisibilityToggle={() => toggleWidget('riskRadar')}
+              {visibleWidgets.riskRadar && companyData?.category !== 'FinTech' && companyData && (
+                <div className="col-span-3 h-[400px]">
+                  <RiskRadarWidget
+                    companyId={companyData?.id || 0}
+                    onToggle={() => toggleWidget('riskRadar')}
                     isVisible={visibleWidgets.riskRadar}
-                  >
-                    <RiskRadarChart 
-                      companyId={companyData?.id || 0} 
-                      showDropdown={true}
-                      className="shadow-none border-none p-2"
-                    />
-                  </Widget>
+                  />
                 </div>
               )}
             </div>
