@@ -90,7 +90,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     const height = svgRef.current.clientHeight;
     const centerX = width / 2;
     const centerY = height / 3; // Position it higher in the visualization
-    const radius = Math.min(width, height) * 0.45; // Slightly larger radius for better visibility
+    const radius = Math.min(width, height) * 0.4; // Scale down the radius slightly to better fit
 
     // Set up the visualization container
     const g = svg.append('g')
