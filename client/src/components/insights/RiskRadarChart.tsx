@@ -314,8 +314,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("bg-transparent") ? 300 : 200, // Fixed size for insights page
-        offsetY: 0, // No offset
+        size: 300,
+        offsetY: 0,
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -329,97 +329,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     responsive: [
       {
-        breakpoint: 1920, // Large desktops
+        breakpoint: 992, // Tablets and below
         options: {
-          chart: {
-            height: className?.includes("border-none") ? 280 : 500
-          },
           plotOptions: {
             radar: {
-              size: className?.includes("bg-transparent") ? '75%' : 
-                   className?.includes("border-none") ? 180 : 300,
-              offsetY: className?.includes("bg-transparent") ? 0 : 
-                      className?.includes("border-none") ? 5 : -20
+              size: 250,
+              offsetY: 0
             }
-          }
-        }
-      },
-      {
-        breakpoint: 1366, // Medium desktops
-        options: {
-          chart: {
-            height: className?.includes("border-none") ? 270 : 480
-          },
-          plotOptions: {
-            radar: {
-              size: className?.includes("border-none") ? 170 : 260,
-              offsetY: className?.includes("border-none") ? 5 : -20
-            }
-          }
-        }
-      },
-      {
-        breakpoint: 1200, // Small desktops
-        options: {
-          chart: {
-            height: className?.includes("border-none") ? 260 : 450
-          },
-          plotOptions: {
-            radar: {
-              size: className?.includes("border-none") ? 160 : 220,
-              offsetY: className?.includes("border-none") ? 0 : -15
-            }
-          }
-        }
-      },
-      {
-        breakpoint: 992, // Tablets
-        options: {
-          chart: {
-            height: className?.includes("border-none") ? 250 : 420
-          },
-          plotOptions: {
-            radar: {
-              size: className?.includes("border-none") ? 140 : 200,
-              offsetY: className?.includes("border-none") ? 0 : -15
-            }
-          },
-          markers: {
-            size: className?.includes("border-none") ? 4 : 6
-          }
-        }
-      },
-      {
-        breakpoint: 768, // Large phones
-        options: {
-          chart: {
-            height: className?.includes("border-none") ? 240 : 400
-          },
-          plotOptions: {
-            radar: {
-              size: className?.includes("border-none") ? 130 : 180,
-              offsetY: className?.includes("border-none") ? 0 : -10
-            }
-          },
-          markers: {
-            size: className?.includes("border-none") ? 4 : 5
-          }
-        }
-      },
-      {
-        breakpoint: 576, // Small phones
-        options: {
-          chart: {
-            height: className?.includes("border-none") ? 230 : 380
-          },
-          plotOptions: {
-            radar: {
-              size: className?.includes("border-none") ? 120 : 150,
-              offsetY: className?.includes("border-none") ? 0 : -5
-            }
-          },
-          markers: {
-            size: className?.includes("border-none") ? 3 : 4
           }
         }
       }
@@ -494,27 +410,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-6" : "", "h-full flex-grow")}>
-        <div className={cn(
-          "w-full rounded-md overflow-visible", 
-          className?.includes("border-none") 
-            ? "h-[350px] aspect-square mx-auto" // Dashboard view
-            : className?.includes("bg-transparent") 
-              ? "h-[400px] w-full" // Insights page view - FIXED HEIGHT
-              : "h-[520px]" // Profile page view
-        )}>
+      <CardContent className="p-4">
+        <div className="w-full" style={{ height: '450px' }}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="100%"
+              height="450"
               width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-full" : "h-[520px]")} />
+              <Skeleton className="w-full h-[450px] rounded-md" />
             </div>
           )}
         </div>
