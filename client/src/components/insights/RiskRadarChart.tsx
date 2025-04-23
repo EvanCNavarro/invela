@@ -137,21 +137,26 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Specific formatting for category names to ensure all are visible
+  // Enhanced formatting to guarantee all categories are visible
   const formatCategoryNames = (categories: string[]): string[] => {
-    return categories.map(category => {
+    return categories.map((category, index) => {
       if (!category) return '';
       
-      // Special handling for problematic categories
+      // Create custom positions for specific categories
       if (category === "Data Transfers") {
-        return "Data\nTransfers";
+        return "Data\nTransfers"; 
       }
       
       if (category === "PII Data") {
-        return "PII\nData";
+        // Double line break for PII Data to position it properly
+        return "PII\nData"; 
       }
       
-      // All other categories with spaces get a simple line break between words
+      if (category === "Security Risk") {
+        return "Security\nRisk"; 
+      }
+      
+      // All other categories with spaces get simple line breaks
       const words = category.split(' ');
       if (words.length <= 1) return category;
       
@@ -219,10 +224,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 5,
-        bottom: 5,
-        left: 5,
-        right: 5
+        top: 15,
+        bottom: 25, // Extra padding at bottom for the bottom label
+        left: 10,
+        right: 10
       }
     },
     yaxis: {
@@ -242,12 +247,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: className?.includes("border-none") ? '11px' : '12px',
+          fontSize: className?.includes("border-none") ? '10px' : '12px', // Slightly smaller font
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: className?.includes("border-none") ? 3 : 3
+        offsetY: className?.includes("border-none") ? 5 : 3, // More distance from the chart
+        offsetX: 0,
+        formatter: function(val: string) {
+          // Make sure each label has proper positioning by adjusting string length
+          return val.toString().length > 10 ? val.toString().substring(0, 10) + '...' : val;
+        }
       }
     },
     dataLabels: {
@@ -289,8 +299,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 140 : 200, // Increased size for better visibility
-        offsetY: className?.includes("border-none") ? 0 : -20, // No offset for widget version
+        size: className?.includes("border-none") ? 110 : 200, // Reduced size to fit properly
+        offsetY: className?.includes("border-none") ? -10 : -20, // Added negative offset to move up
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
