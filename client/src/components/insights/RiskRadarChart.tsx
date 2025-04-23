@@ -193,10 +193,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     grid: {
-      show: false, // Removed horizontal lines in the background
+      show: true, // Show grid for better readability
       padding: {
-        top: 20,
-        bottom: 20
+        top: 30,
+        right: 30,
+        bottom: 30,
+        left: 30
       }
     },
     yaxis: {
@@ -205,7 +207,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       tickAmount: 5,
       labels: {
         style: {
-          fontSize: '12px',
+          fontSize: '13px',
           fontWeight: 500,
           colors: ['#64748b']
         },
@@ -216,30 +218,31 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: '14px',
+          fontSize: '15px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: 5
+        offsetY: 15, // Increased offset to prevent overlap with chart elements
+        formatter: (val: string) => val.split('\n').join(' ')
       }
     },
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: '14px',
+        fontSize: '15px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
       background: {
         enabled: true,
-        borderRadius: 4,
-        padding: 4,
-        opacity: 0.9,
+        borderRadius: 6,
+        padding: 6,
+        opacity: 1,
         borderWidth: 1,
         borderColor: '#e2e8f0',
       },
-      offsetY: -5
+      offsetY: 0
     },
     tooltip: {
       theme: 'light',
@@ -263,8 +266,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 220,
-        offsetY: -20, // Move chart up to make bottom clusters visible
+        size: 250, // Increased size to ensure full visibility of the chart
+        offsetY: 10, // Small offset to center the chart in the container
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -285,8 +288,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 260,
-              offsetY: -30 // Move up to ensure bottom clusters are visible
+              size: 300, // Larger size for better visibility
+              offsetY: 0  // Center the chart
             }
           }
         }
@@ -299,8 +302,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 220,
-              offsetY: -25 // Move up to ensure bottom clusters are visible
+              size: 280, // Increased size
+              offsetY: 0  // Center the chart
             }
           }
         }
@@ -313,8 +316,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 180,
-              offsetY: -20 // Move up to ensure bottom clusters are visible
+              size: 240, // Increased size
+              offsetY: 0  // Center the chart
             }
           },
           markers: {
@@ -330,8 +333,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: 150,
-              offsetY: -15 // Move up to ensure bottom clusters are visible
+              size: 200, // Increased size
+              offsetY: 0  // Center the chart
             }
           },
           markers: {
@@ -415,19 +418,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         className?.includes("border-none") ? "p-2" : ""
       )}>
         <div className={cn("w-full rounded-md flex items-center justify-center", 
-          className?.includes("border-none") ? "h-[350px]" : "h-[520px]"
+          className?.includes("border-none") ? "h-[400px]" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height={className?.includes("border-none") ? "350" : "520"}
+              height={className?.includes("border-none") ? "400" : "520"}
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[400px]" : "h-[520px]")} />
             </div>
           )}
         </div>

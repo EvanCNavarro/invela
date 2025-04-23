@@ -339,11 +339,12 @@ export default function DashboardPage() {
                           icon={<Shield className="h-5 w-5" />}
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
+                          size="triple"
                         >
                           <RiskRadarChart 
                             companyId={companyData?.id || 0} 
                             showDropdown={false}
-                            className="shadow-none border-none p-2"
+                            className="shadow-none border-none p-2 h-full"
                           />
                         </Widget>
                       </div>
