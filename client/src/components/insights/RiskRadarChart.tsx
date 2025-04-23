@@ -197,28 +197,41 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: 5, // Smaller markers for compact widget
+      size: 7, // Larger markers to match reference
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: 2, // Thinner stroke for better appearance at smaller size
+      strokeWidth: 2, 
       hover: {
-        size: 7, // Smaller hover size
+        size: 9, // Larger hover size
       }
     },
     grid: {
-      show: false, // Removed horizontal lines in the background
+      show: true, // Show grid lines
+      borderColor: '#e2e8f0',
+      strokeDashArray: 5,
+      position: 'back',
+      xaxis: {
+        lines: {
+          show: true
+        }
+      },
+      yaxis: {
+        lines: {
+          show: true
+        }
+      },
       padding: {
-        top: 20,
-        bottom: 20
+        top: 0,
+        bottom: 0
       }
     },
     yaxis: {
       show: true,
       max: 500,
-      tickAmount: 3, // Fewer tick marks for cleaner look
+      tickAmount: 5, // More tick marks to show concentric circles
       labels: {
         style: {
-          fontSize: '10px',
+          fontSize: '11px',
           fontWeight: 500,
           colors: ['#64748b']
         },
@@ -241,13 +254,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           colors: Array(6).fill('#1e293b')
         },
         rotate: 0,
-        offsetY: 5,
+        offsetY: 10,
+        offsetX: 0,
         background: {
           enabled: true,
-          borderRadius: 2,
-          padding: 3,
-          opacity: 0.9,
-          borderWidth: 1,
+          borderRadius: 3,
+          padding: 4,
+          opacity: 0.8,
+          borderWidth: 0,
           borderColor: '#f1f5f9'
         }
       }
@@ -291,15 +305,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 200, // Further reduced size for more compact widget
+        size: 240, // Larger size for better visibility
         offsetY: 0,
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
           strokeWidth: 1,
+          strokeDashArray: 3,
           connectorColors: '#e2e8f0',
           fill: {
-            colors: ['transparent', 'transparent'] // Transparent background
+            colors: ['#f1f5f9', 'transparent'] // Light background for better visibility
           }
         }
       }
@@ -386,6 +401,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     name: 'Risk Score',
     data: riskClusters ? Object.values(riskClusters) : [],
     color: '#4965EC',
+    fillColor: '#D0E1FF', // Light blue fill like reference
+    opacity: 0.7,
     lineWidth: 3
   }];
 
