@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import {
@@ -28,15 +28,28 @@ import { NetworkInsightVisualization } from "@/components/insights/NetworkInsigh
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 
-const visualizationTypes = [
+// Default visualization types
+const defaultVisualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
   { value: "relationship_distribution", label: "Company Type Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_radar", label: "Risk Radar Chart" },
 ];
 
+// FinTech-specific visualization types (only Risk Radar)
+const fintechVisualizationTypes = [
+  { value: "risk_radar", label: "Risk Radar Chart" },
+];
+
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("network_visualization");
+  const [selectedVisualization, setSelectedVisualization] = useState("risk_radar");
+  const [visualizationTypes, setVisualizationTypes] = useState(defaultVisualizationTypes);
+  const [isFintech, setIsFintech] = useState(false);
+  
+  // Get current company data
+  const { data: currentCompany } = useQuery<any>({
+    queryKey: ["/api/companies/current"],
+  });
 
   const { data: companies = [] } = useQuery<any[]>({
     queryKey: ["/api/companies"],
@@ -50,6 +63,18 @@ export default function InsightsPage() {
   const { data: companyTypeData = [] } = useQuery<{type: string, count: number, color: string}[]>({
     queryKey: ['/api/company-type-distribution'],
   });
+
+  // Determine if the current company is a FinTech
+  useEffect(() => {
+    if (currentCompany?.category === "FinTech") {
+      setIsFintech(true);
+      setVisualizationTypes(fintechVisualizationTypes);
+      setSelectedVisualization("risk_radar");
+    } else {
+      setIsFintech(false);
+      setVisualizationTypes(defaultVisualizationTypes);
+    }
+  }, [currentCompany]);
 
   const exportData = () => {
     // Implementation for PDF export would go here
@@ -70,30 +95,32 @@ export default function InsightsPage() {
           </Button>
         </div>
 
-        <div className="flex justify-between items-center">
-          <Select
-            value={selectedVisualization}
-            onValueChange={setSelectedVisualization}
-          >
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Select visualization" />
-            </SelectTrigger>
-            <SelectContent>
-              {visualizationTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isFintech && (
+          <div className="flex justify-between items-center">
+            <Select
+              value={selectedVisualization}
+              onValueChange={setSelectedVisualization}
+            >
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select visualization" />
+              </SelectTrigger>
+              <SelectContent>
+                {visualizationTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <Widget title="" className="h-[600px]">
-          {selectedVisualization === "network_visualization" && (
+          {selectedVisualization === "network_visualization" && !isFintech && (
             <NetworkInsightVisualization />
           )}
 
-          {selectedVisualization === "relationship_distribution" && (
+          {selectedVisualization === "relationship_distribution" && !isFintech && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={companyTypeData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -114,11 +141,11 @@ export default function InsightsPage() {
             </ResponsiveContainer>
           )}
 
-          {selectedVisualization === "accreditation_status" && (
+          {selectedVisualization === "accreditation_status" && !isFintech && (
             <AccreditationDotMatrix />
           )}
           
-          {selectedVisualization === "risk_radar" && (
+          {(selectedVisualization === "risk_radar" || isFintech) && (
             <RiskRadarChart className="bg-transparent shadow-none border-none" />
           )}
         </Widget>
