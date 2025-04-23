@@ -112,7 +112,7 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className="p-4">
+      <div className={cn("p-4", className?.includes("flex-col") && "flex-grow")}>
         {children}
       </div>
     </Card>
