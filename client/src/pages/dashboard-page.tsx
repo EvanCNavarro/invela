@@ -341,11 +341,12 @@ export default function DashboardPage() {
                           icon={<Shield className="h-5 w-5" />}
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
+                          headerClassName="pb-1" /* Reduce padding below header */
                         >
                           <RiskRadarChart 
                             companyId={companyData?.id || 0} 
                             showDropdown={false}
-                            className="shadow-none border-none p-2"
+                            className="shadow-none border-none p-0"
                           />
                         </Widget>
                       </div>
