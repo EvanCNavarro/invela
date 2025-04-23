@@ -324,7 +324,7 @@ export default function DashboardPage() {
                               chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
                               companyId={companyData?.id || 0}
                               companyType={companyData?.category || "FinTech"}
-                              canAdjust={companyData?.category !== "FinTech"}
+                              canAdjust={["Bank", "Invela"].includes(companyData?.category || "")}
                             />
                           </div>
                         </Widget>
@@ -339,6 +339,7 @@ export default function DashboardPage() {
                           icon={<Shield className="h-5 w-5" />}
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
+                          className="padding-content-none h-full"
                         >
                           <RiskRadarChart 
                             companyId={companyData?.id || 0} 
@@ -386,7 +387,7 @@ export default function DashboardPage() {
                               chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
                               companyId={companyData?.id || 0}
                               companyType={companyData?.category || "FinTech"}
-                              canAdjust={companyData?.category !== "FinTech"}
+                              canAdjust={["Bank", "Invela"].includes(companyData?.category || "")}
                             />
                           </div>
                         </Widget>
@@ -419,6 +420,7 @@ export default function DashboardPage() {
                     size="triple"
                     onVisibilityToggle={() => toggleWidget('riskRadar')}
                     isVisible={visibleWidgets.riskRadar}
+                    className="padding-content-none h-full"
                   >
                     <RiskRadarChart 
                       companyId={companyData?.id || 0} 
