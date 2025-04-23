@@ -324,7 +324,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Network Visualization - Side by side with Company Score */}
+                {/* Network Visualization for Bank/Invela companies */}
                 {visibleWidgets.networkVisualization && companyData?.category !== 'FinTech' && (
                   <div>
                     <Widget
@@ -337,10 +337,28 @@ export default function DashboardPage() {
                     </Widget>
                   </div>
                 )}
+
+                {/* Risk Radar for FinTech - place in same position as Network Viz */}
+                {visibleWidgets.riskRadar && companyData?.category === 'FinTech' && (
+                  <div>
+                    <Widget
+                      title="Risk Radar"
+                      icon={<Shield className="h-5 w-5" />}
+                      onVisibilityToggle={() => toggleWidget('riskRadar')}
+                      isVisible={visibleWidgets.riskRadar}
+                    >
+                      <RiskRadarChart 
+                        companyId={companyData?.id || 0} 
+                        showDropdown={false}
+                        className="shadow-none border-none"
+                      />
+                    </Widget>
+                  </div>
+                )}
               </div>
               
-              {/* Risk Radar - Different variants based on company category */}
-              {visibleWidgets.riskRadar && (
+              {/* Risk Radar - Only for Bank/Invela companies as full width */}
+              {visibleWidgets.riskRadar && companyData?.category !== 'FinTech' && (
                 <div className="col-span-3">
                   <Widget
                     title="Risk Radar"
@@ -349,21 +367,11 @@ export default function DashboardPage() {
                     onVisibilityToggle={() => toggleWidget('riskRadar')}
                     isVisible={visibleWidgets.riskRadar}
                   >
-                    {companyData?.category === 'FinTech' ? (
-                      // FinTech only sees their own data, no dropdown
-                      <RiskRadarChart 
-                        companyId={companyData?.id || 0} 
-                        showDropdown={false}
-                        className="shadow-none border-none p-2"
-                      />
-                    ) : (
-                      // Bank/Invela can view any company in network
-                      <RiskRadarChart 
-                        companyId={companyData?.id || 0} 
-                        showDropdown={true}
-                        className="shadow-none border-none p-2"
-                      />
-                    )}
+                    <RiskRadarChart 
+                      companyId={companyData?.id || 0} 
+                      showDropdown={true}
+                      className="shadow-none border-none p-2"
+                    />
                   </Widget>
                 </div>
               )}
