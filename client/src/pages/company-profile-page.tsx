@@ -93,17 +93,20 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
     case 'VALID':
       return {
         backgroundColor: 'rgba(243, 254, 246, 0.5)', // Even softer green matching blue
-        borderColor: '#e2f5e7'
+        borderColor: '#e2f5e7',
+        boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
       };
     case 'PENDING':
       return {
         backgroundColor: 'rgba(255, 253, 237, 0.5)', // Even softer yellow matching blue
-        borderColor: '#fef7d3'
+        borderColor: '#fef7d3',
+        boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
       };
     default:
       return {
         backgroundColor: 'rgba(254, 245, 245, 0.5)', // Even softer red matching blue
-        borderColor: '#fee7e7'
+        borderColor: '#fee7e7',
+        boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
       };
   }
 };
@@ -656,10 +659,11 @@ export default function CompanyProfilePage() {
               <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
                 {/* Risk Score card with Invela blue background gradient */}
                 <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
+                  className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
                   style={{ 
                     backgroundColor: 'rgba(236, 241, 255, 0.5)', // Even softer blue that matches other colors
-                    borderColor: '#e5edff'
+                    borderColor: '#e5edff',
+                    boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
                   }}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -675,7 +679,7 @@ export default function CompanyProfilePage() {
                 
                 {/* Accreditation status with color-coded background */}
                 <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
+                  className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
                   style={getAccreditationBoxStyle(company.accreditation_status)}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
