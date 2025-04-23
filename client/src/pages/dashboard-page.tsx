@@ -133,10 +133,15 @@ export default function DashboardPage() {
                 <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {Object.entries(visibleWidgets)
-                  // Only show Risk Radar option for FinTech companies
+                  // Filter dropdown options based on company type
                   .filter(([key]) => {
                     if (key === 'riskRadar') {
+                      // Only show Risk Radar for FinTech
                       return companyData?.category === 'FinTech';
+                    }
+                    if (key === 'networkVisualization') {
+                      // Hide Network Visualization for FinTech
+                      return companyData?.category !== 'FinTech';
                     }
                     return true;
                   })
