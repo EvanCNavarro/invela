@@ -137,11 +137,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Format category names for better visibility in radar chart
+  // Format category names to add line breaks with exactly one word per line
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
       if (!category) return '';
-      return category; // Use full names without line breaks for better visibility
+      // Split by spaces and join with line breaks
+      const words = category.split(' ');
+      if (words.length <= 1) return category;
+      
+      // Return with each word on its own line
+      return words.map(word => word.trim()).join('\n');
     });
   };
 
@@ -188,12 +193,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     grid: {
-      show: true, // Show grid for better readability
+      show: false, // Removed horizontal lines in the background
       padding: {
-        top: 30,
-        right: 30,
-        bottom: 30,
-        left: 30
+        top: 20,
+        bottom: 20
       }
     },
     yaxis: {
@@ -202,7 +205,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       tickAmount: 5,
       labels: {
         style: {
-          fontSize: '13px',
+          fontSize: '12px',
           fontWeight: 500,
           colors: ['#64748b']
         },
@@ -213,31 +216,30 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: '13px',
+          fontSize: '14px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: 10, // Lighter offset now that we don't have line breaks
-        formatter: (val: string) => val // Keep as single line
+        offsetY: 5
       }
     },
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: '15px',
+        fontSize: '14px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
       background: {
         enabled: true,
-        borderRadius: 6,
-        padding: 6,
-        opacity: 1,
+        borderRadius: 4,
+        padding: 4,
+        opacity: 0.9,
         borderWidth: 1,
         borderColor: '#e2e8f0',
       },
-      offsetY: 0
+      offsetY: -5
     },
     tooltip: {
       theme: 'light',
@@ -261,8 +263,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: undefined, // Let the chart auto-size to fit container
-        offsetY: 0, // No offset
+        size: 220,
+        offsetY: -20, // Move chart up to make bottom clusters visible
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -278,10 +280,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 1200,
         options: {
+          chart: {
+            height: 550
+          },
           plotOptions: {
             radar: {
-              size: undefined, // Auto-sizing for each breakpoint
-              offsetY: 0
+              size: 260,
+              offsetY: -30 // Move up to ensure bottom clusters are visible
             }
           }
         }
@@ -289,10 +294,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 992,
         options: {
+          chart: {
+            height: 500
+          },
           plotOptions: {
             radar: {
-              size: undefined, // Auto-sizing for each breakpoint
-              offsetY: 0
+              size: 220,
+              offsetY: -25 // Move up to ensure bottom clusters are visible
             }
           }
         }
@@ -300,28 +308,34 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 768,
         options: {
-          markers: {
-            size: 7 // Smaller markers for mobile
+          chart: {
+            height: 450
           },
           plotOptions: {
             radar: {
-              size: undefined, // Auto-sizing for each breakpoint
-              offsetY: 0
+              size: 180,
+              offsetY: -20 // Move up to ensure bottom clusters are visible
             }
+          },
+          markers: {
+            size: 7
           }
         }
       },
       {
         breakpoint: 576,
         options: {
-          markers: {
-            size: 6 // Even smaller markers for small mobile screens
+          chart: {
+            height: 400
           },
           plotOptions: {
             radar: {
-              size: undefined, // Auto-sizing for each breakpoint
-              offsetY: 0
+              size: 150,
+              offsetY: -15 // Move up to ensure bottom clusters are visible
             }
+          },
+          markers: {
+            size: 6
           }
         }
       }
@@ -396,24 +410,24 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-0", // Remove all padding to use full widget space
-        className?.includes("border-none") ? "" : ""
+      <CardContent className={cn("p-4 pb-8", 
+        !showDropdown ? "pt-6" : "", // Add more top padding when no header for FinTech version
+        className?.includes("border-none") ? "p-2" : ""
       )}>
-        <div className={cn("w-full h-full rounded-md flex items-center justify-center", 
-          className?.includes("border-none") ? "h-[450px]" : "h-[520px]"
+        <div className={cn("w-full rounded-md flex items-center justify-center", 
+          className?.includes("border-none") ? "h-[350px]" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              width="100%"
-              height="100%"
+              height={className?.includes("border-none") ? "350" : "520"}
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-full rounded-md" />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
             </div>
           )}
         </div>
