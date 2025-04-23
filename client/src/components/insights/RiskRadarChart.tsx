@@ -184,42 +184,32 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       fontFamily: 'inherit',
       background: 'transparent',
       dropShadow: {
-        enabled: true,
-        blur: 3,
-        opacity: 0.2
+        enabled: false
       },
       redrawOnWindowResize: true,
       redrawOnParentResize: true,
       animations: {
         enabled: true,
         easing: 'easeinout',
-        speed: 500,
+        speed: 300,
         animateGradually: {
           enabled: true,
-          delay: 150
+          delay: 100
         },
         dynamicAnimation: {
           enabled: true,
-          speed: 350
+          speed: 300
         }
       }
     },
     colors: ['#4965EC'],
     fill: {
-      opacity: 0.3,
-      type: 'gradient',
-      gradient: {
-        shade: 'dark',
-        gradientToColors: ['#7B74A8'],
-        shadeIntensity: 1,
-        type: 'vertical',
-        opacityFrom: 0.7,
-        opacityTo: 0.3,
-      }
+      opacity: 0.15,
+      colors: ['#4965EC']
     },
     stroke: {
-      width: 3,
-      curve: 'smooth',
+      width: 2,
+      curve: 'straight',
       colors: ['#4965EC'],
       dashArray: 0,
     },
@@ -235,10 +225,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false,
       padding: {
-        top: 40,
-        bottom: 40,
-        left: 40, 
-        right: 40
+        top: 0,
+        bottom: 0,
+        left: 0, 
+        right: 0
       }
     },
     yaxis: {
@@ -312,7 +302,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: '90%',
+        size: '100%',
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -385,20 +375,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </CardHeader>
       )}
       
-      <CardContent className="p-0 h-full">
-        {chartComponentLoaded && ReactApexChart ? (
-          <ReactApexChart 
-            options={chartOptions} 
-            series={series} 
-            type="radar" 
-            height="100%" 
-            width="100%"
-          />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
+      <CardContent className="p-0 h-[600px] w-full">
+        <div className="h-full w-full flex items-center justify-center">
+          {chartComponentLoaded && ReactApexChart ? (
+            <ReactApexChart 
+              options={chartOptions} 
+              series={series} 
+              type="radar" 
+              height="100%" 
+              width="100%"
+            />
+          ) : (
             <Skeleton className="w-full h-full" />
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
