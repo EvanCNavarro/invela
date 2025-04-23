@@ -162,6 +162,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         enabled: true,
         blur: 3,
         opacity: 0.2
+      },
+      parentHeightOffset: 0,
+      sparkline: {
+        enabled: false
       }
     },
     colors: ['#4965EC'], // Matching brand primary color from network viz
@@ -263,8 +267,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: '100%', // Use 100% of the available width for better responsiveness
-        offsetY: 0, // No vertical offset
+        size: 350, // Fixed size in pixels - much larger than before
+        offsetY: 0,
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -280,12 +284,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 1200,
         options: {
-          chart: {
-            height: '100%'
-          },
           plotOptions: {
             radar: {
-              size: '95%', // Use percentage for better responsive behavior
+              size: 320, // Fixed size in pixels for each breakpoint
               offsetY: 0
             }
           }
@@ -294,12 +295,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 992,
         options: {
-          chart: {
-            height: '100%'
-          },
           plotOptions: {
             radar: {
-              size: '90%',
+              size: 280,
               offsetY: 0
             }
           }
@@ -308,12 +306,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 768,
         options: {
-          chart: {
-            height: '100%'
-          },
           plotOptions: {
             radar: {
-              size: '85%',
+              size: 240,
               offsetY: 0
             }
           },
@@ -325,12 +320,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 576,
         options: {
-          chart: {
-            height: '100%'
-          },
           plotOptions: {
             radar: {
-              size: '80%',
+              size: 210,
               offsetY: 0
             }
           },
@@ -424,8 +416,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         className?.includes("border-none") ? "" : ""
       )}>
         <div className={cn(
-          "w-full rounded-md flex items-center justify-center overflow-visible", 
-          className?.includes("border-none") ? "h-[375px]" : "h-[550px]" // Increase heights to prevent clipping
+          "w-full h-full rounded-md flex items-center justify-center overflow-visible p-4", 
+          className?.includes("border-none") ? "min-h-[450px]" : "min-h-[650px]" // Increased minimum heights
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
@@ -438,7 +430,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[375px]" : "h-[550px]")} />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[400px]" : "h-[600px]")} />
             </div>
           )}
         </div>
