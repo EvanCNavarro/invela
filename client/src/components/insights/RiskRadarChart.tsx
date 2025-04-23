@@ -137,11 +137,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Format category names to add line breaks with exactly one word per line
+  // Format category names to display clearly with proper spacing
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
       if (!category) return '';
-      // Split by spaces and join with line breaks
+      
+      // For "Data Transfers" and "PII Data", use condensed single-line format
+      if (category === "Data Transfers" || category === "PII Data") {
+        return category;
+      }
+      
+      // For other categories with multiple words, split on spaces and join with line breaks
       const words = category.split(' ');
       if (words.length <= 1) return category;
       
@@ -210,10 +216,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 10,
-        bottom: 10,
-        left: 10,
-        right: 10
+        top: 20,
+        bottom: 20,
+        left: 20,
+        right: 20
       }
     },
     yaxis: {
@@ -233,30 +239,30 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: className?.includes("border-none") ? '10px' : '12px',
+          fontSize: className?.includes("border-none") ? '11px' : '12px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: className?.includes("border-none") ? 1 : 3
+        offsetY: className?.includes("border-none") ? 3 : 3
       }
     },
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: className?.includes("border-none") ? '10px' : '12px',
+        fontSize: className?.includes("border-none") ? '11px' : '12px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
       background: {
         enabled: true,
         borderRadius: 3,
-        padding: className?.includes("border-none") ? 2 : 3,
+        padding: className?.includes("border-none") ? 3 : 3,
         opacity: 0.9,
         borderWidth: 1,
         borderColor: '#e2e8f0',
       },
-      offsetY: className?.includes("border-none") ? -2 : -4
+      offsetY: className?.includes("border-none") ? 0 : -4
     },
     tooltip: {
       theme: 'light',
