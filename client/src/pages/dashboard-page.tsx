@@ -120,7 +120,6 @@ export default function DashboardPage() {
         onDrawerOpenChange={setDrawerOpen}
         title="Dashboard"
         description="Get an overview of your company's performance and recent activities."
-        className="flex flex-col h-full"
         headerActions={
           <div className="flex items-center space-x-2">
             <DropdownMenu>
@@ -196,7 +195,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-2 space-y-4 flex-grow flex flex-col">
+        <div className="mt-2 space-y-4">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (
@@ -217,7 +216,7 @@ export default function DashboardPage() {
             // Show appropriate skeleton based on current loading state
             <DashboardSkeleton />
           ) : (
-            <div className="grid grid-cols-3 gap-4 flex-grow h-full">
+            <div className="grid grid-cols-3 gap-4">
               {/* Quick Actions - Full width at the top */}
               {visibleWidgets.quickActions && (
                 <div className="col-span-3">
@@ -343,7 +342,7 @@ export default function DashboardPage() {
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
                           headerClassName="pb-1" /* Reduce padding below header */
-                          className="h-auto min-h-[420px] flex flex-col"
+                          className="h-auto min-h-[360px] flex flex-col"
                         >
                           <div className="flex-grow">
                             <RiskRadarChart 
