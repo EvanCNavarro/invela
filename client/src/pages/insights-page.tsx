@@ -88,7 +88,10 @@ export default function InsightsPage() {
           </Select>
         </div>
 
-        <Widget title="" className="h-[700px]">
+        <Widget 
+          title="" 
+          className={selectedVisualization === "risk_radar" ? "h-[650px]" : "h-[700px]"}
+        >
           {selectedVisualization === "network_visualization" && (
             <NetworkInsightVisualization />
           )}
@@ -119,8 +122,8 @@ export default function InsightsPage() {
           )}
           
           {selectedVisualization === "risk_radar" && (
-            <div className="flex items-center justify-center h-full">
-              <RiskRadarChart className="bg-transparent shadow-none border-none" />
+            <div className="flex items-center justify-center h-full w-full">
+              <RiskRadarChart className="bg-transparent shadow-none border-none w-full" />
             </div>
           )}
         </Widget>
