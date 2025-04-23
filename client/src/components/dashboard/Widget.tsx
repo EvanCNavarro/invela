@@ -53,6 +53,7 @@ export function Widget({
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
       !isVisible && 'opacity-50',
+      className?.includes("h-full") ? "flex flex-col h-full" : "",
       className
     )}>
       <div className={cn("flex items-center justify-between px-4 pt-4", headerClassName)}>
@@ -112,7 +113,11 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className={cn("p-4", className?.includes("flex-col") && "flex-grow")}>
+      <div className={cn(
+        "p-4", 
+        (className?.includes("flex-col") || className?.includes("h-full")) && "flex-grow h-full",
+        "overflow-hidden" // Prevent content overflow
+      )}>
         {children}
       </div>
     </Card>
