@@ -110,7 +110,11 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className="p-4">
+      <div className={cn(
+        "p-4", 
+        className?.includes("padding-content-none") ? "p-0" : "", // Allow for removing padding when needed
+        className?.includes("h-full") ? "h-[calc(100%-52px)]" : "" // Adjust height to fill remaining space minus header
+      )}>
         {children}
       </div>
     </Card>
