@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 interface WidgetProps {
   title: string;
+  subtitle?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
   onVisibilityToggle?: () => void;
@@ -36,6 +37,7 @@ interface WidgetProps {
 
 export function Widget({ 
   title, 
+  subtitle,
   icon, 
   children, 
   onVisibilityToggle,
@@ -63,7 +65,12 @@ export function Widget({
               {icon}
             </div>
           )}
-          <h3 className="font-medium text-base">{title}</h3>
+          <div>
+            <h3 className="font-medium text-base">{title}</h3>
+            {subtitle && (
+              <p className="text-sm text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
         </div>
         {(onVisibilityToggle || actions.length > 0 || onEdit) && (
           <DropdownMenu>
