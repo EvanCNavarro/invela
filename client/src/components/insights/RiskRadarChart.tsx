@@ -280,7 +280,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 180 : 200, // Larger radar for widget view
+        size: className?.includes("border-none") ? 120 : 200, // Smaller radar for widget view
         offsetY: className?.includes("border-none") ? 0 : -20, // No offset for widget version
         offsetX: 0,
         polygons: {
@@ -298,26 +298,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1920, // Large desktops
         options: {
           chart: {
-            height: className?.includes("border-none") ? 380 : 500
+            height: className?.includes("border-none") ? 280 : 500
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 300 : 300,
-              offsetY: className?.includes("border-none") ? 0 : -20
-            }
-          }
-        }
-      },
-      {
-        breakpoint: 1600, // Large desktops
-        options: {
-          chart: {
-            height: className?.includes("border-none") ? 360 : 500
-          },
-          plotOptions: {
-            radar: {
-              size: className?.includes("border-none") ? 280 : 300,
-              offsetY: className?.includes("border-none") ? 0 : -20
+              size: className?.includes("border-none") ? 220 : 300,
+              offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -326,12 +312,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1366, // Medium desktops
         options: {
           chart: {
-            height: className?.includes("border-none") ? 350 : 480
+            height: className?.includes("border-none") ? 270 : 480
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 260 : 260,
-              offsetY: className?.includes("border-none") ? 0 : -20
+              size: className?.includes("border-none") ? 190 : 260,
+              offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -340,11 +326,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1200, // Small desktops
         options: {
           chart: {
-            height: className?.includes("border-none") ? 340 : 450
+            height: className?.includes("border-none") ? 260 : 450
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 240 : 220,
+              size: className?.includes("border-none") ? 160 : 220,
               offsetY: className?.includes("border-none") ? 0 : -15
             }
           }
@@ -354,11 +340,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 992, // Tablets
         options: {
           chart: {
-            height: className?.includes("border-none") ? 330 : 420
+            height: className?.includes("border-none") ? 250 : 420
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 220 : 200,
+              size: className?.includes("border-none") ? 140 : 200,
               offsetY: className?.includes("border-none") ? 0 : -15
             }
           },
@@ -371,11 +357,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 768, // Large phones
         options: {
           chart: {
-            height: className?.includes("border-none") ? 320 : 400
+            height: className?.includes("border-none") ? 240 : 400
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 200 : 180,
+              size: className?.includes("border-none") ? 130 : 180,
               offsetY: className?.includes("border-none") ? 0 : -10
             }
           },
@@ -388,11 +374,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 576, // Small phones
         options: {
           chart: {
-            height: className?.includes("border-none") ? 310 : 380
+            height: className?.includes("border-none") ? 230 : 380
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 180 : 150,
+              size: className?.includes("border-none") ? 120 : 150,
               offsetY: className?.includes("border-none") ? 0 : -5
             }
           },
@@ -432,7 +418,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   }
 
   return (
-    <Card className={cn("w-full h-full flex flex-col", className)}>
+    <Card className={cn("w-full", className)}>
       {/* Only show header with title/description if NOT in condensed view (border-none class indicates dashboard widget) */}
       {!className?.includes("border-none") && (
         <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
@@ -472,8 +458,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-6 flex-grow flex", className?.includes("border-none") ? "p-0" : "")}>
-        <div className={cn("w-full rounded-md flex flex-grow", className?.includes("border-none") ? "min-h-[350px] h-full" : "h-[520px]")}>
+      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-0" : "")}>
+        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "min-h-[280px] h-full max-h-[95vh]" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
@@ -481,12 +467,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               type="radar" 
               height={className?.includes("border-none") ? "100%" : "520"}
               width="100%"
-              className="flex-grow"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[280px]" : "h-[520px]")} />
             </div>
           )}
         </div>
