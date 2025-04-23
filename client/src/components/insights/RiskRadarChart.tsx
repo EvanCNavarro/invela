@@ -403,7 +403,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center p-4">
-          <Skeleton className="h-[450px] w-full rounded-md" />
+          <div className="aspect-square w-full max-w-[450px] mx-auto">
+            <Skeleton className="w-full h-full rounded-md aspect-square" />
+          </div>
         </CardContent>
       </Card>
     );
@@ -453,16 +455,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       <CardContent className="p-0">
         <div 
           className={cn(
-            "w-full rounded-md flex flex-col items-center justify-center p-4",
-            className?.includes("border-none") ? "h-[400px]" : "h-[450px]" // Further reduced height
+            "rounded-md flex flex-col items-center justify-center p-4",
+            // Make the chart container square
+            className?.includes("border-none") ? "aspect-square w-full" : "aspect-square w-full max-w-[450px] mx-auto"
           )}
         >
           {chartComponentLoaded && ReactApexChart ? (
             <div id="apexRadarChart" className="w-full h-full" style={{ 
-              minHeight: "350px", 
               overflow: "visible",
               position: "relative",
-              maxWidth: "95%" // Ensure chart doesn't stretch to edges
+              maxWidth: "100%", // Use full width of parent
+              aspectRatio: "1/1" // Ensure the container itself is square
             }}>
               <ReactApexChart 
                 options={{
@@ -473,7 +476,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                     width: "100%",
                     redrawOnWindowResize: true,
                     redrawOnParentResize: true,
-                    offsetX: -10 // Shift slightly left to center better
+                    offsetX: 0 // Center the chart
                   }
                 }} 
                 series={series} 
@@ -483,8 +486,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               />
             </div>
           ) : (
-            <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[450px] rounded-md" />
+            <div className="aspect-square w-full flex items-center justify-center">
+              <Skeleton className="w-full h-full rounded-md aspect-square" />
             </div>
           )}
         </div>
