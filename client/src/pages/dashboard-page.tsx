@@ -344,7 +344,7 @@ export default function DashboardPage() {
                           <RiskRadarChart 
                             companyId={companyData?.id || 0} 
                             showDropdown={false}
-                            className="shadow-none border-none p-2 h-full"
+                            className="shadow-none border-none h-full w-full"
                           />
                         </Widget>
                       </div>
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                     <RiskRadarChart 
                       companyId={companyData?.id || 0} 
                       showDropdown={true}
-                      className="shadow-none border-none p-2"
+                      className="shadow-none border-none h-full w-full"
                     />
                   </Widget>
                 </div>

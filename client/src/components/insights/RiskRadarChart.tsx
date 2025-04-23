@@ -261,8 +261,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 250, // Increased size to ensure full visibility of the chart
-        offsetY: 10, // Small offset to center the chart in the container
+        size: undefined, // Let the chart auto-size to fit container
+        offsetY: 0, // No offset
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -278,13 +278,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 1200,
         options: {
-          chart: {
-            height: 550
-          },
           plotOptions: {
             radar: {
-              size: 300, // Larger size for better visibility
-              offsetY: 0  // Center the chart
+              size: undefined, // Auto-sizing for each breakpoint
+              offsetY: 0
             }
           }
         }
@@ -292,13 +289,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 992,
         options: {
-          chart: {
-            height: 500
-          },
           plotOptions: {
             radar: {
-              size: 280, // Increased size
-              offsetY: 0  // Center the chart
+              size: undefined, // Auto-sizing for each breakpoint
+              offsetY: 0
             }
           }
         }
@@ -306,34 +300,28 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 768,
         options: {
-          chart: {
-            height: 450
+          markers: {
+            size: 7 // Smaller markers for mobile
           },
           plotOptions: {
             radar: {
-              size: 240, // Increased size
-              offsetY: 0  // Center the chart
+              size: undefined, // Auto-sizing for each breakpoint
+              offsetY: 0
             }
-          },
-          markers: {
-            size: 7
           }
         }
       },
       {
         breakpoint: 576,
         options: {
-          chart: {
-            height: 400
+          markers: {
+            size: 6 // Even smaller markers for small mobile screens
           },
           plotOptions: {
             radar: {
-              size: 200, // Increased size
-              offsetY: 0  // Center the chart
+              size: undefined, // Auto-sizing for each breakpoint
+              offsetY: 0
             }
-          },
-          markers: {
-            size: 6
           }
         }
       }
@@ -408,24 +396,24 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-8", 
-        !showDropdown ? "pt-6" : "", // Add more top padding when no header for FinTech version
-        className?.includes("border-none") ? "p-2" : ""
+      <CardContent className={cn("p-0", // Remove all padding to use full widget space
+        className?.includes("border-none") ? "" : ""
       )}>
-        <div className={cn("w-full rounded-md flex items-center justify-center", 
-          className?.includes("border-none") ? "h-[400px]" : "h-[520px]"
+        <div className={cn("w-full h-full rounded-md flex items-center justify-center", 
+          className?.includes("border-none") ? "h-[450px]" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height={className?.includes("border-none") ? "400" : "520"}
+              width="100%"
+              height="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[400px]" : "h-[520px]")} />
+              <Skeleton className="w-full h-full rounded-md" />
             </div>
           )}
         </div>
