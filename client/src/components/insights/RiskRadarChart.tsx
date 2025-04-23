@@ -137,21 +137,24 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Format category names to display clearly with proper spacing
+  // Specific formatting for category names to ensure all are visible
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
       if (!category) return '';
       
-      // For "Data Transfers" and "PII Data", use condensed single-line format
-      if (category === "Data Transfers" || category === "PII Data") {
-        return category;
+      // Special handling for problematic categories
+      if (category === "Data Transfers") {
+        return "Data\nTransfers";
       }
       
-      // For other categories with multiple words, split on spaces and join with line breaks
+      if (category === "PII Data") {
+        return "PII\nData";
+      }
+      
+      // All other categories with spaces get a simple line break between words
       const words = category.split(' ');
       if (words.length <= 1) return category;
       
-      // Return with each word on its own line
       return words.map(word => word.trim()).join('\n');
     });
   };
@@ -216,10 +219,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 20,
-        bottom: 20,
-        left: 20,
-        right: 20
+        top: 5,
+        bottom: 5,
+        left: 5,
+        right: 5
       }
     },
     yaxis: {
@@ -286,8 +289,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 100 : 200, // Smaller radar for widget view
-        offsetY: className?.includes("border-none") ? 5 : -20, // Small positive offset for widget version
+        size: className?.includes("border-none") ? 140 : 200, // Increased size for better visibility
+        offsetY: className?.includes("border-none") ? 0 : -20, // No offset for widget version
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -464,7 +467,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-0" : "", "h-full flex-grow")}>
+      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "px-0 py-0" : "", "h-full flex-grow")}>
         <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-full" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
