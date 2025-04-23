@@ -133,12 +133,16 @@ export default function DashboardPage() {
                 <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {Object.entries(visibleWidgets)
-                  // Only show Risk Radar option for FinTech companies
+                  // Filter dropdown options based on company type
                   .filter(([key]) => {
-                    if (key === 'riskRadar') {
-                      return companyData?.category === 'FinTech';
+                    // For FinTech companies: show 'riskRadar' but hide 'networkVisualization'
+                    if (companyData?.category === 'FinTech') {
+                      return key !== 'networkVisualization';
                     }
-                    return true;
+                    // For Bank/Invela: hide 'riskRadar' in dropdown (it's always shown at bottom)
+                    else {
+                      return key !== 'riskRadar';
+                    }
                   })
                   .map(([key, isVisible]) => (
                   <DropdownMenuItem
@@ -282,81 +286,127 @@ export default function DashboardPage() {
               )}
 
               {/* Middle section - 2x2 grid */}
-              <div className="col-span-3 grid grid-cols-2 gap-4">
-                {visibleWidgets.companyScore && companyData && (
-                  <div>
-                    <Widget
-                      title="Company Score"
-                      icon={<AlertTriangle className="h-5 w-5" />}
-                      onVisibilityToggle={() => toggleWidget('companyScore')}
-                      isVisible={visibleWidgets.companyScore}
-                    >
-                      <div className="space-y-1">
-                        <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                          {companyData?.logoId ? (
-                            <img
-                              src={`/api/companies/${companyData.id}/logo`}
-                              alt={`${companyData.name} logo`}
-                              className="w-6 h-6 object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                console.debug(`Failed to load logo for company: ${companyData.name}`);
-                              }}
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-xs font-medium text-primary">
-                                {companyData?.name.charAt(0).toUpperCase()}
-                              </span>
+              <div className="col-span-3 grid grid-cols-4 gap-4">
+                {/* For FinTech companies: Company Score (1) and Risk Radar (3) */}
+                {companyData?.category === 'FinTech' ? (
+                  <>
+                    {visibleWidgets.companyScore && companyData && (
+                      <div className="col-span-1">
+                        <Widget
+                          title="Company Score"
+                          icon={<AlertTriangle className="h-5 w-5" />}
+                          onVisibilityToggle={() => toggleWidget('companyScore')}
+                          isVisible={visibleWidgets.companyScore}
+                        >
+                          <div className="space-y-1">
+                            <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                              {companyData?.logoId ? (
+                                <img
+                                  src={`/api/companies/${companyData.id}/logo`}
+                                  alt={`${companyData.name} logo`}
+                                  className="w-6 h-6 object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    console.debug(`Failed to load logo for company: ${companyData.name}`);
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-xs font-medium text-primary">
+                                    {companyData?.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <span className="text-sm font-medium">{companyData?.name}</span>
                             </div>
-                          )}
-                          <span className="text-sm font-medium">{companyData?.name}</span>
-                        </div>
-                        <RiskMeter 
-                          score={companyData?.riskScore || companyData?.risk_score || 0}
-                          chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
-                          companyId={companyData?.id || 0}
-                          companyType={companyData?.category || "FinTech"}
-                          canAdjust={companyData?.category === "Bank" || companyData?.category === "Invela"}
-                        />
+                            <RiskMeter 
+                              score={companyData?.riskScore || companyData?.risk_score || 0}
+                              chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
+                              companyId={companyData?.id || 0}
+                              companyType={companyData?.category || "FinTech"}
+                              canAdjust={companyData?.category !== "FinTech"}
+                            />
+                          </div>
+                        </Widget>
                       </div>
-                    </Widget>
-                  </div>
-                )}
+                    )}
 
-                {/* Network Visualization for Bank/Invela companies */}
-                {visibleWidgets.networkVisualization && companyData?.category !== 'FinTech' && (
-                  <div>
-                    <Widget
-                      title="Network Visualization"
-                      icon={<Globe className="h-5 w-5" />}
-                      onVisibilityToggle={() => toggleWidget('networkVisualization')}
-                      isVisible={visibleWidgets.networkVisualization}
-                    >
-                      <NetworkVisualization className="shadow-none border-none" />
-                    </Widget>
-                  </div>
-                )}
-
-                {/* Risk Radar for FinTech - place in same position as Network Viz */}
-                {visibleWidgets.riskRadar && companyData?.category === 'FinTech' && (
-                  <div className="w-full h-full">
-                    <Widget
-                      title="Risk Radar"
-                      icon={<Shield className="h-5 w-5" />}
-                      onVisibilityToggle={() => toggleWidget('riskRadar')}
-                      isVisible={visibleWidgets.riskRadar}
-                      className="h-full"
-                    >
-                      <div className="h-full w-full">
-                        <RiskRadarChart 
-                          companyId={companyData?.id || 0} 
-                          showDropdown={false}
-                          className="shadow-none border-none h-full"
-                        />
+                    {/* Risk Radar for FinTech - 3 columns wide */}
+                    {visibleWidgets.riskRadar && (
+                      <div className="col-span-3">
+                        <Widget
+                          title="Risk Radar"
+                          icon={<Shield className="h-5 w-5" />}
+                          onVisibilityToggle={() => toggleWidget('riskRadar')}
+                          isVisible={visibleWidgets.riskRadar}
+                        >
+                          <RiskRadarChart 
+                            companyId={companyData?.id || 0} 
+                            showDropdown={false}
+                            className="shadow-none border-none p-2"
+                          />
+                        </Widget>
                       </div>
-                    </Widget>
-                  </div>
+                    )}
+                  </>
+                ) : (
+                  /* For Bank/Invela companies: 2x2 grid layout */
+                  <>
+                    {visibleWidgets.companyScore && companyData && (
+                      <div className="col-span-2">
+                        <Widget
+                          title="Company Score"
+                          icon={<AlertTriangle className="h-5 w-5" />}
+                          onVisibilityToggle={() => toggleWidget('companyScore')}
+                          isVisible={visibleWidgets.companyScore}
+                        >
+                          <div className="space-y-1">
+                            <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                              {companyData?.logoId ? (
+                                <img
+                                  src={`/api/companies/${companyData.id}/logo`}
+                                  alt={`${companyData.name} logo`}
+                                  className="w-6 h-6 object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    console.debug(`Failed to load logo for company: ${companyData.name}`);
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-xs font-medium text-primary">
+                                    {companyData?.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <span className="text-sm font-medium">{companyData?.name}</span>
+                            </div>
+                            <RiskMeter 
+                              score={companyData?.riskScore || companyData?.risk_score || 0}
+                              chosenScore={companyData?.chosenScore || companyData?.chosen_score || undefined}
+                              companyId={companyData?.id || 0}
+                              companyType={companyData?.category || "FinTech"}
+                              canAdjust={companyData?.category !== "FinTech"}
+                            />
+                          </div>
+                        </Widget>
+                      </div>
+                    )}
+
+                    {/* Network Visualization for Bank/Invela companies */}
+                    {visibleWidgets.networkVisualization && (
+                      <div className="col-span-2">
+                        <Widget
+                          title="Network Visualization"
+                          icon={<Globe className="h-5 w-5" />}
+                          onVisibilityToggle={() => toggleWidget('networkVisualization')}
+                          isVisible={visibleWidgets.networkVisualization}
+                        >
+                          <NetworkVisualization className="shadow-none border-none" />
+                        </Widget>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               
