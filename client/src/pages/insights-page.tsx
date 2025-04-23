@@ -2,16 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
 } from "recharts";
 import {
   Select,
@@ -31,7 +22,6 @@ import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 // Default visualization types
 const defaultVisualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
-  { value: "relationship_distribution", label: "Company Type Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_radar", label: "Risk Radar Chart" },
 ];
@@ -59,10 +49,7 @@ export default function InsightsPage() {
     queryKey: ["/api/relationships"],
   });
 
-  // Company type distribution from API
-  const { data: companyTypeData = [] } = useQuery<{type: string, count: number, color: string}[]>({
-    queryKey: ['/api/company-type-distribution'],
-  });
+  // No longer need company type distribution API
 
   // Determine if the current company is a FinTech
   useEffect(() => {
@@ -120,26 +107,7 @@ export default function InsightsPage() {
             <NetworkInsightVisualization />
           )}
 
-          {selectedVisualization === "relationship_distribution" && !isFintech && (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={companyTypeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="type"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <RechartsTooltip />
-                <Bar dataKey="count">
-                  {companyTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || 'hsl(var(--primary))'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          {/* Company Type Distribution visualization has been removed */}
 
           {selectedVisualization === "accreditation_status" && !isFintech && (
             <AccreditationDotMatrix />
