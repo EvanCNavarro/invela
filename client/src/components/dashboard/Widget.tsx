@@ -46,7 +46,7 @@ export function Widget({
 }: WidgetProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60 flex flex-col",
+      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
       size === 'single' ? 'col-span-1' : 
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
@@ -110,11 +110,7 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className={cn(
-        "p-4 flex-grow", 
-        className?.includes("padding-content-none") ? "p-0" : "", // Allow for removing padding when needed
-        className?.includes("h-full") ? "flex flex-col" : "" // Use flex layout for full height
-      )}>
+      <div className="p-4">
         {children}
       </div>
     </Card>

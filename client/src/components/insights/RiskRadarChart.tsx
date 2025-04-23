@@ -1,7 +1,13 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -9,10 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCurrentCompany } from '@/hooks/use-current-company';
+import { useCurrentCompany, type Company } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { MoreVertical } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { Shield } from 'lucide-react';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -27,7 +34,7 @@ interface RiskClusters {
   'Financial Risk': number;
 }
 
-// Define the company type
+// Define the company type to extend the existing Company type from hooks
 interface CompanyWithRiskClusters {
   id: number;
   name: string;
@@ -63,6 +70,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
+  const queryClient = useQueryClient();
 
   // Load ApexCharts components only on client side
   useEffect(() => {
@@ -76,7 +84,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     }
   }, []);
 
-  // Set the selected company ID once the current company is loaded
+  // Set the selected company ID once the current company is loaded or if a specific companyId is provided
   useEffect(() => {
     if (companyId) {
       setSelectedCompanyId(companyId);
@@ -88,13 +96,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Fetch network companies if the current company is a Bank or Invela
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
   
+  // Use a more specific return type to fix TypeScript errors
   interface CompanyNetworkResponse {
     companies: CompanyWithRiskClusters[];
   }
   
-  const { data: networkCompaniesData } = useQuery<RelationshipData[], Error, CompanyNetworkResponse>({
+  const { data: networkCompaniesData, isLoading: isNetworkLoading } = useQuery<RelationshipData[], Error, CompanyNetworkResponse>({
     queryKey: ['/api/relationships', company?.id],
     select: (data) => {
+      // Transform relationship data into CompanyWithRiskClusters format
       const transformedCompanies = data.map(relationship => ({
         id: relationship.relatedCompanyId,
         name: relationship.relatedCompanyName,
@@ -109,6 +119,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     enabled: isBankOrInvela && !!company?.id,
   });
   
+  // Extract the companies array from the response
   const networkCompanies = networkCompaniesData?.companies || [];
 
   // Fetch selected company data
@@ -121,15 +132,28 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const displayCompany = selectedCompanyId === company?.id ? company : selectedCompany;
   const isLoading = isCompanyLoading || (isSelectedCompanyLoading && selectedCompanyId !== company?.id);
 
-  // Extract risk clusters data
+  // Extract risk clusters data - ensuring we handle both Company and CompanyWithRiskClusters types
   const riskClusters = displayCompany ? 
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Demo data exactly matching the reference image
-  const demoData = [280, 380, 180, 420, 320, 180];
+  // Format category names to add line breaks with exactly one word per line
+  const formatCategoryNames = (categories: string[]): string[] => {
+    return categories.map(category => {
+      if (!category) return '';
+      // Split by spaces and join with line breaks
+      const words = category.split(' ');
+      if (words.length <= 1) return category;
+      
+      // Return with each word on its own line
+      return words.map(word => word.trim()).join('\n');
+    });
+  };
 
-  // Configure ApexCharts options based on the reference image
+  // Determine if this is the compact view based on the className
+  const isCompactView = className?.includes("border-none") || false;
+
+  // Configure ApexCharts options with enhanced styling
   const chartOptions = {
     chart: {
       toolbar: {
@@ -138,206 +162,271 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       fontFamily: 'inherit',
       background: 'transparent',
       dropShadow: {
-        enabled: false,
-      },
+        enabled: true,
+        blur: 3,
+        opacity: 0.2
+      }
     },
-    colors: ['#4965EC'],
+    colors: ['#4965EC'], // Matching brand primary color from network viz
     fill: {
-      opacity: 0.2,
-      colors: ['#4965EC']
+      opacity: 0.3,
+      type: 'gradient',
+      gradient: {
+        shade: 'dark',
+        gradientToColors: ['#7B74A8'],
+        shadeIntensity: 1,
+        type: 'vertical',
+        opacityFrom: 0.7,
+        opacityTo: 0.3,
+      }
     },
     stroke: {
-      width: 2,
+      width: isCompactView ? 2 : 3,
+      curve: 'smooth',
       colors: ['#4965EC'],
+      dashArray: 0,
     },
     markers: {
-      size: 6,
-      colors: ['#4965EC'],
-      strokeWidth: 0,
+      size: isCompactView ? 6 : 8, // Adjusted marker size for compact view
+      colors: ['#ffffff'],
+      strokeColors: '#4965EC',
+      strokeWidth: isCompactView ? 2 : 3,
+      hover: {
+        size: isCompactView ? 8 : 10, // Adjusted hover size for compact view
+      }
     },
     grid: {
-      show: false,
+      show: false, // Removed horizontal lines in the background
       padding: {
-        top: 10,
-        bottom: 10,
-        left: 10,
-        right: 10
+        top: isCompactView ? 10 : 20,
+        bottom: isCompactView ? 10 : 20
       }
     },
     yaxis: {
+      show: true,
       max: 500,
-      min: 0,
-      tickAmount: 5,
+      tickAmount: isCompactView ? 4 : 5,
       labels: {
-        show: true,
         style: {
-          fontSize: '12px',
-          fontWeight: 400,
+          fontSize: isCompactView ? '10px' : '12px',
+          fontWeight: 500,
           colors: ['#64748b']
         },
-        formatter: (val: number) => val.toString()
+        formatter: (val: number) => Math.round(val).toString()
       }
     },
     xaxis: {
-      categories: [
-        'FINANCIAL\nRISK', 
-        'SECURITY\nRISK', 
-        'CERTIFICATIONS\nRISK', 
-        'DATA\nTRANSFERS', 
-        'ACCOUNT\nDATA', 
-        'PII DATA'
-      ],
+      categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
-        show: true,
         style: {
-          fontSize: '10px',
-          fontWeight: 700,
-          colors: Array(6).fill('#000000')
+          fontSize: isCompactView ? '11px' : '14px',
+          fontWeight: 600,
+          colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
-        formatter: (value: string) => {
-          return value.split('\n').map(line => 
-            `<div style="text-align:center">${line}</div>`
-          ).join('');
-        }
+        rotate: 0,
+        offsetY: isCompactView ? 2 : 5
       }
     },
     dataLabels: {
-      enabled: false,
+      enabled: !isCompactView, // Disable data labels in compact view
+      style: {
+        fontSize: '14px',
+        fontWeight: 'bold',
+        colors: ['#1e293b']
+      },
+      background: {
+        enabled: true,
+        borderRadius: 4,
+        padding: 4,
+        opacity: 0.9,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+      },
+      offsetY: -5
     },
     tooltip: {
-      enabled: true,
       theme: 'light',
+      style: {
+        fontSize: isCompactView ? '12px' : '14px'
+      },
       y: {
         title: {
           formatter: () => 'Risk Score'
-        }
+        },
+        formatter: (val: number) => val.toString()
+      },
+      marker: {
+        show: true
+      },
+      fixed: {
+        enabled: false,
+        position: 'topRight',
+        offsetY: 0
       }
     },
     plotOptions: {
       radar: {
-        size: '75%',
+        size: isCompactView ? 150 : 220, // Adjusted size for compact view
+        offsetY: isCompactView ? -15 : -20, // Move chart up to make bottom clusters visible
+        offsetX: 0,
         polygons: {
-          strokeColors: '#d1d5db',
+          strokeColors: '#e2e8f0',
           strokeWidth: 1,
-          strokeDashArray: 5,
-          connectorColors: '#d1d5db',
+          connectorColors: '#e2e8f0',
           fill: {
-            colors: undefined
+            colors: ['transparent', 'transparent'] // Transparent background
           }
         }
       }
     },
     responsive: [
       {
-        breakpoint: 768,
+        breakpoint: 1200,
         options: {
+          chart: {
+            height: 550
+          },
           plotOptions: {
             radar: {
-              size: '70%'
+              size: 260,
+              offsetY: -30 // Move up to ensure bottom clusters are visible
+            }
+          }
+        }
+      },
+      {
+        breakpoint: 992,
+        options: {
+          chart: {
+            height: 500
+          },
+          plotOptions: {
+            radar: {
+              size: 220,
+              offsetY: -25 // Move up to ensure bottom clusters are visible
+            }
+          }
+        }
+      },
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 450
+          },
+          plotOptions: {
+            radar: {
+              size: 180,
+              offsetY: -20 // Move up to ensure bottom clusters are visible
             }
           },
           markers: {
-            size: 4
+            size: 7
+          }
+        }
+      },
+      {
+        breakpoint: 576,
+        options: {
+          chart: {
+            height: 400
+          },
+          plotOptions: {
+            radar: {
+              size: 150,
+              offsetY: -15 // Move up to ensure bottom clusters are visible
+            }
+          },
+          markers: {
+            size: 6
           }
         }
       }
     ]
   };
 
-  // Series data that matches the reference image
+  // Prepare the series data with enhanced visual properties
   const series = [{
     name: 'Risk Score',
-    data: riskClusters ? Object.values(riskClusters) : demoData
+    data: riskClusters ? Object.values(riskClusters) : [],
+    color: '#4965EC',
+    lineWidth: 3
   }];
 
-  // If still loading, show a skeleton
-  if (isLoading && !chartComponentLoaded) {
+  // If we're still loading or don't have risk clusters data, show a skeleton
+  if (isLoading || !riskClusters) {
     return (
-      <Card className={cn("w-full h-[400px]", className)}>
-        <div className="w-full h-full flex items-center justify-center">
-          <Skeleton className="w-[80%] h-[80%] rounded-md" />
-        </div>
+      <Card className={cn("w-full", className)}>
+        <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
+          <CardTitle className="text-slate-800">
+            S&P Business Data Access Risk Breakdown
+          </CardTitle>
+          <CardDescription className="text-slate-500">
+            Detailed breakdown of risk factors for this company
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center p-4">
+          <Skeleton className="h-[500px] w-full rounded-md" />
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={cn("w-full relative bg-white p-5", className)}>
-      {/* Title section */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
-          <div className="flex-shrink-0">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-            </svg>
-          </div>
+    <Card className={cn("w-full", className)}>
+      <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h3 className="text-lg font-medium leading-none">Analysis</h3>
-            <p className="text-sm text-muted-foreground mt-1">Vendor risk across six key metrics.</p>
+            <CardTitle className="text-slate-800">
+              S&P Business Data Access Risk Breakdown
+            </CardTitle>
+            <CardDescription className="text-slate-500">
+              Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
+            </CardDescription>
           </div>
-        </div>
-        <MoreVertical className="h-5 w-5 text-gray-400" />
-      </div>
 
-      {/* Company selector - only shown for Bank/Invela if needed */}
-      {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
-        <div className="mb-4">
-          <Select 
-            value={selectedCompanyId?.toString()} 
-            onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
-          >
-            <SelectTrigger className="bg-white border-gray-200 h-9">
-              <SelectValue placeholder="Select a company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={company?.id?.toString() || "0"}>
-                {company?.name || "Your Company"} (You)
-              </SelectItem>
-              {networkCompanies
-                .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
-                .map(c => (
-                  <SelectItem key={c.id} value={c.id.toString()}>
-                    {c.name}
-                  </SelectItem>
-                ))
-              }
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Radar Chart with accreditation badge overlay */}
-      <div className="relative">
-        {/* Accreditation score box - positioned absolutely on top of the chart */}
-        <div className="absolute left-5 top-5 z-10">
-          <div className="bg-white border border-blue-100 rounded px-2 py-1 text-[10px] font-bold text-blue-900 flex items-center gap-1.5">
-            <div className="w-2 h-2 bg-blue-900 rounded-sm"></div>
-            <div className="flex flex-col leading-tight">
-              <span>COMPANY</span>
-              <span>ACCREDITATION</span>
-              <span>SCORE</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart container */}
-        <div className="w-full h-[350px]">
-          {chartComponentLoaded && ReactApexChart ? (
-            <ReactApexChart 
-              options={chartOptions}
-              series={series}
-              type="radar"
-              height="100%"
-              width="100%"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Skeleton className="w-[80%] h-[80%] rounded-md" />
+          {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
+          {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
+            <div className="min-w-[220px]">
+              <Select 
+                value={selectedCompanyId?.toString()} 
+                onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+              >
+                <SelectTrigger className="bg-white border-slate-300">
+                  <SelectValue placeholder="Select a company" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
+                  {Array.isArray(networkCompanies) && networkCompanies
+                    // Filter out FinTech companies and current company
+                    .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
+                    .map(c => (
+                      <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>
-      </div>
+      </CardHeader>
+      <CardContent className={cn("p-4 pb-8", className?.includes("border-none") ? "p-2" : "")}>
+        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")}>
+          {chartComponentLoaded && ReactApexChart && (
+            <ReactApexChart 
+              options={chartOptions} 
+              series={series} 
+              type="radar" 
+              height={className?.includes("border-none") ? "350" : "520"}
+            />
+          )}
+          {!chartComponentLoaded && (
+            <div className="h-full w-full flex items-center justify-center">
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
+            </div>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 }
