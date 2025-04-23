@@ -458,8 +458,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-0" : "")}>
-        <div className={cn("w-full rounded-md h-full", className?.includes("border-none") ? "h-full max-h-full" : "h-[520px]")}>
+      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-0" : "", "h-full flex-grow")}>
+        <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-full" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
@@ -471,7 +471,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[280px]" : "h-[520px]")} />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-full" : "h-[520px]")} />
             </div>
           )}
         </div>
