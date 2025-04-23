@@ -49,26 +49,24 @@ export function PageSideDrawer({
 
   return (
     <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] z-50 pr-4 pt-4">
-      <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b bg-background">
-            <div className="flex items-center gap-2">
-              {titleIcon}
-              <h3 className="font-semibold">{title}</h3>
-            </div>
-            {/* Show close button only if drawer is closable and NOT defaultOpen */}
-            {(isClosable && !defaultOpen) && (
-              <button
-                className="p-2 hover:bg-muted rounded-md"
-                onClick={() => handleOpenChange(false)}
-              >
-                ×
-              </button>
-            )}
+      <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b bg-background sticky top-0 z-10">
+          <div className="flex items-center gap-2">
+            {titleIcon}
+            <h3 className="font-semibold">{title}</h3>
           </div>
-          <div className="flex-1 overflow-y-auto p-6 bg-background">
-            {children}
-          </div>
+          {/* Show close button only if drawer is closable and NOT defaultOpen */}
+          {(isClosable && !defaultOpen) && (
+            <button
+              className="p-2 hover:bg-muted rounded-md"
+              onClick={() => handleOpenChange(false)}
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 bg-background">
+          {children}
         </div>
       </div>
     </div>
@@ -89,9 +87,9 @@ export function PageTemplate({
   onDrawerOpenChange
 }: PageTemplateProps) {
   return (
-    <div className="flex-1 flex overflow-x-hidden overflow-y-auto">
+    <div className="flex-1 flex overflow-x-hidden">
       <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300 overflow-y-auto",
+        "flex-1 min-w-0 transition-all duration-300 flex flex-col",
         drawerOpen ? "mr-[25.75rem]" : ""
       )}>
         {children}
