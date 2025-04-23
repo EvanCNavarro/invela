@@ -137,16 +137,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Format category names to add line breaks with exactly one word per line
+  // Format category names for better visibility in radar chart
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
       if (!category) return '';
-      // Split by spaces and join with line breaks
-      const words = category.split(' ');
-      if (words.length <= 1) return category;
-      
-      // Return with each word on its own line
-      return words.map(word => word.trim()).join('\n');
+      return category; // Use full names without line breaks for better visibility
     });
   };
 
@@ -218,13 +213,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: '15px',
+          fontSize: '13px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: 15, // Increased offset to prevent overlap with chart elements
-        formatter: (val: string) => val.split('\n').join(' ')
+        offsetY: 10, // Lighter offset now that we don't have line breaks
+        formatter: (val: string) => val // Keep as single line
       }
     },
     dataLabels: {
