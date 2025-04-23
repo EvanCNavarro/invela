@@ -198,7 +198,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-2 space-y-4 flex-1 flex flex-col">
+        <div className="mt-2 space-y-4 flex-1 flex flex-col overflow-y-auto">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 h-full">
               {[...Array(6)].map((_, i) => (
@@ -219,7 +219,7 @@ export default function DashboardPage() {
             // Show appropriate skeleton based on current loading state
             <DashboardSkeleton />
           ) : (
-            <div className="grid grid-cols-3 gap-4 flex-1">
+            <div className="grid grid-cols-3 gap-4 flex-1 pb-8">
               {/* Quick Actions - Full width at the top */}
               {visibleWidgets.quickActions && (
                 <div className="col-span-3">
