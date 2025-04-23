@@ -196,7 +196,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <TopNav />
         </header>
 
-        <main className="flex-1 relative overflow-auto">
+        <main className="flex-1 relative">
           <div className={cn(
             "px-4 sm:px-6 md:px-8 py-4",
             "transition-all duration-300 ease-in-out",
