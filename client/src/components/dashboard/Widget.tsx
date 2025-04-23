@@ -46,7 +46,7 @@ export function Widget({
 }: WidgetProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
+      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60 flex flex-col",
       size === 'single' ? 'col-span-1' : 
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
@@ -111,9 +111,9 @@ export function Widget({
         )}
       </div>
       <div className={cn(
-        "p-4", 
+        "p-4 flex-grow", 
         className?.includes("padding-content-none") ? "p-0" : "", // Allow for removing padding when needed
-        className?.includes("h-full") ? "h-[calc(100%-52px)]" : "" // Adjust height to fill remaining space minus header
+        className?.includes("h-full") ? "flex flex-col" : "" // Use flex layout for full height
       )}>
         {children}
       </div>
