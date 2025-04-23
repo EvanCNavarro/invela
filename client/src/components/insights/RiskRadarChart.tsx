@@ -235,10 +235,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 30,
-        bottom: 30,
-        left: 30, 
-        right: 30
+        top: 40,
+        bottom: 40,
+        left: 40, 
+        right: 40
       }
     },
     yaxis: {
@@ -314,7 +314,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? "80%" : 200, // Use percentage for better responsiveness
+        size: className?.includes("border-none") ? "70%" : 200, // Reduced from 80% to 70%
         offsetY: className?.includes("border-none") ? 0 : -20, // No offset needed with proper container
         offsetX: 0,
         polygons: {
