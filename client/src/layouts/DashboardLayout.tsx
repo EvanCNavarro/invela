@@ -165,7 +165,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // All sections are now accessible by default
 
   return (
-    <div className="h-screen bg-[#FAFCFD] relative flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#FAFCFD] relative">
       <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
@@ -188,19 +188,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <div
         className={cn(
-          "h-screen flex flex-col transition-all duration-300 ease-in-out",
+          "min-h-screen flex flex-col transition-all duration-300 ease-in-out",
           isExpanded ? "ml-64" : "ml-20"
         )}
       >
-        <header className="flex-shrink-0 bg-background/80 backdrop-blur-sm border-b">
+        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b">
           <TopNav />
         </header>
 
-        <main className="flex-1 relative overflow-y-auto">
+        <main className="flex-1 relative overflow-auto">
           <div className={cn(
             "px-4 sm:px-6 md:px-8 py-4",
             "transition-all duration-300 ease-in-out",
-            "container mx-auto max-w-full h-full"
+            "container mx-auto max-w-full"
           )}>
             {children}
           </div>
