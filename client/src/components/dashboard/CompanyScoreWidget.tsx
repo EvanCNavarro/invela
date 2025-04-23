@@ -16,9 +16,8 @@ export function CompanyScoreWidget({ companyData, onToggle, isVisible }: Company
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       headerClassName="pb-2" /* Reduce padding below header */
-      className="h-full w-full flex flex-col"
     >
-      <div className="space-y-2 py-1 w-full h-full px-4">
+      <div className="space-y-2 py-1">
         <div className="bg-muted/50 rounded-lg py-1 px-3 flex items-center justify-center space-x-2">
           {companyData?.logoId ? (
             <img

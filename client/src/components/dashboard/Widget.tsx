@@ -114,9 +114,9 @@ export function Widget({
         )}
       </div>
       <div className={cn(
-        "p-0", 
-        (className?.includes("flex-col") || className?.includes("h-full")) && "flex-grow h-full w-full",
-        "overflow-hidden w-full" // Prevent content overflow
+        "p-4", 
+        (className?.includes("flex-col") || className?.includes("h-full")) && "flex-grow h-full",
+        "overflow-hidden" // Prevent content overflow
       )}>
         {children}
       </div>
