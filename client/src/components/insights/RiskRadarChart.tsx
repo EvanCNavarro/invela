@@ -137,30 +137,41 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Enhanced formatting to guarantee all categories are visible
+  // Format all category names to match the reference design
   const formatCategoryNames = (categories: string[]): string[] => {
-    return categories.map((category, index) => {
+    return categories.map((category) => {
       if (!category) return '';
       
-      // Create custom positions for specific categories
-      if (category === "Data Transfers") {
-        return "Data\nTransfers"; 
+      // Convert to all uppercase to match the reference design
+      const uppercaseCategory = category.toUpperCase();
+      
+      // Handle special cases
+      if (uppercaseCategory.includes("DATA TRANSFERS")) {
+        return "DATA\nTRANSFERS";
       }
       
-      if (category === "PII Data") {
-        // Double line break for PII Data to position it properly
-        return "PII\nData"; 
+      if (uppercaseCategory.includes("PII DATA")) {
+        return "PII DATA";
       }
       
-      if (category === "Security Risk") {
-        return "Security\nRisk"; 
+      if (uppercaseCategory.includes("ACCOUNT DATA")) {
+        return "ACCOUNT\nDATA";
       }
       
-      // All other categories with spaces get simple line breaks
-      const words = category.split(' ');
-      if (words.length <= 1) return category;
+      if (uppercaseCategory.includes("SECURITY RISK")) {
+        return "SECURITY\nRISK";
+      }
       
-      return words.map(word => word.trim()).join('\n');
+      if (uppercaseCategory.includes("FINANCIAL RISK")) {
+        return "FINANCIAL\nRISK";
+      }
+      
+      if (uppercaseCategory.includes("CERTIFICATIONS RISK")) {
+        return "CERTIFICATIONS\nRISK";
+      }
+      
+      // Fallback for any other categories
+      return uppercaseCategory;
     });
   };
 
@@ -224,15 +235,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 15,
-        bottom: 25, // Extra padding at bottom for the bottom label
-        left: 10,
-        right: 10
+        top: 30,
+        bottom: 30,
+        left: 30, 
+        right: 30
       }
     },
     yaxis: {
       show: true,
-      max: 350, // Reduced from 500 to better scale the chart
+      max: 500, // Match the reference which shows scale to 500
       tickAmount: 5,
       labels: {
         style: {
@@ -240,23 +251,27 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           fontWeight: 500,
           colors: ['#64748b']
         },
-        formatter: (val: number) => Math.round(val).toString()
+        formatter: (val: number) => {
+          // Only show multiples of 100 to match reference
+          const rounded = Math.round(val);
+          return rounded % 100 === 0 ? rounded.toString() : '';
+        }
       }
     },
     xaxis: {
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: className?.includes("border-none") ? '10px' : '12px', // Slightly smaller font
-          fontWeight: 600,
+          fontSize: className?.includes("border-none") ? '11px' : '12px',
+          fontWeight: 700, // Bold weight to match reference
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: className?.includes("border-none") ? 5 : 3, // More distance from the chart
+        offsetY: className?.includes("border-none") ? 8 : 3, // More distance from the chart
         offsetX: 0,
         formatter: function(val: string) {
-          // Make sure each label has proper positioning by adjusting string length
-          return val.toString().length > 10 ? val.toString().substring(0, 10) + '...' : val;
+          // Don't truncate for the widget version - ensures all text is visible
+          return val;
         }
       }
     },
@@ -299,8 +314,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 110 : 200, // Reduced size to fit properly
-        offsetY: className?.includes("border-none") ? -10 : -20, // Added negative offset to move up
+        size: className?.includes("border-none") ? "80%" : 200, // Use percentage for better responsiveness
+        offsetY: className?.includes("border-none") ? 0 : -20, // No offset needed with proper container
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -477,14 +492,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "px-0 py-0" : "", "h-full flex-grow")}>
-        <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-full" : "h-[520px]")}>
+      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-6" : "", "h-full flex-grow")}>
+        <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-[350px] aspect-square mx-auto" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height={className?.includes("border-none") ? "100%" : "520"}
+              height="100%"
               width="100%"
             />
           )}
