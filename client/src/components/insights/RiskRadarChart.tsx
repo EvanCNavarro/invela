@@ -401,7 +401,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // If we're still loading or don't have risk clusters data, show a skeleton
   if (isLoading || !riskClusters) {
     return (
-      <Card className={cn("w-full", className)}>
+      <Card className={cn("w-full h-full", className)}>
         <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
           <CardTitle className="text-slate-800">
             S&P Business Data Access Risk Breakdown
@@ -410,15 +410,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             Detailed breakdown of risk factors for this company
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center p-4">
-          <Skeleton className="h-[500px] w-full rounded-md" />
+        <CardContent className="flex flex-col items-center p-4 h-full">
+          <Skeleton className="h-full w-full rounded-md flex-1" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn("w-full h-full", className)}>
       {/* Only show header with title/description if NOT in condensed view (border-none class indicates dashboard widget) */}
       {!className?.includes("border-none") && (
         <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
