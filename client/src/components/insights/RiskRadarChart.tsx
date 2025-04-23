@@ -150,6 +150,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     });
   };
 
+  // Determine if this is the compact view based on the className
+  const isCompactView = className?.includes("border-none") || false;
+
   // Configure ApexCharts options with enhanced styling
   const chartOptions = {
     chart: {
@@ -178,34 +181,34 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     stroke: {
-      width: 3,
+      width: isCompactView ? 2 : 3,
       curve: 'smooth',
       colors: ['#4965EC'],
       dashArray: 0,
     },
     markers: {
-      size: 8, // Increased marker size
+      size: isCompactView ? 6 : 8, // Adjusted marker size for compact view
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: 3,
+      strokeWidth: isCompactView ? 2 : 3,
       hover: {
-        size: 10, // Increased hover size
+        size: isCompactView ? 8 : 10, // Adjusted hover size for compact view
       }
     },
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 20,
-        bottom: 20
+        top: isCompactView ? 10 : 20,
+        bottom: isCompactView ? 10 : 20
       }
     },
     yaxis: {
       show: true,
       max: 500,
-      tickAmount: 5,
+      tickAmount: isCompactView ? 4 : 5,
       labels: {
         style: {
-          fontSize: '12px',
+          fontSize: isCompactView ? '10px' : '12px',
           fontWeight: 500,
           colors: ['#64748b']
         },
@@ -216,16 +219,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: '14px',
+          fontSize: isCompactView ? '11px' : '14px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: 5
+        offsetY: isCompactView ? 2 : 5
       }
     },
     dataLabels: {
-      enabled: true,
+      enabled: !isCompactView, // Disable data labels in compact view
       style: {
         fontSize: '14px',
         fontWeight: 'bold',
@@ -244,7 +247,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     tooltip: {
       theme: 'light',
       style: {
-        fontSize: '14px'
+        fontSize: isCompactView ? '12px' : '14px'
       },
       y: {
         title: {
@@ -263,8 +266,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 220, // Even smaller size to ensure all clusters are visible
-        offsetY: -20, // Move chart up to make bottom clusters visible
+        size: isCompactView ? 150 : 220, // Adjusted size for compact view
+        offsetY: isCompactView ? -15 : -20, // Move chart up to make bottom clusters visible
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -395,7 +398,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 <SelectContent>
                   <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
                   {Array.isArray(networkCompanies) && networkCompanies
-                    .filter(c => c.id !== (company?.id || 0))
+                    // Filter out FinTech companies and current company
+                    .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
                     .map(c => (
                       <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                     ))
@@ -406,19 +410,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4 pb-8">
-        <div className="h-[520px] w-full rounded-md">
+      <CardContent className={cn("p-4 pb-8", className?.includes("border-none") ? "p-2" : "")}>
+        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="520"
+              height={className?.includes("border-none") ? "350" : "520"}
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="h-[520px] w-full rounded-md" />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
             </div>
           )}
         </div>
