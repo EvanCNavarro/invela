@@ -195,9 +195,9 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-2 space-y-4">
+        <div className="mt-2 space-y-4 flex-1 flex flex-col">
           {allWidgetsHidden ? (
-            <div className="grid grid-cols-3 gap-4 min-h-[400px]">
+            <div className="grid grid-cols-3 gap-4 h-full">
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
@@ -216,7 +216,7 @@ export default function DashboardPage() {
             // Show appropriate skeleton based on current loading state
             <DashboardSkeleton />
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 flex-1">
               {/* Quick Actions - Full width at the top */}
               {visibleWidgets.quickActions && (
                 <div className="col-span-3">
@@ -290,15 +290,16 @@ export default function DashboardPage() {
               <div className="col-span-3 grid gap-4">
                 {/* FinTech layout - 1:3 ratio grid */}
                 {companyData?.category === 'FinTech' && (visibleWidgets.companyScore || visibleWidgets.riskRadar) && (
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-4 gap-4 h-full">
                     {/* Company Score (1/4 width) for FinTech */}
                     {visibleWidgets.companyScore && companyData && (
-                      <div className="col-span-1">
+                      <div className="col-span-1 h-full">
                         <Widget
                           title="Company Score"
                           icon={<AlertTriangle className="h-5 w-5" />}
                           onVisibilityToggle={() => toggleWidget('companyScore')}
                           isVisible={visibleWidgets.companyScore}
+                          className="h-full"
                         >
                           <div className="space-y-1">
                             <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
@@ -335,14 +336,14 @@ export default function DashboardPage() {
 
                     {/* Risk Radar (3/4 width) for FinTech */}
                     {visibleWidgets.riskRadar && (
-                      <div className="col-span-3">
+                      <div className="col-span-3 h-full">
                         <Widget
                           title="Risk Radar"
                           icon={<Shield className="h-5 w-5" />}
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
                           headerClassName="pb-1" /* Reduce padding below header */
-                          className="h-auto min-h-[360px] flex flex-col"
+                          className="h-full flex flex-col"
                         >
                           <div className="flex-grow">
                             <RiskRadarChart 
