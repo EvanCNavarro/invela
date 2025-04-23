@@ -676,7 +676,7 @@ export default function CompanyProfilePage() {
                 {/* Accreditation status with color-coded background */}
                 <div 
                   className="flex flex-col justify-between p-4 rounded-lg border text-center drop-shadow-sm md:w-52"
-                  style={getAccreditationBoxStyle(company.accreditationStatus)}
+                  style={getAccreditationBoxStyle(company.accreditation_status)}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <BadgeCheck className="h-5 w-5 text-black" />
@@ -686,9 +686,9 @@ export default function CompanyProfilePage() {
                   </div>
                   <div 
                     className="text-lg font-semibold py-2"
-                    style={getAccreditationTextStyle(company.accreditationStatus)}
+                    style={getAccreditationTextStyle(company.accreditation_status)}
                   >
-                    {getAccreditationStatusLabel(company.accreditationStatus)}
+                    {getAccreditationStatusLabel(company.accreditation_status)}
                   </div>
                 </div>
               </div>
