@@ -339,7 +339,7 @@ export default function DashboardPage() {
                           icon={<Shield className="h-5 w-5" />}
                           onVisibilityToggle={() => toggleWidget('riskRadar')}
                           isVisible={visibleWidgets.riskRadar}
-                          className="padding-content-none h-full"
+                          className="padding-content-none h-full min-h-[340px]"
                         >
                           <RiskRadarChart 
                             companyId={companyData?.id || 0} 
@@ -420,7 +420,7 @@ export default function DashboardPage() {
                     size="triple"
                     onVisibilityToggle={() => toggleWidget('riskRadar')}
                     isVisible={visibleWidgets.riskRadar}
-                    className="padding-content-none h-full"
+                    className="padding-content-none h-full min-h-[340px]"
                   >
                     <RiskRadarChart 
                       companyId={companyData?.id || 0} 

@@ -477,7 +477,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               overflow: "visible",
               position: "relative",
               maxWidth: "100%",
-              height: "100%"
+              height: "300px", // Set a specific height to ensure the chart has enough space
+              minHeight: "300px"
             }}>
               <ReactApexChart 
                 options={{
@@ -488,7 +489,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                     width: "100%",
                     redrawOnWindowResize: true,
                     redrawOnParentResize: true,
-                    offsetX: 0 // Center the chart
+                    offsetX: 0, // Center the chart
+                    parentHeightOffset: 0 // Ensure full height is used
                   }
                 }} 
                 series={series} 
