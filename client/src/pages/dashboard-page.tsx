@@ -290,7 +290,7 @@ export default function DashboardPage() {
               <div className="col-span-3 grid gap-4">
                 {/* FinTech layout - 1:3 ratio grid */}
                 {companyData?.category === 'FinTech' && (visibleWidgets.companyScore || visibleWidgets.riskRadar) && (
-                  <div className="grid grid-cols-4 gap-4 h-full">
+                  <div className="grid grid-cols-4 gap-4 h-[450px]">
                     {/* Company Score (1/4 width) for FinTech */}
                     {visibleWidgets.companyScore && companyData && (
                       <div className="col-span-1 h-full">
@@ -300,6 +300,7 @@ export default function DashboardPage() {
                           onVisibilityToggle={() => toggleWidget('companyScore')}
                           isVisible={visibleWidgets.companyScore}
                           className="h-full"
+                          headerClassName="pb-2" /* Reduce padding below header */
                         >
                           <div className="space-y-1">
                             <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
