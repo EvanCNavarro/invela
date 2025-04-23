@@ -137,11 +137,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
 
-  // Format category names to add line breaks with exactly one word per line
+  // Format category names to add line breaks and ensure concise display
   const formatCategoryNames = (categories: string[]): string[] => {
     return categories.map(category => {
       if (!category) return '';
-      // Split by spaces and join with line breaks
+
+      // Use shorter labels for specific categories
+      if (category === 'PII Data') return 'PII\nData';
+      if (category === 'Account Data') return 'Account\nData';
+      if (category === 'Data Transfers') return 'Data\nTransfers';
+      if (category === 'Certifications Risk') return 'Cert.\nRisk';
+      if (category === 'Security Risk') return 'Security\nRisk';
+      if (category === 'Financial Risk') return 'Financial\nRisk';
+      
+      // Default formatting for other categories
       const words = category.split(' ');
       if (words.length <= 1) return category;
       
@@ -188,12 +197,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: 8, // Consistent marker size across all views
+      size: 7, // Reduced marker size
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: 3,
+      strokeWidth: 2.5, // Slightly thinner stroke for better appearance
       hover: {
-        size: 10, // Consistent hover size across all views
+        size: 9, // Smaller hover size to match reduced chart size
       }
     },
     grid: {
@@ -246,19 +255,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     dataLabels: {
       enabled: true,
       style: {
-        fontSize: '14px',
+        fontSize: '13px',
         fontWeight: 'bold',
         colors: ['#1e293b']
       },
       background: {
         enabled: true,
         borderRadius: 4,
-        padding: 4,
+        padding: 3,
         opacity: 0.9,
         borderWidth: 1,
         borderColor: '#e2e8f0',
       },
-      offsetY: -5
+      offsetY: -8
     },
     tooltip: {
       theme: 'light',
@@ -282,7 +291,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 350, // Reduced size for better spacing
+        size: 260, // Further reduced size for better spacing
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -301,7 +310,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 320, // Updated sizes for better scaling
+              size: 240, // Smaller for large screens
               offsetY: 0
             }
           }
@@ -312,7 +321,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 300,
+              size: 220, // Smaller for medium screens
               offsetY: 0
             }
           }
@@ -323,15 +332,22 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 250,
+              size: 200, // Smaller for tablets
               offsetY: 0
             }
           },
           markers: {
-            size: 7
+            size: 6
           },
           dataLabels: {
             enabled: false // Turn off data labels on smaller screens
+          },
+          xaxis: {
+            labels: {
+              style: {
+                fontSize: '12px'
+              }
+            }
           }
         }
       },
@@ -340,15 +356,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 220,
+              size: 180, // Even smaller for mobile
               offsetY: 0
             }
           },
           markers: {
-            size: 6
+            size: 5
           },
           yaxis: {
-            show: true,
             labels: {
               style: {
                 fontSize: '10px'
@@ -358,7 +373,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           xaxis: {
             labels: {
               style: {
-                fontSize: '12px'
+                fontSize: '11px'
               }
             }
           }
@@ -439,29 +454,31 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         <div 
           className={cn(
             "w-full rounded-md flex flex-col items-center justify-center p-4",
-            className?.includes("border-none") ? "h-[500px]" : "h-[550px]" // Reduced height
+            className?.includes("border-none") ? "h-[400px]" : "h-[450px]" // Further reduced height
           )}
         >
           {chartComponentLoaded && ReactApexChart ? (
             <div id="apexRadarChart" className="w-full h-full" style={{ 
-              minHeight: "450px", 
+              minHeight: "350px", 
               overflow: "visible",
-              position: "relative"
+              position: "relative",
+              maxWidth: "95%" // Ensure chart doesn't stretch to edges
             }}>
               <ReactApexChart 
                 options={{
                   ...chartOptions,
                   chart: {
                     ...chartOptions.chart,
-                    height: "100%", // Use percentage instead of fixed value
+                    height: "100%",
                     width: "100%",
                     redrawOnWindowResize: true,
-                    redrawOnParentResize: true
+                    redrawOnParentResize: true,
+                    offsetX: -10 // Shift slightly left to center better
                   }
                 }} 
                 series={series} 
                 type="radar" 
-                height="100%" // Use percentage instead of fixed value
+                height="100%"
                 width="100%"
               />
             </div>
