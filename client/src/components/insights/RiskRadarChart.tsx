@@ -266,8 +266,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: isCompactView ? 180 : 220, // Larger for compact view to fill the space better
-        offsetY: isCompactView ? -5 : -20, // Better centered in the widget for compact view
+        size: isCompactView ? '100%' : 220, // Use full available width for compact view
+        offsetY: isCompactView ? 0 : -20, // Centered for compact view
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -424,18 +424,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       )}
       <CardContent className={cn(
         "p-4 pb-8", 
-        className?.includes("border-none") ? "pt-4 px-2 pb-0" : ""
+        className?.includes("border-none") ? "pt-0 px-0 pb-0" : ""
       )}>
         <div className={cn(
           "w-full rounded-md mx-auto", 
-          className?.includes("border-none") ? "h-[350px] flex items-center justify-center" : "h-[520px]"
+          className?.includes("border-none") ? "h-full flex items-center justify-center" : "h-[520px]"
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height={className?.includes("border-none") ? "350" : "520"}
+              height={className?.includes("border-none") ? "100%" : "520"}
+              width="100%"
             />
           )}
           {!chartComponentLoaded && (
