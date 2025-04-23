@@ -88,16 +88,13 @@ export default function InsightsPage() {
           </Select>
         </div>
 
-        <Widget 
-          title="" 
-          className={selectedVisualization === "risk_radar" ? "h-[650px]" : "h-[700px]"}
-        >
+        <Widget title="" className="h-[600px]">
           {selectedVisualization === "network_visualization" && (
             <NetworkInsightVisualization />
           )}
 
           {selectedVisualization === "relationship_distribution" && (
-            <ResponsiveContainer width="100%" height={500}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={companyTypeData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -122,9 +119,7 @@ export default function InsightsPage() {
           )}
           
           {selectedVisualization === "risk_radar" && (
-            <div className="flex items-center justify-center h-full w-full">
-              <RiskRadarChart className="bg-transparent shadow-none border-none w-full" />
-            </div>
+            <RiskRadarChart className="bg-transparent shadow-none border-none" />
           )}
         </Widget>
       </div>

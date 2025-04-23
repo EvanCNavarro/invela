@@ -314,8 +314,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 200, // Go back to fixed size
-        offsetY: -20, // Restore original offset
+        size: className?.includes("bg-transparent") ? '75%' : 200, // 75% for insights page, fixed size elsewhere
+        offsetY: className?.includes("bg-transparent") ? 0 : -20, // No offset for insights page
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -336,8 +336,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 180 : 300,
-              offsetY: className?.includes("border-none") ? 5 : -20
+              size: className?.includes("bg-transparent") ? '75%' : 
+                   className?.includes("border-none") ? 180 : 300,
+              offsetY: className?.includes("bg-transparent") ? 0 : 
+                      className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -494,13 +496,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       )}
       <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-6" : "", "h-full flex-grow")}>
         <div className={cn(
-          "w-full rounded-md flex-grow", 
-          // If on dashboard (border-none) use 350px height, if on insights page (bg-transparent) use 600px (shorter), otherwise use 520px
+          "w-full rounded-md", 
           className?.includes("border-none") 
-            ? "h-[350px] aspect-square mx-auto" 
+            ? "h-[350px] aspect-square mx-auto" // Dashboard view
             : className?.includes("bg-transparent") 
-              ? "h-[600px] mx-auto" 
-              : "h-[520px]"
+              ? "h-full w-full" // Insights page view - let it fill the container
+              : "h-[520px]" // Profile page view
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
