@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { CompanyScoreWidget } from "@/components/dashboard/CompanyScoreWidget";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
+import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import { Button } from "@/components/ui/button";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -333,15 +334,11 @@ export default function DashboardPage() {
 
                     {/* Network Visualization for Bank/Invela */}
                     {visibleWidgets.networkVisualization && (
-                      <div>
-                        <Widget
-                          title="Network Visualization"
-                          icon={<Globe className="h-5 w-5" />}
-                          onVisibilityToggle={() => toggleWidget('networkVisualization')}
+                      <div className="h-[300px]">
+                        <NetworkVisualizationWidget
+                          onToggle={() => toggleWidget('networkVisualization')}
                           isVisible={visibleWidgets.networkVisualization}
-                        >
-                          <NetworkVisualization className="shadow-none border-none" />
-                        </Widget>
+                        />
                       </div>
                     )}
                   </div>
