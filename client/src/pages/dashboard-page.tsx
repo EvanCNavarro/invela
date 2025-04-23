@@ -340,18 +340,21 @@ export default function DashboardPage() {
 
                 {/* Risk Radar for FinTech - place in same position as Network Viz */}
                 {visibleWidgets.riskRadar && companyData?.category === 'FinTech' && (
-                  <div>
+                  <div className="w-full h-full">
                     <Widget
                       title="Risk Radar"
                       icon={<Shield className="h-5 w-5" />}
                       onVisibilityToggle={() => toggleWidget('riskRadar')}
                       isVisible={visibleWidgets.riskRadar}
+                      className="h-full"
                     >
-                      <RiskRadarChart 
-                        companyId={companyData?.id || 0} 
-                        showDropdown={false}
-                        className="shadow-none border-none"
-                      />
+                      <div className="h-full w-full">
+                        <RiskRadarChart 
+                          companyId={companyData?.id || 0} 
+                          showDropdown={false}
+                          className="shadow-none border-none h-full"
+                        />
+                      </div>
                     </Widget>
                   </div>
                 )}
