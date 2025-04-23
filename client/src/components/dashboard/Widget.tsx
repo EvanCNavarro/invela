@@ -25,6 +25,7 @@ interface WidgetProps {
   isVisible?: boolean;
   onEdit?: () => void;
   className?: string;
+  headerClassName?: string;
   size?: 'single' | 'double' | 'triple';
   actions?: Array<{
     label: string;
@@ -41,6 +42,7 @@ export function Widget({
   isVisible = true,
   onEdit,
   className,
+  headerClassName,
   size = 'single',
   actions = []
 }: WidgetProps) {
@@ -53,7 +55,7 @@ export function Widget({
       !isVisible && 'opacity-50',
       className
     )}>
-      <div className="flex items-center justify-between px-4 pt-4">
+      <div className={cn("flex items-center justify-between px-4 pt-4", headerClassName)}>
         <div className="flex items-center gap-2">
           {icon && (
             <div className="text-muted-foreground">
