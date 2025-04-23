@@ -70,7 +70,7 @@ export default function InsightsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 flex flex-col overflow-y-auto pb-8">
         <div className="flex items-center justify-between">
           <PageHeader
             title="Insights"
@@ -102,7 +102,7 @@ export default function InsightsPage() {
           </div>
         )}
 
-        <Widget title="" className="h-[600px]">
+        <Widget title="" className="h-[600px] mb-12">
           {selectedVisualization === "network_visualization" && !isFintech && (
             <NetworkInsightVisualization />
           )}
