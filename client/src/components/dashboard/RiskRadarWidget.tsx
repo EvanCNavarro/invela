@@ -11,7 +11,7 @@ interface RiskRadarWidgetProps {
 export function RiskRadarWidget({ companyId, onToggle, isVisible }: RiskRadarWidgetProps) {
   return (
     <Widget
-      title="Analysis"
+      title="Risk Radar"
       subtitle="Vendor risk across six key metrics."
       icon={<Shield className="h-5 w-5" />}
       onVisibilityToggle={onToggle}
