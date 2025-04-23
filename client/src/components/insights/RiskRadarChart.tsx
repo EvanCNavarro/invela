@@ -266,8 +266,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: isCompactView ? 150 : 220, // Adjusted size for compact view
-        offsetY: isCompactView ? -15 : -20, // Move chart up to make bottom clusters visible
+        size: isCompactView ? 180 : 220, // Larger for compact view to fill the space better
+        offsetY: isCompactView ? -5 : -20, // Better centered in the widget for compact view
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -357,16 +357,25 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   if (isLoading || !riskClusters) {
     return (
       <Card className={cn("w-full", className)}>
-        <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
-          <CardTitle className="text-slate-800">
-            S&P Business Data Access Risk Breakdown
-          </CardTitle>
-          <CardDescription className="text-slate-500">
-            Detailed breakdown of risk factors for this company
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center p-4">
-          <Skeleton className="h-[500px] w-full rounded-md" />
+        {/* Only show header in full view, not in dashboard widget */}
+        {!className?.includes("border-none") && (
+          <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
+            <CardTitle className="text-slate-800">
+              S&P Business Data Access Risk Breakdown
+            </CardTitle>
+            <CardDescription className="text-slate-500">
+              Detailed breakdown of risk factors for this company
+            </CardDescription>
+          </CardHeader>
+        )}
+        <CardContent className={cn(
+          "flex flex-col items-center p-4",
+          className?.includes("border-none") ? "pt-4 px-2 pb-0" : ""
+        )}>
+          <Skeleton className={cn(
+            "w-full rounded-md", 
+            className?.includes("border-none") ? "h-[350px]" : "h-[500px]"
+          )} />
         </CardContent>
       </Card>
     );
@@ -374,44 +383,53 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <CardTitle className="text-slate-800">
-              S&P Business Data Access Risk Breakdown
-            </CardTitle>
-            <CardDescription className="text-slate-500">
-              Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
-            </CardDescription>
-          </div>
-
-          {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
-          {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
-            <div className="min-w-[220px]">
-              <Select 
-                value={selectedCompanyId?.toString()} 
-                onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
-              >
-                <SelectTrigger className="bg-white border-slate-300">
-                  <SelectValue placeholder="Select a company" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
-                  {Array.isArray(networkCompanies) && networkCompanies
-                    // Filter out FinTech companies and current company
-                    .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
-                    .map(c => (
-                      <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                    ))
-                  }
-                </SelectContent>
-              </Select>
+      {/* Show header only for full view (e.g., on insights page or for Bank/Invela), not for FinTech dashboard */}
+      {!className?.includes("border-none") && (
+        <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <CardTitle className="text-slate-800">
+                S&P Business Data Access Risk Breakdown
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
+              </CardDescription>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className={cn("p-4 pb-8", className?.includes("border-none") ? "p-2" : "")}>
-        <div className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")}>
+
+            {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
+            {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
+              <div className="min-w-[220px]">
+                <Select 
+                  value={selectedCompanyId?.toString()} 
+                  onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                >
+                  <SelectTrigger className="bg-white border-slate-300">
+                    <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
+                    {Array.isArray(networkCompanies) && networkCompanies
+                      // Filter out FinTech companies and current company
+                      .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
+                      .map(c => (
+                        <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+      )}
+      <CardContent className={cn(
+        "p-4 pb-8", 
+        className?.includes("border-none") ? "pt-4 px-2 pb-0" : ""
+      )}>
+        <div className={cn(
+          "w-full rounded-md mx-auto", 
+          className?.includes("border-none") ? "h-[350px] flex items-center justify-center" : "h-[520px]"
+        )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
