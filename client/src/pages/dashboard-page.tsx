@@ -296,7 +296,7 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-4 gap-4 h-[450px]">
                     {/* Company Score (1/4 width) for FinTech */}
                     {visibleWidgets.companyScore && companyData && (
-                      <div className="col-span-1 h-full">
+                      <div className="col-span-1">
                         <CompanyScoreWidget 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companyScore')}
@@ -323,7 +323,7 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Company Score for Bank/Invela */}
                     {visibleWidgets.companyScore && companyData && (
-                      <div className="h-[300px]">
+                      <div>
                         <CompanyScoreWidget 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companyScore')}

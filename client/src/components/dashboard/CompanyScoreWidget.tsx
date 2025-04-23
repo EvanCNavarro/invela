@@ -15,11 +15,10 @@ export function CompanyScoreWidget({ companyData, onToggle, isVisible }: Company
       icon={<AlertTriangle className="h-5 w-5" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
-      className="h-full"
       headerClassName="pb-2" /* Reduce padding below header */
     >
-      <div className="space-y-2 flex flex-col justify-center h-full py-2">
-        <div className="bg-muted/50 rounded-lg py-1.5 px-3 flex items-center justify-center space-x-2">
+      <div className="space-y-2 py-1">
+        <div className="bg-muted/50 rounded-lg py-1 px-3 flex items-center justify-center space-x-2">
           {companyData?.logoId ? (
             <img
               src={`/api/companies/${companyData.id}/logo`}
