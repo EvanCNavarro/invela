@@ -218,7 +218,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     yaxis: {
       show: true,
-      max: 500,
+      max: 350, // Reduced from 500 to better scale the chart
       tickAmount: 5,
       labels: {
         style: {
@@ -280,8 +280,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 120 : 200, // Smaller radar for widget view
-        offsetY: className?.includes("border-none") ? 0 : -20, // No offset for widget version
+        size: className?.includes("border-none") ? 100 : 200, // Smaller radar for widget view
+        offsetY: className?.includes("border-none") ? 5 : -20, // Small positive offset for widget version
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -302,7 +302,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? 220 : 300,
+              size: className?.includes("border-none") ? 180 : 300,
               offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
