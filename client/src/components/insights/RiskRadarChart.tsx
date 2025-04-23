@@ -301,7 +301,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 220, // Adjusted size for better fit in container
+        size: '85%', // Use percentage size to fit better in varying container sizes
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -321,7 +321,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 180
+              size: '80%'
             }
           }
         }
@@ -331,7 +331,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 160
+              size: '75%'
             }
           },
           markers: {
@@ -344,7 +344,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 140
+              size: '70%'
             }
           },
           markers: {
@@ -367,7 +367,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 120
+              size: '65%'
             }
           },
           markers: {
