@@ -267,7 +267,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 350, // Fixed size in pixels - much larger than before
+        size: 450, // Much larger fixed size in pixels
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -286,7 +286,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 320, // Fixed size in pixels for each breakpoint
+              size: 400, // Larger fixed size for each breakpoint
               offsetY: 0
             }
           }
@@ -297,7 +297,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 280,
+              size: 350,
               offsetY: 0
             }
           }
@@ -308,7 +308,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 240,
+              size: 300,
               offsetY: 0
             }
           },
@@ -322,7 +322,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         options: {
           plotOptions: {
             radar: {
-              size: 210,
+              size: 250,
               offsetY: 0
             }
           },
@@ -410,27 +410,39 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn(
-        "p-0", // Remove all padding to use full container width/height
-        !showDropdown ? "pt-2" : "",
-        className?.includes("border-none") ? "" : ""
-      )}>
-        <div className={cn(
-          "w-full h-full rounded-md flex items-center justify-center overflow-visible p-4", 
-          className?.includes("border-none") ? "min-h-[450px]" : "min-h-[650px]" // Increased minimum heights
-        )}>
-          {chartComponentLoaded && ReactApexChart && (
-            <ReactApexChart 
-              options={chartOptions} 
-              series={series} 
-              type="radar" 
-              height="100%"
-              width="100%"
-            />
+      <CardContent className="p-0">
+        <div 
+          className={cn(
+            "w-full rounded-md flex flex-col items-center justify-center",
+            className?.includes("border-none") ? "h-[700px]" : "h-[700px]" // Same height for both variants
           )}
-          {!chartComponentLoaded && (
+        >
+          {chartComponentLoaded && ReactApexChart ? (
+            <div id="apexRadarChart" className="w-full h-full" style={{ 
+              minHeight: "700px", 
+              overflow: "visible",
+              position: "relative"
+            }}>
+              <ReactApexChart 
+                options={{
+                  ...chartOptions,
+                  chart: {
+                    ...chartOptions.chart,
+                    height: "700", // Force a large fixed height
+                    width: "100%",
+                    redrawOnWindowResize: true,
+                    redrawOnParentResize: true
+                  }
+                }} 
+                series={series} 
+                type="radar" 
+                height={700} // Use fixed height value
+                width="100%"
+              />
+            </div>
+          ) : (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[400px]" : "h-[600px]")} />
+              <Skeleton className="w-full h-[700px] rounded-md" />
             </div>
           )}
         </div>
