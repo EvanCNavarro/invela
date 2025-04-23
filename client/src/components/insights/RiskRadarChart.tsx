@@ -235,10 +235,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 50,
-        bottom: 50,
-        left: 50, 
-        right: 50
+        top: 30,
+        bottom: 30,
+        left: 30, 
+        right: 30
       }
     },
     yaxis: {
@@ -314,8 +314,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? "70%" : 200, // Scale down to 70% to provide more space for labels
-        offsetY: className?.includes("border-none") ? 0 : -20, // Centered vertically
+        size: className?.includes("border-none") ? "80%" : 200, // Use percentage for better responsiveness
+        offsetY: className?.includes("border-none") ? 0 : -20, // No offset needed with proper container
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -331,10 +331,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 1920, // Large desktops
         options: {
+          chart: {
+            height: className?.includes("border-none") ? 280 : 500
+          },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? "70%" : 300, // Keep percentage for widget
-              offsetY: 0
+              size: className?.includes("border-none") ? 180 : 300,
+              offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -342,10 +345,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 1366, // Medium desktops
         options: {
+          chart: {
+            height: className?.includes("border-none") ? 270 : 480
+          },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? "70%" : 260,
-              offsetY: 0
+              size: className?.includes("border-none") ? 190 : 260,
+              offsetY: className?.includes("border-none") ? 5 : -20
             }
           }
         }
@@ -353,10 +359,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 1200, // Small desktops
         options: {
+          chart: {
+            height: className?.includes("border-none") ? 260 : 450
+          },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? "70%" : 220,
-              offsetY: 0
+              size: className?.includes("border-none") ? 160 : 220,
+              offsetY: className?.includes("border-none") ? 0 : -15
             }
           }
         }
@@ -364,10 +373,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 992, // Tablets
         options: {
+          chart: {
+            height: className?.includes("border-none") ? 250 : 420
+          },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? "65%" : 200,
-              offsetY: 0
+              size: className?.includes("border-none") ? 140 : 200,
+              offsetY: className?.includes("border-none") ? 0 : -15
             }
           },
           markers: {
@@ -378,10 +390,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 768, // Large phones
         options: {
+          chart: {
+            height: className?.includes("border-none") ? 240 : 400
+          },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? "60%" : 180,
-              offsetY: 0
+              size: className?.includes("border-none") ? 130 : 180,
+              offsetY: className?.includes("border-none") ? 0 : -10
             }
           },
           markers: {
@@ -392,10 +407,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       {
         breakpoint: 576, // Small phones
         options: {
+          chart: {
+            height: className?.includes("border-none") ? 230 : 380
+          },
           plotOptions: {
             radar: {
-              size: className?.includes("border-none") ? "60%" : 150,
-              offsetY: 0
+              size: className?.includes("border-none") ? 120 : 150,
+              offsetY: className?.includes("border-none") ? 0 : -5
             }
           },
           markers: {
@@ -474,15 +492,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn(
-        "p-0", // No padding in content area to maximize chart space
-        className?.includes("border-none") ? "flex items-center justify-center" : "", 
-        "h-full flex-grow"
-      )}>
-        <div className={cn(
-          "w-full rounded-md", 
-          className?.includes("border-none") ? "aspect-square h-full" : "h-[520px]"
-        )}>
+      <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-6" : "", "h-full flex-grow")}>
+        <div className={cn("w-full rounded-md flex-grow", className?.includes("border-none") ? "h-[350px] aspect-square mx-auto" : "h-[520px]")}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
