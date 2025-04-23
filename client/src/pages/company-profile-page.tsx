@@ -93,19 +93,22 @@ const getAccreditationBoxStyle = (status: string | null | undefined): React.CSSP
     case 'VALID':
       return {
         backgroundColor: 'rgba(243, 254, 246, 0.5)', // Even softer green matching blue
-        borderColor: '#e2f5e7',
+        borderColor: '#22c55e', // Solid green border
+        borderLeft: '3px solid #22c55e', // Colored border accent
         boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
       };
     case 'PENDING':
       return {
         backgroundColor: 'rgba(255, 253, 237, 0.5)', // Even softer yellow matching blue
-        borderColor: '#fef7d3',
+        borderColor: '#eab308', // Solid yellow border
+        borderLeft: '3px solid #eab308', // Colored border accent
         boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
       };
     default:
       return {
         backgroundColor: 'rgba(254, 245, 245, 0.5)', // Even softer red matching blue
-        borderColor: '#fee7e7',
+        borderColor: '#f87171', // Solid red border
+        borderLeft: '3px solid #f87171', // Colored border accent
         boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
       };
   }
@@ -662,7 +665,8 @@ export default function CompanyProfilePage() {
                   className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
                   style={{ 
                     backgroundColor: 'rgba(236, 241, 255, 0.5)', // Even softer blue that matches other colors
-                    borderColor: '#e5edff',
+                    borderColor: '#4965EC', // Solid Invela blue border
+                    borderLeft: '3px solid #4965EC', // Colored border accent
                     boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
                   }}
                 >
