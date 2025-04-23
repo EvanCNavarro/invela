@@ -89,9 +89,9 @@ export function PageTemplate({
   onDrawerOpenChange
 }: PageTemplateProps) {
   return (
-    <div className="flex-1 flex overflow-x-hidden">
+    <div className="flex-1 flex overflow-x-hidden overflow-y-auto">
       <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300",
+        "flex-1 min-w-0 transition-all duration-300 overflow-y-auto",
         drawerOpen ? "mr-[25.75rem]" : ""
       )}>
         {children}
