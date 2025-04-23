@@ -263,8 +263,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 220,
-        offsetY: -20, // Move chart up to make bottom clusters visible
+        size: '100%', // Use 100% of the available width for better responsiveness
+        offsetY: 0, // No vertical offset
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -281,12 +281,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 1200,
         options: {
           chart: {
-            height: 550
+            height: '100%'
           },
           plotOptions: {
             radar: {
-              size: 260,
-              offsetY: -30 // Move up to ensure bottom clusters are visible
+              size: '95%', // Use percentage for better responsive behavior
+              offsetY: 0
             }
           }
         }
@@ -295,12 +295,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 992,
         options: {
           chart: {
-            height: 500
+            height: '100%'
           },
           plotOptions: {
             radar: {
-              size: 220,
-              offsetY: -25 // Move up to ensure bottom clusters are visible
+              size: '90%',
+              offsetY: 0
             }
           }
         }
@@ -309,12 +309,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 768,
         options: {
           chart: {
-            height: 450
+            height: '100%'
           },
           plotOptions: {
             radar: {
-              size: 180,
-              offsetY: -20 // Move up to ensure bottom clusters are visible
+              size: '85%',
+              offsetY: 0
             }
           },
           markers: {
@@ -326,16 +326,24 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         breakpoint: 576,
         options: {
           chart: {
-            height: 400
+            height: '100%'
           },
           plotOptions: {
             radar: {
-              size: 150,
-              offsetY: -15 // Move up to ensure bottom clusters are visible
+              size: '80%',
+              offsetY: 0
             }
           },
           markers: {
             size: 6
+          },
+          yaxis: {
+            show: true,
+            labels: {
+              style: {
+                fontSize: '10px' // Smaller font size on mobile
+              }
+            }
           }
         }
       }
@@ -410,24 +418,27 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         </CardHeader>
       )}
-      <CardContent className={cn("p-4 pb-8", 
-        !showDropdown ? "pt-6" : "", // Add more top padding when no header for FinTech version
-        className?.includes("border-none") ? "p-2" : ""
+      <CardContent className={cn(
+        "p-0", // Remove all padding to use full container width/height
+        !showDropdown ? "pt-2" : "",
+        className?.includes("border-none") ? "" : ""
       )}>
-        <div className={cn("w-full rounded-md flex items-center justify-center", 
-          className?.includes("border-none") ? "h-[350px]" : "h-[520px]"
+        <div className={cn(
+          "w-full rounded-md flex items-center justify-center overflow-visible", 
+          className?.includes("border-none") ? "h-[375px]" : "h-[550px]" // Increase heights to prevent clipping
         )}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height={className?.includes("border-none") ? "350" : "520"}
+              height="100%"
+              width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[350px]" : "h-[520px]")} />
+              <Skeleton className={cn("w-full rounded-md", className?.includes("border-none") ? "h-[375px]" : "h-[550px]")} />
             </div>
           )}
         </div>
