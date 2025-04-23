@@ -206,29 +206,19 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     grid: {
-      show: true, // Show grid lines
-      borderColor: '#e2e8f0',
-      strokeDashArray: 5,
-      position: 'back',
-      xaxis: {
-        lines: {
-          show: true
-        }
-      },
-      yaxis: {
-        lines: {
-          show: true
-        }
-      },
+      show: false, // Hide regular grid lines - we'll use the polygons instead
       padding: {
         top: 0,
-        bottom: 0
+        bottom: 0,
+        left: 0,
+        right: 0
       }
     },
     yaxis: {
       show: true,
       max: 500,
-      tickAmount: 5, // More tick marks to show concentric circles
+      tickAmount: 5, // Show 5 concentric circles like in reference
+      min: 0, // Start from 0
       labels: {
         style: {
           fontSize: '11px',
@@ -237,7 +227,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         },
         formatter: (val: number) => Math.round(val).toString(),
         background: {
-          enabled: false
+          enabled: true,
+          borderRadius: 2,
+          padding: 2,
+          opacity: 0.9,
+          borderWidth: 0,
+          borderColor: '#f8fafc',
+          color: '#ffffff' // White background for value labels
         },
         padding: {
           left: 5,
@@ -309,12 +305,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         offsetY: 0,
         offsetX: 0,
         polygons: {
-          strokeColors: '#e2e8f0',
-          strokeWidth: 1,
-          strokeDashArray: 3,
-          connectorColors: '#e2e8f0',
+          strokeColors: '#d1d5db', // More visible grid lines
+          strokeWidth: 1.5,
+          strokeDashArray: 4,
+          connectorColors: '#d1d5db',
           fill: {
-            colors: ['#f1f5f9', 'transparent'] // Light background for better visibility
+            colors: ['#EBF2FF', '#F8FAFC'] // Light blue fill matching reference
           }
         }
       }
@@ -400,10 +396,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const series = [{
     name: 'Risk Score',
     data: riskClusters ? Object.values(riskClusters) : [],
-    color: '#4965EC',
-    fillColor: '#D0E1FF', // Light blue fill like reference
-    opacity: 0.7,
-    lineWidth: 3
+    color: '#4965EC', // Primary blue color
+    fillColor: '#D0E1FF', // Lighter blue fill
+    opacity: 0.8, // More opaque like reference
+    lineWidth: 2.5 // Slightly thinner line width to match reference
   }];
 
   // If we're still loading or don't have risk clusters data, show a skeleton
