@@ -150,9 +150,6 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     });
   };
 
-  // Determine if this is the compact view based on the className
-  const isCompactView = className?.includes("border-none") || false;
-
   // Configure ApexCharts options with enhanced styling
   const chartOptions = {
     chart: {
@@ -181,34 +178,34 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     stroke: {
-      width: isCompactView ? 2 : 3,
+      width: 3,
       curve: 'smooth',
       colors: ['#4965EC'],
       dashArray: 0,
     },
     markers: {
-      size: isCompactView ? 6 : 8, // Adjusted marker size for compact view
+      size: 8, // Consistent marker size across all views
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
-      strokeWidth: isCompactView ? 2 : 3,
+      strokeWidth: 3,
       hover: {
-        size: isCompactView ? 8 : 10, // Adjusted hover size for compact view
+        size: 10, // Consistent hover size across all views
       }
     },
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: isCompactView ? 10 : 20,
-        bottom: isCompactView ? 10 : 20
+        top: 20,
+        bottom: 20
       }
     },
     yaxis: {
       show: true,
       max: 500,
-      tickAmount: isCompactView ? 4 : 5,
+      tickAmount: 5,
       labels: {
         style: {
-          fontSize: isCompactView ? '10px' : '12px',
+          fontSize: '12px',
           fontWeight: 500,
           colors: ['#64748b']
         },
@@ -219,16 +216,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
       labels: {
         style: {
-          fontSize: isCompactView ? '11px' : '14px',
+          fontSize: '14px',
           fontWeight: 600,
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: isCompactView ? 2 : 5
+        offsetY: 5
       }
     },
     dataLabels: {
-      enabled: !isCompactView, // Disable data labels in compact view
+      enabled: true,
       style: {
         fontSize: '14px',
         fontWeight: 'bold',
@@ -247,7 +244,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     tooltip: {
       theme: 'light',
       style: {
-        fontSize: isCompactView ? '12px' : '14px'
+        fontSize: '14px'
       },
       y: {
         title: {
@@ -266,8 +263,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: isCompactView ? 150 : 220, // Adjusted size for compact view
-        offsetY: isCompactView ? -15 : -20, // Move chart up to make bottom clusters visible
+        size: 220,
+        offsetY: -20, // Move chart up to make bottom clusters visible
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
