@@ -314,8 +314,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: className?.includes("bg-transparent") ? '75%' : 200, // 75% for insights page, fixed size elsewhere
-        offsetY: className?.includes("bg-transparent") ? 0 : -20, // No offset for insights page
+        size: className?.includes("bg-transparent") ? 300 : 200, // Fixed size for insights page
+        offsetY: 0, // No offset
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -496,11 +496,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       )}
       <CardContent className={cn("p-4 pb-6", className?.includes("border-none") ? "p-6" : "", "h-full flex-grow")}>
         <div className={cn(
-          "w-full rounded-md", 
+          "w-full rounded-md overflow-visible", 
           className?.includes("border-none") 
             ? "h-[350px] aspect-square mx-auto" // Dashboard view
             : className?.includes("bg-transparent") 
-              ? "h-full w-full" // Insights page view - let it fill the container
+              ? "h-[400px] w-full" // Insights page view - FIXED HEIGHT
               : "h-[520px]" // Profile page view
         )}>
           {chartComponentLoaded && ReactApexChart && (
