@@ -476,7 +476,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
-      // Reset form with empty data
+      // Call the backend API to clear fields
+      const response = await fetch(`/api/universal-clear-fields/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || `Server returned ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // Reset form with empty data locally
       resetForm({});
       
       // Force a re-render to update the UI
@@ -485,13 +500,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Refresh status
       await refreshStatus();
       
-      // Save progress with empty data
-      await saveProgress();
-      
       // Show success message
       toast({
         title: 'Fields Cleared',
-        description: 'Successfully cleared all form fields.',
+        description: result.message || `Successfully cleared ${result.clearedCount || 'all'} fields.`,
         variant: 'success',
       });
     } catch (error) {
@@ -502,7 +514,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [taskId, resetForm, refreshStatus, saveProgress]);
+  }, [taskId, resetForm, refreshStatus]);
   
   // Get form title based on template or task type
   const formTitle = useMemo(() => {
