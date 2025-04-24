@@ -1,92 +1,117 @@
 /**
- * Universal Clear Fields Router
+ * Universal clear fields router
  * 
- * Provides a uniform endpoint to clear fields for any form type
+ * This router creates a unified endpoint for clearing form fields
+ * across all form types, with improved error handling and more
+ * detailed response messages.
  */
 
-import { Router } from "express";
-import universalClearFieldsService from "../services/universalClearFieldsService";
-import { db } from "@db";
-import { tasks } from "@db/schema";
-import { eq } from "drizzle-orm";
+import express from 'express';
+import { db } from '@db';
+import { requireAuth } from '../middleware/auth';
+import { eq } from 'drizzle-orm';
+import { tasks, kybResponses, ky3pResponses, openBankingResponses } from '@db/schema';
+// Create a router
+const router = express.Router();
 
-const logger = {
-  info: (message: string, data?: any) => console.log(message, data),
-  error: (message: string, data?: any) => console.error(message, data)
-};
+// Apply auth middleware
+router.use(requireAuth);
 
-const router = Router();
+// Universal clear fields route for all form types
+router.post('/:taskId', async (req, res) => {
+  const taskId = parseInt(req.params.taskId);
+  const { taskType } = req.body;
 
-/**
- * POST /api/universal-clear-fields/:taskId
- * 
- * Clears all field values for a specified task, regardless of form type
- */
-router.post("/:taskId", async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.taskId);
-    
-    if (isNaN(taskId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task ID provided",
-      });
-    }
-    
-    // Get task type from database
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId),
+  // Validate inputs
+  if (!taskId || isNaN(taskId)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid task ID provided'
     });
-    
+  }
+
+  try {
+    // First, check that the task exists and get its type
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+
     if (!task) {
       return res.status(404).json({
         success: false,
-        message: `Task with ID ${taskId} not found`,
+        message: `Task ID ${taskId} not found`
       });
     }
+
+    // Use the provided task type or fall back to the task's task_type
+    const effectiveTaskType = taskType || task.task_type;
+    console.log(`[Universal Clear Fields] Clearing fields for task ${taskId} (${effectiveTaskType})`);
+
+    // Determine which table to clear based on task type
+    let clearedCount = 0;
     
-    // Extract task type
-    const taskType = task.task_type;
-    
-    logger.info(`[UniversalClearFieldsRouter] Processing clear fields request for task ${taskId} (${taskType})`, {
-      taskId,
-      taskType,
-      userId: req.user?.id,
-      timestamp: new Date(),
-    });
-    
-    // Clear all fields for this task
-    const clearResult = await universalClearFieldsService.clearAllFields(taskId, taskType);
-    
-    if (!clearResult.success) {
-      return res.status(500).json({
+    if (effectiveTaskType === 'kyb' || effectiveTaskType === 'company_kyb') {
+      // Clear KYB responses
+      const result = await db.delete(kybResponses)
+        .where(eq(kybResponses.task_id, taskId))
+        .returning();
+      
+      clearedCount = result.length;
+      console.log(`[Universal Clear Fields] Cleared ${clearedCount} KYB responses for task ${taskId}`);
+    } 
+    else if (effectiveTaskType === 'ky3p' || effectiveTaskType === 'security' || 
+             effectiveTaskType === 'security_assessment' || effectiveTaskType === 'sp_ky3p_assessment') {
+      // Clear KY3P responses
+      const result = await db.delete(ky3pResponses)
+        .where(eq(ky3pResponses.task_id, taskId))
+        .returning();
+      
+      clearedCount = result.length;
+      console.log(`[Universal Clear Fields] Cleared ${clearedCount} KY3P responses for task ${taskId}`);
+    } 
+    else if (effectiveTaskType === 'open_banking' || effectiveTaskType === 'open_banking_survey') {
+      // Clear Open Banking responses
+      const result = await db.delete(openBankingResponses)
+        .where(eq(openBankingResponses.task_id, taskId))
+        .returning();
+      
+      clearedCount = result.length;
+      console.log(`[Universal Clear Fields] Cleared ${clearedCount} Open Banking responses for task ${taskId}`);
+    } 
+    else {
+      return res.status(400).json({
         success: false,
-        message: clearResult.message,
+        message: `Unsupported task type: ${effectiveTaskType}`
       });
     }
-    
-    // Reset task progress
-    const resetResult = await universalClearFieldsService.resetTaskProgress(taskId);
-    
-    if (!resetResult.success) {
-      return res.status(500).json({
-        success: false,
-        message: resetResult.message,
-      });
+
+    // Also clear any saved form data in the tasks table
+    let updateResult;
+    try {
+      updateResult = await db.update(tasks)
+        .set({ 
+          savedFormData: null,
+          progress: 0,
+          status: 'in_progress' 
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+    } catch (updateError) {
+      console.error(`[Universal Clear Fields] Error updating task status: ${updateError}`);
     }
-    
+
+    // Return success response
     return res.status(200).json({
       success: true,
-      clearedCount: clearResult.clearedCount,
-      message: `Successfully cleared ${clearResult.clearedCount} fields and reset progress for task ${taskId}`,
+      clearedCount,
+      message: `Successfully cleared ${clearedCount} fields for ${effectiveTaskType} task`,
+      taskStatus: updateResult?.[0]?.status || 'unknown'
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`[UniversalClearFieldsRouter] Error processing clear fields request: ${errorMessage}`);
-    
+    console.error(`[Universal Clear Fields] Error clearing fields: ${error}`);
     return res.status(500).json({
       success: false,
-      message: `Server error: ${errorMessage}`,
+      message: error instanceof Error ? error.message : 'An internal server error occurred'
     });
   }
 });
