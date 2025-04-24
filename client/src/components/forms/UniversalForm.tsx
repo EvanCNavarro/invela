@@ -51,8 +51,9 @@ import { CheckCircle } from 'lucide-react';
 
 import SectionContent from './SectionContent';
 
-// Import the enhanced demo autofill utility
+// Import the enhanced demo autofill utility and clear fields utility
 import { handleDemoAutoFill } from './handleDemoAutoFill-enhanced';
+import { handleClearFields } from './clearFieldsUtils';
 
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
@@ -457,8 +458,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     });
   }, [taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, formService]);
   
-  // Handle clear fields
-  const handleClearFields = useCallback(async () => {
+  // Handle clear fields using our enhanced utility
+  const handleClearFieldsClick = useCallback(async () => {
     if (!taskId) {
       toast({
         title: 'Clear Fields Error',
@@ -468,53 +469,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
-    try {
-      // Show loading toast
-      toast({
-        title: 'Clear Fields',
-        description: 'Clearing all form fields...',
-        variant: 'default',
-      });
-      
-      // Call the backend API to clear fields
-      const response = await fetch(`/api/universal-clear-fields/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData?.message || `Server returned ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      // Reset form with empty data locally
-      resetForm({});
-      
-      // Force a re-render to update the UI
-      setForceRerender(prev => !prev);
-      
-      // Refresh status
-      await refreshStatus();
-      
-      // Show success message
-      toast({
-        title: 'Fields Cleared',
-        description: result.message || `Successfully cleared ${result.clearedCount || 'all'} fields.`,
-        variant: 'success',
-      });
-    } catch (error) {
-      logger.error('Error clearing fields:', error);
-      toast({
-        title: 'Clear Fields Error',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    }
-  }, [taskId, resetForm, refreshStatus]);
+    await handleClearFields({
+      taskId,
+      taskType,
+      resetForm,
+      refreshStatus,
+      setForceRerender
+    });
+  }, [taskId, taskType, resetForm, refreshStatus]);
   
   // Get form title based on template or task type
   const formTitle = useMemo(() => {
@@ -619,7 +581,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               type="button"
               variant="outline"
               className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
-              onClick={handleClearFields}
+              onClick={handleClearFieldsClick}
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
