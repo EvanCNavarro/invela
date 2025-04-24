@@ -47,11 +47,14 @@ export async function handleDemoAutoFill({
   try {
     logger.info(`Starting demo auto-fill for task ${taskId}`);
     
-    // Try universal endpoint first
-    const universalEndpoint = `/api/demo-autofill/${taskId}`;
+    // Try fixed demo auto-fill endpoint first
+    const fixedEndpoint = `/api/fix-demo-autofill/${taskId}`;
     
-    logger.info(`Using unified demo auto-fill endpoint: ${universalEndpoint}`);
-    console.log(`Attempting to call universal demo auto-fill endpoint: ${universalEndpoint} with taskType: ${taskType}`);
+    logger.info(`Using fixed demo auto-fill endpoint: ${fixedEndpoint}`);
+    console.log(`Attempting to call fixed demo auto-fill endpoint: ${fixedEndpoint} with taskType: ${taskType}`);
+    
+    // Fall back to universal endpoint if fixed endpoint fails
+    const universalEndpoint = `/api/demo-autofill/${taskId}`;
     
     // Show loading toast
     toast({
@@ -62,7 +65,8 @@ export async function handleDemoAutoFill({
 
     let response;
     try {
-      response = await fetch(universalEndpoint, {
+      // First try the fixed endpoint
+      response = await fetch(fixedEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,13 +76,27 @@ export async function handleDemoAutoFill({
         }),
       });
     } catch (error) {
-      // If universal endpoint fails, fall back to legacy endpoints
-      logger.warn(`Universal endpoint failed, trying legacy endpoint for ${taskType}: ${error instanceof Error ? error.message : String(error)}`);
-      return await useLegacyEndpoint(taskId, taskType);
+      // If fixed endpoint fails, try universal endpoint
+      logger.warn(`Fixed endpoint failed, trying universal endpoint: ${error instanceof Error ? error.message : String(error)}`);
+      try {
+        response = await fetch(universalEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            taskType
+          }),
+        });
+      } catch (universalError) {
+        // If universal endpoint also fails, fall back to legacy endpoints
+        logger.warn(`Universal endpoint failed, trying legacy endpoint: ${universalError instanceof Error ? universalError.message : String(universalError)}`);
+        return await useLegacyEndpoint(taskId, taskType);
+      }
     }
 
     if (!response.ok) {
-      logger.warn(`Universal endpoint returned ${response.status}, trying legacy endpoint`);
+      logger.warn(`Endpoint returned ${response.status}, trying next fallback endpoint`);
       return await useLegacyEndpoint(taskId, taskType);
     }
 
@@ -90,7 +108,24 @@ export async function handleDemoAutoFill({
       // Check if the server directly included the form data in the response
       if (result.formData && typeof result.formData === 'object' && Object.keys(result.formData).length > 0) {
         logger.info(`Using form data directly from demo-autofill response (${Object.keys(result.formData).length} fields)`);
+        
+        // Apply each field individually to ensure form field registration
+        for (const [fieldKey, value] of Object.entries(result.formData)) {
+          try {
+            if (value !== null && value !== undefined) {
+              await updateField(fieldKey, value);
+              console.log(`Updated field ${fieldKey} with value:`, value);
+            }
+          } catch (fieldError) {
+            console.warn(`Failed to update field ${fieldKey}:`, fieldError);
+          }
+        }
+        
+        // Then do a complete reset with all values
         resetForm(result.formData);
+        
+        // Add extra delay to allow UI to fully render
+        await new Promise(resolve => setTimeout(resolve, 500));
       } else {
         // Fall back to getting the data through separate requests
         logger.info('Form data not included in response, fetching separately...');
