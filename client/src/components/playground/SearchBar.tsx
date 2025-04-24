@@ -124,6 +124,7 @@ export function SearchBar({
           "pl-9 pr-[70px]",
           className
         )}
+        autoFocus={false}
         {...props}
       />
       <div className="absolute right-3 flex items-center gap-2">
@@ -144,8 +145,13 @@ export function SearchBar({
   )
 }
 
+// Define the types for Fuse matches
+interface FuseIndices {
+  indices: [number, number][];
+}
+
 // Utility function to highlight matched text
-export function highlightMatch(text: string, matches: Fuse.FuseResultMatch[]) {
+export function highlightMatch(text: string, matches: FuseIndices[]) {
   if (!matches?.length) return text
 
   const indices = matches.reduce<[number, number][]>((acc, match) => {
