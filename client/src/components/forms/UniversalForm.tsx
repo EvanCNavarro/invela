@@ -574,7 +574,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   return (
     <div className="w-full mx-auto">
       {/* Form title and subtitle */}
-      <div className="bg-gray-50 p-6 rounded-t-md">
+      <div className="bg-gray-50 p-6 rounded-t-md mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
         <p className="text-gray-600 mt-1">{formDescription}</p>
         
@@ -635,7 +635,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
           {/* Progress bar showing overall completion */}
-          <div className="mb-3">
+          <div className="mb-4">
             <FormProgressBar progress={overallProgress} />
           </div>
           
