@@ -457,6 +457,53 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     });
   }, [taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, formService]);
   
+  // Handle clear fields
+  const handleClearFields = useCallback(async () => {
+    if (!taskId) {
+      toast({
+        title: 'Clear Fields Error',
+        description: 'Cannot clear fields without a task ID',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      // Show loading toast
+      toast({
+        title: 'Clear Fields',
+        description: 'Clearing all form fields...',
+        variant: 'default',
+      });
+      
+      // Reset form with empty data
+      resetForm({});
+      
+      // Force a re-render to update the UI
+      setForceRerender(prev => !prev);
+      
+      // Refresh status
+      await refreshStatus();
+      
+      // Save progress with empty data
+      await saveProgress();
+      
+      // Show success message
+      toast({
+        title: 'Fields Cleared',
+        description: 'Successfully cleared all form fields.',
+        variant: 'success',
+      });
+    } catch (error) {
+      logger.error('Error clearing fields:', error);
+      toast({
+        title: 'Clear Fields Error',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    }
+  }, [taskId, resetForm, refreshStatus, saveProgress]);
+  
   // Get form title based on template or task type
   const formTitle = useMemo(() => {
     if (template?.name) {
@@ -475,9 +522,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return template.description;
     }
     
-    // Fallback description
-    return 'Please complete all required fields in this form.';
-  }, [template]);
+    // Map task types to their descriptions
+    const descriptionMap: Record<string, string> = {
+      'company_kyb': 'Know Your Business form for identity verification',
+      'security_assessment': 'S&P KY3P Security Assessment form for third-party risk evaluation',
+      'open_banking': 'Open Banking Survey for financial data access evaluation',
+    };
+    
+    // Use the mapped description for API requests if available
+    return descriptionMap[taskType] || 'Please complete all required fields in this form.';
+  }, [template, taskType]);
   
   // Render loading state
   if (loading) {
@@ -518,35 +572,71 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Render main form
   return (
-    <div className="w-full mx-auto">      
+    <div className="w-full mx-auto">
+      {/* Form title and subtitle */}
+      <div className="bg-gray-50 p-6 rounded-t-md">
+        <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
+        <p className="text-gray-600 mt-1">{formDescription}</p>
+        
+        {/* Demo buttons - Only show for demo companies */}
+        {company?.isDemo && (
+          <div className="flex gap-3 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
+              onClick={handleDemoAutoFillClick}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="18" 
+                height="18" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              Demo Auto-Fill
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
+              onClick={handleClearFields}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="18" 
+                height="18" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M21 6H3"></path>
+                <path d="M17 6V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2"></path>
+                <path d="M6 10v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              Clear Fields
+            </Button>
+          </div>
+        )}
+      </div>
+      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
-          {/* Progress bar showing overall completion - moved to gray area above tabs */}
-          <div className="mb-3 flex justify-between items-center">
+          {/* Progress bar showing overall completion */}
+          <div className="mb-3">
             <FormProgressBar progress={overallProgress} />
-            
-            {/* Add Demo Auto-Fill button */}
-            {taskId && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      onClick={handleDemoAutoFillClick}
-                      className="flex items-center gap-1"
-                    >
-                      <Lightbulb className="h-4 w-4 mr-1" />
-                      Demo Auto-Fill
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Fill form with demo data for testing</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
           
           {/* Section navigation tabs - flush with form content */}
