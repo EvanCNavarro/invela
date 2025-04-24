@@ -14,7 +14,7 @@ interface DemoAutoFillOptions {
   saveProgress: () => Promise<void>;
   onProgress?: (progress: number) => void;
   formService: FormServiceInterface | null;
-  setForceRerender: (value: boolean) => void;
+  setForceRerender: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**

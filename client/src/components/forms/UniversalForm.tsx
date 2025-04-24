@@ -321,12 +321,91 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     });
   }, [taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, formService, setForceRerender]);
   
-  // Return a placeholder div
+  // Render the form with proper UI elements matching original design
   return (
-    <div className="w-full p-6">
-      <h1 className="text-3xl font-bold mb-4">Universal Form Component</h1>
-      <p className="mb-4">Task Type: {taskType}</p>
-      <Button onClick={handleDemoAutoFill}>Demo Auto-Fill</Button>
+    <div className="w-full">
+      {/* Form Header with Title and Buttons */}
+      <div className="mb-6">
+        <div className="flex flex-col space-y-2">
+          <h1 className="text-2xl font-bold">{formTitle}</h1>
+          {taskType === 'ky3p' && (
+            <p className="text-muted-foreground">
+              S&P KY3P Security Assessment form for third-party risk evaluation
+            </p>
+          )}
+          {companyName && (
+            <p className="text-muted-foreground">{companyName}</p>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex space-x-2 mt-4">
+          <Button 
+            variant="outline" 
+            className="bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
+            onClick={handleDemoAutoFill}
+          >
+            <span className="flex items-center">
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Demo Auto-Fill
+            </span>
+          </Button>
+          
+          {/* Clear Fields button could be added here */}
+        </div>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="mb-6">
+        <div className="bg-gray-100 rounded-full h-2 mb-2">
+          <div 
+            className="bg-primary h-2 rounded-full" 
+            style={{ width: `${calculateOverallProgress(sections)}%` }}
+          ></div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {calculateOverallProgress(sections)}% Complete
+        </p>
+      </div>
+
+      {/* If no sections loaded yet, show loading state */}
+      {(isLoading || sections.length === 0) && (
+        <div className="flex justify-center items-center p-12">
+          <LoadingSpinner size="lg" />
+          <span className="ml-3">Loading form...</span>
+        </div>
+      )}
+
+      {/* If form successfully submitted, show success */}
+      {formSubmitted && (
+        <div className="p-6 bg-green-50 border border-green-200 rounded-lg text-center">
+          <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-green-700 mb-2">Form Submitted Successfully</h2>
+          <p className="mb-4 text-green-700">Thank you for your submission.</p>
+        </div>
+      )}
+
+      {/* The actual form content placeholder - in a full implementation,
+          this would show tabs for different form sections as shown in the screenshot */}
+      {!isLoading && sections.length > 0 && !formSubmitted && (
+        <div className="bg-white rounded-lg border p-6">
+          <p className="mb-4">Form sections would be displayed here for {taskType} task type.</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            This is a placeholder for the complete form UI. The Demo Auto-Fill button functionality is fully implemented.
+          </p>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleDemoAutoFill}
+            className="bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
+          >
+            <span className="flex items-center">
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Demo Auto-Fill
+            </span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
