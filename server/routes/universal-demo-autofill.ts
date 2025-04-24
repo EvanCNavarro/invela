@@ -162,7 +162,7 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
       let formData = null;
       try {
         // Get form data directly from the database 
-        const config = formTypeConfigs[formType];
+        const config = formTypeConfigs[formType as FormTypeKey];
         if (!config) {
           throw new Error(`Unknown form type: ${formType}`);
         }
@@ -187,13 +187,13 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
         }
         
         // Construct form data object from responses
-        formData = {};
+        formData = {} as Record<string, string>;
         for (const response of responses) {
           const field = fieldMap.get(response.field_id);
           if (field) {
             // Use the field key as the property name
-            const fieldKey = field[config.fieldKeyColumn];
-            const value = response[config.responseValueColumn] || '';
+            const fieldKey = field[config.fieldKeyColumn] as string;
+            const value = response[config.responseValueColumn] as string || '';
             
             // Add this field's value to the form data object
             formData[fieldKey] = value;
@@ -302,7 +302,7 @@ router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
     let formData = null;
     try {
       // Get form data directly from the database 
-      const formType = 'kyb';
+      const formType = 'kyb' as FormTypeKey;
       const config = formTypeConfigs[formType];
       
       // Get all responses for this task
@@ -391,7 +391,7 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
     let formData = null;
     try {
       // Get form data directly from the database 
-      const formType = 'ky3p';
+      const formType = 'ky3p' as FormTypeKey;
       const config = formTypeConfigs[formType];
       
       // Get all responses for this task
@@ -480,7 +480,7 @@ router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, 
     let formData = null;
     try {
       // Get form data directly from the database 
-      const formType = 'open_banking';
+      const formType = 'open_banking' as FormTypeKey;
       const config = formTypeConfigs[formType];
       
       // Get all responses for this task
