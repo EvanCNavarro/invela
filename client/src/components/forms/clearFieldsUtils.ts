@@ -5,8 +5,7 @@
  * error handling and logging to address potential JSON parsing issues.
  */
 
-import { toast } from '@/hooks/use-toast';
-import { FormServiceInterface } from '../../services/formService';
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Handle clearing form fields with improved error handling
@@ -26,80 +25,77 @@ export async function handleClearFields({
 }: {
   taskId: number;
   taskType: string;
-  resetForm: (data: Record<string, any>) => void;
+  resetForm: () => void;
   refreshStatus: () => Promise<void>;
-  setForceRerender: React.Dispatch<React.SetStateAction<boolean>>;
+  setForceRerender: (value: boolean) => void;
 }): Promise<void> {
   try {
+    console.log(`[ClearFields] Clearing fields for task ${taskId} (${taskType})`);
+    
     // Show loading toast
     toast({
-      title: 'Clear Fields',
-      description: 'Clearing all form fields...',
-      variant: 'default',
+      title: "Clearing form fields",
+      description: "Please wait while we clear all form fields...",
+      duration: 2000,
     });
-    
-    // Call the backend API to clear fields
+
+    // Call the universal clear fields endpoint
     const response = await fetch(`/api/universal-clear-fields/${taskId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskType })
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ taskType }),
     });
-    
+
     if (!response.ok) {
-      // Try to extract a more detailed error from the response
-      let errorDetail = '';
+      const errorText = await response.text();
+      let errorMessage = 'Failed to clear fields';
+      
       try {
-        const errorText = await response.text();
-        console.log(`[Clear Fields] Error response details:`, errorText.substring(0, 200) + '...');
-        
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorDetail = errorJson.message || errorJson.error || '';
-        } catch (jsonError) {
-          errorDetail = errorText.substring(0, 100);
-        }
-      } catch (textError) {
-        console.error('[Clear Fields] Failed to extract error details:', textError);
+        // Try to parse the error as JSON
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorMessage;
+      } catch (parseError) {
+        // If parsing fails, just use the raw text
+        errorMessage = errorText || errorMessage;
       }
       
-      throw new Error(`Clear fields request failed (${response.status}): ${errorDetail}`);
+      console.error(`[ClearFields] Error clearing fields: ${errorMessage}`);
+      
+      toast({
+        title: "Error clearing fields",
+        description: errorMessage,
+        variant: "destructive",
+        duration: 5000,
+      });
+      
+      return;
     }
+
+    const data = await response.json();
+    console.log(`[ClearFields] Successfully cleared ${data.clearedCount} fields`);
     
-    // Try to parse the response
-    let data;
-    try {
-      const text = await response.text();
-      console.log(`[Clear Fields] Raw response:`, text.substring(0, 100) + '...');
-      data = JSON.parse(text);
-    } catch (parseError) {
-      console.error('[Clear Fields] Error parsing response:', parseError);
-      throw new Error('Failed to parse clear fields response');
-    }
-    
-    if (!data.success) {
-      throw new Error(data.message || 'Failed to clear fields');
-    }
-    
-    // Reset the form with empty data
-    resetForm({});
-    
-    // Force re-render to ensure UI is updated
-    setForceRerender(prev => !prev);
-    
-    // Refresh form status
+    // Reset the form and refresh the status
+    resetForm();
     await refreshStatus();
     
+    // Force a re-render to ensure UI reflects the cleared state
+    setForceRerender(prev => !prev);
+    
     toast({
-      title: 'Fields Cleared',
-      description: 'All form fields have been cleared successfully',
-      variant: 'default',
+      title: "Fields cleared successfully",
+      description: `All ${data.clearedCount} fields have been cleared.`,
+      duration: 3000,
     });
   } catch (error) {
-    console.error('[Clear Fields] Error:', error);
+    console.error('[ClearFields] Error in handleClearFields:', error);
+    
     toast({
-      title: 'Clear Fields Failed',
-      description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      variant: 'destructive',
+      title: "Error clearing fields",
+      description: error instanceof Error ? error.message : "An unexpected error occurred",
+      variant: "destructive",
+      duration: 5000,
     });
   }
 }
