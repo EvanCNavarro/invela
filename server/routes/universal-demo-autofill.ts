@@ -23,6 +23,13 @@ const logger = new Logger('UniversalDemoAutoFillRouter');
  */
 router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
   try {
+    console.log('Universal demo auto-fill endpoint called:', {
+      taskId: req.params.taskId,
+      formType: req.body.formType || req.query.formType,
+      taskType: req.body.taskType,
+      user: req.user ? { id: req.user.id, email: req.user.email } : 'No user'
+    });
+    
     // Check user authentication
     if (!req.user || !req.user.id) {
       logger.error('Unauthenticated user attempted to access demo auto-fill');
@@ -153,28 +160,115 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
 });
 
 // For backward compatibility, add type-specific endpoints
-router.post('/api/kyb/universal-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  // Redirect to universal endpoint with explicit form type
+router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  // Modify the request to include the form type
   req.body.formType = 'kyb';
   
-  // Forward to the universal endpoint handler
-  router.handle(req, res, () => {});
+  // Simply call the universal demo auto-fill service directly
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId) || !req.user) {
+      return res.status(400).json({ success: false, error: 'Invalid request' });
+    }
+    
+    console.log('Legacy KYB demo-autofill endpoint called:', {
+      taskId,
+      formType: 'kyb',
+      user: req.user.id
+    });
+    
+    const result = await universalDemoAutoFillService.applyDemoData(
+      taskId, 
+      'kyb',
+      req.user.id
+    );
+    
+    res.json({
+      success: true,
+      message: result.message,
+      fieldCount: result.fieldCount
+    });
+  } catch (error) {
+    console.error('Error in KYB demo-autofill:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-router.post('/api/ky3p/universal-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  // Redirect to universal endpoint with explicit form type
+router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  // Modify the request to include the form type
   req.body.formType = 'ky3p';
   
-  // Forward to the universal endpoint handler
-  router.handle(req, res, () => {});
+  // Simply call the universal demo auto-fill service directly
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId) || !req.user) {
+      return res.status(400).json({ success: false, error: 'Invalid request' });
+    }
+    
+    console.log('Legacy KY3P demo-autofill endpoint called:', {
+      taskId,
+      formType: 'ky3p',
+      user: req.user.id
+    });
+    
+    const result = await universalDemoAutoFillService.applyDemoData(
+      taskId, 
+      'ky3p',
+      req.user.id
+    );
+    
+    res.json({
+      success: true,
+      message: result.message,
+      fieldCount: result.fieldCount
+    });
+  } catch (error) {
+    console.error('Error in KY3P demo-autofill:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-router.post('/api/open-banking/universal-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  // Redirect to universal endpoint with explicit form type
+router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  // Modify the request to include the form type
   req.body.formType = 'open_banking';
   
-  // Forward to the universal endpoint handler
-  router.handle(req, res, () => {});
+  // Simply call the universal demo auto-fill service directly
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId) || !req.user) {
+      return res.status(400).json({ success: false, error: 'Invalid request' });
+    }
+    
+    console.log('Legacy Open Banking demo-autofill endpoint called:', {
+      taskId,
+      formType: 'open_banking',
+      user: req.user.id
+    });
+    
+    const result = await universalDemoAutoFillService.applyDemoData(
+      taskId, 
+      'open_banking',
+      req.user.id
+    );
+    
+    res.json({
+      success: true,
+      message: result.message,
+      fieldCount: result.fieldCount
+    });
+  } catch (error) {
+    console.error('Error in Open Banking demo-autofill:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 export default router;

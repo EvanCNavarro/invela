@@ -51,6 +51,7 @@ export async function handleDemoAutoFill({
     const universalEndpoint = `/api/demo-autofill/${taskId}`;
     
     logger.info(`Using unified demo auto-fill endpoint: ${universalEndpoint}`);
+    console.log(`Attempting to call universal demo auto-fill endpoint: ${universalEndpoint} with taskType: ${taskType}`);
     
     // Show loading toast
     toast({
