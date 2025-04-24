@@ -853,9 +853,12 @@ export function useFormDataManager({
     }
     
     try {
+      // For demo auto-fill, prioritize the provided data and skip sync
+      const isDemoAutoFill = data && Object.keys(data).length > 0;
+      
       // Synchronize form data between task.savedFormData and individual field responses
-      // This prevents inconsistencies during form resets
-      if (formService && taskId && typeof formService.syncFormData === 'function') {
+      // But only if this is NOT a demo auto-fill operation
+      if (!isDemoAutoFill && formService && taskId && typeof formService.syncFormData === 'function') {
         try {
           logger.info(`[FormSync] Synchronizing form data before reset for task ${taskId}`);
           const syncResult = await formService.syncFormData(taskId);
@@ -924,20 +927,66 @@ export function useFormDataManager({
         return updated;
       });
       
+      // Special handling for demo auto-fill - use bulk update if available
+      if (isDemoAutoFill && formService && typeof formService.bulkUpdateFormData === 'function') {
+        try {
+          logger.info(`[DEMO-AUTOFILL] Using bulkUpdateFormData for faster demo data application`);
+          await formService.bulkUpdateFormData(finalResetData, taskId);
+          logger.info(`[DEMO-AUTOFILL] Bulk update completed successfully`);
+        } catch (bulkError) {
+          logger.error(`[DEMO-AUTOFILL] Bulk update failed, falling back to individual updates: ${bulkError}`);
+          // Fall back to individual updates below
+        }
+      } 
       // Ensure the form service is updated with the new data
-      if (formService) {
+      else if (formService) {
         logger.info(`Updating form service with ${Object.keys(finalResetData).length} fields`);
         
-        Object.entries(finalResetData).forEach(([key, value]) => {
-          // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
-          if (updateFieldRef.current) {
-            // Use the update field function with isSaving flag since this is during a form reset
-            updateFieldRef.current(key, value, true);
-          } else {
-            // Fallback to direct update if reference isn't set yet
-            formService.updateFormData(key, value, taskId);
+        // For demo auto-fill, use a more reliable approach with a small delay between batches
+        if (isDemoAutoFill) {
+          logger.info(`[DEMO-AUTOFILL] Using batched approach for demo data`);
+          
+          // Process in smaller batches to avoid overwhelming the server
+          const batchSize = 5;
+          const entries = Object.entries(finalResetData);
+          const totalBatches = Math.ceil(entries.length / batchSize);
+          
+          for (let i = 0; i < totalBatches; i++) {
+            const batchStart = i * batchSize;
+            const batchEnd = Math.min((i + 1) * batchSize, entries.length);
+            const batch = entries.slice(batchStart, batchEnd);
+            
+            logger.info(`[DEMO-AUTOFILL] Processing batch ${i+1}/${totalBatches} with ${batch.length} fields`);
+            
+            // Process each field in the batch
+            for (const [key, value] of batch) {
+              try {
+                // Always use direct form service update for demo data to ensure consistent behavior
+                formService.updateFormData(key, value, taskId);
+              } catch (fieldError) {
+                logger.error(`[DEMO-AUTOFILL] Error updating field ${key}: ${fieldError}`);
+              }
+            }
+            
+            // Small delay between batches to allow server processing
+            if (i < totalBatches - 1) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
           }
-        });
+        }
+        // For regular resets, use the standard approach
+        else {
+          Object.entries(finalResetData).forEach(([key, value]) => {
+            // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
+            if (updateFieldRef.current) {
+              // Use the update field function with isSaving flag since this is during a form reset
+              updateFieldRef.current(key, value, true);
+            } else {
+              // Fallback to direct update if reference isn't set yet
+              formService.updateFormData(key, value, taskId);
+            }
+          });
+        }
       }
       
       // Notify parent component if callback provided
