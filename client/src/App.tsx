@@ -346,6 +346,25 @@ export default function App() {
     }
   }, []);
   
+  // Prevent automatic focus on any element when the application loads or refreshes
+  useEffect(() => {
+    // Function to override default focus behavior
+    const preventAutoFocus = () => {
+      // This will blur any element that might have received focus during page load
+      if (document.activeElement instanceof HTMLElement && 
+          document.activeElement !== document.body) {
+        console.log('[App] Removing autofocus from', document.activeElement);
+        document.activeElement.blur();
+      }
+    };
+    
+    // Apply immediately and after a small delay to catch delayed focus events
+    preventAutoFocus();
+    const timeoutId = setTimeout(preventAutoFocus, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>

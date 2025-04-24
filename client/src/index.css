@@ -72,6 +72,12 @@
   *:focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
+  
+  /* Prevent automatic focus on page load/refresh */
+  *[autofocus] {
+    outline: none;
+    @apply focus:outline-none focus:ring-0;
+  }
 
   /* Smooth transitions for interactive elements */
   .transition-interactive {

@@ -30,6 +30,7 @@ import React, { useState, useMemo } from "react";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { cn } from "@/lib/utils";
 import { useCurrentCompany } from "@/hooks/use-current-company";
+import { usePreventFocus } from "@/hooks/use-prevent-focus";
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
@@ -37,6 +38,9 @@ export function TopNav() {
   const [location, setLocation] = useLocation();
   const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // Prevent any automatic focus when the component mounts or refreshes
+  usePreventFocus();
 
   // Determine company type and set appropriate icon and color
   const companyProfile = useMemo(() => {
