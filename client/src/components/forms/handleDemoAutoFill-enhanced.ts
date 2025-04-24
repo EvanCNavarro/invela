@@ -72,7 +72,15 @@ export async function handleDemoAutoFill({
       });
       
       if (unifiedResponse.ok) {
-        const data = await unifiedResponse.json();
+        let data;
+        try {
+          const text = await unifiedResponse.text();
+          console.log(`[Demo Auto-Fill] Unified endpoint raw response:`, text.substring(0, 100) + '...');
+          data = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[Demo Auto-Fill] Error parsing unified endpoint response:', parseError);
+          throw new Error('Failed to parse unified endpoint response');
+        }
         
         if (data.success && data.formData) {
           console.log(`[Demo Auto-Fill] Got ${Object.keys(data.formData).length} fields from unified endpoint`);
@@ -117,7 +125,15 @@ export async function handleDemoAutoFill({
       });
       
       if (fixedResponse.ok) {
-        const data = await fixedResponse.json();
+        let data;
+        try {
+          const text = await fixedResponse.text();
+          console.log(`[Demo Auto-Fill] Fixed endpoint raw response:`, text.substring(0, 100) + '...');
+          data = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[Demo Auto-Fill] Error parsing fixed endpoint response:', parseError);
+          throw new Error('Failed to parse fixed endpoint response');
+        }
         
         if (data.success && data.formData) {
           console.log(`[Demo Auto-Fill] Got ${Object.keys(data.formData).length} fields from fixed endpoint`);
@@ -196,7 +212,15 @@ export async function handleDemoAutoFill({
         throw new Error(`Legacy endpoint returned ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      let data;
+      try {
+        const text = await response.text();
+        console.log(`[Demo Auto-Fill] Legacy endpoint raw response:`, text.substring(0, 100) + '...');
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[Demo Auto-Fill] Error parsing legacy endpoint response:', parseError);
+        throw new Error('Failed to parse legacy endpoint response');
+      }
       
       if (data.success && data[responseField]) {
         // Apply the form data with verification and legacy flag
