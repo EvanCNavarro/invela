@@ -1469,7 +1469,11 @@ router.post('/api/kyb/save', async (req, res) => {
 // Get saved progress for KYB form
 import { reconcileTaskProgress } from '../utils/task-reconciliation';
 
-// Endpoint to provide demo data for auto-filling KYB forms
+// Import the universal demo auto-fill service
+import { universalDemoAutoFillService } from '../services/universalDemoAutoFillService';
+
+// Endpoint to provide demo data for auto-filling KYB forms (GET version)
+// This maintains backward compatibility with existing code
 router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
   try {
     // Check if user is authenticated
@@ -1481,192 +1485,128 @@ router.get('/api/kyb/demo-autofill/:taskId', async (req, res) => {
       });
     }
     
-    const { taskId } = req.params;
-    logger.info('Demo auto-fill requested for task', { taskId, userId: req.user.id });
-    
-    // Get the task to retrieve company information
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, parseInt(taskId, 10)));
-      
-    if (!task) {
-      logger.error('Task not found for demo auto-fill', { taskId });
-      return res.status(404).json({ 
-        error: 'Task not found',
-        message: 'Could not find the specified task for auto-filling'
-      });
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
     }
     
-    // CRITICAL SECURITY CHECK: Verify user belongs to company that owns the task
-    if (req.user.company_id !== task.company_id) {
-      logger.error('Security violation: User attempted to access task from another company', {
-        userId: req.user.id,
-        userCompanyId: req.user.company_id,
-        taskId: task.id,
-        taskCompanyId: task.company_id
-      });
-      
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You do not have permission to access this task'
-      });
-    }
+    logger.info('Demo auto-fill requested for KYB task (GET)', { taskId, userId: req.user.id });
     
-    // Check if the company associated with this task is a demo company
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
-      
-    // Ensure we're explicitly checking for true, not just truthy values 
-    if (!company || company.is_demo !== true) {
-      logger.error('Company is not a demo company', { 
+    // Use the universal service to generate demo data
+    try {
+      // Generate demo data without applying it to the database
+      const demoData = await universalDemoAutoFillService.generateDemoData(
         taskId, 
-        companyId: task.company_id,
-        isDemo: company?.is_demo,
-        isDemoType: typeof company?.is_demo
+        'kyb',
+        req.user.id
+      );
+      
+      logger.info('Generated demo data for KYB auto-fill using universal service', {
+        fieldCount: Object.keys(demoData).length,
+        taskId
       });
-      // Log the actual company object to debug
-      console.log('[KYB Demo Auto-Fill] Company object:', JSON.stringify(company));
       
-      return res.status(403).json({
-        error: 'Not a demo company',
-        message: 'Auto-fill is only available for demo companies'
+      // Return the demo data to the client
+      res.json(demoData);
+    } catch (serviceError) {
+      // Handle specific errors from the service
+      logger.error('Error from universal service when generating KYB demo data', {
+        error: serviceError instanceof Error ? serviceError.message : 'Unknown error',
+        stack: serviceError instanceof Error ? serviceError.stack : undefined
+      });
+      
+      // Determine appropriate status code
+      const statusCode = 
+        serviceError instanceof Error && serviceError.message.includes('demo companies') ? 403 :
+        serviceError instanceof Error && serviceError.message.includes('Task not found') ? 404 : 
+        500;
+      
+      return res.status(statusCode).json({
+        error: 'Failed to generate demo data',
+        message: serviceError instanceof Error ? serviceError.message : 'Unknown error occurred'
       });
     }
-    
-    // Get all KYB fields with explicit selection of the demo_autofill column
-    const fields = await db.select({
-      id: kybFields.id,
-      field_key: kybFields.field_key,
-      display_name: kybFields.display_name,
-      field_type: kybFields.field_type,
-      question: kybFields.question,
-      group: kybFields.group,
-      required: kybFields.required,
-      order: kybFields.order,
-      step_index: kybFields.step_index,
-      validation_rules: kybFields.validation_rules,
-      help_text: kybFields.help_text,
-      demo_autofill: kybFields.demo_autofill, // Explicitly select demo_autofill
-      created_at: kybFields.created_at,
-      updated_at: kybFields.updated_at
-    })
-      .from(kybFields)
-      .orderBy(sql`"group" ASC, "order" ASC`);
-    
-    logger.info('Fetched fields for demo auto-fill', {
-      fieldCount: fields.length,
-      taskId
-    });
-    
-    // Create demo data for each field using predefined demo_autofill values from the database
-    const demoData: Record<string, any> = {};
-    
-    // Get current user information for personalized values
-    let userEmail = '';
-    if (req.user) {
-      userEmail = req.user.email;
-    }
-    
-    // Log the first few fields to debug with explicit column check
-    console.log('[KYB Demo Auto-Fill] First 5 fields from database:');
-    
-    // Inspect the raw database results to verify the structure
-    const rawFields = fields.slice(0, 5);
-    console.log('[KYB Demo Auto-Fill] Raw field objects:', rawFields);
-    
-    // Check if demo_autofill is directly accessible
-    rawFields.forEach(field => {
-      // Get all columns for debugging
-      const keys = Object.keys(field);
-      console.log(`[KYB Demo Auto-Fill] Field ${field.field_key} has these properties:`, keys);
-      
-      // Check the demo value specifically
-      const demoValue = field.demo_autofill;
-      console.log(`[KYB Demo Auto-Fill] Field ${field.field_key} demo_autofill = "${demoValue}"`);
-    });
-    
-    for (const field of fields) {
-      const fieldKey = field.field_key;
-      
-      // Special cases that should always use current user/company data regardless of database values
-      if (fieldKey === 'legalEntityName') {
-        // Always use the actual company name
-        demoData[fieldKey] = company.name;
-        console.log(`[KYB Demo Auto-Fill] Using company name for legalEntityName: ${company.name}`);
-      }
-      else if (fieldKey === 'contactEmail') {
-        // Always use the current user's email
-        demoData[fieldKey] = userEmail;
-        console.log(`[KYB Demo Auto-Fill] Using current user email for contactEmail: ${userEmail}`);
-      }
-      // Use the demo_autofill value directly from the database for all other fields
-      else if (field.demo_autofill !== null && field.demo_autofill !== undefined) {
-        // For fields that might contain company name references
-        if (typeof field.demo_autofill === 'string' && field.demo_autofill.includes('{{COMPANY_NAME}}')) {
-          demoData[fieldKey] = field.demo_autofill.replace('{{COMPANY_NAME}}', company.name);
-          console.log(`[KYB Demo Auto-Fill] Replaced template in ${fieldKey}: ${demoData[fieldKey]}`);
-        } else {
-          // Use the predefined value from the database
-          demoData[fieldKey] = field.demo_autofill;
-          console.log(`[KYB Demo Auto-Fill] Used database value for ${fieldKey}: ${demoData[fieldKey]}`);
-        }
-      } 
-      // Fallback for any fields without defined demo values
-      else {
-        // Generate a basic fallback value based on field type
-        console.log(`[KYB Demo Auto-Fill] No demo_autofill value found for ${fieldKey}`);
-        
-        switch (field.field_type) {
-          case 'TEXT':
-          case 'TEXTAREA':
-            demoData[fieldKey] = `Demo ${field.display_name}`;
-            break;
-            
-          case 'DATE':
-            const date = new Date();
-            date.setFullYear(date.getFullYear() - 2);
-            demoData[fieldKey] = date.toISOString().split('T')[0];
-            break;
-            
-          case 'NUMBER':
-            demoData[fieldKey] = '10000';
-            break;
-            
-          case 'BOOLEAN':
-            demoData[fieldKey] = 'true';
-            break;
-            
-          case 'SELECT':
-          case 'MULTI_SELECT':
-          case 'MULTIPLE_CHOICE':
-            demoData[fieldKey] = 'Option A';
-            break;
-            
-          case 'EMAIL':
-            demoData[fieldKey] = `demo@${field.display_name.toLowerCase().replace(/\s/g, '')}.com`;
-            break;
-            
-          default:
-            demoData[fieldKey] = `Demo value for ${field.display_name}`;
-        }
-        console.log(`[KYB Demo Auto-Fill] Generated fallback value for ${fieldKey}: ${demoData[fieldKey]}`);
-      }
-    }
-    
-    logger.info('Generated demo data for auto-fill', {
-      fieldCount: Object.keys(demoData).length,
-      taskId
-    });
-    
-    res.json(demoData);
   } catch (error) {
-    logger.error('Error generating demo auto-fill data', {
+    logger.error('Error in KYB demo auto-fill endpoint', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
+    
     res.status(500).json({
       error: 'Failed to generate demo data',
+      message: error instanceof Error ? error.message : 'Unknown error occurred'
+    });
+  }
+});
+
+// Endpoint to provide demo data for auto-filling KYB forms (POST version)
+// Adding POST support for consistency with other form types
+router.post('/api/kyb/demo-autofill/:taskId', async (req, res) => {
+  try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      logger.error('Unauthenticated user attempted to access demo auto-fill');
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to use this feature'
+      });
+    }
+    
+    const taskId = parseInt(req.params.taskId, 10);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    logger.info('Demo auto-fill requested for KYB task (POST)', { taskId, userId: req.user.id });
+    
+    // Use the universal service to apply demo data
+    try {
+      // Apply the demo data directly to the database
+      const result = await universalDemoAutoFillService.applyDemoData(
+        taskId, 
+        'kyb',
+        req.user.id
+      );
+      
+      logger.info('Applied demo data for KYB auto-fill using universal service', {
+        fieldCount: result.fieldCount,
+        taskId
+      });
+      
+      // Return success result
+      res.json({
+        success: true,
+        message: result.message,
+        fieldCount: result.fieldCount
+      });
+    } catch (serviceError) {
+      // Handle specific errors from the service
+      logger.error('Error from universal service when applying KYB demo data', {
+        error: serviceError instanceof Error ? serviceError.message : 'Unknown error',
+        stack: serviceError instanceof Error ? serviceError.stack : undefined
+      });
+      
+      // Determine appropriate status code
+      const statusCode = 
+        serviceError instanceof Error && serviceError.message.includes('demo companies') ? 403 :
+        serviceError instanceof Error && serviceError.message.includes('Task not found') ? 404 : 
+        500;
+      
+      return res.status(statusCode).json({
+        success: false,
+        error: 'Failed to apply demo data',
+        message: serviceError instanceof Error ? serviceError.message : 'Unknown error occurred'
+      });
+    }
+  } catch (error) {
+    logger.error('Error in KYB demo auto-fill endpoint (POST)', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to apply demo data',
       message: error instanceof Error ? error.message : 'Unknown error occurred'
     });
   }

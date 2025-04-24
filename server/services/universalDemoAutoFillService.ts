@@ -9,28 +9,22 @@
  * form-specific variations.
  */
 
-import { db } from '@db';
-import { 
-  tasks, 
-  companies, 
-  kybFields, 
-  kybResponses,
-  ky3pFields,
-  ky3pResponses,
-  openBankingFields,
-  openBankingResponses
-} from '@db/schema';
-import { eq, and, asc, sql } from 'drizzle-orm';
-import { Logger } from '../utils/logger';
+import { db } from '../../db';
+import { tasks, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, openBankingFields, openBankingResponses } from '../../db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import { broadcastTaskUpdate } from './websocket';
+import { Logger } from '../utils/logger';
 
-// Create logger instance for this service
-const logger = new Logger('UniversalDemoAutoFill');
+const logger = new Logger('UniversalDemoAutoFillService');
 
-// Define the form type string literals for type safety
+/**
+ * Supported form types for auto-fill functionality
+ */
 export type FormType = 'kyb' | 'ky3p' | 'open_banking';
 
-// Define the configuration interface for form-specific settings
+/**
+ * Configuration interface for form-specific behavior
+ */
 interface FormTypeConfig {
   fieldsTable: any;
   responsesTable: any;
@@ -49,8 +43,8 @@ interface FormTypeConfig {
  * This allows us to use the same code with different database tables
  * and handle slight variations between form structures
  */
-const formConfigs: Record<FormType, FormTypeConfig> = {
-  'kyb': {
+const formTypeConfigs: Record<FormType, FormTypeConfig> = {
+  kyb: {
     fieldsTable: kybFields,
     responsesTable: kybResponses,
     fieldKeyColumn: 'field_key',
@@ -59,44 +53,52 @@ const formConfigs: Record<FormType, FormTypeConfig> = {
     groupColumn: 'group',
     requiredColumn: 'required',
     demoAutofillColumn: 'demo_autofill',
-    taskTypes: ['company_kyb', 'kyb', 'kyb_assessment'],
-    responseValueColumn: 'response_value'
+    taskTypes: ['kyb', 'kyb_form', 'onboarding'],
+    responseValueColumn: 'response_value',
   },
-  'ky3p': {
+  ky3p: {
     fieldsTable: ky3pFields,
     responsesTable: ky3pResponses,
-    fieldKeyColumn: 'field_key',
-    displayNameColumn: 'display_name', // Could also be 'label' depending on schema
-    fieldTypeColumn: 'field_type',
-    groupColumn: 'group', // Could also be 'section' in older schemas
-    requiredColumn: 'is_required', // This differs from KYB's 'required'
-    demoAutofillColumn: 'demo_autofill',
-    taskTypes: ['sp_ky3p_assessment', 'ky3p', 'security_assessment'],
-    responseValueColumn: 'response_value'
-  },
-  'open_banking': {
-    fieldsTable: openBankingFields,
-    responsesTable: openBankingResponses,
     fieldKeyColumn: 'field_key',
     displayNameColumn: 'display_name',
     fieldTypeColumn: 'field_type',
     groupColumn: 'group',
     requiredColumn: 'required',
     demoAutofillColumn: 'demo_autofill',
-    taskTypes: ['open_banking', 'open_banking_survey'],
-    responseValueColumn: 'response_value'
+    taskTypes: ['ky3p', 'sp_ky3p_assessment', 'security_assessment'],
+    responseValueColumn: 'response_value',
+  },
+  open_banking: {
+    fieldsTable: openBankingFields,
+    responsesTable: openBankingResponses,
+    fieldKeyColumn: 'field_key',
+    displayNameColumn: 'display_name',
+    fieldTypeColumn: 'field_type', 
+    groupColumn: 'group',
+    requiredColumn: 'required',
+    demoAutofillColumn: 'demo_autofill',
+    taskTypes: ['open_banking', 'open_banking_assessment', '1033_assessment'],
+    responseValueColumn: 'response_value',
   }
 };
 
-// Helper function to determine form type based on task type
+/**
+ * Determine form type from task type
+ * This is used to automatically detect the appropriate form type for a task
+ */
 export function getFormTypeFromTaskType(taskType: string): FormType | null {
-  for (const [formType, config] of Object.entries(formConfigs)) {
-    if (config.taskTypes.includes(taskType)) {
+  if (!taskType) return null;
+  
+  // Normalize task type for comparison
+  const normalizedType = taskType.toLowerCase().trim();
+  
+  // Check each form type configuration for matching task types
+  for (const [formType, config] of Object.entries(formTypeConfigs)) {
+    if (config.taskTypes.some(type => normalizedType.includes(type.toLowerCase()))) {
       return formType as FormType;
     }
   }
   
-  logger.warn('Unknown task type for demo auto-fill', { taskType });
   return null;
 }
 
@@ -110,156 +112,132 @@ export class UniversalDemoAutoFillService {
    * @returns A record containing field keys mapped to demo values
    */
   async generateDemoData(
-    taskId: number, 
+    taskId: number,
     formType: FormType,
     userId?: number
   ): Promise<Record<string, any>> {
     logger.info('Generating demo data', { taskId, formType, userId });
     
-    // Get the configuration for this form type
-    const config = formConfigs[formType];
-    if (!config) {
-      throw new Error(`Invalid form type: ${formType}`);
+    // Get task information to verify ownership and demo status
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
     }
     
-    try {
-      // Get task details
-      const [task] = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
+    // Get company information to verify demo status
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
       
-      if (!task) {
-        logger.error('Task not found for demo auto-fill', { taskId });
-        throw new Error('Task not found');
-      }
-      
-      // Get company details for personalization
-      const [company] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, task.company_id));
-      
-      if (!company) {
-        logger.error('Company not found for task', { taskId, companyId: task.company_id });
-        throw new Error('Company not found');
-      }
-      
-      // Safety check: ensure this is a demo company
-      if (company.is_demo !== true) {
-        logger.error('Company is not marked as demo', { 
-          companyId: company.id,
-          name: company.name,
-          isDemo: company.is_demo
+    if (!company || company.is_demo !== true) {
+      throw new Error('Auto-fill is only available for demo companies');
+    }
+    
+    // Get user information if available
+    let userEmail = '';
+    if (userId) {
+      try {
+        const [user] = await db.select({ email: sql<string>`email` })
+          .from(sql`users`)
+          .where(sql`id = ${userId}`);
+          
+        if (user) {
+          userEmail = user.email;
+        }
+      } catch (error) {
+        logger.warn('Could not retrieve user email for personalization', { 
+          userId, error: error instanceof Error ? error.message : String(error)
         });
-        throw new Error('Auto-fill is only available for demo companies');
       }
+    }
+    
+    // Get configuration for the requested form type
+    const config = formTypeConfigs[formType];
+    if (!config) {
+      throw new Error(`Unsupported form type: ${formType}`);
+    }
+    
+    // Get all fields for this form type
+    const fields = await db.select()
+      .from(config.fieldsTable)
+      .orderBy(sql`${config.groupColumn} ASC, "order" ASC`);
       
-      // Get all fields with their demo_autofill values
-      const fields = await db.select()
-        .from(config.fieldsTable)
-        .orderBy(asc(config.fieldsTable.order));
+    logger.info('Retrieved fields for demo auto-fill', { count: fields.length });
+    
+    // Generate demo data for each field
+    const demoData: Record<string, any> = {};
+    
+    for (const field of fields) {
+      const fieldKey = field[config.fieldKeyColumn];
       
-      logger.info('Fetched fields for demo auto-fill', {
-        fieldCount: fields.length,
-        taskId
-      });
-      
-      // Create demo data for each field
-      const demoData: Record<string, any> = {};
-      
-      // Get current user information for personalized values (if provided)
-      let userEmail = '';
-      if (userId) {
-        // This would get the user email if needed for personalization
-        // Left as placeholder for now
+      // Special cases that should always use current user/company data
+      if (fieldKey === 'legalEntityName') {
+        demoData[fieldKey] = company.name;
       }
-      
-      // Process each field to generate demo data
-      for (const field of fields) {
-        const fieldKey = field[config.fieldKeyColumn];
+      else if (fieldKey === 'contactEmail' && userEmail) {
+        demoData[fieldKey] = userEmail;
+      }
+      // Use the demo_autofill value from the database
+      else if (field[config.demoAutofillColumn] !== null && field[config.demoAutofillColumn] !== undefined) {
+        // Check for template variables that need replacement
+        if (typeof field[config.demoAutofillColumn] === 'string' && 
+            field[config.demoAutofillColumn].includes('{{COMPANY_NAME}}')) {
+          demoData[fieldKey] = field[config.demoAutofillColumn].replace('{{COMPANY_NAME}}', company.name);
+        } else {
+          demoData[fieldKey] = field[config.demoAutofillColumn];
+        }
+      } 
+      // Generate a fallback value if no demo value is defined
+      else {
         const fieldType = field[config.fieldTypeColumn];
         const displayName = field[config.displayNameColumn];
-        const demoValue = field[config.demoAutofillColumn];
         
-        // Special cases that should always use current company/user data 
-        if (fieldKey === 'legalEntityName') {
-          // Always use the actual company name
-          demoData[fieldKey] = company.name;
-          logger.debug(`Using company name for legalEntityName: ${company.name}`);
-        }
-        else if (fieldKey === 'contactEmail' && userEmail) {
-          // Use current user's email if available
-          demoData[fieldKey] = userEmail;
-          logger.debug(`Using current user email for contactEmail: ${userEmail}`);
-        }
-        // Use the demo_autofill value from the database if available
-        else if (demoValue !== null && demoValue !== undefined) {
-          // For fields that might contain company name references
-          if (typeof demoValue === 'string' && demoValue.includes('{{COMPANY_NAME}}')) {
-            demoData[fieldKey] = demoValue.replace('{{COMPANY_NAME}}', company.name);
-            logger.debug(`Replaced template in ${fieldKey}: ${demoData[fieldKey]}`);
-          } else {
-            // Use the predefined value from the database
-            demoData[fieldKey] = demoValue;
-            logger.debug(`Used database value for ${fieldKey}: ${demoData[fieldKey]}`);
-          }
-        } 
-        // Generate fallback values based on field type if no demo value defined
-        else {
-          logger.debug(`No demo_autofill value found for ${fieldKey}`);
-          
-          switch (fieldType) {
-            case 'TEXT':
-            case 'TEXTAREA':
-              demoData[fieldKey] = `Demo ${displayName}`;
-              break;
-              
-            case 'DATE':
-              const date = new Date();
-              date.setFullYear(date.getFullYear() - 2);
-              demoData[fieldKey] = date.toISOString().split('T')[0];
-              break;
-              
-            case 'NUMBER':
-              demoData[fieldKey] = '10000';
-              break;
-              
-            case 'BOOLEAN':
-              demoData[fieldKey] = 'true';
-              break;
-              
-            case 'SELECT':
-            case 'MULTI_SELECT':
-            case 'MULTIPLE_CHOICE':
-              demoData[fieldKey] = 'Option A';
-              break;
-              
-            case 'EMAIL':
-              demoData[fieldKey] = `demo@${displayName.toLowerCase().replace(/\s/g, '')}.com`;
-              break;
-              
-            default:
-              demoData[fieldKey] = `Demo value for ${displayName}`;
-          }
-          logger.debug(`Generated fallback value for ${fieldKey}: ${demoData[fieldKey]}`);
+        switch (fieldType) {
+          case 'TEXT':
+          case 'TEXTAREA':
+            demoData[fieldKey] = `Demo ${displayName}`;
+            break;
+            
+          case 'DATE':
+            const date = new Date();
+            date.setFullYear(date.getFullYear() - 2);
+            demoData[fieldKey] = date.toISOString().split('T')[0];
+            break;
+            
+          case 'NUMBER':
+            demoData[fieldKey] = '10000';
+            break;
+            
+          case 'BOOLEAN':
+            demoData[fieldKey] = 'true';
+            break;
+            
+          case 'SELECT':
+          case 'MULTI_SELECT':
+          case 'MULTIPLE_CHOICE':
+            demoData[fieldKey] = 'Option A';
+            break;
+            
+          case 'EMAIL':
+            demoData[fieldKey] = `demo@${displayName.toLowerCase().replace(/\s/g, '')}.com`;
+            break;
+            
+          default:
+            demoData[fieldKey] = `Demo value for ${displayName}`;
         }
       }
-      
-      logger.info('Generated demo data for auto-fill', {
-        fieldCount: Object.keys(demoData).length,
-        taskId,
-        formType
-      });
-      
-      return demoData;
-    } catch (error) {
-      logger.error('Error generating demo data', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        taskId,
-        formType
-      });
-      throw error;
     }
+    
+    logger.info('Successfully generated demo data', {
+      taskId,
+      formType,
+      fieldCount: Object.keys(demoData).length
+    });
+    
+    return demoData;
   }
   
   /**
@@ -273,143 +251,140 @@ export class UniversalDemoAutoFillService {
    * @returns Object containing operation results
    */
   async applyDemoData(
-    taskId: number, 
+    taskId: number,
     formType: FormType,
     userId?: number
-  ): Promise<{
-    success: boolean;
-    fieldCount: number;
-    message: string;
-  }> {
+  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
     logger.info('Applying demo data directly to database', { taskId, formType, userId });
     
-    // Get the configuration for this form type
-    const config = formConfigs[formType];
-    if (!config) {
-      throw new Error(`Invalid form type: ${formType}`);
+    // Generate the demo data first
+    const demoData = await this.generateDemoData(taskId, formType, userId);
+    
+    // Get configuration for the requested form type
+    const config = formTypeConfigs[formType];
+    
+    // Get task information
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
     }
     
-    try {
-      // First generate the demo data
-      const demoData = await this.generateDemoData(taskId, formType, userId);
+    // Get all existing responses for this task
+    const existingResponses = await db.select()
+      .from(config.responsesTable)
+      .where(eq(config.responsesTable.task_id, taskId));
       
-      // Get the fields to ensure we have the correct field IDs
-      const fields = await db.select()
-        .from(config.fieldsTable);
+    logger.info('Found existing responses', { count: existingResponses.length });
+    
+    // Create a map of field key to response record for quick lookups
+    const responseMap = new Map();
+    
+    // Get field information for field ID mapping
+    const fields = await db.select()
+      .from(config.fieldsTable);
       
-      // Create a mapping of field_key to field_id for easier lookup
-      const fieldKeyToId: Record<string, number> = {};
-      fields.forEach(field => {
-        fieldKeyToId[field[config.fieldKeyColumn]] = field.id;
-      });
-      
-      // Get existing responses to determine if we need to update or insert
-      const existingResponses = await db.select()
-        .from(config.responsesTable)
-        .where(eq(config.responsesTable.task_id, taskId));
-      
-      // Create a mapping of field_id to existing response
-      const fieldIdToResponse: Record<number, any> = {};
-      existingResponses.forEach(response => {
-        fieldIdToResponse[response.field_id] = response;
-      });
-      
-      // Current timestamp for all operations
-      const timestamp = new Date();
-      let updatedCount = 0;
-      let insertedCount = 0;
-      
-      // Process each demo data field
-      for (const [fieldKey, responseValue] of Object.entries(demoData)) {
-        const fieldId = fieldKeyToId[fieldKey];
+    // Create a map of field key to field record for quick lookups
+    const fieldMap = new Map();
+    for (const field of fields) {
+      fieldMap.set(field[config.fieldKeyColumn], field);
+    }
+    
+    // Map existing responses by field key
+    for (const response of existingResponses) {
+      const field = fields.find(f => f.id === response.field_id);
+      if (field) {
+        responseMap.set(field[config.fieldKeyColumn], response);
+      }
+    }
+    
+    // Process each field in the demo data
+    const timestamp = new Date();
+    let updatedCount = 0;
+    let insertedCount = 0;
+    let errorCount = 0;
+    
+    for (const [fieldKey, value] of Object.entries(demoData)) {
+      try {
+        const field = fieldMap.get(fieldKey);
         
-        // Skip if field ID not found
-        if (!fieldId) {
-          logger.warn(`Field key "${fieldKey}" not found in database`, { taskId });
+        if (!field) {
+          logger.warn(`Field not found for key: ${fieldKey}`);
           continue;
         }
         
-        const existingResponse = fieldIdToResponse[fieldId];
+        // Check if response already exists
+        const existingResponse = responseMap.get(fieldKey);
         
         if (existingResponse) {
           // Update existing response
           await db.update(config.responsesTable)
             .set({
-              [config.responseValueColumn]: responseValue,
-              status: 'complete',
-              version: existingResponse.version + 1,
-              updated_at: timestamp
+              [config.responseValueColumn]: value,
+              status: value ? 'FILLED' : 'EMPTY',
+              updated_at: timestamp,
+              version: existingResponse.version + 1
             })
             .where(eq(config.responsesTable.id, existingResponse.id));
-          
+            
           updatedCount++;
         } else {
-          // Insert new response
+          // Create new response
           await db.insert(config.responsesTable)
             .values({
               task_id: taskId,
-              field_id: fieldId,
-              [config.responseValueColumn]: responseValue,
-              status: 'complete',
-              version: 1,
+              field_id: field.id,
+              [config.responseValueColumn]: value,
+              status: value ? 'FILLED' : 'EMPTY',
               created_at: timestamp,
-              updated_at: timestamp
+              updated_at: timestamp,
+              version: 1
             });
-          
+            
           insertedCount++;
         }
-      }
-      
-      // Send a WebSocket broadcast to notify clients of the change
-      try {
-        await broadcastTaskUpdate(taskId);
-        logger.info('Broadcast task update for demo auto-fill', { taskId });
-      } catch (broadcastError) {
-        logger.warn('Failed to broadcast task update', { 
-          error: broadcastError instanceof Error ? broadcastError.message : 'Unknown error',
-          taskId
+      } catch (error) {
+        logger.error(`Error processing field ${fieldKey}`, {
+          error: error instanceof Error ? error.message : String(error)
         });
+        errorCount++;
       }
-      
-      // Update task status to 'in_progress' if it was 'not_started'
-      const [taskStatus] = await db.select({ status: tasks.status })
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
-      
-      if (taskStatus && taskStatus.status === 'not_started') {
-        await db.update(tasks)
-          .set({
-            status: 'in_progress',
-            updated_at: timestamp
-          })
-          .where(eq(tasks.id, taskId));
-        
-        logger.info('Updated task status to in_progress', { taskId });
-      }
-      
-      logger.info('Successfully applied demo data', {
-        taskId,
-        formType,
-        fields: Object.keys(demoData).length,
-        updated: updatedCount,
-        inserted: insertedCount
-      });
-      
-      return {
-        success: true,
-        fieldCount: updatedCount + insertedCount,
-        message: `Successfully auto-filled ${updatedCount + insertedCount} fields (${updatedCount} updated, ${insertedCount} inserted)`
-      };
-    } catch (error) {
-      logger.error('Error applying demo data', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        taskId,
-        formType
-      });
-      
-      throw error;
     }
+    
+    // Update task progress in database
+    const progress = Math.min(Math.round((insertedCount + updatedCount) / fields.length * 100), 100);
+    
+    await db.update(tasks)
+      .set({
+        progress: progress,
+        updated_at: timestamp
+      })
+      .where(eq(tasks.id, taskId));
+      
+    // Broadcast update via WebSocket for real-time UI updates
+    broadcastTaskUpdate({
+      id: taskId,
+      progress: progress,
+      status: task.status,
+      updated_at: timestamp.toISOString()
+    });
+    
+    logger.info('Demo data application completed', {
+      taskId,
+      formType,
+      inserted: insertedCount,
+      updated: updatedCount,
+      errors: errorCount,
+      progress
+    });
+    
+    return {
+      success: true,
+      message: `Successfully applied demo data to ${insertedCount + updatedCount} fields`,
+      fieldCount: insertedCount + updatedCount
+    };
   }
   
   /**
@@ -423,54 +398,29 @@ export class UniversalDemoAutoFillService {
   async autoFillTask(
     taskId: number,
     userId?: number
-  ): Promise<{
-    success: boolean;
-    formType?: FormType;
-    fieldCount?: number;
-    message: string;
-  }> {
-    try {
-      // Get task details to determine form type
-      const [task] = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
+  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
+    // First, get the task to determine its type
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
       
-      if (!task) {
-        logger.error('Task not found', { taskId });
-        return { success: false, message: 'Task not found' };
-      }
-      
-      // Determine form type from task type
-      const formType = getFormTypeFromTaskType(task.task_type);
-      
-      if (!formType) {
-        logger.error('Unknown form type for task', { taskId, taskType: task.task_type });
-        return { success: false, message: `Unknown form type for task type: ${task.task_type}` };
-      }
-      
-      // Apply the demo data
-      const result = await this.applyDemoData(taskId, formType, userId);
-      
-      return {
-        success: result.success,
-        formType,
-        fieldCount: result.fieldCount,
-        message: result.message
-      };
-    } catch (error) {
-      logger.error('Error in autoFillTask', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        taskId
-      });
-      
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
-      };
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
     }
+    
+    // Determine form type from task type
+    const formType = getFormTypeFromTaskType(task.task_type);
+    
+    if (!formType) {
+      throw new Error(`Could not determine form type for task type: ${task.task_type}`);
+    }
+    
+    logger.info('Auto-detected form type from task', { taskId, taskType: task.task_type, formType });
+    
+    // Apply demo data for the detected form type
+    return this.applyDemoData(taskId, formType, userId);
   }
 }
 
-// Export a singleton instance
+// Export a singleton instance for use throughout the application
 export const universalDemoAutoFillService = new UniversalDemoAutoFillService();
