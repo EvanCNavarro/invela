@@ -106,6 +106,7 @@ export function TopNav() {
             isGlobalSearch
             onSearch={handleSearch}
             containerClassName="w-full"
+            autoFocus={false}
           />
         </div>
 
