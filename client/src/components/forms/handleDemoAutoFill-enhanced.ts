@@ -19,10 +19,13 @@ interface DemoAutoFillOptions {
 }
 
 /**
- * Universal demo auto-fill handler that works for all form types
+ * Enhanced universal demo auto-fill handler that works for all form types
  * 
  * This function uses the universal demo auto-fill endpoint first,
  * and if that fails, falls back to the legacy endpoints for specific form types.
+ * 
+ * It uses an improved approach for applying form data to ensure proper
+ * field registration and rendering.
  */
 export async function handleDemoAutoFill({
   taskId,
@@ -110,23 +113,12 @@ export async function handleDemoAutoFill({
       if (result.formData && typeof result.formData === 'object' && Object.keys(result.formData).length > 0) {
         logger.info(`Using form data directly from demo-autofill response (${Object.keys(result.formData).length} fields)`);
         
-        // Apply each field individually to ensure form field registration
-        for (const [fieldKey, value] of Object.entries(result.formData)) {
-          try {
-            if (value !== null && value !== undefined) {
-              await updateField(fieldKey, value);
-              console.log(`Updated field ${fieldKey} with value:`, value);
-            }
-          } catch (fieldError) {
-            console.warn(`Failed to update field ${fieldKey}:`, fieldError);
-          }
-        }
-        
-        // Then do a complete reset with all values
-        resetForm(result.formData);
-        
-        // Add extra delay to allow UI to fully render
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Use our enhanced utility to properly apply form data
+        await applyFormData(
+          result.formData,
+          updateField,
+          resetForm
+        );
       } else {
         // Fall back to getting the data through separate requests
         logger.info('Form data not included in response, fetching separately...');
@@ -146,12 +138,24 @@ export async function handleDemoAutoFill({
             // Use the saved form data if available
             if (taskData.savedFormData && Object.keys(taskData.savedFormData).length > 0) {
               logger.info('Applying saved form data from task response');
-              resetForm(taskData.savedFormData);
+              
+              // Use our enhanced utility to properly apply form data
+              await applyFormData(
+                taskData.savedFormData,
+                updateField,
+                resetForm
+              );
             } else if (formService) {
               // Fall back to the form service if needed
               logger.info('Falling back to form service to get data');
               const refreshedData = await formService.getFormData();
-              resetForm(refreshedData);
+              
+              // Use our enhanced utility to properly apply form data
+              await applyFormData(
+                refreshedData,
+                updateField,
+                resetForm
+              );
             }
           } else {
             throw new Error(`Failed to get task data: ${taskResponse.status}`);
@@ -163,7 +167,13 @@ export async function handleDemoAutoFill({
           if (formService) {
             try {
               const refreshedData = await formService.getFormData();
-              resetForm(refreshedData);
+              
+              // Use our enhanced utility to properly apply form data
+              await applyFormData(
+                refreshedData,
+                updateField,
+                resetForm
+              );
             } catch (fsError) {
               logger.error(`Form service error: ${fsError instanceof Error ? fsError.message : String(fsError)}`);
             }
@@ -263,12 +273,26 @@ export async function handleDemoAutoFill({
             // Use the saved form data if available
             if (taskData.savedFormData && Object.keys(taskData.savedFormData).length > 0) {
               logger.info('Applying saved form data from task response');
-              resetForm(taskData.savedFormData);
+              
+              // Use our enhanced utility to properly apply form data for legacy endpoint
+              await applyFormData(
+                taskData.savedFormData,
+                updateField,
+                resetForm,
+                true // isLegacy = true
+              );
             } else if (formService) {
               // Fall back to the form service if needed
               logger.info('Falling back to form service to get data');
               const refreshedData = await formService.getFormData();
-              resetForm(refreshedData);
+              
+              // Use our enhanced utility to properly apply form data for legacy endpoint
+              await applyFormData(
+                refreshedData,
+                updateField,
+                resetForm,
+                true // isLegacy = true
+              );
             }
           } else {
             throw new Error(`Failed to get task data: ${taskResponse.status}`);
@@ -280,7 +304,14 @@ export async function handleDemoAutoFill({
           if (formService) {
             try {
               const refreshedData = await formService.getFormData();
-              resetForm(refreshedData);
+              
+              // Use our enhanced utility to properly apply form data for legacy endpoint
+              await applyFormData(
+                refreshedData,
+                updateField,
+                resetForm,
+                true // isLegacy = true
+              );
             } catch (fsError) {
               logger.error(`Form service error: ${fsError instanceof Error ? fsError.message : String(fsError)}`);
             }
@@ -302,7 +333,7 @@ export async function handleDemoAutoFill({
         // Show success message
         toast({
           title: 'Demo Auto-Fill Complete',
-          description: `Successfully filled form fields with sample data.`,
+          description: 'Successfully filled form with sample data.',
           variant: 'success',
         });
         
@@ -314,13 +345,18 @@ export async function handleDemoAutoFill({
         }
         
       } else {
-        throw new Error(result.message || 'Failed to auto-fill the form');
+        logger.error('Legacy demo auto-fill failed:', result.message);
+        toast({
+          title: 'Demo Auto-Fill Failed',
+          description: result.message || 'Failed to auto-fill the form. Please try again.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      logger.error('Legacy endpoint error:', error);
+      logger.error('Error during legacy demo auto-fill:', error);
       toast({
-        title: 'Demo Auto-Fill Failed',
-        description: error instanceof Error ? error.message : 'Failed to auto-fill the form. Please try again.',
+        title: 'Auto-Fill Error',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
         variant: 'destructive',
       });
     }
