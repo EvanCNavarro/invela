@@ -24,6 +24,16 @@ import { eq } from 'drizzle-orm';
 // Configuration for direct database access to form data
 type FormTypeKey = 'kyb' | 'ky3p' | 'open_banking';
 
+// Utility type for response data
+type FormDataType = Record<string, string>;
+
+// Utility function to safely set field values in form data
+function safelySetFieldValue(formData: FormDataType, fieldKey: any, value: any): void {
+  if (typeof fieldKey === 'string') {
+    formData[fieldKey] = String(value || '');
+  }
+}
+
 interface FormTypeConfig {
   fieldsTable: any;
   responsesTable: any;
@@ -323,13 +333,13 @@ router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
       }
       
       // Construct form data object from responses
-      formData = {};
+      formData = {} as Record<string, string>;
       for (const response of responses) {
         const field = fieldMap.get(response.field_id);
         if (field) {
           // Use the field key as the property name
-          const fieldKey = field[config.fieldKeyColumn];
-          const value = response[config.responseValueColumn] || '';
+          const fieldKey = field[config.fieldKeyColumn] as string;
+          const value = response[config.responseValueColumn] as string || '';
           
           // Add this field's value to the form data object
           formData[fieldKey] = value;
@@ -412,13 +422,13 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
       }
       
       // Construct form data object from responses
-      formData = {};
+      formData = {} as Record<string, string>;
       for (const response of responses) {
         const field = fieldMap.get(response.field_id);
         if (field) {
           // Use the field key as the property name
-          const fieldKey = field[config.fieldKeyColumn];
-          const value = response[config.responseValueColumn] || '';
+          const fieldKey = field[config.fieldKeyColumn] as string;
+          const value = response[config.responseValueColumn] as string || '';
           
           // Add this field's value to the form data object
           formData[fieldKey] = value;
@@ -501,13 +511,13 @@ router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, 
       }
       
       // Construct form data object from responses
-      formData = {};
+      formData = {} as Record<string, string>;
       for (const response of responses) {
         const field = fieldMap.get(response.field_id);
         if (field) {
           // Use the field key as the property name
-          const fieldKey = field[config.fieldKeyColumn];
-          const value = response[config.responseValueColumn] || '';
+          const fieldKey = field[config.fieldKeyColumn] as string;
+          const value = response[config.responseValueColumn] as string || '';
           
           // Add this field's value to the form data object
           formData[fieldKey] = value;
