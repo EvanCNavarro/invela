@@ -37,6 +37,7 @@ import TestFormUpdate from "./test-form-update";
 import FormDbTestPage from "./form-db-test";
 import FormPerformancePage from "@/pages/FormPerformancePage";
 import ProgressiveLoadingDemo from "@/components/dev/ProgressiveLoadingDemo";
+import TestDemoAutoFill from "@/pages/test-demo-autofill";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -295,6 +296,11 @@ function Router() {
         {/* Progressive Loading Demo - For Testing Section-Based Loading */}
         <Route path="/progressive-loading-demo">
           <ProgressiveLoadingDemo />
+        </Route>
+        
+        {/* Demo Auto-Fill Test Page - For Testing Universal Demo Auto-Fill */}
+        <Route path="/test-demo-autofill">
+          <TestDemoAutoFill />
         </Route>
         
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
