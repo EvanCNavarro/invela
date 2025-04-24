@@ -7,7 +7,7 @@
 
 import { db } from "@db";
 import { kybResponses, ky3pResponses, openBankingResponses, tasks } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 const logger = {
   info: (message: string) => console.log(message),
   error: (message: string) => console.error(message)
@@ -99,18 +99,19 @@ export class UniversalClearFieldsService {
       logger.info(`[UniversalClearFieldsService] Resetting progress for task ID ${taskId}`);
       
       // Update the task progress to 0 and status to "not_started"
-      await db.execute(
-        `UPDATE tasks 
-        SET progress = 0, status = 'not_started', 
-            updated_at = NOW(), 
-            metadata = jsonb_set(
-              COALESCE(metadata, '{}'::jsonb), 
-              '{lastProgressReconciliation}', 
-              to_jsonb(NOW())
-            )
-        WHERE id = $1`,
-        [taskId]
-      );
+      await db
+        .update(tasks)
+        .set({
+          progress: 0,
+          status: 'not_started',
+          updated_at: new Date(),
+          metadata: sql`jsonb_set(
+            COALESCE(metadata, '{}'::jsonb),
+            '{lastProgressReconciliation}'::text[],
+            to_jsonb(NOW())
+          )`
+        })
+        .where(eq(tasks.id, taskId));
       
       return {
         success: true,
