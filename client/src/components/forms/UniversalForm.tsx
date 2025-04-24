@@ -51,8 +51,8 @@ import { CheckCircle } from 'lucide-react';
 
 import SectionContent from './SectionContent';
 
-// Import the demo autofill utility
-import { handleDemoAutoFill } from './handleDemoAutoFill';
+// Import the enhanced demo autofill utility
+import { handleDemoAutoFill } from './handleDemoAutoFill-enhanced';
 
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;

@@ -8,9 +8,7 @@
  * error handling and validation to ensure form data is properly applied.
  */
 
-import getLogger from '@/utils/logger';
-
-const logger = getLogger('updateDemoFormUtils');
+import { FormServiceInterface } from '../../services/formService';
 
 /**
  * Apply form data values individually before resetting the form
@@ -29,44 +27,27 @@ export async function applyFormData(
   resetForm: (data: Record<string, any>) => void,
   isLegacy: boolean = false
 ): Promise<void> {
-  if (!formData || typeof formData !== 'object' || Object.keys(formData).length === 0) {
-    logger.warn('Empty or invalid form data, nothing to apply');
-    return;
-  }
-
-  const prefix = isLegacy ? 'Legacy' : 'Standard';
-  logger.info(`${prefix} applying form data with ${Object.keys(formData).length} fields`);
-  
-  // First apply each field individually to ensure they're registered
-  let updatedCount = 0;
-  let errorCount = 0;
-  
-  for (const [fieldKey, value] of Object.entries(formData)) {
-    try {
-      if (value !== null && value !== undefined) {
-        await updateField(fieldKey, value);
-        console.log(`[${prefix}] Updated field ${fieldKey} with value:`, value);
-        updatedCount++;
+  try {
+    console.log(`[Demo Auto-Fill] Applying form data with ${Object.keys(formData).length} fields${isLegacy ? ' (legacy mode)' : ''}`);
+    
+    // First pass: Update fields individually to ensure they're registered
+    for (const [key, value] of Object.entries(formData)) {
+      try {
+        await updateField(key, value);
+      } catch (fieldError) {
+        console.error(`[Demo Auto-Fill] Error updating field ${key}:`, fieldError);
       }
-    } catch (fieldError) {
-      console.warn(`[${prefix}] Failed to update field ${fieldKey}:`, fieldError);
-      errorCount++;
     }
+    
+    // Second pass: Reset the entire form to ensure UI state is in sync
+    resetForm(formData);
+    
+    console.log('[Demo Auto-Fill] Form data applied successfully');
+  } catch (error) {
+    console.error('[Demo Auto-Fill] Error applying form data:', error);
+    // Fallback to direct reset if individual updates fail
+    resetForm(formData);
   }
-  
-  logger.info(`${prefix} individual field updates completed:`, {
-    total: Object.keys(formData).length,
-    updated: updatedCount,
-    errors: errorCount
-  });
-  
-  // Then reset the entire form to ensure all values are applied
-  resetForm(formData);
-  logger.info(`${prefix} form reset completed with all values`);
-  
-  // Add a delay to allow UI to fully render
-  await new Promise(resolve => setTimeout(resolve, 500));
-  logger.info(`${prefix} delay complete, form should be updated`);
 }
 
 /**
@@ -81,34 +62,62 @@ export async function applyFormData(
 export function verifyFormData(
   formData: Record<string, any>,
   form: any
-): { success: boolean; matchCount: number; mismatchCount: number; mismatches: string[] } {
-  if (!formData || !form || !form.getValues) {
+): { success: boolean; matches: number; mismatches: number; details: any[] } {
+  try {
+    if (!form || typeof form.getValues !== 'function') {
+      return { 
+        success: false, 
+        matches: 0, 
+        mismatches: 0,
+        details: [{ error: 'Invalid form object' }] 
+      };
+    }
+    
+    // Get current form values
+    const currentValues = form.getValues();
+    const verificationDetails: any[] = [];
+    let matches = 0;
+    let mismatches = 0;
+    
+    // Compare each expected field value with actual value
+    for (const [key, expectedValue] of Object.entries(formData)) {
+      const actualValue = currentValues[key];
+      const isMatch = 
+        (expectedValue === actualValue) || 
+        (expectedValue === null && actualValue === '') ||
+        (expectedValue === '' && actualValue === null) ||
+        (expectedValue === undefined && actualValue === '') ||
+        (expectedValue === '' && actualValue === undefined) ||
+        (JSON.stringify(expectedValue) === JSON.stringify(actualValue));
+      
+      if (isMatch) {
+        matches++;
+      } else {
+        mismatches++;
+        verificationDetails.push({
+          field: key,
+          expected: expectedValue,
+          actual: actualValue,
+          match: false
+        });
+      }
+    }
+    
+    return {
+      success: mismatches === 0,
+      matches,
+      mismatches,
+      details: verificationDetails
+    };
+  } catch (error) {
+    console.error('[Demo Auto-Fill] Error verifying form data:', error);
     return { 
       success: false, 
-      matchCount: 0, 
-      mismatchCount: 0, 
-      mismatches: ['Form or form data not provided'] 
+      matches: 0, 
+      mismatches: 0, 
+      details: [{ error: String(error) }] 
     };
   }
-  
-  const currentValues = form.getValues();
-  const mismatches: string[] = [];
-  let matchCount = 0;
-  
-  for (const [fieldKey, expectedValue] of Object.entries(formData)) {
-    if (currentValues[fieldKey] !== expectedValue) {
-      mismatches.push(fieldKey);
-    } else {
-      matchCount++;
-    }
-  }
-  
-  return {
-    success: mismatches.length === 0,
-    matchCount,
-    mismatchCount: mismatches.length,
-    mismatches
-  };
 }
 
 /**
@@ -130,55 +139,67 @@ export async function applyAndVerifyFormData(
   resetForm: (data: Record<string, any>) => void,
   form: any,
   isLegacy: boolean = false
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; details: any }> {
   try {
-    // Apply the form data
+    // First attempt: Standard approach
     await applyFormData(formData, updateField, resetForm, isLegacy);
     
-    // Verify the form data was properly applied
+    // Verify the data was applied correctly
     const verification = verifyFormData(formData, form);
     
-    if (verification.success) {
+    // If we have mismatches, try a more aggressive approach
+    if (!verification.success) {
+      console.warn(
+        `[Demo Auto-Fill] First application attempt had ${verification.mismatches} mismatches. Trying direct approach...`
+      );
+      
+      // Direct approach: Force form reset first, then apply fields individually
+      resetForm(formData);
+      
+      // Apply fields individually, with a slight delay to ensure form state updates
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Update each field individually
+      for (const [key, value] of Object.entries(formData)) {
+        try {
+          await updateField(key, value);
+        } catch (fieldError) {
+          console.error(`[Demo Auto-Fill] Error updating field ${key} (retry):`, fieldError);
+        }
+      }
+      
+      // Final form reset to ensure consistent state
+      resetForm(formData);
+      
+      // Re-verify
+      const secondVerification = verifyFormData(formData, form);
+      
       return {
-        success: true,
-        message: `Successfully applied all ${verification.matchCount} fields`
+        success: secondVerification.success,
+        details: {
+          firstAttempt: verification,
+          secondAttempt: secondVerification
+        }
       };
     }
     
-    // If verification failed, try a more direct approach
-    logger.warn('Form data verification failed, trying direct approach', {
-      mismatches: verification.mismatches,
-      mismatchCount: verification.mismatchCount
-    });
+    return {
+      success: verification.success,
+      details: { verification }
+    };
+  } catch (error) {
+    console.error('[Demo Auto-Fill] Error in applyAndVerifyFormData:', error);
     
-    // Try a more direct approach for each mismatched field
-    for (const fieldKey of verification.mismatches) {
-      try {
-        const value = formData[fieldKey];
-        if (value !== null && value !== undefined) {
-          // Try setting the value directly on the form
-          form.setValue(fieldKey, value);
-          console.log(`Direct set field ${fieldKey} to:`, value);
-        }
-      } catch (fieldError) {
-        console.warn(`Direct field update failed for ${fieldKey}:`, fieldError);
-      }
+    // Last resort fallback
+    try {
+      resetForm(formData);
+    } catch (resetError) {
+      console.error('[Demo Auto-Fill] Error in fallback resetForm:', resetError);
     }
     
-    // Verify again after direct approach
-    const secondVerification = verifyFormData(formData, form);
-    
-    return {
-      success: secondVerification.success,
-      message: secondVerification.success
-        ? `Successfully applied all fields after direct approach`
-        : `Failed to apply ${secondVerification.mismatchCount} fields: ${secondVerification.mismatches.join(', ')}`
-    };
-    
-  } catch (error) {
     return {
       success: false,
-      message: `Error applying form data: ${error instanceof Error ? error.message : String(error)}`
+      details: { error: String(error) }
     };
   }
 }
