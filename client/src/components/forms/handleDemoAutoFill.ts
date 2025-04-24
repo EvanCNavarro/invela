@@ -73,7 +73,7 @@ export async function handleDemoAutoFill({
       });
     } catch (error) {
       // If universal endpoint fails, fall back to legacy endpoints
-      logger.warn(`Universal endpoint failed, trying legacy endpoint for ${taskType}`);
+      logger.warn(`Universal endpoint failed, trying legacy endpoint for ${taskType}: ${error instanceof Error ? error.message : String(error)}`);
       return await useLegacyEndpoint(taskId, taskType);
     }
 
@@ -85,12 +85,54 @@ export async function handleDemoAutoFill({
     const result = await response.json();
     
     if (result.success) {
-      logger.info(`Universal auto-fill completed for ${taskType} with ${result.count || 'unknown'} responses`);
+      logger.info(`Universal auto-fill completed for ${taskType} with ${result.fieldCount || 'unknown'} fields`);
       
-      // Refresh form data
-      if (formService) {
-        const refreshedData = await formService.getFormData();
-        resetForm(refreshedData);
+      // Check if the server directly included the form data in the response
+      if (result.formData && typeof result.formData === 'object' && Object.keys(result.formData).length > 0) {
+        logger.info(`Using form data directly from demo-autofill response (${Object.keys(result.formData).length} fields)`);
+        resetForm(result.formData);
+      } else {
+        // Fall back to getting the data through separate requests
+        logger.info('Form data not included in response, fetching separately...');
+        
+        // Add a small delay to allow the server to process updates
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        try {
+          // Make a direct call to the backend to get the actual form data
+          logger.info(`Fetching data directly from task endpoint for ${taskId}`);
+          const taskResponse = await fetch(`/api/tasks.json/${taskId}`);
+          
+          if (taskResponse.ok) {
+            const taskData = await taskResponse.json();
+            logger.info(`Got fresh task data with ${taskData.savedFormData ? Object.keys(taskData.savedFormData).length : 0} fields`);
+            
+            // Use the saved form data if available
+            if (taskData.savedFormData && Object.keys(taskData.savedFormData).length > 0) {
+              logger.info('Applying saved form data from task response');
+              resetForm(taskData.savedFormData);
+            } else if (formService) {
+              // Fall back to the form service if needed
+              logger.info('Falling back to form service to get data');
+              const refreshedData = await formService.getFormData();
+              resetForm(refreshedData);
+            }
+          } else {
+            throw new Error(`Failed to get task data: ${taskResponse.status}`);
+          }
+        } catch (refreshError) {
+          logger.warn(`Error refreshing form data: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
+          
+          // Still try to use the form service if available
+          if (formService) {
+            try {
+              const refreshedData = await formService.getFormData();
+              resetForm(refreshedData);
+            } catch (fsError) {
+              logger.error(`Form service error: ${fsError instanceof Error ? fsError.message : String(fsError)}`);
+            }
+          }
+        }
       }
       
       // Force a re-render to update the UI
@@ -98,18 +140,26 @@ export async function handleDemoAutoFill({
       
       // Update progress if needed
       if (onProgress) {
-        await refreshStatus();
+        try {
+          await refreshStatus();
+        } catch (statusError) {
+          logger.warn(`Failed to refresh status: ${statusError instanceof Error ? statusError.message : String(statusError)}`);
+        }
       }
       
       // Show success message
       toast({
         title: 'Demo Auto-Fill Complete',
-        description: `Successfully filled ${result.count || 'all'} form fields with sample data.`,
+        description: `Successfully filled ${result.fieldCount || 'all'} form fields with sample data.`,
         variant: 'success',
       });
       
       // Save progress
-      await saveProgress();
+      try {
+        await saveProgress();
+      } catch (saveError) {
+        logger.warn(`Failed to save progress: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+      }
       
     } else {
       logger.error('Demo auto-fill failed:', result.message);
@@ -162,10 +212,43 @@ export async function handleDemoAutoFill({
       if (result.success) {
         logger.info(`Legacy auto-fill completed for ${taskType}`);
         
-        // Refresh form data
-        if (formService) {
-          const refreshedData = await formService.getFormData();
-          resetForm(refreshedData);
+        // Add a small delay to allow the server to process updates
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        try {
+          // Make a direct call to the backend to get the actual form data
+          logger.info(`Fetching data directly from task endpoint for ${taskId}`);
+          const taskResponse = await fetch(`/api/tasks.json/${taskId}`);
+          
+          if (taskResponse.ok) {
+            const taskData = await taskResponse.json();
+            logger.info(`Got fresh task data with ${taskData.savedFormData ? Object.keys(taskData.savedFormData).length : 0} fields`);
+            
+            // Use the saved form data if available
+            if (taskData.savedFormData && Object.keys(taskData.savedFormData).length > 0) {
+              logger.info('Applying saved form data from task response');
+              resetForm(taskData.savedFormData);
+            } else if (formService) {
+              // Fall back to the form service if needed
+              logger.info('Falling back to form service to get data');
+              const refreshedData = await formService.getFormData();
+              resetForm(refreshedData);
+            }
+          } else {
+            throw new Error(`Failed to get task data: ${taskResponse.status}`);
+          }
+        } catch (refreshError) {
+          logger.warn(`Error refreshing form data (legacy endpoint): ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
+          
+          // Still try to use the form service if available
+          if (formService) {
+            try {
+              const refreshedData = await formService.getFormData();
+              resetForm(refreshedData);
+            } catch (fsError) {
+              logger.error(`Form service error: ${fsError instanceof Error ? fsError.message : String(fsError)}`);
+            }
+          }
         }
         
         // Force a re-render to update the UI
@@ -173,7 +256,11 @@ export async function handleDemoAutoFill({
         
         // Update progress if needed
         if (onProgress) {
-          await refreshStatus();
+          try {
+            await refreshStatus();
+          } catch (statusError) {
+            logger.warn(`Failed to refresh status (legacy): ${statusError instanceof Error ? statusError.message : String(statusError)}`);
+          }
         }
         
         // Show success message
@@ -184,7 +271,11 @@ export async function handleDemoAutoFill({
         });
         
         // Save progress
-        await saveProgress();
+        try {
+          await saveProgress();
+        } catch (saveError) {
+          logger.warn(`Failed to save progress (legacy): ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+        }
         
       } else {
         throw new Error(result.message || 'Failed to auto-fill the form');

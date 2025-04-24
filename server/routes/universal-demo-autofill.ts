@@ -118,13 +118,36 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
         fieldCount: result.fieldCount
       });
       
-      // Return success information
+      // Get the current form data to send back in the response
+      // This will help the client correctly update the form without additional requests
+      let formData = null;
+      try {
+        if (formType === 'kyb') {
+          const kybService = require('../services/kybService');
+          formData = await kybService.getKybFormData(taskId);
+        } else if (formType === 'ky3p') {
+          const ky3pService = require('../services/ky3pService');
+          formData = await ky3pService.getKy3pFormData(taskId);
+        } else if (formType === 'open_banking') {
+          const obService = require('../services/openBankingService');
+          formData = await obService.getOpenBankingFormData(taskId);
+        }
+      } catch (formDataError) {
+        logger.warn('Failed to get form data for response', {
+          error: formDataError instanceof Error ? formDataError.message : String(formDataError),
+          taskId,
+          formType
+        });
+      }
+
+      // Return success information along with the current form data
       res.json({
         success: true,
         message: result.message,
         fieldCount: result.fieldCount,
         taskId,
-        formType
+        formType,
+        formData: formData || null
       });
     } catch (serviceError) {
       // Handle specific errors from the service
@@ -183,10 +206,20 @@ router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
       req.user.id
     );
     
+    // Get the current form data to send back in the response
+    let formData = null;
+    try {
+      const kybService = require('../services/kybService');
+      formData = await kybService.getKybFormData(taskId);
+    } catch (formDataError) {
+      console.warn('Failed to get KYB form data for response', formDataError);
+    }
+    
     res.json({
       success: true,
       message: result.message,
-      fieldCount: result.fieldCount
+      fieldCount: result.fieldCount,
+      formData: formData || null
     });
   } catch (error) {
     console.error('Error in KYB demo-autofill:', error);
@@ -220,10 +253,20 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
       req.user.id
     );
     
+    // Get the current form data to send back in the response
+    let formData = null;
+    try {
+      const ky3pService = require('../services/ky3pService');
+      formData = await ky3pService.getKy3pFormData(taskId);
+    } catch (formDataError) {
+      console.warn('Failed to get KY3P form data for response', formDataError);
+    }
+    
     res.json({
       success: true,
       message: result.message,
-      fieldCount: result.fieldCount
+      fieldCount: result.fieldCount,
+      formData: formData || null
     });
   } catch (error) {
     console.error('Error in KY3P demo-autofill:', error);
@@ -257,10 +300,20 @@ router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, 
       req.user.id
     );
     
+    // Get the current form data to send back in the response
+    let formData = null;
+    try {
+      const obService = require('../services/openBankingService');
+      formData = await obService.getOpenBankingFormData(taskId);
+    } catch (formDataError) {
+      console.warn('Failed to get Open Banking form data for response', formDataError);
+    }
+    
     res.json({
       success: true,
       message: result.message,
-      fieldCount: result.fieldCount
+      fieldCount: result.fieldCount,
+      formData: formData || null
     });
   } catch (error) {
     console.error('Error in Open Banking demo-autofill:', error);
