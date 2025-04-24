@@ -269,7 +269,7 @@ export class UniversalDemoAutoFillService {
     taskId: number,
     formType: FormType,
     userId?: number
-  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
+  ): Promise<{ success: boolean; message: string; fieldCount: number; fieldsWithValues?: number; fieldsWithEmptyValues?: number }> {
     logger.info('Applying demo data directly to database', { taskId, formType, userId });
     
     // Generate the demo data first
@@ -383,9 +383,13 @@ export class UniversalDemoAutoFillService {
         
         if (existingResponse) {
           // Update existing response - ensure status is properly set
-          const status = cleanValue && cleanValue !== '' ? 'FILLED' : 'EMPTY';
+          // Fixed status determination to ensure non-empty values are correctly marked as FILLED
+          const status = (cleanValue !== null && cleanValue !== undefined && cleanValue !== '') ? 'FILLED' : 'EMPTY';
+          
           logger.info(`Updating existing response for ${fieldKey}:`, {
             value: cleanValue,
+            valueType: typeof cleanValue,
+            valueLength: typeof cleanValue === 'string' ? cleanValue.length : 'N/A',
             status,
             responseId: existingResponse.id
           });
@@ -414,10 +418,14 @@ export class UniversalDemoAutoFillService {
           
           updatedCount++;
         } else {
-          // Create new response
-          const status = cleanValue && cleanValue !== '' ? 'FILLED' : 'EMPTY';
+          // Create new response - ensure status is properly set
+          // Fixed status determination to ensure non-empty values are correctly marked as FILLED
+          const status = (cleanValue !== null && cleanValue !== undefined && cleanValue !== '') ? 'FILLED' : 'EMPTY';
+          
           logger.info(`Creating new response for ${fieldKey}:`, {
             value: cleanValue,
+            valueType: typeof cleanValue,
+            valueLength: typeof cleanValue === 'string' ? cleanValue.length : 'N/A',
             status,
             fieldId: field.id
           });
@@ -502,7 +510,7 @@ export class UniversalDemoAutoFillService {
   async autoFillTask(
     taskId: number,
     userId?: number
-  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
+  ): Promise<{ success: boolean; message: string; fieldCount: number; fieldsWithValues?: number; fieldsWithEmptyValues?: number }> {
     // First, get the task to determine its type
     const [task] = await db.select()
       .from(tasks)
