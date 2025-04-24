@@ -461,11 +461,31 @@ export class UniversalDemoAutoFillService {
       })
       .where(eq(tasks.id, taskId));
       
+    // Determine the appropriate status based on filled fields
+    // If we filled any fields, we should set the status to "in_progress"
+    const updatedStatus = fieldsWithValues.length > 0 ? 'in_progress' : task.status;
+    
+    logger.info('Determining task status', {
+      taskId,
+      fieldsWithValues: fieldsWithValues.length,
+      fieldsWithEmptyValues: fieldsWithEmptyValues.length,
+      originalStatus: task.status,
+      updatedStatus,
+      timestamp: timestamp.toISOString()
+    });
+    
+    // Also update the task status in the database
+    await db.update(tasks)
+      .set({
+        status: updatedStatus
+      })
+      .where(eq(tasks.id, taskId));
+      
     // Broadcast update via WebSocket for real-time UI updates
     broadcastTaskUpdate({
       id: taskId,
       progress: progress,
-      status: task.status,
+      status: updatedStatus,
       updated_at: timestamp.toISOString()
     });
     
