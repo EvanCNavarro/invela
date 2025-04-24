@@ -10,8 +10,47 @@ import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 import { universalDemoAutoFillService, getFormTypeFromTaskType } from '../services/universalDemoAutoFillService';
 import { db } from '../../db';
-import { tasks } from '../../db/schema';
+import { 
+  tasks,
+  kybFields,
+  kybResponses,
+  ky3pFields,
+  ky3pResponses,
+  openBankingFields,
+  openBankingResponses
+} from '../../db/schema';
 import { eq } from 'drizzle-orm';
+
+// Configuration for direct database access to form data
+type FormTypeKey = 'kyb' | 'ky3p' | 'open_banking';
+
+interface FormTypeConfig {
+  fieldsTable: any;
+  responsesTable: any;
+  fieldKeyColumn: string;
+  responseValueColumn: string;
+}
+
+const formTypeConfigs: Record<FormTypeKey, FormTypeConfig> = {
+  kyb: {
+    fieldsTable: kybFields,
+    responsesTable: kybResponses,
+    fieldKeyColumn: 'field_key',
+    responseValueColumn: 'response_value'
+  },
+  ky3p: {
+    fieldsTable: ky3pFields,
+    responsesTable: ky3pResponses,
+    fieldKeyColumn: 'field_key',
+    responseValueColumn: 'response_value'
+  },
+  open_banking: {
+    fieldsTable: openBankingFields,
+    responsesTable: openBankingResponses,
+    fieldKeyColumn: 'field_key',
+    responseValueColumn: 'response_value'
+  }
+};
 
 const router = Router();
 const logger = new Logger('UniversalDemoAutoFillRouter');
@@ -122,22 +161,75 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
       // This will help the client correctly update the form without additional requests
       let formData = null;
       try {
-        if (formType === 'kyb') {
-          const kybService = require('../services/kybService');
-          formData = await kybService.getKybFormData(taskId);
-        } else if (formType === 'ky3p') {
-          const ky3pService = require('../services/ky3pService');
-          formData = await ky3pService.getKy3pFormData(taskId);
-        } else if (formType === 'open_banking') {
-          const obService = require('../services/openBankingService');
-          formData = await obService.getOpenBankingFormData(taskId);
+        // Get form data directly from the database 
+        const config = formTypeConfigs[formType];
+        if (!config) {
+          throw new Error(`Unknown form type: ${formType}`);
         }
+        
+        logger.info(`Fetching form data directly from database for ${formType} task ${taskId}`);
+        
+        // Get all responses for this task
+        const responses = await db.select()
+          .from(config.responsesTable)
+          .where(eq(config.responsesTable.task_id, taskId));
+          
+        logger.info(`Found ${responses.length} response records for task ${taskId}`);
+        
+        // Get all field definitions
+        const fields = await db.select()
+          .from(config.fieldsTable);
+        
+        // Create a map of field IDs to field definitions for quick lookup
+        const fieldMap = new Map();
+        for (const field of fields) {
+          fieldMap.set(field.id, field);
+        }
+        
+        // Construct form data object from responses
+        formData = {};
+        for (const response of responses) {
+          const field = fieldMap.get(response.field_id);
+          if (field) {
+            // Use the field key as the property name
+            const fieldKey = field[config.fieldKeyColumn];
+            const value = response[config.responseValueColumn] || '';
+            
+            // Add this field's value to the form data object
+            formData[fieldKey] = value;
+            
+            logger.info(`Added ${fieldKey} = "${value}" (${response.status}) to form data`);
+          }
+        }
+        
+        logger.info(`Constructed form data with ${Object.keys(formData).length} fields`);
+        
       } catch (formDataError) {
         logger.warn('Failed to get form data for response', {
           error: formDataError instanceof Error ? formDataError.message : String(formDataError),
           taskId,
           formType
         });
+        
+        // Fall back to using form-specific services if direct approach fails
+        try {
+          if (formType === 'kyb') {
+            const kybService = require('../services/kybService');
+            formData = await kybService.getKybFormData(taskId);
+          } else if (formType === 'ky3p') {
+            const ky3pService = require('../services/ky3pService');
+            formData = await ky3pService.getKy3pFormData(taskId);
+          } else if (formType === 'open_banking') {
+            const obService = require('../services/openBankingService');
+            formData = await obService.getOpenBankingFormData(taskId);
+          }
+        } catch (backupError) {
+          logger.error('Failed to get form data using backup method', {
+            error: backupError instanceof Error ? backupError.message : String(backupError),
+            taskId,
+            formType
+          });
+        }
       }
 
       // Return success information along with the current form data
@@ -209,10 +301,52 @@ router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
     // Get the current form data to send back in the response
     let formData = null;
     try {
-      const kybService = require('../services/kybService');
-      formData = await kybService.getKybFormData(taskId);
+      // Get form data directly from the database 
+      const formType = 'kyb';
+      const config = formTypeConfigs[formType];
+      
+      // Get all responses for this task
+      const responses = await db.select()
+        .from(config.responsesTable)
+        .where(eq(config.responsesTable.task_id, taskId));
+        
+      console.log(`Found ${responses.length} response records for task ${taskId}`);
+      
+      // Get all field definitions
+      const fields = await db.select()
+        .from(config.fieldsTable);
+      
+      // Create a map of field IDs to field definitions for quick lookup
+      const fieldMap = new Map();
+      for (const field of fields) {
+        fieldMap.set(field.id, field);
+      }
+      
+      // Construct form data object from responses
+      formData = {};
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field) {
+          // Use the field key as the property name
+          const fieldKey = field[config.fieldKeyColumn];
+          const value = response[config.responseValueColumn] || '';
+          
+          // Add this field's value to the form data object
+          formData[fieldKey] = value;
+        }
+      }
+      
+      console.log(`Constructed KYB form data with ${Object.keys(formData).length} fields`);
     } catch (formDataError) {
       console.warn('Failed to get KYB form data for response', formDataError);
+      
+      // Fall back to service if direct db approach fails
+      try {
+        const kybService = require('../services/kybService');
+        formData = await kybService.getKybFormData(taskId);
+      } catch (fallbackError) {
+        console.error('Fallback KYB data fetch also failed', fallbackError);
+      }
     }
     
     res.json({
@@ -256,10 +390,52 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
     // Get the current form data to send back in the response
     let formData = null;
     try {
-      const ky3pService = require('../services/ky3pService');
-      formData = await ky3pService.getKy3pFormData(taskId);
+      // Get form data directly from the database 
+      const formType = 'ky3p';
+      const config = formTypeConfigs[formType];
+      
+      // Get all responses for this task
+      const responses = await db.select()
+        .from(config.responsesTable)
+        .where(eq(config.responsesTable.task_id, taskId));
+        
+      console.log(`Found ${responses.length} response records for task ${taskId}`);
+      
+      // Get all field definitions
+      const fields = await db.select()
+        .from(config.fieldsTable);
+      
+      // Create a map of field IDs to field definitions for quick lookup
+      const fieldMap = new Map();
+      for (const field of fields) {
+        fieldMap.set(field.id, field);
+      }
+      
+      // Construct form data object from responses
+      formData = {};
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field) {
+          // Use the field key as the property name
+          const fieldKey = field[config.fieldKeyColumn];
+          const value = response[config.responseValueColumn] || '';
+          
+          // Add this field's value to the form data object
+          formData[fieldKey] = value;
+        }
+      }
+      
+      console.log(`Constructed KY3P form data with ${Object.keys(formData).length} fields`);
     } catch (formDataError) {
       console.warn('Failed to get KY3P form data for response', formDataError);
+      
+      // Fall back to service if direct db approach fails
+      try {
+        const ky3pService = require('../services/ky3pService');
+        formData = await ky3pService.getKy3pFormData(taskId);
+      } catch (fallbackError) {
+        console.error('Fallback KY3P data fetch also failed', fallbackError);
+      }
     }
     
     res.json({
@@ -303,10 +479,52 @@ router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, 
     // Get the current form data to send back in the response
     let formData = null;
     try {
-      const obService = require('../services/openBankingService');
-      formData = await obService.getOpenBankingFormData(taskId);
+      // Get form data directly from the database 
+      const formType = 'open_banking';
+      const config = formTypeConfigs[formType];
+      
+      // Get all responses for this task
+      const responses = await db.select()
+        .from(config.responsesTable)
+        .where(eq(config.responsesTable.task_id, taskId));
+        
+      console.log(`Found ${responses.length} response records for task ${taskId}`);
+      
+      // Get all field definitions
+      const fields = await db.select()
+        .from(config.fieldsTable);
+      
+      // Create a map of field IDs to field definitions for quick lookup
+      const fieldMap = new Map();
+      for (const field of fields) {
+        fieldMap.set(field.id, field);
+      }
+      
+      // Construct form data object from responses
+      formData = {};
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field) {
+          // Use the field key as the property name
+          const fieldKey = field[config.fieldKeyColumn];
+          const value = response[config.responseValueColumn] || '';
+          
+          // Add this field's value to the form data object
+          formData[fieldKey] = value;
+        }
+      }
+      
+      console.log(`Constructed Open Banking form data with ${Object.keys(formData).length} fields`);
     } catch (formDataError) {
       console.warn('Failed to get Open Banking form data for response', formDataError);
+      
+      // Fall back to service if direct db approach fails
+      try {
+        const obService = require('../services/openBankingService');
+        formData = await obService.getOpenBankingFormData(taskId);
+      } catch (fallbackError) {
+        console.error('Fallback Open Banking data fetch also failed', fallbackError);
+      }
     }
     
     res.json({
