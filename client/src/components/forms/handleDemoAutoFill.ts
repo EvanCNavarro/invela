@@ -93,7 +93,7 @@ export async function handleDemoAutoFill({
       }
       
       // Force a re-render to update the UI
-      setForceRerender(prev => !prev);
+      setForceRerender((prev: boolean) => !prev);
       
       // Update progress if needed
       if (onProgress) {
@@ -168,7 +168,7 @@ export async function handleDemoAutoFill({
         }
         
         // Force a re-render to update the UI
-        setForceRerender(prev => !prev);
+        setForceRerender((prev: boolean) => !prev);
         
         // Update progress if needed
         if (onProgress) {
