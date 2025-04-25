@@ -90,7 +90,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     const height = svgRef.current.clientHeight;
     const centerX = width / 2;
     const centerY = height / 3; // Position it higher in the visualization
-    const radius = Math.min(width, height) * 0.4; // Scale down the radius slightly to better fit
+    const radius = Math.min(width, height) * 0.35; // Reduced from 0.4 to 0.35 to scale down the graph size
 
     // Set up the visualization container
     const g = svg.append('g')
@@ -146,7 +146,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     g.append('circle')
       .attr('cx', 0)
       .attr('cy', 0)
-      .attr('r', 30)
+      .attr('r', 32) // Slightly increased from 30 for more emphasis
       .attr('fill', '#ffffff')
       .attr('stroke', '#e5e7eb')
       .attr('stroke-width', 1.5);
@@ -155,7 +155,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     g.append('circle')
       .attr('cx', 0)
       .attr('cy', 0)
-      .attr('r', 28)
+      .attr('r', 30) // Slightly increased from 28 to match the background
       .attr('fill', centerCompanyColor)
       .attr('stroke', '#000')
       .attr('stroke-width', 2)
@@ -190,7 +190,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       g.append('circle')
         .attr('cx', x)
         .attr('cy', y)
-        .attr('r', 17)
+        .attr('r', 15) // Reduced from 17 to make outer nodes smaller
         .attr('fill', 'white')
         .attr('stroke', '#e5e7eb')
         .attr('stroke-width', 1);
@@ -199,10 +199,10 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       const nodeElement = g.append('circle')
         .attr('cx', x)
         .attr('cy', y)
-        .attr('r', 15)
+        .attr('r', 13) // Reduced from 15 to match smaller background
         .attr('fill', nodeColor)
         .attr('stroke', borderColor)
-        .attr('stroke-width', 2.5)
+        .attr('stroke-width', 2)
         .attr('cursor', 'pointer')
         .attr('data-node-id', node.id)
         .on('mouseover', function() {
@@ -309,7 +309,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         })
         .on('mouseout', function() {
           const isSelected = selectedNode && selectedNode.id === node.id;
-          d3.select(this).attr('stroke-width', isSelected ? 3.5 : 2.5);
+          d3.select(this).attr('stroke-width', isSelected ? 3 : 2);
           
           // Only reset the line if not selected
           if (!isSelected) {
@@ -335,13 +335,13 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             
             // Set back to original border (accreditation status)
             circle.attr('stroke', nodeData?.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent')
-              .attr('stroke-width', 2.5);
+              .attr('stroke-width', 2);
           });
           
           // Set black border on the selected node immediately using direct DOM reference
           const selectedNode = d3.select(this);
           selectedNode.attr('stroke', '#000')
-                     .attr('stroke-width', 3.5);
+                     .attr('stroke-width', 3);
           
           // Highlight the line connecting to this node with black
           g.selectAll('line')
