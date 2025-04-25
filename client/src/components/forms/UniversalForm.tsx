@@ -443,14 +443,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
+    // Create promise-wrapped versions of the callbacks to match expected types
+    const updateFieldAsync = async (fieldKey: string, value: any): Promise<void> => {
+      updateField(fieldKey, value, true);
+      return Promise.resolve();
+    };
+    
+    const refreshStatusAsync = async (): Promise<void> => {
+      refreshStatus();
+      return Promise.resolve();
+    };
+    
+    const saveProgressAsync = async (): Promise<void> => {
+      await saveProgress();
+      return Promise.resolve();
+    };
+    
     await handleDemoAutoFill({
       taskId,
       taskType,
       form,
       resetForm,
-      updateField,
-      refreshStatus,
-      saveProgress,
+      updateField: updateFieldAsync,
+      refreshStatus: refreshStatusAsync,
+      saveProgress: saveProgressAsync,
       onProgress,
       formService,
       setForceRerender
