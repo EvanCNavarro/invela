@@ -8,7 +8,10 @@
 import { Router } from 'express';
 import { AtomicDemoAutoFillService } from '../services/atomic-demo-autofill';
 import * as websocketService from '../services/websocket';
-import { logger } from '../utils/logger';
+import { Logger } from '../utils/logger';
+
+// Create logger instance
+const logger = new Logger('TestDemoAutofill');
 
 // Create the router
 const router = Router();
@@ -33,12 +36,12 @@ router.post('/test/:taskId/:formType?', async (req, res) => {
     const companyName = req.query.companyName as string || 'Test Company';
     
     // Apply demo data using the service
-    const result = await service.applyDemoDataAtomically(
-      parseInt(taskId, 10),
-      formType as any,
-      mockUserId,
+    const result = await service.applyDemoDataAtomically({
+      taskId: parseInt(taskId, 10),
+      formType: formType as any,
+      userId: mockUserId,
       companyName
-    );
+    });
     
     logger.info(`[TEST-DEMO-AUTOFILL] Successfully applied demo data`, result);
     
