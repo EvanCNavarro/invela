@@ -784,19 +784,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         <div 
                           className={cn(
                             "p-4 rounded-lg border transition-colors cursor-pointer",
-                            form.getValues('agreement_confirmation') ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200"
+                            form.watch('agreement_confirmation') ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200"
                           )}
                           onClick={() => {
                             const currentValue = form.getValues('agreement_confirmation');
-                            form.setValue('agreement_confirmation', !currentValue);
+                            form.setValue('agreement_confirmation', !currentValue, { shouldValidate: true });
                           }}
                         >
                           <div className="flex items-center mb-2">
                             <div className="flex flex-row items-start space-x-3 space-y-0 m-0">
                               <Checkbox
-                                checked={form.getValues('agreement_confirmation')}
-                                onCheckedChange={() => {}}
-                                onClick={(e) => e.stopPropagation()}
+                                checked={form.watch('agreement_confirmation')}
+                                onCheckedChange={(checked) => {
+                                  form.setValue('agreement_confirmation', !!checked, { shouldValidate: true });
+                                }}
                                 className="mt-0.5"
                               />
                               <div className="font-semibold text-gray-700">
