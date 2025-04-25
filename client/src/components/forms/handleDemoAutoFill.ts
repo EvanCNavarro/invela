@@ -73,12 +73,35 @@ export async function handleDemoAutoFill({
       const success = await standardizedBulkUpdate(taskId, {});
       
       if (success) {
-        // If the update was successful, refresh the form data
+        // If the update was successful, force reload the form data from the database
         if (formService) {
-          logger.info('Refreshing form data from service after standardized update');
-          const refreshedData = await formService.getFormData();
-          logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
-          resetForm(refreshedData);
+          logger.info('Forcing reload of form data from database after demo auto-fill');
+          
+          // First clear any cached data in the form service
+          formService.clearCache?.();
+          
+          // Reload responses directly from the database
+          if (formService.loadResponses) {
+            logger.info('Explicitly calling loadResponses() to get fresh data');
+            try {
+              const freshData = await formService.loadResponses();
+              logger.info('Fresh form data loaded from database', { 
+                fieldCount: Object.keys(freshData || {}).length,
+                sampleKeys: Object.keys(freshData || {}).slice(0, 3)
+              });
+              resetForm(freshData);
+            } catch (loadError) {
+              logger.error('Error loading responses after demo auto-fill:', loadError);
+            }
+          } else {
+            // Fallback to getFormData() if loadResponses isn't available
+            logger.info('loadResponses not available, using getFormData');
+            const refreshedData = await formService.getFormData();
+            logger.info('Form data refreshed via getFormData', { 
+              fieldCount: Object.keys(refreshedData || {}).length 
+            });
+            resetForm(refreshedData);
+          }
         }
         
         // Force a re-render
