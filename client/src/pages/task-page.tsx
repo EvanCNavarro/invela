@@ -793,6 +793,38 @@ export default function TaskPage({ params }: TaskPageProps) {
                       setFileId(result.fileId);
                     }
                     
+                    // Set submission result data for the modal
+                    setSubmissionResult({
+                      taskId: task.id,
+                      fileId: result.fileId,
+                      taskStatus: 'submitted',
+                      completedActions: [
+                        {
+                          type: "task_completion",
+                          description: "KYB Form Completed",
+                          data: {
+                            details: "Your KYB form has been successfully submitted and marked as complete."
+                          }
+                        },
+                        {
+                          type: "file_generation",
+                          description: "CSV Export Generated",
+                          fileId: result.fileId,
+                          data: {
+                            details: "A CSV file has been generated with your form submission data.",
+                            buttonText: "Download CSV"
+                          }
+                        },
+                        {
+                          type: "file_vault_unlocked",
+                          description: "File Vault Access Granted",
+                          data: {
+                            details: "You now have access to the document vault for this company."
+                          }
+                        }
+                      ]
+                    });
+                    
                     // Update UI state
                     setIsSubmitted(true);
                     
@@ -962,8 +994,36 @@ export default function TaskPage({ params }: TaskPageProps) {
                         setFileId(result.fileId);
                       }
                       
+                      // Set submission result data for the modal
+                      setSubmissionResult({
+                        taskId: task.id,
+                        fileId: result.fileId,
+                        taskStatus: 'submitted',
+                        completedActions: [
+                          {
+                            type: "task_completion",
+                            description: "Card Industry Questionnaire Completed",
+                            data: {
+                              details: "Your Card Industry Questionnaire has been successfully submitted and marked as complete."
+                            }
+                          },
+                          {
+                            type: "file_generation",
+                            description: "CSV Export Generated",
+                            fileId: result.fileId,
+                            data: {
+                              details: "A CSV file has been generated with your form submission data.",
+                              buttonText: "Download CSV"
+                            }
+                          }
+                        ]
+                      });
+                      
                       // Update UI state
                       setIsSubmitted(true);
+                      
+                      // Show success modal and fire confetti
+                      setShowSuccessModal(true);
                       
                       // Show confetti
                       fireEnhancedConfetti();
@@ -1131,6 +1191,31 @@ export default function TaskPage({ params }: TaskPageProps) {
                       if (result.fileId) {
                         setFileId(result.fileId);
                       }
+                      
+                      // Set submission result data for the modal
+                      setSubmissionResult({
+                        taskId: task.id,
+                        fileId: result.fileId,
+                        taskStatus: 'submitted',
+                        completedActions: [
+                          {
+                            type: "task_completion",
+                            description: "S&P KY3P Security Assessment Completed",
+                            data: {
+                              details: "Your S&P KY3P Security Assessment has been successfully submitted and marked as complete."
+                            }
+                          },
+                          {
+                            type: "file_generation",
+                            description: "CSV Export Generated",
+                            fileId: result.fileId,
+                            data: {
+                              details: "A CSV file has been generated with your form submission data.",
+                              buttonText: "Download CSV"
+                            }
+                          }
+                        ]
+                      });
                       
                       // Update UI state
                       setIsSubmitted(true);
