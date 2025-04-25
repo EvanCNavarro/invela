@@ -181,7 +181,8 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
         { fieldKey: 'dueDiligence', demoValue: 'Enhanced due diligence for high-risk transactions' },
         { fieldKey: 'regulatoryActions', demoValue: 'No regulatory actions or material findings in past 3 years' },
         { fieldKey: 'directorsAndOfficers', demoValue: 'Board of 5 directors with majority independent members' },
-        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' }
+        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' },
+        { fieldKey: 'controlEnvironment', demoValue: 'Strong controls with quarterly assessments and documented procedures' }
       ],
       'company_kyb': [
         { fieldKey: 'legalEntityName', demoValue: 'Demo Corporation' },
@@ -213,7 +214,8 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
         { fieldKey: 'dueDiligence', demoValue: 'Enhanced due diligence for high-risk transactions' },
         { fieldKey: 'regulatoryActions', demoValue: 'No regulatory actions or material findings in past 3 years' },
         { fieldKey: 'directorsAndOfficers', demoValue: 'Board of 5 directors with majority independent members' },
-        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' }
+        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' },
+        { fieldKey: 'controlEnvironment', demoValue: 'Strong controls with quarterly assessments and documented procedures' }
       ],
       'ky3p': [
         { fieldKey: 'securityCertifications', demoValue: 'ISO 27001, SOC 2 Type II' },
