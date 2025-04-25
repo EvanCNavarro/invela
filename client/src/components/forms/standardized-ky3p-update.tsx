@@ -46,8 +46,14 @@ export async function standardizedBulkUpdate(taskId: number, formData: Record<st
     if (Object.keys(formData).length === 0) {
       logger.info(`Form data is empty, fetching demo data from API`);
       try {
+        // Use POST instead of GET as the server route is configured for POST
         const demoResponse = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
-          credentials: 'include'
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({}) // Empty body for POST request
         });
         
         if (!demoResponse.ok) {
@@ -85,6 +91,16 @@ export async function standardizedBulkUpdate(taskId: number, formData: Record<st
     
     // Step 3: Make the API call with the standardized format
     logger.info(`Using standardized batch-update endpoint for task ${taskId}`);
+    
+    // First let's log exactly what we're sending
+    logger.info(`Request payload sample:`, 
+      JSON.stringify({
+        responses: Object.fromEntries(
+          Object.entries(cleanData).slice(0, 3)
+        )
+      })
+    );
+    
     const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
       method: 'POST',
       headers: {
