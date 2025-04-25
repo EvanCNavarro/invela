@@ -29,6 +29,7 @@ import fixDemoAutofillRouter from './routes/fix-demo-autofill';
 import testDemoAutofillRouter from './routes/test-demo-autofill';
 import kybEnhancedDemoAutofillRouter from './routes/kyb-demo-autofill';
 import atomicDemoAutofillRouter from './routes/atomic-demo-autofill';
+import bypassAuthDemoAutofillRouter from './routes/bypass-auth-demo-autofill';
 import filesRouter from './routes/files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
@@ -72,6 +73,9 @@ export function invalidateCompanyCache(companyId: number) {
 }
 
 export function registerRoutes(app: Express): Express {
+  // Register the bypass-auth-demo-autofill router first, before any authentication middleware
+  // This provides a completely authentication-free endpoint for testing demo auto-fill
+  app.use('/bypass-auth-demo-autofill', bypassAuthDemoAutofillRouter);
   app.use(companySearchRouter);
   app.use(kybRouter);
   
