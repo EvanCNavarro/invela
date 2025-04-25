@@ -1,6 +1,14 @@
 import { eq, and, or, sql } from 'drizzle-orm';
 import { db } from "@db";
-import { tasks, kybResponses, kybFields, openBankingResponses, openBankingFields } from "@db/schema";
+import { 
+  tasks, 
+  kybResponses, 
+  kybFields, 
+  ky3pResponses, 
+  ky3pFields, 
+  openBankingResponses, 
+  openBankingFields 
+} from "@db/schema";
 import { TaskStatus } from '../types';
 import { calculateKybFormProgress } from './kyb-progress';
 import { determineStatusFromProgress, broadcastProgressUpdate } from './progress';
