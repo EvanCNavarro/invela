@@ -397,15 +397,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Show submission toast
       toast({
-        title: 'Submitting KYB Form.',
+        title: 'Submitting Form',
         description: 'Please wait while we process your submission...',
       });
       
       // First save the current progress
-      await saveProgress();
+      const saveResult = await saveProgress();
+      logger.info('Form progress saved, moving to submit phase');
+      
+      // Force the UI to show the review tab by manually setting active section to the last tab
+      // This ensures the form shows as "submitted" with the review content visible
+      if (allSections.length > 0) {
+        setActiveSection(allSections.length - 1);
+      }
+      
+      // Wait a moment for the UI to update before triggering any callbacks
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Then call the onSubmit callback if provided
       if (onSubmit) {
+        logger.info('Calling onSubmit callback from parent component');
         onSubmit(data);
       } else {
         toast({
@@ -423,7 +434,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [saveProgress, onSubmit, overallProgress]);
+  }, [saveProgress, onSubmit, overallProgress, allSections, setActiveSection]);
   
   // Handle cancellation
   const handleCancel = useCallback(() => {
