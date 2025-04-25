@@ -182,25 +182,38 @@ async function createResponse(
 }
 
 /**
- * Get all field IDs for a given form type
+ * Get fields with demo values for a given form type
  */
-async function getFieldIds(formType: FormTypeKey): Promise<number[]> {
+async function getFieldsWithDemoValues(formType: FormTypeKey): Promise<{ id: number, field_key: string, demo_value: string | null }[]> {
   let query;
   
+  // Get fields with their demo_autofill values from the database
   switch (formType) {
     case 'kyb':
-      query = db.select({ id: sql<number>`id` })
-        .from(sql`kyb_fields`);
+      query = db.select({
+        id: sql<number>`id`,
+        field_key: sql<string>`field_key`,
+        demo_value: sql<string>`demo_autofill`
+      })
+      .from(sql`kyb_fields`);
       break;
     
     case 'ky3p':
-      query = db.select({ id: sql<number>`id` })
-        .from(sql`ky3p_fields`);
+      query = db.select({
+        id: sql<number>`id`,
+        field_key: sql<string>`field_key`,
+        demo_value: sql<string>`demo_autofill`
+      })
+      .from(sql`ky3p_fields`);
       break;
     
     case 'open_banking':
-      query = db.select({ id: sql<number>`id` })
-        .from(sql`open_banking_fields`);
+      query = db.select({
+        id: sql<number>`id`,
+        field_key: sql<string>`field_key`,
+        demo_value: sql<string>`demo_autofill`
+      })
+      .from(sql`open_banking_fields`);
       break;
     
     default:
@@ -208,7 +221,21 @@ async function getFieldIds(formType: FormTypeKey): Promise<number[]> {
   }
   
   const results = await query;
-  return results.map(row => row.id);
+  logger.info(`Retrieved ${results.length} fields with demo values for form type ${formType}`);
+  
+  return results.map(row => ({
+    id: row.id,
+    field_key: row.field_key,
+    demo_value: row.demo_value
+  }));
+}
+
+/**
+ * Get all field IDs for a given form type
+ */
+async function getFieldIds(formType: FormTypeKey): Promise<number[]> {
+  const fieldsWithDemoValues = await getFieldsWithDemoValues(formType);
+  return fieldsWithDemoValues.map(field => field.id);
 }
 
 export class AtomicDemoAutoFillService {
@@ -307,12 +334,36 @@ export class AtomicDemoAutoFillService {
         progress: 0
       });
       
+      // Get fields with demo values for this form type
+      const fieldsWithDemoValues = await getFieldsWithDemoValues(actualFormType);
+      logger.info(`Retrieved ${fieldsWithDemoValues.length} fields with demo values from database`);
+      
+      // Create a map of field IDs to their demo values from the database
+      const demoValuesMap = new Map<number, string>();
+      for (const field of fieldsWithDemoValues) {
+        if (field.demo_value) {
+          // Process any template variables like {{COMPANY_NAME}}
+          let finalValue = field.demo_value;
+          if (finalValue.includes('{{COMPANY_NAME}}')) {
+            finalValue = finalValue.replace(/{{COMPANY_NAME}}/g, companyName);
+          }
+          demoValuesMap.set(field.id, finalValue);
+          logger.debug(`Field ${field.id} (${field.field_key}) has demo value: ${finalValue}`);
+        }
+      }
+      
       // Process each field to update or create responses
       for (const fieldIdStr of allFieldIds) {
         const fieldId = Number(fieldIdStr);
-        const value = demoData[`field_${fieldId}`] || demoData[fieldId.toString()] || '';
+        
+        // Try to get the demo value from our database map first, then fall back to generated values
+        let value = demoValuesMap.get(fieldId) || 
+                   demoData[`field_${fieldId}`] || 
+                   demoData[fieldId.toString()] || '';
         
         if (value) {
+          logger.info(`Applying demo value for field ${fieldId}: ${value.substring(0, 30)}${value.length > 30 ? '...' : ''}`);
+          
           try {
             if (existingResponseMap.has(fieldId)) {
               // Update existing response
