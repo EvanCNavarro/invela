@@ -51,32 +51,47 @@ router.post('/:taskId', async (req, res) => {
     let clearedCount = 0;
     
     if (effectiveTaskType === 'kyb' || effectiveTaskType === 'company_kyb') {
-      // Clear KYB responses
-      const result = await db.delete(kybResponses)
+      // Update KYB responses to empty values rather than deleting them
+      const result = await db.update(kybResponses)
+        .set({ 
+          response_value: '', 
+          status: 'EMPTY',
+          updated_at: new Date()
+        })
         .where(eq(kybResponses.task_id, taskId))
         .returning();
       
       clearedCount = result.length;
-      console.log(`[Universal Clear Fields] Cleared ${clearedCount} KYB responses for task ${taskId}`);
+      console.log(`[Universal Clear Fields] Set ${clearedCount} KYB responses to empty for task ${taskId}`);
     } 
     else if (effectiveTaskType === 'ky3p' || effectiveTaskType === 'security' || 
              effectiveTaskType === 'security_assessment' || effectiveTaskType === 'sp_ky3p_assessment') {
-      // Clear KY3P responses
-      const result = await db.delete(ky3pResponses)
+      // Update KY3P responses to empty values rather than deleting them
+      const result = await db.update(ky3pResponses)
+        .set({ 
+          response_value: '', 
+          status: 'EMPTY',
+          updated_at: new Date()
+        })
         .where(eq(ky3pResponses.task_id, taskId))
         .returning();
       
       clearedCount = result.length;
-      console.log(`[Universal Clear Fields] Cleared ${clearedCount} KY3P responses for task ${taskId}`);
+      console.log(`[Universal Clear Fields] Set ${clearedCount} KY3P responses to empty for task ${taskId}`);
     } 
     else if (effectiveTaskType === 'open_banking' || effectiveTaskType === 'open_banking_survey') {
-      // Clear Open Banking responses
-      const result = await db.delete(openBankingResponses)
+      // Update Open Banking responses to empty values rather than deleting them
+      const result = await db.update(openBankingResponses)
+        .set({ 
+          response_value: '', 
+          status: 'EMPTY',
+          updated_at: new Date()
+        })
         .where(eq(openBankingResponses.task_id, taskId))
         .returning();
       
       clearedCount = result.length;
-      console.log(`[Universal Clear Fields] Cleared ${clearedCount} Open Banking responses for task ${taskId}`);
+      console.log(`[Universal Clear Fields] Set ${clearedCount} Open Banking responses to empty for task ${taskId}`);
     } 
     else {
       return res.status(400).json({
