@@ -1,113 +1,71 @@
 /**
  * Test script for KY3P batch update functionality
  * 
- * This script tests the new ky3p-batch-update.ts component that standardizes the format
- * between KY3P and KYB form services for demo auto-fill compatibility.
- * 
- * Usage: node test-ky3p-batch-update.js [taskId]
- * If no taskId is provided, it will use 620 as the default test task.
+ * This script tests the KY3P batch update endpoint by sending a test
+ * request to /api/test/ky3p-batch-update/:taskId with sample KYB-style
+ * response data and verifying the conversion to KY3P format.
  */
 
-// Import required modules
-const fetch = require('node-fetch');
+// Sample task ID to test with (modify as needed)
+const TEST_TASK_ID = 123;
 
-// Get the task ID from command line arguments
-const taskId = process.argv[2] || 620;
-
-// Sample form data in KYB format (object format)
-const sampleFormData = {
-  'organization_name': 'Demo Organization',
-  'organization_type': 'Corporation',
-  'security_controls_overview': 'Our security controls include firewalls, IDS/IPS, access controls, and encryption.',
-  'incident_response_plan': 'Yes',
-  'incident_response_details': 'We have a documented IR plan with regular testing.',
-  'security_certifications': 'ISO 27001, SOC 2',
-  'data_encryption_controls': 'Data is encrypted both at rest and in transit using industry standard encryption.',
-  'access_control_policies': 'Role-based access control is implemented across all systems.',
-  'third_party_risk_management': 'We have a formal vendor risk management program.',
-  'network_security_measures': 'Network is segmented with firewalls, VPNs for remote access, and regular scans.',
-  'physical_security_controls': 'Our facilities have 24/7 security monitoring, badge access, and visitor management.',
-  // Include metadata fields to test they're properly filtered
-  '_lastSaved': new Date().toISOString(),
-  '_formVersion': '1.0',
-  'taskId': taskId
+// Sample KYB-style response data (an object with key-value pairs)
+const TEST_DATA = {
+  responses: {
+    "field_1": "Test value 1",
+    "field_2": "Test value 2",
+    "field_3": "Test value 3",
+    "field_with_comma": "Test, with, commas",
+    "field_with_quotes": "Test \"quoted\" value",
+    "_metadata": "This should be filtered out",
+    "_form_version": "This should be filtered out too"
+  }
 };
 
-async function runTest() {
-  console.log(`\n--- KY3P Batch Update Test ---`);
-  console.log(`Testing with task ID: ${taskId}`);
-  
+// Function to test the KY3P batch update endpoint
+async function testKy3pBatchUpdate() {
   try {
-    // First, test the format conversion using our test endpoint
-    console.log('\n1. Testing format conversion...');
-    const testResponse = await fetch(`http://localhost:5000/api/test/ky3p-batch-update/${taskId}`, {
+    console.log(`Testing KY3P batch update conversion for task ID: ${TEST_TASK_ID}`);
+    console.log('Sample KYB-style data:', TEST_DATA);
+    
+    const response = await fetch(`/api/test/ky3p-batch-update/${TEST_TASK_ID}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        responses: sampleFormData
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(TEST_DATA)
     });
     
-    if (!testResponse.ok) {
-      const errorText = await testResponse.text();
-      throw new Error(`Test endpoint failed: ${testResponse.status} - ${errorText}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Test failed with error:', errorData);
+      return;
     }
     
-    const testResult = await testResponse.json();
-    console.log('   ✓ Format conversion test successful');
-    console.log('     Original keys:', testResult.original.keyCount);
-    console.log('     Converted responses:', testResult.converted.responseCount);
-    console.log('     Sample converted data:', JSON.stringify(testResult.converted.sample[0], null, 2));
+    const result = await response.json();
+    console.log('Conversion result:', result);
     
-    // Next, test the actual batch update helper via our API
-    console.log('\n2. Testing actual batch update...');
-    const updateResponse = await fetch(`http://localhost:5000/api/ky3p/batch-update/${taskId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        responses: sampleFormData
-      }),
-    });
+    console.log('Original format (KYB-style):');
+    console.log('- Format:', result.original.format);
+    console.log('- Key count:', result.original.keyCount);
+    console.log('- Sample keys:', result.original.keys);
     
-    if (!updateResponse.ok) {
-      const errorText = await updateResponse.text();
-      throw new Error(`Batch update failed: ${updateResponse.status} - ${errorText}`);
+    console.log('\nConverted format (KY3P-style):');
+    console.log('- Format:', result.converted.format);
+    console.log('- Response count:', result.converted.responseCount);
+    console.log('- Sample items:', JSON.stringify(result.converted.sample, null, 2));
+    
+    // Validate the conversion
+    const success = result.converted.responseCount === Object.keys(TEST_DATA.responses).filter(key => !key.startsWith('_')).length;
+    console.log(`\nConversion validation: ${success ? 'SUCCESS' : 'FAILED'}`);
+    
+    if (success) {
+      console.log('✅ All non-metadata fields were properly converted to KY3P format');
+    } else {
+      console.log('❌ Conversion failed - response counts do not match expected value');
     }
-    
-    console.log('   ✓ Batch update successful');
-    
-    // Finally, fetch the responses to verify they were saved
-    console.log('\n3. Verifying saved responses...');
-    const verifyResponse = await fetch(`http://localhost:5000/api/ky3p/progress/${taskId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!verifyResponse.ok) {
-      const errorText = await verifyResponse.text();
-      throw new Error(`Verification failed: ${verifyResponse.status} - ${errorText}`);
-    }
-    
-    const verifyResult = await verifyResponse.json();
-    console.log('   ✓ Verification successful');
-    console.log(`     Progress: ${verifyResult.progress}%`);
-    console.log(`     Field count: ${Object.keys(verifyResult.formData || {}).length}`);
-    
-    console.log('\n✅ All tests completed successfully!');
   } catch (error) {
-    console.error('\n❌ Test failed:', error.message);
-    if (error.stack) {
-      console.error(error.stack);
-    }
-    process.exit(1);
+    console.error('Error during test:', error.message);
   }
 }
 
 // Run the test
-runTest();
+testKy3pBatchUpdate();

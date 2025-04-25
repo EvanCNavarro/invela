@@ -15,6 +15,14 @@ import { toast } from "@/hooks/use-toast";
 import getLogger from "@/utils/logger";
 import { apiRequest } from "@/lib/queryClient";
 
+// Type for the Response object returned by fetch
+interface ApiResponse extends Response {
+  ok: boolean;
+  status: number;
+  text(): Promise<string>;
+  json<T>(): Promise<T>;
+}
+
 const logger = getLogger('KY3P.BatchUpdate');
 
 /**
@@ -62,14 +70,14 @@ export async function batchUpdateKy3pResponses(
     // Send the update request
     const response = await apiRequest('POST', `/api/ky3p/${taskId}/responses`, {
       responses: convertedResponses,
-    });
+    }) as ApiResponse;
     
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Failed to update KY3P responses: ${response.status} - ${errorText}`);
     }
     
-    const result = await response.json();
+    const result = await response.json() as { updatedCount?: number, progress?: number };
     
     logger.info('Batch update successful', { 
       taskId, 
@@ -107,7 +115,7 @@ export async function loadKy3pResponses(taskId: number): Promise<Record<string, 
       throw new Error(`Failed to load KY3P responses: ${response.status} - ${errorText}`);
     }
     
-    const result = await response.json();
+    const result = await response.json() as { formData?: Record<string, any> };
     
     return result.formData || {};
   } catch (error) {

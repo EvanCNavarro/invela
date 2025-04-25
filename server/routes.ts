@@ -350,7 +350,7 @@ export function registerRoutes(app: Express): Express {
   app.use(broadcastRouter);
   
   // Register test KY3P update router
-  app.use(testKy3pUpdateRouter);
+  app.use('/api/test/ky3p-batch-update', testKy3pUpdateRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
