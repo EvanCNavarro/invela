@@ -320,7 +320,7 @@ export function registerRoutes(app: Express): Express {
   // Register the universal demo auto-fill router
   app.use(universalDemoAutofillRouter);
   // Register the universal clear fields router
-  app.use('/api/universal-clear-fields', universalClearFieldsRouter);
+  app.use(universalClearFieldsRouter);
   // Register the fixed demo auto-fill router
   app.use(fixDemoAutofillRouter);
   app.use(filesRouter);
@@ -338,6 +338,9 @@ export function registerRoutes(app: Express): Express {
   
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
+  
+  // Fix TypeScript error: Cannot find name 'universalDemoAutoFillRouter'
+  const universalDemoAutofillRouterFix = universalDemoAutofillRouter;
   app.use(tasksRouter);
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);
