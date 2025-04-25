@@ -41,6 +41,7 @@ import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
 import broadcastRouter from './routes/broadcast';
+import testKy3pUpdateRouter from './routes/test-ky3p-update';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -347,6 +348,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register broadcast router for demo auto-fill WebSocket functionality
   app.use(broadcastRouter);
+  
+  // Register test KY3P update router
+  app.use(testKy3pUpdateRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
