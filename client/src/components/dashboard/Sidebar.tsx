@@ -10,8 +10,8 @@ import {
   ChevronRightIcon,
   MousePointer2Icon,
   Hammer,
-  ShieldCheck,
-  Building2
+  FileText,
+  BarChart2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -169,6 +169,22 @@ export function Sidebar({
       label: "Insights",
       href: "/insights",
       locked: !availableTabs.includes('insights')
+    },
+    {
+      icon: FileText,
+      label: "Claims",
+      href: "https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/claims",
+      locked: !availableTabs.includes('claims'),
+      hideForFinTech: true,
+      externalLink: true
+    },
+    {
+      icon: BarChart2,
+      label: "S&P Risk Score",
+      href: "https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/risk-score",
+      locked: !availableTabs.includes('risk-score'),
+      hideForFinTech: true,
+      externalLink: true
     },
     {
       icon: Hammer,
