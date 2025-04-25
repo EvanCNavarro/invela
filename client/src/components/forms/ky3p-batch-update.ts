@@ -108,7 +108,7 @@ export async function batchUpdateKy3pResponses(
  */
 export async function loadKy3pResponses(taskId: number): Promise<Record<string, any> | null> {
   try {
-    const response = await apiRequest('GET', `/api/ky3p/progress/${taskId}`);
+    const response = await apiRequest('GET', `/api/ky3p/progress/${taskId}`) as ApiResponse;
     
     if (!response.ok) {
       const errorText = await response.text();
