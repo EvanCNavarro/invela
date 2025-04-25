@@ -38,23 +38,38 @@ export async function kybDemoAutoFill(taskId: number, userId?: number): Promise<
 
     logger.info(`Filling KYB form with demo data for task ${taskId}`);
 
-    // Query the KYB fields with demo auto-fill values
+    // Query the KYB fields with demo auto-fill values - using direct SQL for reliability
+    // Note: Some systems store empty string as NULL, so we need to check for both
     const sqlQuery = `
       SELECT id, field_key, demo_autofill 
       FROM kyb_fields 
-      WHERE demo_autofill IS NOT NULL AND demo_autofill != ''
+      ORDER BY id
     `;
 
     const fields = await db.execute(sqlQuery);
-    logger.info(`Found ${fields.length} fields with demo data`);
+    const fieldCount = Array.isArray(fields) ? fields.length : 0;
+    logger.info(`Found ${fieldCount} fields with demo data`);
 
     // Log the first few fields for debugging
-    if (fields.length > 0) {
-      const examples = fields.slice(0, 3).map(f => ({
+    if (fieldCount > 0) {
+      // Convert fields to array if not already
+      const fieldsArray = Array.isArray(fields) ? fields : [];
+      
+      // Take up to the first 5 fields to show as examples
+      const examples = fieldsArray.slice(0, 5).map((f: any) => ({
+        id: f.id,
         field_key: f.field_key,
         demo_value: f.demo_autofill
       }));
+      
       logger.info(`Example demo values: ${JSON.stringify(examples, null, 2)}`);
+      
+      // Count non-empty demo values
+      const nonEmptyCount = fieldsArray.filter((f: any) => 
+        f.demo_autofill && f.demo_autofill.trim() !== ''
+      ).length;
+      
+      logger.info(`Fields with non-empty demo values: ${nonEmptyCount} out of ${fieldCount}`);
     }
 
     // Build form data object
