@@ -486,17 +486,7 @@ export class KY3PFormService extends EnhancedKybFormService {
   /**
    * Load existing responses for the form
    */
-  /**
-   * Clear the internal response cache to force fresh data to be loaded
-   * This is especially important for demo auto-fill functionality
-   */
-  public clearCache(): void {
-    logger.info('[KY3P Form Service] Clearing form data cache');
-    this._formData = null;
-    this._timestamps = {};
-    this._responsesCache = null;
-    this._progressData = null;
-  }
+  // clearCache method is already defined earlier in the class
   
   /**
    * Direct method to load responses from the server
