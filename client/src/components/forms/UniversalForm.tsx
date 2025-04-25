@@ -27,10 +27,11 @@ import getLogger from '@/utils/logger';
 import { cn } from '@/lib/utils';
 import { 
   ArrowLeft, 
-  ArrowRight, 
+  ArrowRight,
   Eye,
   Check,
-  Lightbulb
+  Lightbulb,
+  CheckCircle
 } from 'lucide-react';
 import {
   Tooltip,
@@ -47,7 +48,6 @@ import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { useUser } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
-import { CheckCircle } from 'lucide-react';
 
 import SectionContent from './SectionContent';
 
@@ -959,16 +959,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         Previous
                       </Button>
                       
-                      <Button
-                        type="button"
-                        variant="default"
-                        onClick={() => setActiveSection(Math.min(allSections.length - 1, activeSection + 1))}
-                        disabled={activeSection === allSections.length - 1}
-                        className="flex items-center gap-1"
-                      >
-                        Next
-                        <ArrowRight className="h-4 w-4 ml-1" />
-                      </Button>
+                      {activeSection === allSections.length - 2 ? (
+                        <Button
+                          type="button"
+                          variant="default"
+                          onClick={() => setActiveSection(allSections.length - 1)}
+                          disabled={overallProgress < 100}
+                          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
+                        >
+                          Final Review
+                          <Eye className="h-4 w-4 ml-1" />
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="default"
+                          onClick={() => setActiveSection(Math.min(allSections.length - 1, activeSection + 1))}
+                          disabled={activeSection === allSections.length - 1}
+                          className="flex items-center gap-1"
+                        >
+                          Next
+                          <ArrowRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
