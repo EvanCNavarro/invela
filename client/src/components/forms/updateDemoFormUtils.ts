@@ -10,26 +10,6 @@
 
 import { FormServiceInterface } from '../../services/formService';
 
-// Flag to indicate demo auto-fill is in progress - prevents auto-save race conditions
-let demoAutoFillInProgress = false;
-
-/**
- * Check if demo auto-fill is currently in progress
- * Used by auto-save mechanism to prevent race conditions
- */
-export function isDemoAutoFillInProgress(): boolean {
-  return demoAutoFillInProgress;
-}
-
-/**
- * Set the demo auto-fill in progress flag
- * @param inProgress True if demo auto-fill is starting, false when complete
- */
-export function setDemoAutoFillInProgress(inProgress: boolean): void {
-  demoAutoFillInProgress = inProgress;
-  console.log(`[Demo Auto-Fill] In progress flag set to: ${inProgress}`);
-}
-
 /**
  * Apply form data values individually before resetting the form
  * 
@@ -50,10 +30,6 @@ export async function applyFormData(
   try {
     console.log(`[Demo Auto-Fill] Applying form data with ${Object.keys(formData).length} fields${isLegacy ? ' (legacy mode)' : ''}`);
     
-    // Set the flag to indicate we're in the middle of a demo auto-fill
-    // This will prevent the auto-save mechanism from triggering during updates
-    setDemoAutoFillInProgress(true);
-    
     // First pass: Update fields individually to ensure they're registered
     for (const [key, value] of Object.entries(formData)) {
       try {
@@ -67,19 +43,10 @@ export async function applyFormData(
     resetForm(formData);
     
     console.log('[Demo Auto-Fill] Form data applied successfully');
-    
-    // Add a delay before turning off the flag to ensure all form operations complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Now that all updates are done, clear the flag
-    setDemoAutoFillInProgress(false);
   } catch (error) {
     console.error('[Demo Auto-Fill] Error applying form data:', error);
     // Fallback to direct reset if individual updates fail
     resetForm(formData);
-    
-    // Make sure we clear the flag even if there's an error
-    setDemoAutoFillInProgress(false);
   }
 }
 
@@ -174,10 +141,6 @@ export async function applyAndVerifyFormData(
   isLegacy: boolean = false
 ): Promise<{ success: boolean; details: any }> {
   try {
-    // Set the flag to indicate we're in the middle of a demo auto-fill
-    setDemoAutoFillInProgress(true);
-    console.log('[Demo Auto-Fill] Starting applyAndVerifyFormData, demoAutoFillInProgress set to true');
-    
     // First attempt: Standard approach
     await applyFormData(formData, updateField, resetForm, isLegacy);
     
@@ -211,13 +174,6 @@ export async function applyAndVerifyFormData(
       // Re-verify
       const secondVerification = verifyFormData(formData, form);
       
-      // Add a substantial delay before clearing the flag to ensure UI updates are complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Clear the flag
-      setDemoAutoFillInProgress(false);
-      console.log('[Demo Auto-Fill] Completed second attempt, demoAutoFillInProgress set to false');
-      
       return {
         success: secondVerification.success,
         details: {
@@ -226,13 +182,6 @@ export async function applyAndVerifyFormData(
         }
       };
     }
-    
-    // Add a delay before clearing the flag to ensure UI updates are complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Clear the flag
-    setDemoAutoFillInProgress(false);
-    console.log('[Demo Auto-Fill] Completed first attempt successfully, demoAutoFillInProgress set to false');
     
     return {
       success: verification.success,
@@ -247,10 +196,6 @@ export async function applyAndVerifyFormData(
     } catch (resetError) {
       console.error('[Demo Auto-Fill] Error in fallback resetForm:', resetError);
     }
-    
-    // Make sure we clear the flag even if there's an error
-    setDemoAutoFillInProgress(false);
-    console.log('[Demo Auto-Fill] Error occurred, demoAutoFillInProgress set to false');
     
     return {
       success: false,
