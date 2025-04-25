@@ -116,20 +116,16 @@ async function handleKy3pDemoAutofill(req, res) {
     
     logger.info(`Successfully inserted ${insertCount} KY3P responses for task ${taskId}`);
     
-    // Update task progress based on response count
+    // Calculate the progress but always leave the form in in_progress state
+    // so the user can review and submit manually
     const progress = Math.min(Math.round((insertCount / 120) * 100), 100);
-    let status = 'in_progress';
+    const status = 'in_progress'; // Always use 'in_progress' for demo auto-fill
     
-    if (progress >= 100) {
-      status = 'submitted';
-    } else if (progress === 0) {
-      status = 'not_started';
-    }
-    
+    // Update the task progress but preserve its status
     await db.update(tasks)
       .set({
-        progress,
-        status,
+        progress, // Update the progress
+        status,   // Set to 'in_progress' regardless of completion
         updated_at: new Date()
       })
       .where(eq(tasks.id, taskId));

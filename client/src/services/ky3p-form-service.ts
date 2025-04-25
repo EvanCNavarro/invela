@@ -486,14 +486,39 @@ export class KY3PFormService extends EnhancedKybFormService {
   /**
    * Load existing responses for the form
    */
+  /**
+   * Clear the internal response cache to force fresh data to be loaded
+   * This is especially important for demo auto-fill functionality
+   */
+  public clearCache(): void {
+    logger.info('[KY3P Form Service] Clearing form data cache');
+    this._formData = null;
+    this._timestamps = {};
+    this._responsesCache = null;
+    this._progressData = null;
+  }
+  
+  /**
+   * Direct method to load responses from the server
+   * Used by demo auto-fill to force a data refresh
+   */
   public async loadResponses(): Promise<Record<string, any>> {
     if (!this.taskId) {
       throw new Error('No task ID provided for loading responses');
     }
     
+    logger.info('[KY3P Form Service] Force-loading responses for task', { taskId: this.taskId });
+    
     try {
-      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses`, {
-        credentials: 'include' // Include session cookies
+      // Force bypassing any caching mechanism
+      const cacheBuster = new Date().getTime();
+      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses?_cb=${cacheBuster}`, {
+        credentials: 'include', // Include session cookies
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
       
       if (!response.ok) {
@@ -501,15 +526,44 @@ export class KY3PFormService extends EnhancedKybFormService {
       }
       
       const responses = await response.json();
+      logger.info('[KY3P Form Service] Received response data from server', { 
+        count: responses.length,
+        sampleIds: responses.slice(0, 3).map(r => r.field_id)
+      });
       
       // Convert responses to a key-value map
       const responseMap: Record<string, any> = {};
+      
+      // Process all responses
       for (const resp of responses) {
-        const field = await this.getFieldById(resp.field_id);
-        if (field) {
-          responseMap[field.key] = resp.response_value;
+        try {
+          // Try to get field by ID
+          const field = await this.getFieldById(resp.field_id);
+          
+          if (field) {
+            responseMap[field.key] = resp.value || resp.response_value;
+            logger.debug(`[KY3P Form Service] Mapped response for field ${field.key}`, {
+              fieldId: resp.field_id,
+              value: resp.value || resp.response_value
+            });
+          } else {
+            // Also try direct key mapping if available
+            if (resp.field_key) {
+              responseMap[resp.field_key] = resp.value || resp.response_value;
+              logger.debug(`[KY3P Form Service] Mapped response by field_key ${resp.field_key}`);
+            }
+          }
+        } catch (fieldError) {
+          logger.warn(`[KY3P Form Service] Error mapping field ${resp.field_id}:`, fieldError);
         }
       }
+      
+      // Update the internal form data with the loaded responses
+      this._formData = responseMap;
+      logger.info('[KY3P Form Service] Successfully loaded responses', { 
+        fieldCount: Object.keys(responseMap).length,
+        sampleKeys: Object.keys(responseMap).slice(0, 3)
+      });
       
       return responseMap;
     } catch (error) {
