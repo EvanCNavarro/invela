@@ -781,33 +781,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         </div>
                         
                         {/* Consent section */}
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <h4 className="font-medium text-gray-900">Submission Consent</h4>
-                          
-                          <FormField
-                            control={form.control}
-                            name="agreement_confirmation"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel className="text-sm font-normal">
-                                    I, Chris James, in my capacity as an authorized representative of ExampleFinTechCompany, do hereby:
-                                    <ul className="list-disc pl-6 pt-2 space-y-1">
-                                      <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
-                                      <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
-                                      <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
-                                    </ul>
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                          <div className="flex items-center mb-2">
+                            <FormField
+                              control={form.control}
+                              name="agreement_confirmation"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 m-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      className="mt-0.5"
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-semibold text-gray-700 m-0">
+                                    Submission Consent <span className="text-red-500">*</span>
                                   </FormLabel>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="pl-8">
+                            <p className="text-gray-600 text-sm">
+                              I, <span className="font-bold">Chris James</span>, in my capacity as an authorized representative of <span className="font-bold">ExampleFinTechCompany</span>, do hereby:
+                            </p>
+                            <ul className="list-disc pl-5 mt-2 text-sm text-gray-600 space-y-1">
+                              <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
+                              <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
+                              <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
+                            </ul>
+                          </div>
                         </div>
                         
                         {/* Navigation buttons */}
