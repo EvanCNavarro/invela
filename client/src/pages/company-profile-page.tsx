@@ -670,13 +670,13 @@ export default function CompanyProfilePage() {
                     boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
                   }}
                 >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <Award className="h-5 w-5 text-black" />
-                    <div className="text-sm text-black font-medium">
-                      RISK SCORE
+                  <div className="flex flex-col items-center justify-center gap-1 mb-1">
+                    <Award className="h-5 w-5 text-black mb-0.5" />
+                    <div className="text-xs text-black font-medium leading-tight">
+                      S&P BUSINESS DATA<br />RISK SCORE
                     </div>
                   </div>
-                  <div className="text-4xl font-bold text-gray-900 mt-1 py-2">
+                  <div className="text-3xl font-bold text-gray-900 mt-1 py-1">
                     {company.riskScore || company.risk_score || 0}
                   </div>
                 </div>
