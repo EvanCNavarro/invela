@@ -39,10 +39,11 @@ export async function kybDemoAutoFill(taskId: number, userId?: number): Promise<
     logger.info(`Filling KYB form with demo data for task ${taskId}`);
 
     // Query the KYB fields with demo auto-fill values - using direct SQL for reliability
-    // Note: Some systems store empty string as NULL, so we need to check for both
+    // Only get fields that have a non-empty demo_autofill value
     const sqlQuery = `
       SELECT id, field_key, demo_autofill 
       FROM kyb_fields 
+      WHERE demo_autofill IS NOT NULL AND demo_autofill != ''
       ORDER BY id
     `;
 
