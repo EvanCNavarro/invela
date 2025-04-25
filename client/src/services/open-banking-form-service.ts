@@ -719,6 +719,56 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   }
 
   /**
+   * Reset data by fetching fresh data from the server
+   * This is useful for demo autofill functionality
+   */
+  async resetData(): Promise<void> {
+    logger.info('Resetting form service data');
+    
+    // Clear the timestamped form data
+    this.timestampedFormData = createTimestampedFormData();
+    
+    // If we have a task ID, immediately load fresh data
+    if (this.taskId) {
+      try {
+        logger.info(`Reloading fresh data for task ${this.taskId}`);
+        const { formData } = await this.getOpenBankingProgress(this.taskId);
+        
+        if (formData && Object.keys(formData).length > 0) {
+          // Directly load data without merging with existing (since we cleared it)
+          this.loadFormData(formData);
+          logger.info(`Successfully reloaded data with ${Object.keys(formData).length} fields`);
+        }
+      } catch (error) {
+        logger.error('Error reloading data during reset:', error);
+      }
+    }
+  }
+  
+  /**
+   * Update a single field value
+   */
+  async updateField(fieldKey: string, value: any): Promise<void> {
+    logger.info(`Updating field ${fieldKey} with new value`);
+    
+    // Update the field in our timestamped form data
+    this.timestampedFormData = updateField(this.timestampedFormData, fieldKey, value);
+    
+    // Also update the fields array for UI consistency
+    this.fields = this.fields.map(field => 
+      field.key === fieldKey ? { ...field, value } : field
+    );
+    
+    // Update the sections array too
+    this.sections = this.sections.map(section => ({
+      ...section,
+      fields: section.fields.map(field => 
+        field.key === fieldKey ? { ...field, value } : field
+      )
+    }));
+  }
+
+  /**
    * Load progress from the server
    * This method is used by the FormDataManager to load saved form data
    */
