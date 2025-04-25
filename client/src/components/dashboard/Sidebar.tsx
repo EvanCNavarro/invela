@@ -253,6 +253,7 @@ export function Sidebar({
                 notificationCount={item.count}
                 showPulsingDot={item.pulsingDot}
                 isPlayground={isPlayground}
+                externalLink={item.externalLink}
               />
             ))}
           </div>
