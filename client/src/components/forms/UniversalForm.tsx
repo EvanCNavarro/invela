@@ -780,26 +780,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           </Accordion>
                         </div>
                         
-                        {/* Consent section - entirely simplified to avoid reactivity issues */}
+                        {/* Consent section - ultra simple implementation */}
                         <div 
-                          className={
-                            form.getValues("agreement_confirmation") 
-                              ? "p-4 rounded-lg border border-blue-300 bg-blue-50 cursor-pointer" 
-                              : "p-4 rounded-lg border border-gray-200 bg-white cursor-pointer"
-                          }
+                          className="p-4 rounded-lg border cursor-pointer"
+                          style={{
+                            backgroundColor: form.getValues("agreement_confirmation") ? "#EFF6FF" : "white",
+                            borderColor: form.getValues("agreement_confirmation") ? "#93C5FD" : "#E5E7EB"
+                          }}
                           onClick={() => {
-                            // Simple toggle with no reactivity tricks
+                            // Toggle the value
                             const newValue = !form.getValues("agreement_confirmation");
                             form.setValue("agreement_confirmation", newValue);
                             
-                            // Force refresh DOM element class
-                            const element = document.getElementById("consent-box");
-                            if (element) {
-                              if (newValue) {
-                                element.className = "p-4 rounded-lg border border-blue-300 bg-blue-50 cursor-pointer";
-                              } else {
-                                element.className = "p-4 rounded-lg border border-gray-200 bg-white cursor-pointer";
-                              }
+                            // Directly update checkbox
+                            const checkbox = document.getElementById("consent-checkbox") as HTMLInputElement;
+                            if (checkbox) {
+                              checkbox.checked = newValue;
+                            }
+                            
+                            // Update container style
+                            const container = document.getElementById("consent-box");
+                            if (container) {
+                              container.style.backgroundColor = newValue ? "#EFF6FF" : "white";
+                              container.style.borderColor = newValue ? "#93C5FD" : "#E5E7EB";
                             }
                           }}
                           id="consent-box"
@@ -808,10 +811,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             <div className="flex flex-row items-start space-x-3 space-y-0 m-0">
                               <input 
                                 type="checkbox" 
-                                checked={form.getValues("agreement_confirmation")}
-                                onChange={() => {}} // Empty handler since parent div handles changes
+                                id="consent-checkbox"
+                                defaultChecked={form.getValues("agreement_confirmation") || false}
                                 className="mt-0.5 h-4 w-4" 
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Allow the checkbox to be clicked directly too
+                                  const checkbox = e.target as HTMLInputElement;
+                                  form.setValue("agreement_confirmation", checkbox.checked);
+                                  
+                                  // Update container style
+                                  const container = document.getElementById("consent-box");
+                                  if (container) {
+                                    container.style.backgroundColor = checkbox.checked ? "#EFF6FF" : "white";
+                                    container.style.borderColor = checkbox.checked ? "#93C5FD" : "#E5E7EB";
+                                  }
+                                }}
                               />
                               <div className="font-semibold text-gray-700">
                                 Submission Consent <span className="text-red-500">*</span>
