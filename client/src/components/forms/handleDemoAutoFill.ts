@@ -86,9 +86,21 @@ export async function handleDemoAutoFill({
     if (result.success) {
       logger.info(`Universal auto-fill completed for ${taskType} with ${result.count || 'unknown'} responses`);
       
+      // Show loading message while refreshing
+      toast({
+        title: 'Demo Auto-Fill Loading',
+        description: 'Refreshing form with sample data...',
+        variant: 'default',
+      });
+      
+      // Slight delay to ensure data is saved in the database
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Refresh form data
       if (formService) {
-        const refreshedData = await formService.getFormData();
+        logger.info('Refreshing form data from service');
+        const refreshedData = await formService.getFormData(true); // Force refresh from server
+        logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
         resetForm(refreshedData);
       }
       
@@ -103,7 +115,7 @@ export async function handleDemoAutoFill({
       // Show success message
       toast({
         title: 'Demo Auto-Fill Complete',
-        description: `Successfully filled ${result.count || 'all'} form fields with sample data.`,
+        description: `Successfully filled ${result.fieldCount || 'all'} form fields with sample data.`,
         variant: 'success',
       });
       
@@ -161,9 +173,21 @@ export async function handleDemoAutoFill({
       if (result.success) {
         logger.info(`Legacy auto-fill completed for ${taskType}`);
         
+        // Show loading message while refreshing
+        toast({
+          title: 'Demo Auto-Fill Loading',
+          description: 'Refreshing form with sample data...',
+          variant: 'default',
+        });
+        
+        // Slight delay to ensure data is saved in the database
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Refresh form data
         if (formService) {
-          const refreshedData = await formService.getFormData();
+          logger.info('Refreshing form data from service via legacy endpoint');
+          const refreshedData = await formService.getFormData(true); // Force refresh from server
+          logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
           resetForm(refreshedData);
         }
         

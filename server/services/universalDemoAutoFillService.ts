@@ -257,9 +257,6 @@ export class UniversalDemoAutoFillService {
   ): Promise<{ success: boolean; message: string; fieldCount: number }> {
     logger.info('Applying demo data directly to database', { taskId, formType, userId });
     
-    // Generate the demo data first
-    const demoData = await this.generateDemoData(taskId, formType, userId);
-    
     // Get configuration for the requested form type
     const config = formTypeConfigs[formType];
     
@@ -272,6 +269,40 @@ export class UniversalDemoAutoFillService {
       throw new Error(`Task not found: ${taskId}`);
     }
     
+    // Get company information to verify demo status
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+      
+    if (!company || company.is_demo !== true) {
+      throw new Error('Auto-fill is only available for demo companies');
+    }
+    
+    // Get user information if available
+    let userEmail = '';
+    if (userId) {
+      try {
+        const [user] = await db.select({ email: sql<string>`email` })
+          .from(sql`users`)
+          .where(sql`id = ${userId}`);
+          
+        if (user) {
+          userEmail = user.email;
+        }
+      } catch (error) {
+        logger.warn('Could not retrieve user email for personalization', { 
+          userId, error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+    
+    // Get all fields for this form type including demo_autofill values
+    const fields = await db.select()
+      .from(config.fieldsTable)
+      .orderBy(sql`${config.groupColumn} ASC, "order" ASC`);
+      
+    logger.info('Retrieved fields for demo auto-fill', { count: fields.length });
+    
     // Get all existing responses for this task
     const existingResponses = await db.select()
       .from(config.responsesTable)
@@ -282,16 +313,6 @@ export class UniversalDemoAutoFillService {
     // Create a map of field key to response record for quick lookups
     const responseMap = new Map();
     
-    // Get field information for field ID mapping
-    const fields = await db.select()
-      .from(config.fieldsTable);
-      
-    // Create a map of field key to field record for quick lookups
-    const fieldMap = new Map();
-    for (const field of fields) {
-      fieldMap.set(field[config.fieldKeyColumn], field);
-    }
-    
     // Map existing responses by field key
     for (const response of existingResponses) {
       const field = fields.find(f => f.id === response.field_id);
@@ -300,20 +321,65 @@ export class UniversalDemoAutoFillService {
       }
     }
     
-    // Process each field in the demo data
+    // Create a map of field key to field record for quick lookups
+    const fieldMap = new Map();
+    for (const field of fields) {
+      fieldMap.set(field[config.fieldKeyColumn], field);
+    }
+    
+    // Process each field and apply demo values
     const timestamp = new Date();
     let updatedCount = 0;
     let insertedCount = 0;
     let errorCount = 0;
     
-    for (const [fieldKey, value] of Object.entries(demoData)) {
+    // First check if we have any demo values actually defined
+    const fieldsWithDemoValues = fields.filter(field => 
+      field[config.demoAutofillColumn] !== null && 
+      field[config.demoAutofillColumn] !== undefined &&
+      field[config.demoAutofillColumn] !== '');
+      
+    logger.info('Found fields with demo values', { 
+      count: fieldsWithDemoValues.length,
+      sampleFields: fieldsWithDemoValues.slice(0, 3).map(f => ({
+        key: f[config.fieldKeyColumn],
+        demoValue: f[config.demoAutofillColumn]
+      }))
+    });
+    
+    if (fieldsWithDemoValues.length === 0) {
+      logger.warn('No demo values found in database for this form type', { formType });
+    }
+    
+    // Apply demo values field by field
+    for (const field of fields) {
       try {
-        const field = fieldMap.get(fieldKey);
+        const fieldKey = field[config.fieldKeyColumn];
+        let demoValue = field[config.demoAutofillColumn];
         
-        if (!field) {
-          logger.warn(`Field not found for key: ${fieldKey}`);
+        // Special cases that should always use current user/company data
+        if (fieldKey === 'legalEntityName') {
+          demoValue = company.name;
+        }
+        else if (fieldKey === 'contactEmail' && userEmail) {
+          demoValue = userEmail;
+        }
+        // Replace template variables
+        else if (typeof demoValue === 'string' && demoValue.includes('{{COMPANY_NAME}}')) {
+          demoValue = demoValue.replace('{{COMPANY_NAME}}', company.name);
+        }
+        
+        // Skip if no demo value
+        if (demoValue === null || demoValue === undefined) {
+          logger.debug(`No demo value for field ${fieldKey}, skipping`);
           continue;
         }
+        
+        // Debug info
+        logger.info(`Setting demo value for field "${fieldKey}"`, { 
+          value: demoValue, 
+          fieldId: field.id
+        });
         
         // Check if response already exists
         const existingResponse = responseMap.get(fieldKey);
@@ -322,13 +388,18 @@ export class UniversalDemoAutoFillService {
           // Update existing response
           await db.update(config.responsesTable)
             .set({
-              [config.responseValueColumn]: value,
-              status: value ? 'FILLED' : 'EMPTY',
+              [config.responseValueColumn]: demoValue,
+              status: demoValue ? 'FILLED' : 'EMPTY',
               updated_at: timestamp,
               version: existingResponse.version + 1
             })
             .where(eq(config.responsesTable.id, existingResponse.id));
             
+          logger.debug(`Updated field ${fieldKey} with demo value`, { 
+            oldValue: existingResponse[config.responseValueColumn],
+            newValue: demoValue
+          });
+          
           updatedCount++;
         } else {
           // Create new response
@@ -336,17 +407,21 @@ export class UniversalDemoAutoFillService {
             .values({
               task_id: taskId,
               field_id: field.id,
-              [config.responseValueColumn]: value,
-              status: value ? 'FILLED' : 'EMPTY',
+              [config.responseValueColumn]: demoValue,
+              status: demoValue ? 'FILLED' : 'EMPTY',
               created_at: timestamp,
               updated_at: timestamp,
               version: 1
             });
             
+          logger.debug(`Created new response for field ${fieldKey} with demo value`, {
+            value: demoValue
+          });
+          
           insertedCount++;
         }
       } catch (error) {
-        logger.error(`Error processing field ${fieldKey}`, {
+        logger.error(`Error processing field ${field[config.fieldKeyColumn]}`, {
           error: error instanceof Error ? error.message : String(error)
         });
         errorCount++;
