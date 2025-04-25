@@ -9,7 +9,9 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MousePointer2Icon,
-  Hammer
+  Hammer,
+  ShieldCheck,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
