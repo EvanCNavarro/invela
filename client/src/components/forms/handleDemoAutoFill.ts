@@ -66,13 +66,16 @@ export async function handleDemoAutoFill({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include credentials for authentication
         body: JSON.stringify({
           taskType
         }),
       });
+      
+      logger.info(`Universal endpoint response status: ${response.status}`);
     } catch (error) {
       // If universal endpoint fails, fall back to legacy endpoints
-      logger.warn(`Universal endpoint failed, trying legacy endpoint for ${taskType}`);
+      logger.warn(`Universal endpoint failed, trying legacy endpoint for ${taskType}`, error);
       return await useLegacyEndpoint(taskId, taskType);
     }
 
@@ -162,7 +165,10 @@ export async function handleDemoAutoFill({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include credentials for authentication
       });
+      
+      logger.info(`Legacy endpoint response status: ${response.status}`);
       
       if (!response.ok) {
         throw new Error(`Legacy endpoint failed with status ${response.status}`);
