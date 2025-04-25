@@ -98,7 +98,12 @@ export async function enhancedDemoAutoFill(taskId: number, formType: FormType, u
     await db.delete(config.responsesTable).where(eq(config.responsesTable.task_id, taskId));
     
     // Fetch all fields with demo autofill data defined
-    const fields = await db.select().from(config.fieldsTable);
+    const fields = await db.select()
+      .from(config.fieldsTable)
+      .where(
+        // Filter out fields with empty or null demo_autofill values
+        db.sql`${config.fieldsTable[config.demoAutofillColumn]} IS NOT NULL AND ${config.fieldsTable[config.demoAutofillColumn]} != ''`
+      );
     
     if (!fields || fields.length === 0) {
       return {
