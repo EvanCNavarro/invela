@@ -1,0 +1,70 @@
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, taskTitle: "1. KYB Form: DevTest32"}
+[Enhanced KYB Service] Auto-saving form after field goodStanding update
+[Enhanced KYB Service] Auto-saving form after field corporateRegistration update
+[Enhanced KYB Service] Auto-saving form after field externalAudit update
+[Enhanced KYB Service] Auto-saving form after field controlEnvironment update
+[Enhanced KYB Service] Auto-saving form after field authorizedSigners update
+[Enhanced KYB Service] Auto-saving form after field governmentOwnership update
+[Enhanced KYB Service] Auto-saving form after field ultimateBeneficialOwners update
+[Enhanced KYB Service] Auto-saving form after field directorsAndOfficers update
+[Enhanced KYB Service] Auto-saving form after field contactEmail update
+[Enhanced KYB Service] Auto-saving form after field marketCapitalization update
+[TaskPage] [TaskPage] WebSocket message received: 
+Object {type: "task_updated", payload: {…}}
+[TaskPage] [TaskPage] Task update received via WebSocket: 
+Object {taskId: 637, status: "ready_for_submission", progress: 100}
+[TaskPage] Fetching task data by ID: 
+Object {taskId: 637, fullUrl: "/api/tasks.json/637", timestamp: "2025-04-25T06:46:05.945Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", payload: {…}}
+[TaskPage] [TaskPage] WebSocket message received: 
+Object {type: "task_updated", payload: {…}}
+[TaskPage] [TaskPage] Task update received via WebSocket: 
+Object {taskId: 637, status: "ready_for_submission", progress: 100}
+[TaskPage] Fetching task data by ID: 
+Object {taskId: 637, fullUrl: "/api/tasks.json/637", timestamp: "2025-04-25T06:46:05.953Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", payload: {…}}
+[Enhanced KYB Service] Auto-saving form after field lifetimeCustomerValue update
+[Enhanced KYB Service] Auto-saving form after field annualRecurringRevenue update
+[Enhanced KYB Service] Auto-saving form after field monthlyRecurringRevenue update
+[Enhanced KYB Service] Auto-saving form after field investigationsIncidents update
+[Enhanced KYB Service] Auto-saving form after field financialStatements update
+[Enhanced KYB Service] Auto-saving form after field operationalPolicies update
+[Enhanced KYB Service] Auto-saving form after field dataVolume update
+[Enhanced KYB Service] Auto-saving form after field dataTypes update
+[Enhanced KYB Service] Auto-saving form after field sanctionsCheck update
+[Enhanced KYB Service] Auto-saving form after field dueDiligence update
+[Enhanced KYB Service] Auto-saving form after field regulatoryActions update
+[Enhanced KYB Service] Auto-saving form after field legalEntityName update
+[Enhanced KYB Service] Auto-saving form after field registrationNumber update
+[Enhanced KYB Service] Auto-saving form after field incorporationDate update
+[Enhanced KYB Service] Auto-saving form after field businessType update
+[UniversalForm] Form data changed: 30 fields
+[TaskPage] Task data received: 
+Object {taskId: 637, taskType: "company_kyb", title: "1. KYB Form: DevTest32", status: "ready_for_submission", timestamp: "2025-04-25T06:46:06.287Z"}
+[TaskPage] Task data received: 
+Object {taskId: 637, taskType: "company_kyb", title: "1. KYB Form: DevTest32", status: "ready_for_submission", timestamp: "2025-04-25T06:46:06.562Z"}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "1. KYB Form: DevTest32"
+[TaskPage] Extracted company name (numbered KYB): "DevTest32"
+[TaskPage] Found current company name from API: "DevTest32"
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, currentCompanyName: "DevTest32", taskTitle: "1. KYB Form: DevTest32"}
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, taskTitle: "1. KYB Form: DevTest32"}
+[KYB Timestamp Sync] Saving timestamps for task 637 - 30 fields
+[KYB Timestamp Sync] Successfully synchronized timestamps with server
+[Enhanced KYB Service] Auto-saving form after field externalAudit update
+[Enhanced KYB Service] Auto-saving form after field controlEnvironment update
+[Enhanced KYB Service] Auto-saving form after field authorizedSigners update
+[Enhanced KYB Service] Auto-saving form after field governmentOwnership update
+[Enhanced KYB Service] Auto-saving form after field ultimateBeneficialOwners update
+[Enhanced KYB Service] Auto-saving form after field directorsAndOfficers update
+[Enhanced KYB Service] Auto-saving form after field contactEmail update
+[Enhanced KYB Service] Auto-saving form after field marketCapitalization update
+[Enhanced KYB Service] Auto-saving form after field lifetimeCustomerValue update
