@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin: Update Company Tabs</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #2563eb;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    button:disabled {
+      background-color: #a0aec0;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #166534;
+    }
+    .error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
+    pre {
+      overflow-x: auto;
+      background-color: #f8fafc;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin: Update Company Tabs</h1>
+  
+  <div class="card">
+    <p>This tool will update all Invela and Bank companies to have access to the following sidebar tabs:</p>
+    <ul>
+      <li>Claims - Opens at <code>https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/claims</code></li>
+      <li>S&P Risk Score - Opens at <code>https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/risk-score</code></li>
+    </ul>
+    <p>Both tabs will respect the company category permissions and are only visible to Invela and Bank companies.</p>
+    
+    <button id="updateButton" onclick="updateTabs()">Update All Company Tabs</button>
+    
+    <div id="resultContainer" class="result">
+      <div id="resultContent"></div>
+      <pre id="resultDetails"></pre>
+    </div>
+  </div>
+
+  <script>
+    async function updateTabs() {
+      const button = document.getElementById('updateButton');
+      const resultContainer = document.getElementById('resultContainer');
+      const resultContent = document.getElementById('resultContent');
+      const resultDetails = document.getElementById('resultDetails');
+      
+      // Disable button and show loading state
+      button.disabled = true;
+      button.textContent = 'Updating...';
+      
+      try {
+        const response = await fetch('/api/admin/update-tabs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        // Display result
+        resultContainer.style.display = 'block';
+        
+        if (response.ok) {
+          resultContainer.className = 'result success';
+          resultContent.textContent = data.message || 'Successfully updated company tabs';
+          resultDetails.textContent = JSON.stringify(data, null, 2);
+        } else {
+          resultContainer.className = 'result error';
+          resultContent.textContent = data.message || 'Failed to update company tabs';
+          resultDetails.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        // Handle error
+        resultContainer.style.display = 'block';
+        resultContainer.className = 'result error';
+        resultContent.textContent = 'An error occurred while updating tabs';
+        resultDetails.textContent = error.toString();
+      } finally {
+        // Reset button
+        button.disabled = false;
+        button.textContent = 'Update All Company Tabs';
+      }
+    }
+  </script>
+</body>
+</html>
