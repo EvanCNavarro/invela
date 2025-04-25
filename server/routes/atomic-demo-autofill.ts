@@ -10,12 +10,12 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { AtomicDemoAutoFillService } from '../services/atomic-demo-autofill';
 import * as websocketService from '../services/websocket';
-import getLogger from '../utils/logger';
+import { Logger } from '../utils/logger';
 
+const logger = new Logger('AtomicDemoAutoFill');
 const router = Router();
-const logger = getLogger('AtomicDemoAutoFillRoutes');
 
-// Create the service instance with WebSocket capabilities
+// Create an instance of the service with the WebSocket service
 const atomicDemoAutoFillService = new AtomicDemoAutoFillService(websocketService);
 
 /**
@@ -24,73 +24,79 @@ const atomicDemoAutoFillService = new AtomicDemoAutoFillService(websocketService
  */
 router.post('/api/atomic-demo-autofill/:taskId', requireAuth, async (req, res) => {
   try {
-    const taskId = parseInt(req.params.taskId, 10);
-    const formType = req.body.formType || 'kyb'; // Default to KYB if not specified
+    const { taskId } = req.params;
+    const taskIdNum = parseInt(taskId, 10);
     
-    if (isNaN(taskId)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid task ID' 
+    if (isNaN(taskIdNum)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
       });
     }
     
-    logger.info('Atomic demo auto-fill requested', { 
-      taskId, 
-      formType, 
-      userId: req.user?.id 
-    });
+    // Get form type from the request body, defaulting to 'kyb'
+    const formType = req.body.formType || 'kyb';
     
-    // Apply the demo data with progressive UI updates
+    logger.info(`Received atomic demo auto-fill request for task ${taskIdNum} (${formType})`);
+    
+    // Get the user ID from the authenticated user
+    const userId = req.user?.id;
+    
+    // Apply the demo data with WebSocket updates
     const result = await atomicDemoAutoFillService.applyDemoDataAtomically(
-      taskId,
+      taskIdNum,
       formType,
-      req.user?.id
+      userId
     );
+    
+    logger.info(`Atomic demo auto-fill completed for task ${taskIdNum}:`, {
+      success: result.success,
+      fieldCount: result.fieldCount
+    });
     
     return res.json({
       success: true,
       message: result.message,
-      fieldCount: result.fieldCount
+      fieldCount: result.fieldCount,
+      taskId: taskIdNum
     });
   } catch (error) {
-    logger.error('Error in atomic demo auto-fill endpoint', {
+    logger.error('Error in atomic demo auto-fill route:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
     
-    const statusCode = 
-      error instanceof Error && error.message.includes('demo companies') ? 403 :
-      error instanceof Error && error.message.includes('Task not found') ? 404 : 
-      500;
-    
-    return res.status(statusCode).json({
+    return res.status(500).json({
       success: false,
-      error: 'Error applying demo data',
-      message: error instanceof Error ? error.message : 'An unknown error occurred'
+      message: 'An error occurred while applying demo data',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
 /**
- * Add support to specific form types as aliases to the atomic endpoint
+ * GET /api/atomic-demo-autofill/status
+ * Return the status of the atomic demo auto-fill service
  */
-
-// KYB atomic demo auto-fill endpoint
-router.post('/api/kyb/atomic-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  req.body.formType = 'kyb';
-  return router.handle(req, res);
-});
-
-// KY3P atomic demo auto-fill endpoint
-router.post('/api/ky3p/atomic-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  req.body.formType = 'ky3p';
-  return router.handle(req, res);
-});
-
-// Open Banking atomic demo auto-fill endpoint
-router.post('/api/open-banking/atomic-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  req.body.formType = 'open_banking';
-  return router.handle(req, res);
+router.get('/api/atomic-demo-autofill/status', requireAuth, async (req, res) => {
+  try {
+    // Simply return service status
+    return res.json({
+      success: true,
+      message: 'Atomic demo auto-fill service is available',
+      serviceVersion: '1.0.0',
+      supportsFormTypes: ['kyb', 'company_kyb', 'ky3p', 'open_banking']
+    });
+  } catch (error) {
+    logger.error('Error in service status route:', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while checking service status'
+    });
+  }
 });
 
 export default router;
