@@ -55,6 +55,9 @@ import SectionContent from './SectionContent';
 import { handleDemoAutoFill } from './handleDemoAutoFill';
 import { handleClearFields } from './clearFieldsUtils';
 
+// Import WebSocket field updater component for real-time form field updates
+import WebSocketFieldUpdater from './WebSocketFieldUpdater';
+
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
 
@@ -605,6 +608,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           </div>
         )}
       </div>
+      
+      {/* Add WebSocketFieldUpdater component for real-time field updates during demo auto-fill */}
+      {taskId && (
+        <WebSocketFieldUpdater 
+          taskId={taskId} 
+          updateField={updateField}
+          enabled={true}
+        />
+      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
