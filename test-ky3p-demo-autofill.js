@@ -1,122 +1,108 @@
 /**
- * Test script for KY3P demo auto-fill functionality
+ * Test the KY3P demo auto-fill function to verify our database fix
  * 
- * This script:
- * 1. Fetches demo data from the server
- * 2. Converts the data to the format expected by the bulk update endpoint
- * 3. Logs the data to verify correct formatting
- * 
- * Run this script to test the data flow before implementing a fix
+ * This script ensures that the KY3P demo auto-fill works correctly after
+ * renaming the 'is_required' column to 'required' in the ky3p_fields table.
  */
 
-import fetch from 'node-fetch';
+import { db } from './db/index.js';
+import { tasks, companies } from './db/schema.js';
+import { eq, and } from 'drizzle-orm';
+import { UniversalDemoAutoFillService } from './server/services/universalDemoAutoFillService.js';
 
-async function getKy3pFields() {
+async function testKy3pDemoAutoFill() {
   try {
-    const response = await fetch('http://localhost:5000/api/ky3p-fields', {
-      method: 'GET',
-      credentials: 'include'
-    });
+    console.log('Finding a KY3P task associated with a demo company...');
     
-    if (!response.ok) {
-      console.error('Failed to get KY3P fields:', response.status, response.statusText);
-      return [];
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching KY3P fields:', error);
-    return [];
-  }
-}
-
-async function getDemoData(taskId) {
-  try {
-    const response = await fetch(`http://localhost:5000/api/ky3p/demo-autofill/${taskId}`, {
-      method: 'GET',
-      credentials: 'include'
-    });
-    
-    if (!response.ok) {
-      console.error('Failed to get demo data:', response.status, response.statusText);
-      return {};
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching demo data:', error);
-    return {};
-  }
-}
-
-async function testConversion(taskId) {
-  // Get all fields to create the mapping
-  console.log(`Fetching KY3P fields...`);
-  const fields = await getKy3pFields();
-  
-  if (!fields.length) {
-    console.error('No KY3P fields found');
-    return;
-  }
-  
-  console.log(`Got ${fields.length} fields`);
-  
-  // Create mapping from field keys to IDs
-  const fieldKeyToIdMap = new Map();
-  for (const field of fields) {
-    fieldKeyToIdMap.set(field.field_key, field.id);
-  }
-  
-  // Get demo data
-  console.log(`Fetching demo data for task ${taskId}...`);
-  const demoData = await getDemoData(taskId);
-  
-  if (!Object.keys(demoData).length) {
-    console.error('No demo data found');
-    return;
-  }
-  
-  console.log(`Got demo data with ${Object.keys(demoData).length} fields`);
-  
-  // Convert to array format
-  const responsesArray = [];
-  let validCount = 0;
-  let invalidCount = 0;
-  
-  for (const [key, value] of Object.entries(demoData)) {
-    const fieldId = fieldKeyToIdMap.get(key);
-    
-    if (fieldId !== undefined) {
-      const numericFieldId = Number(fieldId);
+    // Find demo companies first
+    const demoCompanies = await db.select()
+      .from(companies)
+      .where(eq(companies.is_demo, true));
       
-      if (!isNaN(numericFieldId)) {
-        responsesArray.push({
-          fieldId: numericFieldId,
-          value
-        });
-        validCount++;
-      } else {
-        console.warn(`Invalid field ID for key ${key}: ${fieldId}`);
-        invalidCount++;
-      }
-    } else {
-      console.warn(`Field key not found: ${key}`);
-      invalidCount++;
+    if (demoCompanies.length === 0) {
+      console.error('No demo companies found in the database.');
+      return;
     }
+    
+    console.log(`Found ${demoCompanies.length} demo companies`);
+    
+    // Get the IDs of all demo companies
+    const demoCompanyIds = demoCompanies.map(company => company.id);
+    
+    // Find KY3P tasks for demo companies
+    console.log('Finding security assessment tasks for demo companies...');
+    
+    // First try to find security_assessment tasks
+    let kyspTasks = [];
+    
+    for (const companyId of demoCompanyIds) {
+      const securityTasks = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.company_id, companyId),
+          eq(tasks.task_type, 'security_assessment')
+        ));
+        
+      if (securityTasks.length > 0) {
+        kyspTasks.push(...securityTasks);
+        break; // Found what we need
+      }
+    }
+    
+    // If no tasks found, look for alternative task types
+    if (kyspTasks.length === 0) {
+      console.log('No security_assessment tasks found. Checking other task types...');
+      
+      for (const companyId of demoCompanyIds) {
+        const altTasks = await db.select()
+          .from(tasks)
+          .where(and(
+            eq(tasks.company_id, companyId),
+            eq(tasks.task_type, 'company_security')
+          ));
+          
+        if (altTasks.length > 0) {
+          kyspTasks.push(...altTasks);
+          break; // Found what we need
+        }
+      }
+    }
+    
+    if (kyspTasks.length === 0) {
+      console.error('No suitable security assessment tasks found for demo companies.');
+      return;
+    }
+    
+    const testTask = kyspTasks[0];
+    console.log(`Found task to test: ID=${testTask.id}, Type=${testTask.task_type}, Company=${testTask.company_id}`);
+    
+    // Create an instance of the service
+    const demoService = new UniversalDemoAutoFillService();
+    
+    // Apply demo data to the task
+    console.log('Applying demo data to task...');
+    const result = await demoService.applyDemoData(testTask.id, 'ky3p');
+    
+    console.log('Demo auto-fill result:', result);
+    
+    if (result.success) {
+      console.log('✅ KY3P Demo auto-fill is working correctly!');
+      console.log(`Applied demo data to ${result.fieldCount} fields.`);
+    } else {
+      console.error('❌ Demo auto-fill failed:', result.message);
+    }
+  } catch (error) {
+    console.error('Error during test:', error);
   }
-  
-  console.log(`Converted ${validCount} fields to array format (${invalidCount} invalid/not found)`);
-  console.log('First 5 converted responses:');
-  console.log(JSON.stringify(responsesArray.slice(0, 5), null, 2));
-  
-  return {
-    demoData,
-    responsesArray
-  };
 }
 
-// Provide a task ID when running the script
-const taskId = process.argv[2] || 613;
-testConversion(taskId)
-  .then(() => console.log('Test complete'))
-  .catch(error => console.error('Test failed:', error));
+// Run the test
+testKy3pDemoAutoFill()
+  .then(() => {
+    console.log('Test completed.');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('Test failed with error:', err);
+    process.exit(1);
+  });
