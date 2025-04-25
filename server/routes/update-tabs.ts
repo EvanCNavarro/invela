@@ -1,66 +1,122 @@
-import { Request, Response } from "express";
-import { db } from "@db";
-import { sql } from "drizzle-orm";
-import { broadcastCompanyTabsUpdate } from "../services/websocket";
+import { Request, Response } from 'express';
+import { db } from '../../db';
+import { sql } from 'drizzle-orm';
+import { companies } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+import { getWebSocketServer } from '../services/websocket';
 
+/**
+ * Updates all Invela and Bank category companies to have the Claims and S&P Risk Score tabs
+ * and broadcasts a WebSocket message to trigger cache invalidation and UI refresh
+ */
 export async function updateClaimsAndRiskScoreTabs(req: Request, res: Response) {
   try {
-    console.log("[Update Tabs API] Starting update of available_tabs for Invela and Bank companies");
-
-    // Update Invela companies
-    const [invelaResult] = await db.execute(sql`
-      UPDATE companies 
-      SET available_tabs = array_append(array_append(available_tabs, 'claims'), 'risk-score')
-      WHERE category = 'Invela'
-      AND NOT ('claims' = ANY(available_tabs))
-      RETURNING id, name, available_tabs;
+    // Find all Invela and Bank companies
+    const companiesResult = await db.execute(sql`
+      SELECT id, name, category, available_tabs 
+      FROM companies 
+      WHERE category IN ('Invela', 'Bank')
     `);
-
-    console.log(`[Update Tabs API] Updated ${invelaResult?.rowCount || 0} Invela companies`);
-
-    // Update Bank companies
-    const [bankResult] = await db.execute(sql`
-      UPDATE companies 
-      SET available_tabs = array_append(array_append(available_tabs, 'claims'), 'risk-score')
-      WHERE category = 'Bank'
-      AND NOT ('claims' = ANY(available_tabs))
-      RETURNING id, name, available_tabs;
-    `);
-
-    console.log(`[Update Tabs API] Updated ${bankResult?.rowCount || 0} Bank companies`);
-
-    // Combine results
-    const updatedCompanies = [
-      ...(invelaResult?.rows || []),
-      ...(bankResult?.rows || [])
-    ];
-
-    // Log all updated companies
-    for (const company of updatedCompanies) {
-      console.log(`[Update Tabs API] Company "${company.name}" (ID: ${company.id}) updated with tabs: ${company.available_tabs.join(', ')}`);
+    
+    const companies = companiesResult.rows as { 
+      id: number; 
+      name: string; 
+      category: string;
+      available_tabs: string[];
+    }[];
+    
+    console.log(`[Admin API] Found ${companies.length} companies to update`);
+    
+    const updatedCompanies = [];
+    
+    // Update each company
+    for (const company of companies) {
+      let updated = false;
+      const newTabs = [...company.available_tabs];
       
-      // Try to broadcast the update
-      try {
-        broadcastCompanyTabsUpdate(company.id, company.available_tabs, {
-          cache_invalidation: true,
-          source: "api_endpoint"
+      // Check if we need to add 'claims'
+      if (!newTabs.includes('claims')) {
+        newTabs.push('claims');
+        updated = true;
+      }
+      
+      // Check if we need to add 'risk-score'
+      if (!newTabs.includes('risk-score')) {
+        newTabs.push('risk-score');
+        updated = true;
+      }
+      
+      // Only update if needed
+      if (updated) {
+        await db.execute(sql`
+          UPDATE companies 
+          SET available_tabs = ${JSON.stringify(newTabs)}
+          WHERE id = ${company.id}
+        `);
+        
+        updatedCompanies.push({
+          id: company.id,
+          name: company.name,
+          category: company.category,
+          updated: true,
+          tabs: newTabs
         });
-      } catch (error) {
-        console.error("[Update Tabs API] Error broadcasting update:", error);
+        
+        // Broadcast WebSocket update message to trigger UI refresh
+        broadcastCompanyUpdate(company.id, newTabs);
+      } else {
+        updatedCompanies.push({
+          id: company.id,
+          name: company.name,
+          category: company.category,
+          updated: false,
+          tabs: newTabs
+        });
       }
     }
-
+    
+    // Return success response
     return res.status(200).json({
       success: true,
-      message: `Updated ${updatedCompanies.length} companies`,
-      updatedCompanies: updatedCompanies.map(c => ({ id: c.id, name: c.name }))
+      message: `Updated ${updatedCompanies.filter(c => c.updated).length} companies`,
+      data: updatedCompanies
     });
   } catch (error) {
-    console.error("[Update Tabs API] Error:", error);
+    console.error('[Admin API] Error updating company tabs:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to update company tabs",
-      error: error.message
+      message: 'Failed to update company tabs',
+      error: String(error)
     });
   }
+}
+
+/**
+ * Broadcasts a WebSocket message to all clients to update the company tabs
+ * This will trigger cache invalidation in the frontend and refresh the sidebar
+ */
+function broadcastCompanyUpdate(companyId: number, availableTabs: string[]) {
+  const wss = getWebSocketServer();
+  if (!wss) {
+    console.error('[WebSocket] Server not initialized');
+    return;
+  }
+  
+  const message = {
+    type: 'company_updated',
+    payload: {
+      companyId,
+      availableTabs,
+      cache_invalidation: true,
+      timestamp: new Date().toISOString()
+    }
+  };
+  
+  console.log(`[WebSocket] Broadcasting company update for company ${companyId}`);
+  
+  wss.clients.forEach(client => {
+    if (client.readyState === client.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
 }
