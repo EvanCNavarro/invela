@@ -336,20 +336,38 @@ export class AtomicDemoAutoFillService {
       
       // Get fields with demo values for this form type
       const fieldsWithDemoValues = await getFieldsWithDemoValues(actualFormType);
-      logger.info(`Retrieved ${fieldsWithDemoValues.length} fields with demo values from database`);
+      logger.info(`Retrieved ${fieldsWithDemoValues.length} fields with demo values from database for form type: ${actualFormType}`);
       
       // Create a map of field IDs to their demo values from the database
       const demoValuesMap = new Map<number, string>();
+      let fieldsWithValidDemoValues = 0;
+      
       for (const field of fieldsWithDemoValues) {
-        if (field.demo_value) {
-          // Process any template variables like {{COMPANY_NAME}}
-          let finalValue = field.demo_value;
-          if (finalValue.includes('{{COMPANY_NAME}}')) {
-            finalValue = finalValue.replace(/{{COMPANY_NAME}}/g, companyName);
-          }
-          demoValuesMap.set(field.id, finalValue);
-          logger.debug(`Field ${field.id} (${field.field_key}) has demo value: ${finalValue}`);
+        // Log all fields, even those without demo values
+        if (!field.demo_value) {
+          logger.warn(`Field ${field.id} (${field.field_key}) has no demo value in database`);
+          continue;
         }
+        
+        // Process any template variables like {{COMPANY_NAME}}
+        let finalValue = field.demo_value;
+        if (finalValue.includes('{{COMPANY_NAME}}')) {
+          finalValue = finalValue.replace(/{{COMPANY_NAME}}/g, companyName);
+          logger.debug(`Replaced template variable in field ${field.id}: {{COMPANY_NAME}} -> ${companyName}`);
+        }
+        
+        demoValuesMap.set(field.id, finalValue);
+        fieldsWithValidDemoValues++;
+        logger.debug(`Field ${field.id} (${field.field_key}) has demo value: ${finalValue.substring(0, 30)}${finalValue.length > 30 ? '...' : ''}`);
+      }
+      
+      logger.info(`Found ${fieldsWithValidDemoValues} fields with valid demo values out of ${fieldsWithDemoValues.length} total fields`);
+      
+      // Log some data from the generated demo data as fallback
+      logger.info(`Generated demo data contains ${Object.keys(demoData).length} fields as fallback`);
+      const sampleKeys = Object.keys(demoData).slice(0, 3);
+      for (const key of sampleKeys) {
+        logger.debug(`Sample generated demo data: ${key} -> ${demoData[key].substring(0, 30)}${demoData[key].length > 30 ? '...' : ''}`);
       }
       
       // Process each field to update or create responses
