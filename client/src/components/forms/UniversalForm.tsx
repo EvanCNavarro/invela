@@ -804,6 +804,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               container.style.backgroundColor = newValue ? "#EFF6FF" : "white";
                               container.style.borderColor = newValue ? "#93C5FD" : "#E5E7EB";
                             }
+                            
+                            // Update submit button state
+                            const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                            if (submitButton) {
+                              submitButton.disabled = !newValue;
+                            }
                           }}
                           id="consent-box"
                         >
@@ -825,6 +831,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   if (container) {
                                     container.style.backgroundColor = checkbox.checked ? "#EFF6FF" : "white";
                                     container.style.borderColor = checkbox.checked ? "#93C5FD" : "#E5E7EB";
+                                  }
+                                  
+                                  // Update submit button state
+                                  const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+                                  if (submitButton) {
+                                    submitButton.disabled = !checkbox.checked;
                                   }
                                 }}
                               />
