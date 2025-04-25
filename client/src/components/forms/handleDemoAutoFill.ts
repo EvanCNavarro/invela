@@ -87,12 +87,12 @@ export async function handleDemoAutoFill({
       logger.info(`Universal auto-fill completed for ${taskType} with ${result.count || 'unknown'} responses`);
       
       // Refresh form data
-      if (formService) {
+      if (formService && typeof formService.resetData === 'function') {
         // First update the form service data
         await formService.resetData();
         
         // Then get the updated data to reset the form
-        const refreshedData = await formService.getFormData();
+        const refreshedData = formService.getFormData();
         
         // Finally reset the form with the new data
         resetForm(refreshedData);
@@ -171,12 +171,12 @@ export async function handleDemoAutoFill({
         logger.info(`Legacy auto-fill completed for ${taskType}`);
         
         // Refresh form data
-        if (formService) {
+        if (formService && typeof formService.resetData === 'function') {
           // First update the form service data
           await formService.resetData();
           
           // Then get the updated data to reset the form
-          const refreshedData = await formService.getFormData();
+          const refreshedData = formService.getFormData();
           
           // Finally reset the form with the new data
           resetForm(refreshedData);
