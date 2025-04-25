@@ -62,7 +62,12 @@ export async function handleDemoAutoFill({
     // Try universal endpoint first
     const universalEndpoint = `/api/demo-autofill/${taskId}`;
     
-    logger.info(`[DEMO AUTOFILL] Using unified endpoint: ${universalEndpoint}`);
+    logger.info(`[DEMO AUTOFILL] Using unified endpoint: ${universalEndpoint}`, {
+      taskId,
+      taskType,
+      normalizedTaskType: taskType.toLowerCase(),
+      containsKyb: taskType.toLowerCase().includes('kyb')
+    });
     
     // Show loading toast
     toast({
@@ -184,13 +189,15 @@ export async function handleDemoAutoFill({
       let endpoint = '';
       
       // Determine appropriate legacy endpoint based on task type
-      if (taskType === 'kyb' || taskType === 'company_kyb') {
+      logger.info(`[LEGACY AUTOFILL] Determining endpoint for task type: "${taskType}"`);
+      
+      if (taskType.includes('kyb') || taskType === 'company_kyb') {
         endpoint = `/api/kyb/demo-autofill/${taskId}`;
         logger.info(`[LEGACY AUTOFILL] Using KYB endpoint: ${endpoint}`);
-      } else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment' || taskType === 'security' || taskType === 'security_assessment') {
+      } else if (taskType.includes('ky3p') || taskType.includes('security') || taskType === 'sp_ky3p_assessment' || taskType === 'security_assessment') {
         endpoint = `/api/ky3p/demo-autofill/${taskId}`;
         logger.info(`[LEGACY AUTOFILL] Using KY3P endpoint: ${endpoint}`);
-      } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
+      } else if (taskType.includes('open_banking') || taskType === 'open_banking_survey' || taskType.includes('1033')) {
         endpoint = `/api/open-banking/demo-autofill/${taskId}`;
         logger.info(`[LEGACY AUTOFILL] Using Open Banking endpoint: ${endpoint}`);
       } else {

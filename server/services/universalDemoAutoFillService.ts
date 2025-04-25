@@ -53,7 +53,7 @@ const formTypeConfigs: Record<FormType, FormTypeConfig> = {
     groupColumn: 'group',
     requiredColumn: 'required',
     demoAutofillColumn: 'demo_autofill',
-    taskTypes: ['kyb', 'kyb_form', 'onboarding'],
+    taskTypes: ['kyb', 'kyb_form', 'onboarding', 'company_kyb'],
     responseValueColumn: 'response_value',
   },
   ky3p: {
@@ -92,13 +92,41 @@ export function getFormTypeFromTaskType(taskType: string): FormType | null {
   // Normalize task type for comparison
   const normalizedType = taskType.toLowerCase().trim();
   
+  logger.info('Determining form type from task type', {
+    originalTaskType: taskType,
+    normalizedType,
+    supported: {
+      kyb: formTypeConfigs.kyb.taskTypes,
+      ky3p: formTypeConfigs.ky3p.taskTypes,
+      open_banking: formTypeConfigs.open_banking.taskTypes
+    }
+  });
+  
+  // Special case handling for common task type naming patterns
+  if (normalizedType.includes('kyb') || normalizedType.includes('company') || normalizedType === 'onboarding') {
+    logger.info('Detected KYB task', { taskType, normalizedType });
+    return 'kyb';
+  }
+  
+  if (normalizedType.includes('ky3p') || normalizedType.includes('security')) {
+    logger.info('Detected KY3P task', { taskType, normalizedType });
+    return 'ky3p';
+  }
+  
+  if (normalizedType.includes('open') || normalizedType.includes('banking') || normalizedType.includes('1033')) {
+    logger.info('Detected Open Banking task', { taskType, normalizedType });
+    return 'open_banking';
+  }
+  
   // Check each form type configuration for matching task types
   for (const [formType, config] of Object.entries(formTypeConfigs)) {
     if (config.taskTypes.some(type => normalizedType.includes(type.toLowerCase()))) {
+      logger.info(`Matched task type using config.taskTypes`, { formType, taskType, normalizedType });
       return formType as FormType;
     }
   }
   
+  logger.warn('Could not determine form type for task type', { taskType, normalizedType });
   return null;
 }
 
