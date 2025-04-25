@@ -44,11 +44,16 @@ export async function handleDemoAutoFill({
     return;
   }
 
+  // Define the toast ID outside the try block so it's accessible in the catch block too
+  const toastId = 'demo-autofill-loading';
+  
   try {
     logger.info(`Starting demo auto-fill for task ${taskId}`);
     
-    // Show a single loading toast with an ID
-    const toastId = 'demo-autofill-loading';
+    // First make sure any existing demo auto-fill toast is dismissed
+    // We'll just use the toast ID to ensure we replace any existing toast
+    
+    // Show a single loading toast with the ID
     toast({
       id: toastId,
       title: 'Demo Auto-Fill',
