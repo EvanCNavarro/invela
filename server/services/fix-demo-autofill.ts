@@ -94,16 +94,47 @@ export async function enhancedDemoAutoFill(taskId: number, formType: FormType, u
       };
     }
     
-    // Clear any existing responses
-    await db.delete(config.responsesTable).where(eq(config.responsesTable.task_id, taskId));
+    // First, verify task exists and is from a demo company
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+      
+    if (!company) {
+      throw new Error(`Company not found for task ${taskId}`);
+    }
     
-    // Fetch all fields with demo autofill data defined
+    if (company.is_demo !== true) {
+      logger.warn(`Demo auto-fill attempted on non-demo company: ${company.name} (ID: ${company.id})`);
+      // Continue anyway for testing purposes
+    }
+    
+    // Get all fields with non-empty demo_autofill values
     const fields = await db.select()
       .from(config.fieldsTable)
       .where(
         // Filter out fields with empty or null demo_autofill values
         db.sql`${config.fieldsTable[config.demoAutofillColumn]} IS NOT NULL AND ${config.fieldsTable[config.demoAutofillColumn]} != ''`
       );
+    
+    console.log(`[Demo AutoFill] Found ${fields.length} fields with demo data`);
+    
+    // Log a few examples of the demo values for debugging  
+    if (fields.length > 0) {
+      const examples = fields.slice(0, 3).map(f => ({
+        field_key: f[config.fieldKeyColumn],
+        demo_value: f[config.demoAutofillColumn]
+      }));
+      console.log('[Demo AutoFill] Example demo values:', JSON.stringify(examples, null, 2));
+    } else {
+      console.warn('[Demo AutoFill] No fields found with demo data');
+      
+      // Let's check all fields to debug why none have demo data
+      const allFields = await db.select()
+        .from(config.fieldsTable)
+        .limit(5);
+        
+      console.log('[Demo AutoFill] Sample of all fields:', JSON.stringify(allFields, null, 2));
+    }
     
     if (!fields || fields.length === 0) {
       return {
@@ -148,8 +179,15 @@ export async function enhancedDemoAutoFill(taskId: number, formType: FormType, u
           // Get current timestamp
           const now = new Date();
           
+          // Log verbose info about what we're doing
+          console.log(`[Demo AutoFill] Processing field: ${fieldKey} (ID: ${field.id})`);
+          console.log(`[Demo AutoFill] Demo value: "${demoValue}"`);
+          console.log(`[Demo AutoFill] Existing response: ${existingResponse && existingResponse.length > 0 ? 'Yes' : 'No'}`);
+          
           // If response exists, update it
           if (existingResponse && existingResponse.length > 0) {
+            console.log(`[Demo AutoFill] Updating existing response for ${fieldKey}`);
+            
             await db.update(config.responsesTable)
               .set({
                 [config.responseValueColumn]: demoValue,
@@ -162,8 +200,26 @@ export async function enhancedDemoAutoFill(taskId: number, formType: FormType, u
                   eq(config.responsesTable.field_id, field.id)
                 )
               );
+              
+            // Verify the update  
+            const [verifiedUpdate] = await db.select()
+              .from(config.responsesTable)
+              .where(and(
+                eq(config.responsesTable.task_id, taskId),
+                eq(config.responsesTable.field_id, field.id)
+              ));
+              
+            if (verifiedUpdate) {
+              console.log(`[Demo AutoFill] Verified update for ${fieldKey}:`, {
+                expected: demoValue,
+                actual: verifiedUpdate[config.responseValueColumn],
+                success: verifiedUpdate[config.responseValueColumn] === demoValue
+              });
+            }
           } else {
             // Insert new response
+            console.log(`[Demo AutoFill] Creating new response for ${fieldKey}`);
+            
             await db.insert(config.responsesTable).values({
               task_id: taskId,
               field_id: field.id,
@@ -173,6 +229,22 @@ export async function enhancedDemoAutoFill(taskId: number, formType: FormType, u
               created_at: now,
               updated_at: now
             });
+            
+            // Verify the insert
+            const [verifiedInsert] = await db.select()
+              .from(config.responsesTable)
+              .where(and(
+                eq(config.responsesTable.task_id, taskId),
+                eq(config.responsesTable.field_id, field.id)
+              ));
+              
+            if (verifiedInsert) {
+              console.log(`[Demo AutoFill] Verified insert for ${fieldKey}:`, {
+                expected: demoValue,
+                actual: verifiedInsert[config.responseValueColumn],
+                success: verifiedInsert[config.responseValueColumn] === demoValue
+              });
+            }
           }
           
           responseResults.push({
