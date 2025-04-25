@@ -90,6 +90,18 @@ export interface FormServiceInterface {
   initialize(templateId: number): Promise<void>;
   
   /**
+   * Clear any cached data and force reload
+   * Used for demo auto-fill to ensure full refresh
+   */
+  clearCache?(): void;
+  
+  /**
+   * Load responses directly from the database
+   * @returns Record of field keys and values
+   */
+  loadResponses?(): Promise<Record<string, any>>;
+  
+  /**
    * Get all form fields
    * @returns Array of form fields
    */
