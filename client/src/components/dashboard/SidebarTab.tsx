@@ -14,6 +14,7 @@ interface SidebarTabProps {
   showPulsingDot?: boolean;
   variant?: 'default' | 'invela';
   isPlayground?: boolean;
+  externalLink?: boolean;
   onClick?: () => void;
 }
 
@@ -28,6 +29,7 @@ export function SidebarTab({
   showPulsingDot = false,
   variant = 'default',
   isPlayground = false,
+  externalLink = false,
   onClick
 }: SidebarTabProps) {
   const content = (
@@ -112,6 +114,21 @@ export function SidebarTab({
     return <div>{content}</div>;
   }
 
+  // Use regular anchor tag with target="_blank" for external links
+  if (externalLink && !isDisabled) {
+    return (
+      <a 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="no-underline"
+      >
+        {content}
+      </a>
+    );
+  }
+  
+  // Use Wouter Link for internal navigation
   return (
     <Link href={isDisabled ? "#" : href}>
       {content}
