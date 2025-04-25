@@ -780,25 +780,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           </Accordion>
                         </div>
                         
-                        {/* Consent section */}
+                        {/* Consent section - entirely simplified to avoid reactivity issues */}
                         <div 
-                          className={cn(
-                            "p-4 rounded-lg border transition-colors cursor-pointer",
-                            form.watch('agreement_confirmation') ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200"
-                          )}
+                          className={
+                            form.getValues("agreement_confirmation") 
+                              ? "p-4 rounded-lg border border-blue-300 bg-blue-50 cursor-pointer" 
+                              : "p-4 rounded-lg border border-gray-200 bg-white cursor-pointer"
+                          }
                           onClick={() => {
-                            const currentValue = form.getValues('agreement_confirmation');
-                            form.setValue('agreement_confirmation', !currentValue, { shouldValidate: true });
+                            // Simple toggle with no reactivity tricks
+                            const newValue = !form.getValues("agreement_confirmation");
+                            form.setValue("agreement_confirmation", newValue);
+                            
+                            // Force refresh DOM element class
+                            const element = document.getElementById("consent-box");
+                            if (element) {
+                              if (newValue) {
+                                element.className = "p-4 rounded-lg border border-blue-300 bg-blue-50 cursor-pointer";
+                              } else {
+                                element.className = "p-4 rounded-lg border border-gray-200 bg-white cursor-pointer";
+                              }
+                            }
                           }}
+                          id="consent-box"
                         >
                           <div className="flex items-center mb-2">
                             <div className="flex flex-row items-start space-x-3 space-y-0 m-0">
-                              <Checkbox
-                                checked={form.watch('agreement_confirmation')}
-                                onCheckedChange={(checked) => {
-                                  form.setValue('agreement_confirmation', !!checked, { shouldValidate: true });
-                                }}
-                                className="mt-0.5"
+                              <input 
+                                type="checkbox" 
+                                checked={form.getValues("agreement_confirmation")}
+                                onChange={() => {}} // Empty handler since parent div handles changes
+                                className="mt-0.5 h-4 w-4" 
+                                onClick={(e) => e.stopPropagation()}
                               />
                               <div className="font-semibold text-gray-700">
                                 Submission Consent <span className="text-red-500">*</span>
