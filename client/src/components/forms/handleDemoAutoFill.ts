@@ -260,6 +260,64 @@ export async function handleDemoAutoFill({
       
       // Determine appropriate legacy endpoint based on task type
       if (taskType === 'kyb' || taskType === 'company_kyb') {
+        // Try the enhanced KYB endpoint first
+        endpoint = `/api/kyb/enhanced-demo-autofill/${taskId}`;
+        
+        // Use this enhanced endpoint with special logging
+        logger.info(`Using enhanced KYB demo-autofill endpoint: ${endpoint}`);
+        
+        try {
+          const enhancedResponse = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (enhancedResponse.ok) {
+            const enhancedResult = await enhancedResponse.json();
+            
+            if (enhancedResult.success) {
+              logger.info(`Enhanced KYB demo auto-fill completed successfully for task ${taskId}`);
+              logger.info(`Filled ${enhancedResult.fieldCount || 'unknown'} fields`);
+              
+              if (enhancedResult.formData) {
+                logger.info(`Enhanced response includes form data with ${Object.keys(enhancedResult.formData).length} fields`);
+                
+                // Reset the form with the returned data
+                resetForm(enhancedResult.formData);
+                
+                // Add a small delay to allow the UI to update
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Refresh status
+                await refreshStatus();
+                
+                // Save progress
+                await saveProgress();
+                
+                // Show success message
+                toast({
+                  title: 'Demo Auto-Fill Complete',
+                  description: `Successfully filled ${enhancedResult.fieldCount || 'all'} form fields with sample data.`,
+                  variant: 'success',
+                });
+                
+                // Force a re-render to update the UI
+                setForceRerender((prev: boolean) => !prev);
+                
+                return;
+              }
+            }
+          }
+          
+          // If we get here, enhanced endpoint failed or didn't return form data
+          logger.warn(`Enhanced KYB endpoint failed or returned no data, trying legacy endpoint`);
+        } catch (enhancedError) {
+          logger.warn(`Error using enhanced KYB endpoint: ${enhancedError instanceof Error ? enhancedError.message : String(enhancedError)}`);
+        }
+        
+        // Fall back to legacy endpoint
         endpoint = `/api/kyb/demo-autofill/${taskId}`;
       } else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment' || taskType === 'security' || taskType === 'security_assessment') {
         endpoint = `/api/ky3p/demo-autofill/${taskId}`;
