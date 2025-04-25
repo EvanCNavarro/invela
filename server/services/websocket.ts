@@ -247,12 +247,14 @@ export function broadcastDocumentCountUpdate(companyId: number, count: number) {
   });
 }
 
-// Add broadcastFieldUpdate for kyb.ts
-export function broadcastFieldUpdate(taskId: number, fieldId: number, data: any) {
+// Add broadcastFieldUpdate for form field updates
+export function broadcastFieldUpdate(taskId: number, fieldKey: string | number, value: any) {
+  // Ensure we're using the correct property name for the field identifier
+  // Our client code expects 'fieldKey'
   broadcast('field_update', {
     taskId,
-    fieldId,
-    ...data,
+    fieldKey: String(fieldKey), // Convert to string for consistency
+    value,
     timestamp: new Date().toISOString()
   });
 }
