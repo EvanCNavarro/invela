@@ -130,10 +130,11 @@ export function TopNav() {
           {/* PAIR Support Button - Only shown for FinTech companies */}
           {companyProfile.companyType === "FinTech" && (
             <Button 
-              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-white border-2 border-transparent relative"
+              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-gray-100 border-2 border-transparent relative hover:bg-gray-200 transition-colors"
               style={{
                 backgroundClip: 'padding-box',
                 position: 'relative',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
               onClick={() => {
                 console.log("PAIR Support button clicked");
@@ -144,7 +145,7 @@ export function TopNav() {
                 className="absolute inset-0 rounded-md"
                 style={{
                   margin: '-2px',
-                  background: 'linear-gradient(to right, rgba(59, 130, 246, 0.5), rgba(45, 212, 191, 0.5), rgba(74, 222, 128, 0.5))',
+                  background: 'linear-gradient(to right, rgba(59, 130, 246, 0.3), rgba(45, 212, 191, 0.3), rgba(74, 222, 128, 0.3))',
                   zIndex: -1,
                   borderRadius: '0.375rem',
                 }}
