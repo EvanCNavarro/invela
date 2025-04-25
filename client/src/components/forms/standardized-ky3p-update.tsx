@@ -41,12 +41,16 @@ export async function standardizedBulkUpdate(taskId: number, formData: Record<st
   try {
     logger.info(`Starting standardized bulk update for task ${taskId}`);
     
-    // Step 1: Get demo data if formData is empty
-    let dataToSubmit = formData;
-    if (Object.keys(formData).length === 0) {
-      logger.info(`Form data is empty, fetching demo data from API`);
+    // If formData is empty, we're doing a demo auto-fill
+    const isAutoFill = Object.keys(formData).length === 0;
+    
+    if (isAutoFill) {
+      // Special handling for demo auto-fill - just call the demo endpoint
+      // and don't try to further process or update the data
+      logger.info(`Executing demo auto-fill for task ${taskId}`);
+      
       try {
-        // Use POST instead of GET as the server route is configured for POST
+        // Use POST method as the server route is configured for POST
         const demoResponse = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
           method: 'POST',
           headers: {
@@ -57,22 +61,28 @@ export async function standardizedBulkUpdate(taskId: number, formData: Record<st
         });
         
         if (!demoResponse.ok) {
-          throw new Error(`Failed to fetch demo data: ${demoResponse.statusText}`);
+          throw new Error(`Failed to execute demo auto-fill: ${demoResponse.statusText}`);
         }
         
-        dataToSubmit = await demoResponse.json();
-        logger.info(`Retrieved demo data with ${Object.keys(dataToSubmit).length} fields`);
+        const result = await demoResponse.json();
+        logger.info(`Demo auto-fill successful:`, result);
+        
+        // Don't try to process the metadata as form fields
+        // The demo-autofill endpoint already saved the data to the database
+        // We just need to return success=true so the form knows to reload
+        return true;
       } catch (error) {
-        logger.error('Error fetching demo data:', error);
+        logger.error('Error executing demo auto-fill:', error);
         return false;
       }
     }
     
-    // Step 2: Filter out empty values and metadata
+    // This part only executes for regular updates, not demo auto-fill
+    // Step 1: Filter out empty values and metadata
     const cleanData: Record<string, any> = {};
     let validCount = 0;
     
-    for (const [key, value] of Object.entries(dataToSubmit)) {
+    for (const [key, value] of Object.entries(formData)) {
       // Skip metadata fields (that start with _) and empty values
       if (key.startsWith('_') || key === 'taskId' || value === undefined || value === null || value === '') {
         continue;
@@ -89,7 +99,7 @@ export async function standardizedBulkUpdate(taskId: number, formData: Record<st
       return false;
     }
     
-    // Step 3: Make the API call with the standardized format
+    // Step 2: Make the API call with the standardized format
     logger.info(`Using standardized batch-update endpoint for task ${taskId}`);
     
     // First let's log exactly what we're sending
