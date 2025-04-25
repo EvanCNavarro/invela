@@ -945,6 +945,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       onFieldChange={handleFieldChange}
                       startingQuestionNumber={previousSectionsFieldCount + 1} // Pass the starting number
                     />
+                    
+                    {/* Navigation buttons for section pages */}
+                    <div className="flex justify-between mt-8">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setActiveSection(Math.max(0, activeSection - 1))}
+                        disabled={activeSection === 0}
+                        className="flex items-center gap-1"
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        variant="default"
+                        onClick={() => setActiveSection(Math.min(allSections.length - 1, activeSection + 1))}
+                        disabled={activeSection === allSections.length - 1}
+                        className="flex items-center gap-1"
+                      >
+                        Next
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
