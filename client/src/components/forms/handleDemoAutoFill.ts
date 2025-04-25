@@ -47,8 +47,10 @@ export async function handleDemoAutoFill({
   try {
     logger.info(`Starting demo auto-fill for task ${taskId}`);
     
-    // Show initial loading toast
+    // Show a single loading toast with an ID
+    const toastId = 'demo-autofill-loading';
     toast({
+      id: toastId,
       title: 'Demo Auto-Fill',
       description: 'Filling form with sample data...',
       variant: 'default',
@@ -59,6 +61,7 @@ export async function handleDemoAutoFill({
     
     if (!fieldsResponse.success) {
       toast({
+        id: toastId,
         title: 'Demo Auto-Fill Failed',
         description: fieldsResponse.message || 'Failed to load demo field values',
         variant: 'destructive',
@@ -83,9 +86,10 @@ export async function handleDemoAutoFill({
     
     // Process all updates
     if (updatePromises.length > 0) {
-      // Show loading toast during updates
+      // Update the existing loading toast with new description
       toast({
-        title: 'Demo Auto-Fill Loading',
+        id: toastId,
+        title: 'Demo Auto-Fill',
         description: 'Updating form fields...',
         variant: 'default',
       });
@@ -116,8 +120,9 @@ export async function handleDemoAutoFill({
         await refreshStatus();
       }
       
-      // Show success message
+      // Show success message - replace the loading toast with the success toast
       toast({
+        id: toastId,
         title: 'Demo Auto-Fill Complete',
         description: `Successfully filled ${appliedCount} form fields with sample data.`,
         variant: 'success',
@@ -132,6 +137,7 @@ export async function handleDemoAutoFill({
   } catch (error) {
     logger.error('Error during demo auto-fill:', error);
     toast({
+      id: toastId,
       title: 'Auto-Fill Error',
       description: error instanceof Error ? error.message : 'An unexpected error occurred',
       variant: 'destructive',
