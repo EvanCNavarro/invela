@@ -115,6 +115,21 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* PAIR Support Button - Only shown for FinTech companies */}
+          {companyProfile.companyType === "FinTech" && (
+            <Button 
+              className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-white shadow-sm bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 transition-all duration-200"
+              onClick={() => {
+                console.log("PAIR Support button clicked");
+                // This would typically open a support chat or modal
+              }}
+            >
+              <HelpCircleIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Contact Your PAIR Representative</span>
+              <span className="sm:hidden">PAIR Support</span>
+            </Button>
+          )}
+          
           <div className="hidden sm:flex items-center gap-2">
             {/* WebSocket functionality still maintained in the context provider */}
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
