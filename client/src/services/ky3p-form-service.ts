@@ -348,53 +348,87 @@ export class KY3PFormService extends EnhancedKybFormService {
   
   /**
    * Save a specific field's response
+   * @param fieldIdOrKey The field ID (legacy numeric format) or field key (new string format)
+   * @param value The value to save for the field
    */
-  public async saveField(fieldId: number | string, value: any): Promise<void> {
+  public async saveField(fieldIdOrKey: number | string, value: any): Promise<void> {
     if (!this.taskId) {
       logger.warn('[KY3P Form Service] No task ID provided for saving field, cannot save');
       return;
     }
     
-    if (!fieldId || fieldId === 'undefined' || fieldId === 'null') {
-      logger.warn(`[KY3P Form Service] Invalid field ID (${fieldId}) provided for saving, skipping`);
+    if (!fieldIdOrKey || fieldIdOrKey === 'undefined' || fieldIdOrKey === 'null') {
+      logger.warn(`[KY3P Form Service] Invalid field ID or key (${fieldIdOrKey}) provided for saving, skipping`);
       return;
     }
     
     try {
-      // Make sure fieldId is a valid number
-      const validFieldId = Number(fieldId);
-      if (isNaN(validFieldId)) {
-        logger.warn(`[KY3P Form Service] Field ID is not a valid number: ${fieldId}, skipping`);
-        return;
-      }
+      // Check if the field identifier is a string key or a numeric ID
+      const isFieldKey = typeof fieldIdOrKey === 'string' && isNaN(Number(fieldIdOrKey));
+      const isNumericId = !isFieldKey;
       
-      logger.info(`[KY3P Form Service] Saving field ${validFieldId} for task ${this.taskId}`);
-      
-      // Use the correct bulk update endpoint with the proper format - single field in array
-      const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        credentials: 'include', // Include session cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          responses: [
-            {
-              fieldId: validFieldId,
-              value: value
+      if (isFieldKey) {
+        logger.info(`[KY3P Form Service] Using field key format: ${fieldIdOrKey} for task ${this.taskId}`);
+        
+        // For string field keys, use the batch-update endpoint which supports key-based updates
+        // This is the preferred method in the new standardized approach
+        const response = await fetch(`/api/ky3p/batch-update/${this.taskId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            responses: {
+              [fieldIdOrKey]: value
             }
-          ]
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to save field: ${response.status}`, errorText);
-        return;
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`[KY3P Form Service] Failed to save field using key format: ${response.status}`, errorText);
+          return;
+        }
+        
+        logger.info(`[KY3P Form Service] Successfully saved field using key: ${fieldIdOrKey}`);
+        return response.json();
+      } else {
+        // Legacy numeric ID format - maintain backward compatibility for now
+        const validFieldId = Number(fieldIdOrKey);
+        if (isNaN(validFieldId)) {
+          logger.warn(`[KY3P Form Service] Field ID is not a valid number: ${fieldIdOrKey}, skipping`);
+          return;
+        }
+        
+        logger.info(`[KY3P Form Service] Saving field ${validFieldId} for task ${this.taskId} (legacy numeric format)`);
+        
+        // Use the bulk update endpoint with the proper format - single field in array
+        const response = await fetch(`/api/tasks/${this.taskId}/ky3p-responses/bulk`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            responses: [
+              {
+                fieldId: validFieldId,
+                value: value
+              }
+            ]
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`[KY3P Form Service] Failed to save field: ${response.status}`, errorText);
+          return;
+        }
+        
+        logger.info(`[KY3P Form Service] Successfully saved field ${validFieldId}`);
+        return response.json();
       }
-      
-      logger.info(`[KY3P Form Service] Successfully saved field ${validFieldId}`);
-      return response.json();
     } catch (error) {
       logger.error('[KY3P Form Service] Error saving field:', error);
       // Don't throw the error, just log it

@@ -1462,6 +1462,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     });
     
     // Special handling for requests with 'fieldIdRaw': 'bulk' pattern
+    // This is a request from UniversalForm which uses string field keys
     if (req.body && req.body.fieldIdRaw === 'bulk') {
       // Get the referrer and user agent to help track down where this is coming from
       const userAgent = req.headers['user-agent'] || 'unknown';
@@ -1469,7 +1470,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       const origin = req.headers['origin'] || 'unknown';
       
       // Log with more detailed information to track down the source
-      logger.info(`[KY3P API] Detected legacy bulk request with fieldIdRaw=bulk pattern - converting to new format`, {
+      logger.info(`[KY3P API] Detected UniversalForm bulk update request with fieldIdRaw=bulk pattern`, {
         taskIdRaw: req.body.taskIdRaw,
         fieldIdRaw: req.body.fieldIdRaw,
         headers: {
@@ -1481,14 +1482,9 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         requestBody: JSON.stringify(req.body).substring(0, 200)
       });
       
-      // Instead of rejecting, convert the request to the proper format if possible
-      // For a legacy 'bulk' request, use the clearAll flag which will clear all form fields
-      req.body = {
-        clearAll: true,
-        responses: [] // Empty responses array indicates we're just clearing
-      };
-      
-      logger.info(`[KY3P API] Converted malformed bulk request to valid format with clearAll flag`);
+      // Redirect to the batch-update endpoint which handles string field keys properly
+      // This is the modernized endpoint that supports our standardized approach
+      return res.redirect(307, `/api/ky3p/batch-update/${taskId}`);
     }
     
     // Validate response object
