@@ -14,6 +14,7 @@ import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
 import { OpenBankingSuccessModal } from "@/components/openbanking/OpenBankingSuccessModal";
+import { UniversalSuccessModal, type SubmissionResult } from "@/components/forms/UniversalSuccessModal";
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
@@ -70,6 +71,8 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [derivedCompanyName, setDerivedCompanyName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
+  // Added submission result state for the universal success modal
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResult>({});
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [task, setTask] = useState<Task | null>(null);
   
@@ -1344,6 +1347,50 @@ export default function TaskPage({ params }: TaskPageProps) {
   // Render the modals at the application-level (outside individual form sections)
   // This ensures we only have one modal instance per type
   if (showSuccessModal && task) {
+    // We're now using a dual-modal approach:
+    // 1. Legacy modal rendering for backward compatibility
+    // 2. Enhanced UniversalSuccessModal for improved UX
+    
+    // Create standard submission result data for the universal modal
+    const universalSubmissionResult: SubmissionResult = {
+      fileId: fileId || undefined,
+      taskId: task.id,
+      taskStatus: task.status,
+      completedActions: [
+        {
+          type: "task_completion",
+          description: "Task Completed",
+          data: {
+            details: "Your form has been successfully submitted and marked as complete."
+          }
+        }
+      ]
+    };
+    
+    // Add additional actions based on the task type
+    if (fileId) {
+      universalSubmissionResult.completedActions?.push({
+        type: "file_generation",
+        description: "File Generated",
+        fileId: fileId,
+        data: {
+          details: "A downloadable file has been created with your form submission data.",
+          buttonText: "Download File"
+        }
+      });
+    }
+    
+    // Handle file vault unlocking action for KYB forms
+    if (taskContentType === 'kyb') {
+      universalSubmissionResult.completedActions?.push({
+        type: "file_vault_unlocked",
+        description: "File Vault Access Granted",
+        data: {
+          details: "You now have access to the document vault for this company."
+        }
+      });
+    }
+    
     if (taskContentType === 'open_banking') {
       return (
         <>
@@ -1354,10 +1401,14 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </PageTemplate>
           </DashboardLayout>
-          <OpenBankingSuccessModal
+          
+          {/* Use Universal Modal for consistent experience */}
+          <UniversalSuccessModal
             open={showSuccessModal}
             onOpenChange={setShowSuccessModal}
+            taskType="open_banking"
             companyName={displayName}
+            submissionResult={universalSubmissionResult}
           />
         </>
       );
@@ -1371,10 +1422,14 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </PageTemplate>
           </DashboardLayout>
-          <KYBSuccessModal
+          
+          {/* Use Universal Modal for consistent experience */}
+          <UniversalSuccessModal
             open={showSuccessModal}
             onOpenChange={setShowSuccessModal}
+            taskType="kyb"
             companyName={displayName}
+            submissionResult={universalSubmissionResult}
           />
         </>
       );
@@ -1388,10 +1443,14 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </PageTemplate>
           </DashboardLayout>
-          <SecuritySuccessModal
+          
+          {/* Use Universal Modal for consistent experience */}
+          <UniversalSuccessModal
             open={showSuccessModal}
             onOpenChange={setShowSuccessModal}
+            taskType={taskContentType === 'ky3p' ? 'sp_ky3p_assessment' : 'security'}
             companyName={displayName}
+            submissionResult={universalSubmissionResult}
           />
         </>
       );
