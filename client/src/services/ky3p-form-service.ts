@@ -528,7 +528,11 @@ export class KY3PFormService extends EnhancedKybFormService {
       const responses = await response.json();
       logger.info('[KY3P Form Service] Received response data from server', { 
         count: responses.length,
-        sampleIds: responses.slice(0, 3).map(r => r.field_id)
+        sampleFields: responses.slice(0, 3).map(r => ({
+          field_id: r.field_id,
+          field_key: r.field?.field_key,
+          response_value: r.response_value
+        }))
       });
       
       // Convert responses to a key-value map
@@ -537,20 +541,41 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Process all responses
       for (const resp of responses) {
         try {
-          // Try to get field by ID
-          const field = await this.getFieldById(resp.field_id);
+          // First, check if we have a field object with a field_key
+          if (resp.field && resp.field.field_key) {
+            const fieldKey = resp.field.field_key;
+            const value = resp.response_value;
+            
+            if (value !== undefined && value !== null) {
+              responseMap[fieldKey] = value;
+              logger.debug(`[KY3P Form Service] Mapped response via field.field_key: ${fieldKey} = ${value}`);
+              continue;
+            }
+          }
           
-          if (field) {
-            responseMap[field.key] = resp.value || resp.response_value;
-            logger.debug(`[KY3P Form Service] Mapped response for field ${field.key}`, {
-              fieldId: resp.field_id,
-              value: resp.value || resp.response_value
-            });
-          } else {
-            // Also try direct key mapping if available
-            if (resp.field_key) {
-              responseMap[resp.field_key] = resp.value || resp.response_value;
-              logger.debug(`[KY3P Form Service] Mapped response by field_key ${resp.field_key}`);
+          // Next, if there's a direct field_key in the response
+          if (resp.field_key) {
+            const value = resp.response_value || resp.value;
+            if (value !== undefined && value !== null) {
+              responseMap[resp.field_key] = value;
+              logger.debug(`[KY3P Form Service] Mapped response via field_key: ${resp.field_key} = ${value}`);
+              continue;
+            }
+          }
+          
+          // Finally, use field_id lookup as a fallback
+          if (resp.field_id) {
+            try {
+              const field = await this.getFieldById(resp.field_id);
+              if (field && field.key) {
+                const value = resp.response_value || resp.value;
+                if (value !== undefined && value !== null) {
+                  responseMap[field.key] = value;
+                  logger.debug(`[KY3P Form Service] Mapped response via field lookup: ${field.key} = ${value}`);
+                }
+              }
+            } catch (lookupError) {
+              logger.warn(`[KY3P Form Service] Error looking up field ${resp.field_id}:`, lookupError);
             }
           }
         } catch (fieldError) {
@@ -560,9 +585,14 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       // Update the internal form data with the loaded responses
       this._formData = responseMap;
+      
+      // Log the results
+      const fieldCount = Object.keys(responseMap).length;
       logger.info('[KY3P Form Service] Successfully loaded responses', { 
-        fieldCount: Object.keys(responseMap).length,
-        sampleKeys: Object.keys(responseMap).slice(0, 3)
+        fieldCount,
+        hasData: fieldCount > 0,
+        sampleKeys: Object.keys(responseMap).slice(0, 5),
+        sampleValues: Object.entries(responseMap).slice(0, 3).map(([k, v]) => `${k}: ${v}`)
       });
       
       return responseMap;
