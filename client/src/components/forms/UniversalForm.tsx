@@ -476,16 +476,48 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
+      // Create an empty data object with all the same keys, but empty values
+      const emptyData: Record<string, any> = {};
+      
+      // Go through each field and set to empty value based on field type
+      fields.forEach(field => {
+        // Default empty value is empty string
+        let emptyValue = '';
+        
+        // Handle different field types
+        if (field.type === 'boolean' || field.type === 'checkbox') {
+          emptyValue = false;
+        } else if (field.type === 'number') {
+          emptyValue = null;
+        } else if (field.type === 'select' && field.multiple) {
+          emptyValue = [];
+        }
+        
+        emptyData[field.key] = emptyValue;
+      });
+      
       // Reset form with empty data
-      resetForm({});
+      resetForm(emptyData);
       
       // Force a re-render to update the UI
       setForceRerender(prev => !prev);
       
-      // Refresh status
+      // Update form status
       await refreshStatus();
       
       // Save progress with empty data
+      if (formService) {
+        try {
+          // Clear form data in the service
+          Object.keys(emptyData).forEach(key => {
+            formService.updateField(key, emptyData[key]);
+          });
+        } catch (serviceError) {
+          logger.error('Error updating form service:', serviceError);
+        }
+      }
+      
+      // Call save progress to update the database
       await saveProgress();
       
       // Show success message
@@ -502,7 +534,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [taskId, resetForm, refreshStatus, saveProgress]);
+  }, [taskId, fields, resetForm, refreshStatus, saveProgress, formService]);
   
   // Get form title based on template or task type
   const formTitle = useMemo(() => {

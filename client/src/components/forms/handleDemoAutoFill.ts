@@ -88,8 +88,17 @@ export async function handleDemoAutoFill({
       
       // Refresh form data
       if (formService) {
+        // First update the form service data
+        await formService.resetData();
+        
+        // Then get the updated data to reset the form
         const refreshedData = await formService.getFormData();
+        
+        // Finally reset the form with the new data
         resetForm(refreshedData);
+        
+        // Log successful data refresh
+        logger.info('Successfully refreshed form data after demo auto-fill');
       }
       
       // Force a re-render to update the UI
@@ -163,8 +172,17 @@ export async function handleDemoAutoFill({
         
         // Refresh form data
         if (formService) {
+          // First update the form service data
+          await formService.resetData();
+          
+          // Then get the updated data to reset the form
           const refreshedData = await formService.getFormData();
+          
+          // Finally reset the form with the new data
           resetForm(refreshedData);
+          
+          // Log successful data refresh
+          logger.info('Successfully refreshed form data after legacy demo auto-fill');
         }
         
         // Force a re-render to update the UI
