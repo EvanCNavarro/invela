@@ -22,6 +22,10 @@ const logger = new Logger('UniversalDemoAutoFillRouter');
  * and uses the appropriate service to fill the form with demo data.
  */
 router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  logger.info('Universal demo-autofill endpoint called directly', { 
+    taskId: req.params.taskId,
+    formType: req.body.formType || req.query.formType || 'auto-detect'
+  });
   try {
     // Check user authentication
     if (!req.user || !req.user.id) {
@@ -153,28 +157,147 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
 });
 
 // For backward compatibility, add type-specific endpoints
-router.post('/api/kyb/universal-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  // Redirect to universal endpoint with explicit form type
-  req.body.formType = 'kyb';
-  
-  // Forward to the universal endpoint handler
-  router.handle(req, res, () => {});
+router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Set explicit form type
+    req.body.formType = 'kyb';
+    const taskId = req.params.taskId;
+    logger.info('KYB demo-autofill endpoint called, redirecting to universal service', { taskId });
+
+    // Instead of router.handle, call the service directly
+    const result = await universalDemoAutoFillService.applyDemoData(
+      parseInt(taskId, 10),
+      'kyb',
+      req.user?.id
+    );
+    
+    logger.info('Successfully applied demo data via KYB endpoint', {
+      taskId,
+      formType: 'kyb',
+      fieldCount: result.fieldCount
+    });
+    
+    res.json({
+      success: true,
+      message: result.message,
+      fieldCount: result.fieldCount,
+      taskId,
+      formType: 'kyb'
+    });
+  } catch (error) {
+    logger.error('Error in KYB demo auto-fill endpoint', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Determine appropriate status code
+    const statusCode = 
+      error instanceof Error && error.message.includes('demo companies') ? 403 :
+      error instanceof Error && error.message.includes('Task not found') ? 404 : 
+      500;
+    
+    return res.status(statusCode).json({
+      success: false,
+      error: 'Failed to apply demo data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-router.post('/api/ky3p/universal-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  // Redirect to universal endpoint with explicit form type
-  req.body.formType = 'ky3p';
-  
-  // Forward to the universal endpoint handler
-  router.handle(req, res, () => {});
+router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Set explicit form type
+    req.body.formType = 'ky3p';
+    const taskId = req.params.taskId;
+    logger.info('KY3P demo-autofill endpoint called, redirecting to universal service', { taskId });
+
+    // Instead of router.handle, call the service directly
+    const result = await universalDemoAutoFillService.applyDemoData(
+      parseInt(taskId, 10),
+      'ky3p',
+      req.user?.id
+    );
+    
+    logger.info('Successfully applied demo data via KY3P endpoint', {
+      taskId,
+      formType: 'ky3p',
+      fieldCount: result.fieldCount
+    });
+    
+    res.json({
+      success: true,
+      message: result.message,
+      fieldCount: result.fieldCount,
+      taskId,
+      formType: 'ky3p'
+    });
+  } catch (error) {
+    logger.error('Error in KY3P demo auto-fill endpoint', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Determine appropriate status code
+    const statusCode = 
+      error instanceof Error && error.message.includes('demo companies') ? 403 :
+      error instanceof Error && error.message.includes('Task not found') ? 404 : 
+      500;
+    
+    return res.status(statusCode).json({
+      success: false,
+      error: 'Failed to apply demo data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
-router.post('/api/open-banking/universal-demo-autofill/:taskId', requireAuth, async (req, res) => {
-  // Redirect to universal endpoint with explicit form type
-  req.body.formType = 'open_banking';
-  
-  // Forward to the universal endpoint handler
-  router.handle(req, res, () => {});
+router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Set explicit form type
+    req.body.formType = 'open_banking';
+    const taskId = req.params.taskId;
+    logger.info('Open Banking demo-autofill endpoint called, redirecting to universal service', { taskId });
+
+    // Instead of router.handle, call the service directly
+    const result = await universalDemoAutoFillService.applyDemoData(
+      parseInt(taskId, 10),
+      'open_banking',
+      req.user?.id
+    );
+    
+    logger.info('Successfully applied demo data via Open Banking endpoint', {
+      taskId,
+      formType: 'open_banking',
+      fieldCount: result.fieldCount
+    });
+    
+    res.json({
+      success: true,
+      message: result.message,
+      fieldCount: result.fieldCount,
+      taskId,
+      formType: 'open_banking'
+    });
+  } catch (error) {
+    logger.error('Error in Open Banking demo auto-fill endpoint', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Determine appropriate status code
+    const statusCode = 
+      error instanceof Error && error.message.includes('demo companies') ? 403 :
+      error instanceof Error && error.message.includes('Task not found') ? 404 : 
+      500;
+    
+    return res.status(statusCode).json({
+      success: false,
+      error: 'Failed to apply demo data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
+// Export as both named and default export for flexibility
+export { router };
 export default router;
