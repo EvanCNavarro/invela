@@ -68,6 +68,7 @@ export class KybFormService implements FormServiceInterface {
   private formData: Record<string, any> = {};
   private initialized = false;
   private templateId: number | null = null;
+  private currentTaskId: number | null = null; // Track current task ID for resetData method
   private taskStatus: string = 'not_started'; // Status of the task/form
   private logger = getLogger('KYB Service');
   
@@ -968,10 +969,63 @@ export class KybFormService implements FormServiceInterface {
   }
 
   /**
+   * Reset data by fetching fresh data from the server
+   * This is useful for the demo autofill functionality
+   */
+  async resetData(): Promise<void> {
+    this.logger.info('Resetting form service data');
+    // Clear the current form data
+    this.formData = {};
+    // Clear write buffer to prevent any pending saves
+    this.writeBuffer = {};
+    this.lastSavedData = '';
+    
+    // If we have a task ID, immediately load fresh data
+    if (this.currentTaskId) {
+      try {
+        this.logger.info(`Reloading fresh data for task ${this.currentTaskId}`);
+        const progressData = await this.getKybProgress(this.currentTaskId);
+        if (progressData && progressData.formData) {
+          // Directly load data without merging with existing (since we cleared it)
+          this.loadFormData(progressData.formData);
+          this.logger.info(`Successfully reloaded data with ${Object.keys(progressData.formData).length} fields`);
+        }
+      } catch (error) {
+        this.logger.error('Error reloading data during reset:', error);
+      }
+    }
+  }
+  
+  /**
+   * Update a single field value
+   */
+  async updateField(fieldKey: string, value: any): Promise<void> {
+    this.logger.info(`Updating field ${fieldKey} with new value`);
+    // Update the field in our form data
+    this.formData[fieldKey] = value;
+    
+    // Update the field in our fields array
+    this.fields = this.fields.map(field => 
+      field.key === fieldKey ? { ...field, value } : field
+    );
+    
+    // Update the field in all sections
+    this.sections = this.sections.map(section => ({
+      ...section,
+      fields: section.fields.map(field => 
+        field.key === fieldKey ? { ...field, value } : field
+      )
+    }));
+  }
+
+  /**
    * Load saved progress for a task
    */
   async loadProgress(taskId: number): Promise<Record<string, any>> {
     try {
+      // Store the task ID for resetData method
+      this.currentTaskId = taskId;
+      
       // Get current form data before loading - we'll use this if the API call fails
       const currentFormData = this.formData;
       
