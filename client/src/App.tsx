@@ -310,6 +310,11 @@ function Router() {
           <TestKy3pPage />
         </Route>
         
+        {/* Standardized KY3P Update Test Page - For Testing String-Based Field Keys */}
+        <Route path="/test-standardized-ky3p-update">
+          <TestStandardizedKy3pUpdate />
+        </Route>
+        
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
         <Route path="/debug/status-fixer">
           <ProtectedLayout>
