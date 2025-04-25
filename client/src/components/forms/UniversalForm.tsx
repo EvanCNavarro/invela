@@ -782,10 +782,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Consent section */}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <h4 className="font-medium text-gray-900">Confirmation</h4>
-                          <p className="text-sm mt-1 mb-2 text-gray-600">
-                            By submitting this form, you confirm that the information provided is accurate and complete.
-                          </p>
+                          <h4 className="font-medium text-gray-900">Submission Consent</h4>
                           
                           <FormField
                             control={form.control}
@@ -800,7 +797,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
                                   <FormLabel className="text-sm font-normal">
-                                    I, {user?.full_name || 'the submitter'}, confirm that the information provided in this form is accurate and complete to the best of my knowledge.
+                                    I, Chris James, in my capacity as an authorized representative of ExampleFinTechCompany, do hereby:
+                                    <ul className="list-disc pl-6 pt-2 space-y-1">
+                                      <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
+                                      <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
+                                      <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
+                                    </ul>
                                   </FormLabel>
                                 </div>
                               </FormItem>
