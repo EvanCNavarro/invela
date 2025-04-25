@@ -110,23 +110,62 @@ export async function handleDemoAutoFill({
       if (result.formData && typeof result.formData === 'object' && Object.keys(result.formData).length > 0) {
         logger.info(`Using form data directly from demo-autofill response (${Object.keys(result.formData).length} fields)`);
         
-        // Apply each field individually to ensure form field registration
-        for (const [fieldKey, value] of Object.entries(result.formData)) {
-          try {
-            if (value !== null && value !== undefined) {
-              await updateField(fieldKey, value);
-              console.log(`Updated field ${fieldKey} with value:`, value);
+        try {
+          // First, use the enhanced utility to apply and verify form data
+          logger.info('Using enhanced form data application utility');
+          const { applyAndVerifyFormData } = await import('./updateDemoFormUtils');
+          
+          const applyResult = await applyAndVerifyFormData(
+            result.formData,
+            updateField,
+            resetForm,
+            form,
+            false
+          );
+          
+          logger.info(`Enhanced form data application result: ${applyResult.success ? 'SUCCESS' : 'FAILED'}`);
+          
+          if (!applyResult.success) {
+            logger.warn('Enhanced form data application failed, falling back to direct method');
+            
+            // Force manual approach if enhanced utility fails
+            // Apply each field individually to ensure form field registration
+            for (const [fieldKey, value] of Object.entries(result.formData)) {
+              try {
+                if (value !== null && value !== undefined) {
+                  await updateField(fieldKey, value);
+                  console.log(`Updated field ${fieldKey} with value:`, value);
+                }
+              } catch (fieldError) {
+                console.warn(`Failed to update field ${fieldKey}:`, fieldError);
+              }
             }
-          } catch (fieldError) {
-            console.warn(`Failed to update field ${fieldKey}:`, fieldError);
+            
+            // Then do a complete reset with all values
+            resetForm(result.formData);
           }
+        } catch (utilError) {
+          logger.error('Error using enhanced form utilities:', utilError);
+          
+          // Fall back to direct approach if enhanced utility fails
+          // Apply each field individually to ensure form field registration
+          for (const [fieldKey, value] of Object.entries(result.formData)) {
+            try {
+              if (value !== null && value !== undefined) {
+                await updateField(fieldKey, value);
+                console.log(`Updated field ${fieldKey} with value:`, value);
+              }
+            } catch (fieldError) {
+              console.warn(`Failed to update field ${fieldKey}:`, fieldError);
+            }
+          }
+          
+          // Then do a complete reset with all values
+          resetForm(result.formData);
         }
         
-        // Then do a complete reset with all values
-        resetForm(result.formData);
-        
         // Add extra delay to allow UI to fully render
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
       } else {
         // Fall back to getting the data through separate requests
         logger.info('Form data not included in response, fetching separately...');
