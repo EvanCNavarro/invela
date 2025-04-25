@@ -177,7 +177,9 @@ export async function kybDemoAutoFill(taskId: number, userId?: number): Promise<
     const taskMetadata = {
       ...task.metadata,
       savedFormData: formData,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      demoAutoFilled: true,  // Add a flag to indicate demo auto-fill was applied
+      demoAutoFillTimestamp: new Date().toISOString()
     };
     
     const updateTaskQuery = `
