@@ -331,7 +331,51 @@ export function registerRoutes(app: Express): Express {
   // Register the atomic demo auto-fill router with WebSocket support
   app.use(atomicDemoAutofillRouter);
   // Register the test demo auto-fill router for testing without authentication
-  app.use('/api/test-demo-autofill', testDemoAutofillRouter);
+  // This route explicitly bypasses authentication middleware
+  app.post('/api/test-demo-autofill/test/:taskId/:formType?', async (req, res) => {
+    try {
+      // Extract parameters
+      const { taskId } = req.params;
+      const formType = req.params.formType || 'auto'; // Default to auto-detection
+      const companyName = req.query.companyName as string || 'Test Company';
+      
+      console.log(`[Test Demo Autofill] Received request for task ${taskId} with form type ${formType}`);
+      
+      // Create the service
+      const service = new AtomicDemoAutoFillService(websocketService);
+      
+      // Set dummy user ID for testing
+      const mockUserId = 1;
+      
+      // Apply demo data using the service
+      const result = await service.applyDemoDataAtomically({
+        taskId: parseInt(taskId, 10),
+        formType: formType as any,
+        userId: mockUserId,
+        companyName
+      });
+      
+      console.log(`[Test Demo Autofill] Successfully applied demo data for task ${taskId}`);
+      
+      res.json({
+        success: true,
+        message: `Successfully applied demo data for task ${taskId}`,
+        details: result
+      });
+    } catch (error) {
+      console.error('[Test Demo Autofill] Error applying demo data:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        taskId: req.params.taskId,
+        formType: req.params.formType
+      });
+      
+      res.status(500).json({
+        success: false,
+        message: 'Error applying demo data',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
