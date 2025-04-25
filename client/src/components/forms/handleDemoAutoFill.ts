@@ -173,7 +173,15 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
         { fieldKey: 'annualRecurringRevenue', demoValue: '$8,500,000' },
         { fieldKey: 'revenueGrowthRate', demoValue: '18%' },
         { fieldKey: 'investigationsIncidents', demoValue: 'None in the past 5 years' },
-        { fieldKey: 'financialStatements', demoValue: 'Audited annually by Big 4 accounting firm' }
+        { fieldKey: 'financialStatements', demoValue: 'Audited annually by Big 4 accounting firm' },
+        { fieldKey: 'operationalPolicies', demoValue: 'Comprehensive policies with annual review cycle' },
+        { fieldKey: 'dataVolume', demoValue: 'Approximately 5TB of customer data processed monthly' },
+        { fieldKey: 'dataTypes', demoValue: 'Financial transactions, PII, account information' },
+        { fieldKey: 'sanctionsCheck', demoValue: 'Regular screening against OFAC and other global sanctions lists' },
+        { fieldKey: 'dueDiligence', demoValue: 'Enhanced due diligence for high-risk transactions' },
+        { fieldKey: 'regulatoryActions', demoValue: 'No regulatory actions or material findings in past 3 years' },
+        { fieldKey: 'directorsAndOfficers', demoValue: 'Board of 5 directors with majority independent members' },
+        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' }
       ],
       'company_kyb': [
         { fieldKey: 'legalEntityName', demoValue: 'Demo Corporation' },
@@ -197,7 +205,15 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
         { fieldKey: 'annualRecurringRevenue', demoValue: '$8,500,000' },
         { fieldKey: 'revenueGrowthRate', demoValue: '18%' },
         { fieldKey: 'investigationsIncidents', demoValue: 'None in the past 5 years' },
-        { fieldKey: 'financialStatements', demoValue: 'Audited annually by Big 4 accounting firm' }
+        { fieldKey: 'financialStatements', demoValue: 'Audited annually by Big 4 accounting firm' },
+        { fieldKey: 'operationalPolicies', demoValue: 'Comprehensive policies with annual review cycle' },
+        { fieldKey: 'dataVolume', demoValue: 'Approximately 5TB of customer data processed monthly' },
+        { fieldKey: 'dataTypes', demoValue: 'Financial transactions, PII, account information' },
+        { fieldKey: 'sanctionsCheck', demoValue: 'Regular screening against OFAC and other global sanctions lists' },
+        { fieldKey: 'dueDiligence', demoValue: 'Enhanced due diligence for high-risk transactions' },
+        { fieldKey: 'regulatoryActions', demoValue: 'No regulatory actions or material findings in past 3 years' },
+        { fieldKey: 'directorsAndOfficers', demoValue: 'Board of 5 directors with majority independent members' },
+        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' }
       ],
       'ky3p': [
         { fieldKey: 'securityCertifications', demoValue: 'ISO 27001, SOC 2 Type II' },
