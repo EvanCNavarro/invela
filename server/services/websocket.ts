@@ -257,6 +257,30 @@ export function broadcastFieldUpdate(taskId: number, fieldId: number, data: any)
   });
 }
 
+/**
+ * Broadcast progress update for form progress
+ * @param taskId Task ID
+ * @param progress Progress value (0-1)
+ */
+export function broadcastProgressUpdate(taskId: number, progress: number) {
+  broadcast('form_progress', {
+    taskId,
+    progress,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Broadcast completion of demo auto-fill process
+ * @param taskId Task ID 
+ */
+export function broadcastDemoAutoFillComplete(taskId: number) {
+  broadcast('demo_autofill_complete', {
+    taskId,
+    timestamp: new Date().toISOString()
+  });
+}
+
 export default {
   setupWebSocket,
   getWebSocketServer,
@@ -266,5 +290,7 @@ export default {
   broadcastTaskUpdate,
   broadcastCompanyTabsUpdate,
   broadcastDocumentCountUpdate,
-  broadcastFieldUpdate
+  broadcastFieldUpdate,
+  broadcastProgressUpdate,
+  broadcastDemoAutoFillComplete
 };
