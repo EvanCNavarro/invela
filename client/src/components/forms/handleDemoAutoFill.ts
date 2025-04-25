@@ -1,6 +1,7 @@
 import { FormServiceInterface } from '@/services/formService';
 import getLogger from '@/utils/logger';
 import { toast } from '@/hooks/use-toast';
+import { standardizedBulkUpdate } from './standardized-ky3p-update';
 
 const logger = getLogger('handleDemoAutoFill');
 
@@ -22,6 +23,9 @@ interface DemoAutoFillOptions {
  * 
  * This function uses a direct database update approach instead of API calls
  * to populate form fields with demo data.
+ * 
+ * For KY3P forms, it now uses the standardized approach with string-based field keys
+ * that matches KYB's implementation.
  */
 export async function handleDemoAutoFill({
   taskId,
@@ -49,8 +53,66 @@ export async function handleDemoAutoFill({
   
   try {
     logger.info(`Starting demo auto-fill for task ${taskId}`);
+    
+    // Show initial loading toast
+    toast({
+      id: toastId,
+      title: 'Demo Auto-Fill',
+      description: 'Loading demo data...',
+      variant: 'default',
+    });
 
-    // Get all field definitions with demo values from the database
+    // Special handling for KY3P forms using the standardized approach with POST method
+    const normalizedType = taskType.toLowerCase();
+    if (normalizedType === 'ky3p' || normalizedType === 'sp_ky3p_assessment' || 
+        normalizedType === 'security_assessment' || normalizedType === 'security') {
+      
+      logger.info(`Using standardized KY3P demo auto-fill for task type: ${taskType}`);
+      
+      // Use the new standardized bulk update approach which uses POST
+      const success = await standardizedBulkUpdate(taskId, {});
+      
+      if (success) {
+        // If the update was successful, refresh the form data
+        if (formService) {
+          logger.info('Refreshing form data from service after standardized update');
+          const refreshedData = await formService.getFormData();
+          logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
+          resetForm(refreshedData);
+        }
+        
+        // Force a re-render
+        setForceRerender((prev: boolean) => !prev);
+        
+        // Update progress if needed
+        if (onProgress) {
+          await refreshStatus();
+        }
+        
+        // Show success message
+        toast({
+          id: toastId,
+          title: 'Demo Auto-Fill Complete',
+          description: 'Successfully filled the form with demo data.',
+          variant: 'success',
+        });
+        
+        return;
+      } else {
+        // If the standardized approach failed, show an error
+        toast({
+          id: toastId,
+          title: 'Demo Auto-Fill Failed',
+          description: 'Could not auto-fill the form using the standardized approach.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
+    // For other form types (KYB, Open Banking), continue with the original implementation
+    
+    // Get all field definitions with demo values from local data
     const fieldsResponse = await getFormFieldsWithDemoValues(taskType);
     
     if (!fieldsResponse.success) {
@@ -210,24 +272,6 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
         { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' },
         { fieldKey: 'controlEnvironment', demoValue: 'Strong controls with quarterly assessments and documented procedures' }
       ],
-      'ky3p': [
-        { fieldKey: 'securityCertifications', demoValue: 'ISO 27001, SOC 2 Type II' },
-        { fieldKey: 'dataEncryption', demoValue: 'AES-256 for data at rest, TLS 1.3 for data in transit' },
-        { fieldKey: 'incidentResponse', demoValue: 'Formal incident response team with 24/7 coverage' },
-        { fieldKey: 'accessControl', demoValue: 'Role-based access control with MFA for all privileged access' },
-        { fieldKey: 'vulnerabilityManagement', demoValue: 'Weekly automated scans, quarterly penetration testing' },
-        { fieldKey: 'bcpDrp', demoValue: 'Comprehensive plans with annual testing and RTO of 4 hours' },
-        { fieldKey: 'securityFramework', demoValue: 'NIST Cybersecurity Framework' }
-      ],
-      'security_assessment': [
-        { fieldKey: 'securityCertifications', demoValue: 'ISO 27001, SOC 2 Type II' },
-        { fieldKey: 'dataEncryption', demoValue: 'AES-256 for data at rest, TLS 1.3 for data in transit' },
-        { fieldKey: 'incidentResponse', demoValue: 'Formal incident response team with 24/7 coverage' },
-        { fieldKey: 'accessControl', demoValue: 'Role-based access control with MFA for all privileged access' },
-        { fieldKey: 'vulnerabilityManagement', demoValue: 'Weekly automated scans, quarterly penetration testing' },
-        { fieldKey: 'bcpDrp', demoValue: 'Comprehensive plans with annual testing and RTO of 4 hours' },
-        { fieldKey: 'securityFramework', demoValue: 'NIST Cybersecurity Framework' }
-      ],
       'open_banking': [
         { fieldKey: 'apiStandards', demoValue: 'Fully compliant with FDX API 5.0 standards' },
         { fieldKey: 'apiSecurity', demoValue: 'OAuth 2.0 with mTLS for all API endpoints' },
@@ -250,8 +294,6 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
     
     if (normalizedType === 'kyb' || normalizedType === 'company_kyb') {
       fields = demoFieldsByType['kyb'];
-    } else if (normalizedType === 'ky3p' || normalizedType === 'security_assessment' || normalizedType === 'security') {
-      fields = demoFieldsByType['ky3p'];
     } else if (normalizedType === 'open_banking' || normalizedType === 'open_banking_survey') {
       fields = demoFieldsByType['open_banking'];
     } else {
