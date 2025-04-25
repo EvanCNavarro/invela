@@ -429,7 +429,7 @@ export const ky3pFields = pgTable("ky3p_fields", {
   demo_autofill: text("demo_autofill"),
   group: text("group").notNull(), // Renamed from section
   field_type: text("field_type").$type<keyof typeof KYBFieldType>().notNull(),
-  is_required: boolean("is_required").notNull(),
+  required: boolean("required").notNull(), // Renamed from is_required
   answer_expectation: text("answer_expectation"),
   validation_type: text("validation_type"),
   phasing: text("phasing"),
