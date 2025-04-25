@@ -52,7 +52,7 @@ import { CheckCircle } from 'lucide-react';
 import SectionContent from './SectionContent';
 
 // Import the enhanced demo autofill utility and clear fields utility
-import { handleDemoAutoFill } from './handleDemoAutoFill-enhanced';
+import { handleDemoAutoFill } from './handleDemoAutoFill';
 import { handleClearFields } from './clearFieldsUtils';
 
 // Create a type alias for form sections

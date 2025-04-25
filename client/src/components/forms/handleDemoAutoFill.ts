@@ -49,7 +49,7 @@ export async function handleDemoAutoFill({
     logger.info(`Starting demo auto-fill for task ${taskId}`);
     
     // Try fixed demo auto-fill endpoint first
-    const fixedEndpoint = `/api/fix-demo-autofill/${taskId}`;
+    const fixedEndpoint = `/fix-demo-autofill/${taskId}`;
     
     logger.info(`Using fixed demo auto-fill endpoint: ${fixedEndpoint}`);
     console.log(`Attempting to call fixed demo auto-fill endpoint: ${fixedEndpoint} with taskType: ${taskType}`);
