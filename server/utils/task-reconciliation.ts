@@ -143,7 +143,7 @@ export async function reconcileTaskProgress(
       required: boolean | null;
     }[] = [];
 
-    // Check if it's a KYB or Open Banking task and fetch appropriate responses
+    // Check the task type and fetch appropriate responses
     if (taskType === 'open_banking') {
       try {
         // Fetch Open Banking responses
@@ -240,8 +240,96 @@ export async function reconcileTaskProgress(
         // Fall back to empty responses
         responses = [];
       }
+    } else if (taskType === 'ky3p') {
+      try {
+        // Fetch KY3P responses - Add special handling for KY3P tasks
+        console.log(`${logPrefix} Fetching KY3P responses for task ${taskId}`);
+        
+        // Count total KY3P fields
+        const totalFieldsResult = await db
+          .select({
+            count: sql<number>`count(*)`
+          })
+          .from(ky3pFields);
+        
+        const totalFields = totalFieldsResult[0].count;
+        
+        // Count completed KY3P responses
+        const completedResponsesResult = await db
+          .select({
+            count: sql<number>`count(*)`
+          })
+          .from(ky3pResponses)
+          .where(
+            eq(ky3pResponses.task_id, taskId)
+          );
+        
+        // Extract the completed fields count
+        const completedFields = completedResponsesResult[0]?.count || 0;
+        
+        // Calculate accurate progress percentage
+        const calculatedProgress = 
+          totalFields > 0 && completedFields > 0
+            ? Math.min(100, Math.max(1, Math.ceil((completedFields / totalFields) * 100)))
+            : 0;
+            
+        console.log(`${logPrefix} Recalculated KY3P progress:`, {
+          taskId,
+          totalFields,
+          completedFields,
+          currentProgress: task.progress,
+          calculatedProgress
+        });
+        
+        // If progress differs, update the task and broadcast
+        if (forceUpdate || task.progress !== calculatedProgress) {
+          // Determine the correct status based on progress
+          const newStatus = 
+            calculatedProgress === 0 ? TaskStatus.NOT_STARTED :
+            calculatedProgress >= 100 ? TaskStatus.READY_FOR_SUBMISSION :
+            TaskStatus.IN_PROGRESS;
+            
+          console.log(`${logPrefix} Updating KY3P task progress:`, {
+            taskId,
+            progressFrom: task.progress,
+            progressTo: calculatedProgress,
+            statusFrom: task.status,
+            statusTo: newStatus
+          });
+          
+          // Update task in database
+          const [updatedTask] = await db.update(tasks)
+            .set({
+              progress: calculatedProgress,
+              status: newStatus,
+              updated_at: new Date(),
+              metadata: {
+                ...task.metadata,
+                lastProgressReconciliation: new Date().toISOString()
+              }
+            })
+            .where(eq(tasks.id, taskId))
+            .returning();
+          
+          // Broadcast the update to all connected clients
+          broadcastProgressUpdate(
+            taskId,
+            calculatedProgress,
+            newStatus,
+            updatedTask.metadata || {}
+          );
+        }
+        
+        // Exit early since we've handled everything for KY3P
+        return;
+      } catch (error) {
+        console.error(`${logPrefix} Error fetching KY3P responses:`, error);
+        console.error(error);
+        // Fall back to empty responses
+        responses = [];
+      }
     } else {
-      // Default to KYB responses for backward compatibility
+      // Default to KYB responses (for company_kyb type)
       responses = await db.select({
         response_value: kybResponses.response_value,
         field_key: kybFields.field_key,
