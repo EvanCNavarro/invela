@@ -843,161 +843,60 @@ export function useFormDataManager({
     let finalResetData = data || defaultValues;
     logger.info(`Resetting form with ${Object.keys(finalResetData).length} fields`);
     
-    // Add debug logging to see what's in the incoming data
-    if (data) {
-      logger.info(`Demo data received in resetForm: ${Object.keys(data).length} fields`);
-      const sampleKeys = Object.keys(data).slice(0, 5);
-      sampleKeys.forEach(key => {
-        logger.info(`Sample field ${key}: "${data[key]}"`);
+    // Synchronize form data between task.savedFormData and individual field responses
+    // This prevents inconsistencies during form resets
+    if (formService && taskId && typeof formService.syncFormData === 'function') {
+      try {
+        logger.info(`[FormSync] Synchronizing form data before reset for task ${taskId}`);
+        const syncResult = await formService.syncFormData(taskId);
+        
+        if (syncResult.success) {
+          logger.info(`[FormSync] Data synchronized successfully during reset with direction: ${syncResult.syncDirection}`);
+          
+          // If data was synchronized, merge with reset data
+          if (syncResult.syncDirection !== 'none' && Object.keys(syncResult.formData).length > 0) {
+            logger.info(`[FormSync] Merging synchronized data into reset data`);
+            // Only merge synchronized data if we're resetting to defaults
+            if (!data) {
+              finalResetData = {
+                ...finalResetData,
+                ...syncResult.formData
+              };
+              logger.info(`[FormSync] Reset data updated with synchronized fields`);
+            }
+          }
+        } else {
+          logger.warn(`[FormSync] Failed to synchronize form data during reset: ${syncResult.syncDirection}`);
+        }
+      } catch (syncError) {
+        logger.error(`[FormSync] Error during form data synchronization for reset: ${syncError}`);
+        // Continue with normal reset even if sync fails
+      }
+    }
+    
+    // Reset the form
+    form.reset(finalResetData);
+    
+    // Update local state
+    setFormData(finalResetData);
+    
+    // Update form service if available
+    if (formService) {
+      Object.entries(finalResetData).forEach(([key, value]) => {
+        // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
+        if (updateFieldRef.current) {
+          // Use the update field function with isSaving flag since this is during a form reset
+          updateFieldRef.current(key, value, true);
+        } else {
+          // Fallback to direct update if reference isn't set yet
+          formService.updateFormData(key, value, taskId);
+        }
       });
     }
     
-    try {
-      // For demo auto-fill, prioritize the provided data and skip sync
-      const isDemoAutoFill = data && Object.keys(data).length > 0;
-      
-      // Synchronize form data between task.savedFormData and individual field responses
-      // But only if this is NOT a demo auto-fill operation
-      if (!isDemoAutoFill && formService && taskId && typeof formService.syncFormData === 'function') {
-        try {
-          logger.info(`[FormSync] Synchronizing form data before reset for task ${taskId}`);
-          const syncResult = await formService.syncFormData(taskId);
-          
-          if (syncResult.success) {
-            logger.info(`[FormSync] Data synchronized successfully during reset with direction: ${syncResult.syncDirection}`);
-            
-            // If data was synchronized, merge with reset data
-            if (syncResult.syncDirection !== 'none' && Object.keys(syncResult.formData).length > 0) {
-              logger.info(`[FormSync] Merging synchronized data into reset data`);
-              // Only merge synchronized data if we're resetting to defaults
-              if (!data) {
-                finalResetData = {
-                  ...finalResetData,
-                  ...syncResult.formData
-                };
-                logger.info(`[FormSync] Reset data updated with synchronized fields`);
-              }
-            }
-          } else {
-            logger.warn(`[FormSync] Failed to synchronize form data during reset: ${syncResult.syncDirection}`);
-          }
-        } catch (syncError) {
-          logger.error(`[FormSync] Error during form data synchronization for reset: ${syncError}`);
-          // Continue with normal reset even if sync fails
-        }
-      }
-      
-      // If data is empty but we have a taskId, try fetching the latest data from the server
-      if ((!data || Object.keys(data).length === 0) && taskId) {
-        try {
-          logger.info(`No data provided to resetForm, fetching latest data for task ${taskId}`);
-          const response = await fetch(`/api/tasks.json/${taskId}`);
-          
-          if (response.ok) {
-            const taskData = await response.json();
-            
-            if (taskData.savedFormData && Object.keys(taskData.savedFormData).length > 0) {
-              logger.info(`Found saved form data in task response with ${Object.keys(taskData.savedFormData).length} fields`);
-              finalResetData = taskData.savedFormData;
-            }
-          }
-        } catch (fetchError) {
-          logger.error(`Error fetching latest task data: ${fetchError}`);
-        }
-      }
-      
-      logger.info(`Applying reset with ${Object.keys(finalResetData).length} fields`);
-      
-      // Reset the form - this updates the React Hook Form state
-      form.reset(finalResetData);
-      
-      // Update local state to ensure component re-renders
-      setFormData(prev => {
-        const updated = { ...finalResetData };
-        
-        // Log the difference between previous and updated data
-        const prevKeys = Object.keys(prev);
-        const updatedKeys = Object.keys(updated);
-        const addedKeys = updatedKeys.filter(k => !prevKeys.includes(k));
-        const removedKeys = prevKeys.filter(k => !updatedKeys.includes(k));
-        const changedKeys = updatedKeys.filter(k => prevKeys.includes(k) && prev[k] !== updated[k]);
-        
-        logger.info(`Form data state update: ${addedKeys.length} added, ${removedKeys.length} removed, ${changedKeys.length} changed`);
-        
-        return updated;
-      });
-      
-      // Special handling for demo auto-fill - use bulk update if available
-      if (isDemoAutoFill && formService && typeof formService.bulkUpdateFormData === 'function') {
-        try {
-          logger.info(`[DEMO-AUTOFILL] Using bulkUpdateFormData for faster demo data application`);
-          await formService.bulkUpdateFormData(finalResetData, taskId);
-          logger.info(`[DEMO-AUTOFILL] Bulk update completed successfully`);
-        } catch (bulkError) {
-          logger.error(`[DEMO-AUTOFILL] Bulk update failed, falling back to individual updates: ${bulkError}`);
-          // Fall back to individual updates below
-        }
-      } 
-      // Ensure the form service is updated with the new data
-      else if (formService) {
-        logger.info(`Updating form service with ${Object.keys(finalResetData).length} fields`);
-        
-        // For demo auto-fill, use a more reliable approach with a small delay between batches
-        if (isDemoAutoFill) {
-          logger.info(`[DEMO-AUTOFILL] Using batched approach for demo data`);
-          
-          // Process in smaller batches to avoid overwhelming the server
-          const batchSize = 5;
-          const entries = Object.entries(finalResetData);
-          const totalBatches = Math.ceil(entries.length / batchSize);
-          
-          for (let i = 0; i < totalBatches; i++) {
-            const batchStart = i * batchSize;
-            const batchEnd = Math.min((i + 1) * batchSize, entries.length);
-            const batch = entries.slice(batchStart, batchEnd);
-            
-            logger.info(`[DEMO-AUTOFILL] Processing batch ${i+1}/${totalBatches} with ${batch.length} fields`);
-            
-            // Process each field in the batch
-            for (const [key, value] of batch) {
-              try {
-                // Always use direct form service update for demo data to ensure consistent behavior
-                formService.updateFormData(key, value, taskId);
-              } catch (fieldError) {
-                logger.error(`[DEMO-AUTOFILL] Error updating field ${key}: ${fieldError}`);
-              }
-            }
-            
-            // Small delay between batches to allow server processing
-            if (i < totalBatches - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
-          }
-        }
-        // For regular resets, use the standard approach
-        else {
-          Object.entries(finalResetData).forEach(([key, value]) => {
-            // Use the updateFieldRef if it's defined, otherwise fallback to direct service update
-            if (updateFieldRef.current) {
-              // Use the update field function with isSaving flag since this is during a form reset
-              updateFieldRef.current(key, value, true);
-            } else {
-              // Fallback to direct update if reference isn't set yet
-              formService.updateFormData(key, value, taskId);
-            }
-          });
-        }
-      }
-      
-      // Notify parent component if callback provided
-      if (onDataChange) {
-        onDataChange(finalResetData);
-      }
-      
-      // Log success
-      logger.info('Form reset completed successfully');
-    } catch (resetError) {
-      logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
+    // Notify parent component if callback provided
+    if (onDataChange) {
+      onDataChange(finalResetData);
     }
   }, [form, defaultValues, formService, onDataChange, taskId]);
   

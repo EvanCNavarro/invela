@@ -172,27 +172,23 @@ export class UniversalDemoAutoFillService {
     
     for (const field of fields) {
       const fieldKey = field[config.fieldKeyColumn];
-      let demoValue: string;
       
       // Special cases that should always use current user/company data
       if (fieldKey === 'legalEntityName') {
-        demoValue = company.name || 'Demo Company';
-        logger.info(`Using company name for legalEntityName: ${demoValue}`);
+        demoData[fieldKey] = company.name;
       }
       else if (fieldKey === 'contactEmail' && userEmail) {
-        demoValue = userEmail;
-        logger.info(`Using user email for contactEmail: ${demoValue}`);
+        demoData[fieldKey] = userEmail;
       }
       // Use the demo_autofill value from the database
-      else if (field[config.demoAutofillColumn] !== null && field[config.demoAutofillColumn] !== undefined && field[config.demoAutofillColumn] !== '') {
+      else if (field[config.demoAutofillColumn] !== null && field[config.demoAutofillColumn] !== undefined) {
         // Check for template variables that need replacement
         if (typeof field[config.demoAutofillColumn] === 'string' && 
             field[config.demoAutofillColumn].includes('{{COMPANY_NAME}}')) {
-          demoValue = field[config.demoAutofillColumn].replace('{{COMPANY_NAME}}', company.name);
+          demoData[fieldKey] = field[config.demoAutofillColumn].replace('{{COMPANY_NAME}}', company.name);
         } else {
-          demoValue = field[config.demoAutofillColumn];
+          demoData[fieldKey] = field[config.demoAutofillColumn];
         }
-        logger.info(`Using demo_autofill column value for ${fieldKey}: "${demoValue}"`);
       } 
       // Generate a fallback value if no demo value is defined
       else {
@@ -202,48 +198,37 @@ export class UniversalDemoAutoFillService {
         switch (fieldType) {
           case 'TEXT':
           case 'TEXTAREA':
-            demoValue = `Demo ${displayName}`;
+            demoData[fieldKey] = `Demo ${displayName}`;
             break;
             
           case 'DATE':
             const date = new Date();
             date.setFullYear(date.getFullYear() - 2);
-            demoValue = date.toISOString().split('T')[0];
+            demoData[fieldKey] = date.toISOString().split('T')[0];
             break;
             
           case 'NUMBER':
-            demoValue = '10000';
+            demoData[fieldKey] = '10000';
             break;
             
           case 'BOOLEAN':
-            demoValue = 'true';
+            demoData[fieldKey] = 'true';
             break;
             
           case 'SELECT':
           case 'MULTI_SELECT':
           case 'MULTIPLE_CHOICE':
-            demoValue = 'Option A';
+            demoData[fieldKey] = 'Option A';
             break;
             
           case 'EMAIL':
-            demoValue = `demo@${displayName.toLowerCase().replace(/\s/g, '')}.com`;
+            demoData[fieldKey] = `demo@${displayName.toLowerCase().replace(/\s/g, '')}.com`;
             break;
             
           default:
-            demoValue = `Demo value for ${displayName}`;
+            demoData[fieldKey] = `Demo value for ${displayName}`;
         }
-        
-        logger.info(`Generated fallback demo value for ${fieldKey}: "${demoValue}"`);
       }
-      
-      // Ensure we never set undefined or null values
-      if (demoValue === undefined || demoValue === null) {
-        logger.warn(`Fixing null/undefined demo value for ${fieldKey}`);
-        demoValue = `Demo ${field[config.displayNameColumn] || fieldKey}`;
-      }
-      
-      // Actually set the value in our demo data object
-      demoData[fieldKey] = demoValue;
     }
     
     logger.info('Successfully generated demo data', {
@@ -269,24 +254,11 @@ export class UniversalDemoAutoFillService {
     taskId: number,
     formType: FormType,
     userId?: number
-  ): Promise<{ success: boolean; message: string; fieldCount: number; fieldsWithValues?: number; fieldsWithEmptyValues?: number }> {
+  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
     logger.info('Applying demo data directly to database', { taskId, formType, userId });
     
     // Generate the demo data first
     const demoData = await this.generateDemoData(taskId, formType, userId);
-    
-    // Add sample debugging information for demo data
-    const demoKeys = Object.keys(demoData);
-    logger.info(`Generated demo data with ${demoKeys.length} fields`, {
-      taskId,
-      formType,
-      sampleKeys: demoKeys.slice(0, 5),
-      sampleValues: demoKeys.slice(0, 5).map(key => ({
-        key,
-        value: demoData[key],
-        type: typeof demoData[key]
-      }))
-    });
     
     // Get configuration for the requested form type
     const config = formTypeConfigs[formType];
@@ -314,11 +286,6 @@ export class UniversalDemoAutoFillService {
     const fields = await db.select()
       .from(config.fieldsTable);
       
-    logger.info(`Found ${fields.length} field definitions for ${formType}`, {
-      taskId,
-      formType
-    });
-    
     // Create a map of field key to field record for quick lookups
     const fieldMap = new Map();
     for (const field of fields) {
@@ -339,17 +306,6 @@ export class UniversalDemoAutoFillService {
     let insertedCount = 0;
     let errorCount = 0;
     
-    // Log all demo data before processing
-    logger.info(`Processing ${Object.keys(demoData).length} demo data fields`, {
-      taskId,
-      fieldKeys: Object.keys(demoData).slice(0, 10),
-      someValues: Object.entries(demoData).slice(0, 5).map(([k, v]) => `${k}: ${v}`)
-    });
-    
-    // Track fields with actual values to debug empty fields issue
-    const fieldsWithValues = [];
-    const fieldsWithEmptyValues = [];
-    
     for (const [fieldKey, value] of Object.entries(demoData)) {
       try {
         const field = fieldMap.get(fieldKey);
@@ -359,83 +315,29 @@ export class UniversalDemoAutoFillService {
           continue;
         }
         
-        // Debug log field value
-        logger.info(`Processing field ${fieldKey}:`, { 
-          value,
-          valueType: typeof value,
-          isEmpty: value === null || value === undefined || value === '',
-          fieldId: field.id
-        });
-        
-        // Track fields with values vs empty
-        if (value === null || value === undefined || value === '') {
-          fieldsWithEmptyValues.push(fieldKey);
-        } else {
-          fieldsWithValues.push(fieldKey);
-        }
-        
-        // Make sure we're working with clean values
-        // Convert null/undefined to empty string to avoid DB errors
-        const cleanValue = value === null || value === undefined ? '' : value;
-        
         // Check if response already exists
         const existingResponse = responseMap.get(fieldKey);
         
         if (existingResponse) {
-          // Update existing response - ensure status is properly set
-          // Fixed status determination to ensure non-empty values are correctly marked as FILLED
-          const status = (cleanValue !== null && cleanValue !== undefined && cleanValue !== '') ? 'FILLED' : 'EMPTY';
-          
-          logger.info(`Updating existing response for ${fieldKey}:`, {
-            value: cleanValue,
-            valueType: typeof cleanValue,
-            valueLength: typeof cleanValue === 'string' ? cleanValue.length : 'N/A',
-            status,
-            responseId: existingResponse.id
-          });
-          
+          // Update existing response
           await db.update(config.responsesTable)
             .set({
-              [config.responseValueColumn]: cleanValue,
-              status: status,
+              [config.responseValueColumn]: value,
+              status: value ? 'FILLED' : 'EMPTY',
               updated_at: timestamp,
               version: existingResponse.version + 1
             })
             .where(eq(config.responsesTable.id, existingResponse.id));
-          
-          // Verify the update worked
-          const [updatedResponse] = await db.select()
-            .from(config.responsesTable)
-            .where(eq(config.responsesTable.id, existingResponse.id));
             
-          if (updatedResponse) {
-            logger.info(`Verified update for ${fieldKey}:`, {
-              expectedValue: cleanValue,
-              actualValue: updatedResponse[config.responseValueColumn],
-              matched: updatedResponse[config.responseValueColumn] === cleanValue
-            });
-          }
-          
           updatedCount++;
         } else {
-          // Create new response - ensure status is properly set
-          // Fixed status determination to ensure non-empty values are correctly marked as FILLED
-          const status = (cleanValue !== null && cleanValue !== undefined && cleanValue !== '') ? 'FILLED' : 'EMPTY';
-          
-          logger.info(`Creating new response for ${fieldKey}:`, {
-            value: cleanValue,
-            valueType: typeof cleanValue,
-            valueLength: typeof cleanValue === 'string' ? cleanValue.length : 'N/A',
-            status,
-            fieldId: field.id
-          });
-          
+          // Create new response
           await db.insert(config.responsesTable)
             .values({
               task_id: taskId,
               field_id: field.id,
-              [config.responseValueColumn]: cleanValue,
-              status: status,
+              [config.responseValueColumn]: value,
+              status: value ? 'FILLED' : 'EMPTY',
               created_at: timestamp,
               updated_at: timestamp,
               version: 1
@@ -461,31 +363,11 @@ export class UniversalDemoAutoFillService {
       })
       .where(eq(tasks.id, taskId));
       
-    // Determine the appropriate status based on filled fields
-    // If we filled any fields, we should set the status to "in_progress"
-    const updatedStatus = fieldsWithValues.length > 0 ? 'in_progress' : task.status;
-    
-    logger.info('Determining task status', {
-      taskId,
-      fieldsWithValues: fieldsWithValues.length,
-      fieldsWithEmptyValues: fieldsWithEmptyValues.length,
-      originalStatus: task.status,
-      updatedStatus,
-      timestamp: timestamp.toISOString()
-    });
-    
-    // Also update the task status in the database
-    await db.update(tasks)
-      .set({
-        status: updatedStatus
-      })
-      .where(eq(tasks.id, taskId));
-      
     // Broadcast update via WebSocket for real-time UI updates
     broadcastTaskUpdate({
       id: taskId,
       progress: progress,
-      status: updatedStatus,
+      status: task.status,
       updated_at: timestamp.toISOString()
     });
     
@@ -495,27 +377,13 @@ export class UniversalDemoAutoFillService {
       inserted: insertedCount,
       updated: updatedCount,
       errors: errorCount,
-      progress,
-      fieldsWithValues: fieldsWithValues.length,
-      fieldsWithEmptyValues: fieldsWithEmptyValues.length,
-      valuesRatio: `${fieldsWithValues.length}/${fieldsWithValues.length + fieldsWithEmptyValues.length}`
+      progress
     });
-    
-    // Check if we actually have any fields with values
-    if (fieldsWithValues.length === 0 && fieldsWithEmptyValues.length > 0) {
-      logger.error('Critical error: All demo values were empty!', {
-        taskId,
-        formType,
-        emptyFieldSample: fieldsWithEmptyValues.slice(0, 5)
-      });
-    }
     
     return {
       success: true,
       message: `Successfully applied demo data to ${insertedCount + updatedCount} fields`,
-      fieldCount: insertedCount + updatedCount,
-      fieldsWithValues: fieldsWithValues.length,
-      fieldsWithEmptyValues: fieldsWithEmptyValues.length
+      fieldCount: insertedCount + updatedCount
     };
   }
   
@@ -530,7 +398,7 @@ export class UniversalDemoAutoFillService {
   async autoFillTask(
     taskId: number,
     userId?: number
-  ): Promise<{ success: boolean; message: string; fieldCount: number; fieldsWithValues?: number; fieldsWithEmptyValues?: number }> {
+  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
     // First, get the task to determine its type
     const [task] = await db.select()
       .from(tasks)
