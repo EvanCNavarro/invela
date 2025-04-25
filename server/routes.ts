@@ -26,10 +26,6 @@ import openBankingDemoAutofillRouter from './routes/open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import universalClearFieldsRouter from './routes/universal-clear-fields';
 import fixDemoAutofillRouter from './routes/fix-demo-autofill';
-import testDemoAutofillRouter from './routes/test-demo-autofill';
-import kybEnhancedDemoAutofillRouter from './routes/kyb-demo-autofill';
-import atomicDemoAutofillRouter from './routes/atomic-demo-autofill';
-import bypassAuthDemoAutofillRouter from './routes/bypass-auth-demo-autofill';
 import filesRouter from './routes/files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
@@ -73,9 +69,6 @@ export function invalidateCompanyCache(companyId: number) {
 }
 
 export function registerRoutes(app: Express): Express {
-  // Register the bypass-auth-demo-autofill router first, before any authentication middleware
-  // This provides a completely authentication-free endpoint for testing demo auto-fill
-  app.use('/bypass-auth-demo-autofill', bypassAuthDemoAutofillRouter);
   app.use(companySearchRouter);
   app.use(kybRouter);
   
@@ -327,59 +320,9 @@ export function registerRoutes(app: Express): Express {
   // Register the universal demo auto-fill router
   app.use(universalDemoAutofillRouter);
   // Register the universal clear fields router
-  app.use(universalClearFieldsRouter);
+  app.use('/api/universal-clear-fields', universalClearFieldsRouter);
   // Register the fixed demo auto-fill router
   app.use(fixDemoAutofillRouter);
-  // Register the enhanced KYB demo auto-fill router
-  app.use(kybEnhancedDemoAutofillRouter);
-  // Register the atomic demo auto-fill router with WebSocket support
-  app.use(atomicDemoAutofillRouter);
-  // Register the test demo auto-fill router for testing without authentication
-  // This route explicitly bypasses authentication middleware
-  app.post('/api/test-demo-autofill/test/:taskId/:formType?', async (req, res) => {
-    try {
-      // Extract parameters
-      const { taskId } = req.params;
-      const formType = req.params.formType || 'auto'; // Default to auto-detection
-      const companyName = req.query.companyName as string || 'Test Company';
-      
-      console.log(`[Test Demo Autofill] Received request for task ${taskId} with form type ${formType}`);
-      
-      // Create the service
-      const service = new AtomicDemoAutoFillService(websocketService);
-      
-      // Set dummy user ID for testing
-      const mockUserId = 1;
-      
-      // Apply demo data using the service
-      const result = await service.applyDemoDataAtomically({
-        taskId: parseInt(taskId, 10),
-        formType: formType as any,
-        userId: mockUserId,
-        companyName
-      });
-      
-      console.log(`[Test Demo Autofill] Successfully applied demo data for task ${taskId}`);
-      
-      res.json({
-        success: true,
-        message: `Successfully applied demo data for task ${taskId}`,
-        details: result
-      });
-    } catch (error) {
-      console.error('[Test Demo Autofill] Error applying demo data:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        taskId: req.params.taskId,
-        formType: req.params.formType
-      });
-      
-      res.status(500).json({
-        success: false,
-        message: 'Error applying demo data',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
@@ -395,9 +338,6 @@ export function registerRoutes(app: Express): Express {
   
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
-  
-  // Fix TypeScript error: Cannot find name 'universalDemoAutoFillRouter'
-  const universalDemoAutofillRouterFix = universalDemoAutofillRouter;
   app.use(tasksRouter);
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);

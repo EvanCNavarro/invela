@@ -247,38 +247,12 @@ export function broadcastDocumentCountUpdate(companyId: number, count: number) {
   });
 }
 
-// Add broadcastFieldUpdate for form field updates
-export function broadcastFieldUpdate(taskId: number, fieldKey: string | number, value: any) {
-  // Ensure we're using the correct property name for the field identifier
-  // Our client code expects 'fieldKey'
+// Add broadcastFieldUpdate for kyb.ts
+export function broadcastFieldUpdate(taskId: number, fieldId: number, data: any) {
   broadcast('field_update', {
     taskId,
-    fieldKey: String(fieldKey), // Convert to string for consistency
-    value,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * Broadcast progress update for form progress
- * @param taskId Task ID
- * @param progress Progress value (0-1)
- */
-export function broadcastProgressUpdate(taskId: number, progress: number) {
-  broadcast('form_progress', {
-    taskId,
-    progress,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * Broadcast completion of demo auto-fill process
- * @param taskId Task ID 
- */
-export function broadcastDemoAutoFillComplete(taskId: number) {
-  broadcast('demo_autofill_complete', {
-    taskId,
+    fieldId,
+    ...data,
     timestamp: new Date().toISOString()
   });
 }
@@ -292,7 +266,5 @@ export default {
   broadcastTaskUpdate,
   broadcastCompanyTabsUpdate,
   broadcastDocumentCountUpdate,
-  broadcastFieldUpdate,
-  broadcastProgressUpdate,
-  broadcastDemoAutoFillComplete
+  broadcastFieldUpdate
 };

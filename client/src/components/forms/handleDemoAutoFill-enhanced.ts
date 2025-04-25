@@ -65,7 +65,7 @@ export async function handleDemoAutoFill({
     // First attempt: Use the unified endpoint (if available)
     try {
       console.log(`[Demo Auto-Fill] Attempting unified endpoint for task ${taskId}`);
-      const unifiedResponse = await fetch(`/api/demo-autofill/${taskId}`, {
+      const unifiedResponse = await fetch(`/api/universal-demo-autofill/${taskId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskType })
@@ -118,7 +118,7 @@ export async function handleDemoAutoFill({
     // Second attempt: Try the fixed demo-autofill endpoint
     try {
       console.log(`[Demo Auto-Fill] Attempting fixed endpoint for task ${taskId}`);
-      const fixedResponse = await fetch(`/fix-demo-autofill/${taskId}`, {
+      const fixedResponse = await fetch(`/api/fix-demo-autofill/${taskId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskType })

@@ -110,62 +110,23 @@ export async function handleDemoAutoFill({
       if (result.formData && typeof result.formData === 'object' && Object.keys(result.formData).length > 0) {
         logger.info(`Using form data directly from demo-autofill response (${Object.keys(result.formData).length} fields)`);
         
-        try {
-          // First, use the enhanced utility to apply and verify form data
-          logger.info('Using enhanced form data application utility');
-          const { applyAndVerifyFormData } = await import('./updateDemoFormUtils');
-          
-          const applyResult = await applyAndVerifyFormData(
-            result.formData,
-            updateField,
-            resetForm,
-            form,
-            false
-          );
-          
-          logger.info(`Enhanced form data application result: ${applyResult.success ? 'SUCCESS' : 'FAILED'}`);
-          
-          if (!applyResult.success) {
-            logger.warn('Enhanced form data application failed, falling back to direct method');
-            
-            // Force manual approach if enhanced utility fails
-            // Apply each field individually to ensure form field registration
-            for (const [fieldKey, value] of Object.entries(result.formData)) {
-              try {
-                if (value !== null && value !== undefined) {
-                  await updateField(fieldKey, value);
-                  console.log(`Updated field ${fieldKey} with value:`, value);
-                }
-              } catch (fieldError) {
-                console.warn(`Failed to update field ${fieldKey}:`, fieldError);
-              }
+        // Apply each field individually to ensure form field registration
+        for (const [fieldKey, value] of Object.entries(result.formData)) {
+          try {
+            if (value !== null && value !== undefined) {
+              await updateField(fieldKey, value);
+              console.log(`Updated field ${fieldKey} with value:`, value);
             }
-            
-            // Then do a complete reset with all values
-            resetForm(result.formData);
+          } catch (fieldError) {
+            console.warn(`Failed to update field ${fieldKey}:`, fieldError);
           }
-        } catch (utilError) {
-          logger.error('Error using enhanced form utilities:', utilError);
-          
-          // Fall back to direct approach if enhanced utility fails
-          // Apply each field individually to ensure form field registration
-          for (const [fieldKey, value] of Object.entries(result.formData)) {
-            try {
-              if (value !== null && value !== undefined) {
-                await updateField(fieldKey, value);
-                console.log(`Updated field ${fieldKey} with value:`, value);
-              }
-            } catch (fieldError) {
-              console.warn(`Failed to update field ${fieldKey}:`, fieldError);
-            }
-          }
-          
-          // Then do a complete reset with all values
-          resetForm(result.formData);
         }
         
+        // Then do a complete reset with all values
+        resetForm(result.formData);
+        
         // Add extra delay to allow UI to fully render
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
       } else {
         // Fall back to getting the data through separate requests
         logger.info('Form data not included in response, fetching separately...');
@@ -260,64 +221,6 @@ export async function handleDemoAutoFill({
       
       // Determine appropriate legacy endpoint based on task type
       if (taskType === 'kyb' || taskType === 'company_kyb') {
-        // Try the enhanced KYB endpoint first
-        endpoint = `/api/kyb/enhanced-demo-autofill/${taskId}`;
-        
-        // Use this enhanced endpoint with special logging
-        logger.info(`Using enhanced KYB demo-autofill endpoint: ${endpoint}`);
-        
-        try {
-          const enhancedResponse = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (enhancedResponse.ok) {
-            const enhancedResult = await enhancedResponse.json();
-            
-            if (enhancedResult.success) {
-              logger.info(`Enhanced KYB demo auto-fill completed successfully for task ${taskId}`);
-              logger.info(`Filled ${enhancedResult.fieldCount || 'unknown'} fields`);
-              
-              if (enhancedResult.formData) {
-                logger.info(`Enhanced response includes form data with ${Object.keys(enhancedResult.formData).length} fields`);
-                
-                // Reset the form with the returned data
-                resetForm(enhancedResult.formData);
-                
-                // Add a small delay to allow the UI to update
-                await new Promise(resolve => setTimeout(resolve, 300));
-                
-                // Refresh status
-                await refreshStatus();
-                
-                // Save progress
-                await saveProgress();
-                
-                // Show success message
-                toast({
-                  title: 'Demo Auto-Fill Complete',
-                  description: `Successfully filled ${enhancedResult.fieldCount || 'all'} form fields with sample data.`,
-                  variant: 'success',
-                });
-                
-                // Force a re-render to update the UI
-                setForceRerender((prev: boolean) => !prev);
-                
-                return;
-              }
-            }
-          }
-          
-          // If we get here, enhanced endpoint failed or didn't return form data
-          logger.warn(`Enhanced KYB endpoint failed or returned no data, trying legacy endpoint`);
-        } catch (enhancedError) {
-          logger.warn(`Error using enhanced KYB endpoint: ${enhancedError instanceof Error ? enhancedError.message : String(enhancedError)}`);
-        }
-        
-        // Fall back to legacy endpoint
         endpoint = `/api/kyb/demo-autofill/${taskId}`;
       } else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment' || taskType === 'security' || taskType === 'security_assessment') {
         endpoint = `/api/ky3p/demo-autofill/${taskId}`;
