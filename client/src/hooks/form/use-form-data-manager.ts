@@ -5,6 +5,7 @@ import { FormServiceInterface, FormField, FormData } from '@/services/formServic
 import { createFormSchema } from '@/utils/formUtils';
 import createEnhancedLogger from '@/utils/enhanced-logger';
 import { OptimizationFeatures, FormBatchUpdater } from '@/utils/form-optimization';
+import { isDemoAutoFillInProgress } from '@/components/forms/updateDemoFormUtils';
 
 // Enhanced logger instance with category-based filtering with all messages disabled
 // We completely disable the sync logs which are causing console spam
@@ -217,7 +218,9 @@ export function useFormDataManager({
     }
   }, [formService, taskId]);
   
-  // Function to update a single field value with timestamp-based conflict resolution
+
+
+// Function to update a single field value with timestamp-based conflict resolution
   const updateField = useCallback((name: string, value: any, isSaving: boolean = false) => {
     if (!formService) {
       logger.warn('Cannot update field - form service is not available');
@@ -331,6 +334,12 @@ export function useFormDataManager({
       
       // Determine whether to use debounced updates or immediate saves
       if (taskId) {
+        // Check if demo auto-fill is in progress - if so, skip saving
+        if (isDemoAutoFillInProgress()) {
+          logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Demo auto-fill in progress, skipping save for field ${name}`);
+          return;
+        }
+        
         // Get field information to determine if this field requires immediate saving
         const fieldInfo = fields.find(f => f.key === name);
         
@@ -507,6 +516,12 @@ export function useFormDataManager({
       const unsubscribe = FormBatchUpdater.onUpdate((fields, timestamps) => {
         logger.info(`[BATCH UPDATER] Processing batch with ${Object.keys(fields).length} fields`);
         
+        // Check if demo auto-fill is in progress - if so, skip processing the batch
+        if (isDemoAutoFillInProgress()) {
+          logger.info(`[BATCH UPDATER] Demo auto-fill in progress, skipping batch processing of ${Object.keys(fields).length} fields`);
+          return;
+        }
+        
         // Update form service with all fields in the batch
         Object.entries(fields).forEach(([key, value]) => {
           formService.updateFormData(key, value, taskId);
@@ -544,6 +559,12 @@ export function useFormDataManager({
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
         saveTimerRef.current = null;
+      }
+      
+      // Check if demo auto-fill is in progress - if so, skip saving on unmount
+      if (isDemoAutoFillInProgress()) {
+        logger.info('[SAVE DEBUG] Demo auto-fill in progress, skipping unmount save');
+        return;
       }
       
       logger.info('[SAVE DEBUG] Unmount detected - Forcing immediate save of latest data');
