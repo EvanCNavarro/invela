@@ -7,7 +7,6 @@
 
 import { EnhancedKybFormService } from './enhanced-kyb-service';
 import { FormField, FormSection } from './formService';
-import { createTimestampedFormData, updateField } from '../types/form-data';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('KY3PFormService');
@@ -46,56 +45,6 @@ export class KY3PFormService extends EnhancedKybFormService {
     return numericFieldId;
   }
   
-  /**
-   * Reset data by fetching fresh data from the server
-   * This is useful for demo autofill functionality
-   */
-  async resetData(): Promise<void> {
-    logger.info('[KY3P Form Service] Resetting form service data');
-    
-    // Store the current task ID before resetting
-    const currentTaskId = this.taskId;
-    
-    // Clear the timestamped form data
-    this.timestampedFormData = createTimestampedFormData();
-    
-    // If we have a task ID, immediately load fresh data
-    if (currentTaskId) {
-      try {
-        logger.info(`[KY3P Form Service] Reloading fresh data for task ${currentTaskId}`);
-        
-        // Force a fresh load of data from the server
-        const freshData = await this.loadProgress(currentTaskId);
-        
-        if (freshData && Object.keys(freshData).length > 0) {
-          // Data will be loaded by loadProgress, so we don't need to do it again
-          logger.info(`[KY3P Form Service] Successfully reloaded data with ${Object.keys(freshData).length} fields`);
-        }
-      } catch (error) {
-        logger.error('[KY3P Form Service] Error reloading data during reset:', error);
-      }
-    }
-  }
-  
-  /**
-   * Update a single field value
-   * This method is required by the FormServiceInterface and is used by the demo auto-fill functionality
-   */
-  async updateField(fieldKey: string, value: any): Promise<void> {
-    logger.info(`[KY3P Form Service] Updating field ${fieldKey} with new value`);
-    
-    // Update the field in the timestamped form data
-    this.timestampedFormData = updateField(this.timestampedFormData, fieldKey, value);
-    
-    // Also update the field in the sections for UI consistency
-    this.sections = this.sections.map(section => ({
-      ...section,
-      fields: section.fields.map(field => 
-        field.key === fieldKey ? { ...field, value } : field
-      )
-    }));
-  }
-
   /**
    * COMPLETE OVERRIDE of initialize method from EnhancedKybFormService
    * to prevent inheriting the KYB section logic

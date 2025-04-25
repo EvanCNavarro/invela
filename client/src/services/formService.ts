@@ -167,18 +167,4 @@ export interface FormServiceInterface {
    * @returns Validation result (true if valid, error object if invalid)
    */
   validate(data: FormData): boolean | Record<string, string>;
-  
-  /**
-   * Reset form data to force a refresh from the server
-   * @returns Promise that resolves when data has been reset
-   */
-  resetData?(): Promise<void>;
-  
-  /**
-   * Update a single field value
-   * @param fieldKey Field key to update
-   * @param value New value
-   * @returns Promise that resolves when field is updated
-   */
-  updateField?(fieldKey: string, value: any): Promise<void>;
 }
