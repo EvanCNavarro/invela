@@ -99,7 +99,7 @@ export async function handleDemoAutoFill({
       // Refresh form data
       if (formService) {
         logger.info('Refreshing form data from service');
-        const refreshedData = await formService.getFormData(true); // Force refresh from server
+        const refreshedData = await formService.getFormData(); // Get refreshed data from server
         logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
         resetForm(refreshedData);
       }
@@ -186,7 +186,7 @@ export async function handleDemoAutoFill({
         // Refresh form data
         if (formService) {
           logger.info('Refreshing form data from service via legacy endpoint');
-          const refreshedData = await formService.getFormData(true); // Force refresh from server
+          const refreshedData = await formService.getFormData(); // Get refreshed data from server
           logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
           resetForm(refreshedData);
         }
