@@ -8,6 +8,7 @@ import { Router } from 'express';
 import * as db from '@db';
 import { eq } from 'drizzle-orm';
 import { tasks } from '@db/schema';
+import { requireAuth } from '../middleware/auth';
 import { enhancedDemoAutoFill, getFormTypeFromTaskType } from '../services/fix-demo-autofill';
 
 // Create router
@@ -16,7 +17,7 @@ const router = Router();
 /**
  * Fixed endpoint for improved demo auto-fill across all form types
  */
-router.post('/fix-demo-autofill/:taskId', async (req, res) => {
+router.post('/api/fix-demo-autofill/:taskId', requireAuth, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId, 10);
     const { taskType } = req.body;
@@ -29,9 +30,9 @@ router.post('/fix-demo-autofill/:taskId', async (req, res) => {
     }
     
     // Get the task from the database to verify it exists and belongs to the user
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
     
     if (!task) {
       return res.status(404).json({ 
