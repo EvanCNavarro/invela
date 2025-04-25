@@ -920,58 +920,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 );
               })}
             </div>
-            
-            {/* Navigation buttons */}
-            <div className="flex justify-between mt-8">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (activeSection > 0) {
-                    setActiveSection(activeSection - 1);
-                  }
-                }}
-                disabled={activeSection === 0}
-                className="flex items-center gap-1"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              <div className="flex gap-2">
-                {onCancel && activeSection !== allSections.length - 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
-                )}
-                
-                {activeSection < allSections.length - 1 ? (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setActiveSection(activeSection + 1);
-                    }}
-                    className="flex items-center gap-1"
-                  >
-                    Next
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
-                ) : (
-                  <Button 
-                    type="submit"
-                    disabled={!form.getValues('agreement_confirmation')}
-                    className="flex items-center gap-1"
-                  >
-                    Submit
-                    <Check className="h-4 w-4 ml-1" />
-                  </Button>
-                )}
-              </div>
-            </div>
           </div>
         </form>
       </Form>
