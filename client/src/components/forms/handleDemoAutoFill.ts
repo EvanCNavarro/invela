@@ -49,17 +49,6 @@ export async function handleDemoAutoFill({
   
   try {
     logger.info(`Starting demo auto-fill for task ${taskId}`);
-    
-    // First make sure any existing demo auto-fill toast is dismissed
-    // We'll just use the toast ID to ensure we replace any existing toast
-    
-    // Show a single loading toast with the ID
-    toast({
-      id: toastId,
-      title: 'Demo Auto-Fill',
-      description: 'Filling form with sample data...',
-      variant: 'default',
-    });
 
     // Get all field definitions with demo values from the database
     const fieldsResponse = await getFormFieldsWithDemoValues(taskType);
@@ -91,14 +80,7 @@ export async function handleDemoAutoFill({
     
     // Process all updates
     if (updatePromises.length > 0) {
-      // Update the existing loading toast with new description
-      toast({
-        id: toastId,
-        title: 'Demo Auto-Fill',
-        description: 'Updating form fields...',
-        variant: 'default',
-      });
-      
+      // Perform updates without any loading toast
       await Promise.all(updatePromises);
       
       logger.info(`Applied ${appliedCount} demo values to form fields`);
