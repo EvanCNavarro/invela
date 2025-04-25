@@ -115,21 +115,6 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* PAIR Support Button - Only shown for FinTech companies */}
-          {companyProfile.companyType === "FinTech" && (
-            <Button 
-              className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-white shadow-sm bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 transition-all duration-200"
-              onClick={() => {
-                console.log("PAIR Support button clicked");
-                // This would typically open a support chat or modal
-              }}
-            >
-              <HelpCircleIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Contact Your PAIR Representative</span>
-              <span className="sm:hidden">PAIR Support</span>
-            </Button>
-          )}
-          
           <div className="hidden sm:flex items-center gap-2">
             {/* WebSocket functionality still maintained in the context provider */}
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -140,6 +125,21 @@ export function TopNav() {
               <BellIcon className="h-4 w-4" />
             </Button>
           </div>
+          
+          {/* PAIR Support Button - Only shown for FinTech companies */}
+          {companyProfile.companyType === "FinTech" && (
+            <Button 
+              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-white shadow-sm bg-gradient-to-r from-blue-400/80 via-teal-400/80 to-green-400/80 hover:from-blue-500/90 hover:via-teal-500/90 hover:to-green-500/90 transition-all duration-200"
+              onClick={() => {
+                console.log("PAIR Support button clicked");
+                // This would typically open a support chat or modal
+              }}
+            >
+              <HelpCircleIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Need help?</span>
+              <span className="sm:hidden">Need help?</span>
+            </Button>
+          )}
 
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
