@@ -1375,6 +1375,31 @@ export default function TaskPage({ params }: TaskPageProps) {
                         setFileId(result.fileId);
                       }
                       
+                      // Set submission result data for the modal
+                      setSubmissionResult({
+                        taskId: task.id,
+                        fileId: result.fileId,
+                        taskStatus: 'submitted',
+                        completedActions: [
+                          {
+                            type: "task_completion",
+                            description: "Open Banking Survey Completed",
+                            data: {
+                              details: "Your Open Banking Survey has been successfully submitted and marked as complete."
+                            }
+                          },
+                          {
+                            type: "file_generation",
+                            description: "CSV Export Generated",
+                            fileId: result.fileId,
+                            data: {
+                              details: "A CSV file has been generated with your form submission data.",
+                              buttonText: "Download CSV"
+                            }
+                          }
+                        ]
+                      });
+                      
                       // Update UI state
                       setIsSubmitted(true);
                       
@@ -1436,8 +1461,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     // 1. Legacy modal rendering for backward compatibility
     // 2. Enhanced UniversalSuccessModal for improved UX
     
-    // Create standard submission result data for the universal modal
-    const universalSubmissionResult: SubmissionResult = {
+    // Only create a default submission result if we don't have a specific one already
+    const universalSubmissionResult: SubmissionResult = submissionResult || {
       fileId: fileId || undefined,
       taskId: task.id,
       taskStatus: task.status,
@@ -1452,28 +1477,31 @@ export default function TaskPage({ params }: TaskPageProps) {
       ]
     };
     
-    // Add additional actions based on the task type
-    if (fileId) {
-      universalSubmissionResult.completedActions?.push({
-        type: "file_generation",
-        description: "File Generated",
-        fileId: fileId,
-        data: {
-          details: "A downloadable file has been created with your form submission data.",
-          buttonText: "Download File"
-        }
-      });
-    }
-    
-    // Handle file vault unlocking action for KYB forms
-    if (taskContentType === 'kyb') {
-      universalSubmissionResult.completedActions?.push({
-        type: "file_vault_unlocked",
-        description: "File Vault Access Granted",
-        data: {
-          details: "You now have access to the document vault for this company."
-        }
-      });
+    // Only add these default actions if we're using the default submission result
+    if (!submissionResult) {
+      // Add additional actions based on the task type
+      if (fileId) {
+        universalSubmissionResult.completedActions?.push({
+          type: "file_generation",
+          description: "File Generated",
+          fileId: fileId,
+          data: {
+            details: "A downloadable file has been created with your form submission data.",
+            buttonText: "Download File"
+          }
+        });
+      }
+      
+      // Handle file vault unlocking action for KYB forms
+      if (taskContentType === 'kyb') {
+        universalSubmissionResult.completedActions?.push({
+          type: "file_vault_unlocked",
+          description: "File Vault Access Granted",
+          data: {
+            details: "You now have access to the document vault for this company."
+          }
+        });
+      }
     }
     
     if (taskContentType === 'open_banking') {
