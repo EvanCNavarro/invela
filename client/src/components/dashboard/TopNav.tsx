@@ -13,6 +13,7 @@ import {
   Landmark,
   ChevronDown,
   ChevronUp,
+  GlobeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -118,23 +119,36 @@ export function TopNav() {
           <div className="hidden sm:flex items-center gap-2">
             {/* WebSocket functionality still maintained in the context provider */}
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <HelpCircleIcon className="h-4 w-4" />
+              <BellIcon className="h-4 w-4" />
             </Button>
 
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <BellIcon className="h-4 w-4" />
+              <GlobeIcon className="h-4 w-4" />
             </Button>
           </div>
           
           {/* PAIR Support Button - Only shown for FinTech companies */}
           {companyProfile.companyType === "FinTech" && (
             <Button 
-              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-white shadow-sm bg-gradient-to-r from-blue-400/80 via-teal-400/80 to-green-400/80 hover:from-blue-500/90 hover:via-teal-500/90 hover:to-green-500/90 transition-all duration-200"
+              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-white border-2 border-transparent relative"
+              style={{
+                backgroundClip: 'padding-box',
+                position: 'relative',
+              }}
               onClick={() => {
                 console.log("PAIR Support button clicked");
                 // This would typically open a support chat or modal
               }}
             >
+              <div
+                className="absolute inset-0 rounded-md"
+                style={{
+                  margin: '-2px',
+                  background: 'linear-gradient(to right, rgba(59, 130, 246, 0.5), rgba(45, 212, 191, 0.5), rgba(74, 222, 128, 0.5))',
+                  zIndex: -1,
+                  borderRadius: '0.375rem',
+                }}
+              />
               <HelpCircleIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Need help?</span>
               <span className="sm:hidden">Need help?</span>
