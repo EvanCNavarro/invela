@@ -31,15 +31,34 @@ const logger = getLogger('KY3P.BatchUpdate');
  * @param responses - The object containing field keys and values
  * @returns An array of KY3P response objects with fieldId and value
  */
-export function convertToKy3pResponseFormat(responses: Record<string, any>): Array<{fieldId: string, value: any}> {
+export function convertToKy3pResponseFormat(responses: Record<string, any>): Array<{fieldId: number, value: any}> {
   // Filter out metadata fields (starting with underscore)
   const filteredResponses = Object.entries(responses).filter(([key]) => !key.startsWith('_'));
   
+  // Load field mapping from IDs to numeric IDs
+  const fieldKeyToIdMap = new Map<string, number>();
+  
+  // TODO: This needs to be populated from the field definitions
+  // For now, we'll parse the key as a number if possible
+  
   // Convert to the array format expected by KY3P API
-  return filteredResponses.map(([key, value]) => ({
-    fieldId: key,
-    value: value,
-  }));
+  return filteredResponses
+    .map(([key, value]) => {
+      // Try to parse the key as a number
+      const numericId = parseInt(key, 10);
+      
+      // Skip fields that don't have a valid numeric ID
+      if (isNaN(numericId)) {
+        logger.warn(`Skipping field with non-numeric ID: ${key}`);
+        return null;
+      }
+      
+      return {
+        fieldId: numericId,
+        value: value,
+      };
+    })
+    .filter((item): item is {fieldId: number, value: any} => item !== null);
 }
 
 /**
