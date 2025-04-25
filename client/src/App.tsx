@@ -38,6 +38,7 @@ import FormDbTestPage from "./form-db-test";
 import FormPerformancePage from "@/pages/FormPerformancePage";
 import ProgressiveLoadingDemo from "@/components/dev/ProgressiveLoadingDemo";
 import TestDemoAutoFill from "@/pages/test-demo-autofill";
+import TestKy3pPage from "@/pages/test-ky3p-page";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -301,6 +302,11 @@ function Router() {
         {/* Demo Auto-Fill Test Page - For Testing Universal Demo Auto-Fill */}
         <Route path="/test-demo-autofill">
           <TestDemoAutoFill />
+        </Route>
+        
+        {/* KY3P Batch Update Test Page - For Testing KY3P Form Compatibility */}
+        <Route path="/test-ky3p-batch-update">
+          <TestKy3pPage />
         </Route>
         
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
