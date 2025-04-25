@@ -781,12 +781,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         </div>
                         
                         {/* Consent section */}
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                          <div className="flex items-center mb-2">
-                            <FormField
-                              control={form.control}
-                              name="agreement_confirmation"
-                              render={({ field }) => (
+                        <FormField
+                          control={form.control}
+                          name="agreement_confirmation"
+                          render={({ field }) => (
+                            <div 
+                              className={cn(
+                                "p-4 rounded-lg border transition-colors cursor-pointer",
+                                field.value ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200"
+                              )}
+                              onClick={() => field.onChange(!field.value)}
+                            >
+                              <div className="flex items-center mb-2">
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 m-0">
                                   <FormControl>
                                     <Checkbox
@@ -795,25 +801,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                       className="mt-0.5"
                                     />
                                   </FormControl>
-                                  <FormLabel className="font-semibold text-gray-700 m-0">
+                                  <FormLabel 
+                                    className="font-semibold text-gray-700 m-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     Submission Consent <span className="text-red-500">*</span>
                                   </FormLabel>
                                 </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <div className="pl-8">
-                            <p className="text-gray-600 text-sm">
-                              I, <span className="font-bold">Chris James</span>, in my capacity as an authorized representative of <span className="font-bold">ExampleFinTechCompany</span>, do hereby:
-                            </p>
-                            <ul className="list-disc pl-5 mt-2 text-sm text-gray-600 space-y-1">
-                              <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
-                              <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
-                              <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
-                            </ul>
-                          </div>
-                        </div>
+                              </div>
+                              
+                              <div className="pl-8">
+                                <p className="text-gray-600 text-sm">
+                                  I, <span className="font-bold">Chris James</span>, in my capacity as an authorized representative of <span className="font-bold">ExampleFinTechCompany</span>, do hereby:
+                                </p>
+                                <ul className="list-disc pl-5 mt-2 text-sm text-gray-600 space-y-1">
+                                  <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
+                                  <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
+                                  <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                        />
                         
                         {/* Navigation buttons */}
                         <div className="flex justify-between mt-8">
