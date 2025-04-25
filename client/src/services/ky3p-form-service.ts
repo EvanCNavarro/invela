@@ -548,58 +548,65 @@ export class KY3PFormService extends EnhancedKybFormService {
     formData?: Record<string, any>
   ): Promise<{ success: boolean; error?: string; updatedCount: number }> {
     try {
-      // Get the demo data from our endpoint
-      const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
-        credentials: 'include'
-      });
+      // Get the demo data from our endpoint if formData is not provided
+      let dataToSubmit = formData || {};
       
-      if (!response.ok) {
-        logger.error(`[KY3P Form Service] Failed to fetch demo data: ${response.status} ${response.statusText}`);
-        return { 
-          success: false, 
-          error: `Failed to fetch demo data: ${response.statusText}`, 
-          updatedCount: 0 
-        };
-      }
-      
-      const demoData = await response.json();
-      logger.info(`[KY3P Form Service] Retrieved ${Object.keys(demoData).length} demo fields`);
-      
-      if (Object.keys(demoData).length === 0) {
-        return { 
-          success: false, 
-          error: 'No demo data available', 
-          updatedCount: 0 
-        };
-      }
-      
-      // Call the helper function from fix-ky3p-bulk-update.ts that uses the KYB endpoint
-      try {
-        // Dynamically import the helper function
-        const { bulkUpdateKy3pResponses } = await import('@/components/forms/fix-ky3p-bulk-update');
+      if (Object.keys(dataToSubmit).length === 0) {
+        logger.info(`[KY3P Form Service] No form data provided, fetching demo data for task ${taskId}`);
         
-        // Call the helper function
-        const success = await bulkUpdateKy3pResponses(taskId, demoData);
+        const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          logger.error(`[KY3P Form Service] Failed to fetch demo data: ${response.status} ${response.statusText}`);
+          return { 
+            success: false, 
+            error: `Failed to fetch demo data: ${response.statusText}`, 
+            updatedCount: 0 
+          };
+        }
+        
+        dataToSubmit = await response.json();
+        logger.info(`[KY3P Form Service] Retrieved ${Object.keys(dataToSubmit).length} demo fields`);
+        
+        if (Object.keys(dataToSubmit).length === 0) {
+          return { 
+            success: false, 
+            error: 'No demo data available', 
+            updatedCount: 0 
+          };
+        }
+      }
+      
+      // Use the standardized bulk update implementation
+      try {
+        // Dynamically import the standardized helper function
+        const { standardizedBulkUpdate } = await import('@/components/forms/standardized-ky3p-update');
+        
+        // Call the standardized helper function
+        const success = await standardizedBulkUpdate(taskId, dataToSubmit);
         
         if (success) {
-          logger.info(`[KY3P Form Service] Bulk update completed successfully with ${Object.keys(demoData).length} fields`);
+          const fieldCount = Object.keys(dataToSubmit).length;
+          logger.info(`[KY3P Form Service] Standardized bulk update completed successfully with ${fieldCount} fields`);
           return {
             success: true,
-            updatedCount: Object.keys(demoData).length
+            updatedCount: fieldCount
           };
         } else {
-          logger.error('[KY3P Form Service] Bulk update failed');
+          logger.error('[KY3P Form Service] Standardized bulk update failed');
           return {
             success: false,
-            error: 'Bulk update operation failed',
+            error: 'Standardized bulk update operation failed',
             updatedCount: 0
           };
         }
       } catch (bulkUpdateError: any) {
-        logger.error('[KY3P Form Service] Error during bulk update:', bulkUpdateError);
+        logger.error('[KY3P Form Service] Error during standardized bulk update:', bulkUpdateError);
         return {
           success: false,
-          error: bulkUpdateError?.message || 'Error during bulk update',
+          error: bulkUpdateError?.message || 'Error during standardized bulk update',
           updatedCount: 0
         };
       }
@@ -1038,9 +1045,9 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
       
-      // Try to use our batch-update endpoint first
+      // Use the standardized batch-update endpoint with string field keys
       try {
-        logger.info(`[KY3P Form Service] Attempting to use batch-update endpoint for task ${effectiveTaskId}`);
+        logger.info(`[KY3P Form Service] Using standardized batch-update endpoint for task ${effectiveTaskId}`);
         const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
           method: 'POST',
           headers: {
@@ -1048,46 +1055,21 @@ export class KY3PFormService extends EnhancedKybFormService {
           },
           credentials: 'include',
           body: JSON.stringify({
-            responses: cleanData // Send the original data with keys
+            responses: cleanData // Send the original data with string field keys
           }),
         });
         
         if (batchResponse.ok) {
-          logger.info(`[KY3P Form Service] Successfully saved form data using batch-update endpoint`);
+          logger.info(`[KY3P Form Service] Successfully saved form data using standardized batch-update endpoint`);
           return true;
         }
         
-        logger.warn(`[KY3P Form Service] Batch update failed with status ${batchResponse.status}, falling back to bulk endpoint`);
-      } catch (batchError) {
-        logger.warn(`[KY3P Form Service] Error using batch-update endpoint:`, batchError);
+        const errorText = await batchResponse.text();
+        throw new Error(`Batch update failed with status ${batchResponse.status}: ${errorText}`);
+      } catch (error) {
+        logger.error(`[KY3P Form Service] Error saving form data:`, error);
+        return false;
       }
-      
-      // Fallback to the batch-update helper function
-      try {
-        logger.info(`[KY3P Form Service] Attempting to use batch-update helper function for task ${effectiveTaskId}`);
-        
-        // Dynamically import the helper function that uses batched updates
-        const { batchUpdateKy3pResponses } = await import('@/components/forms/ky3p-batch-update');
-        
-        // Call the helper function with the task ID and clean data
-        const success = await batchUpdateKy3pResponses(Number(effectiveTaskId), cleanData);
-        
-        if (success) {
-          logger.info(`[KY3P Form Service] Successfully saved form data using batch-update helper function`);
-          return true;
-        }
-        
-        logger.warn(`[KY3P Form Service] Batch-update helper function failed, falling back to original API approach`);
-      } catch (helperError) {
-        logger.warn(`[KY3P Form Service] Error using batch-update helper function:`, helperError);
-      }
-      
-      // As a final fallback, use the original bulk API approach
-      logger.info(`[KY3P Form Service] Falling back to original bulk API approach`);
-      
-      // Create a mapping from field keys to field IDs
-      // The backend expects field IDs, not field keys
-      // We need to map our field.key values to field.id values
       const keyToIdResponses: Record<string, any> = {};
       const allFields = await this.getFields();
       
@@ -1192,8 +1174,8 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
-      // Try the direct batch-update endpoint first
-      logger.info(`[KY3P Form Service] Attempting to use direct batch-update endpoint for task ${effectiveTaskId}`);
+      // Use the standardized batch-update endpoint with string field keys
+      logger.info(`[KY3P Form Service] Using standardized batch-update endpoint for task ${effectiveTaskId}`);
       try {
         const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
           method: 'POST',
@@ -1202,116 +1184,19 @@ export class KY3PFormService extends EnhancedKybFormService {
           },
           credentials: 'include',
           body: JSON.stringify({
-            responses: cleanData // Send the original data with keys
+            responses: cleanData // Send the data with string field keys
           }),
         });
         
         if (batchResponse.ok) {
-          logger.info(`[KY3P Form Service] Successfully updated form using batch-update endpoint`);
+          logger.info(`[KY3P Form Service] Successfully updated form using standardized batch-update endpoint`);
           return true;
         }
         
-        logger.warn(`[KY3P Form Service] Batch update endpoint failed, falling back to helper function`);
-      } catch (batchError) {
-        logger.warn(`[KY3P Form Service] Error using batch-update endpoint:`, batchError);
-      }
-
-      // IMPORTANT: Do not use bulk update! Use the batch update pattern instead
-      logger.info(`[KY3P Form Service] Redirecting bulk update to batch update pattern for task ${effectiveTaskId} with ${Object.keys(cleanData).length} fields`);
-      
-      try {
-        // Dynamically import the helper function that uses batched updates
-        const { batchUpdateKy3pResponses } = await import('@/components/forms/ky3p-batch-update');
-        
-        // Call the helper function with the task ID and clean data - this does batch updates
-        const success = await batchUpdateKy3pResponses(Number(effectiveTaskId), cleanData);
-        
-        if (success) {
-          logger.info(`[KY3P Form Service] Batch update completed successfully`);
-          return true;
-        } else {
-          logger.error(`[KY3P Form Service] Batch update failed`);
-          return false;
-        }
-      } catch (batchUpdateError: any) {
-        logger.error(`[KY3P Form Service] Error in batch update helper:`, batchUpdateError);
-        
-        // Fallback to direct KYB endpoint and update each field individually
-        logger.warn(`[KY3P Form Service] Falling back to manual field updates via KYB endpoint`);
-        
-        let fieldsUpdated = 0;
-        const fieldEntries = Object.entries(cleanData).filter(
-          ([key, value]) => 
-            key !== 'taskId' && 
-            value !== null && 
-            value !== undefined && 
-            value !== ''
-        );
-        
-        // Process each field in sequence with small batches
-        const batchSize = 5;
-        for (let i = 0; i < fieldEntries.length; i += batchSize) {
-          const batch = fieldEntries.slice(i, i + batchSize);
-          
-          await Promise.all(batch.map(async ([fieldKey, fieldValue]) => {
-            try {
-              // Use the KYB endpoint for individual field
-              const response = await fetch(`/api/kyb/responses/${effectiveTaskId}/${fieldKey}`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                  value: fieldValue
-                })
-              });
-              
-              if (response.ok) {
-                fieldsUpdated++;
-              }
-            } catch (fieldError) {
-              logger.error(`[KY3P Form Service] Error updating field ${fieldKey}:`, fieldError);
-            }
-          }));
-          
-          // Add a delay between batches
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        logger.info(`[KY3P Form Service] Updated ${fieldsUpdated} out of ${fieldEntries.length} fields using fallback approach`);
-        
-        // Update progress to 100% if at least some fields were updated
-        if (fieldsUpdated > 0) {
-          await fetch(`/api/tasks/${effectiveTaskId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              progress: 100,
-              status: 'in_progress'
-            })
-          });
-          
-          // Broadcast update via WebSocket for UI refresh
-          await fetch('/api/broadcast/task-update', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              taskId: effectiveTaskId,
-              type: 'task_updated',
-              timestamp: new Date().toISOString()
-            })
-          });
-          
-          return true;
-        }
-        
+        const errorText = await batchResponse.text();
+        throw new Error(`Batch update failed with status ${batchResponse.status}: ${errorText}`);
+      } catch (error) {
+        logger.error(`[KY3P Form Service] Error updating form data:`, error);
         return false;
       }
     } catch (error) {
