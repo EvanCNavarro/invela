@@ -26,6 +26,7 @@ import openBankingDemoAutofillRouter from './routes/open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import universalClearFieldsRouter from './routes/universal-clear-fields';
 import fixDemoAutofillRouter from './routes/fix-demo-autofill';
+import testDemoAutofillRouter from './routes/test-demo-autofill';
 import kybEnhancedDemoAutofillRouter from './routes/kyb-demo-autofill';
 import atomicDemoAutofillRouter from './routes/atomic-demo-autofill';
 import filesRouter from './routes/files';
@@ -329,6 +330,8 @@ export function registerRoutes(app: Express): Express {
   app.use(kybEnhancedDemoAutofillRouter);
   // Register the atomic demo auto-fill router with WebSocket support
   app.use(atomicDemoAutofillRouter);
+  // Register the test demo auto-fill router for testing without authentication
+  app.use('/api/test-demo-autofill', testDemoAutofillRouter);
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
