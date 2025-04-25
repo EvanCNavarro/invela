@@ -1,0 +1,79 @@
+Preloaded image: /assets/harmonized_modal_userOboarding_3.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_4.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", payload: {…}}
+Preloaded image: /assets/harmonized_modal_userOboarding_5.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskTable] Task clicked: 
+Object {id: 637, title: "1. KYB Form: DevTest32", type: "company_kyb", status: "not_started", metadata: {…}, …}
+[TaskTable] Generated task URL: 
+Object {taskId: 637, companyName: "DevTest32", formUrl: "/task-center/task/637", timestamp: "2025-04-25T05:56:38.278Z"}
+[TaskTable] Direct task navigation preparation: 
+Object {taskId: 637, taskType: "company_kyb", formType: "kyb", title: "1. KYB Form: DevTest32", constructedUrl: "/task-center/task/637", …}
+[TaskTable] Initiating direct ID-based navigation to: /task-center/task/637
+[Router] Current location: /task-center/task/637
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[Sidebar] Available tabs updated: 
+Array ["task-center"]
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 283, email: "32@e.com", onboardingCompleted: true, userObject: "{↵  "id": 283,↵  "email": "32@e.com",↵  "full_name": "John Doe",↵  "first_name":…"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[TaskPage] Task initialization: 
+Object {taskSlug: "637", parsedId: 637, taskId: 637, apiEndpoint: "/api/tasks.json/637", timestamp: "2025-04-25T05:56:38.285Z"}
+[TaskPage] [TaskPage] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[TaskPage] Fetching task data by ID: 
+Object {taskId: 637, fullUrl: "/api/tasks.json/637", timestamp: "2025-04-25T05:56:38.285Z"}
+Preloaded image: /assets/harmonized_modal_userOboarding_5.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_3.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_2.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_4.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/modal_userOboarding_1.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Task data received: 
+Object {taskId: 637, taskType: "company_kyb", title: "1. KYB Form: DevTest32", status: "not_started", timestamp: "2025-04-25T05:56:38.560Z"}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "1. KYB Form: DevTest32"
+[TaskPage] Extracted company name (numbered KYB): "DevTest32"
+[TaskPage] Found current company name from API: "DevTest32"
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, currentCompanyName: "DevTest32", taskTitle: "1. KYB Form: DevTest32"}
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, taskTitle: "1. KYB Form: DevTest32"}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Form progress updated: 0
+[UniversalForm] Fetching template for task type: kyb
+[TaskTemplateService] Fetching template for task type: company_kyb
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "1. KYB Form: DevTest32"
+[TaskPage] Extracted company name (numbered KYB): "DevTest32"
+[TaskPage] Found current company name from API: "DevTest32"
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, currentCompanyName: "DevTest32", taskTitle: "1. KYB Form: DevTest32"}
+[TaskPage] Company name set for kyb form: 
+Object {displayNameValue: "DevTest32", extractedName: "DevTest32", metadataName: undefined, taskTitle: "1. KYB Form: DevTest32"}
+[TaskPage] [TaskPage] WebSocket connection established
+[TaskPage] [TaskPage] WebSocket message received: 
+Object {type: "connection_established", payload: {…}}
