@@ -7,182 +7,62 @@
  */
 
 import { db } from '@db';
-import { eq, sql } from 'drizzle-orm';
-import { tasks } from '@db/schema';
-import { companies } from '@db/schema';
-import getLogger from '../utils/logger';
-import { WebSocketService } from './webSocketService';
+import { eq, or, sql } from 'drizzle-orm';
+import { companies, kybResponses, ky3pResponses, openBankingResponses, tasks, users } from '@db/schema';
+import { generateDemoKybValues } from '../utils/demo-helpers';
+import { generateDemoKy3pValues } from '../utils/ky3p-demo-helpers';
+import { generateDemoOpenBankingValues } from '../utils/open-banking-demo-helpers';
+import * as websocketService from './websocket';
+import { Logger } from '../utils/logger';
 
-// Task types we support
+const logger = new Logger('AtomicDemoAutoFill');
+
+// Define supported form types
 export type FormType = 'kyb' | 'company_kyb' | 'ky3p' | 'open_banking';
 type FormTypeKey = 'kyb' | 'ky3p' | 'open_banking';
 
-const logger = getLogger('AtomicDemoAutoFill');
-
-// Configuration for different form types
-const formTypeConfigs = {
-  'kyb': {
-    fieldsTable: sql`kyb_fields`,
-    responsesTable: sql`kyb_responses`,
-    fieldKeyColumn: 'field_key',
-    fieldIdColumn: 'id',
-    displayNameColumn: 'display_name',
-    fieldTypeColumn: 'field_type',
-    demoAutofillColumn: 'demo_autofill',
-    groupColumn: sql`"group"`,
-  },
-  'ky3p': {
-    fieldsTable: sql`ky3p_fields`,
-    responsesTable: sql`ky3p_responses`,
-    fieldKeyColumn: 'field_key',
-    fieldIdColumn: 'id',
-    displayNameColumn: 'display_name',
-    fieldTypeColumn: 'field_type',
-    demoAutofillColumn: 'demo_autofill',
-    groupColumn: sql`"group"`,
-  },
-  'open_banking': {
-    fieldsTable: sql`open_banking_fields`,
-    responsesTable: sql`open_banking_responses`,
-    fieldKeyColumn: 'field_key',
-    fieldIdColumn: 'id',
-    displayNameColumn: 'display_name',
-    fieldTypeColumn: 'field_type',
-    demoAutofillColumn: 'demo_autofill',
-    groupColumn: sql`"group"`,
-  }
-};
+// Calculate the delay between field updates - this creates a visible but not too slow effect
+const FIELD_UPDATE_DELAY_MS = 75; 
 
 /**
  * Get the appropriate form type based on task type
  */
 function mapTaskTypeToFormType(taskType: string): FormTypeKey {
-  if (taskType === 'company_kyb' || taskType === 'kyb') {
-    return 'kyb';
-  } else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
-    return 'ky3p';
-  } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-    return 'open_banking';
+  switch (taskType) {
+    case 'company_kyb':
+    case 'kyb':
+      return 'kyb';
+    case 'ky3p':
+    case 'security_assessment':
+      return 'ky3p';
+    case 'open_banking':
+    case 'open_banking_survey':
+      return 'open_banking';
+    default:
+      logger.warn(`Unknown task type: ${taskType}, defaulting to KYB`);
+      return 'kyb';
   }
-  
-  // Fallback to KYB as default
-  logger.warn(`Unrecognized task type: ${taskType}, defaulting to kyb`);
-  return 'kyb';
 }
 
 /**
  * Generate appropriate demo data for different form types
  */
 function generateDemoData(taskType: string, companyName: string = 'Demo Company'): Record<string, string> {
-  // Create a base demo data object with common fields
-  const baseData = {
-    'legalEntityName': companyName,
-    'registrationNumber': '12-3456789',
-    'incorporationDate': '5/12/2010',
-    'businessType': 'Corporation',
-    'jurisdiction': 'Delaware, United States',
-    'registeredAddress': '123 Corporate Plaza, Suite 500, New York, NY 10001',
-    'companyPhone': '+1 (555) 123-4567',
-    'contactEmail': 'contact@demofintech.com',
-  };
+  const formType = mapTaskTypeToFormType(taskType);
   
-  // Add task-specific fields based on task type
-  if (taskType === 'company_kyb' || taskType === 'company_onboarding_KYB' || taskType === 'kyb') {
-    // Specific sections mapping to ensure 100% coverage
-    
-    // Company Profile section fields (8 fields)
-    const companyProfileFields = {
-      'legalEntityName': companyName,
-      'registrationNumber': '12-3456789',
-      'incorporationDate': '5/12/2010',
-      'businessType': 'Corporation',
-      'jurisdiction': 'Delaware, United States',
-      'registeredAddress': '123 Corporate Plaza, Suite 500, New York, NY 10001',
-      'companyPhone': '+1 (555) 123-4567',
-      'priorNames': 'TechDemo Inc. (2010-2015)',
-    };
-    
-    // Governance & Leadership section fields (10 fields)
-    const governanceFields = {
-      'contactEmail': 'contact@demofintech.com',
-      'goodStanding': 'Yes',
-      'corporateRegistration': 'Active and in good standing',
-      'externalAudit': 'Annual audit by PricewaterhouseCoopers (PWC)',
-      'controlEnvironment': 'Comprehensive governance framework with quarterly internal audits',
-      'authorizedSigners': 'Jane Smith (CEO), John Davis (CFO), Sarah Johnson (COO)',
-      'governmentOwnership': 'No',
-      'ultimateBeneficialOwners': 'Jane Smith (35%), Venture Capital Firm XYZ (40%), Angel Investors (25%)',
-      'directorsAndOfficers': 'Jane Smith (CEO, Director), John Davis (CFO, Director), Sarah Johnson (COO, Director), Michael Anderson (Independent Director)',
-      'licenses': 'Financial Services License #12345, Electronic Money Institution License #67890',
-    };
-    
-    // Financial Profile section fields (4 fields)
-    const financialFields = {
-      'marketCapitalization': '$120,000,000',
-      'lifetimeCustomerValue': '$45,000,000',
-      'annualRecurringRevenue': '$28,500,000',
-      'monthlyRecurringRevenue': '$2,375,000',
-    };
-    
-    // Operations & Compliance section fields (8 fields)
-    const operationsFields = {
-      'investigationsIncidents': 'None in the last 5 years',
-      'financialStatements': 'Audited statements available for past 3 fiscal years',
-      'operationalPolicies': 'Comprehensive policy framework covering AML, KYC, data protection, and information security',
-      'dataVolume': '500,000 customer records processed monthly',
-      'dataTypes': 'Customer PII, transaction data, merchant information',
-      'sanctionsCheck': 'Regular screening against OFAC, UN, and EU sanctions lists',
-      'dueDiligence': 'Enhanced due diligence procedures for high-risk customers',
-      'regulatoryActions': 'None in the last 5 years',
-    };
-    
-    // Combine all sections
-    return {
-      ...companyProfileFields,
-      ...governanceFields,
-      ...financialFields,
-      ...operationsFields,
-    };
-  } else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
-    return {
-      ...baseData,
-      'dataProtectionPolicy': 'Yes, compliant with GDPR, CCPA, and industry standards',
-      'securityBreaches': 'No security breaches in the last 5 years',
-      'penetrationTesting': 'Annual penetration testing by third-party security firm',
-      'dataEncryption': 'AES-256 encryption for data at rest, TLS 1.3 for data in transit',
-      'accessControls': 'Role-based access controls with multi-factor authentication for all employees',
-      'disasterRecovery': 'Comprehensive disaster recovery plan with quarterly testing',
-      'vendorManagement': 'Formal vendor risk assessment and ongoing monitoring program',
-      'incidentResponse': 'Documented incident response plan with 24/7 security operations center',
-      'securityCertifications': 'ISO 27001, SOC 2 Type II, PCI DSS Level 1',
-      'securityTeam': 'Dedicated security team with CISSP, CISM, and OSCP certifications',
-      'vulnerabilityManagement': '30-day remediation for critical vulnerabilities, 90-day for non-critical',
-      'cloudSecurity': 'Multi-layered security controls for all cloud environments',
-      'employeeTraining': 'Mandatory security awareness training for all employees',
-      'physicalSecurity': 'Biometric access controls at all data centers and offices',
-    };
-  } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-    return {
-      ...baseData,
-      'apiSecurity': 'OAuth 2.0 with mutual TLS for all API endpoints',
-      'openBankingCompliance': 'Fully compliant with PSD2 and Open Banking standards',
-      'dataSharing': 'Transparent consent model with granular permission controls',
-      'thirdPartyAccess': 'Secure onboarding and ongoing monitoring of all third-party providers',
-      'customerAuthentication': 'Strong Customer Authentication (SCA) implemented for all transactions',
-      'transactionMonitoring': 'Real-time transaction monitoring with AI-powered fraud detection',
-      'auditTrail': 'Comprehensive audit logging for all data access and API calls',
-      'informationClassification': 'Data classification framework with separate handling procedures',
-      'backupProcedures': 'Daily incremental and weekly full backups with offsite storage',
-      'apiRateLimiting': 'Intelligent rate limiting to prevent abuse and DDoS attacks',
-      'sdkSecurity': 'Secure SDK with code signing and integrity verification',
-      'openApiDocumentation': 'Detailed API documentation with security best practices',
-      'techStack': 'Modern microservices architecture with containerization and orchestration',
-      'dataResidency': 'Data centers in EU and US with region-specific data handling',
-    };
+  logger.info(`Generating demo data for ${formType} form (task type: ${taskType})`);
+  
+  switch (formType) {
+    case 'kyb':
+      return generateDemoKybValues(companyName);
+    case 'ky3p':
+      return generateDemoKy3pValues(companyName);
+    case 'open_banking':
+      return generateDemoOpenBankingValues(companyName);
+    default:
+      logger.warn(`No demo data generator for ${formType}, defaulting to KYB`);
+      return generateDemoKybValues(companyName);
   }
-  
-  // Default to base data for unknown task types
-  return baseData;
 }
 
 /**
@@ -190,41 +70,154 @@ function generateDemoData(taskType: string, companyName: string = 'Demo Company'
  */
 function createResponseUpdateQuery(
   formType: FormTypeKey,
-  taskId: number,
-  fieldId: number,
+  taskId: number, 
+  fieldId: number | string, 
   value: string
-) {
-  const config = formTypeConfigs[formType];
-  if (!config) {
-    throw new Error(`Invalid form type: ${formType}`);
+): Promise<any> {
+  switch (formType) {
+    case 'kyb':
+      return db.update(kybResponses)
+        .set({ 
+          response_value: value,
+          updated_at: new Date()
+        })
+        .where(eq(kybResponses.task_id, taskId))
+        .where(eq(kybResponses.field_id, Number(fieldId)));
+    
+    case 'ky3p':
+      return db.update(ky3pResponses)
+        .set({ 
+          response_value: value,
+          updated_at: new Date()
+        })
+        .where(eq(ky3pResponses.task_id, taskId))
+        .where(eq(ky3pResponses.field_id, Number(fieldId)));
+    
+    case 'open_banking':
+      return db.update(openBankingResponses)
+        .set({ 
+          response_value: value,
+          updated_at: new Date()
+        })
+        .where(eq(openBankingResponses.task_id, taskId))
+        .where(eq(openBankingResponses.field_id, Number(fieldId)));
+    
+    default:
+      throw new Error(`Unsupported form type: ${formType}`);
+  }
+}
+
+/**
+ * Get existing responses for a given task and form type
+ */
+async function getExistingResponses(formType: FormTypeKey, taskId: number): Promise<any[]> {
+  switch (formType) {
+    case 'kyb':
+      return db.select()
+        .from(kybResponses)
+        .where(eq(kybResponses.task_id, taskId));
+    
+    case 'ky3p':
+      return db.select()
+        .from(ky3pResponses)
+        .where(eq(ky3pResponses.task_id, taskId));
+    
+    case 'open_banking':
+      return db.select()
+        .from(openBankingResponses)
+        .where(eq(openBankingResponses.task_id, taskId));
+    
+    default:
+      throw new Error(`Unsupported form type: ${formType}`);
+  }
+}
+
+/**
+ * Create a new response for a given task and form type
+ */
+async function createResponse(
+  formType: FormTypeKey,
+  taskId: number, 
+  fieldId: number | string, 
+  value: string,
+  userId?: number
+): Promise<any> {
+  switch (formType) {
+    case 'kyb':
+      return db.insert(kybResponses)
+        .values({
+          task_id: taskId,
+          field_id: Number(fieldId),
+          response_value: value,
+          created_at: new Date(),
+          updated_at: new Date(),
+          user_id: userId
+        });
+    
+    case 'ky3p':
+      return db.insert(ky3pResponses)
+        .values({
+          task_id: taskId,
+          field_id: Number(fieldId),
+          response_value: value,
+          created_at: new Date(),
+          updated_at: new Date(),
+          user_id: userId
+        });
+    
+    case 'open_banking':
+      return db.insert(openBankingResponses)
+        .values({
+          task_id: taskId,
+          field_id: Number(fieldId),
+          response_value: value,
+          created_at: new Date(),
+          updated_at: new Date(),
+          user_id: userId
+        });
+    
+    default:
+      throw new Error(`Unsupported form type: ${formType}`);
+  }
+}
+
+/**
+ * Get all field IDs for a given form type
+ */
+async function getFieldIds(formType: FormTypeKey): Promise<number[]> {
+  let query;
+  
+  switch (formType) {
+    case 'kyb':
+      query = db.select({ id: sql<number>`id` })
+        .from(sql`kyb_fields`);
+      break;
+    
+    case 'ky3p':
+      query = db.select({ id: sql<number>`id` })
+        .from(sql`ky3p_fields`);
+      break;
+    
+    case 'open_banking':
+      query = db.select({ id: sql<number>`id` })
+        .from(sql`open_banking_fields`);
+      break;
+    
+    default:
+      throw new Error(`Unsupported form type: ${formType}`);
   }
   
-  // Status is 'filled' if there's a value, 'empty' otherwise
-  const status = value && value.trim() !== '' ? 'filled' : 'empty';
-  
-  // Prepare correct update SQL based on form type
-  const updateQuery = sql`
-    INSERT INTO ${config.responsesTable} (task_id, field_id, response_value, status)
-    VALUES (${taskId}, ${fieldId}, ${value}, ${status})
-    ON CONFLICT (task_id, field_id) 
-    DO UPDATE SET 
-      response_value = ${value},
-      status = ${status},
-      updated_at = NOW()
-    RETURNING id, field_id
-  `;
-  
-  return updateQuery;
+  const results = await query;
+  return results.map(row => row.id);
 }
 
 export class AtomicDemoAutoFillService {
-  private webSocketService: WebSocketService;
-  
-  constructor(webSocketService: WebSocketService) {
+  private webSocketService: typeof websocketService;
+
+  constructor(webSocketService: typeof websocketService) {
     this.webSocketService = webSocketService;
-    logger.info('Atomic Demo Auto-Fill Service initialized');
   }
-  
+
   /**
    * Atomically apply demo data to a form, with progressive UI updates
    */
@@ -232,197 +225,165 @@ export class AtomicDemoAutoFillService {
     taskId: number,
     formType: FormType,
     userId?: number
-  ): Promise<{
-    success: boolean;
-    message: string;
-    fieldCount: number;
-  }> {
-    logger.info('Starting atomic demo data application', { taskId, formType, userId });
-    
-    // Get task information
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-      
-    if (!task) {
-      throw new Error(`Task not found: ${taskId}`);
-    }
-    
-    // Get company information
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
-      
-    if (!company || company.is_demo !== true) {
-      throw new Error('Auto-fill is only available for demo companies');
-    }
-    
-    // Map form type to the appropriate internal form type
-    const mappedFormType = mapTaskTypeToFormType(formType);
-    const config = formTypeConfigs[mappedFormType];
-    
-    // First set task status to not_started to ensure progress bar starts from beginning
-    await db.update(tasks)
-      .set({ 
-        status: 'not_started', 
-        progress: 0,
-        updated_at: new Date(),
+  ): Promise<{ success: boolean; message: string; fieldCount: number }> {
+    try {
+      // Validate the task exists and get company name
+      const task = await db.select({
+        id: tasks.id,
+        title: tasks.title,
+        task_type: tasks.task_type,
+        metadata: tasks.metadata
       })
-      .where(eq(tasks.id, taskId));
-    
-    // Notify clients that task is resetting
-    this.webSocketService.broadcastTaskUpdate(taskId, {
-      status: 'not_started',
-      progress: 0,
-      metadata: { lastUpdated: new Date().toISOString() }
-    });
-    
-    // Get all fields for this form type
-    const fields = await db.select()
-      .from(config.fieldsTable)
-      .orderBy(sql`${config.groupColumn} ASC, "order" ASC`);
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
       
-    logger.info(`Retrieved ${fields.length} fields for demo auto-fill`);
-    
-    // Generate demo data based on task type
-    const demoData = generateDemoData(formType, company.name);
-    
-    // Show loading toast on client side
-    this.webSocketService.broadcast({
-      type: 'demo_autofill_started',
-      payload: {
-        taskId,
-        fieldCount: fields.length,
-        timestamp: new Date().toISOString()
+      if (!task || task.length === 0) {
+        throw new Error(`Task not found: ${taskId}`);
       }
-    });
-    
-    // Process fields in batches for better performance but still visible progression
-    const BATCH_SIZE = 5;
-    const totalBatches = Math.ceil(fields.length / BATCH_SIZE);
-    
-    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-      const startIdx = batchIndex * BATCH_SIZE;
-      const endIdx = Math.min(startIdx + BATCH_SIZE, fields.length);
-      const batchFields = fields.slice(startIdx, endIdx);
       
-      // Calculate progress percentage
-      const progressPercentage = Math.floor((batchIndex / totalBatches) * 100);
+      const taskData = task[0];
       
-      // Process this batch in a transaction
-      await db.transaction(async (tx) => {
-        for (const field of batchFields) {
-          const fieldKey = field[config.fieldKeyColumn];
-          const fieldId = field[config.fieldIdColumn];
-          
-          // Skip if this field doesn't have a key
-          if (!fieldKey) {
-            logger.warn(`Field is missing key property, skipping`, { fieldId });
-            continue;
-          }
-          
-          // Get the demo value for this field
-          let demoValue = demoData[fieldKey] || '';
-          
-          // If db has a demo_autofill value, use that instead
-          if (field[config.demoAutofillColumn] && field[config.demoAutofillColumn] !== '') {
-            // Check for template variables that need replacement
-            if (typeof field[config.demoAutofillColumn] === 'string' && 
-                field[config.demoAutofillColumn].includes('{{COMPANY_NAME}}')) {
-              demoValue = field[config.demoAutofillColumn].replace('{{COMPANY_NAME}}', company.name);
-            } else {
-              demoValue = field[config.demoAutofillColumn];
-            }
-          }
-          
-          // Create and execute the update query
-          const updateQuery = createResponseUpdateQuery(
-            mappedFormType,
-            taskId,
-            fieldId,
-            demoValue
-          );
-          
-          await tx.execute(updateQuery);
-          
-          // Send WebSocket notification for this field update
-          this.webSocketService.broadcast({
-            type: 'demo_field_update',
-            payload: {
-              taskId,
-              fieldId: fieldKey,
-              value: demoValue,
-              timestamp: new Date().toISOString()
-            }
-          });
-          
-          // Small delay for visual effect (50ms)
-          await new Promise(resolve => setTimeout(resolve, 50));
+      // Get company name from task metadata or title
+      let companyName = 'Demo Company';
+      
+      if (taskData.metadata && taskData.metadata.company_name) {
+        companyName = taskData.metadata.company_name;
+      } else if (taskData.metadata && taskData.metadata.companyName) {
+        companyName = taskData.metadata.companyName;
+      } else if (taskData.title.includes(':')) {
+        // Extract from title format like "KYB Form: CompanyName"
+        const parts = taskData.title.split(':');
+        if (parts.length > 1) {
+          companyName = parts[1].trim();
         }
+      }
+      
+      logger.info(`Starting atomic demo auto-fill for ${formType} task ${taskId}, company: ${companyName}`);
+      
+      // Use the task type to determine the correct form type if not specified
+      const actualFormType = formType === 'kyb' || formType === 'company_kyb' 
+        ? 'kyb' 
+        : mapTaskTypeToFormType(taskData.task_type);
+      
+      // Generate demo data
+      const demoData = generateDemoData(taskData.task_type, companyName);
+      
+      // Get existing responses
+      const existingResponses = await getExistingResponses(actualFormType, taskId);
+      
+      // Create a map of existing responses by field ID
+      const existingResponseMap = new Map();
+      for (const response of existingResponses) {
+        existingResponseMap.set(response.field_id, response);
+      }
+      
+      // Get all field IDs for this form type
+      const allFieldIds = await getFieldIds(actualFormType);
+      
+      // Apply updates progressively, with WebSocket notifications between each field
+      let updateCount = 0;
+      
+      // Start with a progress notification
+      this.webSocketService.broadcast('demo_autofill_start', {
+        taskId,
+        formType: actualFormType,
+        totalFields: Object.keys(demoData).length,
+        timestamp: new Date().toISOString()
       });
       
       // Update task progress
       await db.update(tasks)
         .set({ 
-          status: 'in_progress', 
-          progress: progressPercentage,
-          updated_at: new Date(),
+          status: 'in_progress',
+          updated_at: new Date()
         })
         .where(eq(tasks.id, taskId));
       
-      // Broadcast progress update
-      this.webSocketService.broadcastTaskUpdate(taskId, {
+      // Broadcast status update
+      this.webSocketService.broadcastTaskUpdate({
+        id: taskId,
         status: 'in_progress',
-        progress: progressPercentage,
-        metadata: {
-          lastUpdated: new Date().toISOString(),
-          demoAutoFillInProgress: true
-        }
+        progress: 0
       });
       
-      // Small delay between batches for visual effect
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    // Final update to task with completion
-    await db.update(tasks)
-      .set({ 
-        status: 'in_progress', 
-        progress: 100,
-        updated_at: new Date(),
-      })
-      .where(eq(tasks.id, taskId));
-    
-    // Final broadcast
-    this.webSocketService.broadcastTaskUpdate(taskId, {
-      status: 'in_progress',
-      progress: 100,
-      metadata: {
-        lastUpdated: new Date().toISOString(),
-        demoAutoFillCompleted: true
+      // Process each field to update or create responses
+      for (const fieldIdStr of allFieldIds) {
+        const fieldId = Number(fieldIdStr);
+        const value = demoData[`field_${fieldId}`] || demoData[fieldId.toString()] || '';
+        
+        if (value) {
+          try {
+            if (existingResponseMap.has(fieldId)) {
+              // Update existing response
+              await createResponseUpdateQuery(actualFormType, taskId, fieldId, value);
+            } else {
+              // Create new response
+              await createResponse(actualFormType, taskId, fieldId, value, userId);
+            }
+            
+            // Send WebSocket notification for this field update
+            this.webSocketService.broadcast('field_update', {
+              taskId,
+              fieldId: fieldId,
+              value: value,
+              timestamp: new Date().toISOString()
+            });
+            
+            updateCount++;
+            
+            // Send progress update
+            if (updateCount % 5 === 0) {
+              const progressPercent = Math.min(99, Math.round((updateCount / Object.keys(demoData).length) * 100));
+              this.webSocketService.broadcast('demo_autofill_progress', {
+                taskId,
+                progress: progressPercent,
+                fieldsCompleted: updateCount,
+                totalFields: Object.keys(demoData).length,
+                timestamp: new Date().toISOString()
+              });
+            }
+            
+            // Add a small delay between updates to create a visual effect
+            await new Promise(resolve => setTimeout(resolve, FIELD_UPDATE_DELAY_MS));
+          } catch (error) {
+            logger.error(`Error updating field ${fieldId}:`, {
+              error: error instanceof Error ? error.message : 'Unknown error',
+              taskId,
+              fieldId,
+              formType: actualFormType
+            });
+          }
+        }
       }
-    });
-    
-    // Broadcast completion notification
-    this.webSocketService.broadcast({
-      type: 'demo_autofill_complete',
-      payload: {
+      
+      // Completion notification
+      this.webSocketService.broadcast('demo_autofill_complete', {
         taskId,
-        fieldCount: fields.length,
+        fieldsUpdated: updateCount,
         timestamp: new Date().toISOString()
-      }
-    });
-    
-    logger.info('Successfully applied demo data atomically', {
-      taskId,
-      formType,
-      fieldCount: fields.length
-    });
-    
-    return {
-      success: true,
-      message: `Successfully applied demo data to ${fields.length} fields`,
-      fieldCount: fields.length
-    };
+      });
+
+      // Final task update
+      this.webSocketService.broadcastTaskUpdate({
+        id: taskId,
+        status: 'in_progress',
+        progress: 0
+      });
+      
+      return {
+        success: true,
+        message: `Successfully applied demo data to ${updateCount} fields`,
+        fieldCount: updateCount
+      };
+    } catch (error) {
+      logger.error('Error in atomic demo auto-fill:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        taskId,
+        formType
+      });
+      
+      throw error;
+    }
   }
 }
