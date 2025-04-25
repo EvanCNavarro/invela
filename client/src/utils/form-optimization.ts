@@ -1,26 +1,9 @@
-/**
- * Form Optimization Utilities
- * 
- * This module provides optimizations for form updates, particularly for demo auto-fill
- * functionality where many field updates can occur in a short period of time.
- * 
- * The primary optimization is batch processing, which consolidates multiple updates to
- * the same field within a small time window, reducing redundant rendering and improving
- * performance.
- */
+import getLogger from '@/utils/logger';
 
-// Constants for batch processing
-const BATCH_PROCESSING_INTERVAL = 100; // ms between batch processing cycles
-const BATCH_SIZE_LIMIT = 10; // maximum number of fields to process per cycle
-
-// Queued updates by field key
-let pendingUpdates: Record<string, any> = {};
-
-// Timestamp of when processing was last performed
-let lastProcessTimestamp = 0;
-
-// Current processing interval ID
-let processingInterval: ReturnType<typeof setInterval> | null = null;
+// Create a logger for form optimization utilities
+const logger = getLogger('FormOptimization', { 
+  levels: { debug: true, info: true, warn: true, error: true } 
+});
 
 /**
  * Form Batch Updater
@@ -29,82 +12,100 @@ let processingInterval: ReturnType<typeof setInterval> | null = null;
  * during operations like demo auto-fill where many fields might be updated rapidly.
  */
 export const FormBatchUpdater = {
+  // Queue for pending field updates - fieldKey → value mapping
+  private: {
+    updateQueue: new Map<string, any>(),
+    debounceTimers: new Map<string, NodeJS.Timeout>()
+  },
+
   /**
    * Add a field update to the batch processing queue
    * 
    * @param fieldKey The field identifier
    * @param value The value to set for the field
    */
-  addUpdate: (fieldKey: string, value: any): void => {
-    // Store the update, overwriting any previous update for the same field
-    pendingUpdates[fieldKey] = value;
-    
-    // Start processing interval if not already running
-    if (!processingInterval) {
-      processingInterval = setInterval(() => {
-        const currentTimestamp = Date.now();
-        const elapsed = currentTimestamp - lastProcessTimestamp;
-        
-        // Only process if sufficient time has elapsed
-        if (elapsed >= BATCH_PROCESSING_INTERVAL) {
-          lastProcessTimestamp = currentTimestamp;
-          FormBatchUpdater.processQueue();
-        }
-      }, BATCH_PROCESSING_INTERVAL);
-      
-      // Update timestamp for the first time
-      lastProcessTimestamp = Date.now();
-    }
+  addUpdate(fieldKey: string, value: any): void {
+    this.private.updateQueue.set(fieldKey, value);
+    logger.debug(`Added field update to batch: ${fieldKey}`);
   },
-  
+
+  /**
+   * Get all pending updates from the queue
+   * 
+   * @returns Object with field keys mapped to their values
+   */
+  getPendingUpdates(): Record<string, any> {
+    const updates: Record<string, any> = {};
+    this.private.updateQueue.forEach((value, key) => {
+      updates[key] = value;
+    });
+    return updates;
+  },
+
   /**
    * Process pending updates in the queue
    * 
    * @returns Object with processed field values
    */
-  processQueue: (): Record<string, any> => {
-    // Exit early if no updates
-    if (Object.keys(pendingUpdates).length === 0) {
-      return {};
-    }
-    
-    const processed: Record<string, any> = {};
-    const fieldKeys = Object.keys(pendingUpdates);
-    const keysToProcess = fieldKeys.slice(0, BATCH_SIZE_LIMIT);
-    
-    // Process updates up to the batch size limit
-    for (const fieldKey of keysToProcess) {
-      processed[fieldKey] = pendingUpdates[fieldKey];
-      delete pendingUpdates[fieldKey];
-    }
-    
-    // Stop interval if queue is empty
-    if (Object.keys(pendingUpdates).length === 0 && processingInterval) {
-      clearInterval(processingInterval);
-      processingInterval = null;
-    }
-    
-    return processed;
+  processUpdates(): Record<string, any> {
+    const updates = this.getPendingUpdates();
+    this.clearUpdates();
+    return updates;
   },
-  
+
   /**
    * Clear all pending updates
    */
-  clearQueue: (): void => {
-    pendingUpdates = {};
-    if (processingInterval) {
-      clearInterval(processingInterval);
-      processingInterval = null;
-    }
+  clearUpdates(): void {
+    this.private.updateQueue.clear();
+    logger.debug('Cleared all pending field updates');
   },
-  
+
   /**
    * Get the current size of the update queue
    * 
    * @returns Number of pending updates
    */
-  queueSize: (): number => {
-    return Object.keys(pendingUpdates).length;
+  getQueueSize(): number {
+    return this.private.updateQueue.size;
+  },
+
+  /**
+   * Add a debounced field update
+   * 
+   * @param fieldKey The field identifier
+   * @param value The value to set
+   * @param callback The function to call with the update
+   * @param delay The debounce delay in milliseconds
+   */
+  addDebouncedUpdate(
+    fieldKey: string,
+    value: any,
+    callback: (fieldKey: string, value: any) => void,
+    delay = 300
+  ): void {
+    // Clear existing timer if any
+    if (this.private.debounceTimers.has(fieldKey)) {
+      clearTimeout(this.private.debounceTimers.get(fieldKey));
+    }
+
+    // Set new timer
+    const timer = setTimeout(() => {
+      callback(fieldKey, value);
+      this.private.debounceTimers.delete(fieldKey);
+    }, delay);
+
+    this.private.debounceTimers.set(fieldKey, timer);
+  },
+
+  /**
+   * Clear all debounce timers
+   */
+  clearDebouncedUpdates(): void {
+    this.private.debounceTimers.forEach((timer) => {
+      clearTimeout(timer);
+    });
+    this.private.debounceTimers.clear();
   }
 };
 
@@ -117,25 +118,141 @@ export const FormBatchUpdater = {
  */
 export function debounceFormUpdate<T extends (...args: any[]) => any>(
   func: T,
-  wait: number = 200
+  wait = 300
 ): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  
+  let timeout: NodeJS.Timeout | null = null;
+
   return function(...args: Parameters<T>): void {
     const later = () => {
       timeout = null;
       func(...args);
     };
-    
-    if (timeout !== null) {
+
+    if (timeout) {
       clearTimeout(timeout);
     }
-    
+
     timeout = setTimeout(later, wait);
   };
 }
 
-export default {
-  FormBatchUpdater,
-  debounceFormUpdate
-};
+/**
+ * Throttle function for form field updates
+ * 
+ * @param func The function to throttle
+ * @param limit Minimum time between invocations in milliseconds
+ * @returns Throttled function
+ */
+export function throttleFormUpdate<T extends (...args: any[]) => any>(
+  func: T,
+  limit = 300
+): (...args: Parameters<T>) => void {
+  let inThrottle = false;
+  let lastArgs: Parameters<T> | null = null;
+
+  return function(...args: Parameters<T>): void {
+    // Store the latest arguments
+    lastArgs = args;
+
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+
+      setTimeout(() => {
+        inThrottle = false;
+        
+        // Call with latest arguments if there were any updates during throttle
+        if (lastArgs && lastArgs !== args) {
+          func(...lastArgs);
+          lastArgs = null;
+        }
+      }, limit);
+    }
+  };
+}
+
+/**
+ * Create a batch processor for form updates
+ * 
+ * @param processor Function to process updates
+ * @param options Configuration options
+ * @returns Batch processor functions
+ */
+export function createBatchProcessor(
+  processor: (updates: Record<string, any>) => Promise<void>,
+  options: {
+    batchSize?: number;
+    batchDelay?: number;
+  } = {}
+) {
+  const { batchSize = 10, batchDelay = 500 } = options;
+  const updates: Record<string, any> = {};
+  let timer: NodeJS.Timeout | null = null;
+  let count = 0;
+
+  const processUpdates = async () => {
+    if (Object.keys(updates).length === 0) return;
+    
+    const batch = { ...updates };
+    // Clear processed updates
+    Object.keys(batch).forEach(key => {
+      delete updates[key];
+    });
+    
+    // Reset counter
+    count = 0;
+    
+    // Process the batch
+    await processor(batch);
+  };
+
+  return {
+    /**
+     * Add an update to the batch
+     */
+    add(key: string, value: any) {
+      updates[key] = value;
+      count++;
+      
+      // Process batch if we hit the batch size
+      if (count >= batchSize) {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        processUpdates();
+      } else if (!timer) {
+        // Start a timer if not already running
+        timer = setTimeout(() => {
+          timer = null;
+          processUpdates();
+        }, batchDelay);
+      }
+    },
+    
+    /**
+     * Force process any pending updates
+     */
+    flush() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      return processUpdates();
+    },
+    
+    /**
+     * Clear all pending updates
+     */
+    clear() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      Object.keys(updates).forEach(key => {
+        delete updates[key];
+      });
+      count = 0;
+    }
+  };
+}
