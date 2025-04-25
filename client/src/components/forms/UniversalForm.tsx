@@ -493,8 +493,32 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
-      // Use our new dedicated clearFields utility from imported function
-      const success = await handleClearFieldsUtil(formService, fields, updateField);
+      // Debug output for debugging
+      console.log('[ClearFields] Starting clear operation with:', {
+        fieldsCount: fields.length,
+        formServiceAvailable: !!formService,
+        formData: Object.keys(formService.getFormData()).length
+      });
+      
+      // Use our improved clearFields utility 
+      const success = await handleClearFieldsUtil(
+        formService, 
+        fields, 
+        // Pass callback to update field value in form
+        (fieldId, value) => {
+          // Call the update function from the hook
+          updateField(fieldId, value);
+          
+          // Also update the form directly with setValue if available
+          if (form) {
+            try {
+              form.setValue(fieldId, value, { shouldValidate: false, shouldDirty: true });
+            } catch (err) {
+              console.log(`[ClearFields] Unable to set form value for ${fieldId}:`, err);
+            }
+          }
+        }
+      );
       
       if (success) {
         // Force a re-render to update the UI

@@ -17,29 +17,62 @@ export async function handleClearFields(
   try {
     console.log('[ClearFields] Starting to clear fields - found', fields.length, 'fields');
     
+    // Get the current form data
+    const currentData = formService.getFormData();
+    console.log('[ClearFields] Current form data keys:', Object.keys(currentData).length);
+    
+    // Track successful field clears
+    let clearedCount = 0;
+    
     // Clear each field individually
     for (const field of fields) {
+      // Field ID can be either id or key property depending on the form system
+      const fieldId = field.id || field.key;
+      
       // Skip system fields that shouldn't be cleared
-      if (field.id === 'agreement_confirmation') {
-        console.log('[ClearFields] Skipping system field:', field.id);
+      if (fieldId === 'agreement_confirmation') {
+        console.log('[ClearFields] Skipping system field:', fieldId);
+        continue;
+      }
+      
+      // Skip empty or undefined field IDs
+      if (!fieldId) {
+        console.log('[ClearFields] Skipping field with no ID:', field);
         continue;
       }
       
       // Debug output for each field
-      console.log(`[ClearFields] Clearing field ${field.id} (${field.type})`);
+      console.log(`[ClearFields] Clearing field ${fieldId} (${field.type})`);
       
-      // Clear the field based on its type
-      if (field.type === 'boolean') {
-        updateField(field.id, false);
-      } else if (field.type === 'number') {
-        updateField(field.id, null);
-      } else {
-        updateField(field.id, '');
+      try {
+        // Clear the field based on its type
+        if (field.type === 'boolean') {
+          updateField(fieldId, false);
+        } else if (field.type === 'number') {
+          updateField(fieldId, null);
+        } else {
+          updateField(fieldId, '');
+        }
+        
+        // Also try directly updating the form service
+        if (formService.updateFormData) {
+          if (field.type === 'boolean') {
+            formService.updateFormData(fieldId, false);
+          } else if (field.type === 'number') {
+            formService.updateFormData(fieldId, null);
+          } else {
+            formService.updateFormData(fieldId, '');
+          }
+        }
+        
+        clearedCount++;
+      } catch (fieldError) {
+        console.error(`[ClearFields] Error clearing field ${fieldId}:`, fieldError);
       }
     }
     
-    console.log('[ClearFields] Successfully cleared all form fields');
-    return true;
+    console.log(`[ClearFields] Successfully cleared ${clearedCount}/${fields.length} form fields`);
+    return clearedCount > 0;
   } catch (error) {
     console.error('[ClearFields] Error clearing fields:', error);
     return false;
