@@ -63,8 +63,13 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
         progress: updatedTask.progress 
       });
 
-      // Broadcast the update to all WebSocket clients
-      broadcastTaskUpdate(taskId, updatedTask.status as TaskStatus);
+      // Broadcast the update to all WebSocket clients using the proper format
+      broadcastTaskUpdate({
+        id: taskId,
+        status: updatedTask.status,
+        progress: updatedTask.progress,
+        metadata: updatedTask.metadata || { locked: false }
+      });
     }
 
     // Return success response
