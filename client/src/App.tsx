@@ -40,6 +40,7 @@ import ProgressiveLoadingDemo from "@/components/dev/ProgressiveLoadingDemo";
 import TestDemoAutoFill from "@/pages/test-demo-autofill";
 import TestKy3pPage from "@/pages/test-ky3p-page";
 import TestStandardizedKy3pUpdate from "@/components/test/TestStandardizedKy3pUpdate";
+import TestStandardizedServicePage from "@/pages/test-standardized-service-page";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -315,6 +316,11 @@ function Router() {
           <TestStandardizedKy3pUpdate />
         </Route>
         
+        {/* Standardized Form Service Test Page - For Testing the Complete FormServiceInterface Implementation */}
+        <Route path="/test-standardized-service">
+          <TestStandardizedServicePage />
+        </Route>
+        
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
         <Route path="/debug/status-fixer">
           <ProtectedLayout>
@@ -356,9 +362,13 @@ export default function App() {
       // Register our standardized services as alternatives
       // Import and register our improved standardized services
       import('./services/register-standardized-services')
-        .then(({ registerStandardizedServices }) => {
+        .then(({ registerStandardizedServices, useStandardizedServices }) => {
           console.log('[App] Registering standardized form services');
           registerStandardizedServices();
+          
+          // Use our standardized services as the default
+          console.log('[App] Using standardized form services by default');
+          useStandardizedServices();
         })
         .catch(error => {
           console.error('[App] Error loading standardized services:', error);
