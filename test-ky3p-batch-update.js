@@ -3,7 +3,27 @@
  * 
  * This script directly tests the batch update endpoint for KY3P forms.
  * It can be used to verify that the endpoint is working correctly.
+ * 
+ * Note: This script requires a valid authenticated browser session.
+ * To use this script:
+ * 1. Log in to the application in your browser
+ * 2. Copy the session cookie from your browser
+ * 3. Set the SESSION_COOKIE value below
  */
+
+// Set your session cookie here - get this from your browser after logging in
+const SESSION_COOKIE = ""; // e.g. "connect.sid=s%3AxYz..."
+
+// If no session cookie is provided, exit with an error
+if (!SESSION_COOKIE) {
+  console.error("ERROR: Please set the SESSION_COOKIE value in the script");
+  console.error("To get the cookie:");
+  console.error("1. Log in to the application in your browser");
+  console.error("2. Open browser developer tools (F12)");
+  console.error("3. Go to Application tab > Cookies > localhost:5000");
+  console.error("4. Copy the value of connect.sid cookie");
+  process.exit(1);
+}
 
 async function testKy3pBatchUpdate() {
   // Set the task ID for testing
@@ -31,11 +51,12 @@ async function testKy3pBatchUpdate() {
   console.log(`Testing KY3P batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
   
   try {
-    // Call the batch update endpoint
+    // Call the batch update endpoint with proper authentication
     const response = await fetch(`http://localhost:5000/api/ky3p/batch-update/${taskId}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cookie': SESSION_COOKIE
       },
       body: JSON.stringify({
         responses: responses
@@ -64,11 +85,12 @@ async function testKy3pDemoAutofill() {
   console.log(`Testing KY3P demo autofill for task ${taskId}`);
   
   try {
-    // Call the demo autofill endpoint
+    // Call the demo autofill endpoint with proper authentication
     const response = await fetch(`http://localhost:5000/api/ky3p/demo-autofill/${taskId}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cookie': SESSION_COOKIE
       },
       body: JSON.stringify({})
     });
@@ -89,11 +111,15 @@ async function testKy3pDemoAutofill() {
 
 // Run the tests
 async function runTests() {
+  console.log("Starting KY3P endpoint tests with authentication...");
+  
   // First test the batch update endpoint
   await testKy3pBatchUpdate();
   
   // Then test the demo autofill endpoint
   await testKy3pDemoAutofill();
+  
+  console.log("Test run completed");
 }
 
 // Execute the tests
