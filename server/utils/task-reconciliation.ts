@@ -171,8 +171,8 @@ export async function reconcileTaskProgress(
             and(
               eq(openBankingResponses.task_id, taskId),
               or(
-                eq(openBankingResponses.status, 'COMPLETE'),
-                eq(openBankingResponses.status, 'complete')
+                sql`${openBankingResponses.status} = 'COMPLETE'`,
+                sql`${openBankingResponses.status} = 'complete'`
               )
             )
           );
@@ -264,10 +264,10 @@ export async function reconcileTaskProgress(
             and(
               eq(ky3pResponses.task_id, taskId),
               or(
-                eq(ky3pResponses.status, 'COMPLETE'),
-                eq(ky3pResponses.status, 'FILLED'),
-                eq(ky3pResponses.status, 'complete'),
-                eq(ky3pResponses.status, 'filled')
+                sql`${ky3pResponses.status} = 'COMPLETE'`,
+                sql`${ky3pResponses.status} = 'FILLED'`,
+                sql`${ky3pResponses.status} = 'complete'`,
+                sql`${ky3pResponses.status} = 'filled'`
               ),
               sql`${ky3pResponses.response_value} IS NOT NULL`,
               sql`${ky3pResponses.response_value} != ''`
