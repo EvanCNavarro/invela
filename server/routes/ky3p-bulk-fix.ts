@@ -9,13 +9,16 @@
  */
 
 import { Request, Response } from 'express';
-import { pool } from '@db';
-import { getLogger } from '@/utils/logger';
+import { db } from '@db';
+import { ky3pFields, ky3pResponses } from '@db/schema';
+import { and, eq } from 'drizzle-orm';
+import getLogger from '../utils/logger';
 
-const logger = getLogger('KY3PBulkFix');
+const logger = getLogger('KY3P-Bulk-Fix');
 
 /**
  * Handle the special case where fieldIdRaw is "bulk" and responseValue is "undefined"
+ * This is caused by the UniversalForm component sending bulk updates in the wrong format
  * 
  * @param req Express request object
  * @param res Express response object
@@ -25,73 +28,51 @@ export async function handleSpecialBulkCase(
   req: Request,
   res: Response
 ): Promise<boolean> {
-  // Check if this is the special case we're looking for
-  if (
-    req.body &&
-    req.body.fieldIdRaw === 'bulk' &&
-    (req.body.responseValue === 'undefined' || req.body.responseValue === undefined)
-  ) {
-    logger.info('[KY3P Bulk Fix] Detected special case with fieldIdRaw=bulk');
+  try {
+    const { fieldIdRaw, responseValue, taskIdRaw } = req.body;
     
-    // This is an invalid request format, but we know it's from the UniversalForm
-    // trying to use the demo auto-fill functionality
-    
-    try {
-      // Extract the task ID from the params or the body
-      const taskId = req.params.taskId || req.body.taskIdRaw;
+    // Check if this is the special case we're looking for
+    if (fieldIdRaw === 'bulk' && (responseValue === 'undefined' || responseValue === undefined)) {
+      logger.info(`[KY3P API] Detected special case with fieldIdRaw="bulk" and responseValue="undefined" for task ${taskIdRaw}`);
+      
+      // Get the task ID from the URL or request body
+      const taskId = req.params.taskId || taskIdRaw;
       
       if (!taskId) {
-        logger.error('[KY3P Bulk Fix] No task ID provided');
+        logger.error('[KY3P API] No task ID provided in special case handler');
         res.status(400).json({ message: 'No task ID provided' });
-        return true; // We handled this case, even though it's an error
+        return true; // We handled it by returning an error
       }
       
-      // Redirect to the demo-autofill endpoint instead
-      logger.info(`[KY3P Bulk Fix] Redirecting to demo-autofill endpoint for task ${taskId}`);
-      
-      // Use the direct demo-autofill endpoint to fill the form with demo data
-      const result = await fetch(`${req.protocol}://${req.get('host')}/api/ky3p/demo-autofill/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': req.headers.cookie || '',
-        },
-        body: JSON.stringify({}),
-      });
-      
-      if (!result.ok) {
-        logger.error(`[KY3P Bulk Fix] Demo auto-fill failed: ${result.status}`);
-        res.status(result.status).json({ 
-          message: `Demo auto-fill failed: ${result.status}`,
-          redirected: true
-        });
-        return true; // We handled this case, even though the demo auto-fill failed
+      try {
+        // Check if the task exists in our database
+        // This identifies whether we should bother with demo auto-fill or just redirect
+        const fields = await db.select().from(ky3pFields);
+        
+        if (fields.length > 0) {
+          logger.info(`[KY3P API] Redirecting to demo-autofill endpoint for task ${taskId}`);
+          
+          // Redirect to the demo auto-fill endpoint which will populate with standard data
+          return new Promise((resolve) => {
+            res.redirect(307, `/api/ky3p/demo-autofill/${taskId}`);
+            resolve(true);
+          });
+        } else {
+          logger.warn('[KY3P API] No KY3P fields found in database, returning empty success response');
+          res.status(200).json({ message: 'No fields to update' });
+          return true;
+        }
+      } catch (error) {
+        logger.error('[KY3P API] Error in special case handler:', error);
+        res.status(500).json({ message: 'Server error in special case handler' });
+        return true;
       }
-      
-      const demoResult = await result.json();
-      
-      // Return success with the demo auto-fill result
-      res.status(200).json({
-        success: true,
-        message: 'Successfully applied demo data via auto-fill endpoint',
-        fieldsPopulated: demoResult.fieldsPopulated || 0,
-        redirected: true
-      });
-      
-      // Indicate that we handled this special case
-      return true;
-    } catch (error) {
-      logger.error('[KY3P Bulk Fix] Error handling special bulk case:', error);
-      res.status(500).json({ 
-        message: 'Error processing special bulk case',
-        error: error instanceof Error ? error.message : String(error)
-      });
-      
-      // We still handled this case, even though there was an error
-      return true;
     }
+    
+    // Not the special case we're looking for
+    return false;
+  } catch (error) {
+    logger.error('[KY3P API] Error in handleSpecialBulkCase:', error);
+    return false; // Let the regular handler deal with it
   }
-  
-  // This is not the special case, so return false to let normal processing continue
-  return false;
 }

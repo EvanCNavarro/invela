@@ -11,7 +11,7 @@
 
 import getLogger from '@/utils/logger';
 
-const logger = getLogger('standardizedKy3pUpdate');
+const logger = getLogger('KY3P-Update');
 
 /**
  * Perform a standardized bulk update for KY3P forms using string-based field keys
@@ -24,74 +24,57 @@ export async function standardizedBulkUpdate(
   taskId: number,
   formData: Record<string, any>
 ): Promise<boolean> {
+  logger.info(`Using standardized batch update for task ${taskId} with ${Object.keys(formData).length} fields`);
+
   try {
-    logger.info(`Performing standardized KY3P bulk update for task ${taskId}`);
-    
-    // Prepare the data in the format expected by the batch-update endpoint
-    const preparedData: Record<string, any> = {};
-    let fieldCount = 0;
-    
-    for (const [fieldKey, value] of Object.entries(formData)) {
-      // Skip undefined or null values
-      if (value === undefined || value === null) continue;
-      
-      // Use the fieldKey directly - our fix on the server supports this format
-      preparedData[fieldKey] = value;
-      fieldCount++;
-    }
-    
-    // If no valid fields, return early
-    if (fieldCount === 0) {
-      logger.warn('No valid fields to update');
-      return true; // Still return success to avoid breaking the UI
-    }
-    
-    logger.info(`Sending ${fieldCount} fields to batch-update endpoint`);
-    
-    // Use the standardized batch-update endpoint
+    // Skip metadata fields (starting with _)
+    const cleanData = { ...formData };
+    Object.keys(cleanData).forEach(key => {
+      if (key.startsWith('_') || key === 'taskId') {
+        delete cleanData[key];
+      }
+    });
+
     const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(preparedData)
+      body: JSON.stringify({
+        responses: cleanData
+      }),
     });
-    
+
     if (!response.ok) {
-      logger.error(`Batch update failed: ${response.status}`);
+      const errorText = await response.text();
+      logger.error(`Standardized bulk update failed with status ${response.status}: ${errorText}`);
       
-      // If the standardized endpoint fails, attempt to use the special demo-autofill endpoint
-      if (fieldCount > 10) {
-        logger.info('Detected possible auto-fill operation, trying demo-autofill endpoint');
+      // Try the demo autofill endpoint as a fallback if we're likely in an autofill scenario
+      if (Object.keys(cleanData).length === 0 || 
+          (formData.responseValue === 'undefined' && formData.fieldIdRaw === 'bulk')) {
+        logger.info('Detected potential demo autofill request, redirecting to demo-autofill endpoint');
         
         const demoResponse = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          method: 'GET',
           credentials: 'include',
-          body: JSON.stringify({})
         });
         
         if (demoResponse.ok) {
-          logger.info('Demo auto-fill succeeded as fallback');
+          logger.info('Successfully used demo-autofill fallback');
           return true;
+        } else {
+          logger.error(`Demo autofill fallback failed: ${await demoResponse.text()}`);
         }
-        
-        logger.error(`Demo auto-fill fallback failed: ${demoResponse.status}`);
       }
       
       return false;
     }
-    
-    // Process successful response
-    const result = await response.json();
-    
-    logger.info(`Batch update succeeded with ${result.count || 0} fields updated`);
+
+    logger.info(`Successfully updated form data using standardized batch update for task ${taskId}`);
     return true;
   } catch (error) {
-    logger.error('Error performing standardized KY3P bulk update:', error);
+    logger.error('Error in standardized bulk update:', error);
     return false;
   }
 }
