@@ -5,9 +5,10 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { componentFactory } from '@/services/componentFactory';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { FormField, FormSection } from '@/services/formService';
+import { FormField, FormSection, FormServiceInterface } from '@/services/formService';
 import { useStandardizedServices } from '@/services/register-standardized-services';
 import { Loader2 } from 'lucide-react';
+import { KY3PFormServiceFixed } from '@/services/ky3p-form-service-fixed';
 
 const SAMPLE_TASK_ID = 654; // KY3P test task
 
@@ -45,19 +46,15 @@ export default function TestStandardizedServicePage() {
     setError(null);
     
     try {
-      // Get the form service for KY3P forms using the component factory
-      const serviceInstance = componentFactory.getFormService('ky3p');
-      console.log('[TestStandardizedService] Form service created:', serviceInstance);
-      
-      if (!serviceInstance) {
-        throw new Error('Form service could not be created');
-      }
-      
-      setFormService(serviceInstance);
+      // Create our own instance of the KY3PFormServiceFixed
+      const serviceInstance = new KY3PFormServiceFixed();
+      console.log('[TestStandardizedService] Form service created directly:', serviceInstance);
       
       // Set the task ID and initialize the form
       serviceInstance.setTaskId(testTaskId);
       await serviceInstance.initialize(10); // Generic template ID
+      
+      setFormService(serviceInstance);
       
       // Load the form fields and sections
       const fieldData = serviceInstance.getFields();
@@ -287,19 +284,19 @@ export default function TestStandardizedServicePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {fields.slice(0, 10).map((field) => (
                   <div 
-                    key={field.id} 
+                    key={field.key} 
                     className="border rounded-md p-3"
                   >
-                    <h4 className="font-medium">{field.label || field.displayName}</h4>
+                    <h4 className="font-medium">{field.label}</h4>
                     <p className="text-sm text-gray-500 mb-2">
-                      Key: {field.fieldKey || field.id}
+                      Key: {field.key}
                     </p>
                     <p className="text-sm mb-2">
-                      Current value: <span className="font-mono">{JSON.stringify(formData[field.fieldKey || field.id?.toString()])}</span>
+                      Current value: <span className="font-mono">{JSON.stringify(formData[field.key])}</span>
                     </p>
                     <button
                       onClick={() => handleSaveField(
-                        field.fieldKey || field.id?.toString(),
+                        field.key,
                         `Test value ${Math.floor(Math.random() * 1000)}`
                       )}
                       className="text-sm text-blue-600 hover:text-blue-800"
