@@ -315,6 +315,7 @@ export function registerRoutes(app: Express): Express {
   app.use(cardRouter);
   app.use(securityRouter);
   app.use(ky3pRouter);
+  app.use(ky3pClearRouter);
   app.use(ky3pDemoAutofillRouter);
   app.use(openBankingDemoAutofillRouter);
   // Register the universal demo auto-fill router
