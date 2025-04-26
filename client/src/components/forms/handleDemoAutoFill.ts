@@ -80,27 +80,73 @@ export async function handleDemoAutoFill({
           // First clear any cached data in the form service
           formService.clearCache?.();
           
-          // Reload responses directly from the database
-          if (formService.loadResponses) {
-            logger.info('Explicitly calling loadResponses() to get fresh data');
-            try {
-              const freshData = await formService.loadResponses();
-              logger.info('Fresh form data loaded from database', { 
-                fieldCount: Object.keys(freshData || {}).length,
-                sampleKeys: Object.keys(freshData || {}).slice(0, 3)
-              });
-              resetForm(freshData);
-            } catch (loadError) {
-              logger.error('Error loading responses after demo auto-fill:', loadError);
-            }
-          } else {
-            // Fallback to getFormData() if loadResponses isn't available
-            logger.info('loadResponses not available, using getFormData');
-            const refreshedData = await formService.getFormData();
-            logger.info('Form data refreshed via getFormData', { 
-              fieldCount: Object.keys(refreshedData || {}).length 
+          try {
+            // For KY3P forms, make a direct API call to get fresh data 
+            // This bypasses any caching issues in the form service
+            logger.info('Making direct API call to get fresh KY3P form data');
+            
+            // Use the progress endpoint which converts responses to field_key format
+            const response = await fetch(`/api/ky3p/progress/${taskId}`, {
+              credentials: 'include'
             });
-            resetForm(refreshedData);
+            
+            if (!response.ok) {
+              throw new Error(`Failed to get fresh KY3P data: ${response.status} ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.formData) {
+              logger.info('Fresh KY3P form data loaded with direct API call', { 
+                fieldCount: Object.keys(result.formData || {}).length,
+                sampleKeys: Object.keys(result.formData || {}).slice(0, 3)
+              });
+              
+              // This is the key step - directly updating the form with fresh data
+              resetForm(result.formData);
+              
+              // Force re-render at this point
+              setForceRerender((prev: boolean) => !prev);
+              
+              // Also try regular form service methods as a backup
+              if (formService.loadResponses) {
+                // This might not work for KY3P, but let's try anyway
+                formService.loadResponses().catch(e => 
+                  logger.warn('Secondary loadResponses failed, but we already have data:', e)
+                );
+              }
+              
+              // Success - no need to continue to fallback options
+              logger.info('Direct KY3P data refresh successful');
+            } else {
+              throw new Error('KY3P progress API returned no form data');
+            }
+          } catch (directApiError) {
+            logger.error('Direct API call for KY3P form data failed:', directApiError);
+            
+            // Fall back to standard methods
+            // Reload responses directly from the database
+            if (formService.loadResponses) {
+              logger.info('Falling back to loadResponses() after direct API call failed');
+              try {
+                const freshData = await formService.loadResponses();
+                logger.info('Fresh form data loaded from database via loadResponses()', { 
+                  fieldCount: Object.keys(freshData || {}).length,
+                  sampleKeys: Object.keys(freshData || {}).slice(0, 3)
+                });
+                resetForm(freshData);
+              } catch (loadError) {
+                logger.error('Error loading responses after demo auto-fill:', loadError);
+              }
+            } else {
+              // Last resort fallback to getFormData()
+              logger.info('All other methods failed, using getFormData');
+              const refreshedData = await formService.getFormData();
+              logger.info('Form data refreshed via getFormData', { 
+                fieldCount: Object.keys(refreshedData || {}).length 
+              });
+              resetForm(refreshedData);
+            }
           }
         }
         
