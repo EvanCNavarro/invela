@@ -42,7 +42,8 @@ export async function handleSpecialBulkCase(
       
       if (!taskId) {
         logger.error('[KY3P Bulk Fix] No task ID provided');
-        return res.status(400).json({ message: 'No task ID provided' });
+        res.status(400).json({ message: 'No task ID provided' });
+        return true; // We handled this case, even though it's an error
       }
       
       // Redirect to the demo-autofill endpoint instead
@@ -60,31 +61,35 @@ export async function handleSpecialBulkCase(
       
       if (!result.ok) {
         logger.error(`[KY3P Bulk Fix] Demo auto-fill failed: ${result.status}`);
-        return res.status(result.status).json({ 
+        res.status(result.status).json({ 
           message: `Demo auto-fill failed: ${result.status}`,
           redirected: true
         });
+        return true; // We handled this case, even though the demo auto-fill failed
       }
       
       const demoResult = await result.json();
       
       // Return success with the demo auto-fill result
-      return res.status(200).json({
+      res.status(200).json({
         success: true,
         message: 'Successfully applied demo data via auto-fill endpoint',
         fieldsPopulated: demoResult.fieldsPopulated || 0,
         redirected: true
       });
+      
+      // Indicate that we handled this special case
+      return true;
     } catch (error) {
       logger.error('[KY3P Bulk Fix] Error handling special bulk case:', error);
-      return res.status(500).json({ 
+      res.status(500).json({ 
         message: 'Error processing special bulk case',
         error: error instanceof Error ? error.message : String(error)
       });
+      
+      // We still handled this case, even though there was an error
+      return true;
     }
-    
-    // Indicate that we handled this special case
-    return true;
   }
   
   // This is not the special case, so return false to let normal processing continue

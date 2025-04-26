@@ -1347,9 +1347,29 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
-      // Use the standardized batch-update endpoint with string field keys
-      logger.info(`[KY3P Form Service] Using standardized batch-update endpoint for task ${effectiveTaskId}`);
+      // Import our standardized update utility to handle the update
       try {
+        // Dynamic import to avoid circular dependencies
+        const { standardizedBulkUpdate } = await import('@/components/forms/standardized-ky3p-update');
+        
+        // Use the standardized utility to handle the update
+        logger.info(`[KY3P Form Service] Using standardized update utility for task ${effectiveTaskId}`);
+        
+        const result = await standardizedBulkUpdate(effectiveTaskId, cleanData);
+        if (result) {
+          logger.info(`[KY3P Form Service] Successfully updated form using standardized update utility`);
+          return true;
+        }
+        
+        // If the standardized utility fails, fall back to the old method
+        logger.warn(`[KY3P Form Service] Standardized update failed, falling back to legacy batch update endpoint`);
+      } catch (importError) {
+        logger.error(`[KY3P Form Service] Error importing standardized update utility:`, importError);
+      }
+      
+      // Legacy fallback: Use the batch-update endpoint
+      try {
+        logger.info(`[KY3P Form Service] Using batch-update endpoint for task ${effectiveTaskId}`);
         const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
           method: 'POST',
           headers: {
@@ -1362,7 +1382,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         });
         
         if (batchResponse.ok) {
-          logger.info(`[KY3P Form Service] Successfully updated form using standardized batch-update endpoint`);
+          logger.info(`[KY3P Form Service] Successfully updated form using batch-update endpoint`);
           return true;
         }
         
