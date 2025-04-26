@@ -69,11 +69,24 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
   }
 
   private async fetchFields(): Promise<KY3PField[]> {
-    const response = await fetch('/api/ky3p/fields');
+    // Use the correct endpoint that matches the original service
+    const response = await fetch('/api/ky3p-fields', {
+      credentials: 'include' // Include session cookies
+    });
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch KY3P fields: ${response.status}`);
+      const errorText = await response.text();
+      logger.error('Failed to fetch KY3P fields:', { 
+        status: response.status, 
+        statusText: response.statusText,
+        responseBody: errorText
+      });
+      throw new Error(`Failed to fetch KY3P fields: ${response.status} - ${errorText}`);
     }
-    return await response.json();
+    
+    const fields = await response.json();
+    logger.info(`Successfully loaded ${fields.length} KY3P fields`);
+    return fields;
   }
 
   private transformFields(ky3pFields: KY3PField[]): FormField[] {
@@ -164,11 +177,13 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
     try {
       this.saveInProgress = true;
       
-      const response = await fetch(`/api/ky3p/responses/${taskId}`, {
+      // Use the correct API endpoint that matches the original service
+      const response = await fetch(`/api/tasks/${taskId}/ky3p-response`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include session cookies
         body: JSON.stringify({
           fieldIdRaw: fieldKey,
           responseValue: value,
@@ -177,10 +192,16 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
       });
       
       if (!response.ok) {
-        logger.error(`Failed to save field ${fieldKey}: ${await response.text()}`);
+        const errorText = await response.text();
+        logger.error(`Failed to save field ${fieldKey}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseBody: errorText
+        });
         return false;
       }
       
+      logger.info(`Successfully saved field ${fieldKey} for task ${taskId}`);
       return true;
     } catch (error) {
       logger.error(`Error saving field ${fieldKey}:`, error);
@@ -244,14 +265,39 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
 
   public async loadProgress(taskId: number): Promise<FormData> {
     try {
-      const response = await fetch(`/api/ky3p/responses/${taskId}`);
+      // Use the correct API endpoint that matches the original service
+      const response = await fetch(`/api/tasks/${taskId}/ky3p-responses`, {
+        credentials: 'include' // Include session cookies
+      });
       
       if (!response.ok) {
-        throw new Error(`Failed to load progress: ${response.status}`);
+        const errorText = await response.text();
+        logger.error(`Failed to load progress for task ${taskId}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Failed to load progress: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
-      this.formData = data || {};
+      
+      // Transform the response to match the expected format
+      const formattedData: FormData = {};
+      
+      // Handle both array format and direct object format
+      if (Array.isArray(data)) {
+        data.forEach(response => {
+          if (response.field_key) {
+            formattedData[response.field_key] = response.response_value;
+          }
+        });
+      } else if (typeof data === 'object' && data !== null) {
+        // If already in key-value format, use directly
+        Object.assign(formattedData, data);
+      }
+      
+      this.formData = formattedData;
       
       logger.info(`Loaded progress for task ${taskId} with ${Object.keys(this.formData).length} fields`);
       return { ...this.formData };
@@ -288,16 +334,23 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
       // First save all progress
       await this.saveProgress(taskId);
       
-      // Then submit the form
-      const response = await fetch(`/api/ky3p/submit/${taskId}`, {
+      // Then submit the form - use the correct API endpoint that matches the original service
+      const response = await fetch(`/api/tasks/${taskId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include session cookies
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to submit form: ${response.status}`);
+        const errorText = await response.text();
+        logger.error(`Failed to submit form for task ${taskId}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Failed to submit form: ${response.status} - ${errorText}`);
       }
       
       const result = await response.json();
@@ -352,10 +405,19 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
         throw new Error('No task ID set');
       }
       
-      const response = await fetch(`/api/ky3p/demo-autofill/${effectiveTaskId}`);
+      // Use the correct API endpoint that matches the original service
+      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-demo-autofill`, {
+        credentials: 'include' // Include session cookies
+      });
       
       if (!response.ok) {
-        throw new Error(`Failed to get KY3P demo data: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        logger.error(`Failed to get KY3P demo data for task ${effectiveTaskId}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Failed to get KY3P demo data: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
