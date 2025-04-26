@@ -29,7 +29,7 @@ import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import filesRouter from './routes/files';
 import kybClearRouter from './routes/kyb-clear';
 import openBankingClearRouter from './routes/open-banking-clear';
-import ky3pBatchUpdateRouter from './routes/ky3p-batch-update';
+import ky3pBatchUpdateRouter from './routes/ky3p-batch-update-fixed';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
 import { registerOpenBankingRoutes } from './routes/open-banking';
