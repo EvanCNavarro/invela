@@ -1,54 +1,57 @@
 /**
  * Direct KY3P Clear Function
  * 
- * This is a specialized function to clear KY3P forms by directly calling
- * the KY3P clear endpoint we created, bypassing the form service's bulk update
- * which is causing the "Invalid field ID format" error.
+ * This file provides a direct approach to clear KY3P tasks by directly
+ * calling the server's transaction-based endpoint.
+ * 
+ * This bypasses the problematic bulk update API that was causing
+ * "Invalid field ID format" errors.
  */
 
-import { toast } from "@/hooks/use-toast";
+// Simple console logger for direct KY3P clear operations
+const logger = {
+  info: (message: string, ...args: any[]) => console.log(`%c${message}`, 'color: #2196F3', ...args),
+  error: (message: string, ...args: any[]) => console.error(`%c${message}`, 'color: #F44336', ...args),
+  warn: (message: string, ...args: any[]) => console.warn(`%c${message}`, 'color: #FF9800', ...args),
+};
 
 /**
- * Clear all KY3P responses for a task and reset task status to "not_started"
+ * Directly clear a KY3P task using the transaction-based server endpoint
  * 
- * @param taskId The KY3P task ID to clear
- * @returns A promise that resolves to the API response
+ * @param taskId The task ID to clear
+ * @returns Result of the clearing operation
  */
-export async function directClearKy3pTask(taskId: number): Promise<{ success: boolean, message: string }> {
-  console.log(`[DirectKY3PClear] Clearing KY3P task ${taskId}`);
-  
+export async function directClearKy3pTask(taskId: number): Promise<{
+  success: boolean;
+  message: string;
+  taskId: number;
+}> {
   try {
-    // Call our fixed /api/ky3p/clear/:taskId endpoint directly
+    logger.info(`[DirectKY3PClear] Starting clear operation for task ${taskId}`);
+    
+    // Call the dedicated server endpoint that uses a transaction to 
+    // properly delete responses and reset task status
     const response = await fetch(`/api/ky3p/clear/${taskId}`, {
       method: 'POST',
-      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[DirectKY3PClear] API error: ${response.status}`, errorText);
-      throw new Error(`Failed to clear KY3P task: ${response.status} - ${errorText}`);
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(`Server error: ${errorData.message || response.statusText}`);
     }
     
     const result = await response.json();
-    console.log('[DirectKY3PClear] Successfully cleared KY3P task:', result);
     
-    // Return the API response
+    logger.info(`[DirectKY3PClear] Successfully cleared task ${taskId}:`, result);
+    
     return result;
   } catch (error) {
-    console.error('[DirectKY3PClear] Error clearing KY3P task:', error);
+    logger.error(`[DirectKY3PClear] Error clearing task ${taskId}:`, error);
     
-    // Show error toast
-    toast({
-      title: "Error clearing KY3P task",
-      description: error.message || "An unexpected error occurred while clearing the KY3P task",
-      variant: "destructive"
-    });
-    
-    // Rethrow the error to be handled by the caller
+    // Re-throw to let caller handle it
     throw error;
   }
 }
