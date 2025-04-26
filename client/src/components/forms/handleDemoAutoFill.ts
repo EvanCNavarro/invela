@@ -1,9 +1,14 @@
-import { FormServiceInterface } from '@/services/formService';
-import getLogger from '@/utils/logger';
-import { toast } from '@/hooks/use-toast';
-import { standardizedBulkUpdate } from './standardized-ky3p-update';
+/**
+ * Enhanced Demo Auto-Fill Handler
+ * 
+ * This module provides a standardized approach to demo auto-fill functionality
+ * that works across different form types (KYB, KY3P, and Open Banking).
+ */
 
-const logger = getLogger('handleDemoAutoFill');
+import type { FormServiceInterface } from '@/services/formService';
+import getLogger from '@/utils/logger';
+
+const logger = getLogger('DemoAutoFill');
 
 interface DemoAutoFillOptions {
   taskId?: number;
@@ -21,11 +26,10 @@ interface DemoAutoFillOptions {
 /**
  * Universal demo auto-fill handler that works for all form types
  * 
- * This function uses a direct database update approach instead of API calls
- * to populate form fields with demo data.
+ * This function uses the standardized approach with string-based field keys
+ * that is consistent across KYB, KY3P, and Open Banking.
  * 
- * For KY3P forms, it now uses the standardized approach with string-based field keys
- * that matches KYB's implementation.
+ * @param options Configuration options for the demo auto-fill
  */
 export async function handleDemoAutoFill({
   taskId,
@@ -39,539 +43,119 @@ export async function handleDemoAutoFill({
   formService,
   setForceRerender
 }: DemoAutoFillOptions): Promise<void> {
-  if (!taskId || !formService) {
-    toast({
-      title: 'Demo Auto-Fill Error',
-      description: 'Could not auto-fill the form. Missing task ID or form service.',
-      variant: 'destructive',
-    });
+  if (!formService) {
+    logger.error('No form service provided for demo auto-fill');
     return;
   }
 
-  // Define the toast ID outside the try block so it's accessible in the catch block too
-  const toastId = 'demo-autofill-loading';
+  if (!taskId) {
+    logger.error('No task ID provided for demo auto-fill');
+    return;
+  }
+
+  logger.info(`Starting demo auto-fill for ${taskType} task ${taskId}`);
   
   try {
-    logger.info(`Starting demo auto-fill for task ${taskId}`);
-    
-    // Show initial loading toast
-    toast({
-      id: toastId,
-      title: 'Demo Auto-Fill',
-      description: 'Loading demo data...',
-      variant: 'default',
-    });
-
-    // Normalize the task type for consistent comparison
-    const normalizedType = taskType.toLowerCase();
-
-    // Special handling for KY3P forms using the standardized approach with POST method
-    if (normalizedType === 'ky3p' || normalizedType === 'sp_ky3p_assessment' || 
-        normalizedType === 'security_assessment' || normalizedType === 'security') {
-      
-      logger.info(`Using standardized KY3P demo auto-fill for task type: ${taskType}`);
-      
+    // For KY3P forms, use our standardized bulk update approach
+    if (taskType === 'ky3p') {
       try {
-        // Use the new improved demo auto-fill endpoint
-        const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({}),
-        });
+        // Import the standardized bulk update utility
+        const { standardizedBulkUpdate } = await import('./standardized-ky3p-update');
         
-        if (!response.ok) {
-          // If the demo auto-fill endpoint failed, show an error
-          let errorMessage = `KY3P demo auto-fill failed: ${response.status}`;
-          try {
-            if (typeof response.text === 'function') {
-              errorMessage += ` - ${await response.text()}`;
-            }
-          } catch (e) {
-            logger.error('Could not extract error details:', e);
-          }
-          
-          toast({
-            id: toastId,
-            title: 'Demo Auto-Fill Failed',
-            description: errorMessage,
-            variant: 'destructive',
-          });
-          return;
-        }
+        // Fetch the demo data 
+        logger.info(`Fetching KY3P demo data from service for task ${taskId}`);
+        const demoData = await formService.getDemoData(taskId);
         
-        // If the demo auto-fill was successful, refresh the form data
-        if (formService) {
-          logger.info('Forcing reload of form data from database after demo auto-fill');
-          
-          // First clear any cached data in the form service
-          formService.clearCache?.();
-          
-          try {
-            // For KY3P forms, make a direct API call to get fresh data 
-            // This bypasses any caching issues in the form service
-            logger.info('Making direct API call to get fresh KY3P form data');
-            
-            // Use the progress endpoint which converts responses to field_key format
-            const progressResponse = await fetch(`/api/ky3p/progress/${taskId}`, {
-              credentials: 'include'
-            });
-            
-            if (!progressResponse.ok) {
-              throw new Error(`Failed to get fresh KY3P data: ${progressResponse.status} ${progressResponse.statusText}`);
-            }
-            
-            const result = await progressResponse.json();
-            
-            if (result.formData) {
-              logger.info('Fresh KY3P form data loaded with direct API call', { 
-                fieldCount: Object.keys(result.formData || {}).length,
-                sampleKeys: Object.keys(result.formData || {}).slice(0, 3)
-              });
-              
-              // This is the key step - directly updating the form with fresh data
-              resetForm(result.formData);
-              
-              // Force re-render at this point
-              setForceRerender((prev: boolean) => !prev);
-              
-              // Also try regular form service methods as a backup
-              if (formService.loadResponses) {
-                // This might not work for KY3P, but let's try anyway
-                formService.loadResponses().catch(e => 
-                  logger.warn('Secondary loadResponses failed, but we already have data:', e)
-                );
-              }
-              
-              // Success - no need to continue to fallback options
-              logger.info('Direct KY3P data refresh successful');
-              
-              // Force a re-render
-              setForceRerender((prev: boolean) => !prev);
-              
-              // Update progress if needed
-              if (onProgress) {
-                await refreshStatus();
-              }
-              
-              // Show success message
-              toast({
-                id: toastId,
-                title: 'Demo Auto-Fill Complete',
-                description: 'Successfully filled the form with demo data.',
-                variant: 'success',
-              });
-              
-              return;
-            } else {
-              throw new Error('KY3P progress API returned no form data');
-            }
-          } catch (directApiError) {
-            logger.error('Direct API call for KY3P form data failed:', directApiError);
-            
-            // Fall back to standard methods
-            // Reload responses directly from the database
-            if (formService.loadResponses) {
-              logger.info('Falling back to loadResponses() after direct API call failed');
-              try {
-                const freshData = await formService.loadResponses();
-                logger.info('Fresh form data loaded from database via loadResponses()', { 
-                  fieldCount: Object.keys(freshData || {}).length,
-                  sampleKeys: Object.keys(freshData || {}).slice(0, 3)
-                });
-                resetForm(freshData);
-                
-                // Show success message - we were able to get data even if not through the preferred method
-                toast({
-                  id: toastId,
-                  title: 'Demo Auto-Fill Complete',
-                  description: 'Successfully filled the form with demo data.',
-                  variant: 'success',
-                });
-                return;
-              } catch (loadError) {
-                logger.error('Error loading responses after demo auto-fill:', loadError);
-              }
-            } else {
-              // Last resort fallback to getFormData()
-              logger.info('All other methods failed, using getFormData');
-              const refreshedData = await formService.getFormData();
-              logger.info('Form data refreshed via getFormData', { 
-                fieldCount: Object.keys(refreshedData || {}).length 
-              });
-              resetForm(refreshedData);
-              
-              // Show success message since we were able to get something
-              toast({
-                id: toastId,
-                title: 'Demo Auto-Fill Complete',
-                description: 'Successfully filled the form with demo data.',
-                variant: 'success',
-              });
-              return;
-            }
-          }
-        }
+        // Use the standardized bulk update to send all the data at once
+        logger.info(`Using standardized bulk update for KY3P demo data with ${Object.keys(demoData).length} fields`);
+        const success = await standardizedBulkUpdate(taskId, demoData);
         
-        // If we get here without returning, something went wrong
-        toast({
-          id: toastId,
-          title: 'Demo Auto-Fill Warning',
-          description: 'Demo auto-fill may have completed but form refresh failed.',
-          variant: 'default',
-        });
-      } catch (error) {
-        // If the KY3P demo auto-fill failed, show an error
-        logger.error('KY3P demo auto-fill error:', error);
-        toast({
-          id: toastId,
-          title: 'Demo Auto-Fill Failed',
-          description: error instanceof Error ? error.message : 'Unknown error during KY3P demo auto-fill',
-          variant: 'destructive',
-        });
-      }
-      
-      return;
-    }
-    
-    // Special handling for Open Banking forms using the standardized approach
-    if (normalizedType === 'open_banking' || normalizedType === 'open_banking_survey') {
-      
-      logger.info(`Using Open Banking demo auto-fill for task type: ${taskType}`);
-      
-      // Call the demo-autofill endpoint
-      const openBankingResponse = await fetch(`/api/open-banking/demo-autofill/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({}),
-      });
-      
-      if (!openBankingResponse.ok) {
-        toast({
-          id: toastId,
-          title: 'Demo Auto-Fill Failed',
-          description: `Open Banking demo auto-fill failed: ${openBankingResponse.status} ${openBankingResponse.statusText}`,
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      const result = await openBankingResponse.json();
-      
-      if (result.success) {
-        // If the update was successful, force reload the form data from the database
-        if (formService) {
-          logger.info('Forcing reload of form data from database after Open Banking demo auto-fill');
+        if (success) {
+          logger.info('KY3P demo data successfully applied');
           
-          // First clear any cached data in the form service
-          formService.clearCache?.();
+          // Reset the form with the demo data
+          resetForm(demoData);
           
-          try {
-            // Make a direct API call to get fresh data
-            logger.info('Making direct API call to get fresh Open Banking form data');
-            
-            // Use the progress endpoint which returns data in field_key format
-            const response = await fetch(`/api/open-banking/progress/${taskId}`, {
-              credentials: 'include'
-            });
-            
-            if (!response.ok) {
-              throw new Error(`Failed to get fresh Open Banking data: ${response.status} ${response.statusText}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.formData) {
-              logger.info('Fresh Open Banking form data loaded with direct API call', { 
-                fieldCount: Object.keys(result.formData || {}).length,
-                sampleKeys: Object.keys(result.formData || {}).slice(0, 3)
-              });
-              
-              // This is the key step - directly updating the form with fresh data
-              resetForm(result.formData);
-              
-              // Force re-render at this point
-              setForceRerender((prev: boolean) => !prev);
-              
-              // Also try regular form service methods as a backup
-              if (formService.loadResponses) {
-                formService.loadResponses().catch(e => 
-                  logger.warn('Secondary loadResponses failed, but we already have data:', e)
-                );
-              }
-              
-              // Success - no need to continue to fallback options
-              logger.info('Direct Open Banking data refresh successful');
-            } else {
-              throw new Error('Open Banking progress API returned no form data');
-            }
-          } catch (directApiError) {
-            logger.error('Direct API call for Open Banking form data failed:', directApiError);
-            
-            // Fall back to standard methods
-            // Reload responses directly from the database
-            if (formService.loadResponses) {
-              logger.info('Falling back to loadResponses() after direct API call failed');
-              try {
-                const freshData = await formService.loadResponses();
-                logger.info('Fresh form data loaded from database via loadResponses()', { 
-                  fieldCount: Object.keys(freshData || {}).length,
-                  sampleKeys: Object.keys(freshData || {}).slice(0, 3)
-                });
-                resetForm(freshData);
-              } catch (loadError) {
-                logger.error('Error loading responses after demo auto-fill:', loadError);
-              }
-            } else {
-              // Last resort fallback to getFormData()
-              logger.info('All other methods failed, using getFormData');
-              const refreshedData = await formService.getFormData();
-              logger.info('Form data refreshed via getFormData', { 
-                fieldCount: Object.keys(refreshedData || {}).length 
-              });
-              resetForm(refreshedData);
-            }
-          }
-        }
-        
-        // Force a re-render
-        setForceRerender((prev: boolean) => !prev);
-        
-        // Update progress if needed
-        if (onProgress) {
+          // Force a re-render to show the updated form
+          setForceRerender(prev => !prev);
+          
+          // Refresh the status to update progress
           await refreshStatus();
+          
+          return;
+        } else {
+          logger.error('Failed to apply KY3P demo data using standardized bulk update');
         }
-        
-        // Show success message
-        toast({
-          id: toastId,
-          title: 'Demo Auto-Fill Complete',
-          description: 'Successfully filled the form with demo data.',
-          variant: 'success',
-        });
-        
-        return;
-      } else {
-        // If the Open Banking demo auto-fill failed, show an error
-        toast({
-          id: toastId,
-          title: 'Demo Auto-Fill Failed',
-          description: result.message || 'Could not auto-fill the Open Banking form.',
-          variant: 'destructive',
-        });
-        return;
+      } catch (error) {
+        logger.error('Error using standardized KY3P update:', error);
       }
     }
     
-    // For other form types (KYB), continue with the original implementation
+    // Generic approach for all form types as fallback
+    logger.info(`Using generic approach for ${taskType} demo auto-fill`);
     
-    // Get all field definitions with demo values from local data
-    const fieldsResponse = await getFormFieldsWithDemoValues(taskType);
-    
-    if (!fieldsResponse.success) {
-      toast({
-        id: toastId,
-        title: 'Demo Auto-Fill Failed',
-        description: fieldsResponse.message || 'Failed to load demo field values',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    logger.info(`Retrieved ${fieldsResponse.fields.length} fields with demo values`);
-    
-    // Apply demo values directly to form
-    let appliedCount = 0;
-    
-    // Batch updates for better performance
-    const updatePromises = [];
-    
-    for (const field of fieldsResponse.fields) {
-      if (field.demoValue !== null && field.demoValue !== undefined) {
-        updatePromises.push(updateField(field.fieldKey, field.demoValue));
-        appliedCount++;
+    try {
+      // Get the demo data from the form service
+      const demoData = await formService.getDemoData(taskId);
+      
+      if (!demoData || Object.keys(demoData).length === 0) {
+        logger.error('No demo data returned from service');
+        return;
       }
-    }
-    
-    // Process all updates
-    if (updatePromises.length > 0) {
-      // Perform updates without any loading toast
-      await Promise.all(updatePromises);
       
-      logger.info(`Applied ${appliedCount} demo values to form fields`);
+      logger.info(`Retrieved ${Object.keys(demoData).length} demo fields for ${taskType}`);
       
-      // Save all changes
+      // Reset form with demo data
+      resetForm(demoData);
+      
+      // Call save progress to persist to server
       await saveProgress();
       
-      // Give database a moment to catch up
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Refresh form data to ensure consistency
-      if (formService) {
-        logger.info('Refreshing form data from service');
-        const refreshedData = await formService.getFormData();
-        logger.info('Form data refreshed', { fieldCount: Object.keys(refreshedData || {}).length });
-        resetForm(refreshedData);
+      // For non-KY3P forms, we might need to do individual field updates
+      // This is a fallback approach
+      if (taskType !== 'ky3p') {
+        const totalFields = Object.keys(demoData).length;
+        let processedFields = 0;
+        
+        // Process fields in batches to avoid overwhelming the server
+        const fieldEntries = Object.entries(demoData);
+        const batchSize = 10;
+        
+        for (let i = 0; i < fieldEntries.length; i += batchSize) {
+          const batch = fieldEntries.slice(i, i + batchSize);
+          
+          // Process batch in parallel
+          await Promise.all(
+            batch.map(async ([key, value]) => {
+              try {
+                await updateField(key, value);
+                processedFields++;
+                
+                // Report progress
+                if (onProgress) {
+                  onProgress(Math.round((processedFields / totalFields) * 100));
+                }
+              } catch (fieldError) {
+                logger.error(`Error updating field ${key}:`, fieldError);
+              }
+            })
+          );
+          
+          // Small delay between batches
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
       }
       
-      // Force a re-render to update the UI
-      setForceRerender((prev: boolean) => !prev);
+      // Force a re-render to show the updated form
+      setForceRerender(prev => !prev);
       
-      // Update progress if needed
-      if (onProgress) {
-        await refreshStatus();
-      }
+      // Refresh the status to update progress
+      await refreshStatus();
       
-      // Show success message - replace the loading toast with the success toast
-      toast({
-        id: toastId,
-        title: 'Demo Auto-Fill Complete',
-        description: `Successfully filled ${appliedCount} form fields with sample data.`,
-        variant: 'success',
-      });
-    } else {
-      toast({
-        title: 'Demo Auto-Fill Notice',
-        description: 'No demo values found for this form type.',
-        variant: 'default',
-      });
+    } catch (error) {
+      logger.error(`Error in demo auto-fill for ${taskType}:`, error);
     }
   } catch (error) {
-    logger.error('Error during demo auto-fill:', error);
-    toast({
-      id: toastId,
-      title: 'Auto-Fill Error',
-      description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      variant: 'destructive',
-    });
-  }
-}
-
-/**
- * Get field definitions with demo values for the specified form type
- * This bypasses the server authentication by getting demo values directly from the form type
- */
-async function getFormFieldsWithDemoValues(formType: string): Promise<{ 
-  success: boolean, 
-  fields: Array<{ fieldKey: string, demoValue: any }>,
-  message?: string 
-}> {
-  try {
-    // Map form types to field lists with demo values
-    const demoFieldsByType: Record<string, Array<{ fieldKey: string, demoValue: any }>> = {
-      'kyb': [
-        { fieldKey: 'legalEntityName', demoValue: 'Demo Corporation' },
-        { fieldKey: 'registrationNumber', demoValue: '12-3456789' },
-        { fieldKey: 'incorporationDate', demoValue: '2020-01-15' },
-        { fieldKey: 'businessType', demoValue: 'Limited Liability Company (LLC)' },
-        { fieldKey: 'jurisdiction', demoValue: 'Delaware, United States' },
-        { fieldKey: 'registeredAddress', demoValue: '123 Market Street, Wilmington, DE 19801' },
-        { fieldKey: 'companyPhone', demoValue: '(302) 555-1234' },
-        { fieldKey: 'priorNames', demoValue: 'None' },
-        { fieldKey: 'goodStanding', demoValue: 'Yes' },
-        { fieldKey: 'externalAudit', demoValue: 'No' },
-        { fieldKey: 'ultimateBeneficialOwners', demoValue: 'John Smith (65%), Jane Doe (35%)' },
-        { fieldKey: 'licenses', demoValue: 'Money Transmitter License #MT-12345, Financial Data Provider License #FDP-98765' },
-        { fieldKey: 'corporateRegistration', demoValue: 'Current and valid' },
-        { fieldKey: 'authorizedSigners', demoValue: 'John Smith (CEO), Jane Doe (CFO)' },
-        { fieldKey: 'governmentOwnership', demoValue: 'No' },
-        { fieldKey: 'contactEmail', demoValue: 'contact@democorp.com' },
-        { fieldKey: 'marketCapitalization', demoValue: '$25,000,000' },
-        { fieldKey: 'lifetimeCustomerValue', demoValue: '$4,500' },
-        { fieldKey: 'annualRecurringRevenue', demoValue: '$8,500,000' },
-        { fieldKey: 'revenueGrowthRate', demoValue: '18%' },
-        { fieldKey: 'investigationsIncidents', demoValue: 'None in the past 5 years' },
-        { fieldKey: 'financialStatements', demoValue: 'Audited annually by Big 4 accounting firm' },
-        { fieldKey: 'operationalPolicies', demoValue: 'Comprehensive policies with annual review cycle' },
-        { fieldKey: 'dataVolume', demoValue: 'Approximately 5TB of customer data processed monthly' },
-        { fieldKey: 'dataTypes', demoValue: 'Financial transactions, PII, account information' },
-        { fieldKey: 'sanctionsCheck', demoValue: 'Regular screening against OFAC and other global sanctions lists' },
-        { fieldKey: 'dueDiligence', demoValue: 'Enhanced due diligence for high-risk transactions' },
-        { fieldKey: 'regulatoryActions', demoValue: 'No regulatory actions or material findings in past 3 years' },
-        { fieldKey: 'directorsAndOfficers', demoValue: 'Board of 5 directors with majority independent members' },
-        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' },
-        { fieldKey: 'controlEnvironment', demoValue: 'Strong controls with quarterly assessments and documented procedures' }
-      ],
-      'company_kyb': [
-        { fieldKey: 'legalEntityName', demoValue: 'Demo Corporation' },
-        { fieldKey: 'registrationNumber', demoValue: '12-3456789' },
-        { fieldKey: 'incorporationDate', demoValue: '2020-01-15' },
-        { fieldKey: 'businessType', demoValue: 'Limited Liability Company (LLC)' },
-        { fieldKey: 'jurisdiction', demoValue: 'Delaware, United States' },
-        { fieldKey: 'registeredAddress', demoValue: '123 Market Street, Wilmington, DE 19801' },
-        { fieldKey: 'companyPhone', demoValue: '(302) 555-1234' },
-        { fieldKey: 'priorNames', demoValue: 'None' },
-        { fieldKey: 'goodStanding', demoValue: 'Yes' },
-        { fieldKey: 'externalAudit', demoValue: 'No' },
-        { fieldKey: 'ultimateBeneficialOwners', demoValue: 'John Smith (65%), Jane Doe (35%)' },
-        { fieldKey: 'licenses', demoValue: 'Money Transmitter License #MT-12345, Financial Data Provider License #FDP-98765' },
-        { fieldKey: 'corporateRegistration', demoValue: 'Current and valid' },
-        { fieldKey: 'authorizedSigners', demoValue: 'John Smith (CEO), Jane Doe (CFO)' },
-        { fieldKey: 'governmentOwnership', demoValue: 'No' },
-        { fieldKey: 'contactEmail', demoValue: 'contact@democorp.com' },
-        { fieldKey: 'marketCapitalization', demoValue: '$25,000,000' },
-        { fieldKey: 'lifetimeCustomerValue', demoValue: '$4,500' },
-        { fieldKey: 'annualRecurringRevenue', demoValue: '$8,500,000' },
-        { fieldKey: 'revenueGrowthRate', demoValue: '18%' },
-        { fieldKey: 'investigationsIncidents', demoValue: 'None in the past 5 years' },
-        { fieldKey: 'financialStatements', demoValue: 'Audited annually by Big 4 accounting firm' },
-        { fieldKey: 'operationalPolicies', demoValue: 'Comprehensive policies with annual review cycle' },
-        { fieldKey: 'dataVolume', demoValue: 'Approximately 5TB of customer data processed monthly' },
-        { fieldKey: 'dataTypes', demoValue: 'Financial transactions, PII, account information' },
-        { fieldKey: 'sanctionsCheck', demoValue: 'Regular screening against OFAC and other global sanctions lists' },
-        { fieldKey: 'dueDiligence', demoValue: 'Enhanced due diligence for high-risk transactions' },
-        { fieldKey: 'regulatoryActions', demoValue: 'No regulatory actions or material findings in past 3 years' },
-        { fieldKey: 'directorsAndOfficers', demoValue: 'Board of 5 directors with majority independent members' },
-        { fieldKey: 'monthlyRecurringRevenue', demoValue: '$750,000' },
-        { fieldKey: 'controlEnvironment', demoValue: 'Strong controls with quarterly assessments and documented procedures' }
-      ],
-      'open_banking': [
-        { fieldKey: 'apiStandards', demoValue: 'Fully compliant with FDX API 5.0 standards' },
-        { fieldKey: 'apiSecurity', demoValue: 'OAuth 2.0 with mTLS for all API endpoints' },
-        { fieldKey: 'customerConsent', demoValue: 'Granular consent management with transparent data usage policies' },
-        { fieldKey: 'openBankingCertifications', demoValue: 'FDX Certified, Open Banking Implementation Entity (OBIE) verified' }
-      ],
-      'open_banking_survey': [
-        { fieldKey: 'apiStandards', demoValue: 'Fully compliant with FDX API 5.0 standards' },
-        { fieldKey: 'apiSecurity', demoValue: 'OAuth 2.0 with mTLS for all API endpoints' },
-        { fieldKey: 'customerConsent', demoValue: 'Granular consent management with transparent data usage policies' },
-        { fieldKey: 'openBankingCertifications', demoValue: 'FDX Certified, Open Banking Implementation Entity (OBIE) verified' }
-      ]
-    };
-    
-    // Normalize form type key for lookup
-    let normalizedType = formType.toLowerCase();
-    
-    // Get appropriate field list based on form type
-    let fields: Array<{ fieldKey: string, demoValue: any }> = [];
-    
-    if (normalizedType === 'kyb' || normalizedType === 'company_kyb') {
-      fields = demoFieldsByType['kyb'];
-    } else if (normalizedType === 'open_banking' || normalizedType === 'open_banking_survey') {
-      fields = demoFieldsByType['open_banking'];
-    } else {
-      return {
-        success: false,
-        fields: [],
-        message: `Unsupported form type: ${formType}`
-      };
-    }
-    
-    return {
-      success: true,
-      fields
-    };
-  } catch (error) {
-    logger.error('Error getting demo field values:', error);
-    return {
-      success: false,
-      fields: [],
-      message: error instanceof Error ? error.message : 'An unexpected error occurred'
-    };
+    logger.error('Unexpected error in handleDemoAutoFill:', error);
   }
 }
