@@ -12,7 +12,7 @@
  */
 
 // Set your session cookie here - get this from your browser after logging in
-const SESSION_COOKIE = ""; // e.g. "connect.sid=s%3AxYz..."
+const SESSION_COOKIE = "connect.sid=s%3AbO9zfN6mjqF98_hVhd-BSxwHg_X-9vkj.UDYKaVR%2F%2F4%2BXpTPWs%2FxHWQfQVupnPNBNXLx%2FSDI9nCA";
 
 // If no session cookie is provided, exit with an error
 if (!SESSION_COOKIE) {
