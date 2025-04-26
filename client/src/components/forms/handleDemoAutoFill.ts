@@ -71,11 +71,38 @@ export async function handleDemoAutoFill({
       
       logger.info(`Using standardized KY3P demo auto-fill for task type: ${taskType}`);
       
-      // Use the new standardized bulk update approach which uses POST
-      const success = await standardizedBulkUpdate(taskId, {});
-      
-      if (success) {
-        // If the update was successful, force reload the form data from the database
+      try {
+        // Use the new improved demo auto-fill endpoint
+        const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({}),
+        });
+        
+        if (!response.ok) {
+          // If the demo auto-fill endpoint failed, show an error
+          let errorMessage = `KY3P demo auto-fill failed: ${response.status}`;
+          try {
+            if (typeof response.text === 'function') {
+              errorMessage += ` - ${await response.text()}`;
+            }
+          } catch (e) {
+            logger.error('Could not extract error details:', e);
+          }
+          
+          toast({
+            id: toastId,
+            title: 'Demo Auto-Fill Failed',
+            description: errorMessage,
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        // If the demo auto-fill was successful, refresh the form data
         if (formService) {
           logger.info('Forcing reload of form data from database after demo auto-fill');
           
@@ -88,15 +115,15 @@ export async function handleDemoAutoFill({
             logger.info('Making direct API call to get fresh KY3P form data');
             
             // Use the progress endpoint which converts responses to field_key format
-            const response = await fetch(`/api/ky3p/progress/${taskId}`, {
+            const progressResponse = await fetch(`/api/ky3p/progress/${taskId}`, {
               credentials: 'include'
             });
             
-            if (!response.ok) {
-              throw new Error(`Failed to get fresh KY3P data: ${response.status} ${response.statusText}`);
+            if (!progressResponse.ok) {
+              throw new Error(`Failed to get fresh KY3P data: ${progressResponse.status} ${progressResponse.statusText}`);
             }
             
-            const result = await response.json();
+            const result = await progressResponse.json();
             
             if (result.formData) {
               logger.info('Fresh KY3P form data loaded with direct API call', { 
@@ -120,6 +147,24 @@ export async function handleDemoAutoFill({
               
               // Success - no need to continue to fallback options
               logger.info('Direct KY3P data refresh successful');
+              
+              // Force a re-render
+              setForceRerender((prev: boolean) => !prev);
+              
+              // Update progress if needed
+              if (onProgress) {
+                await refreshStatus();
+              }
+              
+              // Show success message
+              toast({
+                id: toastId,
+                title: 'Demo Auto-Fill Complete',
+                description: 'Successfully filled the form with demo data.',
+                variant: 'success',
+              });
+              
+              return;
             } else {
               throw new Error('KY3P progress API returned no form data');
             }
@@ -137,6 +182,15 @@ export async function handleDemoAutoFill({
                   sampleKeys: Object.keys(freshData || {}).slice(0, 3)
                 });
                 resetForm(freshData);
+                
+                // Show success message - we were able to get data even if not through the preferred method
+                toast({
+                  id: toastId,
+                  title: 'Demo Auto-Fill Complete',
+                  description: 'Successfully filled the form with demo data.',
+                  variant: 'success',
+                });
+                return;
               } catch (loadError) {
                 logger.error('Error loading responses after demo auto-fill:', loadError);
               }
@@ -148,37 +202,38 @@ export async function handleDemoAutoFill({
                 fieldCount: Object.keys(refreshedData || {}).length 
               });
               resetForm(refreshedData);
+              
+              // Show success message since we were able to get something
+              toast({
+                id: toastId,
+                title: 'Demo Auto-Fill Complete',
+                description: 'Successfully filled the form with demo data.',
+                variant: 'success',
+              });
+              return;
             }
           }
         }
         
-        // Force a re-render
-        setForceRerender((prev: boolean) => !prev);
-        
-        // Update progress if needed
-        if (onProgress) {
-          await refreshStatus();
-        }
-        
-        // Show success message
+        // If we get here without returning, something went wrong
         toast({
           id: toastId,
-          title: 'Demo Auto-Fill Complete',
-          description: 'Successfully filled the form with demo data.',
-          variant: 'success',
+          title: 'Demo Auto-Fill Warning',
+          description: 'Demo auto-fill may have completed but form refresh failed.',
+          variant: 'default',
         });
-        
-        return;
-      } else {
-        // If the standardized approach failed, show an error
+      } catch (error) {
+        // If the KY3P demo auto-fill failed, show an error
+        logger.error('KY3P demo auto-fill error:', error);
         toast({
           id: toastId,
           title: 'Demo Auto-Fill Failed',
-          description: 'Could not auto-fill the form using the standardized approach.',
+          description: error instanceof Error ? error.message : 'Unknown error during KY3P demo auto-fill',
           variant: 'destructive',
         });
-        return;
       }
+      
+      return;
     }
     
     // Special handling for Open Banking forms using the standardized approach
