@@ -293,11 +293,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Fetch sections from the service with ENHANCED DIAGNOSTICS
         logger.info(`Fetching sections from form service...`);
         try {
-          const serviceSections = formService.getSections();
+          // Handle async getSections method
+          const serviceSections = await Promise.resolve(formService.getSections());
           logger.info(`Sections result type: ${typeof serviceSections}`);
           logger.info(`Is sections array: ${Array.isArray(serviceSections)}`);
           
-          if (serviceSections && serviceSections.length > 0) {
+          if (serviceSections && Array.isArray(serviceSections) && serviceSections.length > 0) {
             logger.info(`Loaded ${serviceSections.length} sections from form service`);
             logger.info(`Sample section: ${JSON.stringify(serviceSections[0])}`);
             

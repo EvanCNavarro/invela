@@ -28,6 +28,10 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   constructor(companyId?: number, taskId?: number) {
     super(companyId, taskId);
     
+    // Store locally too for our tracking
+    this._companyId = companyId;
+    this._taskId = taskId;
+    
     logger.info(
       '[OpenBankingFormService] Initializing Open Banking Form Service',
       { companyId, taskId }
@@ -43,7 +47,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    */
   async initialize(templateId?: number): Promise<void> {
     // If already initialized and the same template ID, just return
-    if (this.initialized && (templateId === undefined || this.templateId === templateId)) {
+    if (this._initialized && (templateId === undefined || this._templateId === templateId)) {
       logger.info('[OpenBankingFormService] Already initialized', { 
         templateId: templateId || 'none provided'
       });
@@ -53,7 +57,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     try {
       // Store template ID if provided
       if (templateId !== undefined) {
-        this.templateId = templateId;
+        this._templateId = templateId;
       }
       
       // Step 1: Get the field definitions from the Open Banking fields table
@@ -96,7 +100,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
           }
         } catch (fetchError) {
           logger.error('[OpenBankingFormService] Field fetch error', fetchError);
-          throw new Error(`Failed to fetch Open Banking fields: ${fetchError.message}`);
+          throw new Error(`Failed to fetch Open Banking fields: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
         }
       }
       
@@ -116,8 +120,8 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       }
       
       // Step 3: Store the sections and set initialized flag
-      this.sections = sections;
-      this.initialized = true;
+      this._sections = sections;
+      this._initialized = true;
       
       logger.info('[OpenBankingFormService] Initialization complete', { 
         sectionsCount: sections.length,
@@ -307,97 +311,51 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   
   /**
    * Get the sections for the current form template
+   * This method overrides the base class method to handle async initialization
+   * and return an array of form sections.
    */
-  async getSections(): Promise<any[]> {
-    if (!this.initialized) {
-      logger.warn('[OpenBankingFormService] Not initialized, attempting auto-initialization');
-      try {
-        await this.initialize();
-      } catch (error) {
-        logger.error('[OpenBankingFormService] Auto-initialization failed', { error });
-        throw new Error('Open Banking Form Service not initialized. Call initialize() first.');
-      }
-    }
-    
-    // If sections are still empty despite initialization, try one more time
-    if (!this.sections || !Array.isArray(this.sections) || this.sections.length === 0) {
-      logger.warn('[OpenBankingFormService] Sections array is empty after initialization, forcing reload');
-      try {
-        // Force re-initialization to reload fields and sections
-        this.initialized = false; 
-        await this.initialize();
-        
-        // Still empty? Log detailed error
-        if (!this.sections || !Array.isArray(this.sections) || this.sections.length === 0) {
-          logger.error('[OpenBankingFormService] Failed to load sections after forced reload', {
-            initialized: this.initialized,
-            sectionsState: this.sections ? 
-              (Array.isArray(this.sections) ? 'empty array' : `not an array: ${typeof this.sections}`) : 
-              'null',
-            templateId: this.templateId || 'none'
-          });
-          
-          // Last resort: Create a default section with all fields
-          logger.warn('[OpenBankingFormService] Creating fallback sections');
-          try {
-            const fields = await this.getFields();
-            
-            if (fields && fields.length > 0) {
-              // Group fields by their group property
-              const fieldsByGroup = fields.reduce((acc, field) => {
-                const group = field.group || 'General';
-                if (!acc[group]) {
-                  acc[group] = [];
-                }
-                acc[group].push(field);
-                return acc;
-              }, {});
-              
-              // Create sections from field groups
-              this.sections = Object.entries(fieldsByGroup).map(([groupName, groupFields], index) => ({
-                id: `section-${index}`,
-                title: groupName,
-                order: index,
-                fields: groupFields,
-                collapsed: false,
-                description: `${groupName} section`
-              }));
-              
-              logger.info('[OpenBankingFormService] Created fallback sections', {
-                sectionsCount: this.sections.length,
-                sectionNames: this.sections.map(s => s.title).join(', ')
-              });
-            }
-          } catch (fallbackError) {
-            logger.error('[OpenBankingFormService] Failed to create fallback sections', { fallbackError });
-          }
-        }
-      } catch (reloadError) {
-        logger.error('[OpenBankingFormService] Error during forced reload', { reloadError });
-      }
+  getSections(): any[] {
+    // First check if we need to initialize
+    if (!this._initialized) {
+      // Return an empty array synchronously, but trigger initialization
+      this.initialize().catch(error => {
+        logger.error('[OpenBankingFormService] Background initialization failed', { error });
+      });
+      return [];
     }
     
     logger.info('[OpenBankingFormService] Getting sections', { 
-      count: this.sections && Array.isArray(this.sections) ? this.sections.length : 0,
-      sectionIds: this.sections && Array.isArray(this.sections) ? this.sections.map(s => s.id).join(', ') : 'none'
+      count: this._sections ? this._sections.length : 0,
+      sectionIds: this._sections ? this._sections.map(s => s.id).join(', ') : 'none'
     });
     
     // Ensure we always return an array
-    return Array.isArray(this.sections) ? this.sections : [];
+    return Array.isArray(this._sections) ? this._sections : [];
   }
+  
+  // Private properties for tracking state
+  private _initialized = false;
+  private _sections: any[] = [];
+  private _templateId?: number;
+  private _taskId?: number;
+  private _companyId?: number;
   
   /**
    * Get all fields from all sections
    * This is required by the FormServiceInterface
    */
   getFields(): any[] {
-    if (!this.initialized) {
+    if (!this._initialized) {
       logger.warn('[OpenBankingFormService] getFields called before initialization');
+      // Trigger initialize in the background without blocking
+      this.initialize().catch(err => {
+        logger.error('[OpenBankingFormService] Background initialization failed', { err });
+      });
       return [];
     }
     
     // Extract fields from all sections and flatten into a single array
-    const allFields = this.sections.flatMap(section => {
+    const allFields = this._sections.flatMap(section => {
       // Make sure each field has the correct section ID
       return (section.fields || []).map(field => ({
         ...field,
@@ -409,7 +367,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     if (allFields.length > 0) {
       logger.info('[OpenBankingFormService] Field sample with section mapping', {
         fieldSample: {
-          key: allFields[0].key,
+          key: allFields[0].key || allFields[0].name,
           name: allFields[0].name,
           section: allFields[0].section
         }
@@ -420,7 +378,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     // This is needed for compatibility with the Universal Form component
     const fieldsWithKeys = allFields.map(field => ({
       ...field,
-      key: field.name || field.key, // Ensure key exists
+      key: field.name || field.key || field.id, // Ensure key exists (with fallbacks)
       section: field.section // Ensure section is present
     }));
     
@@ -485,7 +443,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     progress: number;
     status: string;
   }> {
-    const effectiveTaskId = taskId || this.taskId;
+    const effectiveTaskId = taskId || this._taskId;
     
     if (!effectiveTaskId) {
       // Return default empty progress instead of throwing to make the component more resilient
@@ -762,7 +720,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    */
   public async loadProgress(taskId?: number): Promise<Record<string, any>> {
     // Use provided taskId or fall back to the service's taskId
-    const effectiveTaskId = taskId || this.taskId;
+    const effectiveTaskId = taskId || this._taskId;
     
     if (!effectiveTaskId) {
       throw new Error('No task ID provided for loading progress');
@@ -850,11 +808,11 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    * @returns True if save was successful, false otherwise
    */
   public async save(options: { taskId?: number, includeMetadata?: boolean }): Promise<boolean> {
-    if (!this.taskId && !options.taskId) {
+    if (!this._taskId && !options.taskId) {
       throw new Error('No task ID provided for saving form');
     }
     
-    const effectiveTaskId = options.taskId || this.taskId;
+    const effectiveTaskId = options.taskId || this._taskId;
     
     // Implement throttling to prevent too many save operations
     const now = Date.now();
@@ -971,7 +929,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    * @param taskId Optional task ID (uses this.taskId if not provided)
    */
   public resetFormData(taskId?: number): void {
-    const effectiveTaskId = taskId || this.taskId;
+    const effectiveTaskId = taskId || this._taskId;
     
     if (!effectiveTaskId) {
       logger.error('[OpenBankingFormService] No task ID provided for resetting form data');
@@ -1006,7 +964,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
    * @returns True if clearing was successful, false otherwise
    */
   public async clearAllFields(taskId?: number): Promise<boolean> {
-    const effectiveTaskId = taskId || this.taskId;
+    const effectiveTaskId = taskId || this._taskId;
     
     if (!effectiveTaskId) {
       logger.error('[OpenBankingFormService] No task ID provided for clearing fields');
@@ -1091,7 +1049,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     fileName?: string;
     fileId?: number;
   }> {
-    const effectiveTaskId = options.taskId || this.taskId;
+    const effectiveTaskId = options.taskId || this._taskId;
     
     if (!effectiveTaskId) {
       throw new Error('No task ID provided for submitting form');
