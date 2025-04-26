@@ -42,27 +42,29 @@ export async function standardizedBulkUpdate(
  * Standardized approach for clearing KY3P form fields
  * 
  * This function provides a consistent way to clear all fields in a KY3P form
- * by sending empty values for each field.
+ * by calling the dedicated clear-fields endpoint.
  * 
  * @param taskId The task ID to clear
- * @param fieldKeys Array of field keys to clear
  * @returns Promise<boolean> Success or failure
  */
 export async function standardizedFormClear(
-  taskId: number,
-  fieldKeys: string[]
+  taskId: number
 ): Promise<boolean> {
   try {
-    console.log(`Standardized KY3P Form Clear for task ${taskId} with ${fieldKeys.length} fields`);
+    console.log(`Standardized KY3P Form Clear for task ${taskId}`);
     
-    // Create a form data object with empty values for each field
-    const emptyFormData: Record<string, any> = {};
-    fieldKeys.forEach(key => {
-      emptyFormData[key] = '';
-    });
+    // Call the dedicated clear-fields endpoint
+    const response = await apiRequest('POST', `/api/ky3p/clear-fields/${taskId}`, {});
     
-    // Use the batch update endpoint to clear all fields
-    return await standardizedBulkUpdate(taskId, emptyFormData);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Form clear failed: ${response.status} - ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`Form clear success: All fields cleared`);
+    
+    return true;
   } catch (error) {
     console.error('Error in standardizedFormClear:', error);
     throw error;
