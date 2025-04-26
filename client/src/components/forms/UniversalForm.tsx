@@ -504,6 +504,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
     
     try {
+      // Show confirmation dialog
+      const confirmed = await confirmDialog({
+        title: 'Clear all fields?',
+        description: 'This will erase all the data you have entered and cannot be undone.',
+        confirmText: 'Yes, clear all fields',
+        cancelText: 'No, keep my data',
+      });
+      
+      if (!confirmed) {
+        logger.info('[ClearFields] User cancelled the clear operation');
+        return;
+      }
+      
       // Show loading toast
       toast({
         title: 'Clear Fields',
@@ -518,7 +531,70 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         formDataFields: Object.keys(formService.getFormData()).length
       });
       
-      // Use our improved clearFields utility with standardized field handling 
+      // Special handling for KY3P forms - use our direct API endpoint
+      if (taskData?.id && 
+          (formService.constructor.name === 'KY3PFormService' || 
+           taskType === 'ky3p' || 
+           (typeof formService['formType'] === 'string' && formService['formType'] === 'ky3p'))) {
+        try {
+          // Import dynamically to avoid circular dependencies
+          const { directClearKy3pTask } = await import('./direct-ky3p-clear');
+          
+          logger.info(`[ClearFields] Using direct KY3P clear approach for task ${taskData.id}`);
+          
+          // Call the direct clear function that bypasses the bulk update issue
+          const result = await directClearKy3pTask(taskData.id);
+          logger.info('[ClearFields] Direct KY3P clear result:', result);
+          
+          // Clear the form UI (this doesn't trigger API calls, it just updates the UI)
+          fields.forEach(field => {
+            const fieldId = field.key || field.name || String(field.id) || field.field_key || '';
+            if (!fieldId) return;
+            
+            try {
+              // Choose appropriate empty value based on field type
+              const emptyValue = field.type === 'boolean' ? false : 
+                                field.type === 'number' ? null : '';
+              
+              // Update the field value in our form state
+              updateField(fieldId, emptyValue);
+              
+              // Also update the form library state if available
+              if (form) {
+                try {
+                  form.setValue(fieldId, emptyValue, { shouldValidate: false, shouldDirty: true });
+                } catch (e) {
+                  // Ignore setValue errors
+                }
+              }
+            } catch (e) {
+              logger.warn(`[ClearFields] Error clearing field ${fieldId} in UI:`, e);
+            }
+          });
+          
+          // Clear form service cache
+          formService.clearCache();
+          
+          // Trigger UI refresh
+          setForceRerender(prev => !prev);
+          
+          // Refresh task status to get updated progress
+          await refreshStatus();
+          
+          // Show success toast
+          toast({
+            title: 'Fields cleared successfully',
+            variant: 'default',
+          });
+          
+          return;
+        } catch (directClearError) {
+          logger.error('[ClearFields] Direct KY3P clear failed, falling back to standard method:', directClearError);
+          // Continue to standard method as fallback
+        }
+      }
+      
+      // Standard approach for non-KY3P forms
       const success = await handleClearFieldsUtil(
         formService, 
         fields, 
