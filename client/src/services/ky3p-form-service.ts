@@ -1220,74 +1220,92 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
         
         const errorText = await batchResponse.text();
-        throw new Error(`Batch update failed with status ${batchResponse.status}: ${errorText}`);
-      } catch (error) {
-        logger.error(`[KY3P Form Service] Error saving form data:`, error);
-        return false;
-      }
-      const keyToIdResponses: Record<string, any> = {};
-      const allFields = await this.getFields();
-      
-      // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map();
-      
-      // Ensure we have valid field IDs for mapping
-      allFields.forEach(field => {
-        if (field.key && field.id !== undefined) {
-          fieldKeyToIdMap.set(field.key, field.id);
-        }
-      });
-      
-      // Track fields found in the system versus received in the data
-      let totalFieldsInData = Object.keys(cleanData).length;
-      let validFieldsFound = 0;
-      
-      // Convert the keys in cleanData to field IDs
-      // Only include fields that actually exist in this form service
-      for (const [key, value] of Object.entries(cleanData)) {
-        if (key === 'taskId') continue; // Skip taskId field
-        if (value === null || value === undefined || value === '') continue; // Skip empty values
+        logger.warn(`[KY3P Form Service] Standardized batch update failed: ${batchResponse.status} - ${errorText}`);
+        logger.info(`[KY3P Form Service] Falling back to legacy bulk update endpoint with ID mapping`);
         
-        const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId !== undefined) {
-          keyToIdResponses[String(fieldId)] = value;
-          validFieldsFound++;
-        } else {
-          // Just log the warning but don't include this field in the mapping
-          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
-        }
+        // Fall through to the legacy endpoint below
+      } catch (error) {
+        logger.error(`[KY3P Form Service] Error with standardized batch update:`, error);
+        logger.info(`[KY3P Form Service] Falling back to legacy bulk update endpoint with ID mapping`);
+        // Fall through to the legacy endpoint below
       }
       
-      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for save operation. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
-      
-      // Convert to array format with explicit fieldId property
-      // This is needed because the backend API expects array format for ky3p-responses/bulk
-      const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
-        fieldId, // Use the string ID directly
-        value
-      }));
-      logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
-      
-      // Use the standardized endpoint that expects array format with fieldId property
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: arrayFormatResponses // Using array format with explicit fieldId property
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to save form data: ${response.status}`, errorText);
+      // === LEGACY BULK UPDATE ENDPOINT WITH ID MAPPING ===
+      // This is the fallback approach when the standardized endpoint fails
+      try {
+        const keyToIdResponses: Record<string, any> = {};
+        const allFields = await this.getFields();
+        
+        // Create a map of field key to field ID for quick lookup
+        const fieldKeyToIdMap = new Map();
+        
+        // Ensure we have valid field IDs for mapping
+        allFields.forEach(field => {
+          if (field.key && field.id !== undefined) {
+            fieldKeyToIdMap.set(field.key, field.id);
+          }
+        });
+        
+        // Track fields found in the system versus received in the data
+        let totalFieldsInData = Object.keys(cleanData).length;
+        let validFieldsFound = 0;
+        
+        // Convert the keys in cleanData to field IDs
+        // Only include fields that actually exist in this form service
+        for (const [key, value] of Object.entries(cleanData)) {
+          if (key === 'taskId') continue; // Skip taskId field
+          if (value === null || value === undefined || value === '') continue; // Skip empty values
+          
+          const fieldId = fieldKeyToIdMap.get(key);
+          if (fieldId !== undefined) {
+            keyToIdResponses[String(fieldId)] = value;
+            validFieldsFound++;
+          } else {
+            // Just log the warning but don't include this field in the mapping
+            logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
+          }
+        }
+        
+        logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for save operation. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
+        
+        // Convert to array format with explicit fieldId property
+        // This is needed because the backend API expects array format for ky3p-responses/bulk
+        const arrayFormatResponses = Object.entries(keyToIdResponses).map(([fieldId, value]) => ({
+          fieldId, // Use the string ID directly
+          value
+        }));
+        logger.info(`[KY3P Form Service] Converted to ${arrayFormatResponses.length} array format responses`);
+        
+        // Don't include empty fields
+        if (arrayFormatResponses.length === 0) {
+          logger.warn(`[KY3P Form Service] No valid fields to update after mapping`);
+          return false;
+        }
+        
+        // Use the legacy endpoint that expects array format with fieldId property
+        const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include session cookies
+          body: JSON.stringify({
+            responses: arrayFormatResponses // Using array format with explicit fieldId property
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`[KY3P Form Service] Failed to save form data: ${response.status}`, errorText);
+          return false;
+        }
+        
+        logger.info(`[KY3P Form Service] Form data saved successfully for task ${effectiveTaskId}`);
+        return true;
+      } catch (legacyError) {
+        logger.error('[KY3P Form Service] Error using legacy bulk update:', legacyError);
         return false;
       }
-      
-      logger.info(`[KY3P Form Service] Form data saved successfully for task ${effectiveTaskId}`);
-      return true;
     } catch (error) {
       logger.error('[KY3P Form Service] Error saving form data:', error);
       return false;
