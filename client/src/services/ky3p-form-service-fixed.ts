@@ -1,584 +1,304 @@
 /**
- * S&P KY3P Security Assessment Form Service
+ * Fixed KY3P Form Service
  * 
- * This service extends the EnhancedKybFormService to provide specialized 
- * functionality for the S&P KY3P Security Assessment form.
+ * This is an enhanced version of the KY3P Form Service that uses
+ * standardized string-based field keys for bulk updates, ensuring
+ * compatibility with the standardized approach used across
+ * all form types (KYB, KY3P, and Open Banking).
  */
 
-import { EnhancedKybFormService } from './enhanced-kyb-service';
-import { FormField, FormSection } from './formService';
-import getLogger from '@/utils/logger';
+import type { FieldDefinition, FormSection, FormServiceInterface } from "./formService";
+import getLogger from "@/utils/logger";
+import { fixedKy3pBulkUpdate } from "@/components/forms/standardized-ky3p-update";
 
-const logger = getLogger('KY3PFormService');
-
-// Singleton instance for backwards compatibility
-let _instance: KY3PFormService | null = null;
-
-export class KY3PFormService extends EnhancedKybFormService {
-  // Override the form type to match the task type in the database
-  protected readonly formType = 'sp_ky3p_assessment';
-  
-  // Cache for KY3P fields by template ID
-  private static ky3pFieldsCache: Record<number, any[]> = {};
-  
-  constructor(companyId?: number, taskId?: number) {
-    super(companyId, taskId);
-    
-    logger.info(
-      '[KY3P Form Service] Initializing KY3P Form Service',
-      { companyId, taskId }
-    );
-  }
-  
-  /**
-   * Convert field ID to proper numeric format
-   * This ensures compatibility with the server-side API which expects numeric IDs
-   */
-  private ensureNumericFieldId(fieldId: any, key?: string): number | null {
-    const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
-    
-    if (isNaN(numericFieldId)) {
-      logger.warn(`[KY3P Form Service] Invalid field ID format (not a number): ${fieldId}${key ? ` for key ${key}` : ''}`);
-      return null;
-    }
-    
-    return numericFieldId;
-  }
-  
-  /**
-   * Convert a database field to FormField format
-   * Used to format fields within sections
-   */
-  private convertToFormField(field: any, sectionId: string): FormField {
-    return {
-      id: field.id,
-      key: field.field_key || field.key,
-      label: field.display_name || field.label,
-      description: field.question || field.description,
-      type: field.field_type || field.type,
-      required: field.is_required || field.required || false,
-      section: sectionId,
-      order: field.order || 0,
-      defaultValue: field.default_value || field.defaultValue || '',
-      placeholder: field.placeholder || '',
-      helpText: field.help_text || field.helpText || '',
-      group: field.group || '',
-      options: field.options || [],
-      demoAutofill: field.demo_autofill || field.demoAutofill || '',
-      disabled: field.disabled || false,
-      validation: field.validation || {
-        type: field.validation_type || 'none',
-        rules: field.validation_rules || {}
-      }
-    };
-  }
-  
-  /**
-   * COMPLETE OVERRIDE of initialize method from EnhancedKybFormService
-   * to prevent inheriting the KYB section logic
-   */
-  async initialize(templateId: number): Promise<void> {
-    if (this.initialized && this.templateId === templateId) {
-      logger.info('[KY3P Form Service] Already initialized with template:', templateId);
-      return; // Already initialized with this template
-    }
-
-    try {
-      this.templateId = templateId;
-      logger.info(`[KY3P Form Service] Initializing with template ID: ${templateId}`);
-      
-      // CLEAR PREVIOUS STATE to ensure fresh initialization
-      this.fields = [];
-      this.sections = [];
-      this.initialized = false;
-      
-      // Fetch KY3P fields from the server or cache
-      const fields = await this.getKybFields(); // This calls our overridden method that fetches KY3P fields
-      logger.info(`[KY3P Form Service] Retrieved KY3P fields from API: ${fields.length}`);
-      
-      if (fields.length === 0) {
-        logger.error('[KY3P Form Service] No KY3P fields retrieved from API - form will be empty');
-        this.initialized = true; // Mark as initialized even though it's empty
-        return;
-      }
-      
-      // Group fields by group name (formerly section) without any expected/hardcoded groups
-      const groupedFields = this.groupFieldsByGroup(fields);
-      logger.info(`[KY3P Form Service] Field grouping result: ${Object.keys(groupedFields).length} groups found`);
-      logger.info(`[KY3P Form Service] Groups found: ${Object.keys(groupedFields).join(', ')}`);
-      
-      // Create sections directly from the groups without any normalization or injecting empty KYB sections
-      this.sections = Object.entries(groupedFields).map(([sectionName, sectionFields], index) => {
-        const sectionId = `section-${index}`;
-        
-        logger.info(`[KY3P Form Service] Creating section "${sectionName}" with ID "${sectionId}" (${sectionFields.length} fields)`);
-        
-        // Create the section with the properly assigned fields
-        const section = {
-          id: sectionId,
-          title: sectionName,
-          description: '',
-          order: index,
-          collapsed: false,
-          // Convert each field and assign the proper section ID
-          fields: sectionFields.map(field => this.convertToFormField(field, sectionId))
-        };
-        
-        return section;
-      });
-      
-      // Create a flat array of all fields from all sections
-      this.fields = this.sections.flatMap(section => section.fields);
-      
-      logger.info('[KY3P Form Service] Form initialization complete:',
-        `${this.sections.length} sections, ${this.fields.length} fields`);
-      
-      // Mark as initialized
-      this.initialized = true;
-    } catch (error) {
-      logger.error('[KY3P Form Service] Error initializing form:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Override getKybFields to use KY3P fields instead
-   * This is the main method called by the EnhancedKybFormService
-   */
-  async getKybFields(): Promise<any[]> {
-    logger.info('[KY3P Form Service] getKybFields called - using KY3P fields instead of KYB fields');
-    
-    // Use cache if available
-    if (this.templateId && KY3PFormService.ky3pFieldsCache[this.templateId]) {
-      logger.info(`[KY3P Form Service] Using cached KY3P fields for template ${this.templateId}`);
-      return KY3PFormService.ky3pFieldsCache[this.templateId];
-    }
-    
-    try {
-      const response = await fetch('/api/ky3p-fields', {
-        credentials: 'include' // Include session cookies
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error('[KY3P Form Service] Failed to load KY3P fields:', { 
-          status: response.status, 
-          statusText: response.statusText,
-          responseBody: errorText
-        });
-        throw new Error(`Failed to load KY3P fields: ${response.status} - ${errorText}`);
-      }
-      
-      const fields = await response.json();
-      logger.info(`[KY3P Form Service] Successfully loaded ${fields.length} fields from API`);
-      
-      // Cache fields for future use
-      if (this.templateId) {
-        KY3PFormService.ky3pFieldsCache[this.templateId] = fields;
-      }
-      
-      // Log some sample fields for debugging
-      if (fields.length > 0) {
-        logger.info('[KY3P Form Service] Sample KY3P fields:', 
-          fields.slice(0, 3).map((f: any) => ({ 
-            id: f.id, 
-            key: f.field_key, 
-            displayName: f.display_name, 
-            group: f.group
-          }))
-        );
-      }
-      
-      return fields;
-    } catch (error) {
-      logger.error('[KY3P Form Service] Error loading KY3P fields:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Group fields by their group property
-   */
-  private groupFieldsByGroup(fields: any[]): Record<string, any[]> {
-    const groups: Record<string, any[]> = {};
-    
-    for (const field of fields) {
-      const groupName = field.group || 'Ungrouped';
-      
-      if (!groups[groupName]) {
-        groups[groupName] = [];
-      }
-      
-      groups[groupName].push(field);
-    }
-    
-    // Sort fields within each group by ID to maintain consistent order
-    for (const groupName in groups) {
-      groups[groupName].sort((a, b) => a.id - b.id);
-    }
-    
-    return groups;
-  }
-  
-  /**
-   * Save the form's current state
-   * @param options Save options
-   * @returns True if save was successful, false otherwise
-   */
-  public async save(options: { taskId?: number, includeMetadata?: boolean }): Promise<boolean> {
-    if (!this.taskId && !options.taskId) {
-      logger.warn('[KY3P Form Service] No task ID provided for saving form, cannot save');
-      return false;
-    }
-    
-    const effectiveTaskId = options.taskId || this.taskId;
-    
-    try {
-      logger.info(`[KY3P Form Service] Saving form data for task ${effectiveTaskId}`);
-      
-      // Get current form data
-      const formData = this.getFormData();
-      
-      // Filter out metadata fields before sending to server
-      const cleanData = { ...formData };
-      Object.keys(cleanData).forEach(key => {
-        if (key.startsWith('_')) {
-          delete cleanData[key];
-        }
-      });
-      
-      // Create a mapping from field keys to field IDs
-      // The backend expects field IDs, not field keys
-      // We need to map our field.key values to field.id values
-      const keyToIdResponses: Record<string, any> = {};
-      const allFields = await this.getFields();
-      
-      // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map(
-        allFields.map(field => [field.key, field.id])
-      );
-      
-      // Track fields found in the system versus received in the data
-      let totalFieldsInData = Object.keys(cleanData).length;
-      let validFieldsFound = 0;
-      
-      // Convert the keys in cleanData to field IDs
-      // Only include fields that actually exist in this form service
-      for (const [key, value] of Object.entries(cleanData)) {
-        const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId) {
-          // Convert to numeric ID if needed
-          const numericFieldId = this.ensureNumericFieldId(fieldId, key);
-          if (numericFieldId !== null) {
-            keyToIdResponses[numericFieldId] = value;
-            validFieldsFound++;
-          }
-        } else {
-          // Just log the warning but don't include this field in the mapping
-          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
-        }
-      }
-      
-      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for save operation. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
-      
-      // Using the standardized KYB approach - simpler and more reliable
-      // Send to server with proper payload format including 'responses' wrapper
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to save form data: ${response.status}`, errorText);
-        return false;
-      }
-      
-      logger.info(`[KY3P Form Service] Form data saved successfully for task ${effectiveTaskId}`);
-      return true;
-    } catch (error) {
-      logger.error('[KY3P Form Service] Error saving form data:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Bulk update form responses
-   * This is a direct implementation of the bulk update functionality 
-   * that's called from the UniversalForm auto-fill mechanism
-   * 
-   * @param data Record of field keys to values
-   * @param taskId Optional task ID override
-   * @returns Promise resolving to success status
-   */
-  public async bulkUpdate(data: Record<string, any>, taskId?: number): Promise<boolean> {
-    if (!this.taskId && !taskId) {
-      logger.warn('[KY3P Form Service] No task ID provided for bulk update, cannot update');
-      return false;
-    }
-    
-    const effectiveTaskId = taskId || this.taskId;
-    
-    try {
-      logger.info(`[KY3P Form Service] Performing bulk update for task ${effectiveTaskId}`);
-      
-      // First update the local form data - this follows the KYB implementation pattern
-      Object.entries(data).forEach(([key, value]) => {
-        // Only update if not a metadata field (starting with _)
-        if (!key.startsWith('_')) {
-          // Update our local form data
-          this.formData[key] = value;
-        }
-      });
-      
-      // Filter out metadata fields before sending to server
-      const cleanData = { ...data };
-      Object.keys(cleanData).forEach(key => {
-        if (key.startsWith('_')) {
-          delete cleanData[key];
-        }
-      });
-
-      // Create a mapping from field keys to field IDs
-      // The backend expects field IDs, not field keys
-      // We need to map our field.key values to field.id values
-      const keyToIdResponses: Record<string, any> = {};
-      const allFields = await this.getFields();
-      
-      // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map(
-        allFields.map(field => [field.key, field.id])
-      );
-      
-      // Track fields found in the system versus received in the demo data
-      let totalFieldsInDemoData = Object.keys(cleanData).length;
-      let validFieldsFound = 0;
-      
-      // Convert the keys in cleanData to field IDs
-      // Only include fields that actually exist in this form service
-      for (const [key, value] of Object.entries(cleanData)) {
-        const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId) {
-          // Convert to numeric ID if needed
-          const numericFieldId = this.ensureNumericFieldId(fieldId, key);
-          if (numericFieldId !== null) {
-            keyToIdResponses[numericFieldId] = value;
-            validFieldsFound++;
-          }
-        } else {
-          // Just log the warning but don't include this field in the mapping
-          logger.debug(`[KY3P Form Service] Field key not found in mapping: ${key}`);
-        }
-      }
-      
-      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInDemoData} fields for bulk update. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
-
-      // Use the standardized pattern from KYB service - shorter and more reliable
-      // Send to server with proper payload format including 'responses' wrapper
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          responses: keyToIdResponses // Now using field IDs as keys instead of field keys
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Failed to perform bulk update: ${response.status}`, errorText);
-        return false;
-      }
-      
-      logger.info(`[KY3P Form Service] Bulk update successful for task ${effectiveTaskId}`);
-      return true;
-    } catch (error) {
-      logger.error('[KY3P Form Service] Error during bulk update:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Submit the form
-   * @param options The submission options
-   * @returns The submission response
-   */
-  public async submit(options: { taskId?: number, fileName?: string, format?: 'json' | 'pdf' | 'csv' }): Promise<{
-    success: boolean;
-    error?: string;
-    details?: string;
-    fileName?: string;
-    fileId?: number;
-  }> {
-    const effectiveTaskId = options.taskId || this.taskId;
-    
-    if (!effectiveTaskId) {
-      logger.warn('[KY3P Form Service] No task ID provided for submitting form, cannot submit');
-      return {
-        success: false,
-        error: 'No task ID provided for form submission'
-      };
-    }
-    
-    try {
-      logger.info(`[KY3P Form Service] Submitting form for task ${effectiveTaskId}`);
-      
-      // First save all form data to ensure everything is up to date
-      const saveResult = await this.save({ taskId: effectiveTaskId, includeMetadata: true });
-      
-      if (!saveResult) {
-        logger.error(`[KY3P Form Service] Failed to save form data before submission`);
-        return {
-          success: false,
-          error: 'Failed to save form data before submission',
-        };
-      }
-      
-      // Get form data and clean it by removing metadata fields
-      const formData = this.getFormData();
-      const cleanData = { ...formData };
-      Object.keys(cleanData).forEach(key => {
-        if (key.startsWith('_')) {
-          delete cleanData[key];
-        }
-      });
-      
-      // Create a mapping from field keys to field IDs
-      // The backend expects field IDs, not field keys
-      // We need to map our field.key values to field.id values
-      const keyToIdResponses: Record<string, any> = {};
-      const allFields = await this.getFields();
-      
-      // Create a map of field key to field ID for quick lookup
-      const fieldKeyToIdMap = new Map(
-        allFields.map(field => [field.key, field.id])
-      );
-      
-      // Track fields found in the system versus received in the data
-      let totalFieldsInData = Object.keys(cleanData).length;
-      let validFieldsFound = 0;
-      
-      // Convert the keys in cleanData to field IDs
-      // Only include fields that actually exist in this form service
-      for (const [key, value] of Object.entries(cleanData)) {
-        const fieldId = fieldKeyToIdMap.get(key);
-        if (fieldId) {
-          // Convert to numeric ID if needed
-          const numericFieldId = this.ensureNumericFieldId(fieldId, key);
-          if (numericFieldId !== null) {
-            keyToIdResponses[numericFieldId] = value;
-            validFieldsFound++;
-          }
-        } else {
-          // Just log the warning but don't include this field in the mapping
-          logger.debug(`[KY3P Form Service] Field key not found in mapping for submission: ${key}`);
-        }
-      }
-      
-      logger.info(`[KY3P Form Service] Mapped ${validFieldsFound} out of ${totalFieldsInData} fields for submission. Using ${Object.keys(keyToIdResponses).length} valid fields.`);
-      
-      // Call the submit endpoint with clean data
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          formData: keyToIdResponses,
-          fileName: options.fileName
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[KY3P Form Service] Form submission failed: ${response.status}`, errorText);
-        return {
-          success: false,
-          error: `Form submission failed: ${response.status}`,
-          details: errorText
-        };
-      }
-      
-      const result = await response.json();
-      
-      logger.info(`[KY3P Form Service] Form submitted successfully:`, {
-        fileId: result.fileId,
-        fileName: result.fileName
-      });
-      
-      return {
-        success: true,
-        fileId: result.fileId,
-        fileName: result.fileName
-      };
-    } catch (error) {
-      logger.error('[KY3P Form Service] Form submission error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: String(error)
-      };
-    }
-  }
-}
-
-// Forward declaration of factory class to avoid reference error
-class KY3PFormServiceFactory {
-  private static instance: KY3PFormServiceFactory;
-  private constructor() {}
-  
-  public static getInstance(): KY3PFormServiceFactory {
-    if (!KY3PFormServiceFactory.instance) {
-      KY3PFormServiceFactory.instance = new KY3PFormServiceFactory();
-    }
-    return KY3PFormServiceFactory.instance;
-  }
-}
-
-// Create singleton instance for use in the application
-export const ky3pFormService = new KY3PFormService();
-export const ky3pFormServiceFactory = KY3PFormServiceFactory.getInstance();
+const logger = getLogger('KY3P-Form-Service-Fixed');
 
 /**
- * Factory class for creating isolated KY3P form service instances
- * Follows the same pattern as EnhancedKybServiceFactory
+ * Standardized KY3P Form Service that ensures proper update handling
  */
-export class KY3PFormServiceFactory {
-  private static instance: KY3PFormServiceFactory;
-  private instances: Map<string, KY3PFormService> = new Map();
-  
-  private constructor() {}
-  
-  public static getInstance(): KY3PFormServiceFactory {
-    if (!KY3PFormServiceFactory.instance) {
-      KY3PFormServiceFactory.instance = new KY3PFormServiceFactory();
+export class KY3PFormServiceFixed implements FormServiceInterface {
+  private taskId: number | null = null;
+  private isReady: boolean = false;
+  private saveInProgress: boolean = false;
+  private fieldData: Record<string, any> = {};
+
+  constructor(taskId?: number) {
+    if (taskId) {
+      this.setTaskId(taskId);
     }
-    return KY3PFormServiceFactory.instance;
+    logger.info('Initialized fixed KY3P form service with standardized update handlers');
   }
-  
-  /**
-   * Get or create an isolated KY3P form service instance
-   * @param companyId The company ID
-   * @param taskId The task ID
-   * @returns KY3P form service instance specific to this company and task
-   */
-  public getServiceInstance(companyId: number | string, taskId: number | string): KY3PFormService {
-    const key = `${companyId}-${taskId}`;
+
+  public setTaskId(taskId: number): void {
+    this.taskId = taskId;
+    logger.info(`Task ID set to ${taskId}`);
+  }
+
+  public async getFields(): Promise<FieldDefinition[]> {
+    try {
+      if (!this.taskId) {
+        throw new Error('No task ID set');
+      }
+
+      const response = await fetch(`/api/ky3p/fields`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get KY3P fields: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      logger.error('Error getting KY3P fields:', error);
+      return [];
+    }
+  }
+
+  public async getSections(): Promise<FormSection[]> {
+    try {
+      const fields = await this.getFields();
+      const groupedFields: Record<string, FormSection> = {};
+      
+      fields.forEach(field => {
+        const group = field.group || 'General';
+        
+        if (!groupedFields[group]) {
+          groupedFields[group] = {
+            id: group,
+            title: group,
+            fields: []
+          };
+        }
+        
+        groupedFields[group].fields.push(field);
+      });
+      
+      return Object.values(groupedFields);
+    } catch (error) {
+      logger.error('Error getting KY3P sections:', error);
+      return [];
+    }
+  }
+
+  public async getResponses(): Promise<Record<string, any>> {
+    try {
+      if (!this.taskId) {
+        throw new Error('No task ID set');
+      }
+      
+      const response = await fetch(`/api/ky3p/responses/${this.taskId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get KY3P responses: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      this.fieldData = data || {};
+      
+      return data || {};
+    } catch (error) {
+      logger.error('Error getting KY3P responses:', error);
+      return {};
+    }
+  }
+
+  public async getProgress(): Promise<{ status: string; progress: number; }> {
+    try {
+      if (!this.taskId) {
+        throw new Error('No task ID set');
+      }
+      
+      const response = await fetch(`/api/ky3p/progress/${this.taskId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get KY3P progress: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      return {
+        status: data.status || 'not_started',
+        progress: data.progress || 0
+      };
+    } catch (error) {
+      logger.error('Error getting KY3P progress:', error);
+      return {
+        status: 'not_started',
+        progress: 0
+      };
+    }
+  }
+
+  public async getDemoData(taskId?: number): Promise<Record<string, any>> {
+    try {
+      const effectiveTaskId = taskId || this.taskId;
+      
+      if (!effectiveTaskId) {
+        throw new Error('No task ID set');
+      }
+      
+      const response = await fetch(`/api/ky3p/demo-autofill/${effectiveTaskId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get KY3P demo data: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data || {};
+    } catch (error) {
+      logger.error('Error getting KY3P demo data:', error);
+      return {};
+    }
+  }
+
+  public async saveField(fieldId: string, value: any): Promise<boolean> {
+    try {
+      if (!this.taskId) {
+        throw new Error('No task ID set');
+      }
+      
+      // Update the local field data
+      this.fieldData[fieldId] = value;
+      
+      const response = await fetch(`/api/ky3p/responses/${this.taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fieldIdRaw: fieldId,
+          responseValue: value,
+          responseValueType: typeof value
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save KY3P field: ${response.status} ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      logger.error(`Error saving KY3P field ${fieldId}:`, error);
+      return false;
+    }
+  }
+
+  public async saveAllFields(formData: Record<string, any>): Promise<boolean> {
+    logger.info(`Saving all fields for task ${this.taskId} using standardized bulk update`);
     
-    if (!this.instances.has(key)) {
-      logger.info(`[KY3PFormServiceFactory] Creating new KY3P form service instance for company ${companyId}, task ${taskId}`);
-      this.instances.set(key, new KY3PFormService(Number(companyId), Number(taskId)));
+    if (!this.taskId) {
+      logger.error('No task ID set');
+      return false;
     }
     
-    return this.instances.get(key)!;
+    // To avoid duplicate saves
+    if (this.saveInProgress) {
+      logger.warn('Save already in progress, skipping');
+      return false;
+    }
+    
+    try {
+      this.saveInProgress = true;
+      
+      // First attempt our fixed standardized bulk update
+      const success = await fixedKy3pBulkUpdate(this.taskId, formData);
+      
+      if (success) {
+        logger.info('Successfully saved all fields using standardized bulk update');
+        return true;
+      }
+      
+      // If that fails, try the legacy approach with manual field-by-field updates
+      logger.warn('Standardized bulk update failed, falling back to field-by-field updates');
+      
+      let allSaved = true;
+      
+      for (const [key, value] of Object.entries(formData)) {
+        if (key.startsWith('_') || key === 'taskId') {
+          continue; // Skip metadata fields
+        }
+        
+        const saved = await this.saveField(key, value);
+        
+        if (!saved) {
+          allSaved = false;
+        }
+      }
+      
+      return allSaved;
+    } catch (error) {
+      logger.error('Error saving all KY3P fields:', error);
+      return false;
+    } finally {
+      this.saveInProgress = false;
+    }
+  }
+
+  public async submitForm(): Promise<boolean> {
+    try {
+      if (!this.taskId) {
+        throw new Error('No task ID set');
+      }
+      
+      const response = await fetch(`/api/ky3p/submit/${this.taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to submit KY3P form: ${response.status} ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      logger.error('Error submitting KY3P form:', error);
+      return false;
+    }
+  }
+
+  // Added for compatibility with FormServiceInterface
+  public async loadSection(sectionId: string): Promise<FieldDefinition[]> {
+    // KY3P form doesn't use sectional loading
+    // Return all fields that belong to the given section
+    try {
+      const fields = await this.getFields();
+      return fields.filter(field => field.group === sectionId);
+    } catch (error) {
+      logger.error(`Error loading section ${sectionId}:`, error);
+      return [];
+    }
+  }
+
+  // Added for compatibility with FormServiceInterface
+  public getIsProgressiveLoading(): boolean {
+    return false; // KY3P form doesn't use progressive loading
+  }
+
+  // Bulk update method - now uses standardized approach
+  public async bulkUpdate(formData: Record<string, any>): Promise<boolean> {
+    logger.info(`Bulk updating KY3P form for task ${this.taskId}`);
+    
+    if (!this.taskId) {
+      logger.error('No task ID set for bulk update');
+      return false;
+    }
+    
+    // Use our fixed standardized bulk update function
+    try {
+      const success = await fixedKy3pBulkUpdate(this.taskId, formData);
+      
+      if (success) {
+        logger.info('Successfully bulk updated KY3P form using standardized approach');
+      } else {
+        logger.error('Failed to bulk update KY3P form using standardized approach');
+      }
+      
+      return success;
+    } catch (error) {
+      logger.error('Error in bulk update:', error);
+      return false;
+    }
   }
 }

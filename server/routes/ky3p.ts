@@ -1461,25 +1461,12 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       requestBodyPreview: JSON.stringify(req.body).substring(0, 200)
     });
     
-    // Import our special case handler - use dynamic import for ESM compatibility
-    try {
-      const module = await import('./ky3p-bulk-fix');
-      
-      // First, check if this is the special case with fieldIdRaw="bulk" and responseValue="undefined"
-      const isSpecialCase = await module.handleSpecialBulkCase(req, res);
-      if (isSpecialCase) {
-        // If it's handled by the special case handler, don't continue with normal processing
-        logger.info('[KY3P API] Special case was handled by bulk-fix handler');
-        return;
-      }
-    } catch (error) {
-      logger.error('[KY3P API] Error importing or using special case handler:', error);
-      // Continue with normal processing if there's an error with the special case handler
-    }
-    
-    // Special handling for requests with 'fieldIdRaw': 'bulk' pattern
-    // This is a request from UniversalForm which uses string field keys
+    // Special handling for bulk update with fieldIdRaw="bulk" and empty response value
+    // This special case is sent by the UniversalForm component
     if (req.body && req.body.fieldIdRaw === 'bulk') {
+      // This is the problematic case we're trying to handle
+      logger.info(`[KY3P API] Detected bulk update request with fieldIdRaw=bulk for task ${taskId}`);
+      
       // Get the referrer and user agent to help track down where this is coming from
       const userAgent = req.headers['user-agent'] || 'unknown';
       const referrer = req.headers['referer'] || 'unknown';
@@ -1489,6 +1476,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       logger.info(`[KY3P API] Detected UniversalForm bulk update request with fieldIdRaw=bulk pattern`, {
         taskIdRaw: req.body.taskIdRaw,
         fieldIdRaw: req.body.fieldIdRaw,
+        responseValue: req.body.responseValue,
         headers: {
           userAgent: userAgent.substring(0, 100),
           referrer,
@@ -1498,9 +1486,28 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         requestBody: JSON.stringify(req.body).substring(0, 200)
       });
       
-      // Redirect to the batch-update endpoint which handles string field keys properly
-      // This is the modernized endpoint that supports our standardized approach
-      return res.redirect(307, `/api/ky3p/batch-update/${taskId}`);
+      try {
+        // First try to use our specialized handler
+        try {
+          const bulkFixModule = await import('./ky3p-bulk-fix');
+          const isHandled = await bulkFixModule.handleSpecialBulkCase(req, res);
+          
+          if (isHandled) {
+            logger.info('[KY3P API] Successfully handled special bulk case');
+            return; // Exit early as the special case handler took care of it
+          }
+        } catch (importError) {
+          logger.error('[KY3P API] Error using special case handler:', importError);
+        }
+        
+        // If the special handler fails, provide a fallback approach
+        // Redirect to the standardized batch-update endpoint
+        logger.info(`[KY3P API] Redirecting bulk request to demo-autofill endpoint for task ${taskId}`);
+        return res.redirect(307, `/api/ky3p/demo-autofill/${taskId}`);
+      } catch (redirectError) {
+        logger.error('[KY3P API] Error redirecting to demo-autofill:', redirectError);
+        return res.status(500).json({ message: 'Internal server error handling bulk request' });
+      }
     }
     
     // Validate response object
