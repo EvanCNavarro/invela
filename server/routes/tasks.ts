@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { tasks, TaskStatus as DbTaskStatus, companies, kybFields, kybResponses, ky3pFields, openBankingFields } from "@db/schema";
+import { tasks, TaskStatus as DbTaskStatus, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, openBankingFields, openBankingResponses } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastTaskUpdate, broadcastMessage } from "../services/websocket"; // Use the correct import path

@@ -489,21 +489,19 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
       ]
     };
     
-    // Normalize form type key for lookup
-    let normalizedType = formType.toLowerCase();
-    
-    // Get appropriate field list based on form type
+    // Get the appropriate fields for this form type
     let fields: Array<{ fieldKey: string, demoValue: any }> = [];
     
-    if (normalizedType === 'kyb' || normalizedType === 'company_kyb') {
+    // Map the form type to the correct demo data
+    if (formType.toLowerCase() === 'kyb' || formType.toLowerCase() === 'company_kyb') {
       fields = demoFieldsByType['kyb'];
-    } else if (normalizedType === 'open_banking' || normalizedType === 'open_banking_survey') {
+    } else if (formType.toLowerCase() === 'open_banking' || formType.toLowerCase() === 'open_banking_survey') {
       fields = demoFieldsByType['open_banking'];
     } else {
       return {
         success: false,
         fields: [],
-        message: `Unsupported form type: ${formType}`
+        message: `No demo data available for form type: ${formType}`
       };
     }
     
@@ -512,7 +510,7 @@ async function getFormFieldsWithDemoValues(formType: string): Promise<{
       fields
     };
   } catch (error) {
-    logger.error('Error getting demo field values:', error);
+    console.error('Error getting demo values:', error);
     return {
       success: false,
       fields: [],
