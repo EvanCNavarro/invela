@@ -79,11 +79,14 @@ async function fixedKy3pBulkUpdate(taskId: number, formData: Record<string, any>
     try {
       logger.info(`Using batch-update endpoint for task ${taskId} with ${Object.keys(formData).length} fields`);
       
-      // Filter out metadata and empty values
+      // Filter out metadata and format data for the server
       const cleanData: Record<string, any> = {};
       for (const [key, value] of Object.entries(formData)) {
-        if (!key.startsWith('_') && value !== undefined && value !== null && value !== '') {
-          cleanData[key] = value;
+        // Skip internal metadata fields that start with underscore
+        if (!key.startsWith('_')) {
+          // For empty fields, we'll still send them (null/undefined becomes empty string)
+          // so they get properly cleared in the database
+          cleanData[key] = value !== undefined && value !== null ? value : '';
         }
       }
       
