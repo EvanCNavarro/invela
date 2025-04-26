@@ -1,8 +1,8 @@
 /**
- * Standardized KY3P update component 
+ * Fixed KY3P Bulk Update Implementation
  * 
- * This implementation uses the standardized field key approach that matches KYB,
- * eliminating the conversion from string keys to numeric IDs
+ * This module fixes the demo auto-fill functionality by correctly formatting
+ * the bulk update request for KY3P forms.
  */
 
 // Simple logger implementation
@@ -26,8 +26,7 @@ class Logger {
   }
 }
 
-// Initialize a single logger instance
-const logger = new Logger('StandardizedKY3PUpdate');
+const logger = new Logger('KY3P-BulkUpdate');
 
 /**
  * Perform a bulk update for KY3P form using the proper field ID format
@@ -42,7 +41,7 @@ const logger = new Logger('StandardizedKY3PUpdate');
  * @param formData The form data to bulk update
  * @returns Promise<boolean> Success or failure status
  */
-async function fixedKy3pBulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
+export async function fixedKy3pBulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
   try {
     logger.info(`Running fixed KY3P bulk update for task ${taskId}`);
     
@@ -114,27 +113,6 @@ async function fixedKy3pBulkUpdate(taskId: number, formData: Record<string, any>
     }
   } catch (error) {
     logger.error('Unexpected error in fixed KY3P bulk update:', error);
-    return false;
-  }
-}
-
-/**
- * Handles bulk update of KY3P form data using string-based field keys
- * which is compatible with the standardized form system
- * 
- * @param taskId The task ID to update
- * @param formData The form data with field keys and values
- * @returns Success or failure status
- */
-export async function standardizedBulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
-  try {
-    logger.info(`Starting standardized bulk update for task ${taskId}`);
-    
-    // Use our fixed implementation which handles both demo auto-fill and normal updates
-    return await fixedKy3pBulkUpdate(taskId, formData);
-    
-  } catch (error) {
-    logger.error('Error during standardized KY3P bulk update:', error);
     return false;
   }
 }
