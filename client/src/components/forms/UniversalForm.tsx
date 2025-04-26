@@ -53,7 +53,7 @@ import SectionContent from './SectionContent';
 
 // Import utility functions
 import { handleDemoAutoFill } from './handleDemoAutoFill';
-import { handleClearFields as handleClearFieldsUtil } from './handleClearFields';
+import { handleClearFieldsUtil } from './handleClearFields';
 
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
@@ -525,7 +525,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (taskId) {
         try {
           // Import dynamically to avoid circular dependencies
-          const { handleClearFieldsUtil, directClearFields } = await import('./handleClearFields');
+          const clearFieldsModule = await import('./handleClearFields');
+          const { directClearFields } = clearFieldsModule;
           
           logger.info(`[ClearFields] Using direct clear approach for task ${taskId} (${taskType})`);
           
@@ -584,7 +585,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
       
       // Standard approach for non-KY3P forms
-      const success = await handleClearFieldsUtil(
+      const clearFieldsModule = await import('./handleClearFields');
+      const success = await clearFieldsModule.handleClearFieldsUtil(
         formService, 
         fields, 
         // Pass callback to update field value in form
