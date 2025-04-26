@@ -17,9 +17,9 @@ const router = express.Router();
 async function updateTaskProgress(taskId: number): Promise<number> {
   try {
     // Direct database update to calculate and update progress
-    // Get visible fields count
+    // Get all fields count (we're not using is_visible at this time)
     const [totalResult] = await db.execute<{ count: number }>(
-      sql`SELECT COUNT(*) as count FROM ky3p_fields WHERE is_visible = true`
+      sql`SELECT COUNT(*) as count FROM ky3p_fields`
     );
     
     // Get completed responses count
@@ -167,54 +167,40 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
     
     console.log(`[KY3P API] Demo auto-fill requested for task ${taskId}`);
     
-    // For this simplified implementation, we'll use a direct demo data approach
+    // Use a direct demo data approach with field keys that match our database schema
     const demoData = {
-      // Company Information
-      'company_name': 'DevTest35',
-      'contact_email': 'support@devtest35.com',
-      'contact_phone': '+1-555-123-4567',
-      'business_description': 'Leading provider of compliance and risk management software solutions specializing in vendor risk management and security assessment.',
-      'industry': 'Financial Technology',
-      'years_in_business': '8',
+      // External Systems & Security
+      'externalSystems': 'Our organization maintains a comprehensive inventory of external information systems through automated discovery tools and regular manual audits. The inventory is updated monthly and validated quarterly.',
+      'breachNotification': 'Our breach notification process follows a structured protocol. Upon detection, incidents are escalated to the security team within 1 hour, assessed within 4 hours, and data controllers are notified within 24 hours of confirmation.',
+      'standardChangeControl': 'We follow ITIL-based change management procedures with formal documentation, impact assessment, and approval workflows. All changes are tested in staging environments before deployment.',
+      'dataLossGovernance': 'Our DLP strategy includes content inspection, context analysis, and location-based controls. We regularly review and update data loss prevention policies based on quarterly risk assessments.',
+      'centralizedAuthentication': 'We implement centralized authentication through a federated identity management system with role-based access controls and just-in-time provisioning.',
+      'antiFraudGovernance': 'Our fraud detection system employs machine learning algorithms to monitor transaction patterns, behavioral biometrics, and unusual access patterns in real-time.',
+      'defaultPasswords': 'We enforce a strict policy against default passwords. All default credentials are changed before systems enter production, verified by automated scanning and security audits.',
+      'assetRetrieval': 'We maintain a structured asset retrieval process for departing employees including access revocation, equipment return verification, and data sanitization procedures.',
       
-      // Security Controls
-      'security_policy_documented': 'Yes',
-      'security_policy_last_updated': '2025-01-15',
-      'encryption_in_transit': 'Yes',
-      'encryption_standards': 'TLS 1.3, AES-256',
-      'encryption_at_rest': 'Yes',
-      'encryption_key_management': 'Hardware Security Module (HSM)',
-      'multifactor_authentication': 'Yes',
-      'mfa_type': 'TOTP and hardware tokens for privileged users',
-      'incident_response_plan': 'Yes',
-      'incident_response_last_tested': '2025-03-10',
+      // Privacy and Security
+      'privacyIncidentProcedure': 'Our privacy incident response plan includes a dedicated privacy team, containment procedures, forensic investigation protocols, and communication templates for different stakeholder groups.',
+      'dataClassificationGovernance': 'Our data classification framework has four tiers: Public, Internal, Confidential, and Restricted. Each tier has defined handling requirements, access controls, and retention policies.',
+      'threatManagementGovernance': 'Our threat management program includes continuous monitoring, threat intelligence integration, and coordinated vulnerability management through our security operations center.',
+      'webApplicationSecurity': 'We implement OWASP security practices including regular SAST/DAST testing, secure code reviews, and runtime application self-protection (RASP) for critical applications.',
+      'remoteMfa': 'All remote access requires multi-factor authentication using a combination of hardware tokens for privileged users and mobile authenticator apps for standard users.',
+      'fraudActivityReporting': 'Suspected fraud activity is reported through a dedicated hotline and online portal, with anonymous reporting options and mandatory review within 24 hours.',
+      'incidentDocumentation': 'Security incidents are documented in our centralized incident management system with standardized templates for incident classification, response actions, and post-incident analysis.',
       
-      // Security Assessment
-      'security_training_frequency': 'Quarterly',
-      'security_awareness_program': 'Comprehensive program including simulated phishing and gamified learning',
-      'vulnerability_scanning_frequency': 'Monthly',
-      'vulnerability_remediation_timeframe': 'Critical: 24h, High: 7d, Medium: 30d, Low: 90d',
-      'penetration_testing_frequency': 'Annually',
-      'penetration_testing_last_date': '2024-11-05',
-      'data_classification_implemented': 'Yes',
-      'data_classification_levels': 'Public, Internal, Confidential, Restricted',
+      // Compliance and Development
+      'privacyLawCompliance': 'We maintain compliance with relevant privacy laws through a dedicated privacy office, periodic assessments, data mapping exercises, and regulatory monitoring.',
+      'developmentLifecycle': 'Our secure development lifecycle incorporates security requirements definition, threat modeling, secure coding standards, and security testing at all stages of development.',
+      'acceptableUse': 'Our acceptable use policy covers all IT resources, is reviewed annually, requires explicit user acknowledgment, and is reinforced through regular security awareness training.',
+      'securityExceptions': 'Security exceptions require formal risk assessment, compensating controls, executive approval, and are documented with specific expiration dates and periodic reviews.',
+      'securityPatching': 'Our patch management process includes daily vulnerability monitoring, risk-based prioritization, testing protocols, and defined SLAs for deployment (Critical: 24h, High: 7d, Medium: 30d).',
       
-      // Business Continuity
-      'backup_frequency': 'Daily',
-      'backup_retention_period': '90 days',
-      'backup_last_tested': '2025-02-18',
-      'disaster_recovery_tested': 'Yes',
-      'disaster_recovery_last_test_date': '2025-01-22',
-      'business_continuity_plan': 'Yes',
-      'recovery_time_objective': '4 hours',
-      'recovery_point_objective': '15 minutes',
-      
-      // Third-Party Management
-      'third_party_risk_assessment': 'Yes',
-      'third_party_assessment_frequency': 'Annual and upon significant changes',
-      'vendor_management_program': 'Yes',
-      'critical_vendor_list_maintained': 'Yes',
-      'third_party_access_controls': 'Enforced least privilege access with mandatory MFA'
+      // Additional Areas
+      'incidentResponse': 'Our incident response team conducts quarterly tabletop exercises and annual full-scale simulations to ensure readiness for various security scenarios.',
+      'disasterRecovery': 'Our disaster recovery plan is tested bi-annually, maintains RTO of 4 hours and RPO of 15 minutes for critical systems, with geographically distributed recovery sites.',
+      'backupManagement': 'Critical data is backed up daily with incremental backups throughout the day, 30-day retention for standard data, and 7-year retention for regulated data.',
+      'encryptionControls': 'We implement AES-256 encryption for data at rest and TLS 1.3 for data in transit, with hardware security modules (HSMs) for key management.',
+      'vendorAssessment': 'Third-party vendors undergo security assessment before engagement and annually thereafter, with risk-tiered evaluation depth and continuous monitoring.'
     };
     
     // Get all fields for mapping
