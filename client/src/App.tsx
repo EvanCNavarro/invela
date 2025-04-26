@@ -41,6 +41,7 @@ import TestDemoAutoFill from "@/pages/test-demo-autofill";
 import TestKy3pPage from "@/pages/test-ky3p-page";
 import TestStandardizedKy3pUpdate from "@/components/test/TestStandardizedKy3pUpdate";
 import TestStandardizedServicePage from "@/pages/test-standardized-service-page";
+import TestStandardizedUniversalFormPage from "@/pages/test-standardized-universal-form";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -319,6 +320,11 @@ function Router() {
         {/* Standardized Form Service Test Page - For Testing the Complete FormServiceInterface Implementation */}
         <Route path="/test-standardized-service">
           <TestStandardizedServicePage />
+        </Route>
+        
+        {/* Standardized Universal Form Test Page - For Testing Across Different Form Types */}
+        <Route path="/test-standardized-universal-form">
+          <TestStandardizedUniversalFormPage />
         </Route>
         
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}

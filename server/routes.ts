@@ -23,6 +23,8 @@ import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
+// Import standardized KY3P batch update routes
+import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
 import openBankingDemoAutofillRouter from './routes/open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import filesRouter from './routes/files';
@@ -319,6 +321,8 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pRouter);
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
+  // Register the standardized KY3P batch update routes
+  registerKY3PBatchUpdateRoutes(app);
   app.use(kybClearRouter);
   app.use(openBankingClearRouter);
   app.use(openBankingDemoAutofillRouter);

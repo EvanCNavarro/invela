@@ -1,482 +1,597 @@
 /**
  * Standardized KY3P Form Service
  * 
- * This service implements the FormServiceInterface for KY3P forms using
- * the standardized approach with string-based field keys.
- * 
- * It resolves the "Invalid field ID format" error by ensuring proper 
- * compatibility between KY3P form structure and the universal form interface.
+ * This service provides standardized functionality for KY3P forms
+ * with enhanced error handling, endpoint fallback, and consistent
+ * interfaces that work with the StandardizedUniversalForm component.
  */
 
-import type { FormData, FormField, FormSection, FormServiceInterface, FormSubmitOptions } from "./formService";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { FormSection, FormField, FormServiceInterface } from "./formService";
 import getLogger from "@/utils/logger";
 import { standardizedBulkUpdate } from "@/components/forms/standardized-ky3p-update";
 
 const logger = getLogger('StandardizedKY3PFormService');
 
-interface KY3PField {
-  id: number; 
-  field_key: string;
-  display_name: string;
-  field_type: string;
-  group: string;
-  required: boolean;
-  is_required?: boolean;
-  step_index?: number;
-  validation?: any;
-  options?: any;
-  [key: string]: any;
+// Cache for form data, fields, and sections to avoid redundant requests
+interface ServiceCache {
+  fields: FormField[];
+  sections: FormSection[];
+  formData: Record<string, any>;
+  progress: number;
+  status: string;
+  lastUpdated: number;
+  lastTaskId?: number;
 }
 
 export class StandardizedKY3PFormService implements FormServiceInterface {
-  private taskId: number | null = null;
-  private templateId: number | null = null;
-  private formData: FormData = {};
-  private fields: FormField[] = [];
-  private sections: FormSection[] = [];
-  private saveInProgress: boolean = false;
-  private isInitialized: boolean = false;
+  private taskId?: number;
+  private cache: ServiceCache = {
+    fields: [],
+    sections: [],
+    formData: {},
+    progress: 0,
+    status: 'not_started',
+    lastUpdated: 0,
+  };
+  
+  // Track successful endpoints to prioritize them in future requests
+  private successfulEndpoints: Record<string, boolean> = {
+    batch: false,
+    auto_fill: false,
+    demo_autofill: false,
+  };
 
   constructor(taskId?: number) {
+    this.taskId = taskId;
+    logger.info(`Initialized with taskId: ${taskId}`);
+    
+    // If we have a task ID, initialize the cache with that task
     if (taskId) {
-      this.taskId = taskId;
+      this.cache.lastTaskId = taskId;
     }
-    logger.info('Initialized standardized KY3P form service');
   }
 
-  public async initialize(templateId: number): Promise<void> {
-    this.templateId = templateId;
+  /**
+   * Get all form fields
+   * 
+   * @returns Array of form fields
+   */
+  getFields(): FormField[] {
+    // If cache is empty or stale, fetch fields
+    if (this.cache.fields.length === 0) {
+      this.fetchFields();
+      return [];
+    }
     
+    return this.cache.fields;
+  }
+
+  /**
+   * Get all form sections with their fields
+   * 
+   * @returns Array of form sections
+   */
+  getSections(): FormSection[] {
+    // If cache is empty or stale, fetch sections
+    if (this.cache.sections.length === 0) {
+      this.fetchSections();
+      return [];
+    }
+    
+    return this.cache.sections;
+  }
+
+  /**
+   * Get current form data
+   * 
+   * @returns Form data object
+   */
+  getFormData(): Record<string, any> {
+    return this.cache.formData || {};
+  }
+
+  /**
+   * Load form data into the service
+   * 
+   * @param data Form data to load
+   */
+  loadFormData(data: Record<string, any>): void {
+    this.cache.formData = { ...data };
+    this.cache.lastUpdated = Date.now();
+    logger.info(`Loaded ${Object.keys(data).length} form data fields`);
+  }
+
+  /**
+   * Fetch form fields from the server
+   * 
+   * @returns Promise that resolves when fields are fetched
+   */
+  async fetchFields(): Promise<void> {
     try {
-      // Load fields and transform them to match FormField interface
-      const fields = await this.fetchFields();
-      this.fields = this.transformFields(fields);
-      
-      // Generate sections from fields
-      this.sections = this.generateSections(this.fields);
-      
-      // If we have a task ID, load saved data
-      if (this.taskId) {
-        this.formData = await this.loadProgress(this.taskId);
-      }
-      
-      this.isInitialized = true;
-      logger.info('KY3P form service initialized successfully');
-    } catch (error) {
-      logger.error('Failed to initialize KY3P form service:', error);
-      throw new Error('Failed to initialize KY3P form service');
-    }
-  }
-
-  private async fetchFields(): Promise<KY3PField[]> {
-    // Use the correct endpoint that matches the original service
-    const response = await fetch('/api/ky3p-fields', {
-      credentials: 'include' // Include session cookies
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error('Failed to fetch KY3P fields:', { 
-        status: response.status, 
-        statusText: response.statusText,
-        responseBody: errorText
-      });
-      throw new Error(`Failed to fetch KY3P fields: ${response.status} - ${errorText}`);
-    }
-    
-    const fields = await response.json();
-    logger.info(`Successfully loaded ${fields.length} KY3P fields`);
-    return fields;
-  }
-
-  private transformFields(ky3pFields: KY3PField[]): FormField[] {
-    return ky3pFields.map(field => ({
-      key: field.field_key,
-      label: field.display_name,
-      type: field.field_type || 'TEXT',
-      section: field.group || 'General',
-      sectionId: field.group || 'General',
-      helpText: field.description || '',
-      question: field.question || field.display_name,
-      questionNumber: field.step_index || 0,
-      default: field.default_value || '',
-      options: field.options || [],
-      validation: {
-        required: field.required || field.is_required || false,
-        ...field.validation || {}
-      },
-      order: field.step_index || 0,
-      metadata: {
-        id: field.id,
-        field_key: field.field_key,
-        originalField: field
-      }
-    }));
-  }
-
-  private generateSections(fields: FormField[]): FormSection[] {
-    const sectionMap: Record<string, FormSection> = {};
-    
-    fields.forEach(field => {
-      const sectionId = field.section || 'General';
-      
-      if (!sectionMap[sectionId]) {
-        sectionMap[sectionId] = {
-          id: sectionId,
-          title: sectionId,
-          description: '',
-          order: 0, // Will be adjusted later
-          collapsed: false,
-          fields: []
-        };
-      }
-      
-      sectionMap[sectionId].fields.push(field);
-    });
-    
-    // Sort fields within each section by order
-    Object.values(sectionMap).forEach(section => {
-      section.fields.sort((a, b) => a.order - b.order);
-      
-      // Set section order based on first field in section
-      if (section.fields.length > 0) {
-        section.order = section.fields[0].order;
-      }
-    });
-    
-    // Convert to array and sort sections by order
-    return Object.values(sectionMap).sort((a, b) => a.order - b.order);
-  }
-
-  // FormServiceInterface implementation
-  public getFields(): FormField[] {
-    return this.fields;
-  }
-
-  public getSections(): FormSection[] {
-    return this.sections;
-  }
-
-  public loadFormData(data: FormData): void {
-    this.formData = { ...data };
-    logger.info(`Loaded form data with ${Object.keys(data).length} fields`);
-  }
-
-  public updateFormData(fieldKey: string, value: any, taskId?: number): void {
-    this.formData[fieldKey] = value;
-    
-    // If taskId is provided, save immediately
-    if (taskId && !this.saveInProgress) {
-      this.saveField(fieldKey, value, taskId).catch(error => {
-        logger.error(`Failed to save field ${fieldKey}:`, error);
-      });
-    }
-  }
-
-  private async saveField(fieldKey: string, value: any, taskId: number): Promise<boolean> {
-    try {
-      this.saveInProgress = true;
-      
-      // Use the correct API endpoint that matches the original service
-      const response = await fetch(`/api/tasks/${taskId}/ky3p-response`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
-        body: JSON.stringify({
-          fieldIdRaw: fieldKey,
-          responseValue: value,
-          responseValueType: typeof value
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`Failed to save field ${fieldKey}:`, {
-          status: response.status,
-          statusText: response.statusText,
-          responseBody: errorText
-        });
-        return false;
-      }
-      
-      logger.info(`Successfully saved field ${fieldKey} for task ${taskId}`);
-      return true;
-    } catch (error) {
-      logger.error(`Error saving field ${fieldKey}:`, error);
-      return false;
-    } finally {
-      this.saveInProgress = false;
-    }
-  }
-
-  public getFormData(): FormData {
-    return { ...this.formData };
-  }
-
-  public calculateProgress(): number {
-    if (this.fields.length === 0) return 0;
-    
-    const requiredFields = this.fields.filter(field => 
-      field.validation?.required || false
-    );
-    
-    if (requiredFields.length === 0) return 1; // 100% if no required fields
-    
-    const completedRequiredFields = requiredFields.filter(field => {
-      const value = this.formData[field.key];
-      return value !== undefined && value !== null && value !== '';
-    });
-    
-    return completedRequiredFields.length / requiredFields.length;
-  }
-
-  public async saveProgress(taskId?: number): Promise<void> {
-    const effectiveTaskId = taskId || this.taskId;
-    
-    if (!effectiveTaskId) {
-      throw new Error('No task ID provided for saving progress');
-    }
-    
-    if (this.saveInProgress) {
-      logger.warn('Save already in progress, skipping');
-      return;
-    }
-    
-    try {
-      this.saveInProgress = true;
-      
-      // Use our standardized bulk update approach
-      const success = await standardizedBulkUpdate(effectiveTaskId, this.formData);
-      
-      if (!success) {
-        throw new Error('Failed to save progress');
-      }
-      
-      logger.info(`Successfully saved progress for task ${effectiveTaskId}`);
-    } catch (error) {
-      logger.error('Error saving progress:', error);
-      throw error;
-    } finally {
-      this.saveInProgress = false;
-    }
-  }
-
-  public async loadProgress(taskId: number): Promise<FormData> {
-    try {
-      // Use the correct API endpoint that matches the original service
-      const response = await fetch(`/api/tasks/${taskId}/ky3p-responses`, {
-        credentials: 'include' // Include session cookies
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`Failed to load progress for task ${taskId}:`, {
-          status: response.status,
-          statusText: response.statusText,
-          responseBody: errorText
-        });
-        throw new Error(`Failed to load progress: ${response.status} - ${errorText}`);
-      }
-      
+      logger.info('Fetching KY3P fields');
+      const response = await apiRequest('GET', '/api/ky3p-fields');
       const data = await response.json();
       
-      // Transform the response to match the expected format
-      const formattedData: FormData = {};
-      
-      // Handle both array format and direct object format
       if (Array.isArray(data)) {
-        data.forEach(response => {
-          if (response.field_key) {
-            formattedData[response.field_key] = response.response_value;
-          }
-        });
-      } else if (typeof data === 'object' && data !== null) {
-        // If already in key-value format, use directly
-        Object.assign(formattedData, data);
+        this.cache.fields = data.map(field => ({
+          ...field,
+          // Ensure we have the right key format for standardized approach
+          key: field.key || `${field.id}`,
+          // Standardize field options
+          options: field.options || [],
+        }));
+        
+        logger.info(`Fetched ${this.cache.fields.length} KY3P fields`);
+      } else {
+        logger.error('Invalid KY3P fields data format:', data);
+        this.cache.fields = [];
       }
-      
-      this.formData = formattedData;
-      
-      logger.info(`Loaded progress for task ${taskId} with ${Object.keys(this.formData).length} fields`);
-      return { ...this.formData };
     } catch (error) {
-      logger.error('Error loading progress:', error);
-      return {};
+      logger.error('Error fetching KY3P fields:', error);
+      this.cache.fields = [];
     }
   }
 
-  public async save(options: FormSubmitOptions): Promise<boolean> {
-    const { taskId = this.taskId } = options;
-    
-    if (!taskId) {
-      throw new Error('No task ID provided for saving form');
-    }
-    
+  /**
+   * Fetch form sections from the server
+   * 
+   * @returns Promise that resolves when sections are fetched
+   */
+  async fetchSections(): Promise<void> {
     try {
-      await this.saveProgress(taskId);
-      return true;
+      logger.info('Fetching KY3P sections');
+      const response = await apiRequest('GET', '/api/ky3p-sections');
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        // Process sections and organize fields into them
+        await this.processSections(data);
+        logger.info(`Fetched ${this.cache.sections.length} KY3P sections`);
+      } else {
+        logger.error('Invalid KY3P sections data format:', data);
+        this.cache.sections = [];
+        
+        // Fallback: Try to create sections from fields
+        await this.createSectionsFromFields();
+      }
     } catch (error) {
-      logger.error('Error saving form:', error);
-      return false;
+      logger.error('Error fetching KY3P sections:', error);
+      this.cache.sections = [];
+      
+      // Fallback: Try to create sections from fields
+      await this.createSectionsFromFields();
     }
   }
 
-  public async submit(options: FormSubmitOptions): Promise<any> {
-    const { taskId = this.taskId } = options;
-    
-    if (!taskId) {
-      throw new Error('No task ID provided for submitting form');
+  /**
+   * Process sections data and organize fields into them
+   * 
+   * @param sectionsData Sections data from the server
+   */
+  private async processSections(sectionsData: any[]): Promise<void> {
+    // Ensure we have fields
+    if (this.cache.fields.length === 0) {
+      await this.fetchFields();
     }
     
-    try {
-      // First save all progress
-      await this.saveProgress(taskId);
-      
-      // Then submit the form - use the correct API endpoint that matches the original service
-      const response = await fetch(`/api/tasks/${taskId}/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include session cookies
+    // Create sections with their fields
+    this.cache.sections = sectionsData.map((section) => {
+      const sectionFields = this.cache.fields.filter((field) => {
+        // Check for various section ID formats
+        return (
+          field.sectionId === section.id || 
+          field.section === section.id || 
+          field.section === section.name || 
+          field.group === section.id || 
+          field.group === section.name
+        );
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`Failed to submit form for task ${taskId}:`, {
-          status: response.status,
-          statusText: response.statusText,
-          responseBody: errorText
-        });
-        throw new Error(`Failed to submit form: ${response.status} - ${errorText}`);
+      return {
+        ...section,
+        id: section.id || section.name,
+        fields: sectionFields,
+      };
+    });
+  }
+
+  /**
+   * Create sections from fields as a fallback
+   */
+  private async createSectionsFromFields(): Promise<void> {
+    logger.info('Creating sections from fields as fallback');
+    
+    // Ensure we have fields
+    if (this.cache.fields.length === 0) {
+      await this.fetchFields();
+    }
+    
+    // Group fields by section or group
+    const sectionMap = new Map<string, FormField[]>();
+    
+    this.cache.fields.forEach((field) => {
+      const sectionId = field.sectionId || field.section || field.group || 'default';
+      
+      if (!sectionMap.has(sectionId)) {
+        sectionMap.set(sectionId, []);
       }
       
-      const result = await response.json();
-      logger.info(`Successfully submitted form for task ${taskId}`);
+      sectionMap.get(sectionId)?.push(field);
+    });
+    
+    // Create sections from the map
+    this.cache.sections = Array.from(sectionMap.entries()).map(([sectionId, fields]) => {
+      return {
+        id: sectionId,
+        title: sectionId.charAt(0).toUpperCase() + sectionId.slice(1).replace(/_/g, ' '),
+        fields,
+      };
+    });
+    
+    logger.info(`Created ${this.cache.sections.length} sections from fields`);
+  }
+
+  /**
+   * Update form data for a specific field
+   * 
+   * @param fieldKey Field key or ID
+   * @param value New field value
+   * @param taskId Optional task ID for auto-save
+   */
+  async updateFormData(fieldKey: string, value: any, taskId?: number): Promise<void> {
+    // Update the local cache
+    this.cache.formData[fieldKey] = value;
+    this.cache.lastUpdated = Date.now();
+    
+    // If task ID is provided, save progress
+    if (taskId) {
+      try {
+        // Use standardized bulk update for the field
+        await standardizedBulkUpdate(taskId, {
+          [fieldKey]: value,
+        });
+      } catch (error) {
+        logger.error(`Error auto-saving field ${fieldKey}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Load progress for a task
+   * 
+   * @param taskId Task ID
+   * @returns Form data object
+   */
+  async loadProgress(taskId: number): Promise<Record<string, any>> {
+    try {
+      logger.info(`Loading progress for task ${taskId}`);
       
-      return result;
+      // Send request to get progress
+      const response = await apiRequest('GET', `/api/ky3p-task/${taskId}/progress`);
+      const data = await response.json();
+      
+      logger.info(`Loaded progress for task ${taskId}:`, {
+        progress: data.progress,
+        status: data.status,
+        fieldCount: data.formData ? Object.keys(data.formData).length : 0,
+      });
+      
+      // Update cache
+      this.cache.formData = data.formData || {};
+      this.cache.progress = data.progress || 0;
+      this.cache.status = data.status || 'in_progress';
+      this.cache.lastUpdated = Date.now();
+      this.cache.lastTaskId = taskId;
+      
+      return this.cache.formData;
     } catch (error) {
-      logger.error('Error submitting form:', error);
+      logger.error(`Failed to load progress for task ${taskId}:`, error);
       throw error;
     }
   }
 
-  public validate(data: FormData): boolean | Record<string, string> {
-    const errors: Record<string, string> = {};
-    
-    this.fields.forEach(field => {
-      const value = data[field.key];
-      const { validation } = field;
+  /**
+   * Save progress for a task
+   * 
+   * @param taskId Task ID
+   * @returns Success status
+   */
+  async saveProgress(taskId: number): Promise<boolean> {
+    try {
+      logger.info(`Saving progress for task ${taskId} with ${Object.keys(this.cache.formData).length} fields`);
       
-      if (validation?.required && (value === undefined || value === null || value === '')) {
-        errors[field.key] = `${field.label} is required`;
+      // Use standardized bulk update for all fields
+      const success = await standardizedBulkUpdate(taskId, this.cache.formData);
+      
+      // Mark the batch endpoint as successful
+      if (success) {
+        this.successfulEndpoints.batch = true;
       }
       
-      // Additional validation based on field type
-      if (value !== undefined && value !== null && value !== '') {
-        if (validation?.minLength && typeof value === 'string' && value.length < validation.minLength) {
-          errors[field.key] = `${field.label} must be at least ${validation.minLength} characters`;
-        }
+      return success;
+    } catch (error) {
+      logger.error(`Failed to save progress for task ${taskId}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Submit the form for a task
+   * 
+   * @param options Submit options with task ID
+   * @returns Success status
+   */
+  async submit(options: { taskId?: number }): Promise<boolean> {
+    const taskId = options.taskId || this.taskId;
+    
+    if (!taskId) {
+      logger.error('Cannot submit without a task ID');
+      return false;
+    }
+    
+    try {
+      logger.info(`Submitting form for task ${taskId}`);
+      
+      // Save progress first
+      await this.saveProgress(taskId);
+      
+      // Then submit the form
+      const response = await apiRequest('POST', `/api/ky3p-task/${taskId}/submit`);
+      
+      if (response.ok) {
+        logger.info(`Successfully submitted form for task ${taskId}`);
         
-        if (validation?.maxLength && typeof value === 'string' && value.length > validation.maxLength) {
-          errors[field.key] = `${field.label} must be at most ${validation.maxLength} characters`;
-        }
+        // Invalidate task cache to reflect updated status
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/ky3p-task/${taskId}`] });
         
-        if (validation?.pattern && typeof value === 'string') {
-          const pattern = new RegExp(validation.pattern);
-          if (!pattern.test(value)) {
-            errors[field.key] = validation.message || `${field.label} is invalid`;
-          }
-        }
+        return true;
+      } else {
+        const errorData = await response.json();
+        logger.error(`Error submitting form for task ${taskId}:`, errorData);
+        return false;
+      }
+    } catch (error) {
+      logger.error(`Failed to submit form for task ${taskId}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Validate form data
+   * 
+   * @param formData Form data to validate
+   * @returns True if valid, or error object if invalid
+   */
+  validate(formData: Record<string, any>): true | Record<string, string> {
+    const errors: Record<string, string> = {};
+    
+    // If cache is empty, load fields
+    if (this.cache.fields.length === 0) {
+      logger.warn('Validating with empty fields cache');
+      return true;
+    }
+    
+    // Check required fields
+    this.cache.fields.forEach((field) => {
+      // Skip non-required fields
+      if (!field.validation?.required && !field.required) {
+        return;
+      }
+      
+      const value = formData[field.key];
+      
+      // Check if value is missing
+      if (value === undefined || value === null || value === '') {
+        errors[field.key] = 'This field is required';
       }
     });
     
+    // Return true if no errors, otherwise return errors
     return Object.keys(errors).length === 0 ? true : errors;
   }
 
-  // Additional methods specific to KY3P forms
-  public async getDemoData(taskId?: number): Promise<Record<string, any>> {
+  /**
+   * Calculate form completion progress
+   * 
+   * @returns Progress percentage (0-100)
+   */
+  calculateProgress(): number {
+    // If cache is empty, return cached progress
+    if (this.cache.fields.length === 0) {
+      return this.cache.progress;
+    }
+    
+    // Count required fields
+    const requiredFields = this.cache.fields.filter(
+      (field) => field.validation?.required || field.required
+    );
+    
+    if (requiredFields.length === 0) {
+      return 100;
+    }
+    
+    // Count completed required fields
+    const completedRequiredFields = requiredFields.filter((field) => {
+      const value = this.cache.formData[field.key];
+      return value !== undefined && value !== null && value !== '';
+    });
+    
+    // Calculate progress percentage
+    const progress = (completedRequiredFields.length / requiredFields.length) * 100;
+    
+    // Update cache
+    this.cache.progress = progress;
+    
+    return progress;
+  }
+
+  /**
+   * Get demo data for the form
+   * 
+   * @param taskId Optional task ID
+   * @returns Demo data object
+   */
+  async getDemoData(taskId?: number): Promise<Record<string, any>> {
+    const targetTaskId = taskId || this.taskId;
+    
+    if (!targetTaskId) {
+      logger.error('Cannot get demo data without a task ID');
+      throw new Error('Task ID is required for demo data');
+    }
+    
     try {
-      const effectiveTaskId = taskId || this.taskId;
+      logger.info(`Getting demo data for task ${targetTaskId}`);
       
-      if (!effectiveTaskId) {
-        throw new Error('No task ID set');
-      }
+      // Try multiple endpoints in sequence, starting with previously successful ones
+      const endpointAttempts = this.getEndpointPriority();
       
-      // Use the correct API endpoint that matches the original service
-      // IMPORTANT: This must match the exact endpoint used in the original KY3P service
-      const response = await fetch(`/api/ky3p/demo-autofill/${effectiveTaskId}`, {
-        method: 'POST', // The endpoint expects a POST request
-        credentials: 'include', // Include session cookies
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({}) // Send empty body for POST request
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`Failed to get KY3P demo data for task ${effectiveTaskId}:`, {
-          status: response.status,
-          statusText: response.statusText,
-          responseBody: errorText
-        });
-        throw new Error(`Failed to get KY3P demo data: ${response.status} - ${errorText}`);
-      }
-      
-      // The response might be wrapped in a 'success' property or similar
-      const responseData = await response.json();
-      
-      // Handle potential response formats
-      let formattedData: Record<string, any> = {};
-      
-      if (responseData.formData) {
-        // If data is wrapped in a formData property
-        formattedData = responseData.formData;
-      } else if (responseData.data) {
-        // Or if it's in a data property
-        formattedData = responseData.data;
-      } else if (responseData.fields) {
-        // Or if it's in a fields property with field_key/response_value format
-        responseData.fields.forEach((field: any) => {
-          if (field.field_key && field.response_value !== undefined) {
-            formattedData[field.field_key] = field.response_value;
+      for (const endpoint of endpointAttempts) {
+        try {
+          let response;
+          let data;
+          
+          switch (endpoint) {
+            case 'batch':
+              // Try batch update-based demo auto-fill
+              response = await apiRequest('GET', `/api/ky3p-task/${targetTaskId}/demo-data`);
+              data = await response.json();
+              break;
+              
+            case 'auto_fill':
+              // Try legacy auto-fill endpoint
+              response = await apiRequest('POST', `/api/ky3p-task/${targetTaskId}/auto-fill`);
+              data = await response.json();
+              break;
+              
+            case 'demo_autofill':
+              // Try universal demo auto-fill endpoint
+              response = await apiRequest('POST', `/api/ky3p-task/${targetTaskId}/demo-autofill`);
+              data = await response.json();
+              break;
+              
+            default:
+              continue;
           }
-        });
-      } else {
-        // If it's already in the right format, use it directly
-        formattedData = responseData;
+          
+          // Process the response data based on the format
+          const demoData = this.processDemoDataResponse(data);
+          
+          if (demoData && Object.keys(demoData).length > 0) {
+            logger.info(`Successfully retrieved demo data from ${endpoint} endpoint`);
+            
+            // Mark this endpoint as successful for future priority
+            this.successfulEndpoints[endpoint] = true;
+            
+            // Update cache
+            this.cache.formData = demoData;
+            this.cache.lastUpdated = Date.now();
+            
+            return demoData;
+          }
+        } catch (error) {
+          logger.warn(`Error getting demo data from ${endpoint} endpoint:`, error);
+          // Continue to next endpoint
+        }
       }
       
-      const fieldCount = Object.keys(formattedData).length;
-      logger.info(`Retrieved demo data with ${fieldCount} fields`);
-      
-      if (fieldCount === 0) {
-        logger.warn('Demo data response contained no usable fields');
-        logger.debug('Raw demo data response:', responseData);
-      }
-      
-      return formattedData;
+      // If we've tried all endpoints and none worked, throw error
+      throw new Error('Failed to get demo data from any endpoint');
     } catch (error) {
-      logger.error('Error getting KY3P demo data:', error);
-      throw error; // Propagate the error for better debugging
+      logger.error(`Error getting KY3P demo data:`, error);
+      throw error;
     }
   }
 
-  // Helper method for clearing form data
-  public clearCache(): void {
-    this.formData = {};
-    logger.info('Form data cache cleared');
+  /**
+   * Process demo data response to extract form data consistently
+   * 
+   * @param data Response data from demo data endpoint
+   * @returns Processed form data
+   */
+  private processDemoDataResponse(data: any): Record<string, any> {
+    // Handle different response formats:
+    
+    // Format 1: { formData: {...} }
+    if (data && data.formData && typeof data.formData === 'object') {
+      return data.formData;
+    }
+    
+    // Format 2: { responses: [...] }
+    if (data && data.responses && Array.isArray(data.responses)) {
+      const formData: Record<string, any> = {};
+      
+      data.responses.forEach((response: any) => {
+        if (response.field_id && response.response_value !== undefined) {
+          formData[response.field_id] = response.response_value;
+        }
+      });
+      
+      return formData;
+    }
+    
+    // Format 3: { form_data: {...} }
+    if (data && data.form_data && typeof data.form_data === 'object') {
+      return data.form_data;
+    }
+    
+    // Format 4: { data: {...} }
+    if (data && data.data && typeof data.data === 'object') {
+      return data.data;
+    }
+    
+    // Format 5: Just the data object itself
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      // Filter out non-field properties
+      const { formData, responses, form_data, data: innerData, progress, status, ...rest } = data;
+      
+      // If we have field data directly in the object
+      if (Object.keys(rest).length > 0) {
+        return rest;
+      }
+    }
+    
+    logger.error('Could not process demo data response:', data);
+    return {};
   }
 
-  public getIsProgressiveLoading(): boolean {
-    return false; // KY3P doesn't use progressive loading
+  /**
+   * Get prioritized list of endpoints to try
+   * 
+   * @returns Array of endpoint names in priority order
+   */
+  private getEndpointPriority(): string[] {
+    const successful: string[] = [];
+    const notTried: string[] = [];
+    
+    // Categorize endpoints by success status
+    Object.entries(this.successfulEndpoints).forEach(([endpoint, success]) => {
+      if (success) {
+        successful.push(endpoint);
+      } else {
+        notTried.push(endpoint);
+      }
+    });
+    
+    // Order: successful endpoints first, then untried ones
+    return [...successful, ...notTried];
   }
 
-  public async loadSection(sectionId: string): Promise<FormField[]> {
-    // For compatibility with FormServiceInterface
-    return this.fields.filter(field => field.section === sectionId);
+  /**
+   * Clear the service cache
+   */
+  clearCache(): void {
+    this.cache = {
+      fields: this.cache.fields, // Keep fields
+      sections: this.cache.sections, // Keep sections
+      formData: {}, // Clear form data
+      progress: 0,
+      status: 'not_started',
+      lastUpdated: 0,
+      lastTaskId: this.cache.lastTaskId,
+    };
+    
+    logger.info('Cache cleared');
   }
 }
