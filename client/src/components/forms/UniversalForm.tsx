@@ -487,6 +487,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   }, [taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, formService]);
   
   // Handle clear fields
+  /**
+   * Handle clearing all form fields
+   * 
+   * This function uses the improved handleClearFields utility which
+   * properly handles different field identifiers across form types.
+   */
   const handleClearFields = useCallback(async () => {
     if (!formService || !fields.length) {
       toast({
@@ -505,29 +511,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
-      // Debug output for debugging
-      console.log('[ClearFields] Starting clear operation with:', {
+      // Enhanced logging for better debugging
+      logger.info('[ClearFields] Starting clear operation', {
         fieldsCount: fields.length,
-        formServiceAvailable: !!formService,
-        formData: Object.keys(formService.getFormData()).length
+        formServiceType: formService.constructor.name,
+        formDataFields: Object.keys(formService.getFormData()).length
       });
       
-      // Use our improved clearFields utility 
+      // Use our improved clearFields utility with standardized field handling 
       const success = await handleClearFieldsUtil(
         formService, 
         fields, 
         // Pass callback to update field value in form
         (fieldId, value) => {
-          // Call the update function from the hook
-          updateField(fieldId, value);
-          
-          // Also update the form directly with setValue if available
-          if (form) {
-            try {
-              form.setValue(fieldId, value, { shouldValidate: false, shouldDirty: true });
-            } catch (err) {
-              console.log(`[ClearFields] Unable to set form value for ${fieldId}:`, err);
+          try {
+            // Call the update function from the hook
+            updateField(fieldId, value);
+            
+            // Also update the form directly with setValue if available
+            if (form) {
+              try {
+                form.setValue(fieldId, value, { shouldValidate: false, shouldDirty: true });
+              } catch (formError) {
+                // Don't let setValue errors block the process
+                logger.warn(`[ClearFields] Unable to set form value for ${fieldId}:`, formError);
+              }
             }
+          } catch (updateError) {
+            logger.error(`[ClearFields] Field update error for ${fieldId}:`, updateError);
           }
         }
       );
@@ -536,30 +547,44 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Force a re-render to update the UI
         setForceRerender(prev => !prev);
         
-        // Refresh status
-        await refreshStatus();
-        
-        // Save progress with cleared data
-        await saveProgress();
-        
-        // Show success message
-        toast({
-          title: 'Fields Cleared',
-          description: 'Successfully cleared all form fields.',
-          variant: 'success',
-        });
+        // Refresh status and save progress in sequence
+        try {
+          logger.info('[ClearFields] Refreshing form status...');
+          await refreshStatus();
+          
+          logger.info('[ClearFields] Saving progress with cleared fields...');
+          await saveProgress();
+          
+          // Calculate new progress to show in toast
+          const newProgress = formService.calculateProgress();
+          
+          // Show success message
+          toast({
+            title: 'Fields Cleared',
+            description: `Successfully cleared all form fields. Form progress: ${newProgress}%`,
+            variant: 'success',
+          });
+        } catch (saveError) {
+          logger.error('[ClearFields] Error during status refresh or save:', saveError);
+          // Still consider the operation successful since fields were cleared
+          toast({
+            title: 'Fields Cleared',
+            description: 'Fields cleared successfully, but there was an issue updating progress.',
+            variant: 'default',
+          });
+        }
       } else {
-        throw new Error('Failed to clear form fields');
+        throw new Error('Failed to clear form fields - no fields were cleared');
       }
     } catch (error) {
-      logger.error('Error clearing fields:', error);
+      logger.error('[ClearFields] Error clearing fields:', error);
       toast({
         title: 'Clear Fields Error',
         description: error instanceof Error ? error.message : 'An unexpected error occurred',
         variant: 'destructive',
       });
     }
-  }, [formService, fields, updateField, refreshStatus, saveProgress, setForceRerender]);
+  }, [formService, fields, updateField, refreshStatus, saveProgress, setForceRerender, form]);
   
   // Get form title based on template or task type
   const formTitle = useMemo(() => {
