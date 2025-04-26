@@ -25,7 +25,7 @@ const logger = new Logger('KY3PDemoAutofill');
  * Helper function to handle the KY3P demo auto-fill logic
  * This is reused by both endpoint formats to avoid code duplication
  */
-async function handleKy3pDemoAutofill(req, res) {
+async function handleKy3pDemoAutofill(req: any, res: any) {
   const taskId = parseInt(req.params.taskId, 10);
   if (!req.user || !req.user.id) {
     return res.status(401).json({ message: 'Authentication required' });
@@ -101,14 +101,12 @@ async function handleKy3pDemoAutofill(req, res) {
       return db.insert(ky3pResponses)
         .values({
           field_id: field.id,
-          field_key: field.field_key,
           task_id: taskId,
           response_value: field.demo_autofill || '', // Changed from 'value' to 'response_value' to match schema
           status: 'COMPLETE', // Set status to COMPLETE for proper reconciliation
+          version: 1,
           created_at: new Date(),
-          updated_at: new Date(),
-          created_by: req.user.id,
-          updated_by: req.user.id
+          updated_at: new Date()
         });
     });
     
