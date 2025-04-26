@@ -504,13 +504,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
     
     try {
-      // Show confirmation dialog using window.confirm since confirmDialog is not defined
-      const confirmed = window.confirm('Clear all fields? This will erase all the data you have entered and cannot be undone.');
-      
-      if (!confirmed) {
-        logger.info('[ClearFields] User cancelled the clear operation');
-        return;
-      }
+      // No confirmation dialog - just clear the fields directly
+      logger.info('[ClearFields] Starting clear operation without confirmation');
       
       // Show loading toast
       toast({
@@ -526,24 +521,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         formDataFields: Object.keys(formService.getFormData()).length
       });
       
-      // Special handling for KY3P forms - use our direct API endpoint
-      if (taskId && 
-          (formService.constructor.name === 'KY3PFormService' || 
-           taskType === 'ky3p' || 
-           (formService as any).formType === 'ky3p')) {
+      // Use the direct approach for all form types
+      if (taskId) {
         try {
           // Import dynamically to avoid circular dependencies
-          const { directClearKy3pTask } = await import('./direct-ky3p-clear');
+          const { handleClearFieldsUtil, directClearFields } = await import('./handleClearFields');
           
-          logger.info(`[ClearFields] Using direct KY3P clear approach for task ${taskId}`);
+          logger.info(`[ClearFields] Using direct clear approach for task ${taskId} (${taskType})`);
           
-          // Call the direct clear function that bypasses the bulk update issue
-          const result = await directClearKy3pTask(taskId);
-          logger.info('[ClearFields] Direct KY3P clear result:', result);
+          // Call the direct clear function that works for all form types
+          const result = await directClearFields(taskId, taskType);
+          logger.info('[ClearFields] Direct clear result:', result);
           
           // Clear the form UI (this doesn't trigger API calls, it just updates the UI)
           fields.forEach(field => {
-            const fieldId = field.key || field.name || String(field.id) || field.field_key || '';
+            const fieldId = field.key || (field as any).name || String((field as any).id) || (field as any).field_key || '';
             if (!fieldId) return;
             
             try {
@@ -567,8 +559,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             }
           });
           
-          // Clear form service cache
-          formService.clearCache();
+          // Clear form service cache if available
+          if (typeof formService.clearCache === 'function') {
+            formService.clearCache();
+          }
           
           // Trigger UI refresh
           setForceRerender(prev => !prev);
@@ -584,7 +578,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           return;
         } catch (directClearError) {
-          logger.error('[ClearFields] Direct KY3P clear failed, falling back to standard method:', directClearError);
+          logger.error('[ClearFields] Direct clear failed, falling back to standard method:', directClearError);
           // Continue to standard method as fallback
         }
       }
@@ -594,7 +588,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         formService, 
         fields, 
         // Pass callback to update field value in form
-        (fieldId, value) => {
+        (fieldId: string, value: any) => {
           try {
             // Call the update function from the hook
             updateField(fieldId, value);
