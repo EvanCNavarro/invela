@@ -339,6 +339,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   private _templateId?: number;
   private _taskId?: number;
   private _companyId?: number;
+  private autoSaveEnabled = true; // Default autoSave to enabled
   
   /**
    * Get all fields from all sections
@@ -798,8 +799,8 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   }
   
     // Add throttling variables for progress updates
-  private static lastSaveTime: Record<number, number> = {};
-  private static saveQueue: Record<number, any> = {};
+  private static lastSaveTime: Record<string, number> = {};
+  private static saveQueue: Record<string, {formData: Record<string, any>, timestamp: number}> = {};
   private static MIN_SAVE_INTERVAL = 2000; // 2 seconds between saves
   
   /**
@@ -816,14 +817,21 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     
     // Implement throttling to prevent too many save operations
     const now = Date.now();
-    if (OpenBankingFormService.lastSaveTime[effectiveTaskId]) {
-      const timeSinceLastSave = now - OpenBankingFormService.lastSaveTime[effectiveTaskId];
+    // Make sure effectiveTaskId is not undefined before using it
+    if (!effectiveTaskId) {
+      logger.error('[OpenBankingFormService] No valid task ID for save operation');
+      return false;
+    }
+    const taskIdKey = effectiveTaskId.toString(); // Convert to string to use as object key
+    
+    if (OpenBankingFormService.lastSaveTime[taskIdKey]) {
+      const timeSinceLastSave = now - OpenBankingFormService.lastSaveTime[taskIdKey];
       if (timeSinceLastSave < OpenBankingFormService.MIN_SAVE_INTERVAL) {
         // Queue the save to be done later
         logger.debug(`[OpenBankingFormService] Throttling save for task ${effectiveTaskId} - queued for later`);
         
         // Store the latest form data in the queue
-        OpenBankingFormService.saveQueue[effectiveTaskId] = {
+        OpenBankingFormService.saveQueue[taskIdKey] = {
           formData: this.getFormData(),
           timestamp: now
         };
@@ -835,11 +843,11 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     
     // If we're here, it's been long enough since the last save
     // Update the last save time
-    OpenBankingFormService.lastSaveTime[effectiveTaskId] = now;
+    OpenBankingFormService.lastSaveTime[taskIdKey] = now;
     
     // Clear the queue entry if it exists
-    if (OpenBankingFormService.saveQueue[effectiveTaskId]) {
-      delete OpenBankingFormService.saveQueue[effectiveTaskId];
+    if (OpenBankingFormService.saveQueue[taskIdKey]) {
+      delete OpenBankingFormService.saveQueue[taskIdKey];
     }
     
     try {
@@ -896,12 +904,14 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         const updatedStatus = result.savedData.status;
         
         // Update our cache for next time to prevent progress mismatches
-        OpenBankingFormService.progressCache.set(effectiveTaskId, {
-          formData: result.savedData.formData,
-          progress: updatedProgress,
-          status: updatedStatus,
-          timestamp: Date.now()
-        });
+        if (effectiveTaskId) {
+          OpenBankingFormService.progressCache.set(Number(effectiveTaskId), {
+            formData: result.savedData.formData,
+            progress: updatedProgress,
+            status: updatedStatus,
+            timestamp: Date.now()
+          });
+        }
       }
       
       logger.info(`[OpenBankingFormService] Form data saved successfully for task ${effectiveTaskId}`, {
@@ -940,9 +950,10 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       // Create empty data object with all fields set to empty strings
       const emptyData: Record<string, string> = {};
       
-      // Set all fields to empty strings if we have them loaded
-      if (this.fields && this.fields.length > 0) {
-        this.fields.forEach(field => {
+      // Get fields from our getSections method rather than accessing private parent property
+      const fields = this.getFields();
+      if (fields && fields.length > 0) {
+        fields.forEach(field => {
           if (field && field.key) {
             emptyData[field.key] = '';
           }
