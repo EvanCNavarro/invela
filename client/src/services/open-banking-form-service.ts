@@ -320,7 +320,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     }
     
     // If sections are still empty despite initialization, try one more time
-    if (!this.sections || this.sections.length === 0) {
+    if (!this.sections || !Array.isArray(this.sections) || this.sections.length === 0) {
       logger.warn('[OpenBankingFormService] Sections array is empty after initialization, forcing reload');
       try {
         // Force re-initialization to reload fields and sections
@@ -328,12 +328,49 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         await this.initialize();
         
         // Still empty? Log detailed error
-        if (!this.sections || this.sections.length === 0) {
+        if (!this.sections || !Array.isArray(this.sections) || this.sections.length === 0) {
           logger.error('[OpenBankingFormService] Failed to load sections after forced reload', {
             initialized: this.initialized,
-            sectionsState: this.sections ? 'empty array' : 'null',
+            sectionsState: this.sections ? 
+              (Array.isArray(this.sections) ? 'empty array' : `not an array: ${typeof this.sections}`) : 
+              'null',
             templateId: this.templateId || 'none'
           });
+          
+          // Last resort: Create a default section with all fields
+          logger.warn('[OpenBankingFormService] Creating fallback sections');
+          try {
+            const fields = await this.getFields();
+            
+            if (fields && fields.length > 0) {
+              // Group fields by their group property
+              const fieldsByGroup = fields.reduce((acc, field) => {
+                const group = field.group || 'General';
+                if (!acc[group]) {
+                  acc[group] = [];
+                }
+                acc[group].push(field);
+                return acc;
+              }, {});
+              
+              // Create sections from field groups
+              this.sections = Object.entries(fieldsByGroup).map(([groupName, groupFields], index) => ({
+                id: `section-${index}`,
+                title: groupName,
+                order: index,
+                fields: groupFields,
+                collapsed: false,
+                description: `${groupName} section`
+              }));
+              
+              logger.info('[OpenBankingFormService] Created fallback sections', {
+                sectionsCount: this.sections.length,
+                sectionNames: this.sections.map(s => s.title).join(', ')
+              });
+            }
+          } catch (fallbackError) {
+            logger.error('[OpenBankingFormService] Failed to create fallback sections', { fallbackError });
+          }
         }
       } catch (reloadError) {
         logger.error('[OpenBankingFormService] Error during forced reload', { reloadError });
@@ -341,11 +378,12 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     }
     
     logger.info('[OpenBankingFormService] Getting sections', { 
-      count: this.sections ? this.sections.length : 0,
-      sectionIds: this.sections ? this.sections.map(s => s.id).join(', ') : 'none'
+      count: this.sections && Array.isArray(this.sections) ? this.sections.length : 0,
+      sectionIds: this.sections && Array.isArray(this.sections) ? this.sections.map(s => s.id).join(', ') : 'none'
     });
     
-    return this.sections || [];
+    // Ensure we always return an array
+    return Array.isArray(this.sections) ? this.sections : [];
   }
   
   /**
