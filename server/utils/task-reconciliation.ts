@@ -254,14 +254,24 @@ export async function reconcileTaskProgress(
         
         const totalFields = totalFieldsResult[0].count;
         
-        // Count completed KY3P responses
+        // Count completed KY3P responses with proper status and non-empty response_value
         const completedResponsesResult = await db
           .select({
             count: sql<number>`count(*)`
           })
           .from(ky3pResponses)
           .where(
-            eq(ky3pResponses.task_id, taskId)
+            and(
+              eq(ky3pResponses.task_id, taskId),
+              or(
+                eq(ky3pResponses.status, 'COMPLETE'),
+                eq(ky3pResponses.status, 'FILLED'),
+                eq(ky3pResponses.status, 'complete'),
+                eq(ky3pResponses.status, 'filled')
+              ),
+              sql`${ky3pResponses.response_value} IS NOT NULL`,
+              sql`${ky3pResponses.response_value} != ''`
+            )
           );
         
         // Extract the completed fields count
