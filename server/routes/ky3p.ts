@@ -1461,14 +1461,20 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       requestBodyPreview: JSON.stringify(req.body).substring(0, 200)
     });
     
-    // Import our special case handler
-    const { handleSpecialBulkCase } = require('./ky3p-bulk-fix');
-    
-    // First, check if this is the special case with fieldIdRaw="bulk" and responseValue="undefined"
-    const isSpecialCase = await handleSpecialBulkCase(req, res);
-    if (isSpecialCase) {
-      // If it's handled by the special case handler, don't continue with normal processing
-      return;
+    // Import our special case handler - use dynamic import for ESM compatibility
+    try {
+      const module = await import('./ky3p-bulk-fix');
+      
+      // First, check if this is the special case with fieldIdRaw="bulk" and responseValue="undefined"
+      const isSpecialCase = await module.handleSpecialBulkCase(req, res);
+      if (isSpecialCase) {
+        // If it's handled by the special case handler, don't continue with normal processing
+        logger.info('[KY3P API] Special case was handled by bulk-fix handler');
+        return;
+      }
+    } catch (error) {
+      logger.error('[KY3P API] Error importing or using special case handler:', error);
+      // Continue with normal processing if there's an error with the special case handler
     }
     
     // Special handling for requests with 'fieldIdRaw': 'bulk' pattern
