@@ -3,8 +3,41 @@
  * 
  * This function clears all form fields without affecting demo auto-fill functionality.
  * It's implemented as a completely separate module to avoid any interference.
+ * 
+ * UPDATED: Improved compatibility with all form types by using proper field key handling
  */
 import { FormField, FormServiceInterface } from "@/services/formService";
+
+/**
+ * Get the correct field identifier based on form type
+ * This is critical for cross-form-type compatibility
+ */
+function getFieldIdentifier(field: FormField): string {
+  // Always prefer using the key property for standardization
+  // This is the most reliable identifier across all form types
+  if (field.key) {
+    return field.key;
+  }
+  
+  // Fallback 1: Try name property - some form types use this
+  if (field.name) {
+    return field.name;
+  }
+  
+  // Fallback 2: Use id property converted to string (if number)
+  if (field.id !== undefined) {
+    return String(field.id);
+  }
+  
+  // Fallback 3: Last resort - use field_key if it exists
+  if (field.field_key) {
+    return field.field_key;
+  }
+  
+  // No valid identifier found - this will likely cause an error
+  console.warn('[ClearFields] Field has no usable identifier:', field);
+  return '';
+}
 
 /**
  * Clear all form fields while preserving critical system fields
@@ -23,11 +56,13 @@ export async function handleClearFields(
     
     // Track successful field clears
     let clearedCount = 0;
+    const formType = formService.constructor.name;
+    console.log(`[ClearFields] Form service type: ${formType}`);
     
     // Clear each field individually
     for (const field of fields) {
-      // Field ID can be either id or key property depending on the form system
-      const fieldId = field.id || field.key;
+      // Get standardized field identifier using our helper function
+      const fieldId = getFieldIdentifier(field);
       
       // Skip system fields that shouldn't be cleared
       if (fieldId === 'agreement_confirmation') {
@@ -37,7 +72,7 @@ export async function handleClearFields(
       
       // Skip empty or undefined field IDs
       if (!fieldId) {
-        console.log('[ClearFields] Skipping field with no ID:', field);
+        console.log('[ClearFields] Skipping field with no identifier', field);
         continue;
       }
       
@@ -54,14 +89,19 @@ export async function handleClearFields(
           updateField(fieldId, '');
         }
         
-        // Also try directly updating the form service
+        // Also try directly updating the form service with the same fieldId
         if (formService.updateFormData) {
-          if (field.type === 'boolean') {
-            formService.updateFormData(fieldId, false);
-          } else if (field.type === 'number') {
-            formService.updateFormData(fieldId, null);
-          } else {
-            formService.updateFormData(fieldId, '');
+          try {
+            if (field.type === 'boolean') {
+              formService.updateFormData(fieldId, false);
+            } else if (field.type === 'number') {
+              formService.updateFormData(fieldId, null);
+            } else {
+              formService.updateFormData(fieldId, '');
+            }
+          } catch (serviceError) {
+            console.warn(`[ClearFields] Form service update failed for field ${fieldId}:`, serviceError);
+            // Continue anyway since we already updated via the updateField callback
           }
         }
         
