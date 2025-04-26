@@ -1461,6 +1461,16 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
       requestBodyPreview: JSON.stringify(req.body).substring(0, 200)
     });
     
+    // Import our special case handler
+    const { handleSpecialBulkCase } = require('./ky3p-bulk-fix');
+    
+    // First, check if this is the special case with fieldIdRaw="bulk" and responseValue="undefined"
+    const isSpecialCase = await handleSpecialBulkCase(req, res);
+    if (isSpecialCase) {
+      // If it's handled by the special case handler, don't continue with normal processing
+      return;
+    }
+    
     // Special handling for requests with 'fieldIdRaw': 'bulk' pattern
     // This is a request from UniversalForm which uses string field keys
     if (req.body && req.body.fieldIdRaw === 'bulk') {
