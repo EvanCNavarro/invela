@@ -24,12 +24,34 @@ export async function standardizedBulkUpdate(
     
     // Check if the request was successful
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Batch update failed: ${response.status} - ${errorText}`);
+      let errorMessage = `Batch update failed: ${response.status}`;
+      try {
+        // Use optional chaining to safely access response.text if it's a function
+        if (typeof response.text === 'function') {
+          errorMessage += ` - ${await response.text()}`;
+        }
+      } catch (textError) {
+        console.warn('Could not extract error text from response:', textError);
+      }
+      throw new Error(errorMessage);
     }
     
-    const result = await response.json();
-    console.log(`Batch update success: ${result.updatedCount} fields updated`);
+    let result;
+    try {
+      // Use optional chaining to safely access response.json if it's a function
+      if (typeof response.json === 'function') {
+        result = await response.json();
+        console.log(`Batch update success: ${result.processedCount || 0} fields updated`);
+      } else {
+        // If response is already parsed JSON (which happens with some fetch implementations)
+        result = response;
+        console.log(`Batch update success, response already parsed`);
+      }
+    } catch (jsonError) {
+      console.warn('Could not parse JSON response:', jsonError);
+      // Continue despite JSON parsing error
+      result = { success: true };
+    }
     
     return true;
   } catch (error) {
@@ -56,13 +78,36 @@ export async function standardizedFormClear(
     // Call the dedicated clear-fields endpoint
     const response = await apiRequest('POST', `/api/ky3p/clear-fields/${taskId}`, {});
     
+    // Check if the request was successful
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Form clear failed: ${response.status} - ${errorText}`);
+      let errorMessage = `Form clear failed: ${response.status}`;
+      try {
+        // Use optional chaining to safely access response.text if it's a function
+        if (typeof response.text === 'function') {
+          errorMessage += ` - ${await response.text()}`;
+        }
+      } catch (textError) {
+        console.warn('Could not extract error text from response:', textError);
+      }
+      throw new Error(errorMessage);
     }
     
-    const result = await response.json();
-    console.log(`Form clear success: All fields cleared`);
+    let result;
+    try {
+      // Use optional chaining to safely access response.json if it's a function
+      if (typeof response.json === 'function') {
+        result = await response.json();
+        console.log(`Form clear success: All fields cleared`);
+      } else {
+        // If response is already parsed JSON (which happens with some fetch implementations)
+        result = response;
+        console.log(`Form clear success, response already parsed`);
+      }
+    } catch (jsonError) {
+      console.warn('Could not parse JSON response from clear-fields endpoint:', jsonError);
+      // Continue despite JSON parsing error
+      result = { success: true };
+    }
     
     return true;
   } catch (error) {
