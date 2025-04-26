@@ -406,8 +406,14 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
       }
       
       // Use the correct API endpoint that matches the original service
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-demo-autofill`, {
-        credentials: 'include' // Include session cookies
+      // IMPORTANT: This must match the exact endpoint used in the original KY3P service
+      const response = await fetch(`/api/ky3p/demo-autofill/${effectiveTaskId}`, {
+        method: 'POST', // The endpoint expects a POST request
+        credentials: 'include', // Include session cookies
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({}) // Send empty body for POST request
       });
       
       if (!response.ok) {
@@ -420,12 +426,42 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
         throw new Error(`Failed to get KY3P demo data: ${response.status} - ${errorText}`);
       }
       
-      const data = await response.json();
-      logger.info(`Retrieved demo data with ${Object.keys(data).length} fields`);
-      return data || {};
+      // The response might be wrapped in a 'success' property or similar
+      const responseData = await response.json();
+      
+      // Handle potential response formats
+      let formattedData: Record<string, any> = {};
+      
+      if (responseData.formData) {
+        // If data is wrapped in a formData property
+        formattedData = responseData.formData;
+      } else if (responseData.data) {
+        // Or if it's in a data property
+        formattedData = responseData.data;
+      } else if (responseData.fields) {
+        // Or if it's in a fields property with field_key/response_value format
+        responseData.fields.forEach((field: any) => {
+          if (field.field_key && field.response_value !== undefined) {
+            formattedData[field.field_key] = field.response_value;
+          }
+        });
+      } else {
+        // If it's already in the right format, use it directly
+        formattedData = responseData;
+      }
+      
+      const fieldCount = Object.keys(formattedData).length;
+      logger.info(`Retrieved demo data with ${fieldCount} fields`);
+      
+      if (fieldCount === 0) {
+        logger.warn('Demo data response contained no usable fields');
+        logger.debug('Raw demo data response:', responseData);
+      }
+      
+      return formattedData;
     } catch (error) {
       logger.error('Error getting KY3P demo data:', error);
-      return {};
+      throw error; // Propagate the error for better debugging
     }
   }
 
