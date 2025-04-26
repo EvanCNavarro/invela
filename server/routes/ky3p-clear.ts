@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@db';
 import { ky3pResponses, tasks, TaskStatus } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+// Import the console directly since we don't have a Logger import
 import { broadcastTaskUpdate } from '../services/websocket';
 
 const router = Router();
@@ -22,7 +22,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       return res.status(400).send('Invalid task ID');
     }
 
-    logger.info('[KY3P Clear] Clearing fields for task', { taskId, userId, companyId });
+    console.log('[KY3P Clear] Clearing fields for task', { taskId, userId, companyId });
 
     // First, verify the task exists and belongs to the user's company
     const taskResult = await db.select().from(tasks).where(
@@ -34,7 +34,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
     ).limit(1);
 
     if (taskResult.length === 0) {
-      logger.warn('[KY3P Clear] Task not found or not authorized', { taskId, companyId });
+      console.warn('[KY3P Clear] Task not found or not authorized', { taskId, companyId });
       return res.status(404).send('Task not found or not authorized');
     }
 
@@ -45,7 +45,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       eq(ky3pResponses.task_id, taskId)
     );
 
-    logger.info('[KY3P Clear] Deleted responses', { taskId, deleteResult });
+    console.log('[KY3P Clear] Deleted responses', { taskId, deleteResult });
 
     // Update task status to not_started and progress to 0
     const updateResult = await db.update(tasks).set({
@@ -57,7 +57,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
     // Broadcast the task update to all clients
     if (updateResult.length > 0) {
       const updatedTask = updateResult[0];
-      logger.info('[KY3P Clear] Updated task status', { 
+      console.log('[KY3P Clear] Updated task status', { 
         taskId, 
         status: updatedTask.status,
         progress: updatedTask.progress 
@@ -74,7 +74,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       taskId
     });
   } catch (error) {
-    logger.error('[KY3P Clear] Error clearing fields:', error);
+    console.error('[KY3P Clear] Error clearing fields:', error);
     return res.status(500).send('Error clearing fields');
   }
 });
