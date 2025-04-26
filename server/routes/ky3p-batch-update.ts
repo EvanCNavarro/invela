@@ -10,6 +10,7 @@ import { db } from '@db';
 import { ky3pFields, ky3pResponses } from '@db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
 import { Logger } from '../utils/logger';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 const logger = new Logger('KY3P-BatchUpdate');
@@ -18,7 +19,7 @@ const logger = new Logger('KY3P-BatchUpdate');
  * Special batch-update endpoint that accepts string field keys
  * This is used by the standardized KY3P bulk update implementation
  */
-router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
+router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     if (isNaN(taskId)) {
@@ -85,8 +86,12 @@ router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
           inArray(ky3pResponses.field_id, responseEntries.map(entry => entry.field_id))
         ));
       
-      // Then insert new responses
-      await tx.insert(ky3pResponses).values(responseEntries);
+      // Then insert new responses if we have any
+      if (responseEntries.length > 0) {
+        await tx.insert(ky3pResponses).values(responseEntries);
+      } else {
+        logger.warn(`No matching fields found for task ${taskId}`);
+      }
     });
     
     // Update task progress
@@ -129,7 +134,7 @@ router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
 /**
  * Special demo-autofill endpoint for KY3P forms
  */
-router.post('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
+router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     if (isNaN(taskId)) {
@@ -225,8 +230,12 @@ router.post('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
       await tx.delete(ky3pResponses)
         .where(eq(ky3pResponses.task_id, taskId));
       
-      // Then insert new responses
-      await tx.insert(ky3pResponses).values(responseEntries);
+      // Then insert new responses if we have any
+      if (responseEntries.length > 0) {
+        await tx.insert(ky3pResponses).values(responseEntries);
+      } else {
+        logger.warn(`No matching fields found for task ${taskId}`);
+      }
     });
     
     // Update task progress

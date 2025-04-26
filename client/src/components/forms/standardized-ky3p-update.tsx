@@ -1,143 +1,70 @@
-/**
- * Standardized KY3P update component 
- * 
- * This implementation uses the standardized field key approach that matches KYB,
- * eliminating the conversion from string keys to numeric IDs
- */
-
-// Simple logger implementation
-class Logger {
-  private prefix: string;
-
-  constructor(prefix: string) {
-    this.prefix = prefix;
-  }
-
-  info(message: string, ...args: any[]): void {
-    console.info(`[${this.prefix}] ${message}`, ...args);
-  }
-  
-  warn(message: string, ...args: any[]): void {
-    console.warn(`[${this.prefix}] ${message}`, ...args);
-  }
-  
-  error(message: string, ...args: any[]): void {
-    console.error(`[${this.prefix}] ${message}`, ...args);
-  }
-}
-
-// Initialize a single logger instance
-const logger = new Logger('StandardizedKY3PUpdate');
+import { apiRequest } from '@/lib/queryClient';
 
 /**
- * Perform a bulk update for KY3P form using the proper field ID format
+ * Standardized approach for bulk updating KY3P forms
  * 
- * The issue was that we were sending "bulk" as the fieldIdRaw value, which
- * was causing the server to reject the request with "Invalid field ID format"
- * 
- * This function fixes that by sending a properly formatted array of responses
- * or by using the batch-update endpoint that accepts string field keys.
- * 
- * @param taskId The task ID
- * @param formData The form data to bulk update
- * @returns Promise<boolean> Success or failure status
- */
-async function fixedKy3pBulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
-  try {
-    logger.info(`Running fixed KY3P bulk update for task ${taskId}`);
-    
-    // If formData is empty, we're performing a demo auto-fill
-    if (Object.keys(formData).length === 0) {
-      // Call the direct demo-autofill endpoint for the server to handle
-      try {
-        logger.info('Calling dedicated demo-autofill endpoint');
-        
-        const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Demo auto-fill endpoint failed: ${response.status} ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        logger.info('Demo auto-fill endpoint succeeded:', result);
-        
-        return true;
-      } catch (demoError) {
-        logger.error('Error calling demo-autofill endpoint:', demoError);
-        return false;
-      }
-    }
-    
-    // For regular updates with explicit form data
-    // Use the batch-update endpoint that accepts string field keys
-    try {
-      logger.info(`Using batch-update endpoint for task ${taskId} with ${Object.keys(formData).length} fields`);
-      
-      // Filter out metadata and format data for the server
-      const cleanData: Record<string, any> = {};
-      for (const [key, value] of Object.entries(formData)) {
-        // Skip internal metadata fields that start with underscore
-        if (!key.startsWith('_')) {
-          // For empty fields, we'll still send them (null/undefined becomes empty string)
-          // so they get properly cleared in the database
-          cleanData[key] = value !== undefined && value !== null ? value : '';
-        }
-      }
-      
-      const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          responses: cleanData
-        })
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`Batch update failed: ${response.status}`, errorText);
-        throw new Error(`Batch update failed: ${response.status} - ${errorText}`);
-      }
-      
-      const result = await response.json();
-      logger.info('Batch update succeeded:', result);
-      
-      return true;
-    } catch (error) {
-      logger.error('Error during fixed KY3P batch update:', error);
-      return false;
-    }
-  } catch (error) {
-    logger.error('Unexpected error in fixed KY3P bulk update:', error);
-    return false;
-  }
-}
-
-/**
- * Handles bulk update of KY3P form data using string-based field keys
- * which is compatible with the standardized form system
+ * This function provides a consistent way to update multiple KY3P form fields
+ * in a single API call, using the standardized string key-based approach.
  * 
  * @param taskId The task ID to update
- * @param formData The form data with field keys and values
- * @returns Success or failure status
+ * @param formData An object with field keys mapped to their values
+ * @returns Promise<boolean> Success or failure
  */
-export async function standardizedBulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
+export async function standardizedBulkUpdate(
+  taskId: number,
+  formData: Record<string, any>
+): Promise<boolean> {
   try {
-    logger.info(`Starting standardized bulk update for task ${taskId}`);
+    console.log(`Standardized KY3P Bulk Update for task ${taskId} with ${Object.keys(formData).length} fields`);
     
-    // Use our fixed implementation which handles both demo auto-fill and normal updates
-    return await fixedKy3pBulkUpdate(taskId, formData);
+    // Call the batch update endpoint
+    const response = await apiRequest('POST', `/api/ky3p/batch-update/${taskId}`, { 
+      responses: formData 
+    });
     
+    // Check if the request was successful
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Batch update failed: ${response.status} - ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`Batch update success: ${result.updatedCount} fields updated`);
+    
+    return true;
   } catch (error) {
-    logger.error('Error during standardized KY3P bulk update:', error);
-    return false;
+    console.error('Error in standardizedBulkUpdate:', error);
+    throw error;
+  }
+}
+
+/**
+ * Standardized approach for clearing KY3P form fields
+ * 
+ * This function provides a consistent way to clear all fields in a KY3P form
+ * by sending empty values for each field.
+ * 
+ * @param taskId The task ID to clear
+ * @param fieldKeys Array of field keys to clear
+ * @returns Promise<boolean> Success or failure
+ */
+export async function standardizedFormClear(
+  taskId: number,
+  fieldKeys: string[]
+): Promise<boolean> {
+  try {
+    console.log(`Standardized KY3P Form Clear for task ${taskId} with ${fieldKeys.length} fields`);
+    
+    // Create a form data object with empty values for each field
+    const emptyFormData: Record<string, any> = {};
+    fieldKeys.forEach(key => {
+      emptyFormData[key] = '';
+    });
+    
+    // Use the batch update endpoint to clear all fields
+    return await standardizedBulkUpdate(taskId, emptyFormData);
+  } catch (error) {
+    console.error('Error in standardizedFormClear:', error);
+    throw error;
   }
 }
