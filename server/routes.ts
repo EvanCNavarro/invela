@@ -21,15 +21,13 @@ import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
-// Import the fixed version of the KY3P clear router (with transactions support)
-import ky3pClearRouter from './routes/ky3p-clear-fixed';
-import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
+// Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
+import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 import openBankingDemoAutofillRouter from './routes/open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import filesRouter from './routes/files';
 import kybClearRouter from './routes/kyb-clear';
 import openBankingClearRouter from './routes/open-banking-clear';
-import ky3pBatchUpdateRouter from './routes/ky3p-batch-update-fixed';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
 import { registerOpenBankingRoutes } from './routes/open-banking';
@@ -319,11 +317,10 @@ export function registerRoutes(app: Express): Express {
   app.use(cardRouter);
   app.use(securityRouter);
   app.use(ky3pRouter);
-  app.use(ky3pClearRouter);
-  app.use(ky3pBatchUpdateRouter);
+  // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
+  app.use(ky3pFixedRouter);
   app.use(kybClearRouter);
   app.use(openBankingClearRouter);
-  app.use(ky3pDemoAutofillRouter);
   app.use(openBankingDemoAutofillRouter);
   // Register the universal demo auto-fill router
   app.use(universalDemoAutofillRouter);
