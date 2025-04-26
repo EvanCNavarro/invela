@@ -21,6 +21,7 @@ import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
+import ky3pClearRouter from './routes/ky3p-clear';
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 import openBankingDemoAutofillRouter from './routes/open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';

@@ -489,6 +489,87 @@ export class KY3PFormService extends EnhancedKybFormService {
   // clearCache method is already defined earlier in the class
   
   /**
+   * Clear all field responses for the task
+   * This method is typically called by the Clear Fields action
+   * to reset all fields to their initial empty state
+   */
+  async clearFields(): Promise<boolean> {
+    if (!this.taskId) {
+      logger.error('[KY3P Form Service] Cannot clear fields - no task ID available');
+      return false;
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Clearing all fields for task ${this.taskId}`);
+      
+      // Call the specific clear API endpoint for KY3P
+      const clearResponse = await fetch(`/api/ky3p/clear/${this.taskId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!clearResponse.ok) {
+        const errorText = await clearResponse.text();
+        logger.error(`[KY3P Form Service] API error clearing fields: ${clearResponse.status} - ${errorText}`);
+        
+        // Fallback: Empty our local data directly
+        this.formData = {};
+        
+        // Force a progress recalculation and save
+        const progress = this.calculateProgress();
+        await this.save({
+          taskId: this.taskId,
+          progress,
+          status: progress >= 100 ? 'ready_for_submission' : 'not_started'
+        });
+        
+        return true; // Return true anyway as we did our best with the fallback
+      }
+      
+      // Clear successful via API
+      const clearResult = await clearResponse.json();
+      logger.info(`[KY3P Form Service] Fields cleared successfully via API for task ${this.taskId}`);
+      
+      // Empty our local data as well to match the server state
+      this.formData = {};
+      
+      // Also make sure to refresh our cached progress
+      if (this.progressCache) {
+        this.progressCache.delete(this.taskId);
+      }
+      
+      // Trigger a load to refresh data from server
+      await this.loadProgress();
+      
+      return true;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error clearing fields:', error);
+      
+      // Fallback: Try clearing locally if API fails
+      try {
+        this.formData = {};
+        
+        // Force a progress recalculation and save with explicit status reset
+        const progress = 0;
+        await this.save({
+          taskId: this.taskId,
+          progress,
+          status: 'not_started'
+        });
+        
+        return true;
+      } catch (fallbackError) {
+        logger.error('[KY3P Form Service] Fallback error:', fallbackError);
+        return false;
+      }
+    }
+  }
+
+  /**
    * Direct method to load responses from the server
    * Used by demo auto-fill to force a data refresh
    */
