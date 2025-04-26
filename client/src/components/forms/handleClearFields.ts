@@ -85,13 +85,18 @@ export async function directClearFields(
     // Determine the appropriate endpoint based on form type
     switch (normalizedFormType) {
       case 'ky3p':
-        apiEndpoint = `/api/ky3p/clear/${taskId}`;
+      case 'sp-ky3p-assessment':
+      case 'security-assessment':
+      case 'security':
+        // Use our new fixed KY3P clear fields endpoint
+        apiEndpoint = `/api/ky3p/clear-fields/${taskId}`;
         break;
       case 'kyb':
       case 'company-kyb':
         apiEndpoint = `/api/kyb/clear/${taskId}`;
         break;
       case 'open-banking':
+      case 'open-banking-survey':
         apiEndpoint = `/api/open-banking/clear/${taskId}`;
         break;
       default:
@@ -105,16 +110,47 @@ export async function directClearFields(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      credentials: 'include' // Important to include credentials for authentication
     });
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(`Server error: ${errorData.message || response.statusText}`);
+      let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      
+      try {
+        // Try to get more detailed error information
+        if (typeof response.json === 'function') {
+          const errorData = await response.json().catch(() => null);
+          if (errorData && errorData.message) {
+            errorMessage = `Server error: ${errorData.message}`;
+          }
+        } else if (typeof response.text === 'function') {
+          const errorText = await response.text().catch(() => null);
+          if (errorText) {
+            errorMessage = `Server error: ${errorText}`;
+          }
+        }
+      } catch (parseError) {
+        logger.warn(`[DirectClearFields] Could not parse error response: ${parseError}`);
+      }
+      
+      throw new Error(errorMessage);
     }
     
-    const result = await response.json();
-    logger.info(`[DirectClearFields] Successfully cleared task ${taskId}:`, result);
+    let result;
+    try {
+      if (typeof response.json === 'function') {
+        result = await response.json();
+      } else {
+        // If response is already parsed
+        result = response;
+      }
+      logger.info(`[DirectClearFields] Successfully cleared task ${taskId}:`, result);
+    } catch (jsonError) {
+      logger.warn(`[DirectClearFields] Could not parse JSON response: ${jsonError}`);
+      // Continue despite JSON parsing error
+      result = { success: true };
+    }
     
     return {
       success: true,
