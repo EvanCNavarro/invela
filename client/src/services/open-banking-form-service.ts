@@ -20,7 +20,7 @@ let _instance: OpenBankingFormService | null = null;
 
 export class OpenBankingFormService extends EnhancedKybFormService {
   // Override the form type to match the task type in the database
-  protected readonly formType = 'open_banking_survey';
+  protected readonly formType = 'open_banking';
   
   // Cache for Open Banking fields by template ID
   private static openBankingFieldsCache: Record<number, any[]> = {};
