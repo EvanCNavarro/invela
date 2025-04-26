@@ -6,7 +6,7 @@
  */
 
 import getLogger from "@/utils/logger";
-import { FormServiceRegistry } from "@/services/FormServiceRegistry";
+import { componentFactory } from "./componentFactory";
 import { StandardizedKY3PFormService } from "./standardized-ky3p-form-service";
 import { KY3PFormServiceFixed } from "./ky3p-form-service-fixed";
 
@@ -21,16 +21,14 @@ export function registerStandardizedServices(): void {
   
   try {
     // Register the standardized KY3P form service
-    FormServiceRegistry.register('ky3p', (taskId?: number) => {
-      logger.info('Creating standardized KY3P form service');
-      return new StandardizedKY3PFormService(taskId);
-    });
+    const standardizedKy3pService = new StandardizedKY3PFormService();
+    componentFactory.registerFormService('ky3p', standardizedKy3pService);
+    logger.info('Registered standardized KY3P form service');
     
     // Register the fixed KY3P form service as an alternative
-    FormServiceRegistry.register('ky3p-fixed', (taskId?: number) => {
-      logger.info('Creating fixed KY3P form service');
-      return new KY3PFormServiceFixed(taskId);
-    });
+    const fixedKy3pService = new KY3PFormServiceFixed();
+    componentFactory.registerFormService('ky3p-fixed', fixedKy3pService);
+    logger.info('Registered fixed KY3P form service');
     
     logger.info('Standardized form services registered successfully');
   } catch (error) {
@@ -51,12 +49,15 @@ export function useStandardizedServices(): void {
     registerStandardizedServices();
     
     // Override the default KY3P service to use our standardized version
-    FormServiceRegistry.registerDefault('ky3p', (taskId?: number) => {
-      logger.info('Creating standardized KY3P form service as default');
-      return new StandardizedKY3PFormService(taskId);
-    });
+    const standardizedKy3pService = new StandardizedKY3PFormService();
     
-    logger.info('Now using standardized form services as defaults');
+    // Override for all related KY3P task types
+    componentFactory.registerFormService('ky3p', standardizedKy3pService);
+    componentFactory.registerFormService('sp_ky3p_assessment', standardizedKy3pService);
+    componentFactory.registerFormService('security', standardizedKy3pService);
+    componentFactory.registerFormService('security_assessment', standardizedKy3pService);
+    
+    logger.info('Now using standardized form services as defaults for all KY3P task types');
   } catch (error) {
     logger.error('Failed to switch to standardized form services:', error);
   }
