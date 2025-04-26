@@ -504,13 +504,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
     
     try {
-      // Show confirmation dialog
-      const confirmed = await confirmDialog({
-        title: 'Clear all fields?',
-        description: 'This will erase all the data you have entered and cannot be undone.',
-        confirmText: 'Yes, clear all fields',
-        cancelText: 'No, keep my data',
-      });
+      // Show confirmation dialog using window.confirm since confirmDialog is not defined
+      const confirmed = window.confirm('Clear all fields? This will erase all the data you have entered and cannot be undone.');
       
       if (!confirmed) {
         logger.info('[ClearFields] User cancelled the clear operation');
@@ -532,18 +527,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
       
       // Special handling for KY3P forms - use our direct API endpoint
-      if (taskData?.id && 
+      if (taskId && 
           (formService.constructor.name === 'KY3PFormService' || 
            taskType === 'ky3p' || 
-           (typeof formService['formType'] === 'string' && formService['formType'] === 'ky3p'))) {
+           (formService as any).formType === 'ky3p')) {
         try {
           // Import dynamically to avoid circular dependencies
           const { directClearKy3pTask } = await import('./direct-ky3p-clear');
           
-          logger.info(`[ClearFields] Using direct KY3P clear approach for task ${taskData.id}`);
+          logger.info(`[ClearFields] Using direct KY3P clear approach for task ${taskId}`);
           
           // Call the direct clear function that bypasses the bulk update issue
-          const result = await directClearKy3pTask(taskData.id);
+          const result = await directClearKy3pTask(taskId);
           logger.info('[ClearFields] Direct KY3P clear result:', result);
           
           // Clear the form UI (this doesn't trigger API calls, it just updates the UI)
