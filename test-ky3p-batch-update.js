@@ -1,71 +1,100 @@
 /**
- * Test script for KY3P batch update functionality
+ * Test script for KY3P batch update endpoint
  * 
- * This script tests the KY3P batch update endpoint by sending a test
- * request to /api/test/ky3p-batch-update/:taskId with sample KYB-style
- * response data and verifying the conversion to KY3P format.
+ * This script directly tests the batch update endpoint for KY3P forms.
+ * It can be used to verify that the endpoint is working correctly.
  */
 
-// Sample task ID to test with (modify as needed)
-const TEST_TASK_ID = 123;
-
-// Sample KYB-style response data (an object with key-value pairs)
-const TEST_DATA = {
-  responses: {
-    "field_1": "Test value 1",
-    "field_2": "Test value 2",
-    "field_3": "Test value 3",
-    "field_with_comma": "Test, with, commas",
-    "field_with_quotes": "Test \"quoted\" value",
-    "_metadata": "This should be filtered out",
-    "_form_version": "This should be filtered out too"
-  }
-};
-
-// Function to test the KY3P batch update endpoint
 async function testKy3pBatchUpdate() {
+  // Set the task ID for testing
+  const taskId = 654; // Use a known KY3P task ID for testing
+  
+  // Sample data for the batch update endpoint
+  const responses = {
+    'company_name': 'DevTest35',
+    'contact_email': 'support@devtest35.com',
+    'contact_phone': '+1-555-123-4567',
+    'security_policy_documented': 'Yes',
+    'encryption_in_transit': 'Yes',
+    'encryption_at_rest': 'Yes',
+    'multifactor_authentication': 'Yes',
+    'incident_response_plan': 'Yes',
+    'security_training_frequency': 'Quarterly',
+    'vulnerability_scanning_frequency': 'Monthly',
+    'penetration_testing_frequency': 'Annually',
+    'data_classification_implemented': 'Yes',
+    'backup_frequency': 'Daily',
+    'disaster_recovery_tested': 'Yes',
+    'third_party_risk_assessment': 'Yes'
+  };
+  
+  console.log(`Testing KY3P batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
+  
   try {
-    console.log(`Testing KY3P batch update conversion for task ID: ${TEST_TASK_ID}`);
-    console.log('Sample KYB-style data:', TEST_DATA);
-    
-    const response = await fetch(`/api/test/ky3p-batch-update/${TEST_TASK_ID}`, {
+    // Call the batch update endpoint
+    const response = await fetch(`http://localhost:5000/api/ky3p/batch-update/${taskId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(TEST_DATA)
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        responses: responses
+      })
     });
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Test failed with error:', errorData);
-      return;
-    }
+    // Get the response data
+    const data = await response.json();
     
-    const result = await response.json();
-    console.log('Conversion result:', result);
-    
-    console.log('Original format (KYB-style):');
-    console.log('- Format:', result.original.format);
-    console.log('- Key count:', result.original.keyCount);
-    console.log('- Sample keys:', result.original.keys);
-    
-    console.log('\nConverted format (KY3P-style):');
-    console.log('- Format:', result.converted.format);
-    console.log('- Response count:', result.converted.responseCount);
-    console.log('- Sample items:', JSON.stringify(result.converted.sample, null, 2));
-    
-    // Validate the conversion
-    const success = result.converted.responseCount === Object.keys(TEST_DATA.responses).filter(key => !key.startsWith('_')).length;
-    console.log(`\nConversion validation: ${success ? 'SUCCESS' : 'FAILED'}`);
-    
-    if (success) {
-      console.log('✅ All non-metadata fields were properly converted to KY3P format');
+    // Log the result
+    if (response.ok) {
+      console.log('Batch update success:', data);
     } else {
-      console.log('❌ Conversion failed - response counts do not match expected value');
+      console.error('Batch update failed:', data);
     }
   } catch (error) {
-    console.error('Error during test:', error.message);
+    console.error('Error calling batch update endpoint:', error);
   }
 }
 
-// Run the test
-testKy3pBatchUpdate();
+// Test the demo autofill endpoint
+async function testKy3pDemoAutofill() {
+  // Set the task ID for testing
+  const taskId = 654; // Use a known KY3P task ID for testing
+  
+  console.log(`Testing KY3P demo autofill for task ${taskId}`);
+  
+  try {
+    // Call the demo autofill endpoint
+    const response = await fetch(`http://localhost:5000/api/ky3p/demo-autofill/${taskId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    
+    // Get the response data
+    const data = await response.json();
+    
+    // Log the result
+    if (response.ok) {
+      console.log('Demo autofill success:', data);
+    } else {
+      console.error('Demo autofill failed:', data);
+    }
+  } catch (error) {
+    console.error('Error calling demo autofill endpoint:', error);
+  }
+}
+
+// Run the tests
+async function runTests() {
+  // First test the batch update endpoint
+  await testKy3pBatchUpdate();
+  
+  // Then test the demo autofill endpoint
+  await testKy3pDemoAutofill();
+}
+
+// Execute the tests
+runTests().catch(console.error);
