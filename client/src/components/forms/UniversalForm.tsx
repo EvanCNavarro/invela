@@ -660,8 +660,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               Demo Auto-Fill
             </Button>
             
-            {/* Clear Fields button hidden per request but functionality retained */}
-            {false && (
+            {/* Clear Fields button is now visible */}
+            {(
               <Button
                 type="button"
                 variant="outline"
