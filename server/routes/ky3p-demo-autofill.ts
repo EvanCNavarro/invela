@@ -103,7 +103,8 @@ async function handleKy3pDemoAutofill(req, res) {
           field_id: field.id,
           field_key: field.field_key,
           task_id: taskId,
-          value: field.demo_autofill || '',
+          response_value: field.demo_autofill || '', // Changed from 'value' to 'response_value' to match schema
+          status: 'COMPLETE', // Set status to COMPLETE for proper reconciliation
           created_at: new Date(),
           updated_at: new Date(),
           created_by: req.user.id,
