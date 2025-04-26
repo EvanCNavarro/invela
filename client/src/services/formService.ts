@@ -179,4 +179,25 @@ export interface FormServiceInterface {
    * @returns Validation result (true if valid, error object if invalid)
    */
   validate(data: FormData): boolean | Record<string, string>;
+  
+  /**
+   * Get demo data for the form
+   * @param taskId Optional task ID to customize the demo data
+   * @returns Promise that resolves with demo form data
+   */
+  getDemoData?(taskId?: number): Promise<Record<string, any>>;
+  
+  /**
+   * Check if this form service uses progressive loading
+   * @returns True if the form service uses progressive loading
+   */
+  getIsProgressiveLoading?(): boolean;
+  
+  /**
+   * Load a specific section of the form
+   * For progressive loading forms, this loads the fields for a specific section
+   * @param sectionId ID of the section to load
+   * @returns Promise that resolves with the fields for the section
+   */
+  loadSection?(sectionId: string): Promise<FormField[]>;
 }
