@@ -7,9 +7,9 @@
  * all form types (KYB, KY3P, and Open Banking).
  */
 
-import type { FieldDefinition, FormSection, FormServiceInterface } from "./formService";
+import type { FormField, FormSection, FormServiceInterface } from "./formService";
 import getLogger from "@/utils/logger";
-import { fixedKy3pBulkUpdate } from "@/components/forms/standardized-ky3p-update";
+import { standardizedBulkUpdate } from "@/components/forms/standardized-ky3p-update";
 
 const logger = getLogger('KY3P-Form-Service-Fixed');
 
@@ -201,7 +201,7 @@ export class KY3PFormServiceFixed implements FormServiceInterface {
       this.saveInProgress = true;
       
       // First attempt our fixed standardized bulk update
-      const success = await fixedKy3pBulkUpdate(this.taskId, formData);
+      const success = await standardizedBulkUpdate(this.taskId, formData);
       
       if (success) {
         logger.info('Successfully saved all fields using standardized bulk update');
@@ -287,7 +287,7 @@ export class KY3PFormServiceFixed implements FormServiceInterface {
     
     // Use our fixed standardized bulk update function
     try {
-      const success = await fixedKy3pBulkUpdate(this.taskId, formData);
+      const success = await standardizedBulkUpdate(this.taskId, formData);
       
       if (success) {
         logger.info('Successfully bulk updated KY3P form using standardized approach');

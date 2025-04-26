@@ -350,7 +350,19 @@ export default function App() {
     
     // Properly initialize services with explicit context to avoid deprecated warnings
     try {
+      // Register standard services first
       registerServices();
+      
+      // Register our standardized services as alternatives
+      // Import and register our improved standardized services
+      import('./services/register-standardized-services')
+        .then(({ registerStandardizedServices }) => {
+          console.log('[App] Registering standardized form services');
+          registerStandardizedServices();
+        })
+        .catch(error => {
+          console.error('[App] Error loading standardized services:', error);
+        });
       
       // Initialize app-wide services with explicit context values
       // This prevents "Using deprecated default instance" warnings
