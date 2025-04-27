@@ -39,7 +39,7 @@ import FormPerformancePage from "@/pages/FormPerformancePage";
 import ProgressiveLoadingDemo from "@/components/dev/ProgressiveLoadingDemo";
 import TestDemoAutoFill from "@/pages/test-demo-autofill";
 import TestKy3pPage from "@/pages/test-ky3p-page";
-import TestStandardizedKy3pUpdate from "@/components/test/TestStandardizedKy3pUpdate";
+import { TestStandardizedKy3pUpdate } from "@/components/test/TestStandardizedKy3pUpdate";
 import TestStandardizedServicePage from "@/pages/test-standardized-service-page";
 import TestStandardizedUniversalFormPage from "@/pages/test-standardized-universal-form";
 

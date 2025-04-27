@@ -1,29 +1,25 @@
 /**
- * Standardized KY3P Update Functions
+ * Standardized KY3P Batch Update
  * 
- * This module provides utilities for performing bulk updates on KY3P forms
- * using the standardized approach with string-based field keys.
+ * This module provides a standardized approach to updating KY3P form fields
+ * using string-based field keys, ensuring compatibility with the universal
+ * form components.
  */
 
+import { apiRequest } from "@/lib/queryClient";
 import getLogger from "@/utils/logger";
 
 const logger = getLogger('StandardizedKY3PUpdate');
 
 /**
- * Track the endpoints that have worked in the past
- * This helps optimize subsequent requests by trying successful endpoints first
- */
-let successfulEndpoint: string | null = null;
-
-/**
- * Standardized bulk update for KY3P forms
+ * Perform a standardized bulk update for a KY3P form
  * 
- * This function tries multiple endpoints and formats for bulk updating KY3P form data,
- * handling the "Invalid field ID format" error by properly formatting requests.
+ * This function handles both single field updates and bulk updates
+ * with proper error handling and fallback logic.
  * 
  * @param taskId The task ID
- * @param formData The form data to update (field_key => value)
- * @returns Promise<boolean> Success or failure status
+ * @param formData The form data to update (field keys to values)
+ * @returns Promise that resolves to true if successful, false otherwise
  */
 export async function standardizedBulkUpdate(
   taskId: number,
@@ -32,85 +28,56 @@ export async function standardizedBulkUpdate(
   try {
     logger.info(`Performing standardized bulk update for task ${taskId} with ${Object.keys(formData).length} fields`);
     
-    // Define all the endpoints we'll try in sequence
-    // If we have a successful endpoint from a previous attempt, try it first
-    let endpoints = [
-      `/api/ky3p/batch-update/${taskId}`,        // Standardized key-based batch update endpoint
-      `/api/tasks/${taskId}/ky3p-batch-update`,  // Original task batch update endpoint
-      `/api/ky3p/responses/bulk/${taskId}`,      // Old bulk update endpoint
-      `/api/batch-update/${taskId}`              // Universal batch update endpoint
-    ];
-    
-    // If we have a successful endpoint from a previous call, prioritize it
-    if (successfulEndpoint) {
-      endpoints = [
-        successfulEndpoint,
-        ...endpoints.filter(endpoint => endpoint !== successfulEndpoint)
-      ];
-    }
-    
-    let lastError: string | null = null;
-    
-    // Try each endpoint in sequence
-    for (const endpoint of endpoints) {
-      try {
-        logger.info(`Trying batch update endpoint: ${endpoint}`);
-        
-        // For standardized endpoints, we can just pass the field key -> value mapping directly
-        const body = {
-          responses: formData
-        };
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          lastError = `${response.status} - ${errorText}`;
-          logger.warn(`Endpoint ${endpoint} failed: ${lastError}`);
-          continue;
-        }
-        
-        // If we get here, the update was successful
-        logger.info(`Successfully updated using endpoint: ${endpoint}`);
-        
-        // Remember this endpoint for future calls
-        successfulEndpoint = endpoint;
-        
+    // First attempt: Use the batch update endpoint
+    try {
+      const batchResponse = await apiRequest('POST', `/api/ky3p-task/${taskId}/batch-update`, {
+        fields: formData
+      });
+      
+      if (batchResponse.ok) {
+        logger.info(`Batch update successful for task ${taskId}`);
         return true;
-      } catch (endpointError) {
-        lastError = endpointError instanceof Error ? endpointError.message : String(endpointError);
-        logger.error(`Error with endpoint ${endpoint}:`, endpointError);
       }
+    } catch (error) {
+      logger.warn('Batch update failed, falling back to individual updates:', error);
     }
     
-    // If we get here, all endpoints failed
-    throw new Error(`Failed to perform bulk update after trying multiple endpoints: ${lastError}`);
+    // Second attempt: Convert to individual field updates
+    try {
+      // Create an array of field update promises
+      const updatePromises = Object.entries(formData).map(async ([fieldKey, value]) => {
+        try {
+          const response = await apiRequest('POST', `/api/ky3p-task/${taskId}/update-field`, {
+            fieldKey,
+            value
+          });
+          
+          return response.ok;
+        } catch (fieldError) {
+          logger.error(`Error updating field ${fieldKey}:`, fieldError);
+          return false;
+        }
+      });
+      
+      // Wait for all update promises to resolve
+      const results = await Promise.all(updatePromises);
+      
+      // Check if all updates were successful
+      const allSuccessful = results.every(result => result === true);
+      
+      if (allSuccessful) {
+        logger.info(`Individual field updates successful for task ${taskId}`);
+        return true;
+      } else {
+        logger.warn(`Some individual field updates failed for task ${taskId}`);
+        return false;
+      }
+    } catch (error) {
+      logger.error('Individual updates failed:', error);
+      return false;
+    }
   } catch (error) {
-    logger.error(`Error in standardizedBulkUpdate:`, error);
+    logger.error(`Error in standardized bulk update for task ${taskId}:`, error);
     return false;
   }
-}
-
-/**
- * Update a single field in a KY3P form
- * 
- * @param taskId The task ID
- * @param fieldKey The field key (string-based identifier)
- * @param value The new value for the field
- * @returns Promise<boolean> Success or failure status
- */
-export async function standardizedFieldUpdate(
-  taskId: number,
-  fieldKey: string,
-  value: any
-): Promise<boolean> {
-  // For single field updates, we can just use the bulk update with a single field
-  return standardizedBulkUpdate(taskId, { [fieldKey]: value });
 }
