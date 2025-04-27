@@ -40,6 +40,7 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
     batch: false,
     auto_fill: false,
     demo_autofill: false,
+    standardized: false,
   };
 
   constructor(taskId?: number) {
@@ -471,6 +472,12 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
               data = await response.json();
               break;
               
+            case 'standardized':
+              // Try our new standardized universal demo auto-fill endpoint
+              response = await apiRequest('GET', `/api/universal/demo-autofill?taskId=${targetTaskId}&formType=ky3p`);
+              data = await response.json();
+              break;
+              
             default:
               continue;
           }
@@ -574,7 +581,15 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
       }
     });
     
-    // Order: successful endpoints first, then untried ones
+    // Order: standardized endpoint first (if not tried yet), then successful endpoints, then other untried ones
+    const standardizedIndex = notTried.indexOf('standardized');
+    
+    // If standardized endpoint hasn't been tried yet, put it first in line
+    if (standardizedIndex !== -1) {
+      const standardized = notTried.splice(standardizedIndex, 1);
+      return [...standardized, ...successful, ...notTried];
+    }
+    
     return [...successful, ...notTried];
   }
 
