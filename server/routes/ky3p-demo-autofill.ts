@@ -214,7 +214,7 @@ router.get('/api/ky3p-task/:taskId/demo-data', async (req, res) => {
       progress: 95, // Demo data is nearly complete (but not 100% to allow for user edits)
       status: 'in_progress',
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('[KY3P Demo Auto-Fill] Error handling demo data request:', error);
     return res.status(500).json({
       error: 'Server error',
@@ -249,7 +249,7 @@ router.post('/api/ky3p-task/:taskId/demo-autofill', async (req, res) => {
       progress: 95,
       status: 'in_progress',
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('[KY3P Demo Auto-Fill] Error handling demo auto-fill request:', error);
     return res.status(500).json({
       error: 'Server error',
@@ -284,7 +284,7 @@ router.get('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
       progress: 95,
       status: 'in_progress',
     });
-  } catch (error) {
+  } catch (error: any) {
     logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill request:', error);
     return res.status(500).json({
       error: 'Server error',
