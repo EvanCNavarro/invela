@@ -21,6 +21,135 @@ const logger = new Logger('UniversalDemoAutoFillRouter');
  * This endpoint automatically detects the form type from the task
  * and uses the appropriate service to fill the form with demo data.
  */
+/**
+ * GET endpoint for universal demo auto-fill
+ * This provides a standardized way to get demo data for any form type
+ * via a single, consistent endpoint
+ */
+router.get('/api/universal/demo-autofill', requireAuth, async (req, res) => {
+  logger.info('Universal GET demo-autofill endpoint called', { 
+    taskId: req.query.taskId,
+    formType: req.query.formType || 'auto-detect'
+  });
+  
+  try {
+    // Check user authentication
+    if (!req.user || !req.user.id) {
+      logger.error('Unauthenticated user attempted to access demo auto-fill');
+      return res.status(401).json({ 
+        success: false,
+        error: 'Authentication required' 
+      });
+    }
+    
+    // Parse taskId from query parameters
+    const taskId = req.query.taskId ? parseInt(req.query.taskId as string, 10) : undefined;
+    if (!taskId || isNaN(taskId)) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid or missing task ID' 
+      });
+    }
+    
+    // Get the formType from query parameters
+    const formType = req.query.formType as string;
+    if (!formType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing form type',
+        message: 'The formType query parameter is required'
+      });
+    }
+    
+    // Get the task to verify access
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (!task) {
+      logger.error('Task not found for demo auto-fill', { taskId });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Task not found' 
+      });
+    }
+    
+    // SECURITY: Verify user belongs to the task's company
+    if (req.user.company_id !== task.company_id) {
+      logger.error('Security violation: User attempted to access task from another company', {
+        userId: req.user.id,
+        userCompanyId: req.user.company_id,
+        taskId: task.id,
+        taskCompanyId: task.company_id
+      });
+      
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied',
+        message: 'You do not have permission to access this task'
+      });
+    }
+    
+    // Generate demo data using the universal service
+    try {
+      const result = await universalDemoAutoFillService.getDemoData(
+        taskId, 
+        formType,
+        req.user.id
+      );
+      
+      logger.info('Successfully generated demo data', {
+        taskId,
+        formType,
+        fieldCount: Object.keys(result.formData || {}).length
+      });
+      
+      // Return the demo data in a consistent format
+      res.json({
+        success: true,
+        message: 'Demo data generated successfully',
+        formData: result.formData || {},
+        progress: result.progress || 0,
+        status: result.status || 'demo',
+        taskId,
+        formType
+      });
+    } catch (serviceError) {
+      logger.error('Error from universal service when getting demo data', {
+        error: serviceError instanceof Error ? serviceError.message : 'Unknown error',
+        stack: serviceError instanceof Error ? serviceError.stack : undefined
+      });
+      
+      // Determine appropriate status code
+      const statusCode = 
+        serviceError instanceof Error && serviceError.message.includes('demo companies') ? 403 :
+        serviceError instanceof Error && serviceError.message.includes('Task not found') ? 404 : 
+        500;
+      
+      return res.status(statusCode).json({
+        success: false,
+        error: 'Failed to generate demo data',
+        message: serviceError instanceof Error ? serviceError.message : 'Unknown error'
+      });
+    }
+  } catch (error) {
+    logger.error('Error in universal GET demo auto-fill endpoint', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'An unknown error occurred'
+    });
+  }
+});
+
+/**
+ * POST endpoint for universal demo auto-fill
+ * This allows automatic application of demo data to a task
+ */
 router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
   logger.info('Universal demo-autofill endpoint called directly', { 
     taskId: req.params.taskId,

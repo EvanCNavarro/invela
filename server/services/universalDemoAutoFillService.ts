@@ -463,6 +463,48 @@ export class UniversalDemoAutoFillService {
   }
   
   /**
+   * Get demo data for a task without applying it to the database
+   * This is used by the standardized GET API endpoint
+   * 
+   * @param taskId The ID of the task
+   * @param formType The type of form
+   * @param userId Optional user ID for personalization
+   * @returns The demo data and metadata
+   */
+  async getDemoData(
+    taskId: number,
+    formType: FormType,
+    userId?: number
+  ): Promise<{
+    formData: Record<string, any>;
+    progress: number;
+    status: string;
+  }> {
+    logger.info('Getting demo data for task', { taskId, formType, userId });
+    
+    // Get task information
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    
+    // Generate the demo data
+    const demoData = await this.generateDemoData(taskId, formType, userId);
+    
+    // Calculate approximate progress
+    const progress = 100; // We consider demo data as 100% complete
+    
+    return {
+      formData: demoData,
+      progress,
+      status: 'demo',
+    };
+  }
+  
+  /**
    * Convenience method that takes a task ID, determines its form type,
    * and calls the appropriate demo auto-fill method
    * 
