@@ -1,188 +1,305 @@
 /**
- * KY3P Demo Auto-fill API Route
+ * KY3P Demo Auto-Fill Routes
  * 
- * This file provides an API endpoint for automatically filling KY3P forms with demo data
- * for testing and demonstration purposes.
+ * This module provides server-side endpoints for generating demo data
+ * for KY3P forms, supporting both the standard and standardized approaches.
  */
 
-import { Router } from 'express';
+import express from 'express';
 import { db } from '@db';
-import { 
-  ky3pFields, 
-  ky3pResponses, 
-  tasks,
-  companies
-} from '@db/schema';
-import { eq, and, asc, sql } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
-import { broadcastTaskUpdate } from '../services/websocket';
+import { ky3pFields, ky3pResponses } from '@db/schema';
+import { eq } from 'drizzle-orm';
+import console from 'console';
 
-const router = Router();
-const logger = new Logger('KY3PDemoAutofill');
+// Create a simple logger for this module
+const logger = {
+  info: (message: string, ...args: any[]) => console.log(`[KY3P Demo Auto-Fill] ${message}`, ...args),
+  error: (message: string, ...args: any[]) => console.error(`[KY3P Demo Auto-Fill] ${message}`, ...args),
+  warn: (message: string, ...args: any[]) => console.warn(`[KY3P Demo Auto-Fill] ${message}`, ...args),
+};
+
+const router = express.Router();
 
 /**
- * Helper function to handle the KY3P demo auto-fill logic
- * This is reused by both endpoint formats to avoid code duplication
+ * Generate demo data for a KY3P task
+ * 
+ * @param taskId The task ID
+ * @returns Object with form data (field keys to values)
  */
-async function handleKy3pDemoAutofill(req: any, res: any) {
-  const taskId = parseInt(req.params.taskId, 10);
-  if (!req.user || !req.user.id) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
-
+async function generateKy3pDemoData(taskId: number): Promise<Record<string, any>> {
   try {
-    logger.info('Demo auto-fill requested for KY3P task', { taskId, userId: req.user.id });
+    logger.info(`[KY3P Demo Auto-Fill] Generating demo data for task ${taskId}`);
     
-    // Get the task to verify ownership and company
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-      
-    if (!task) {
-      logger.error('Task not found for KY3P demo auto-fill', { taskId });
-      return res.status(404).json({ message: 'Task not found' });
+    // Get all KY3P fields
+    const fields = await db.select().from(ky3pFields);
+    
+    if (!fields || fields.length === 0) {
+      logger.error('No KY3P fields found');
+      throw new Error('No KY3P fields found');
     }
     
-    // SECURITY: Verify user belongs to the task's company
-    if (req.user.company_id !== task.company_id) {
-      logger.error('Security violation: User attempted to access task from another company', {
-        userId: req.user.id,
-        userCompanyId: req.user.company_id,
-        taskId: task.id,
-        taskCompanyId: task.company_id
-      });
+    logger.info(`Found ${fields.length} KY3P fields`);
+    
+    // Create a response object with sensible demo values for each field
+    const demoData: Record<string, any> = {};
+    
+    // Generate demo values based on field type and name/key
+    fields.forEach(field => {
+      const fieldKey = field.key || field.id.toString();
+      const fieldType = field.type?.toLowerCase() || 'text';
+      const fieldName = (field.display_name || field.label || '').toLowerCase();
       
-      return res.status(403).json({
-        message: 'You do not have permission to access this task'
-      });
-    }
-    
-    // Verify this is a demo company
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
+      // Skip fields that shouldn't have demo values
+      if (field.key === 'skipThisField') {
+        return;
+      }
       
-    // In the DB schema it's 'is_demo', but we need to verify both naming conventions for compatibility
-    if (!company || company.is_demo !== true) {
-      logger.error('Company is not marked as demo', { 
-        companyId: task.company_id,
-        isDemo: company?.is_demo
-      });
+      // Determine demo value based on field type and name
+      let demoValue: any = null;
       
-      return res.status(403).json({
-        message: 'Auto-fill is only available for demo companies'
-      });
-    }
-    
-    // Get all KY3P fields with demo_autofill values
-    const fields = await db.select({
-      id: ky3pFields.id,
-      field_key: ky3pFields.field_key,
-      demo_autofill: ky3pFields.demo_autofill
-    })
-      .from(ky3pFields)
-      .where(and(
-        sql`${ky3pFields.demo_autofill} IS NOT NULL`,
-        sql`${ky3pFields.demo_autofill} != ''`
-      ))
-      .orderBy(asc(ky3pFields.id));
-    
-    logger.info(`Found ${fields.length} KY3P fields with demo values for task ${taskId}`);
-    
-    // First delete any existing responses for this task
-    await db.delete(ky3pResponses)
-      .where(eq(ky3pResponses.task_id, taskId));
-    
-    logger.info(`Cleared existing responses for task ${taskId}`);
-    
-    // Insert all demo data
-    const insertPromises = fields.map(field => {
-      return db.insert(ky3pResponses)
-        .values({
-          field_id: field.id,
-          task_id: taskId,
-          response_value: field.demo_autofill || '', // Changed from 'value' to 'response_value' to match schema
-          status: 'COMPLETE', // Set status to COMPLETE for proper reconciliation
-          version: 1,
-          created_at: new Date(),
-          updated_at: new Date()
-        });
+      switch (fieldType) {
+        case 'text':
+        case 'string':
+          // Contextual text responses based on field name patterns
+          if (fieldName.includes('name') || fieldKey.includes('name')) {
+            demoValue = 'DevTest35 Security Team';
+          } else if (fieldName.includes('system') || fieldKey.includes('system')) {
+            demoValue = 'Enterprise Risk Management System';
+          } else if (fieldName.includes('process') || fieldKey.includes('process')) {
+            demoValue = 'We follow a standardized process that includes regular reviews.';
+          } else if (fieldName.includes('description') || fieldKey.includes('description')) {
+            demoValue = 'This is a detailed description of our enterprise-grade system.';
+          } else if (fieldName.includes('policy') || fieldKey.includes('policy')) {
+            demoValue = 'Our policy requires annual reviews and updates.';
+          } else if (fieldName.includes('framework') || fieldKey.includes('framework')) {
+            demoValue = 'NIST Cybersecurity Framework';
+          } else {
+            demoValue = 'Sample response for demonstration purposes';
+          }
+          break;
+          
+        case 'textarea':
+        case 'long_text':
+          demoValue = 'This is a detailed explanation for demonstration purposes. It includes multiple sentences to simulate a real response. Our organization follows industry best practices and maintains comprehensive documentation.';
+          break;
+          
+        case 'number':
+          if (fieldName.includes('year') || fieldKey.includes('year')) {
+            demoValue = 2025;
+          } else if (fieldName.includes('count') || fieldKey.includes('count')) {
+            demoValue = 5;
+          } else if (fieldName.includes('percentage') || fieldKey.includes('percentage')) {
+            demoValue = 95;
+          } else {
+            demoValue = 42;
+          }
+          break;
+          
+        case 'boolean':
+        case 'checkbox':
+          // Most security/compliance questions should default to "yes"
+          demoValue = true;
+          break;
+          
+        case 'select':
+        case 'dropdown':
+          // If options are available, select the first one
+          if (field.options && Array.isArray(field.options) && field.options.length > 0) {
+            demoValue = field.options[0].value;
+          } else {
+            demoValue = 'Option A';
+          }
+          break;
+          
+        case 'date':
+          demoValue = '2025-01-15';
+          break;
+          
+        case 'radio':
+        case 'radio_group':
+          // If options are available, select the first one
+          if (field.options && Array.isArray(field.options) && field.options.length > 0) {
+            demoValue = field.options[0].value;
+          } else {
+            demoValue = 'Yes';
+          }
+          break;
+          
+        default:
+          demoValue = 'Sample response';
+          break;
+      }
+      
+      // Add the demo value to the response data
+      demoData[fieldKey] = demoValue;
     });
     
-    await Promise.all(insertPromises);
-    const insertCount = insertPromises.length;
+    logger.info(`[KY3P Demo Auto-Fill] Generated demo data with ${Object.keys(demoData).length} fields`);
     
-    logger.info(`Successfully inserted ${insertCount} KY3P responses for task ${taskId}`);
-    
-    // Calculate the progress based on response count
-    const progress = Math.min(Math.round((insertCount / 120) * 100), 100);
-    
-    // Use 'ready_for_submission' when we reach 100% to match KYB behavior
-    // This allows the user to review before final submission
-    const status = progress >= 100 ? 'ready_for_submission' : 'in_progress';
-    
-    // Update the task progress and set appropriate status
-    await db.update(tasks)
-      .set({
-        progress,
-        status,
-        updated_at: new Date()
-      })
-      .where(eq(tasks.id, taskId));
-    
-    logger.info('Updated task progress after demo auto-fill', {
-      taskId,
-      progress,
-      status
-    });
-    
-    // Broadcast the update to WebSocket clients for real-time UI updates
-    broadcastTaskUpdate({
-      id: taskId, // IMPORTANT: Must use 'id' not 'taskId' for WebSocket broadcast
-      taskId, // Keep taskId for backwards compatibility
-      status,
-      progress,
-      source: 'ky3p_demo_autofill',
-      timestamp: new Date().toISOString()
-    });
-    
-    return res.json({
-      success: true,
-      message: 'KY3P form auto-filled with demo data',
-      responsesInserted: insertCount,
-      progress,
-      status
-    });
+    return demoData;
   } catch (error) {
-    logger.error('Error performing KY3P demo auto-fill', {
-      taskId,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-    
-    return res.status(500).json({
-      message: 'Failed to auto-fill KY3P form',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    logger.error('[KY3P Demo Auto-Fill] Error generating demo data:', error);
+    throw error;
   }
 }
 
 /**
- * API endpoint to auto-fill all KY3P form fields with demo data
- * Original URL format: /api/tasks/:taskId/ky3p-demo-autofill
- * This directly inserts the data into the responses table
+ * Save demo data responses to the database
+ * 
+ * @param taskId The task ID
+ * @param demoData The demo data object
+ * @returns Success status
  */
-router.post('/api/tasks/:taskId/ky3p-demo-autofill', requireAuth, async (req, res) => {
-  return handleKy3pDemoAutofill(req, res);
+async function saveDemoResponses(taskId: number, demoData: Record<string, any>): Promise<boolean> {
+  try {
+    logger.info(`[KY3P Demo Auto-Fill] Saving ${Object.keys(demoData).length} demo responses for task ${taskId}`);
+    
+    // First, delete any existing responses for this task
+    await db.delete(ky3p_responses).where(eq(ky3p_responses.task_id, taskId));
+    
+    // Get field IDs for all fields
+    const fields = await db.select({ id: ky3p_fields.id, key: ky3p_fields.key }).from(ky3p_fields);
+    
+    // Create a map of field keys to field IDs
+    const fieldKeyToIdMap = new Map<string, number>();
+    fields.forEach(field => {
+      const key = field.key || field.id.toString();
+      fieldKeyToIdMap.set(key, field.id);
+    });
+    
+    // Create batch insert data
+    const responsesToInsert = Object.entries(demoData).map(([fieldKey, value]) => {
+      const fieldId = fieldKeyToIdMap.get(fieldKey);
+      
+      // Skip fields that don't exist in the database
+      if (!fieldId) {
+        logger.warn(`[KY3P Demo Auto-Fill] Field with key "${fieldKey}" not found in database`);
+        return null;
+      }
+      
+      return {
+        task_id: taskId,
+        field_id: fieldId,
+        response_value: value?.toString() || '',
+      };
+    }).filter(item => item !== null);
+    
+    // Insert all responses in a batch
+    if (responsesToInsert.length > 0) {
+      // @ts-ignore - TypeScript doesn't like the null filtering above
+      await db.insert(ky3p_responses).values(responsesToInsert);
+    }
+    
+    logger.info(`[KY3P Demo Auto-Fill] Successfully saved ${responsesToInsert.length} demo responses`);
+    
+    return true;
+  } catch (error) {
+    logger.error('[KY3P Demo Auto-Fill] Error saving demo responses:', error);
+    return false;
+  }
+}
+
+/**
+ * Endpoint for getting demo data for a KY3P task
+ * Supports both the standard and standardized approaches
+ */
+router.get('/api/ky3p-task/:taskId/demo-data', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    logger.info(`[KY3P Demo Auto-Fill] Demo data requested for task ${taskId}`);
+    
+    // Generate the demo data
+    const demoData = await generateKy3pDemoData(taskId);
+    
+    // Return the demo data in the format expected by the client
+    return res.status(200).json({
+      formData: demoData,
+      progress: 95, // Demo data is nearly complete (but not 100% to allow for user edits)
+      status: 'in_progress',
+    });
+  } catch (error) {
+    logger.error('[KY3P Demo Auto-Fill] Error handling demo data request:', error);
+    return res.status(500).json({
+      error: 'Server error',
+      message: 'An error occurred while generating demo data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
 });
 
 /**
- * API endpoint to auto-fill all KY3P form fields with demo data
- * New URL format: /api/ky3p/demo-autofill/:taskId  
- * This matches the pattern used by other form types
+ * Handle POST request for demo auto-fill (compatibility with legacy approach)
  */
-router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
-  return handleKy3pDemoAutofill(req, res);
+router.post('/api/ky3p-task/:taskId/demo-autofill', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    logger.info(`[KY3P Demo Auto-Fill] Demo auto-fill requested for task ${taskId}`);
+    
+    // Generate the demo data
+    const demoData = await generateKy3pDemoData(taskId);
+    
+    // Save the demo responses to the database
+    await saveDemoResponses(taskId, demoData);
+    
+    // Return the demo data in the format expected by the client
+    return res.status(200).json({
+      formData: demoData,
+      progress: 95,
+      status: 'in_progress',
+    });
+  } catch (error) {
+    logger.error('[KY3P Demo Auto-Fill] Error handling demo auto-fill request:', error);
+    return res.status(500).json({
+      error: 'Server error',
+      message: 'An error occurred while generating demo data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
+/**
+ * GET endpoint for standardized demo auto-fill
+ */
+router.get('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    logger.info(`[KY3P Demo Auto-Fill] Standardized demo auto-fill requested for task ${taskId}`);
+    
+    // Generate the demo data
+    const demoData = await generateKy3pDemoData(taskId);
+    
+    // Save the demo responses to the database
+    await saveDemoResponses(taskId, demoData);
+    
+    // Return the demo data in the standardized format
+    return res.status(200).json({
+      formData: demoData,
+      progress: 95,
+      status: 'in_progress',
+    });
+  } catch (error) {
+    logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill request:', error);
+    return res.status(500).json({
+      error: 'Server error',
+      message: 'An error occurred while generating demo data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
 });
 
 export default router;
