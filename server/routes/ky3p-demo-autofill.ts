@@ -45,12 +45,12 @@ async function generateKy3pDemoData(taskId: number): Promise<Record<string, any>
     
     // Generate demo values based on field type and name/key
     fields.forEach(field => {
-      const fieldKey = field.key || field.id.toString();
-      const fieldType = field.type?.toLowerCase() || 'text';
-      const fieldName = (field.display_name || field.label || '').toLowerCase();
+      const fieldKey = field.field_key || field.id.toString();
+      const fieldType = field.field_type?.toLowerCase() || 'text';
+      const fieldName = field.display_name?.toLowerCase() || '';
       
       // Skip fields that shouldn't have demo values
-      if (field.key === 'skipThisField') {
+      if (field.field_key === 'skipThisField') {
         return;
       }
       
@@ -103,12 +103,8 @@ async function generateKy3pDemoData(taskId: number): Promise<Record<string, any>
           
         case 'select':
         case 'dropdown':
-          // If options are available, select the first one
-          if (field.options && Array.isArray(field.options) && field.options.length > 0) {
-            demoValue = field.options[0].value;
-          } else {
-            demoValue = 'Option A';
-          }
+          // Default to a common option since we don't have options data in the DB schema yet
+          demoValue = 'Option A';
           break;
           
         case 'date':
@@ -117,12 +113,8 @@ async function generateKy3pDemoData(taskId: number): Promise<Record<string, any>
           
         case 'radio':
         case 'radio_group':
-          // If options are available, select the first one
-          if (field.options && Array.isArray(field.options) && field.options.length > 0) {
-            demoValue = field.options[0].value;
-          } else {
-            demoValue = 'Yes';
-          }
+          // Default to a common option for radio buttons
+          demoValue = 'Yes';
           break;
           
         default:
@@ -155,15 +147,15 @@ async function saveDemoResponses(taskId: number, demoData: Record<string, any>):
     logger.info(`[KY3P Demo Auto-Fill] Saving ${Object.keys(demoData).length} demo responses for task ${taskId}`);
     
     // First, delete any existing responses for this task
-    await db.delete(ky3p_responses).where(eq(ky3p_responses.task_id, taskId));
+    await db.delete(ky3pResponses).where(eq(ky3pResponses.task_id, taskId));
     
     // Get field IDs for all fields
-    const fields = await db.select({ id: ky3p_fields.id, key: ky3p_fields.key }).from(ky3p_fields);
+    const fields = await db.select({ id: ky3pFields.id, field_key: ky3pFields.field_key }).from(ky3pFields);
     
     // Create a map of field keys to field IDs
     const fieldKeyToIdMap = new Map<string, number>();
     fields.forEach(field => {
-      const key = field.key || field.id.toString();
+      const key = field.field_key || field.id.toString();
       fieldKeyToIdMap.set(key, field.id);
     });
     
@@ -186,8 +178,8 @@ async function saveDemoResponses(taskId: number, demoData: Record<string, any>):
     
     // Insert all responses in a batch
     if (responsesToInsert.length > 0) {
-      // @ts-ignore - TypeScript doesn't like the null filtering above
-      await db.insert(ky3p_responses).values(responsesToInsert);
+      // Insert the responses, TS doesn't like the null filtering so we cast
+      await db.insert(ky3pResponses).values(responsesToInsert as any);
     }
     
     logger.info(`[KY3P Demo Auto-Fill] Successfully saved ${responsesToInsert.length} demo responses`);
