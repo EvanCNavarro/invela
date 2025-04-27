@@ -1,159 +1,193 @@
 /**
- * Test component for standardized KY3P demo auto-fill functionality
+ * Test component for standardized KY3P update functionality
+ * 
+ * This component provides a UI for testing the standardized KY3P
+ * update functionality with string-based field keys.
  */
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { StandardizedKY3PFormService } from '@/services/standardized-ky3p-form-service';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { standardizedBulkUpdate } from '@/components/forms/standardized-ky3p-update';
+import { toast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 import getLogger from '@/utils/logger';
 
-const logger = getLogger('TestKY3PStandardized');
+const logger = getLogger('TestStandardizedKy3pUpdate');
 
 export function TestStandardizedKy3pUpdate() {
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<boolean | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [responseData, setResponseData] = useState<Record<string, any> | null>(null);
+  const [taskId, setTaskId] = useState<number>(654); // Default to DevTest35 KY3P task
+  const [loading, setLoading] = useState<boolean>(false);
+  const [updateResult, setUpdateResult] = useState<string>('');
+  const [fieldData, setFieldData] = useState<string>('{\n  "field1": "Test value 1",\n  "field2": "Test value 2"\n}');
   
-  const taskId = 654; // DevTest35 KY3P task
-  
-  // Function to test the standardized KY3P form service demo auto-fill
-  const testDemoAutoFill = async () => {
-    setLoading(true);
-    setSuccess(null);
-    setErrorMessage(null);
-    setResponseData(null);
-    
+  const handleBulkUpdate = async () => {
     try {
-      // Create a new instance of the standardized service
-      const service = new StandardizedKY3PFormService(taskId);
-      logger.info('Testing standardized KY3P service demo auto-fill');
+      setLoading(true);
+      setUpdateResult('');
       
-      // Try to get demo data
-      const demoData = await service.getDemoData(taskId);
-      setResponseData(demoData);
-      
-      // Check if we got any data
-      if (Object.keys(demoData).length > 0) {
-        setSuccess(true);
-        logger.info(`Successfully retrieved ${Object.keys(demoData).length} demo fields`);
-      } else {
-        setSuccess(false);
-        setErrorMessage('Demo auto-fill returned no fields');
-        logger.error('Demo auto-fill returned no fields');
+      // Parse the field data JSON
+      let formData: Record<string, any>;
+      try {
+        formData = JSON.parse(fieldData);
+      } catch (error) {
+        toast({
+          title: 'Invalid JSON',
+          description: 'Please provide valid JSON for the field data',
+          variant: 'destructive',
+        });
+        return;
       }
+      
+      // Perform the bulk update
+      logger.info(`Performing standardized bulk update for task ${taskId} with fields:`, formData);
+      
+      const success = await standardizedBulkUpdate(taskId, formData);
+      
+      setUpdateResult(
+        success
+          ? `✅ Successfully updated ${Object.keys(formData).length} fields for task ${taskId}`
+          : `❌ Failed to update fields for task ${taskId}`
+      );
+      
+      toast({
+        title: success ? 'Update Successful' : 'Update Failed',
+        description: success
+          ? `Successfully updated ${Object.keys(formData).length} fields`
+          : 'Failed to update fields. See console for details.',
+        variant: success ? 'default' : 'destructive',
+      });
+      
     } catch (error) {
-      setSuccess(false);
-      setErrorMessage(error instanceof Error ? error.message : String(error));
-      logger.error('Error testing demo auto-fill:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Function to test standardized bulk update
-  const testBulkUpdate = async () => {
-    setLoading(true);
-    setSuccess(null);
-    setErrorMessage(null);
-    setResponseData(null);
-    
-    try {
-      // Import the standardized bulk update utility
-      const { standardizedBulkUpdate } = await import('../forms/standardized-ky3p-update');
-      logger.info('Testing standardized KY3P bulk update');
+      logger.error('Error in bulk update:', error);
       
-      // Create sample data for testing
-      const testData = {
-        'test_field': 'Test value from standardized update',
-        'test_boolean': true,
-        'test_number': 123
-      };
+      setUpdateResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // Try the bulk update
-      const success = await standardizedBulkUpdate(taskId, testData);
-      
-      setSuccess(success);
-      setResponseData({ message: success ? 'Bulk update successful' : 'Bulk update failed', testData });
-      
-      if (success) {
-        logger.info('Standardized bulk update test succeeded');
-      } else {
-        logger.error('Standardized bulk update test failed');
-      }
-    } catch (error) {
-      setSuccess(false);
-      setErrorMessage(error instanceof Error ? error.message : String(error));
-      logger.error('Error testing bulk update:', error);
+      toast({
+        title: 'Update Error',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
   
   return (
-    <Card className="w-full max-w-3xl">
-      <CardHeader>
-        <CardTitle>Test Standardized KY3P Demo Auto-Fill</CardTitle>
-        <CardDescription>
-          This tests the standardized approach for KY3P demo auto-fill functionality.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <Button 
-            onClick={testDemoAutoFill} 
+    <div className="container py-8 max-w-3xl">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Test Standardized KY3P Update</CardTitle>
+          <CardDescription>
+            Test the standardized KY3P update functionality with string-based field keys.
+            This component tests the standardizedBulkUpdate function directly with the provided task ID
+            and field data.
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="taskId">Task ID</Label>
+              <Input
+                id="taskId"
+                type="number"
+                value={taskId}
+                onChange={(e) => setTaskId(parseInt(e.target.value))}
+                placeholder="Enter task ID"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="fieldData">Field Data (JSON)</Label>
+              <Textarea
+                id="fieldData"
+                value={fieldData}
+                onChange={(e) => setFieldData(e.target.value)}
+                placeholder='{"field1": "value1", "field2": "value2"}'
+                rows={10}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Provide a JSON object with field keys and values to update.
+                For example: {'{\"field1\": \"value1\", \"field2\": \"value2\"}'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between">
+          <Button
+            onClick={handleBulkUpdate}
             disabled={loading}
-            className="flex items-center space-x-2"
           >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            <span>Test Demo Auto-Fill</span>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? 'Updating...' : 'Update Fields'}
           </Button>
           
-          <Button 
-            onClick={testBulkUpdate} 
-            disabled={loading}
-            variant="outline"
-            className="flex items-center space-x-2"
-          >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            <span>Test Bulk Update</span>
-          </Button>
-          
-          {success !== null && (
-            <div className="flex items-center space-x-2">
-              {success ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-              ) : (
-                <XCircle className="h-5 w-5 text-red-500" />
-              )}
-              <span className={success ? 'text-green-500' : 'text-red-500'}>
-                {success ? 'Success' : 'Failed'}
-              </span>
+          {updateResult && (
+            <div className="ml-4 text-sm">
+              {updateResult}
             </div>
           )}
-        </div>
+        </CardFooter>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Documentation</CardTitle>
+          <CardDescription>
+            How the standardized KY3P update works
+          </CardDescription>
+        </CardHeader>
         
-        {errorMessage && (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        )}
-        
-        {responseData && Object.keys(responseData).length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-lg font-medium mb-2">Response Data:</h3>
-            <div className="bg-muted p-4 rounded overflow-auto max-h-60">
-              <pre className="text-xs">
-                {JSON.stringify(responseData, null, 2)}
+        <CardContent className="space-y-4">
+          <div className="text-sm space-y-4">
+            <div>
+              <h3 className="font-medium mb-1">Standardized Approach</h3>
+              <p className="text-muted-foreground">
+                The standardized KY3P update uses string-based field keys (e.g., "field1", "field2")
+                instead of numeric field IDs (e.g., 123, 456) for better compatibility with other form types
+                like KYB and Open Banking which already use string-based keys.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-medium mb-1">Fallback Logic</h3>
+              <p className="text-muted-foreground">
+                If the batch update endpoint fails, the standardized update will automatically
+                fall back to individual field updates for better reliability. This ensures updates
+                work even if some endpoints are unavailable.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-medium mb-1">Usage Example</h3>
+              <pre className="bg-muted p-2 rounded text-xs overflow-auto">
+                {`// Import the function
+import { standardizedBulkUpdate } from '@/components/forms/standardized-ky3p-update';
+
+// Use it in your component
+const updateFields = async () => {
+  const success = await standardizedBulkUpdate(654, {
+    'field1': 'value1',
+    'field2': 'value2'
+  });
+  
+  if (success) {
+    console.log('Update successful');
+  } else {
+    console.error('Update failed');
+  }
+};`}
               </pre>
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
