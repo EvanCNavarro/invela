@@ -28,10 +28,11 @@ export async function standardizedBulkUpdate(
   try {
     logger.info(`Performing standardized bulk update for task ${taskId} with ${Object.keys(formData).length} fields`);
     
-    // First attempt: Use the batch update endpoint
+    // First attempt: Use the batch update endpoint with correct path
     try {
-      const batchResponse = await apiRequest('POST', `/api/ky3p-task/${taskId}/batch-update`, {
-        fields: formData
+      // Use the correct batch update endpoint path
+      const batchResponse = await apiRequest('POST', `/api/ky3p/batch-update/${taskId}`, {
+        responses: formData
       });
       
       if (batchResponse.ok) {
@@ -42,12 +43,26 @@ export async function standardizedBulkUpdate(
       logger.warn('Batch update failed, falling back to individual updates:', error);
     }
     
-    // Second attempt: Convert to individual field updates
+    // Second attempt: Use alternative batch update endpoint path
+    try {
+      const altBatchResponse = await apiRequest('POST', `/api/tasks/${taskId}/ky3p-batch-update`, {
+        responses: formData
+      });
+      
+      if (altBatchResponse.ok) {
+        logger.info(`Batch update successful using alternative endpoint for task ${taskId}`);
+        return true;
+      }
+    } catch (error) {
+      logger.warn('Alternative batch update failed, falling back to individual updates:', error);
+    }
+    
+    // Third attempt: Convert to individual field updates
     try {
       // Create an array of field update promises
       const updatePromises = Object.entries(formData).map(async ([fieldKey, value]) => {
         try {
-          const response = await apiRequest('POST', `/api/ky3p-task/${taskId}/update-field`, {
+          const response = await apiRequest('POST', `/api/ky3p-fields/${taskId}/update`, {
             fieldKey,
             value
           });
