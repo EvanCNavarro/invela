@@ -31,3 +31,29 @@ export class Logger {
     console.error(this.formatMessage('ERROR', message, context));
   }
 }
+
+// Create a logger instance for a specific namespace
+export function createLogger(namespace: string): Logger {
+  return new Logger(namespace);
+}
+
+// Export simple functions for backward compatibility
+export function debug(message: string, context?: LogContext) {
+  const defaultLogger = new Logger('Default');
+  defaultLogger.debug(message, context);
+}
+
+export function info(message: string, context?: LogContext) {
+  const defaultLogger = new Logger('Default');
+  defaultLogger.info(message, context);
+}
+
+export function warn(message: string, context?: LogContext) {
+  const defaultLogger = new Logger('Default');
+  defaultLogger.warn(message, context);
+}
+
+export function error(message: string, context?: LogContext) {
+  const defaultLogger = new Logger('Default');
+  defaultLogger.error(message, context);
+}
