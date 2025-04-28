@@ -514,25 +514,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
-      // Always navigate to the first section regardless of where we are
-      // This ensures we don't get stuck in the Review & Submit tab
-      logger.info(`[ClearFields] Current section: ${activeSection}, navigating to first section`);
+      // Log the current section where the clear operation was initiated from
+      logger.info(`[ClearFields] Current section: ${activeSection}, will navigate to first section after clearing`);
       
-      // Force navigation to first section
-      if (sections && sections.length > 0) {
-        logger.info('[ClearFields] Navigating to first section');
-        // This is a critical operation - force it to happen immediately
-        setActiveSection(0);
-        
-        // Set a brief timeout to ensure the section change is processed
-        setTimeout(() => {
-          // Double-check that we've moved to section 0
-          if (activeSection !== 0) {
-            logger.info('[ClearFields] Forcing navigation to section 0');
-            setActiveSection(0);
-          }
-        }, 50);
-      }
+      // We'll navigate to the first section AFTER clearing the fields (moved to end of function)
       
       // Enhanced logging for better debugging
       logger.info('[ClearFields] Starting clear operation', {
@@ -597,6 +582,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             variant: 'default',
           });
           
+          // Navigate to the first section AFTER successfully clearing the fields
+          if (sections && sections.length > 0) {
+            logger.info('[ClearFields] Successfully cleared fields, navigating to first section');
+            // Use setTimeout to ensure this happens after the UI has updated
+            setTimeout(() => {
+              setActiveSection(0);
+              logger.info('[ClearFields] Navigation to first section completed');
+            }, 150);
+          }
+          
           return;
         } catch (directClearError) {
           logger.error('[ClearFields] Direct clear failed, falling back to standard method:', directClearError);
@@ -651,6 +646,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             description: `Successfully cleared all form fields. Form progress: ${newProgress}%`,
             variant: 'success',
           });
+          
+          // Navigate to the first section AFTER successfully clearing the fields
+          if (sections && sections.length > 0) {
+            logger.info('[ClearFields] Successfully cleared fields (standard method), navigating to first section');
+            // Use setTimeout to ensure this happens after the UI has updated
+            setTimeout(() => {
+              setActiveSection(0);
+              logger.info('[ClearFields] Navigation to first section completed (standard method)');
+            }, 150);
+          }
         } catch (saveError) {
           logger.error('[ClearFields] Error during status refresh or save:', saveError);
           // Still consider the operation successful since fields were cleared
@@ -659,6 +664,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             description: 'Fields cleared successfully, but there was an issue updating progress.',
             variant: 'default',
           });
+          
+          // Still try to navigate back to first section even if there was an error updating progress
+          if (sections && sections.length > 0) {
+            logger.info('[ClearFields] Navigating to first section despite save error');
+            setTimeout(() => {
+              setActiveSection(0);
+            }, 150);
+          }
         }
       } else {
         throw new Error('Failed to clear form fields - no fields were cleared');
