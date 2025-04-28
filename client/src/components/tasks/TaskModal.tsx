@@ -24,6 +24,7 @@ interface Task {
 }
 
 const taskStatusMap = {
+  // Support both lowercase and uppercase status values
   email_sent: 'Email Sent',
   completed: 'Completed',
   not_started: 'Not Started',
@@ -31,19 +32,30 @@ const taskStatusMap = {
   ready_for_submission: 'Ready for Submission',
   submitted: 'Submitted',
   approved: 'Approved',
+  // Add uppercase versions for consistency with server
+  EMAIL_SENT: 'Email Sent',
+  COMPLETED: 'Completed',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  READY_FOR_SUBMISSION: 'Ready for Submission',
+  SUBMITTED: 'Submitted',
+  APPROVED: 'Approved',
 } as const;
 
 const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  switch (status) {
-    case 'not_started':
-    case 'email_sent':
+  // Convert to uppercase for case-insensitive matching
+  const upperStatus = status.toUpperCase();
+  
+  switch (upperStatus) {
+    case 'NOT_STARTED':
+    case 'EMAIL_SENT':
       return "secondary";
-    case 'completed':
-    case 'approved':
-    case 'submitted':  // Added submitted to use the same style as completed
+    case 'COMPLETED':
+    case 'APPROVED':
+    case 'SUBMITTED':  // Added SUBMITTED to use the same style as COMPLETED
       return "default";
-    case 'in_progress':
-    case 'ready_for_submission':
+    case 'IN_PROGRESS':
+    case 'READY_FOR_SUBMISSION':
       return "outline";
     default:
       return "default";
@@ -144,7 +156,10 @@ export function TaskModal({ task, open, onOpenChange }: TaskModalProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Badge variant={getStatusVariant(task.status)}>
-                {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
+                {/* Try both original case and uppercase to handle server and client status values */}
+                {taskStatusMap[task.status as keyof typeof taskStatusMap] || 
+                 taskStatusMap[task.status.toUpperCase() as keyof typeof taskStatusMap] || 
+                 task.status.replace(/_/g, ' ')}
               </Badge>
               <span className="text-sm text-muted-foreground">
                 {task.progress}% Complete
