@@ -38,6 +38,7 @@ interface Task {
 }
 
 const taskStatusMap = {
+  // Support both uppercase (from server) and lowercase (from client) status values
   EMAIL_SENT: 'Email Sent',
   COMPLETED: 'Completed',
   NOT_STARTED: 'Not Started',
@@ -45,6 +46,14 @@ const taskStatusMap = {
   READY_FOR_SUBMISSION: 'Ready for Submission',
   SUBMITTED: 'Submitted',
   APPROVED: 'Approved',
+  // Add lowercase versions
+  email_sent: 'Email Sent',
+  completed: 'Completed',
+  not_started: 'Not Started',
+  in_progress: 'In Progress',
+  ready_for_submission: 'Ready for Submission',
+  submitted: 'Submitted',
+  approved: 'Approved',
 } as const;
 
 const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -291,7 +300,10 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(task.status)}>
-                      {taskStatusMap[task.status.toUpperCase() as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
+                      {/* Try both original case and uppercase to handle server and client status values */}
+                      {taskStatusMap[task.status as keyof typeof taskStatusMap] || 
+                       taskStatusMap[task.status.toUpperCase() as keyof typeof taskStatusMap] || 
+                       task.status.replace(/_/g, ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell>
