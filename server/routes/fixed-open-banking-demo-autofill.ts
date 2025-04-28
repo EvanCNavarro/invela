@@ -104,9 +104,11 @@ router.post('/api/tasks/:taskId/open-banking-demo-autofill', requireAuth, async 
           task_id: taskId,
           field_id: field.id,
           response_value: field.demo_autofill || '',
-          created_at: new Date(),
-          updated_at: new Date(),
-          created_by: req.user!.id
+          status: 'COMPLETE',
+          ai_suspicion_level: 0,
+          partial_risk_score: 0,
+          version: 1,
+          updated_at: new Date()
         });
         insertCount++;
       } catch (insertError) {
@@ -130,18 +132,19 @@ router.post('/api/tasks/:taskId/open-banking-demo-autofill', requireAuth, async 
     // Adjust the denominator to match the total number of Open Banking fields
     const totalOpenBankingFields = 120; // Adjust this to match your actual count
     const progress = Math.min(Math.round((insertCount / totalOpenBankingFields) * 100), 100);
-    let status = 'in_progress';
+    // Use the proper TaskStatus enum values
+    let status: keyof typeof TaskStatus = 'IN_PROGRESS';
     
     if (progress >= 100) {
-      status = 'submitted';
+      status = 'SUBMITTED';
     } else if (progress === 0) {
-      status = 'not_started';
+      status = 'NOT_STARTED';
     }
     
     await db.update(tasks)
       .set({
         progress,
-        status,
+        status: TaskStatus[status],
         updated_at: new Date()
       })
       .where(eq(tasks.id, taskId));
