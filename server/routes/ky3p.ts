@@ -300,7 +300,7 @@ router.get('/api/tasks/:taskId/ky3p-responses', requireAuth, hasTaskAccess, asyn
           question: ky3pFields.question,
           group: ky3pFields.group,
           field_type: ky3pFields.field_type,
-          is_required: ky3pFields.is_required
+          is_required: ky3pFields.required // Updated from is_required to required to match renamed column
         }
       })
       .from(ky3pResponses)
@@ -657,7 +657,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAc
     const allFields = await db
       .select()
       .from(ky3pFields)
-      .where(ky3pFields.is_required);
+      .where(eq(ky3pFields.required, true)); // Updated from is_required to required to match renamed column
     
     const totalRequiredFields = allFields.length;
     
@@ -1722,7 +1722,7 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
     const requiredFields = await db
       .select()
       .from(ky3pFields)
-      .where(eq(ky3pFields.is_required, true));
+      .where(eq(ky3pFields.required, true)); // Updated from is_required to required to match renamed column
     
     const totalRequiredFields = requiredFields.length;
     
@@ -1940,7 +1940,7 @@ router.get('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
       field_type: ky3pFields.field_type,
       question: ky3pFields.question,
       group: ky3pFields.group,
-      required: ky3pFields.is_required,
+      required: ky3pFields.required, // Updated from is_required to required to match renamed column
       order: ky3pFields.order,
       step_index: ky3pFields.step_index,
       validation_rules: ky3pFields.validation_rules,
