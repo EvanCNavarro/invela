@@ -30,7 +30,37 @@ export async function handleClearFieldsUtil(
   try {
     logger.info('[ClearFields] Starting universal clear operation');
     
-    // Clear all fields one by one
+    // Check if this is a KY3P form by inspecting the form service type
+    const isKy3pForm = formService && (
+      formService.formType === 'ky3p' || 
+      (formService as any)?.constructor?.name === 'KY3PFormService'
+    );
+    
+    // If it's a KY3P form, prefer the direct clear endpoint
+    if (isKy3pForm && formService.taskId) {
+      logger.info(`[ClearFields] Detected KY3P form with task ID ${formService.taskId}, using dedicated clear endpoint`);
+      try {
+        // Call the dedicated KY3P clear endpoint directly
+        const response = await fetch(`/api/ky3p/clear-fields/${formService.taskId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`KY3P clear endpoint failed: ${response.status}`);
+        }
+        
+        // On successful server-side clear, also update UI
+        logger.info('[ClearFields] KY3P server-side clear successful, updating UI');
+      } catch (clearError) {
+        logger.warn('[ClearFields] KY3P server-side clear failed, falling back to UI-only clear:', clearError);
+        // Fall through to UI clearing below
+      }
+    }
+    
+    // Always clear the UI regardless of server response
+    // This ensures the form looks cleared even if the server operation failed
     for (const field of fields) {
       // Get the field ID in the most reliable way
       const fieldId = field.key || 
