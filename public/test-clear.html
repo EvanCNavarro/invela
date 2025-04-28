@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KY3P Form Clear Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    .button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .button-clear {
+      background-color: #f44336;
+    }
+    code {
+      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+      background-color: #f5f5f5;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    #results {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      min-height: 100px;
+    }
+    .success {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>KY3P Form Clear Fields Test</h1>
+  
+  <div class="section">
+    <h2>Test Setup</h2>
+    <p>This page helps test the KY3P form clearing functionality using the dedicated backend endpoint.</p>
+    <p>Current configuration:</p>
+    <ul>
+      <li>Testing endpoint: <code>/api/ky3p/clear-fields/:taskId</code></li>
+      <li>Current task ID: <code>658</code> (KY3P task)</li>
+    </ul>
+  </div>
+  
+  <div class="section">
+    <h2>Test Controls</h2>
+    <button id="clear-button" class="button button-clear">Clear KY3P Fields (Task ID: 658)</button>
+    <button id="check-button" class="button">Check Task Status</button>
+  </div>
+  
+  <div id="results">
+    <p>Results will appear here after running tests...</p>
+  </div>
+  
+  <script>
+    // Element references
+    const clearButton = document.getElementById('clear-button');
+    const checkButton = document.getElementById('check-button');
+    const results = document.getElementById('results');
+    
+    // Task ID to test
+    const TASK_ID = 658;
+    
+    // Display results in the results div
+    function displayResults(html) {
+      results.innerHTML = html;
+    }
+    
+    // Test clear fields functionality
+    async function testClearFields() {
+      try {
+        displayResults('<p>Testing KY3P clear fields...</p>');
+        
+        const response = await fetch(`/api/ky3p/clear-fields/${TASK_ID}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        
+        displayResults(`
+          <p class="success">✅ Success! KY3P fields cleared.</p>
+          <pre>${JSON.stringify(result, null, 2)}</pre>
+          <p>The task status should now be reset to "not_started" with 0% progress.</p>
+        `);
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error clearing KY3P fields:</p>
+          <pre>${error.message}</pre>
+        `);
+        console.error('Error clearing KY3P fields:', error);
+      }
+    }
+    
+    // Check task status
+    async function checkTaskStatus() {
+      try {
+        displayResults('<p>Checking task status...</p>');
+        
+        const response = await fetch(`/api/tasks.json/${TASK_ID}`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+        
+        const task = await response.json();
+        
+        displayResults(`
+          <p>Current task status:</p>
+          <pre>${JSON.stringify({
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            progress: task.progress,
+            type: task.task_type
+          }, null, 2)}</pre>
+        `);
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error checking task status:</p>
+          <pre>${error.message}</pre>
+        `);
+        console.error('Error checking task status:', error);
+      }
+    }
+    
+    // Event listeners
+    clearButton.addEventListener('click', testClearFields);
+    checkButton.addEventListener('click', checkTaskStatus);
+    
+    // Check task status on page load
+    checkTaskStatus();
+  </script>
+</body>
+</html>
