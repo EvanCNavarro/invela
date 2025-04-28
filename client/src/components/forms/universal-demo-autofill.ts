@@ -11,6 +11,7 @@
 import { FormServiceInterface } from '@/services/formService';
 import getLogger from '@/utils/logger';
 import { toast } from '@/hooks/use-toast';
+import { fixedUniversalSaveProgress } from './fix-universal-bulk-save';
 
 const logger = getLogger('UniversalDemoAutoFill');
 
@@ -123,8 +124,26 @@ export async function handleUniversalDemoAutoFill(
       onProgress(progress);
     }
     
-    // Save progress to the server
-    await saveProgress();
+    // Try using fixed implementation to save progress directly
+    if (taskId) {
+      logger.info(`Attempting to save progress using fixed implementation for ${taskType} task ${taskId}`);
+      try {
+        const success = await fixedUniversalSaveProgress(taskId, taskType, demoData);
+        if (success) {
+          logger.info(`Successfully saved demo data with fixed implementation for ${taskType} task ${taskId}`);
+        } else {
+          // Fallback to standard saveProgress
+          logger.info(`Fixed implementation was not successful, falling back to standard saveProgress`);
+          await saveProgress();
+        }
+      } catch (saveError) {
+        logger.warn(`Error using fixed implementation, falling back to standard saveProgress:`, saveError);
+        await saveProgress();
+      }
+    } else {
+      // No task ID, use standard saveProgress
+      await saveProgress();
+    }
     
     // Refresh the form status
     await refreshStatus();
