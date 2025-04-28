@@ -27,7 +27,7 @@ import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
 // Import the enhanced KY3P demo auto-fill routes
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
-import openBankingDemoAutofillRouter from './routes/open-banking-demo-autofill';
+import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
