@@ -734,12 +734,38 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       }
       
-      // Use the standardized bulk update implementation
+      // === APPROACH 1: Use the KY3P field update implementation ===
+      try {
+        // Dynamically import the dedicated KY3P field update utility
+        const { updateKY3PFields } = await import('@/components/forms/ky3p-field-update');
+        
+        // Use the optimized KY3P update utility
+        logger.info(`[KY3P Form Service] Using updateKY3PFields utility for task ${taskId}`);
+        
+        const success = await updateKY3PFields(taskId, dataToSubmit);
+        
+        if (success) {
+          const fieldCount = Object.keys(dataToSubmit).length;
+          logger.info(`[KY3P Form Service] KY3P field update completed successfully with ${fieldCount} fields`);
+          return {
+            success: true,
+            updatedCount: fieldCount
+          };
+        } else {
+          logger.warn('[KY3P Form Service] KY3P field update failed, trying standardized bulk update');
+        }
+      } catch (updateError: any) {
+        logger.error('[KY3P Form Service] Error using KY3P field update:', updateError);
+        logger.warn('[KY3P Form Service] Falling back to standardized bulk update');
+      }
+      
+      // === APPROACH 2: Use the standardized bulk update implementation ===
       try {
         // Dynamically import the standardized helper function
         const { standardizedBulkUpdate } = await import('@/components/forms/standardized-ky3p-update');
         
         // Call the standardized helper function
+        logger.info(`[KY3P Form Service] Using standardizedBulkUpdate for task ${taskId}`);
         const success = await standardizedBulkUpdate(taskId, dataToSubmit);
         
         if (success) {
@@ -750,18 +776,43 @@ export class KY3PFormService extends EnhancedKybFormService {
             updatedCount: fieldCount
           };
         } else {
-          logger.error('[KY3P Form Service] Standardized bulk update failed');
-          return {
-            success: false,
-            error: 'Standardized bulk update operation failed',
-            updatedCount: 0
-          };
+          logger.warn('[KY3P Form Service] Standardized bulk update failed, trying universal bulk save');
         }
       } catch (bulkUpdateError: any) {
         logger.error('[KY3P Form Service] Error during standardized bulk update:', bulkUpdateError);
+        logger.warn('[KY3P Form Service] Falling back to fixed universal bulk save');
+      }
+      
+      // === APPROACH 3: Use the fixed universal bulk save approach ===
+      try {
+        // Try the fixed universal bulk save implementation as last resort
+        const { fixedUniversalBulkSave } = await import('@/components/forms/fix-universal-bulk-save');
+        
+        logger.info(`[KY3P Form Service] Using fixedUniversalBulkSave for task ${taskId}`);
+        
+        const success = await fixedUniversalBulkSave(taskId, dataToSubmit, 'ky3p');
+        
+        if (success) {
+          const fieldCount = Object.keys(dataToSubmit).length;
+          logger.info(`[KY3P Form Service] Fixed universal bulk save completed successfully with ${fieldCount} fields`);
+          return {
+            success: true,
+            updatedCount: fieldCount
+          };
+        }
+        
+        // All approaches failed
+        logger.error('[KY3P Form Service] All update approaches failed');
         return {
           success: false,
-          error: bulkUpdateError?.message || 'Error during standardized bulk update',
+          error: 'All update approaches failed',
+          updatedCount: 0
+        };
+      } catch (fixedError: any) {
+        logger.error('[KY3P Form Service] Error during fixed universal bulk save:', fixedError);
+        return {
+          success: false,
+          error: fixedError?.message || 'Error during fixed universal bulk save',
           updatedCount: 0
         };
       }
@@ -1347,7 +1398,27 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
       });
 
-      // Import our standardized update utility to handle the update
+      // === APPROACH 1: Use the KY3P field update implementation ===
+      try {
+        // Dynamic import to avoid circular dependencies
+        const { updateKY3PFields } = await import('@/components/forms/ky3p-field-update');
+        
+        // Use the specialized KY3P update utility with proper field key format
+        logger.info(`[KY3P Form Service] Using updateKY3PFields utility for task ${effectiveTaskId}`);
+        
+        const result = await updateKY3PFields(effectiveTaskId, cleanData);
+        if (result) {
+          logger.info(`[KY3P Form Service] Successfully updated form using KY3P field update utility`);
+          return true;
+        }
+        
+        // If the direct update fails, try the standardized implementation
+        logger.warn(`[KY3P Form Service] KY3P field update failed, trying standardized utility`);
+      } catch (updateError) {
+        logger.error(`[KY3P Form Service] Error using KY3P field update:`, updateError);
+      }
+      
+      // === APPROACH 2: Use the standardized bulk update utility ===
       try {
         // Dynamic import to avoid circular dependencies
         const { standardizedBulkUpdate } = await import('@/components/forms/standardized-ky3p-update');
@@ -1361,15 +1432,40 @@ export class KY3PFormService extends EnhancedKybFormService {
           return true;
         }
         
-        // If the standardized utility fails, fall back to the old method
-        logger.warn(`[KY3P Form Service] Standardized update failed, falling back to legacy batch update endpoint`);
+        // If the standardized utility fails, try the fixed universal approach
+        logger.warn(`[KY3P Form Service] Standardized update failed, trying universal bulk save`);
       } catch (importError) {
-        logger.error(`[KY3P Form Service] Error importing standardized update utility:`, importError);
+        logger.error(`[KY3P Form Service] Error using standardized update:`, importError);
       }
       
-      // Legacy fallback: Use the batch-update endpoint
+      // === APPROACH 3: Use the fixed universal bulk save approach ===
+      try {
+        const { fixedUniversalBulkSave } = await import('@/components/forms/fix-universal-bulk-save');
+        
+        logger.info(`[KY3P Form Service] Using fixedUniversalBulkSave for task ${effectiveTaskId}`);
+        
+        const result = await fixedUniversalBulkSave(effectiveTaskId, cleanData, 'ky3p');
+        if (result) {
+          logger.info(`[KY3P Form Service] Successfully updated form using fixed universal bulk save`);
+          return true;
+        }
+        
+        logger.warn(`[KY3P Form Service] All standardized approaches failed`);
+      } catch (fixedError) {
+        logger.error(`[KY3P Form Service] Error using fixed universal bulk save:`, fixedError);
+      }
+      
+      // === FALLBACK: Use the batch-update endpoint with array format ===
+      // This is our last resort to maintain backward compatibility
       try {
         logger.info(`[KY3P Form Service] Using batch-update endpoint for task ${effectiveTaskId}`);
+        
+        // Convert to array format expected by the batch endpoint
+        const arrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => ({
+          fieldKey,
+          value
+        }));
+        
         const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
           method: 'POST',
           headers: {
@@ -1377,7 +1473,7 @@ export class KY3PFormService extends EnhancedKybFormService {
           },
           credentials: 'include',
           body: JSON.stringify({
-            responses: cleanData // Send the data with string field keys
+            responses: arrayResponses
           }),
         });
         
@@ -1387,9 +1483,10 @@ export class KY3PFormService extends EnhancedKybFormService {
         }
         
         const errorText = await batchResponse.text();
-        throw new Error(`Batch update failed with status ${batchResponse.status}: ${errorText}`);
+        logger.error(`[KY3P Form Service] Batch update failed: ${batchResponse.status} - ${errorText}`);
+        return false;
       } catch (error) {
-        logger.error(`[KY3P Form Service] Error updating form data:`, error);
+        logger.error(`[KY3P Form Service] Error during form update:`, error);
         return false;
       }
     } catch (error) {
