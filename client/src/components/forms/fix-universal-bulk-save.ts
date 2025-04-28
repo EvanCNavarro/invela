@@ -7,6 +7,7 @@
 
 import { apiRequest } from "@/lib/queryClient";
 import { standardizedBulkUpdate } from "./standardized-ky3p-update";
+import { updateKY3PFields } from "./ky3p-field-update";
 import getLogger from "@/utils/logger";
 
 const logger = getLogger('FixUniversalBulkSave');
@@ -32,8 +33,22 @@ export async function fixedUniversalSaveProgress(
     const normalizedType = taskType.toLowerCase();
     
     if (normalizedType === 'ky3p') {
-      // Use the standardized KY3P bulk update
-      return await standardizedBulkUpdate(taskId, formData);
+      // Try the new KY3P field update approach first
+      try {
+        logger.info(`Attempting KY3P field update for task ${taskId} with the fields API`);
+        const success = await updateKY3PFields(taskId, formData);
+        if (success) {
+          logger.info(`Successfully updated KY3P fields for task ${taskId} with fields API`);
+          return true;
+        }
+        
+        // If that fails, try the standardized approach
+        logger.info(`Field API update failed, trying standardized bulk update as fallback`);
+        return await standardizedBulkUpdate(taskId, formData);
+      } catch (error) {
+        logger.error(`Error in KY3P field update:`, error);
+        return false;
+      }
     } 
     else if (normalizedType === 'kyb') {
       // KYB uses a different endpoint format
