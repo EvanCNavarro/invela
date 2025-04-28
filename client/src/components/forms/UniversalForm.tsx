@@ -514,14 +514,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
-      // If we're on the Review & Submit tab, navigate back to the first section
-      // This must happen BEFORE clearing the fields to avoid locked state issues
+      // Always navigate to the first section regardless of where we are
+      // This ensures we don't get stuck in the Review & Submit tab
+      logger.info(`[ClearFields] Current section: ${activeSection}, navigating to first section`);
+      
+      // Force navigation to first section
       if (sections && sections.length > 0) {
-        const lastSectionIndex = sections.length - 1;
-        if (activeSection === lastSectionIndex) {
-          logger.info('[ClearFields] Currently on Review & Submit, navigating to first section');
-          setActiveSection(0);
-        }
+        logger.info('[ClearFields] Navigating to first section');
+        // This is a critical operation - force it to happen immediately
+        setActiveSection(0);
+        
+        // Set a brief timeout to ensure the section change is processed
+        setTimeout(() => {
+          // Double-check that we've moved to section 0
+          if (activeSection !== 0) {
+            logger.info('[ClearFields] Forcing navigation to section 0');
+            setActiveSection(0);
+          }
+        }, 50);
       }
       
       // Enhanced logging for better debugging
@@ -661,7 +671,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [formService, fields, updateField, refreshStatus, saveProgress, setForceRerender, form]);
+  }, [formService, fields, updateField, refreshStatus, saveProgress, setForceRerender, form, setActiveSection, activeSection, sections, taskId, taskType]);
   
   // Get form title based on template or task type
   const formTitle = useMemo(() => {
