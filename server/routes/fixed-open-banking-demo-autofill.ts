@@ -11,9 +11,12 @@ import {
   openBankingFields, 
   openBankingResponses, 
   tasks,
-  companies
+  companies,
+  KYBFieldStatus,
+  TaskStatus
 } from '@db/schema';
-import { eq, and, asc, ne, isNotNull } from 'drizzle-orm';
+import { eq, and, asc } from 'drizzle-orm';
+import { isNotNull, ne } from 'drizzle-orm/expressions';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 import { broadcastTaskUpdate } from '../services/websocket';
@@ -104,7 +107,7 @@ router.post('/api/tasks/:taskId/open-banking-demo-autofill', requireAuth, async 
           task_id: taskId,
           field_id: field.id,
           response_value: field.demo_autofill || '',
-          status: 'COMPLETE',
+          status: KYBFieldStatus.COMPLETE,
           ai_suspicion_level: 0,
           partial_risk_score: 0,
           version: 1,
@@ -144,7 +147,7 @@ router.post('/api/tasks/:taskId/open-banking-demo-autofill', requireAuth, async 
     await db.update(tasks)
       .set({
         progress,
-        status: TaskStatus[status],
+        status: status.toLowerCase(), // Use lowercase for DB compatibility
         updated_at: new Date()
       })
       .where(eq(tasks.id, taskId));
