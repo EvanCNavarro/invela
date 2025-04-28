@@ -514,6 +514,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
+      // If we're on the Review & Submit tab, navigate back to the first section
+      // This must happen BEFORE clearing the fields to avoid locked state issues
+      if (sections && sections.length > 0) {
+        const lastSectionIndex = sections.length - 1;
+        if (activeSection === lastSectionIndex) {
+          logger.info('[ClearFields] Currently on Review & Submit, navigating to first section');
+          setActiveSection(0);
+        }
+      }
+      
       // Enhanced logging for better debugging
       logger.info('[ClearFields] Starting clear operation', {
         fieldsCount: fields.length,
