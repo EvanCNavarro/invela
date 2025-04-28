@@ -16,6 +16,7 @@ import { handleUniversalDemoAutoFill } from './universal-demo-autofill';
 import { Progress } from '@/components/ui/progress';
 import { getFormServiceForTaskType } from '@/services/standardized-service-registry';
 import { standardizedBulkUpdate } from './standardized-ky3p-update';
+import { fixedUniversalSaveProgress } from './fix-universal-bulk-save';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('StandardizedUniversalForm');
@@ -120,8 +121,26 @@ export function StandardizedUniversalForm({
     
     try {
       setSaving(true);
-      logger.info(`Saving progress for task ${taskId}`);
+      logger.info(`Saving progress for task ${taskId} using fixed universal implementation`);
       
+      // First try our fixed implementation
+      try {
+        const success = await fixedUniversalSaveProgress(taskId, taskType, formData);
+        
+        if (success) {
+          logger.info(`Successfully saved progress for task ${taskId} using fixed implementation`);
+          
+          // Calculate and update the progress
+          const calculatedProgress = formService.calculateProgress();
+          setProgress(calculatedProgress);
+          return;
+        }
+      } catch (fixedError) {
+        logger.warn('Fixed implementation failed:', fixedError);
+      }
+      
+      // Fallback to the form service implementation
+      logger.info(`Falling back to form service saveProgress for task ${taskId}`);
       await formService.saveProgress(taskId);
       
       // Calculate and update the progress
@@ -137,7 +156,7 @@ export function StandardizedUniversalForm({
     } finally {
       setSaving(false);
     }
-  }, [formService, taskId]);
+  }, [formService, taskId, taskType, formData]);
 
   // Refresh progress and form status
   const refreshStatus = useCallback(async () => {
