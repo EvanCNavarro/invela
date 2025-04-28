@@ -26,9 +26,9 @@ export class OpenBankingFormService extends EnhancedKybFormService {
   private static openBankingFieldsCache: Record<number, any[]> = {};
   
   constructor(companyId?: number, taskId?: number) {
-    super(companyId, taskId);
+    super();
     
-    // Store locally too for our tracking
+    // Store locally for our tracking
     this._companyId = companyId;
     this._taskId = taskId;
     
@@ -358,7 +358,7 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     // Extract fields from all sections and flatten into a single array
     const allFields = this._sections.flatMap(section => {
       // Make sure each field has the correct section ID
-      return (section.fields || []).map(field => ({
+      return (section.fields || []).map((field: any) => ({
         ...field,
         section: section.id // Critical: ensure every field has a section property
       }));
