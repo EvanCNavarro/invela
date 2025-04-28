@@ -425,6 +425,69 @@ export class OpenBankingFormService extends EnhancedKybFormService {
     }
   }
   
+  /**
+   * Override the getDemoData method to use the Open Banking endpoint
+   * This method is required for demo auto-fill functionality
+   */
+  public async getDemoData(taskId?: number): Promise<Record<string, any>> {
+    const effectiveTaskId = taskId || this._taskId;
+    
+    if (!effectiveTaskId) {
+      logger.error('[OpenBankingFormService] No task ID provided for demo data retrieval');
+      throw new Error('Task ID is required to retrieve demo data');
+    }
+    
+    try {
+      logger.info(`[OpenBankingFormService] Fetching demo auto-fill data for Open Banking task ${effectiveTaskId}`);
+      
+      // Use the specific endpoint for Open Banking demo auto-fill
+      const response = await fetch(`/api/open-banking/demo-autofill/${effectiveTaskId}`, {
+        credentials: 'include', // Include session cookies
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[OpenBankingFormService] Failed to get demo data: ${response.status}`, errorText);
+        throw new Error(`Failed to get Open Banking demo data: ${response.status} - ${errorText}`);
+      }
+      
+      // Process the raw demo data from the server
+      const rawDemoData = await response.json();
+      
+      // Extract the form data from the response
+      const formData = rawDemoData.formData || rawDemoData;
+      
+      // Filter out fields that don't exist in our fields array
+      const filteredDemoData: Record<string, any> = {};
+      let skippedFields = 0;
+      
+      // Only include fields that exist in our form service
+      const allFields = this.getFields();
+      const fieldKeys = allFields.map(field => field.key);
+      
+      for (const [key, value] of Object.entries(formData)) {
+        if (fieldKeys.includes(key)) {
+          filteredDemoData[key] = value;
+        } else {
+          logger.warn(`[OpenBankingFormService] Skipping demo field key that doesn't exist in our form: ${key}`);
+          skippedFields++;
+        }
+      }
+      
+      const fieldCount = Object.keys(filteredDemoData).length;
+      
+      logger.info(`[OpenBankingFormService] Successfully fetched and filtered demo fields: ${fieldCount} valid, ${skippedFields} skipped`);
+      
+      return filteredDemoData;
+    } catch (error) {
+      logger.error('[OpenBankingFormService] Error retrieving demo data:', error);
+      throw error;
+    }
+  }
+  
   // Simple in-memory cache for progress data to improve load times
   private static progressCache: Map<number, {
     formData: Record<string, any>;
