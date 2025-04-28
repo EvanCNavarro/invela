@@ -326,7 +326,7 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pFixedRouter);
   // Use our enhanced KY3P demo auto-fill routes
   app.use(ky3pDemoAutofillRouter);
-  // Register the standardized KY3P batch update routes
+  // Register the standardized KY3P batch update routes with enhanced field key/ID support
   registerKY3PBatchUpdateRoutes(app);
   // Register the standardized KY3P field update routes
   registerKY3PFieldUpdateRoutes(app);
