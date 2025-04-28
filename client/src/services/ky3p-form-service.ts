@@ -1496,6 +1496,77 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Clear all fields in the form using a specialized endpoint
+   * 
+   * This method uses a dedicated server endpoint for KY3P forms
+   * that properly clears all fields and resets the task status.
+   * 
+   * @param taskId The task ID (optional, will use instance's taskId if not provided)
+   * @returns Promise that resolves to true if successful, false otherwise
+   */
+  public async clearAllFields(taskId?: number): Promise<boolean> {
+    const effectiveTaskId = taskId || this._taskId;
+    
+    if (!effectiveTaskId) {
+      logger.error('[KY3P Form Service] No task ID provided for clearing fields');
+      return false;
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Clearing all fields for task ${effectiveTaskId}`);
+      
+      // Create empty data object with all fields set to empty strings
+      const emptyData: Record<string, string> = {};
+      
+      // Get all field definitions
+      const fields = await this.getFields();
+      
+      // Set all fields to empty strings
+      fields.forEach(field => {
+        if (field && field.key) {
+          emptyData[field.key] = '';
+        }
+      });
+      
+      // Temporarily disable automatic form saving during clear operation
+      // to prevent firing multiple reconciliation requests
+      const wasSavingEnabled = this.autoSaveEnabled;
+      this.autoSaveEnabled = false;
+      
+      // Use the dedicated KY3P clear endpoint that directly clears the database
+      const response = await fetch(`/api/ky3p/clear-fields/${effectiveTaskId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        logger.error(`[KY3P Form Service] Failed to clear fields: ${response.status}`);
+        this.autoSaveEnabled = wasSavingEnabled; // Restore previous auto-save setting
+        return false;
+      }
+      
+      // Update form data in our service without triggering save
+      this.loadFormData(emptyData);
+      
+      // Instead of immediately saving/reconciling, wait a bit to let server-side 
+      // reconciliation skip timer expire
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Restore auto-save setting
+      this.autoSaveEnabled = wasSavingEnabled;
+      
+      logger.info(`[KY3P Form Service] Successfully cleared all fields for task ${effectiveTaskId}`);
+      return true;
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error clearing fields:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Save the current progress 
    * @param taskId The task ID (optional, will use instance's taskId if not provided)
    */
