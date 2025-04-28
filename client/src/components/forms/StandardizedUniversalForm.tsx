@@ -190,18 +190,27 @@ export function StandardizedUniversalForm({
     }));
     
     // Also update the form service data
-    formService.updateFormData(fieldKey, value, autoSave ? taskId : undefined);
+    formService.updateFormData(fieldKey, value, false); // Don't auto-save within the form service
     
     // If auto-save is enabled and we have a task ID, save the progress
     if (autoSave && taskId) {
       try {
-        // Using standardized bulk update for single field
-        const success = await standardizedBulkUpdate(taskId, {
+        // First try our fixed implementation for single field update
+        const success = await fixedUniversalSaveProgress(taskId, taskType, {
           [fieldKey]: value
         });
         
-        if (!success) {
-          logger.error(`Failed to auto-save field ${fieldKey}`);
+        if (success) {
+          logger.info(`Successfully saved field ${fieldKey} using fixed implementation`);
+        } else {
+          // Fallback to standardized bulk update
+          const altSuccess = await standardizedBulkUpdate(taskId, {
+            [fieldKey]: value
+          });
+          
+          if (!altSuccess) {
+            logger.error(`Failed to auto-save field ${fieldKey}`);
+          }
         }
         
         // Calculate and update the progress
@@ -211,7 +220,7 @@ export function StandardizedUniversalForm({
         logger.error(`Error auto-saving field ${fieldKey}:`, error);
       }
     }
-  }, [formService, taskId, autoSave]);
+  }, [formService, taskId, taskType, autoSave]);
 
   // Reset the form with new data
   const resetForm = useCallback((data: Record<string, any>) => {
