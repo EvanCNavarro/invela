@@ -83,8 +83,8 @@ router.post('/api/tasks/:taskId/open-banking-demo-autofill', requireAuth, async 
     })
       .from(openBankingFields)
       .where(and(
-        openBankingFields.demo_autofill.notNull(),
-        openBankingFields.demo_autofill.ne('')
+        isNotNull(openBankingFields.demo_autofill),
+        ne(openBankingFields.demo_autofill, '')
       ))
       .orderBy(asc(openBankingFields.id));
     
@@ -235,7 +235,7 @@ router.get('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, r
       });
     }
     
-    // Get all Open Banking fields with demo_autofill values
+    // Get all Open Banking fields with demo_autofill values - FIXED QUERY
     const fields = await db.select({
       id: openBankingFields.id,
       field_key: openBankingFields.field_key,
@@ -243,8 +243,8 @@ router.get('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, r
     })
       .from(openBankingFields)
       .where(and(
-        openBankingFields.demo_autofill.notNull(),
-        openBankingFields.demo_autofill.ne('')
+        isNotNull(openBankingFields.demo_autofill),
+        ne(openBankingFields.demo_autofill, '')
       ))
       .orderBy(asc(openBankingFields.id));
     
