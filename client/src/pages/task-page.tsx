@@ -119,9 +119,27 @@ export default function TaskPage({ params }: TaskPageProps) {
         logger.info('[TaskPage] WebSocket connection established');
       };
       
+      // Add a timestamp tracking mechanism to avoid duplicate processing
+      const lastMessageTimestamps = new Map<string, number>();
+      
       socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          
+          // Implement de-duplication for messages
+          const messageTimestamp = message.timestamp ? new Date(message.timestamp).getTime() : Date.now();
+          const messageKey = `${message.type}-${message.payload?.id || message.payload?.taskId || 'unknown'}`;
+          const lastTimestamp = lastMessageTimestamps.get(messageKey) || 0;
+          
+          // Ignore messages that are too close together (within 300ms)
+          if (messageTimestamp - lastTimestamp < 300) {
+            // Skip this message as it's too close to the previous one
+            return;
+          }
+          
+          // Update the timestamp for this message type
+          lastMessageTimestamps.set(messageKey, messageTimestamp);
+          
           logger.info('[TaskPage] WebSocket message received:', message);
           
           // Handle task update messages
