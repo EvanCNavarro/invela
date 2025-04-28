@@ -1378,6 +1378,73 @@ export class EnhancedKybFormService implements FormServiceInterface {
     // Return true if no errors, otherwise return the errors object
     return Object.keys(errors).length === 0 ? true : errors;
   }
+  
+  /**
+   * Get demo data for auto-filling KYB forms
+   * 
+   * This method retrieves demo data for KYB forms from the server and
+   * ensures that only valid field keys are included in the returned data.
+   * 
+   * @param taskId Optional task ID to specify which task to retrieve demo data for
+   * @returns Record of field keys to values for demo auto-fill
+   */
+  public async getDemoData(taskId?: number): Promise<Record<string, any>> {
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      this.logger.error('No task ID provided for demo data retrieval');
+      throw new Error('Task ID is required to retrieve demo data');
+    }
+    
+    try {
+      this.logger.info(`Fetching demo auto-fill data for KYB task ${effectiveTaskId}`);
+      
+      // Use the specific endpoint for KYB demo auto-fill
+      const response = await fetch(`/api/kyb/demo-autofill/${effectiveTaskId}`, {
+        credentials: 'include', // Include session cookies
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(`Failed to get demo data: ${response.status}`, errorText);
+        throw new Error(`Failed to get demo data: ${response.status} - ${errorText}`);
+      }
+      
+      // Process the raw demo data from the server
+      const rawDemoData = await response.json();
+      
+      // Extract the form data from the response
+      const formData = rawDemoData.formData || rawDemoData;
+      
+      // Filter out fields that don't exist in our fields array
+      const filteredDemoData: Record<string, any> = {};
+      let skippedFields = 0;
+      
+      // Only include fields that exist in our form service
+      const fieldKeys = this.fields.map(field => field.key);
+      
+      for (const [key, value] of Object.entries(formData)) {
+        if (fieldKeys.includes(key)) {
+          filteredDemoData[key] = value;
+        } else {
+          this.logger.warn(`Skipping demo field key that doesn't exist in our form: ${key}`);
+          skippedFields++;
+        }
+      }
+      
+      const fieldCount = Object.keys(filteredDemoData).length;
+      
+      this.logger.info(`Successfully fetched and filtered demo fields: ${fieldCount} valid, ${skippedFields} skipped`);
+      
+      return filteredDemoData;
+    } catch (error) {
+      this.logger.error('Error retrieving demo data:', error);
+      throw error;
+    }
+  }
 }
 
 // Create a factory for managing isolated instances of EnhancedKybFormService
