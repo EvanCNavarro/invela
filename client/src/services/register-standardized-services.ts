@@ -1,103 +1,68 @@
 /**
- * Register Standardized Services
+ * Register Standardized Form Services
  * 
- * This module registers standardized form services that use a consistent
- * interface with string-based field keys across all form types.
+ * This module registers the standardized form services with the component factory
+ * to ensure they're available for use throughout the application.
  */
 
-import { ComponentFactory, componentFactory } from './componentFactory';
+import { componentFactory } from './componentFactory';
+import { formServiceFactory } from './form-service-factory';
 import { EnhancedKY3PFormService } from './enhanced-ky3p-form-service';
+import getLogger from '@/utils/logger';
 
-// List of service registrations to set up
-const standardizedServiceRegistrations = [
-  {
-    serviceName: 'EnhancedKY3PFormService',
-    serviceType: EnhancedKY3PFormService,
-    formTypes: ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'],
-  },
-];
-
-// Map that tracks if services are registered
-const serviceRegistrationStatus = new Map<string, boolean>();
+const logger = getLogger('RegisterStandardizedServices');
 
 /**
- * Register all standardized form services with the ComponentFactory
- */
-export function registerStandardizedServices() {
-  console.log('[RegisterStandardizedServices] Registering standardized form services');
-  
-  standardizedServiceRegistrations.forEach(registration => {
-    const { serviceName, serviceType, formTypes } = registration;
-    
-    try {
-      // Register for each form type
-      formTypes.forEach(formType => {
-        console.log(`[RegisterStandardizedServices] Registering ${serviceName} for task type: ${formType}`);
-        componentFactory.registerFormService(formType, serviceType);
-      });
-      
-      // Mark as registered
-      serviceRegistrationStatus.set(serviceName, true);
-      console.log(`[RegisterStandardizedServices] Successfully registered ${serviceName} for ${formTypes.length} form types`);
-    } catch (error) {
-      console.error(`[RegisterStandardizedServices] Error registering ${serviceName}:`, error);
-      serviceRegistrationStatus.set(serviceName, false);
-    }
-  });
-}
-
-/**
- * Check if a specific service is registered
+ * Register all standardized form services
  * 
- * @param serviceName The name of the service to check
+ * This function registers all the standardized form services with the
+ * component factory to make them available throughout the application.
  */
-export function isServiceRegistered(serviceName: string): boolean {
-  return serviceRegistrationStatus.get(serviceName) === true;
-}
-
-/**
- * Use standardized services as the default implementation
- * 
- * This function makes the standardized services the default choice
- * for all form types where they're available.
- */
-export function useStandardizedServices() {
-  console.log('[RegisterStandardizedServices] Setting standardized services as default');
-  
-  // Override the KY3P form service with our enhanced version
-  const ky3pOverrideSuccess = overrideKY3PFormService();
-  console.log(`[RegisterStandardizedServices] KY3P form service override ${ky3pOverrideSuccess ? 'successful' : 'failed'}`);
-  
-  // Add more overrides here as they become available
-}
-
-/**
- * Override the KY3P form service with our enhanced version
- */
-function overrideKY3PFormService(): boolean {
+export function registerStandardizedServices(): void {
   try {
-    // Check if KY3P form service is available in the ComponentFactory
-    const existingKY3PService = componentFactory.getFormService('ky3p');
+    logger.info('Registering standardized form services');
     
-    if (!existingKY3PService) {
-      console.warn('[RegisterStandardizedServices] Standard KY3P form service not available for override');
-      return false;
-    }
+    // Register the enhanced KY3P form service
+    logger.info('Registering enhanced KY3P form service');
     
-    console.log('[RegisterStandardizedServices] Overriding KY3P form service with enhanced version');
-    
-    // Register our enhanced service for all KY3P form types
-    standardizedServiceRegistrations.forEach(registration => {
-      if (registration.serviceName === 'EnhancedKY3PFormService') {
-        registration.formTypes.forEach(formType => {
-          componentFactory.registerFormService(formType, registration.serviceType);
-        });
-      }
+    // We use the ComponentFactory instance (not static methods)
+    // to register the service, which avoids the "is not a constructor" error
+    componentFactory.registerFormService('ky3p', (companyId, taskId) => {
+      logger.info(`Creating enhanced KY3P form service via factory for company ${companyId}, task ${taskId}`);
+      return formServiceFactory.getServiceInstance('ky3p', companyId, taskId, true);
     });
     
-    return true;
+    logger.info('Successfully registered enhanced KY3P form service');
+    
+    // Additional service registrations can go here
+    
+    logger.info('All standardized form services registered successfully');
   } catch (error) {
-    console.error('[RegisterStandardizedServices] Error overriding KY3P form service:', error);
-    return false;
+    logger.error('Error registering standardized form services:', error);
   }
 }
+
+/**
+ * Make standardized services the default throughout the application
+ * 
+ * This function sets our standardized service implementations as the default,
+ * replacing the original implementations in the ComponentFactory.
+ */
+export function useStandardizedServices(): void {
+  try {
+    logger.info('Setting standardized form services as default');
+    
+    // Re-register the KY3P service to replace the original implementation
+    componentFactory.registerFormService('ky3p', (companyId, taskId) => {
+      logger.info(`Creating enhanced KY3P form service (default) for company ${companyId}, task ${taskId}`);
+      return formServiceFactory.getServiceInstance('ky3p', companyId, taskId, true);
+    });
+    
+    logger.info('Standardized form services are now the default');
+  } catch (error) {
+    logger.error('Error setting standardized form services as default:', error);
+  }
+}
+
+// Automatically register services when this module is imported
+registerStandardizedServices();
