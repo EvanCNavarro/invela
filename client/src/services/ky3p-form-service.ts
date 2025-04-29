@@ -935,7 +935,7 @@ export class KY3PFormService extends EnhancedKybFormService {
           isSubmitted = taskInfo?.status === 'submitted';
           submissionDate = taskInfo?.completion_date || taskInfo?.metadata?.submissionDate;
           
-          logger.info(`[KY3P Form Service] Retrieved task info for ${this.taskId}:`, {
+          logger.info(`[KY3P Form Service] Retrieved task info for ${effectiveTaskId}:`, {
             status: taskInfo?.status,
             isSubmitted,
             submissionDate,
@@ -971,10 +971,10 @@ export class KY3PFormService extends EnhancedKybFormService {
         // The progress endpoint loads all responses from ky3p_responses table
         // We need to use the proper endpoint that matches what's defined in server/routes/ky3p.ts
         
-        logger.info(`[KY3P Form Service] Attempting to get KY3P responses from task ${this.taskId}`);
+        logger.info(`[KY3P Form Service] Attempting to get KY3P responses from task ${effectiveTaskId}`);
         
         // First try fetching directly from the responses endpoint to get raw data
-        const responsesUrl = `/api/tasks/${this.taskId}/ky3p-responses`;
+        const responsesUrl = `/api/tasks/${effectiveTaskId}/ky3p-responses`;
         logger.info(`[KY3P Form Service] Fetching from: ${responsesUrl}`);
         
         try {
@@ -1017,7 +1017,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         
         // If direct responses fetch failed, try the intended progress endpoint as a fallback
         try {
-          const progressUrl = `/api/ky3p/progress/${this.taskId}`;
+          const progressUrl = `/api/ky3p/progress/${effectiveTaskId}`;
           logger.info(`[KY3P Form Service] Trying alternate endpoint: ${progressUrl}`);
           
           const response = await fetch(progressUrl, {
@@ -1031,7 +1031,7 @@ export class KY3PFormService extends EnhancedKybFormService {
             logger.debug(`[KY3P Form Service] Raw API response data:`, data);
             
             logger.info(`[KY3P Form Service] Progress endpoint returned:`, {
-              taskId: this.taskId,
+              taskId: effectiveTaskId,
               progress: data.progress,
               status: data.status,
               formDataKeys: Object.keys(data.formData || {}).length
@@ -1052,7 +1052,7 @@ export class KY3PFormService extends EnhancedKybFormService {
                 status: data.status || (isSubmitted ? 'submitted' : 'not_started')
               };
             } else {
-              logger.warn(`[KY3P Form Service] Progress endpoint returned empty form data for task ${this.taskId}`);
+              logger.warn(`[KY3P Form Service] Progress endpoint returned empty form data for task ${effectiveTaskId}`);
             }
           } else {
             logger.warn(`[KY3P Form Service] Progress endpoint failed with status: ${response.status}`);
@@ -1067,7 +1067,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       // If we couldn't get data from either method but know the task is submitted,
       // return at least the submission status
       if (isSubmitted) {
-        logger.info(`[KY3P Form Service] Task ${this.taskId} is submitted, returning minimal data with submission date`);
+        logger.info(`[KY3P Form Service] Task ${effectiveTaskId} is submitted, returning minimal data with submission date`);
         return {
           formData: { _submissionDate: submissionDate || new Date().toISOString() },
           progress: 100,
@@ -1076,7 +1076,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       }
       
       // Final fallback - empty form data with appropriate status
-      logger.info(`[KY3P Form Service] No data found for task ${this.taskId}, returning empty data`);
+      logger.info(`[KY3P Form Service] No data found for task ${effectiveTaskId}, returning empty data`);
       return {
         formData: {},
         progress: 0,
