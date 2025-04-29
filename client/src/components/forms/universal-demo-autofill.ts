@@ -12,6 +12,7 @@ import { FormServiceInterface } from '@/services/formService';
 import getLogger from '@/utils/logger';
 import { toast } from '@/hooks/use-toast';
 import { fixedUniversalSaveProgress } from './fix-universal-bulk-save';
+import { createFormService } from '@/services/form-service-factory';
 
 const logger = getLogger('UniversalDemoAutoFill');
 
@@ -180,37 +181,30 @@ export async function handleUniversalDemoAutoFill(
 /**
  * Get appropriate form service for a task type
  * 
- * This is a helper function to ensure we use the correct standardized
- * form service for each task type.
+ * This function uses the form service factory to create the appropriate
+ * form service for the given task type. It ensures we use the enhanced
+ * implementations for each form type.
  * 
  * @param taskType Type of the task (kyb, ky3p, open_banking)
- * @param taskId ID of the task
- * @param serviceRegistry Object containing the available form services
+ * @param taskId ID of the task (optional)
  * @returns The appropriate form service for the task type
  */
 export function getFormServiceForTaskType(
   taskType: string,
-  taskId: number | undefined,
-  serviceRegistry: Record<string, any>
+  taskId?: number
 ): FormServiceInterface | null {
-  // Normalize the task type
-  const normalizedType = taskType.toLowerCase().replace(/-/g, '_');
+  // Use the factory to create the appropriate form service
+  logger.info(`Getting form service for task type: ${taskType}`);
   
-  // Map task types to service names
-  const serviceMap: Record<string, string> = {
-    'kyb': 'standardizedKybFormService',
-    'ky3p': 'standardizedKy3pFormService',
-    'open_banking': 'standardizedOpenBankingFormService',
-  };
+  // First try using the form service factory
+  const formService = createFormService(taskType);
   
-  const serviceName = serviceMap[normalizedType];
-  
-  if (!serviceName || !serviceRegistry[serviceName]) {
-    logger.error(`No standardized form service found for task type: ${taskType}`);
-    return null;
+  if (formService) {
+    logger.info(`Successfully created form service for task type: ${taskType} using factory`);
+    return formService;
   }
   
-  // Create a new instance of the service with the task ID
-  const ServiceClass = serviceRegistry[serviceName];
-  return new ServiceClass(taskId);
+  // Log that we couldn't find a form service
+  logger.error(`No form service found for task type: ${taskType}`);
+  return null;
 }
