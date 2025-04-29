@@ -1065,33 +1065,54 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             )}
                             
                             <Button 
-                              type="submit"
+                              type="button" 
                               disabled={!form.getValues('agreement_confirmation')}
                               className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
                               onClick={() => {
-                                // Add logging for debugging
+                                // TEST ALERT to see if the button works at all
+                                alert('SUBMIT BUTTON CLICKED - Testing the button event');
+                                
+                                // Add extensive logging for debugging
                                 console.log('[KYB Form] Submit button clicked for final submission');
                                 
-                                // Set the submission flag explicitly
+                                // Set the submission flag explicitly 
                                 form.setValue('explicitSubmission', true);
                                 
-                                // Manually trigger form submission
-                                form.handleSubmit(async (data) => {
-                                  console.log('[KYB Form] Explicitly calling handleSubmit with form data');
-                                  
-                                  // Call parent's onSubmit with the enhanced data
+                                // Show immediate feedback
+                                toast({
+                                  title: 'Processing Submission',
+                                  description: 'TEST TOAST - Working on submitting your data...',
+                                  variant: 'default',
+                                });
+                                
+                                // Try to call parent handler directly
+                                try {
                                   if (onSubmit) {
-                                    console.log('[KYB Form] Calling parent component onSubmit handler');
-                                    await onSubmit({...data, explicitSubmission: true});
+                                    console.log('[KYB Form] Calling parent component onSubmit handler directly');
+                                    const formData = form.getValues();
+                                    onSubmit({...formData, explicitSubmission: true});
                                     
-                                    // Show toast notification
                                     toast({
-                                      title: 'Form submitted successfully',
-                                      description: 'Your submission has been received. Thank you!',
+                                      title: 'Direct submission attempt',
+                                      description: 'Attempted direct handler call',
                                       variant: 'default',
                                     });
+                                  } else {
+                                    console.error('[KYB Form] No onSubmit handler provided');
+                                    toast({
+                                      title: 'Submission Error',
+                                      description: 'No submission handler available',
+                                      variant: 'destructive',
+                                    });
                                   }
-                                })();
+                                } catch (error) {
+                                  console.error('[KYB Form] Error in submission:', error);
+                                  toast({
+                                    title: 'Submission Error',
+                                    description: 'An error occurred during submission',
+                                    variant: 'destructive',
+                                  });
+                                }
                               }}
                             >
                               Submit
