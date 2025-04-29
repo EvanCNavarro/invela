@@ -172,16 +172,26 @@ export default function TaskPage({ params }: TaskPageProps) {
     
     try {
       // Import the WebSocket service dynamically to avoid module resolution issues
-      const { default: wsService } = await import('@/lib/websocket');
+      const wsModule = await import('@/lib/websocket');
+      const wsService = wsModule.default;
       
       // First unsubscribe from any existing subscription
       if (websocketSubscription.current) {
-        websocketSubscription.current();
+        try {
+          websocketSubscription.current();
+        } catch (unsubError) {
+          logger.warn('[TaskPage] Error unsubscribing from previous WebSocket:', unsubError);
+        }
         websocketSubscription.current = undefined;
       }
       
+      // Verify the WebSocket service has the subscribe method
+      if (!wsService || typeof wsService.subscribe !== 'function') {
+        throw new Error('WebSocket service not properly initialized or missing subscribe method');
+      }
+      
       // Subscribe to task update events for this specific task
-      websocketSubscription.current = await wsService.subscribe('task_updated', (data) => {
+      const unsubscribe = await wsService.subscribe('task_updated', (data) => {
         // Ensure the message is for this task and component is still mounted
         if (!data || (data.id !== taskId && data.taskId !== taskId) || !isMounted.current) return;
         
@@ -197,10 +207,15 @@ export default function TaskPage({ params }: TaskPageProps) {
         }
       });
       
+      // Store the unsubscribe function
+      websocketSubscription.current = unsubscribe;
+      
       logger.info('[TaskPage] WebSocket subscription set up successfully');
       
     } catch (err) {
       logger.error('[TaskPage] Error setting up WebSocket subscription:', err);
+      // Set websocketSubscription.current to undefined to avoid later issues
+      websocketSubscription.current = undefined;
     }
   }, [taskId]); // Only depend on taskId, not on refetch
   
