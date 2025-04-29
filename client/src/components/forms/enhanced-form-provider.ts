@@ -9,8 +9,8 @@
  * form service that uses string-based field keys consistently.
  */
 
-import { createFormService } from '@/services/form-service-factory';
 import { FormServiceInterface } from '@/services/formService';
+import { createFormService } from '@/services/form-service-factory';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('EnhancedFormProvider');
@@ -29,24 +29,25 @@ export function getFormServiceForTask(
   taskType: string,
   taskId?: number
 ): FormServiceInterface | null {
-  logger.info(`Creating form service for task type: ${taskType}`);
+  logger.info(`Getting form service for task type: ${taskType}`);
   
   try {
-    // Use the form service factory to get the appropriate service
+    // Use the factory to create the correct form service
     const formService = createFormService(taskType);
     
     if (!formService) {
-      logger.error(`Failed to create form service for task type: ${taskType}`);
+      logger.warn(`No form service available for task type: ${taskType}`);
       return null;
     }
     
-    logger.info(`Successfully created ${taskType} form service`, {
-      serviceType: formService.constructor.name
-    });
+    // Initialize the form service if necessary
+    if (typeof formService.initialize === 'function') {
+      formService.initialize(taskId);
+    }
     
     return formService;
   } catch (error) {
-    logger.error(`Error creating form service for ${taskType}:`, error);
+    logger.error(`Error getting form service for task type: ${taskType}`, error);
     return null;
   }
 }
@@ -68,33 +69,23 @@ export async function handleEnhancedDemoAutoFill(
   logger.info(`Handling enhanced demo auto-fill for ${taskType} task ${taskId}`);
   
   try {
-    // Get the appropriate form service
     const formService = getFormServiceForTask(taskType, taskId);
     
     if (!formService) {
-      throw new Error(`No form service available for ${taskType}`);
+      logger.warn(`No form service found for task type: ${taskType}`);
+      return null;
     }
     
-    // Check if the form service supports demo auto-fill
-    if (typeof formService.getDemoData !== 'function') {
-      throw new Error(`Form service for ${taskType} does not support demo auto-fill`);
+    // Check if the form service has a getDemoData method
+    if (typeof (formService as any).getDemoData === 'function') {
+      logger.info(`Using getDemoData from ${taskType} form service`);
+      return await (formService as any).getDemoData(taskId);
     }
     
-    // Get the demo data from the form service
-    const demoData = await formService.getDemoData(taskId);
-    
-    if (!demoData || Object.keys(demoData).length === 0) {
-      throw new Error(`No demo data available for ${taskType}`);
-    }
-    
-    // Log statistics about the demo data
-    logger.info(`Retrieved ${Object.keys(demoData).length} demo data fields for ${taskType}`, {
-      sampleFields: Object.keys(demoData).slice(0, 5)
-    });
-    
-    return demoData;
+    logger.warn(`Form service for ${taskType} doesn't support getDemoData`);
+    return null;
   } catch (error) {
-    logger.error(`Error in enhanced demo auto-fill:`, error);
+    logger.error(`Error in handleEnhancedDemoAutoFill for ${taskType} task ${taskId}:`, error);
     return null;
   }
 }
@@ -116,54 +107,23 @@ export async function handleEnhancedFormClear(
   logger.info(`Handling enhanced form clear for ${taskType} task ${taskId}`);
   
   try {
-    // Get the appropriate form service
     const formService = getFormServiceForTask(taskType, taskId);
     
     if (!formService) {
-      throw new Error(`No form service available for ${taskType}`);
-    }
-    
-    // KY3P forms have a special method for clearing fields
-    if (taskType.toLowerCase() === 'ky3p' && typeof (formService as any).clearFields === 'function') {
-      logger.info(`Using specialized clearFields method for KY3P task ${taskId}`);
-      const success = await (formService as any).clearFields(taskId);
-      
-      if (success) {
-        logger.info(`Successfully cleared fields for KY3P task ${taskId}`);
-        return true;
-      }
-      
-      logger.error(`Failed to clear fields for KY3P task ${taskId}`);
+      logger.warn(`No form service found for task type: ${taskType}`);
       return false;
     }
     
-    // For other form types, we just use bulkUpdate with empty data
-    if (typeof (formService as any).bulkUpdate === 'function') {
-      logger.info(`Using bulkUpdate with empty data for ${taskType} task ${taskId}`);
-      const success = await (formService as any).bulkUpdate(taskId, {});
-      
-      if (success) {
-        logger.info(`Successfully cleared fields for ${taskType} task ${taskId}`);
-        return true;
-      }
-      
-      logger.error(`Failed to clear fields for ${taskType} task ${taskId}`);
-      return false;
+    // Check if the form service has a clearFields method
+    if (typeof (formService as any).clearFields === 'function') {
+      logger.info(`Using clearFields from ${taskType} form service`);
+      return await (formService as any).clearFields(taskId);
     }
     
-    // Last resort: Use a generic approach
-    try {
-      logger.info(`Using saveProgress with empty data for ${taskType} task ${taskId}`);
-      await formService.saveProgress(taskId);
-      
-      logger.info(`Successfully cleared fields for ${taskType} task ${taskId} using saveProgress`);
-      return true;
-    } catch (error) {
-      logger.error(`Error using saveProgress for ${taskType} task ${taskId}:`, error);
-      return false;
-    }
+    logger.warn(`Form service for ${taskType} doesn't support clearFields`);
+    return false;
   } catch (error) {
-    logger.error(`Error in enhanced form clear:`, error);
+    logger.error(`Error in handleEnhancedFormClear for ${taskType} task ${taskId}:`, error);
     return false;
   }
 }
