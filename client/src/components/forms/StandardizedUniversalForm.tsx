@@ -27,6 +27,7 @@ interface StandardizedUniversalFormProps {
   taskType: string;
   formService: FormServiceInterface | null;
   onSubmit?: (data: Record<string, any>) => Promise<void>;
+  onSuccess?: (fileId: number) => void;
   autoSave?: boolean;
   disabled?: boolean;
   showDemoAutoFill?: boolean;
@@ -42,6 +43,7 @@ export function StandardizedUniversalForm({
   taskType,
   formService,
   onSubmit,
+  onSuccess,
   autoSave = true,
   disabled = false,
   showDemoAutoFill = true,
@@ -351,7 +353,7 @@ export function StandardizedUniversalForm({
       setLoading(false);
       submissionTracker.stopTracking();
     }
-  }, [formService, formData, sections, saveProgress, onSubmit, taskId, taskType, refreshStatus]);
+  }, [formService, formData, sections, saveProgress, onSubmit, onSuccess, taskId, taskType, refreshStatus]);
 
   // Handle demo auto-fill
   const handleDemoAutoFill = useCallback(async () => {
