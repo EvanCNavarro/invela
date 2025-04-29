@@ -581,6 +581,26 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
     this.cachedFormData = {};
     this.fieldMappingCache = null;
   }
+  
+  /**
+   * Load saved progress for a task
+   * 
+   * This method is used by FormDataManager to retrieve saved form data.
+   * @override
+   */
+  async loadProgress(taskId: number): Promise<Record<string, any>> {
+    this.log(`Loading progress for KY3P task ${taskId}`);
+    try {
+      // Get the latest data from the API and update our cache
+      const formData = await this.getTaskData(taskId);
+      this.cachedFormData = formData;
+      this.log(`Loaded form data with ${Object.keys(formData).length} fields`);
+      return formData;
+    } catch (error) {
+      this.error('Error loading KY3P progress:', error);
+      return {};
+    }
+  }
 }
 
 // Export a default instance of the service

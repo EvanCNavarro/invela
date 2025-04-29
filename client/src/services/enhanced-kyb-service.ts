@@ -229,6 +229,23 @@ export class EnhancedKybFormService implements FormServiceInterface {
     // Subclasses should override this to clear their specific caches
   }
   
+  /**
+   * Load saved progress for a task
+   * 
+   * This method is used by FormDataManager to retrieve saved form data.
+   * It uses getTaskData internally and should be consistent with it.
+   */
+  async loadProgress(taskId: number): Promise<Record<string, any>> {
+    this.log(`Loading progress for task ${taskId}`);
+    try {
+      // By default, just call getTaskData which fetches the latest data
+      return await this.getTaskData(taskId);
+    } catch (error) {
+      this.error('Error loading progress:', error);
+      return {};
+    }
+  }
+  
   // Logging methods
   protected log(message: string, ...args: any[]): void {
     this.logger.log(message, ...args);
