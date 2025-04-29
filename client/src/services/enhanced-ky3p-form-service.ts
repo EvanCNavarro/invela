@@ -126,11 +126,63 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   
   /**
    * Load existing responses
-   * Delegates to the original service
+   * ENHANCED implementation with better error handling
    */
   async loadResponses(taskId?: number): Promise<boolean> {
-    logger.info(`[EnhancedKY3P] Loading responses for task ${taskId || 'unknown'}`);
-    return this.originalService.loadResponses(taskId);
+    const effectiveTaskId = taskId || (this.originalService as any).taskId;
+    logger.info(`[EnhancedKY3P] Loading responses for task ${effectiveTaskId || 'unknown'}`);
+    
+    try {
+      // Try to load responses from the original service
+      const result = await this.originalService.loadResponses(effectiveTaskId);
+      logger.info(`[EnhancedKY3P] Responses loaded successfully for task ${effectiveTaskId}`);
+      return result;
+    } catch (error) {
+      logger.error(`[EnhancedKY3P] Error loading responses:`, error);
+      
+      // Fallback approach - directly fetch responses from API
+      try {
+        if (!effectiveTaskId) {
+          logger.warn('[EnhancedKY3P] No task ID available for fallback response loading');
+          return false;
+        }
+        
+        logger.info(`[EnhancedKY3P] Attempting fallback response loading for task ${effectiveTaskId}`);
+        
+        const response = await fetch(`/api/ky3p/responses/${effectiveTaskId}`);
+        if (!response.ok) {
+          logger.error(`[EnhancedKY3P] Fallback response loading failed: ${response.status}`);
+          return false;
+        }
+        
+        const responseData = await response.json();
+        if (!responseData.responses || !Array.isArray(responseData.responses)) {
+          logger.warn('[EnhancedKY3P] Fallback response loading returned invalid data format');
+          return false;
+        }
+        
+        // Process the responses
+        logger.info(`[EnhancedKY3P] Processing ${responseData.responses.length} responses from fallback method`);
+        
+        // Update form data in the original service
+        responseData.responses.forEach((response: any) => {
+          if (response.field_id && response.response_value) {
+            try {
+              // Update through the original service's internal method if available
+              (this.originalService as any).updateInternalFormData(response.field_id, response.response_value);
+            } catch (updateError) {
+              logger.warn(`[EnhancedKY3P] Could not update form data for field ${response.field_id}`);
+            }
+          }
+        });
+        
+        logger.info('[EnhancedKY3P] Fallback response loading and processing completed successfully');
+        return true;
+      } catch (fallbackError) {
+        logger.error('[EnhancedKY3P] Fallback response loading also failed:', fallbackError);
+        return false;
+      }
+    }
   }
   
   /**

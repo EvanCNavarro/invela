@@ -3,6 +3,8 @@
  * 
  * This module provides improved endpoints for KY3P forms with proper error handling
  * and consistent response formats.
+ * 
+ * Added response fetching endpoint for error recovery.
  */
 
 import express from 'express';
@@ -268,6 +270,41 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
     return res.status(500).json({
       success: false,
       message: 'An error occurred while auto-filling demo data',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+/**
+ * Get all responses for a KY3P task
+ * This is used for error recovery when loadResponses fails in the form service
+ */
+router.get('/api/ky3p/responses/:taskId', requireAuth, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    if (isNaN(taskId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
+    }
+    
+    console.log(`[KY3P API] Retrieving responses for task ${taskId}`);
+    
+    // Get all responses for this task
+    const responses = await db.select().from(ky3pResponses)
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    return res.status(200).json({
+      success: true,
+      message: `Retrieved ${responses.length} responses for task ${taskId}`,
+      responses: responses
+    });
+  } catch (error) {
+    console.error('[KY3P API] Error retrieving responses', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while retrieving responses',
       error: error instanceof Error ? error.message : String(error)
     });
   }
