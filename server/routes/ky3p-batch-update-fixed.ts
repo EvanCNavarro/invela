@@ -1,238 +1,290 @@
 /**
- * KY3P Batch Update API Routes
+ * KY3P Batch Update Routes
  * 
- * This file implements the API routes for batch updating KY3P form responses
- * using the standardized approach with string-based field keys.
+ * This module provides API endpoints for bulk updating KY3P form fields
+ * using standardized string-based field keys.
  */
 
-import express from 'express';
-import { db, pool } from '../../db';
-import { ky3pFields, ky3pResponses } from '../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { Router } from 'express';
+import { db } from '@db';
+import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
+import { eq, and, sql } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 
-// Logger setup
-const PREFIX = '[KY3P-BATCH-UPDATE]';
-const log = {
-  info: (message: string, ...args: any[]) => console.log(`${PREFIX} ${message}`, ...args),
-  error: (message: string, ...args: any[]) => console.error(`${PREFIX} ERROR: ${message}`, ...args),
-  debug: (message: string, ...args: any[]) => console.log(`${PREFIX} DEBUG: ${message}`, ...args),
-};
+const router = Router();
 
 /**
- * Register the KY3P batch update routes
+ * Register KY3P batch update routes
+ * 
+ * @param app The Express application instance
  */
-export function registerKY3PBatchUpdateRoutes(app: express.Express) {
-  log.info('Registering KY3P batch update routes');
+export function registerKY3PBatchUpdateRoutes(app: Router) {
+  console.log('[KY3P-BATCH-UPDATE] Registering KY3P batch update routes');
 
   /**
-   * Standardized batch update endpoint for KY3P forms
-   * Accepts string-based field keys and handles the proper database operations
-   * 
-   * POST /api/ky3p/batch-update/:taskId
+   * Process a batch update of KY3P fields using string-based field keys
    */
   app.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
+    const taskId = parseInt(req.params.taskId);
+    const formData = req.body; // object with field_key: value pairs
+    
+    console.log(`[KY3P-BATCH-UPDATE] Received batch update request for task ${taskId}`, {
+      fieldCount: Object.keys(formData).length
+    });
+    
+    if (!taskId || isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    const fieldKeys = Object.keys(formData);
+    if (fieldKeys.length === 0) {
+      return res.status(200).json({
+        success: true,
+        processedCount: 0,
+        message: 'No fields to update'
+      });
+    }
+    
     try {
-      const taskId = parseInt(req.params.taskId);
-      const { responses } = req.body;
-
-      if (!responses || typeof responses !== 'object') {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid request format. Expected { responses: { field_key: value, ... } }' 
-        });
+      // Get the task to ensure it exists and is valid
+      const [task] = await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        return res.status(404).json({ error: `Task ${taskId} not found` });
       }
-
-      log.info(`Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
-
-      // Begin a transaction for all database operations
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-
-        // Get all updates processed count
-        let processedCount = 0;
+      
+      // Get all KY3P fields matching the field keys in the form data
+      const fieldsToUpdate = await db
+        .select()
+        .from(ky3pFields)
+        .where(sql`${ky3pFields.field_key} IN (${fieldKeys.map(key => `'${key}'`).join(',')})`);
+      
+      // Map field keys to field IDs
+      const fieldKeyToIdMap = new Map<string, number>();
+      for (const field of fieldsToUpdate) {
+        if (field.field_key) {
+          fieldKeyToIdMap.set(field.field_key, field.id);
+        }
+      }
+      
+      // Process each field in the form data
+      const batchResponses = [];
+      const timestamp = new Date();
+      
+      for (const [fieldKey, value] of Object.entries(formData)) {
+        const fieldId = fieldKeyToIdMap.get(fieldKey);
         
-        // Process each field in the responses object
-        for (const [fieldKey, value] of Object.entries(responses)) {
-          // First, find the field ID using the field_key
-          const fieldResults = await db.select()
-            .from(ky3pFields)
-            .where(eq(ky3pFields.field_key, fieldKey))
-            .limit(1);
-
-          if (fieldResults.length === 0) {
-            log.error(`Field not found for key: ${fieldKey}`);
-            continue;
-          }
-
-          const fieldId = fieldResults[0].id;
-          
-          // Check if a response already exists for this task and field
-          const existingResponses = await db.select()
-            .from(ky3pResponses)
+        if (!fieldId) {
+          console.warn(`[KY3P-BATCH-UPDATE] Field key not found: ${fieldKey}`);
+          continue;
+        }
+        
+        // Check if a response already exists
+        const [existingResponse] = await db
+          .select()
+          .from(ky3pResponses)
+          .where(
+            and(
+              eq(ky3pResponses.taskId, taskId),
+              eq(ky3pResponses.fieldId, fieldId)
+            )
+          );
+        
+        if (existingResponse) {
+          // Update existing response
+          await db
+            .update(ky3pResponses)
+            .set({
+              value: String(value),
+              updatedAt: timestamp
+            })
             .where(
               and(
-                eq(ky3pResponses.task_id, taskId),
-                eq(ky3pResponses.field_id, fieldId)
+                eq(ky3pResponses.taskId, taskId),
+                eq(ky3pResponses.fieldId, fieldId)
               )
             );
-
-          if (existingResponses.length > 0) {
-            // Update existing response
-            await db.update(ky3pResponses)
-              .set({ 
-                response_value: value, 
-                updated_at: new Date() 
-              })
-              .where(
-                and(
-                  eq(ky3pResponses.task_id, taskId),
-                  eq(ky3pResponses.field_id, fieldId)
-                )
-              );
-          } else {
-            // Insert new response
-            await db.insert(ky3pResponses)
-              .values({
-                task_id: taskId,
-                field_id: fieldId,
-                response_value: value,
-                created_at: new Date(),
-                updated_at: new Date()
-              });
-          }
-
-          processedCount++;
+          
+          batchResponses.push({
+            fieldId,
+            fieldKey,
+            operation: 'update',
+            value: String(value)
+          });
+        } else {
+          // Insert new response
+          await db
+            .insert(ky3pResponses)
+            .values({
+              id: randomUUID(),
+              taskId,
+              fieldId,
+              value: String(value),
+              createdAt: timestamp,
+              updatedAt: timestamp
+            });
+          
+          batchResponses.push({
+            fieldId,
+            fieldKey,
+            operation: 'insert',
+            value: String(value)
+          });
         }
-
-        // Commit the transaction
-        await client.query('COMMIT');
-        
-        log.info(`Successfully processed ${processedCount} fields for task ${taskId}`);
-        
-        return res.status(200).json({ 
-          success: true, 
-          message: `Successfully updated ${processedCount} fields` 
-        });
-      } catch (error) {
-        // Rollback the transaction on error
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        // Release the client back to the pool
-        client.release();
       }
+      
+      // Update the task progress
+      try {
+        // Count total responses for this task
+        const [responseCount] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(ky3pResponses)
+          .where(eq(ky3pResponses.taskId, taskId));
+        
+        // Count total fields
+        const [fieldCount] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(ky3pFields);
+        
+        // Calculate progress percentage
+        const totalFields = fieldCount?.count || 1;
+        const completedFields = responseCount?.count || 0;
+        const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+        
+        // Update task progress
+        await db
+          .update(tasks)
+          .set({ progress })
+          .where(eq(tasks.id, taskId));
+        
+        console.log(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress to ${progress}%`);
+      } catch (error) {
+        console.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
+        // Continue processing, don't fail the whole request
+      }
+      
+      // Return success response
+      return res.status(200).json({
+        success: true,
+        processedCount: batchResponses.length,
+        message: `Successfully processed ${batchResponses.length} field updates`,
+        fields: fieldKeys
+      });
     } catch (error) {
-      log.error('Error processing batch update:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      console.error('[KY3P-BATCH-UPDATE] Error processing batch update:', error);
+      return res.status(500).json({
+        error: 'Failed to process batch update',
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
 
   /**
-   * Alternative endpoint path for the same functionality
-   * POST /api/tasks/:taskId/ky3p-batch-update  
+   * Clear all KY3P field responses for a task
    */
-  app.post('/api/tasks/:taskId/ky3p-batch-update', async (req, res) => {
+  app.post('/api/ky3p/clear-fields/:taskId', async (req, res) => {
+    const taskId = parseInt(req.params.taskId);
+    
+    console.log(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`);
+    
+    if (!taskId || isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
     try {
-      const taskId = parseInt(req.params.taskId);
-      const { responses } = req.body;
-
-      if (!responses || typeof responses !== 'object') {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid request format. Expected { responses: { field_key: value, ... } }' 
-        });
-      }
-
-      log.info(`Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields (alt path)`);
-
-      // Begin a transaction for all database operations
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-
-        // Get all updates processed count
-        let processedCount = 0;
-        
-        // Process each field in the responses object
-        for (const [fieldKey, value] of Object.entries(responses)) {
-          // First, find the field ID using the field_key
-          const fieldResults = await db.select()
-            .from(ky3pFields)
-            .where(eq(ky3pFields.field_key, fieldKey))
-            .limit(1);
-
-          if (fieldResults.length === 0) {
-            log.error(`Field not found for key: ${fieldKey}`);
-            continue;
-          }
-
-          const fieldId = fieldResults[0].id;
-          
-          // Check if a response already exists for this task and field
-          const existingResponses = await db.select()
-            .from(ky3pResponses)
-            .where(
-              and(
-                eq(ky3pResponses.task_id, taskId),
-                eq(ky3pResponses.field_id, fieldId)
-              )
-            );
-
-          if (existingResponses.length > 0) {
-            // Update existing response
-            await db.update(ky3pResponses)
-              .set({ 
-                response_value: value, 
-                updated_at: new Date() 
-              })
-              .where(
-                and(
-                  eq(ky3pResponses.task_id, taskId),
-                  eq(ky3pResponses.field_id, fieldId)
-                )
-              );
-          } else {
-            // Insert new response
-            await db.insert(ky3pResponses)
-              .values({
-                task_id: taskId,
-                field_id: fieldId,
-                response_value: value,
-                created_at: new Date(),
-                updated_at: new Date()
-              });
-          }
-
-          processedCount++;
-        }
-
-        // Commit the transaction
-        await client.query('COMMIT');
-        
-        log.info(`Successfully processed ${processedCount} fields for task ${taskId}`);
-        
-        return res.status(200).json({ 
-          success: true, 
-          message: `Successfully updated ${processedCount} fields` 
-        });
-      } catch (error) {
-        // Rollback the transaction on error
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        // Release the client back to the pool
-        client.release();
-      }
+      // Delete all responses for this task
+      const result = await db
+        .delete(ky3pResponses)
+        .where(eq(ky3pResponses.taskId, taskId));
+      
+      // Update task progress to 0
+      await db
+        .update(tasks)
+        .set({ progress: 0 })
+        .where(eq(tasks.id, taskId));
+      
+      console.log(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}`);
+      
+      // Return success response
+      return res.status(200).json({
+        success: true,
+        message: `Successfully cleared all fields for task ${taskId}`
+      });
     } catch (error) {
-      log.error('Error processing batch update:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      console.error('[KY3P-BATCH-UPDATE] Error clearing fields:', error);
+      return res.status(500).json({
+        error: 'Failed to clear fields',
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
+
+  /**
+   * Save KY3P form progress
+   */
+  app.post('/api/ky3p/save-progress/:taskId', async (req, res) => {
+    const taskId = parseInt(req.params.taskId);
+    
+    console.log(`[KY3P-BATCH-UPDATE] Received save progress request for task ${taskId}`);
+    
+    if (!taskId || isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    try {
+      // Get the task to ensure it exists
+      const [task] = await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        return res.status(404).json({ error: `Task ${taskId} not found` });
+      }
+      
+      // Count responses for this task
+      const [responseCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pResponses)
+        .where(eq(ky3pResponses.taskId, taskId));
+      
+      // Count total fields
+      const [fieldCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pFields);
+      
+      // Calculate progress percentage
+      const totalFields = fieldCount?.count || 1;
+      const completedFields = responseCount?.count || 0;
+      const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      
+      // Update task progress
+      await db
+        .update(tasks)
+        .set({ progress })
+        .where(eq(tasks.id, taskId));
+      
+      console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${progress}%`);
+      
+      // Return success response
+      return res.status(200).json({
+        success: true,
+        progress,
+        message: `Successfully saved progress for task ${taskId}`
+      });
+    } catch (error) {
+      console.error('[KY3P-BATCH-UPDATE] Error saving progress:', error);
+      return res.status(500).json({
+        error: 'Failed to save progress',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  console.log('Registering KY3P batch update routes');
+  
+  return router;
 }
