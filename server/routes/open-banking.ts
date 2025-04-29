@@ -343,16 +343,23 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
       
       // Broadcast task update via WebSocket
       if (wss) {
-        broadcastMessage('task_updated', {
-          taskId,
-          status: TaskStatus.SUBMITTED, // Use enum value for consistency
-          progress: 100,
-          metadata: {
-            lastUpdated: new Date().toISOString(),
-            submissionDate: new Date().toISOString(),
-            fileId: fileId // Include fileId for unified handling
-          },
-          timestamp: new Date().toISOString()
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'task_updated',
+              payload: {
+                taskId,
+                status: TaskStatus.SUBMITTED, // Use enum value for consistency
+                progress: 100,
+                metadata: {
+                  lastUpdated: new Date().toISOString(),
+                  submissionDate: new Date().toISOString(),
+                  fileId: fileId // Include fileId for unified handling
+                },
+                timestamp: new Date().toISOString()
+              }
+            }));
+          }
         });
       }
       
