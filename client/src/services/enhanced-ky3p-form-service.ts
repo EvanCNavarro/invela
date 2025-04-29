@@ -129,32 +129,93 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
    * @param value New value for the field
    * @param taskId Optional task ID for immediate saving
    */
+  // Batch update collection to reduce API calls
+  private pendingUpdates: Record<string, any> = {};
+  private isBatchUpdateActive = false;
+  private batchUpdateTimer: any = null;
+  private batchUpdateInterval = 100; // milliseconds
+
+  /**
+   * Update form data with batching to avoid infinite update cycles
+   * This optimizes updates to avoid making 120+ separate API calls
+   */
   updateFormData(fieldKey: string, value: any, taskId?: number): void {
-    logger.info(`[EnhancedKY3P] Updating form data for field ${fieldKey}`);
+    logger.info(`[EnhancedKY3P] Queuing update for field ${fieldKey}`);
     
-    // Check if the original service has an updateFormData method
-    if (typeof this.originalService.updateFormData === 'function') {
-      this.originalService.updateFormData(fieldKey, value, taskId);
-      logger.info('[EnhancedKY3P] Used original service updateFormData method');
-      return;
-    }
+    // Store update in pending updates
+    this.pendingUpdates[fieldKey] = value;
     
-    // Fall back to directly updating the form data
+    // Also update the local form data immediately for UI consistency
     try {
-      logger.info('[EnhancedKY3P] Using fallback method to update form data');
-      
       // Get the current form data
       const formData = this.getFormData() || {};
       
-      // Update the field
+      // Update the field locally
       formData[fieldKey] = value;
       
       // Set the updated form data back to the service
-      (this.originalService as any).formData = formData;
-      
-      logger.info(`[EnhancedKY3P] Successfully updated field ${fieldKey} directly`);
+      if (this.originalService.loadFormData) {
+        this.originalService.loadFormData(formData);
+      } else {
+        (this.originalService as any).formData = formData;
+      }
     } catch (error) {
-      logger.error(`[EnhancedKY3P] Error directly updating field ${fieldKey}:`, error);
+      logger.error(`[EnhancedKY3P] Error updating local form data for field ${fieldKey}:`, error);
+    }
+    
+    // If we're already processing a batch update, don't schedule another one
+    if (this.isBatchUpdateActive) {
+      return;
+    }
+    
+    // Clear any existing timer
+    if (this.batchUpdateTimer) {
+      clearTimeout(this.batchUpdateTimer);
+    }
+    
+    // Schedule a batch update
+    this.batchUpdateTimer = setTimeout(() => {
+      this.flushPendingUpdates(taskId);
+    }, this.batchUpdateInterval);
+  }
+  
+  /**
+   * Process all pending updates in a single batch API call
+   */
+  private async flushPendingUpdates(taskId?: number): Promise<boolean> {
+    // Skip if no pending updates
+    if (Object.keys(this.pendingUpdates).length === 0) {
+      return true;
+    }
+    
+    try {
+      this.isBatchUpdateActive = true;
+      this.batchUpdateTimer = null;
+      
+      // Get the effective task ID
+      const effectiveTaskId = taskId || (this.originalService as any).taskId;
+      if (!effectiveTaskId) {
+        logger.warn('[EnhancedKY3P] No task ID available for batch update');
+        throw new Error('No task ID available for batch update');
+      }
+      
+      // Log the batch update
+      logger.info(`[EnhancedKY3P] Processing batch update with ${Object.keys(this.pendingUpdates).length} fields for task ${effectiveTaskId}`);
+      
+      // Clone and clear pending updates
+      const updates = { ...this.pendingUpdates };
+      this.pendingUpdates = {};
+      
+      // Use standardized bulk update
+      const result = await this.standardizedBulkUpdate(updates, effectiveTaskId);
+      
+      logger.info(`[EnhancedKY3P] Batch update ${result ? 'succeeded' : 'failed'}`);
+      return result;
+    } catch (error) {
+      logger.error('[EnhancedKY3P] Error in batch update:', error);
+      return false;
+    } finally {
+      this.isBatchUpdateActive = false;
     }
   }
   
@@ -491,7 +552,16 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
     logger.info(`[EnhancedKY3P] Saving progress for task ${taskId || 'unknown'}`);
     
     try {
+      // Get the effective task ID
       const effectiveTaskId = taskId || (this.originalService as any).taskId;
+      
+      // First, flush any pending updates
+      if (Object.keys(this.pendingUpdates).length > 0) {
+        logger.info(`[EnhancedKY3P] Flushing ${Object.keys(this.pendingUpdates).length} pending updates before saving progress`);
+        await this.flushPendingUpdates(effectiveTaskId);
+      }
+      
+      // Then save progress using the original service
       const success = await this.originalService.saveProgress(effectiveTaskId);
       logger.info(`[EnhancedKY3P] Progress save ${success ? 'successful' : 'failed'}`);
       // Return void to satisfy interface, but log the success result
@@ -513,6 +583,12 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
     logger.info(`[EnhancedKY3P] Submitting form for task ${taskId || 'unknown'}`);
     
     try {
+      // First, flush any pending updates before submitting
+      if (Object.keys(this.pendingUpdates).length > 0) {
+        logger.info(`[EnhancedKY3P] Flushing ${Object.keys(this.pendingUpdates).length} pending updates before submitting form`);
+        await this.flushPendingUpdates(taskId);
+      }
+      
       // If the original service accepts FormSubmitOptions, pass the options directly
       // Otherwise extract the taskId and pass that
       const originalSubmitParams = options.taskId ? options : taskId;
@@ -606,12 +682,19 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   
   /**
    * Save form data
-   * Delegates to the original service with enhanced logging
+   * Enhanced implementation that first flushes any pending updates
    */
   async save(options: Record<string, any>): Promise<any> {
     logger.info('[EnhancedKY3P] Saving form data with options:', options);
     
     try {
+      // First, flush any pending updates
+      if (Object.keys(this.pendingUpdates).length > 0) {
+        logger.info(`[EnhancedKY3P] Flushing ${Object.keys(this.pendingUpdates).length} pending updates before saving`);
+        await this.flushPendingUpdates(options.taskId);
+      }
+      
+      // Then delegate to the original service
       const result = await this.originalService.save(options);
       logger.info('[EnhancedKY3P] Form data save successful');
       return result;
