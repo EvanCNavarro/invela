@@ -899,12 +899,15 @@ export class KY3PFormService extends EnhancedKybFormService {
     }
   }
   
-  public async getProgress(): Promise<{
+  public async getProgress(taskIdParam?: number): Promise<{
     formData: Record<string, any>;
     progress: number;
     status: string;
   }> {
-    if (!this.taskId) {
+    // Use provided taskId parameter if available, otherwise use the instance's taskId
+    const effectiveTaskId = taskIdParam || this.taskId;
+    
+    if (!effectiveTaskId) {
       logger.warn('[KY3P Form Service] No task ID provided for getting progress, returning empty data');
       return {
         formData: {},
@@ -914,7 +917,7 @@ export class KY3PFormService extends EnhancedKybFormService {
     }
     
     try {
-      logger.info(`[KY3P Form Service] Getting progress for task ${this.taskId}`);
+      logger.info(`[KY3P Form Service] Getting progress for task ${effectiveTaskId}`);
       
       // Create a store for our data
       let formData: Record<string, any> = {};
@@ -923,7 +926,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       // First try to get the task data for context
       try {
-        const taskResponse = await fetch(`/api/tasks/${this.taskId}`, {
+        const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`, {
           credentials: 'include' // Include session cookies
         });
         
@@ -1104,6 +1107,14 @@ export class KY3PFormService extends EnhancedKybFormService {
       return {};
     }
     
+    // Temporarily store the taskId on this instance if not already set
+    // This is needed because getProgress() was originally designed to use this.taskId
+    const originalTaskId = this.taskId;
+    if (!this.taskId && effectiveTaskId) {
+      logger.info(`[KY3P Form Service] Temporarily setting taskId to ${effectiveTaskId} for loading progress`);
+      (this as any).taskId = effectiveTaskId;
+    }
+    
     try {
       logger.info(`[KY3P Form Service] Loading progress for task ${effectiveTaskId}`);
       
@@ -1176,7 +1187,8 @@ export class KY3PFormService extends EnhancedKybFormService {
       // For normal operation, use the progress API with enhanced error handling
       let progress;
       try {
-        progress = await this.getProgress();
+        // Pass the taskId parameter to getProgress to ensure it uses the correct task
+        progress = await this.getProgress(effectiveTaskId);
         
         // Log the data we received for debugging
         logger.info(`[KY3P Form Service] Form data keys received:`, {
@@ -1224,6 +1236,12 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Just return an empty object to prevent errors from bubbling up to the UI
       // The form will correctly show "No answer provided" in this case
       return {};
+    } finally {
+      // Restore the original taskId if we set it temporarily
+      if (!originalTaskId && this.taskId === effectiveTaskId) {
+        logger.info(`[KY3P Form Service] Restoring original taskId (was temporarily set to ${effectiveTaskId})`);
+        (this as any).taskId = originalTaskId;
+      }
     }
   }
   
