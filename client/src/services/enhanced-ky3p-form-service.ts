@@ -1,7 +1,7 @@
 /**
  * Enhanced KY3P Form Service
  * 
- * This service extends the KY3P form service but overrides the bulkUpdate method
+ * This service wraps the KY3P form service but overrides the bulkUpdate method
  * to use the standardized batch update approach with string-based field keys,
  * making it consistent with KYB and Open Banking form services.
  * 
@@ -9,7 +9,8 @@
  * tries to use fieldIdRaw: "bulk" in the request.
  */
 
-import { ky3pFormService as KY3PFormService } from '@/services/ky3p-form-service-final';
+import { ky3pFormService } from '@/services/ky3p-form-service-final';
+import { FormServiceInterface } from '@/services/formService';
 import getLogger from '@/utils/logger';
 
 // Initialize logger with specific prefix for tracking
@@ -17,10 +18,84 @@ const logger = getLogger('EnhancedKY3P');
 
 /**
  * Enhanced KY3P Form Service that uses standardized batch update approach
+ * 
+ * Since we can't extend the service (it's a singleton), we'll wrap it instead
  */
-export class EnhancedKY3PFormService extends KY3PFormService {
+export class EnhancedKY3PFormService implements FormServiceInterface {
+  private taskId?: number;
+  
+  // Implement all required methods from FormServiceInterface by delegating to ky3pFormService
+  initialize(taskId?: number): void {
+    this.taskId = taskId;
+    ky3pFormService.initialize(taskId);
+  }
+  
+  getFields(): any[] {
+    return ky3pFormService.getFields();
+  }
+  
+  getSections(): any[] {
+    return ky3pFormService.getSections();
+  }
+  
+  async loadFormData(formData?: Record<string, any>): Promise<void> {
+    await ky3pFormService.loadFormData(formData);
+  }
+  
+  async saveProgress(taskId?: number): Promise<void> {
+    await ky3pFormService.saveProgress(taskId || this.taskId);
+  }
+  
+  getFieldById(fieldId: string): any {
+    return ky3pFormService.getFieldById(fieldId);
+  }
+  
+  getSectionById(sectionId: string): any {
+    return ky3pFormService.getSectionById(sectionId);
+  }
+  
+  getFirstSection(): any {
+    return ky3pFormService.getFirstSection();
+  }
+  
+  isFormComplete(): boolean {
+    return ky3pFormService.isFormComplete();
+  }
+  
+  getFormProgress(): number {
+    return ky3pFormService.getFormProgress();
+  }
+  
+  syncFormData(formData: Record<string, any>): void {
+    ky3pFormService.syncFormData(formData);
+  }
+  
   /**
-   * Override the bulkUpdate method to use the standardized approach
+   * Get demo data from the server
+   * 
+   * @param taskId Task ID
+   * @returns Promise with demo data
+   */
+  async getDemoData(taskId: number): Promise<Record<string, any>> {
+    try {
+      const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get demo data: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      logger.error('Error getting demo data:', error);
+      return {};
+    }
+  }
+  
+  /**
+   * Custom bulkUpdate method to use the standardized approach
    * 
    * Instead of using fieldIdRaw: "bulk", this method formats the data as
    * a record of field keys to values and sends it to the batch-update endpoint.
@@ -29,7 +104,7 @@ export class EnhancedKY3PFormService extends KY3PFormService {
    * @param formData Form data as Record<string, any>
    * @returns Promise<boolean> Success/failure status
    */
-  override async bulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
+  async bulkUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
     logger.info(`EnhancedKY3P.bulkUpdate called for task ${taskId} with ${Object.keys(formData).length} fields`);
     
     try {
