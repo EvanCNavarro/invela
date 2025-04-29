@@ -1576,9 +1576,10 @@ router.post('/api/tasks/:taskId/ky3p-responses/bulk', requireAuth, hasTaskAccess
         const finalValue = String(sanitizedValue);
         
         // Determine status based on value
+        // FIXED: Using KYBFieldStatus enum instead of string literals for consistency
         const status = (finalValue !== null && finalValue !== undefined && finalValue.trim() !== '') 
-          ? 'COMPLETE' 
-          : 'EMPTY';
+          ? KYBFieldStatus.COMPLETED 
+          : KYBFieldStatus.EMPTY;
           
         // Check if response exists
         const [existingResponse] = await db
