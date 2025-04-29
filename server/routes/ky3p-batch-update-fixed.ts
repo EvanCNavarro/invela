@@ -11,20 +11,20 @@ import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
-const router = Router();
-
 /**
  * Register KY3P batch update routes
  * 
- * @param app The Express application instance
+ * @returns Router with KY3P batch update routes
  */
-export function registerKY3PBatchUpdateRoutes(app: Router) {
+export function registerKY3PBatchUpdateRoutes() {
   console.log('[KY3P-BATCH-UPDATE] Registering KY3P batch update routes');
+  
+  const router = Router();
 
   /**
    * Process a batch update of KY3P fields using string-based field keys
    */
-  app.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
+  router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     const formData = req.body; // object with field_key: value pairs
     
@@ -185,7 +185,7 @@ export function registerKY3PBatchUpdateRoutes(app: Router) {
   /**
    * Clear all KY3P field responses for a task
    */
-  app.post('/api/ky3p/clear-fields/:taskId', async (req, res) => {
+  router.post('/api/ky3p/clear-fields/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     
     console.log(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`);
@@ -225,7 +225,7 @@ export function registerKY3PBatchUpdateRoutes(app: Router) {
   /**
    * Save KY3P form progress
    */
-  app.post('/api/ky3p/save-progress/:taskId', async (req, res) => {
+  router.post('/api/ky3p/save-progress/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     
     console.log(`[KY3P-BATCH-UPDATE] Received save progress request for task ${taskId}`);

@@ -5,7 +5,7 @@
  * using standardized string-based field keys.
  */
 
-import express from 'express';
+import express, { Router } from 'express';
 import { db } from '@db';
 import { ky3pFields, ky3pResponses } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -16,15 +16,17 @@ const log = logger.createLogger('KY3P-Field-Update');
 /**
  * Register the KY3P field update routes
  */
-export function registerKY3PFieldUpdateRoutes(app: express.Express) {
+export function registerKY3PFieldUpdateRoutes() {
   log.info('Registering KY3P field update routes');
+  
+  const router = Router();
 
   /**
    * Update a single KY3P field by field key
    * 
    * POST /api/ky3p-fields/:taskId/update
    */
-  app.post('/api/ky3p-fields/:taskId/update', async (req, res) => {
+  router.post('/api/ky3p-fields/:taskId/update', async (req, res) => {
     try {
       const taskId = parseInt(req.params.taskId);
       const { fieldKey, value } = req.body;
@@ -112,4 +114,6 @@ export function registerKY3PFieldUpdateRoutes(app: express.Express) {
       });
     }
   });
+  
+  return router;
 }
