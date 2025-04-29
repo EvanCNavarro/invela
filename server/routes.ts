@@ -328,12 +328,14 @@ export function registerRoutes(app: Express): Express {
   // Use our enhanced KY3P demo auto-fill routes
   app.use(ky3pDemoAutofillRouter);
   // Register the standardized KY3P batch update routes
-  registerKY3PBatchUpdateRoutes(app);
+  const ky3pBatchFixedRouter = registerKY3PBatchUpdateRoutes();
+  app.use(ky3pBatchFixedRouter);
   // Register our new standardized KY3P batch update routes
   const ky3pBatchUpdateRouter = registerNewKY3PBatchUpdateRoutes();
   app.use(ky3pBatchUpdateRouter);
   // Register the standardized KY3P field update routes
-  registerKY3PFieldUpdateRoutes(app);
+  const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
+  app.use(ky3pFieldUpdateRouter);
   app.use(kybClearRouter);
   app.use(openBankingClearRouter);
   app.use(openBankingDemoAutofillRouter);
