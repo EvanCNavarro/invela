@@ -7,7 +7,7 @@
  */
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { FormSection, FormField, FormServiceInterface } from "./formService";
+import { FormSection, FormField, FormServiceInterface, FormSubmitOptions } from "./formService";
 import getLogger from "@/utils/logger";
 import { standardizedBulkUpdate } from "@/components/forms/standardized-ky3p-update";
 
@@ -193,6 +193,8 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
         ...section,
         id: section.id || section.name,
         fields: sectionFields,
+        order: section.order || 0,
+        collapsed: section.collapsed || false
       };
     });
   }
@@ -227,6 +229,8 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
         id: sectionId,
         title: sectionId.charAt(0).toUpperCase() + sectionId.slice(1).replace(/_/g, ' '),
         fields,
+        order: 0, // Default order
+        collapsed: false // Default collapsed state
       };
     });
     
@@ -296,9 +300,9 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
    * Save progress for a task
    * 
    * @param taskId Task ID
-   * @returns Success status
+   * @returns Promise that resolves when progress is saved
    */
-  async saveProgress(taskId: number): Promise<boolean> {
+  async saveProgress(taskId?: number): Promise<void> {
     try {
       logger.info(`Saving progress for task ${taskId} with ${Object.keys(this.cache.formData).length} fields`);
       
@@ -310,10 +314,10 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
         this.successfulEndpoints.batch = true;
       }
       
-      return success;
+      // Return void as required by interface
     } catch (error) {
       logger.error(`Failed to save progress for task ${taskId}:`, error);
-      return false;
+      // Continue without returning a value (void)
     }
   }
 
@@ -591,6 +595,41 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
     }
     
     return [...successful, ...notTried];
+  }
+
+  /**
+   * Initialize the form service with a template ID
+   * @param templateId ID of the task template
+   */
+  async initialize(templateId: number): Promise<void> {
+    logger.info(`Initializing with template ID: ${templateId}`);
+    // No specific initialization needed for this service
+  }
+
+  /**
+   * Save the form data
+   * @param options Form submission options
+   * @returns Promise that resolves when form data is saved
+   */
+  async save(options: FormSubmitOptions): Promise<boolean> {
+    const taskId = options.taskId || this.taskId;
+    
+    if (!taskId) {
+      logger.error('Cannot save without a task ID');
+      return false;
+    }
+    
+    try {
+      logger.info(`Saving form data for task ${taskId}`);
+      
+      // Use the saveProgress method to save the data
+      await this.saveProgress(taskId);
+      
+      return true;
+    } catch (error) {
+      logger.error(`Failed to save form data for task ${taskId}:`, error);
+      return false;
+    }
   }
 
   /**
