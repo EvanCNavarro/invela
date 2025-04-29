@@ -188,10 +188,10 @@ async function unlockDependentTasks(taskId: number) {
 export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | null) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
   
-  // Direct endpoint for open banking form submissions
+  // Standardized Open Banking form submission endpoint
   app.post('/api/tasks/:taskId/open-banking-submit', requireAuth, async (req, res) => {
     const taskId = parseInt(req.params.taskId, 10);
-    const { formData, fileName } = req.body;
+    const { formData, fileName, forceStatusUpdate, skipReconciliation } = req.body;
     
     if (isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
@@ -202,179 +202,235 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
     }
     
     try {
-      logger.info('[OpenBankingRoutes] Processing direct form submission', { taskId });
-      
-      // Check if task exists and is an Open Banking task
-      const taskData = await db.select().from(tasks)
-        .where(and(
-          eq(tasks.id, taskId),
-          or(
-            eq(tasks.task_type, 'open_banking'),
-            eq(tasks.task_type, 'open_banking_survey')
-          )
-        ))
-        .limit(1);
-      
-      if (taskData.length === 0) {
-        return res.status(404).json({ error: 'Open Banking task not found' });
-      }
-
-      // Get the task with the company relation
-      const task = taskData[0];
-      
-      // Create a filename if not provided
-      const generatedFileName = fileName || `Open_Banking_Survey_task_${taskId}_${new Date().toISOString().split('T')[0]}.csv`;
-      
-      // Generate CSV data
-      const fieldKeys = Object.keys(formData);
-      const csvRows = [];
-      
-      // Header row with 'Field Key', 'Question', 'Response'
-      csvRows.push(['Field Key', 'Question', 'Response']);
-      
-      // Add data rows
-      for (const key of fieldKeys) {
-        // Get the actual question from the database
-        const [field] = await db.select().from(openBankingFields)
-          .where(eq(openBankingFields.field_key, key))
-          .limit(1);
-        
-        const question = field?.display_name || field?.question || key;
-        const response = formData[key] || '';
-        
-        csvRows.push([key, question, response]);
-      }
-      
-      // Convert to CSV string
-      const csvContent = csvRows.map(row => 
-        row.map(cell => 
-          // Properly escape values with quotes if they contain commas, quotes, or newlines
-          typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n')) 
-            ? '"' + cell.replace(/"/g, '""') + '"' 
-            : cell
-        ).join(',')
-      ).join('\n');
-      
-      // Use the standard FileCreationService for consistency across all form types
-      const { FileCreationService } = await import('../services/file-creation');
-      
-      // Create file using the FileCreationService
-      const fileCreationResult = await FileCreationService.createFile({
-        name: generatedFileName,
-        content: csvContent,
-        type: 'text/csv',
-        userId: req.user?.id || task.created_by,
-        companyId: task.company_id || 0,
-        metadata: {
-          taskId,
-          taskType: 'open_banking',
-          formVersion: '1.0',
-          submissionDate: new Date().toISOString(),
-          fields: fieldKeys
-        },
-        status: 'uploaded'
+      logger.info('[OpenBankingRoutes] Processing form submission', { 
+        taskId,
+        forceStatusUpdate: !!forceStatusUpdate,
+        skipReconciliation: !!skipReconciliation,
+        timestamp: new Date().toISOString()
       });
       
-      // Throw an error if file creation failed
-      if (!fileCreationResult.success) {
-        logger.error('[OpenBankingRoutes] File creation failed', {
-          error: fileCreationResult.error,
-          taskId,
-          fileName: generatedFileName
+      // Start transaction to ensure atomic operations
+      return await db.transaction(async (tx) => {
+        // Check if task exists and is an Open Banking task
+        const taskData = await tx.select().from(tasks)
+          .where(and(
+            eq(tasks.id, taskId),
+            or(
+              eq(tasks.task_type, 'open_banking'),
+              eq(tasks.task_type, 'open_banking_survey')
+            )
+          ))
+          .limit(1);
+        
+        if (taskData.length === 0) {
+          return res.status(404).json({ error: 'Open Banking task not found' });
+        }
+        
+        const task = taskData[0];
+        const companyId = task.company_id;
+        
+        // Create a filename if not provided
+        const effectiveFileName = fileName || `Open_Banking_Survey_task_${taskId}_${new Date().toISOString().split('T')[0]}.csv`;
+        
+        // Generate CSV data
+        const fieldKeys = Object.keys(formData);
+        const csvRows = [];
+        
+        // Header row with 'Field Key', 'Question', 'Response'
+        csvRows.push(['Field Key', 'Question', 'Response']);
+        
+        // Add data rows
+        for (const key of fieldKeys) {
+          // Get the actual question from the database
+          const [field] = await tx.select().from(openBankingFields)
+            .where(eq(openBankingFields.field_key, key))
+            .limit(1);
+          
+          const question = field?.display_name || field?.question || key;
+          const response = formData[key] || '';
+          
+          csvRows.push([key, question, response]);
+        }
+        
+        // Convert to CSV string
+        const csvContent = csvRows.map(row => 
+          row.map(cell => 
+            // Properly escape values with quotes if they contain commas, quotes, or newlines
+            typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n')) 
+              ? '"' + cell.replace(/"/g, '""') + '"' 
+              : cell
+          ).join(',')
+        ).join('\n');
+        
+        // Use the standard FileCreationService for consistency across all form types
+        const { FileCreationService } = await import('../services/file-creation');
+        
+        // Create file using the FileCreationService
+        const fileCreationResult = await FileCreationService.createFile({
+          name: effectiveFileName,
+          content: csvContent,
+          type: 'text/csv',
+          userId: req.user?.id || task.created_by,
+          companyId: task.company_id || 0,
+          metadata: {
+            taskId,
+            taskType: 'open_banking',
+            formVersion: '1.0',
+            submissionDate: new Date().toISOString(),
+            fields: fieldKeys
+          },
+          status: 'uploaded'
         });
-        throw new Error(`Failed to create file: ${fileCreationResult.error}`);
-      }
-      
-      // Use the file ID from the FileCreationService result
-      const fileId = fileCreationResult.fileId;
-      
-      // Update task metadata with the file ID from FileCreationService
-      const updatedMetadata = {
-        ...task.metadata,
-        openBankingFormFile: fileId, // Use the fileId from FileCreationService
-        submissionDate: new Date().toISOString(), // Add explicit submission date for status determination
-        statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
-          .filter((v, i, a) => a.indexOf(v) === i)
-      };
-      
-      // Update task status to submitted and save form data
-      // Use the TaskStatus enum to ensure consistency
-      await db.update(tasks)
-        .set({
-          status: TaskStatus.SUBMITTED, // Use enum value for consistency
-          progress: 100,
-          metadata: updatedMetadata,
-          saved_form_data: formData,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, taskId));
-      
-      // Also update company's onboarding_company_completed if needed
-      if (task.company_id) {
-        await db.update(companies)
+        
+        // Throw an error if file creation failed
+        if (!fileCreationResult.success) {
+          logger.error('[OpenBankingRoutes] File creation failed', {
+            error: fileCreationResult.error,
+            taskId,
+            fileName: effectiveFileName
+          });
+          throw new Error(`Failed to create file: ${fileCreationResult.error}`);
+        }
+        
+        // Use the file ID from the FileCreationService result
+        const fileId = fileCreationResult.fileId;
+        
+        // Generate and save risk score with similar approach to KYB
+        let riskScore = null;
+        try {
+          riskScore = await generateOpenBankingRiskScore(taskId, companyId);
+          logger.info('[OpenBankingRoutes] Generated risk score', { taskId, companyId, riskScore });
+        } catch (riskError) {
+          logger.error('[OpenBankingRoutes] Error generating risk score', {
+            error: riskError instanceof Error ? riskError.message : 'Unknown error',
+            taskId,
+            companyId
+          });
+          // Continue with submission even if risk score calculation fails
+        }
+        
+        // Update task metadata with the file ID and ensure statusFlow is updated
+        const updatedMetadata = {
+          ...task.metadata,
+          openBankingFormFile: fileId,
+          submissionDate: new Date().toISOString(),
+          riskScore,
+          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+            .filter((v, i, a) => a.indexOf(v) === i),
+          // Add comprehensive submission tracking
+          submissionDetails: {
+            timestamp: new Date().toISOString(),
+            userId: req.user?.id,
+            fileId,
+            method: 'standardized_submission'
+          }
+        };
+        
+        // Update task status to submitted and save form data
+        await tx.update(tasks)
           .set({
-            onboarding_company_completed: true,
+            status: TaskStatus.SUBMITTED,
+            progress: 100,
+            metadata: updatedMetadata,
+            saved_form_data: formData,
             updated_at: new Date()
           })
-          .where(eq(companies.id, task.company_id));
+          .where(eq(tasks.id, taskId));
+        
+        // Complete company onboarding if needed
+        let onboardingCompleted = false;
+        if (companyId) {
+          // Update company's onboarding status
+          await tx.update(companies)
+            .set({
+              onboarding_company_completed: true,
+              updated_at: new Date()
+            })
+            .where(eq(companies.id, companyId));
           
-        // Unlock dashboard and insights tabs for the company using CompanyTabsService
-        // This is consistent with the dedicated submission endpoint
+          onboardingCompleted = true;
+          
+          // Complete company onboarding (standardized approach)
+          await completeCompanyOnboarding(companyId);
+        }
+        
+        // Get the file record to return in the response
+        const fileRecord = await tx.select().from(files)
+          .where(eq(files.id, fileId))
+          .limit(1);
+        
+        if (fileRecord.length === 0) {
+          throw new Error('File record not found after creation');
+        }
+        
+        // Unlock dependent tasks (similar to KYB implementation)
+        let unlockedTaskCount = 0;
         try {
-          // First ensure file vault is unlocked
-          await unlockFileVaultAccess(task.company_id);
+          // Unlock file vault access
+          await unlockFileVaultAccess(companyId);
           
-          // Then unlock dashboard and insights tabs
-          const success = await unlockDashboardAndInsightsTabs(task.company_id);
+          // Unlock dashboard and insights tabs
+          const success = await unlockDashboardAndInsightsTabs(companyId);
           
           if (success) {
-            logger.info('[OpenBankingRoutes] Successfully unlocked all tabs via direct endpoint', {
-              companyId: task.company_id
+            logger.info('[OpenBankingRoutes] Successfully unlocked dashboard and insights tabs', {
+              companyId
             });
+            unlockedTaskCount = 2; // File vault + Dashboard/Insights
           }
-        } catch (tabError) {
-          // Log but continue with form submission
-          logger.error('[OpenBankingRoutes] Error unlocking tabs via direct endpoint', {
-            error: tabError instanceof Error ? tabError.message : 'Unknown error',
-            companyId: task.company_id
+        } catch (unlockError) {
+          logger.error('[OpenBankingRoutes] Error unlocking tabs', {
+            error: unlockError instanceof Error ? unlockError.message : 'Unknown error',
+            companyId
+          });
+          // Continue with submission even if tab unlocking fails
+        }
+        
+        // Broadcast task update via WebSocket
+        const updatePayload = {
+          taskId,
+          status: TaskStatus.SUBMITTED,
+          progress: 100,
+          metadata: {
+            lastUpdated: new Date().toISOString(),
+            submissionDate: new Date().toISOString(),
+            fileId, // Include fileId for unified handling
+            unlocked: true // Flag for UI to show unlocked status
+          }
+        };
+        
+        if (wss) {
+          wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'task_updated',
+                payload: updatePayload
+              }));
+            }
           });
         }
-      }
-      
-      // Broadcast task update via WebSocket
-      if (wss) {
-        wss.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: 'task_updated',
-              payload: {
-                taskId,
-                status: TaskStatus.SUBMITTED, // Use enum value for consistency
-                progress: 100,
-                metadata: {
-                  lastUpdated: new Date().toISOString(),
-                  submissionDate: new Date().toISOString(),
-                  fileId: fileId // Include fileId for unified handling
-                },
-                timestamp: new Date().toISOString()
-              }
-            }));
-          }
+        
+        // Return comprehensive response with all necessary information for client handling
+        return res.json({
+          success: true,
+          fileId: fileId,
+          fileName: effectiveFileName,
+          message: 'Form submitted successfully',
+          taskId,
+          status: TaskStatus.SUBMITTED,
+          riskScore,
+          companyId,
+          unlockedTaskCount,
+          tabsUpdated: true,
+          onboardingCompleted
         });
-      }
-      
-      // Return success response with file ID from FileCreationService
-      res.json({
-        success: true,
-        message: 'Form submitted successfully',
-        fileId: fileId, // Use the file ID from FileCreationService
-        fileName: generatedFileName // Use the generated filename
       });
     } catch (error) {
       logger.error('[OpenBankingRoutes] Error processing form submission:', error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: 'Failed to process form submission',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        taskId
       });
     }
   });

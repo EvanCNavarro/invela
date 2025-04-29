@@ -1152,7 +1152,9 @@ export class OpenBankingFormService extends EnhancedKybFormService {
         },
         body: JSON.stringify({
           formData: this.getFormData(),
-          fileName: options.fileName
+          fileName: options.fileName,
+          forceStatusUpdate: true, // Add a flag to force status update
+          skipReconciliation: true  // Add a flag to skip reconciliation
         }),
       });
       
@@ -1167,6 +1169,19 @@ export class OpenBankingFormService extends EnhancedKybFormService {
       }
       
       const result = await response.json();
+      
+      // Important: Aggressively invalidate the cache to ensure correct status display
+      try {
+        // Use the global query client if available
+        if (window.__TanStackQueryClient) {
+          window.__TanStackQueryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          window.__TanStackQueryClient.invalidateQueries({ queryKey: [`/api/tasks/${effectiveTaskId}`] });
+          window.__TanStackQueryClient.invalidateQueries({ queryKey: [`/api/open-banking/progress/${effectiveTaskId}`] });
+          logger.info('[OpenBankingFormService] Successfully invalidated task queries');
+        }
+      } catch (cacheError) {
+        logger.error('[OpenBankingFormService] Error invalidating cache:', cacheError);
+      }
       
       logger.info(`[OpenBankingFormService] Form submitted successfully:`, {
         fileId: result.fileId,
