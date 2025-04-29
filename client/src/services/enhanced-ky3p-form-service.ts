@@ -166,6 +166,24 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
    * This optimizes updates to avoid making 120+ separate API calls
    */
   updateFormData(fieldKey: string, value: any, taskId?: number): void {
+    // FIXED: Check if value has changed before queueing update to prevent infinite loops
+    // First, check if we have a cached value to compare against
+    const existingValue = this.cachedFormData?.[fieldKey];
+    const valueChanged = JSON.stringify(existingValue) !== JSON.stringify(value);
+    
+    // Skip update if value hasn't changed to prevent infinite loops
+    if (!valueChanged && existingValue !== undefined) {
+      // Don't queue updates for unchanged values
+      return;
+    }
+    
+    // Check if this field is already in pendingUpdates with the same value
+    if (this.pendingUpdates[fieldKey] !== undefined && 
+        JSON.stringify(this.pendingUpdates[fieldKey]) === JSON.stringify(value)) {
+      // Skip duplicate updates to avoid excessive processing
+      return;
+    }
+    
     // Collect metrics less frequently for better debugging
     if (Object.keys(this.pendingUpdates).length === 0 || Object.keys(this.pendingUpdates).length % 10 === 0) {
       logger.info(`[EnhancedKY3P] Queuing update for field ${fieldKey} (${Object.keys(this.pendingUpdates).length + 1} pending)`);
