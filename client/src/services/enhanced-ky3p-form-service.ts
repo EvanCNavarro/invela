@@ -284,15 +284,54 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   
   /**
    * Sync form data with the server
-   * Delegates to the original service
+   * Delegates to the original service or provides a compatible response
+   * that matches the expected SyncFormDataResponse interface
    */
-  async syncFormData(taskId?: number): Promise<void> {
+  async syncFormData(taskId?: number): Promise<any> {
     logger.info(`[EnhancedKY3P] Syncing form data for task ${taskId || 'unknown'}`);
-    // Call the original service if it has this method, otherwise do nothing
-    if (typeof this.originalService.syncFormData === 'function') {
-      return this.originalService.syncFormData(taskId);
+    
+    try {
+      // Call the original service if it has this method
+      if (typeof this.originalService.syncFormData === 'function') {
+        const result = await this.originalService.syncFormData(taskId);
+        // If result already has success property, return it
+        if (result && typeof result.success !== 'undefined') {
+          return result;
+        }
+        // Otherwise, wrap it in a compatible response
+        return {
+          success: true,
+          formData: this.getFormData() || {},
+          progress: 0,
+          status: 'synced',
+          taskId: taskId || this.taskId || 0,
+          syncDirection: 'none'
+        };
+      }
+      
+      logger.warn('[EnhancedKY3P] Original service does not have syncFormData method');
+      
+      // Return a valid response object to prevent undefined.success errors
+      return {
+        success: true,
+        formData: this.getFormData() || {},
+        progress: 0,
+        status: 'not_synced',
+        taskId: taskId || this.taskId || 0,
+        syncDirection: 'none'
+      };
+    } catch (error) {
+      logger.error(`[EnhancedKY3P] Error syncing form data: ${error instanceof Error ? error.message : String(error)}`);
+      // Return an error response that still has the expected structure
+      return {
+        success: false,
+        formData: {},
+        progress: 0,
+        status: 'error',
+        taskId: taskId || this.taskId || 0,
+        syncDirection: 'none'
+      };
     }
-    logger.warn('[EnhancedKY3P] Original service does not have syncFormData method');
   }
   
   /**
