@@ -98,13 +98,14 @@ export function registerKY3PBatchUpdateRoutes() {
           await db
             .update(ky3pResponses)
             .set({
-              value: String(value),
-              updatedAt: timestamp
+              response_value: String(value),
+              status: 'COMPLETE', // Always set status to COMPLETE when updating a field
+              updated_at: timestamp
             })
             .where(
               and(
-                eq(ky3pResponses.taskId, taskId),
-                eq(ky3pResponses.fieldId, fieldId)
+                eq(ky3pResponses.task_id, taskId),
+                eq(ky3pResponses.field_id, fieldId)
               )
             );
           
@@ -120,11 +121,12 @@ export function registerKY3PBatchUpdateRoutes() {
             .insert(ky3pResponses)
             .values({
               id: randomUUID(),
-              taskId,
-              fieldId,
-              value: String(value),
-              createdAt: timestamp,
-              updatedAt: timestamp
+              task_id: taskId,
+              field_id: fieldId,
+              response_value: String(value),
+              status: 'COMPLETE', // Always set status to COMPLETE when inserting a field
+              created_at: timestamp,
+              updated_at: timestamp
             });
           
           batchResponses.push({
@@ -142,17 +144,31 @@ export function registerKY3PBatchUpdateRoutes() {
         const [responseCount] = await db
           .select({ count: sql<number>`count(*)` })
           .from(ky3pResponses)
-          .where(eq(ky3pResponses.taskId, taskId));
+          .where(eq(ky3pResponses.task_id, taskId));
+        
+        // Count completed responses for this task (status = COMPLETE)
+        const [completedCount] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(ky3pResponses)
+          .where(
+            and(
+              eq(ky3pResponses.task_id, taskId),
+              eq(ky3pResponses.status, 'COMPLETE')
+            )
+          );
         
         // Count total fields
         const [fieldCount] = await db
           .select({ count: sql<number>`count(*)` })
           .from(ky3pFields);
         
-        // Calculate progress percentage
+        // Calculate progress percentage based on COMPLETE fields
         const totalFields = fieldCount?.count || 1;
-        const completedFields = responseCount?.count || 0;
+        // Use completedCount instead of responseCount for more accurate progress
+        const completedFields = completedCount?.count || 0;
         const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+        
+        console.log(`[KY3P-BATCH-UPDATE] Progress calculation: ${completedFields}/${totalFields} = ${progress}% (total responses: ${responseCount?.count || 0})`);
         
         // Update task progress
         await db
@@ -198,7 +214,7 @@ export function registerKY3PBatchUpdateRoutes() {
       // Delete all responses for this task
       const result = await db
         .delete(ky3pResponses)
-        .where(eq(ky3pResponses.taskId, taskId));
+        .where(eq(ky3pResponses.task_id, taskId));
       
       // Update task progress to 0
       await db
@@ -249,7 +265,18 @@ export function registerKY3PBatchUpdateRoutes() {
       const [responseCount] = await db
         .select({ count: sql<number>`count(*)` })
         .from(ky3pResponses)
-        .where(eq(ky3pResponses.taskId, taskId));
+        .where(eq(ky3pResponses.task_id, taskId));
+      
+      // Count completed responses for this task (status = COMPLETE)
+      const [completedCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.status, 'COMPLETE')
+          )
+        );
       
       // Count total fields
       const [fieldCount] = await db
