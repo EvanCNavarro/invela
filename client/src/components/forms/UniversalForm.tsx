@@ -415,11 +415,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Wait a moment for the UI to update before triggering any callbacks
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Then call the onSubmit callback if provided
+      // CRITICAL: This is where we need to handle the actual form submission
+      logger.info('Initiating final submission process - critical step');
+      
+      // Then call the onSubmit callback if provided - THIS IS THE MOST IMPORTANT PART
+      // This makes sure we call the parent component's submission handler which contains
+      // the actual API call to /api/kyb/submit endpoint
       if (onSubmit) {
-        logger.info('Calling onSubmit callback from parent component');
+        logger.info('Calling onSubmit callback from parent component to trigger actual submission');
         onSubmit(data);
       } else {
+        // Only show this toast if we don't have an onSubmit handler
+        // Otherwise the parent component will handle success messaging
         toast({
           title: 'Form submitted',
           description: 'Your form has been successfully submitted.',
