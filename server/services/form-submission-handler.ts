@@ -59,18 +59,37 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
   try {
     // 1. Update task status to submitted
     const now = new Date();
+    
+    // Get current task metadata to preserve existing fields
+    const [currentTask] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+    const currentMetadata = currentTask?.metadata || {};
+    
+    // Prepare updated metadata with explicit submission flags
+    const updatedMetadata = {
+      ...currentMetadata,
+      lastUpdated: now.toISOString(),
+      submittedAt: now.toISOString(),
+      submittedBy: userId,
+      status: 'submitted',         // Explicit status flag in metadata
+      explicitlySubmitted: true,   // Flag to prevent status reconciliation from changing it back
+      statusFlow: [...(currentMetadata.statusFlow || []), 'submitted']
+    };
+    
+    // Update task with submitted status and enhanced metadata
     await db.update(tasks)
       .set({
         status: 'submitted',
         progress: 100,
-        metadata: {
-          lastUpdated: now.toISOString(),
-          submittedAt: now.toISOString(),
-          submittedBy: userId
-        },
+        metadata: updatedMetadata,
         updated_at: now
       })
       .where(eq(tasks.id, taskId));
+    
+    logger.info('Enhanced task status update with submission protection', { 
+      taskId, 
+      status: 'submitted',
+      metadataKeys: Object.keys(updatedMetadata)
+    });
     
     logger.info('Task status updated to submitted', { taskId, formType });
     
