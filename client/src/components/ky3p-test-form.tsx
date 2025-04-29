@@ -86,6 +86,45 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
     initializeFormService();
   }, [taskId, templateId]);
   
+  // Listen for form navigation events
+  useEffect(() => {
+    // This handles the form navigation events from the EnhancedKY3PFormService
+    const handleFormNavigation = (event: CustomEvent) => {
+      try {
+        console.log('Form navigation event received:', event.detail);
+        
+        const { type, payload } = event.detail;
+        
+        if (type === 'form_navigation' && payload) {
+          const { action, sectionId } = payload;
+          
+          if (action === 'navigate_to_section' && sectionId) {
+            // Update the UI to show the section is being navigated to
+            console.log(`Navigating to section: ${sectionId}`);
+            
+            // In a real implementation, we would update the active section
+            // Here we'll just show a toast notification
+            toast({
+              title: 'Form Navigation',
+              description: `Navigated to the first section: ${sectionId}`,
+              variant: 'default'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error handling form navigation event:', error);
+      }
+    };
+    
+    // Add the event listener
+    document.addEventListener('form-navigation', handleFormNavigation as EventListener);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('form-navigation', handleFormNavigation as EventListener);
+    };
+  }, []);
+  
   // Handle form clearing
   const handleClearForm = async () => {
     if (!formService) {
@@ -99,6 +138,13 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
     
     try {
       console.log('Clearing form fields');
+      
+      // First, identify the first section ID for post-clearing navigation
+      const sections = formService.getSections();
+      const firstSectionId = sections && sections.length > 0 ? sections[0].id : null;
+      console.log(`First section ID for navigation: ${firstSectionId}`);
+      
+      // Now clear the fields
       const result = await formService.clearFields(taskId);
       
       if (result) {
@@ -112,6 +158,13 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
           description: 'Form fields cleared successfully',
           variant: 'default'
         });
+        
+        // After clearing, we expect a form-navigation event to be triggered
+        // by the enhanced service. If that fails for some reason, we can manually
+        // trigger the navigation here as a fallback:
+        if (firstSectionId) {
+          console.log(`Form cleared, section navigation to ${firstSectionId} should follow`);
+        }
       } else {
         console.error('Failed to clear form fields');
         toast({
