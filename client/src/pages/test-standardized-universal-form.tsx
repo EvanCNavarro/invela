@@ -6,7 +6,8 @@
  * different form service implementations.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { QueryClient } from '@tanstack/react-query';
 import { StandardizedUniversalForm } from '@/components/forms/StandardizedUniversalForm';
 import { StandardizedKY3PFormService } from '@/services/standardized-ky3p-form-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,12 +25,41 @@ export default function TestStandardizedUniversalFormPage() {
   const [taskId, setTaskId] = useState<number>(654);
   const [taskType, setTaskType] = useState<string>('ky3p');
   const [loading, setLoading] = useState<boolean>(false);
+  const [ky3pFields, setKy3pFields] = useState<any[]>([]);
+  const [ky3pSections, setKy3pSections] = useState<any[]>([]);
   
   // Get the appropriate form service for the current task type
   const formService = getFormServiceForTaskType(taskType, taskId);
   
   // For direct comparison, create a basic KY3P form service
-  const ky3pService = new StandardizedKY3PFormService(taskId);
+  const ky3pService = new StandardizedKY3PFormService(new QueryClient());
+  
+  // Fetch KY3P fields and sections on component mount
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const fields = await ky3pService.getFields();
+        setKy3pFields(fields.slice(0, 3));
+        
+        try {
+          // The getSections method may not exist on all services
+          if (typeof ky3pService.getSections === 'function') {
+            const sections = await ky3pService.getSections();
+            setKy3pSections(sections.slice(0, 1));
+          }
+        } catch (sectionError) {
+          logger.warn('Error fetching KY3P sections:', sectionError);
+          setKy3pSections([]);
+        }
+      } catch (error) {
+        logger.error('Error fetching KY3P fields:', error);
+        setKy3pFields([]);
+        setKy3pSections([]);
+      }
+    }
+    
+    fetchData();
+  }, [taskId, taskType]);
   
   // Handle form submission
   const handleSubmit = async (data: Record<string, any>) => {
@@ -208,10 +238,10 @@ export default function TestStandardizedUniversalFormPage() {
           <CardContent>
             <div className="text-sm overflow-auto max-h-96 bg-muted p-4 rounded">
               <h3 className="font-medium mb-2">Service Fields:</h3>
-              <pre>{JSON.stringify(ky3pService.getFields().slice(0, 3), null, 2)}</pre>
+              <pre>{JSON.stringify(ky3pFields, null, 2)}</pre>
               
               <h3 className="font-medium mt-4 mb-2">Service Sections:</h3>
-              <pre>{JSON.stringify(ky3pService.getSections().slice(0, 1), null, 2)}</pre>
+              <pre>{JSON.stringify(ky3pSections, null, 2)}</pre>
             </div>
           </CardContent>
         </Card>

@@ -8,7 +8,7 @@
 
 import { QueryClient } from '@tanstack/react-query';
 import { EnhancedKybFormService, FormServiceLogger } from './enhanced-kyb-service';
-import { FormField } from './form-service-interface';
+import { FormField, FormSection } from './formService';
 
 interface Ky3PField extends FormField {
   id: number;
@@ -399,6 +399,50 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
     } catch (error) {
       this.error('Error clearing KY3P fields:', error);
       return false;
+    }
+  }
+  
+  /**
+   * Get sections/groups for KY3P forms
+   */
+  async getSections(): Promise<FormSection[]> {
+    try {
+      // Get all fields first
+      const fields = await this.getFields();
+      
+      // Group fields by their 'group' property
+      const groupMap = new Map<string, FormField[]>();
+      
+      fields.forEach(field => {
+        const group = field.group || 'Default';
+        if (!groupMap.has(group)) {
+          groupMap.set(group, []);
+        }
+        groupMap.get(group)!.push(field);
+      });
+      
+      // Convert groups to sections
+      const sections: FormSection[] = [];
+      
+      groupMap.forEach((groupFields, groupName) => {
+        // Take first field's step_index or 0 for the section
+        const stepIndex = groupFields[0]?.step_index || 0;
+        
+        sections.push({
+          key: groupName.toLowerCase().replace(/\s+/g, '-'),
+          name: groupName,
+          title: groupName,
+          description: `KY3P section for ${groupName}`,
+          step_index: stepIndex,
+          fields: groupFields,
+        });
+      });
+      
+      // Sort sections by step_index
+      return sections.sort((a, b) => (a.step_index || 0) - (b.step_index || 0));
+    } catch (error) {
+      this.error('Error getting KY3P sections:', error);
+      return [];
     }
   }
   
