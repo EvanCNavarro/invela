@@ -620,6 +620,97 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       throw error;
     }
   }
+  
+  /**
+   * Get demo data for the form
+   * Implementation of optional getDemoData method defined in FormServiceInterface
+   * 
+   * @param taskId Optional task ID to customize the demo data
+   * @returns Promise that resolves with demo form data
+   */
+  async getDemoData(taskId?: number): Promise<Record<string, any>> {
+    const effectiveTaskId = taskId || (this.originalService as any).taskId;
+    logger.info(`[EnhancedKY3P] Getting demo data for task ${effectiveTaskId || 'unknown'}`);
+    
+    if (!effectiveTaskId) {
+      logger.error('[EnhancedKY3P] Cannot get demo data without a task ID');
+      throw new Error('Task ID is required for demo data');
+    }
+    
+    try {
+      // First try using the original service's getDemoData method if it exists
+      if (typeof this.originalService.getDemoData === 'function') {
+        logger.info('[EnhancedKY3P] Delegating to original service getDemoData method');
+        const demoData = await this.originalService.getDemoData(effectiveTaskId);
+        return demoData;
+      }
+      
+      // If the original service doesn't have getDemoData method, use our own implementation
+      logger.info('[EnhancedKY3P] Original service does not have getDemoData method, using fallback');
+      
+      // Try multiple endpoints in sequence to get demo data
+      const endpoints = [
+        `/api/ky3p-task/${effectiveTaskId}/demo-data`, // Preferred endpoint
+        `/api/ky3p/demo-autofill/${effectiveTaskId}`, // Alternative endpoint
+        `/api/universal/demo-autofill?taskId=${effectiveTaskId}&formType=ky3p` // Universal endpoint
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          logger.info(`[EnhancedKY3P] Trying to get demo data from endpoint: ${endpoint}`);
+          
+          const response = await fetch(endpoint, {
+            method: endpoint.includes('demo-autofill') ? 'POST' : 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Include session cookies
+          });
+          
+          if (!response.ok) {
+            logger.warn(`[EnhancedKY3P] Failed to get demo data from ${endpoint}: ${response.status}`);
+            continue; // Try the next endpoint
+          }
+          
+          const responseData = await response.json();
+          
+          // Extract form data from response based on the response format
+          let demoData: Record<string, any> = {};
+          
+          if (responseData.formData) {
+            // Format: { formData: { ... } }
+            demoData = responseData.formData;
+          } else if (responseData.demoData) {
+            // Format: { demoData: { ... } }
+            demoData = responseData.demoData;
+          } else if (responseData.data) {
+            // Format: { data: { ... } }
+            demoData = responseData.data;
+          } else if (typeof responseData === 'object' && !responseData.error) {
+            // Assume response is the demo data directly
+            demoData = responseData;
+          }
+          
+          if (Object.keys(demoData).length > 0) {
+            logger.info(`[EnhancedKY3P] Successfully retrieved demo data with ${Object.keys(demoData).length} fields`);
+            return demoData;
+          }
+          
+          logger.warn('[EnhancedKY3P] Endpoint returned empty demo data');
+        } catch (endpointError) {
+          logger.warn(`[EnhancedKY3P] Error getting demo data from ${endpoint}:`, endpointError);
+          // Continue to next endpoint
+        }
+      }
+      
+      // If we get here, all endpoints failed
+      throw new Error('Failed to get demo data from any endpoint');
+    } catch (error) {
+      logger.error('[EnhancedKY3P] Error getting demo data:', error);
+      throw error;
+    }
+  }
 }
 
 /**
