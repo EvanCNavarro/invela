@@ -20,10 +20,7 @@ import { getKybProgress } from './routes/kyb-update';
 import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
-// Import fixed KY3P API router with comprehensive field support
-import ky3pRouter from './routes/ky3p-updated';
-// Import old KY3P router for backward compatibility
-import oldKy3pRouter from './routes/old-ky3p-router';
+import ky3pRouter from './routes/ky3p';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 // Import standardized KY3P batch update routes
@@ -324,20 +321,12 @@ export function registerRoutes(app: Express): Express {
   
   app.use(cardRouter);
   app.use(securityRouter);
-  
-  // Register our new improved KY3P API routes with comprehensive field support
   app.use(ky3pRouter);
-  
-  // Keep legacy routes for backward compatibility
-  app.use(oldKy3pRouter);
-  
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
-  
   // Use our enhanced KY3P demo auto-fill routes
   app.use(ky3pDemoAutofillRouter);
-  
-  // Register the standardized KY3P batch update routes with enhanced field key/ID support
+  // Register the standardized KY3P batch update routes
   registerKY3PBatchUpdateRoutes(app);
   // Register the standardized KY3P field update routes
   registerKY3PFieldUpdateRoutes(app);

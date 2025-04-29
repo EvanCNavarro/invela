@@ -273,13 +273,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Fetch fields from the service with ENHANCED DIAGNOSTICS
         logger.info(`Fetching fields from form service...`);
         try {
-          // Handle async getFields method like we do with getSections
-          const serviceFields = await Promise.resolve(formService.getFields());
+          const serviceFields = formService.getFields();
           logger.info(`Fields result type: ${typeof serviceFields}`);
           logger.info(`Is fields array: ${Array.isArray(serviceFields)}`);
-          logger.info(`Fields count: ${serviceFields?.length || 0}`);
           
-          if (serviceFields && Array.isArray(serviceFields) && serviceFields.length > 0) {
+          if (serviceFields && serviceFields.length > 0) {
             logger.info(`Loaded ${serviceFields.length} fields from form service`);
             logger.info(`Sample field: ${JSON.stringify(serviceFields[0])}`);
             setFields(sortFields(serviceFields));

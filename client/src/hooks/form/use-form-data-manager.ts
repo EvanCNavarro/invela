@@ -692,31 +692,7 @@ export function useFormDataManager({
           logger.info(`[TIMESTAMP-SYNC] Using enhanced timestamp-based loading for reliable conflict resolution`);
         }
         
-        // Check if the service has a loadProgress method, fallback to getTaskData if not
-        let savedData = {};
-        if (typeof formService.loadProgress === 'function') {
-          try {
-            logger.info(`[TIMESTAMP-SYNC] Using loadProgress method for task ${taskId}`);
-            savedData = await formService.loadProgress(taskId);
-          } catch (loadProgressError) {
-            logger.error(`[SAVE DEBUG] Error in loadProgress:`, loadProgressError);
-            // Fall back to getTaskData if loadProgress fails
-            try {
-              logger.info(`[TIMESTAMP-SYNC] Falling back to getTaskData method for task ${taskId}`);
-              savedData = await formService.getTaskData(taskId);
-            } catch (getTaskDataError) {
-              logger.error(`[SAVE DEBUG] Failed to load form data with getTaskData fallback:`, getTaskDataError);
-            }
-          }
-        } else {
-          try {
-            // If loadProgress is not available, use getTaskData as a fallback
-            logger.info(`[TIMESTAMP-SYNC] loadProgress method not available, using getTaskData for task ${taskId}`);
-            savedData = await formService.getTaskData(taskId);
-          } catch (getTaskDataError) {
-            logger.error(`[SAVE DEBUG] Failed to load form data:`, getTaskDataError);
-          }
-        }
+        const savedData = await formService.loadProgress(taskId);
         
         // Skip processing if another load operation has started
         if (thisLoadingKey !== loadingKey) {

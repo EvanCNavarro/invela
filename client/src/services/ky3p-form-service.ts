@@ -1455,103 +1455,35 @@ export class KY3PFormService extends EnhancedKybFormService {
         logger.error(`[KY3P Form Service] Error using fixed universal bulk save:`, fixedError);
       }
       
-      // === FALLBACK: Use the batch-update endpoint with improved field key handling ===
+      // === FALLBACK: Use the batch-update endpoint with array format ===
       // This is our last resort to maintain backward compatibility
       try {
-        logger.info(`[KY3P Form Service] Using enhanced batch-update endpoint for task ${effectiveTaskId}`);
+        logger.info(`[KY3P Form Service] Using batch-update endpoint for task ${effectiveTaskId}`);
         
-        // First try with field keys and useFieldKeys flag
-        try {
-          // Convert to array format expected by the batch endpoint
-          const arrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => ({
-            fieldKey,
-            value
-          }));
-          
-          // Use the updated batch endpoint with a flag to use field keys
-          const keyBasedResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              responses: arrayResponses,
-              useFieldKeys: true  // Signal server to use keys instead of IDs
-            }),
-          });
-          
-          if (keyBasedResponse.ok) {
-            logger.info(`[KY3P Form Service] Successfully updated form using key-based batch-update endpoint`);
-            return true;
-          }
-          
-          const keyErrorText = await keyBasedResponse.text();
-          logger.warn(`[KY3P Form Service] Key-based batch update failed: ${keyBasedResponse.status} - ${keyErrorText}`);
-          logger.info(`[KY3P Form Service] Falling back to ID-based format...`);
-        } catch (keyError) {
-          logger.warn(`[KY3P Form Service] Error with key-based batch update:`, keyError);
-        }
+        // Convert to array format expected by the batch endpoint
+        const arrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => ({
+          fieldKey,
+          value
+        }));
         
-        // If key-based update fails, try converting field keys to field IDs
-        // Get all fields to build a mapping
-        logger.info(`[KY3P Form Service] Fetching field definitions to map keys to IDs`);
-        const fields = await this.getFields();
-        
-        // Create a mapping from field keys to field IDs
-        const fieldKeyToIdMap = new Map();
-        fields.forEach(field => {
-          if (field.key && field.id !== undefined) {
-            fieldKeyToIdMap.set(field.key, field.id);
-          }
-        });
-        
-        // Convert field keys to field IDs
-        const idBasedResponses = [];
-        let mappedCount = 0;
-        let unmappedCount = 0;
-        
-        for (const [fieldKey, value] of Object.entries(cleanData)) {
-          const fieldId = fieldKeyToIdMap.get(fieldKey);
-          if (fieldId !== undefined) {
-            idBasedResponses.push({
-              fieldId,  // Use the numeric ID instead of the key
-              value
-            });
-            mappedCount++;
-          } else {
-            logger.warn(`[KY3P Form Service] Could not map field key "${fieldKey}" to an ID`);
-            unmappedCount++;
-          }
-        }
-        
-        if (idBasedResponses.length === 0) {
-          logger.error(`[KY3P Form Service] No fields could be mapped to IDs, cannot proceed with update`);
-          return false;
-        }
-        
-        logger.info(`[KY3P Form Service] Field mapping results: ${mappedCount} mapped, ${unmappedCount} unmapped`);
-        
-        // Try the ID-based update
-        const idBasedResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
+        const batchResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
           body: JSON.stringify({
-            responses: idBasedResponses,
-            useFieldIds: true  // Signal server that we're using IDs
+            responses: arrayResponses
           }),
         });
         
-        if (idBasedResponse.ok) {
-          logger.info(`[KY3P Form Service] Successfully updated form using ID-based batch-update endpoint`);
+        if (batchResponse.ok) {
+          logger.info(`[KY3P Form Service] Successfully updated form using batch-update endpoint`);
           return true;
         }
         
-        const idErrorText = await idBasedResponse.text();
-        logger.error(`[KY3P Form Service] ID-based batch update failed: ${idBasedResponse.status} - ${idErrorText}`);
+        const errorText = await batchResponse.text();
+        logger.error(`[KY3P Form Service] Batch update failed: ${batchResponse.status} - ${errorText}`);
         return false;
       } catch (error) {
         logger.error(`[KY3P Form Service] Error during form update:`, error);

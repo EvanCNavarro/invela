@@ -1,121 +1,203 @@
 /**
- * Form Service Interface
- * 
- * This interface defines the standard API that all form services must implement,
- * enabling standardized form handling across different form types.
+ * Interface for form field validation rules
  */
-
-export interface FormField {
-  id?: number;
-  field_key?: string;
-  key?: string;
-  display_name?: string;
-  label?: string;
-  field_type?: string;
-  type?: string;
-  group?: string;
-  section?: string;
-  step_index?: number;
-  order?: number;
-  required?: boolean; 
-  is_required?: boolean;
-  is_array?: boolean;
-  options?: string[];
-  help_text?: string;
-  helpText?: string;
-  placeholder?: string;
-  default_value?: any;
-  default?: any;
-  validation?: {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    min?: number;
-    max?: number;
-  };
+export interface FormFieldValidation {
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  pattern?: string;
+  message?: string;
+  [key: string]: any;
 }
 
 /**
- * Represents a section or group of fields in a form
+ * Interface for form field
+ */
+export interface FormField {
+  key: string;
+  label: string;
+  type: string;
+  section: string;
+  sectionId?: string;    // Alternative to section for compatibility
+  placeholder?: string;
+  helpText?: string;
+  help_text?: string;    // Alternative to helpText for compatibility
+  tooltip?: string;      // Tooltip text for field help
+  question?: string;
+  questionNumber?: number; // Question number for display
+  default?: any;
+  options?: { label: string; value: any }[];
+  validation?: FormFieldValidation;
+  order: number;
+  metadata?: Record<string, any>;
+  
+  // Enhanced field guidance properties
+  answerExpectation?: string;   // Guidance text for what type of answer is expected
+  demoAutofill?: string;        // Sample values for demonstration purposes
+  validationType?: string;      // Type of validation/documentation required
+  
+  // Optimization properties
+  saveImmediately?: boolean;    // Whether field should be saved immediately
+  batchUpdaterInitialized?: boolean;  // Whether the batch updater has been initialized for this field
+}
+
+/**
+ * Interface for form section
  */
 export interface FormSection {
-  id?: number | string;
-  key?: string;
-  name?: string;
-  title?: string;
+  id: string;
+  title: string;
   description?: string;
-  step_index?: number;
-  order?: number;
-  fields?: FormField[];
+  order: number;
+  collapsed: boolean;
+  fields: FormField[];
 }
 
 /**
- * Standard interface for all form services
+ * Generic form data type
+ */
+export type FormData = Record<string, any>;
+
+/**
+ * Interface for timestamped form data
+ */
+export interface TimestampedFormData {
+  values: FormData;
+  timestamps: Record<string, number>;
+}
+
+/**
+ * Interface for form submission options
+ */
+export interface FormSubmitOptions {
+  taskId?: number;
+  templateId?: number;
+  fileName?: string;
+  [key: string]: any;
+}
+
+/**
+ * Interface for form services
+ * This defines the contract that all form service implementations must follow
  */
 export interface FormServiceInterface {
   /**
-   * Initialize the form service with optional configuration
+   * Initialize the form service with a template ID
+   * @param templateId ID of the task template
    */
-  initialize?(config?: Record<string, any>): Promise<boolean>;
+  initialize(templateId: number): Promise<void>;
   
   /**
-   * Get all form field definitions
+   * Clear any cached data and force reload
+   * Used for demo auto-fill to ensure full refresh
    */
-  getFields(): Promise<FormField[]>;
+  clearCache?(): void;
   
   /**
-   * Get form sections (groups of fields)
+   * Load responses directly from the database
+   * @returns Record of field keys and values
    */
-  getSections?(): Promise<FormSection[]>;
+  loadResponses?(): Promise<Record<string, any>>;
   
   /**
-   * Get form data for a specific task
+   * Get all form fields
+   * @returns Array of form fields
    */
-  getTaskData(taskId: number): Promise<Record<string, any>>;
+  getFields(): FormField[];
   
   /**
-   * Load form data for a specific task
+   * Get all form sections
+   * @returns Array of form sections
    */
-  loadFormData?(taskId: number): Promise<Record<string, any>>;
+  getSections(): FormSection[];
   
   /**
-   * Update form data for a task (batch update)
+   * Load form data into the service
+   * @param data Form data to load
    */
-  updateFormData?(taskId: number, formData: Record<string, any>): Promise<boolean>;
+  loadFormData(data: FormData): void;
   
   /**
-   * Update a single field value
+   * Update a specific field in the form data
+   * @param fieldKey Field key to update
+   * @param value New value for the field
+   * @param taskId Optional task ID for immediate saving
    */
-  updateField(taskId: number, fieldKey: string, value: any): Promise<boolean>;
+  updateFormData(fieldKey: string, value: any, taskId?: number): void;
   
   /**
-   * Batch update multiple fields at once
+   * Get the current form data
+   * @returns Current form data
    */
-  batchUpdate(taskId: number, formData: Record<string, any>): Promise<boolean>;
+  getFormData(): FormData;
   
   /**
-   * Apply demo data to populate the form (for testing)
+   * Get the timestamped form data (for enhanced services)
+   * @returns Timestamped form data with values and timestamps
    */
-  demoAutofill(taskId: number): Promise<boolean>;
+  getTimestampedFormData?(): TimestampedFormData;
   
   /**
-   * Clear all field values for the task
+   * Calculate form completion progress
+   * @returns Percentage of form completion (0-100)
    */
-  clearAllFields(taskId: number): Promise<boolean>;
+  calculateProgress(): number;
   
   /**
-   * Get the task type for this form service
+   * Save form progress for a task
+   * @param taskId Optional ID of the task
+   * @returns Promise that resolves when progress is saved
    */
-  getTaskType(): string;
+  saveProgress(taskId?: number): Promise<void>;
   
   /**
-   * Validate the entire form
+   * Load saved progress for a task
+   * @param taskId ID of the task
+   * @returns Promise that resolves with loaded form data
    */
-  validateForm?(taskId: number): Promise<{valid: boolean, errors: Record<string, string>}>;
+  loadProgress(taskId: number): Promise<FormData>;
   
   /**
-   * Submit the form (mark as complete)
+   * Save the form data
+   * @param options Form submission options
+   * @returns Promise that resolves when form data is saved
    */
-  submitForm?(taskId: number): Promise<boolean>;
+  save(options: FormSubmitOptions): Promise<boolean>;
+  
+  /**
+   * Submit the form
+   * @param options Form submission options
+   * @returns Promise that resolves with submission result
+   */
+  submit(options: FormSubmitOptions): Promise<any>;
+  
+  /**
+   * Validate form data
+   * @param data Form data to validate
+   * @returns Validation result (true if valid, error object if invalid)
+   */
+  validate(data: FormData): boolean | Record<string, string>;
+  
+  /**
+   * Get demo data for the form
+   * @param taskId Optional task ID to customize the demo data
+   * @returns Promise that resolves with demo form data
+   */
+  getDemoData?(taskId?: number): Promise<Record<string, any>>;
+  
+  /**
+   * Check if this form service uses progressive loading
+   * @returns True if the form service uses progressive loading
+   */
+  getIsProgressiveLoading?(): boolean;
+  
+  /**
+   * Load a specific section of the form
+   * For progressive loading forms, this loads the fields for a specific section
+   * @param sectionId ID of the section to load
+   * @returns Promise that resolves with the fields for the section
+   */
+  loadSection?(sectionId: string): Promise<FormField[]>;
 }
