@@ -1501,23 +1501,16 @@ router.post('/api/tasks/:taskId/kyb-submit', requireAuth, async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
+
+    logger.info('Processing KYB form submission with synchronous task dependencies', {
+      taskId,
+      companyId: task.company_id
+    });
     
     // Get all KYB fields
     const fields = await db.select()
       .from(kybFields)
       .orderBy(kybFields.order);
-    
-    // Use the standardized form submission process
-    const result = await standardFormSubmission({
-      taskId,
-      formData,
-      fileName,
-      userId: req.user.id,
-      companyId: task.company_id,
-      formType: 'kyb',
-      fields,
-      convertToCSV: convertKybToCSV
-    });
     
     // Save responses to database
     for (const field of fields) {
@@ -1559,8 +1552,29 @@ router.post('/api/tasks/:taskId/kyb-submit', requireAuth, async (req, res) => {
       }
     }
     
+    // Use our enhanced form submission handler with immediate task unlocking
+    const result = await submitFormWithImmediateUnlock({
+      taskId,
+      userId: req.user.id,
+      companyId: task.company_id,
+      formData,
+      formType: 'kyb',
+      fileName
+    });
+    
+    logger.info('KYB form submission completed with synchronous task unlocking', {
+      taskId,
+      companyId: task.company_id,
+      success: result.success
+    });
+    
     // Return the standardized response
-    res.json(result);
+    res.json({
+      ...result,
+      fileId: result.fileId || null, // Ensure fileId is included if available
+      success: true,
+      message: 'Form submitted successfully'
+    });
   } catch (error) {
     logger.error('Error submitting KYB form', {
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -1575,7 +1589,7 @@ router.post('/api/tasks/:taskId/kyb-submit', requireAuth, async (req, res) => {
 
 // Universal KY3P form submission endpoint with standardized file creation
 router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, res) => {
-  console.log('[Tasks Routes] Using standardized KY3P submit endpoint with enhanced file generation');
+  logger.info('[Tasks Routes] Using standardized KY3P submit endpoint with synchronous task unlocking');
   try {
     const taskId = Number(req.params.taskId);
     const { formData, fileName } = req.body;
@@ -1593,50 +1607,80 @@ router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, 
       return res.status(404).json({ error: 'Task not found' });
     }
     
+    logger.info('Processing KY3P form submission with synchronous task dependencies', {
+      taskId,
+      companyId: task.company_id
+    });
+    
     // Get all KY3P fields
     const fields = await db.select()
       .from(ky3pFields)
       .orderBy(ky3pFields.order);
     
-    // Use the standardized form submission process
-    const result = await standardFormSubmission({
-      taskId,
-      formData,
-      fileName,
-      userId: req.user.id,
-      companyId: task.company_id,
-      formType: 'ky3p',
-      fields,
-      convertToCSV: convertKy3pToCSV
-    });
-    
-    // Process task dependencies to automatically unlock related tasks
-    try {
-      logger.info('[Tasks] Processing dependencies after KY3P submission', {
-        taskId,
-        companyId: task.company_id
-      });
+    // Save responses to database
+    for (const field of fields) {
+      const fieldKey = field.field_key;
+      const value = formData[fieldKey];
+      const status = value ? 'COMPLETE' : 'EMPTY';
       
-      // Process general dependencies using the rules system
-      await processDependencies(task.company_id);
-      
-      // For extra reliability, also directly unlock Open Banking tasks
-      await unlockOpenBankingTasks(task.company_id);
-      
-      logger.info('[Tasks] Successfully processed dependencies after KY3P submission', {
-        taskId,
-        companyId: task.company_id
-      });
-    } catch (unlockError) {
-      logger.error('[Tasks] Error processing dependencies after KY3P submission', {
-        taskId,
-        companyId: task.company_id,
-        error: unlockError instanceof Error ? unlockError.message : 'Unknown error'
-      });
+      try {
+        // First try to insert
+        await db.insert(ky3pResponses)
+          .values({
+            task_id: taskId,
+            field_id: field.id,
+            response_value: value || null,
+            status,
+            version: 1,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+      } catch (err) {
+        const error = err as Error;
+        if (error.message.includes('duplicate key value violates unique constraint')) {
+          // If duplicate, update instead
+          await db.update(ky3pResponses)
+            .set({
+              response_value: value || null,
+              status,
+              version: sql`${ky3pResponses.version} + 1`,
+              updated_at: new Date()
+            })
+            .where(
+              and(
+                eq(ky3pResponses.task_id, taskId),
+                eq(ky3pResponses.field_id, field.id)
+              )
+            );
+        } else {
+          throw error;
+        }
+      }
     }
     
+    // Use our enhanced form submission handler with immediate task unlocking
+    const result = await submitFormWithImmediateUnlock({
+      taskId,
+      userId: req.user.id,
+      companyId: task.company_id,
+      formData,
+      formType: 'ky3p',
+      fileName
+    });
+    
+    logger.info('KY3P form submission completed with synchronous task unlocking', {
+      taskId,
+      companyId: task.company_id,
+      success: result.success
+    });
+    
     // Return the standardized response
-    res.json(result);
+    res.json({
+      ...result,
+      fileId: result.fileId || null,
+      success: true,
+      message: 'Form submitted successfully'
+    });
   } catch (error) {
     logger.error('Error submitting KY3P form', {
       error: error instanceof Error ? error.message : 'Unknown error'
