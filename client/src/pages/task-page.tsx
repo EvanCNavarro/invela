@@ -85,10 +85,88 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Use the shared WebSocket service instead of creating a separate connection
   const websocketSubscription = useRef<(() => void) | undefined>();
+  // Reference to track if the component is mounted
+  const isMounted = useRef(true);
+  // Reference to store refetch function once it's available
+  const refetchRef = useRef<() => void>();
   
-  // This useQuery declaration was moved to the top of the component
+  // Fetch task data using TanStack Query
+  const { data: taskData, isLoading, error, refetch } = useQuery<Task>({
+    queryKey: [apiEndpoint, taskId, params.taskSlug],
+    queryFn: async () => {
+      try {
+        let response;
+        
+        // If we have a task ID, use direct ID lookup with special endpoint
+        if (taskId) {
+          console.log('[TaskPage] Fetching task data by ID:', { 
+            taskId,
+            fullUrl: apiEndpoint,
+            timestamp: new Date().toISOString()
+          });
+          
+          response = await fetch(apiEndpoint);
+        } 
+        // Otherwise try to parse the slug for name-based lookup
+        else {
+          // Parse the slug format: "{taskType}-{companyName}"
+          const match = params.taskSlug.match(/^(kyb|card|security|ky3p)-(.+)$/i);
+          
+          if (match) {
+            const [, type, companyName] = match;
+            console.log('[TaskPage] Fetching task by type and company name:', { 
+              type, 
+              companyName,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Determine the endpoint based on task type
+            let lookupEndpoint = '';
+            if (type.toLowerCase() === 'kyb') {
+              lookupEndpoint = `/api/tasks/kyb/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'card') {
+              lookupEndpoint = `/api/tasks/card/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'security' || type.toLowerCase() === 'ky3p') {
+              lookupEndpoint = `/api/tasks/ky3p/${encodeURIComponent(companyName)}`;
+            }
+            
+            if (lookupEndpoint) {
+              response = await fetch(lookupEndpoint);
+            } else {
+              throw new Error(`Unsupported task type: ${type}`);
+            }
+          } else {
+            throw new Error(`Invalid task slug format: ${params.taskSlug}`);
+          }
+        }
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch task: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('[TaskPage] Task data received:', {
+          taskId: data.id,
+          taskType: data.task_type,
+          title: data.title,
+          status: data.status,
+          timestamp: new Date().toISOString()
+        });
+        
+        return data;
+      } catch (error) {
+        console.error('[TaskPage] Error fetching task data:', error);
+        throw error;
+      }
+    },
+  });
   
-  // Define the setupWebSocketSubscription after the useQuery to ensure refetch is initialized
+  // Store the refetch function in ref to access it safely from WebSocket callback
+  useEffect(() => {
+    refetchRef.current = refetch;
+  }, [refetch]);
+  
+  // Function to set up WebSocket subscription using the safely stored refetch function
   const setupWebSocketSubscription = useCallback(async () => {
     if (!taskId) return;
     
@@ -104,8 +182,8 @@ export default function TaskPage({ params }: TaskPageProps) {
       
       // Subscribe to task update events for this specific task
       websocketSubscription.current = await wsService.subscribe('task_updated', (data) => {
-        // Ensure the message is for this task
-        if (!data || (data.id !== taskId && data.taskId !== taskId)) return;
+        // Ensure the message is for this task and component is still mounted
+        if (!data || (data.id !== taskId && data.taskId !== taskId) || !isMounted.current) return;
         
         logger.info('[TaskPage] Task update received via WebSocket:', {
           taskId: data.id || data.taskId,
@@ -113,9 +191,9 @@ export default function TaskPage({ params }: TaskPageProps) {
           progress: data.progress
         });
         
-        // Refresh task data to get the latest state
-        if (refetch) {
-          refetch();
+        // Use the safely stored refetch function
+        if (refetchRef.current) {
+          refetchRef.current();
         }
       });
       
@@ -124,7 +202,7 @@ export default function TaskPage({ params }: TaskPageProps) {
     } catch (err) {
       logger.error('[TaskPage] Error setting up WebSocket subscription:', err);
     }
-  }, [taskId, refetch]);
+  }, [taskId]); // Only depend on taskId, not on refetch
   
   // Function to extract company name from task title
   const extractCompanyNameFromTitle = useCallback((title: string): string => {
@@ -191,12 +269,27 @@ export default function TaskPage({ params }: TaskPageProps) {
     
     // Cleanup function to unsubscribe when component unmounts
     return () => {
+      // Mark component as unmounted to prevent further updates
+      isMounted.current = false;
+      
+      // Clean up WebSocket subscription
       if (websocketSubscription.current) {
         websocketSubscription.current();
         websocketSubscription.current = undefined;
       }
     };
   }, [setupWebSocketSubscription]);
+  
+  // Track component mount status
+  useEffect(() => {
+    // Mark component as mounted
+    isMounted.current = true;
+    
+    // Mark as unmounted when component is unmounted
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   
   // Handle back button click
   const handleBackClick = useCallback(() => {
@@ -407,83 +500,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
   }, [fileId, taskContentType, toast]);
   
-  // Fetch task data and keep local state to allow updates
-  const { data: taskData, isLoading, error, refetch } = useQuery<Task>({
-    queryKey: [apiEndpoint, taskId, params.taskSlug],
-    queryFn: async () => {
-      try {
-        let response;
-        
-        // If we have a task ID, use direct ID lookup with special endpoint
-        if (taskId) {
-          console.log('[TaskPage] Fetching task data by ID:', { 
-            taskId,
-            fullUrl: apiEndpoint,
-            timestamp: new Date().toISOString()
-          });
-          
-          response = await fetch(apiEndpoint);
-        } 
-        // Otherwise try to parse the slug for name-based lookup
-        else {
-          // Parse the slug format: "{taskType}-{companyName}"
-          const match = params.taskSlug.match(/^(kyb|card|security|ky3p)-(.+)$/i);
-          
-          if (match) {
-            const [, type, companyName] = match;
-            console.log('[TaskPage] Fetching task by type and company name:', { 
-              type, 
-              companyName,
-              timestamp: new Date().toISOString()
-            });
-            
-            // Determine the endpoint based on task type
-            let lookupEndpoint = '';
-            if (type.toLowerCase() === 'kyb') {
-              lookupEndpoint = `/api/tasks/kyb/${encodeURIComponent(companyName)}`;
-            } else if (type.toLowerCase() === 'card') {
-              lookupEndpoint = `/api/tasks/card/${encodeURIComponent(companyName)}`;
-            } else if (type.toLowerCase() === 'security' || type.toLowerCase() === 'ky3p') {
-              lookupEndpoint = `/api/tasks/ky3p/${encodeURIComponent(companyName)}`;
-            }
-            
-            if (lookupEndpoint) {
-              response = await fetch(lookupEndpoint);
-            } else {
-              throw new Error(`Unsupported task type: ${type}`);
-            }
-          } else {
-            throw new Error(`Invalid task slug format: ${params.taskSlug}`);
-          }
-        }
-        
-        if (!response.ok) {
-          console.error('[TaskPage] Failed to fetch task:', { 
-            status: response.status, 
-            url: response.url,
-            timestamp: new Date().toISOString()
-          });
-          throw new Error(`Failed to fetch task: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        console.log('[TaskPage] Task data received:', { 
-          taskId: data.id,
-          taskType: data.task_type,
-          title: data.title,
-          status: data.status,
-          timestamp: new Date().toISOString()
-        });
-        
-        return data;
-      } catch (err) {
-        console.error('[TaskPage] Error fetching task:', err);
-        throw err;
-      }
-    },
-    staleTime: 300000 // 5 minutes
-  });
+  // The task query has been moved to the top of the component
+  // No duplicate declarations here
   
   // Define the task processing logic outside the render cycle
   const processTaskData = useCallback((taskData: Task) => {
