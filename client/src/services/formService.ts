@@ -169,9 +169,15 @@ export interface FormServiceInterface {
   /**
    * Submit the form
    * @param options Form submission options
-   * @returns Promise that resolves with submission result
+   * @returns Promise that resolves with standardized submission result
    */
-  submit(options: FormSubmitOptions): Promise<any>;
+  submit(options: FormSubmitOptions): Promise<{
+    success: boolean;
+    fileId?: number;
+    fileName?: string;
+    error?: string;
+    details?: string;
+  }>;
   
   /**
    * Validate form data
