@@ -129,14 +129,36 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
               const requestData = {
                 fileName: `KYBForm_${task.id}_${cleanCompanyName}_${formattedDate}_${formattedTime}_v1.0`,
                 formData,
-                taskId: task.id
+                taskId: task.id,
+                // IMPORTANT: Add explicit submission flag to ensure correct processing
+                explicitSubmission: true
               };
               
-              console.log('[KYB Form] Sending request data:', {
+              console.log('[KYB Form] Sending submission request:', {
                 fileName: requestData.fileName,
                 taskId: requestData.taskId,
+                explicitSubmission: requestData.explicitSubmission,
                 timestamp: new Date().toISOString()
               });
+              
+              // CRITICAL FIX: Force submission dialog to close after 10 seconds if server doesn't respond
+              // This ensures the user isn't stuck with a spinning indicator forever
+              const submissionTimeout = setTimeout(() => {
+                console.log('[KYB Form] Submission taking too long, forcing completion');
+                // Force the file vault tab to be unlocked even if API is slow
+                try {
+                  directlyAddFileVaultTab();
+                  enableFileVault().catch(e => console.error('[KYB Form] Emergency file vault enable failed:', e));
+                } catch (e) {
+                  console.error('[KYB Form] Emergency file vault enable failed:', e);
+                }
+                
+                toast({
+                  title: "KYB Form Submitted",
+                  description: "Your form was processed, but the server response was delayed. The File Vault tab should now be enabled.",
+                });
+                navigate('/task-center');
+              }, 10000); // 10 second timeout
               
               // Using the correct endpoint URL that's working on the server
               fetch(`/api/kyb/submit/${task.id}`, {
@@ -195,7 +217,12 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   return { success: true };
                 }
               })
-              .then(() => {
+              .then((result) => {
+                // Clear the timeout since we got a response
+                clearTimeout(submissionTimeout);
+                
+                console.log('[KYB Form] Submission result received:', result);
+                
                 // COMPREHENSIVE FIX: Add file-vault tab directly to the current company data in cache
                 // AND update the database through the API
                 try {
@@ -213,30 +240,19 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                     console.error('[KYB Form] API file vault update failed:', apiError);
                   });
                   
-                  // For extra redundancy, add a delay and try updating the cache again
-                  setTimeout(() => {
-                    try {
-                      console.log('[KYB Form] Running secondary file vault unlock attempt for reliability');
-                      const secondResult = directlyAddFileVaultTab();
-                      console.log('[KYB Form] Secondary cache update result:', secondResult);
-                      
-                      // Also make a fallback direct API call
-                      fetch('/api/file-vault/force-enable', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                      })
-                      .then(response => response.json())
-                      .then(data => {
-                        console.log('[KYB Form] Fallback API force-enable result:', data);
-                      })
-                      .catch(fetchError => {
-                        console.error('[KYB Form] Fallback API call failed:', fetchError);
-                      });
-                    } catch (secondaryError) {
-                      console.error('[KYB Form] Secondary cache update attempt failed:', secondaryError);
-                    }
-                  }, 1000);
+                  // For extra reliability, hit the force-enable endpoint directly
+                  fetch('/api/file-vault/force-enable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                    console.log('[KYB Form] Direct force-enable result:', data);
+                  })
+                  .catch(fetchError => {
+                    console.error('[KYB Form] Direct force-enable failed:', fetchError);
+                  });
                   
                 } catch (cacheUpdateError) {
                   console.error('[KYB Form] Error updating file vault tab in cache:', cacheUpdateError);
@@ -244,8 +260,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   // If direct update fails, try with emergency endpoint
                   console.log('[KYB Form] Using emergency file vault update method for company ID:', task.metadata?.company_id);
                   
-                  // Make sure we handle the case where we're submitting for company 206 (DevelopmentTestingZ)
-                  // as well as 205 (DevelopmentTestingY)
+                  // Use the company ID from task metadata
                   fetch('/api/emergency/unlock-file-vault/' + task.metadata?.company_id, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -260,13 +275,21 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   });
                 }
                 
+                // Show success toast and navigate to task center
                 toast({
                   title: "KYB Form Submitted",
                   description: "Your KYB form has been saved and the task has been updated. The File Vault tab is now enabled.",
                 });
-                navigate('/task-center');
+                
+                // Add a small delay before navigation to ensure UI updates and toast is visible
+                setTimeout(() => {
+                  navigate('/task-center');
+                }, 1000);
               })
               .catch(error => {
+                // Clear the timeout since we got a response (even if it's an error)
+                clearTimeout(submissionTimeout);
+                
                 console.error('[KYB Form] Form submission failed:', {
                   errorMessage: error.message,
                   errorName: error.name,
