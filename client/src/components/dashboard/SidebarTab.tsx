@@ -130,7 +130,16 @@ export function SidebarTab({
   
   // Use Wouter Link for internal navigation
   return (
-    <Link href={isDisabled ? "#" : href}>
+    <Link 
+      href={isDisabled ? "/task-center" : href} 
+      onClick={(e) => {
+        if (isDisabled) {
+          e.preventDefault();
+          console.log(`[SidebarTab] Tab "${label}" is locked. Redirecting to task-center.`);
+          window.location.href = '/task-center';
+        }
+      }}
+    >
       {content}
     </Link>
   );
