@@ -265,7 +265,7 @@ export async function reconcileTaskProgress(
               or(
                 // Handle both capitalization variants for maximum compatibility
                 // This ensures we count all completed fields regardless of status format
-                sql`UPPER(${ky3pResponses.status}) = 'COMPLETE'`,
+                sql`UPPER(${ky3pResponses.status}) = UPPER(${KYBFieldStatus.COMPLETE})`,
                 sql`UPPER(${ky3pResponses.status}) = 'FILLED'`
               ),
               // Only count fields with non-empty values
