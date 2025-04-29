@@ -79,6 +79,40 @@ export interface FormServiceInterface {
   getFormData(): Record<string, any>;
   
   /**
+   * Update form data directly in the service's cache
+   * This is used by form components to update the form data without making an API call
+   */
+  updateFormData(fieldKey: string, value: any, taskId?: number): void;
+  
+  /**
+   * Save form data to the server
+   * This is used by form components to persist form data
+   */
+  save(options: { taskId: number, includeMetadata?: boolean }): Promise<boolean>;
+  
+  /**
+   * Synchronize form data between different data sources
+   * This ensures consistency between task.savedFormData and individual field responses
+   */
+  syncFormData?(taskId: number): Promise<{
+    success: boolean;
+    formData: Record<string, any>;
+    progress: number;
+    status: string;
+    taskId: number;
+    syncDirection: 'none' | 'to_task' | 'to_fields';
+  }>;
+  
+  /**
+   * Get timestamped form data for reliable conflict resolution
+   * This is used by form components to track field update timestamps
+   */
+  getTimestampedFormData?(): {
+    values: Record<string, any>;
+    timestamps: Record<string, number>;
+  };
+  
+  /**
    * Clear the service cache
    * This is used to reset the service state when needed
    */
@@ -89,4 +123,16 @@ export interface FormServiceInterface {
    * This is used by FormDataManager to retrieve saved form data
    */
   loadProgress?(taskId: number): Promise<Record<string, any>>;
+  
+  /**
+   * Get form sections/groups
+   * This is used by form components to render section navigation
+   */
+  getSections?(): Promise<FormSection[]>;
+  
+  /**
+   * Calculate form progress
+   * This is used by form components to display progress indicators
+   */
+  calculateProgress?(formData: Record<string, any>): number;
 }
