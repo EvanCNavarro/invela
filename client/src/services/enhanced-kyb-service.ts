@@ -1235,8 +1235,8 @@ export class EnhancedKybFormService implements FormServiceInterface {
       // Get timestamps
       const timestamps = this.timestampedFormData.timestamps;
       
-      // FIX: Use the correct endpoint that matches the server implementation
-      const response = await fetch(`/api/kyb/submit/${taskId}`, {
+      // FIXED: Use the standardized endpoint format like other form types
+      const response = await fetch(`/api/tasks/${taskId}/kyb-submit`, {
         method: 'POST',
         credentials: 'include',
         headers: {
