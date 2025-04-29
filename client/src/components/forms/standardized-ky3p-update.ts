@@ -34,9 +34,14 @@ const logger = getLogger('StandardizedKY3PUpdate');
  * @returns Promise that resolves to true if successful, false otherwise
  */
 export async function standardizedBulkUpdate(
-  taskId: number,
+  taskId: number | undefined,
   formData: Record<string, any>
 ): Promise<boolean> {
+  // Verify taskId is provided
+  if (!taskId) {
+    logger.error('standardizedBulkUpdate called without a taskId');
+    return false;
+  }
   try {
     logger.info(`Performing standardized bulk update for task ${taskId} with ${Object.keys(formData).length} fields`);
     
