@@ -86,6 +86,8 @@ export default function TaskPage({ params }: TaskPageProps) {
   // Use the shared WebSocket service instead of creating a separate connection
   const websocketSubscription = useRef<(() => void) | undefined>();
   
+  // This was moved above the setupWebSocketSubscription function
+  
   // Import shared WebSocket service at the top level to avoid issues
   const setupWebSocketSubscription = useCallback(async () => {
     if (!taskId) return;
