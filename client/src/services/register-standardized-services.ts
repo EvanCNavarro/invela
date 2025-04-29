@@ -1,69 +1,103 @@
 /**
  * Register Standardized Services
  * 
- * This module handles the registration of all standardized form services
- * and provides a mechanism to make them the default services for the application.
+ * This module registers standardized form services that use a consistent
+ * interface with string-based field keys across all form types.
  */
 
-import { StandardizedKY3PFormService } from './standardized-ky3p-form-service';
-import { registerStandardizedService } from './standardized-service-registry';
-import getLogger from '@/utils/logger';
+import { ComponentFactory } from '@/components/forms/component-factory';
+import { EnhancedKY3PFormService } from './enhanced-ky3p-form-service';
 
-const logger = getLogger('RegisterStandardizedServices');
+// List of service registrations to set up
+const standardizedServiceRegistrations = [
+  {
+    serviceName: 'EnhancedKY3PFormService',
+    serviceType: EnhancedKY3PFormService,
+    formTypes: ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'],
+  },
+];
+
+// Map that tracks if services are registered
+const serviceRegistrationStatus = new Map<string, boolean>();
 
 /**
- * Register all standardized form services
- * 
- * This function registers all available standardized form services
- * with the service registry, making them available for use throughout
- * the application.
+ * Register all standardized form services with the ComponentFactory
  */
-export function registerStandardizedServices(): void {
-  logger.info('Registering standardized form services');
+export function registerStandardizedServices() {
+  console.log('[RegisterStandardizedServices] Registering standardized form services');
   
-  try {
-    // Register KY3P form service
-    registerStandardizedService('standardizedKy3pFormService', StandardizedKY3PFormService);
-    logger.info('KY3P form service registered successfully');
+  standardizedServiceRegistrations.forEach(registration => {
+    const { serviceName, serviceType, formTypes } = registration;
     
-    // Future services would be registered here
-    // registerStandardizedService('standardizedKybFormService', StandardizedKYBFormService);
-    // registerStandardizedService('standardizedOpenBankingFormService', StandardizedOpenBankingFormService);
-  } catch (error) {
-    logger.error('Error registering standardized services:', error);
-  }
+    try {
+      // Register for each form type
+      formTypes.forEach(formType => {
+        console.log(`[RegisterStandardizedServices] Registering ${serviceName} for task type: ${formType}`);
+        ComponentFactory.registerService(formType, serviceType);
+      });
+      
+      // Mark as registered
+      serviceRegistrationStatus.set(serviceName, true);
+      console.log(`[RegisterStandardizedServices] Successfully registered ${serviceName} for ${formTypes.length} form types`);
+    } catch (error) {
+      console.error(`[RegisterStandardizedServices] Error registering ${serviceName}:`, error);
+      serviceRegistrationStatus.set(serviceName, false);
+    }
+  });
 }
 
 /**
- * Use standardized form services as the default
+ * Check if a specific service is registered
  * 
- * This function overrides the standard form service implementations
- * with our standardized versions, making them the default throughout
- * the application.
+ * @param serviceName The name of the service to check
  */
-export function useStandardizedServices(): void {
-  logger.info('Using standardized form services as default');
+export function isServiceRegistered(serviceName: string): boolean {
+  return serviceRegistrationStatus.get(serviceName) === true;
+}
+
+/**
+ * Use standardized services as the default implementation
+ * 
+ * This function makes the standardized services the default choice
+ * for all form types where they're available.
+ */
+export function useStandardizedServices() {
+  console.log('[RegisterStandardizedServices] Setting standardized services as default');
   
+  // Override the KY3P form service with our enhanced version
+  const ky3pOverrideSuccess = overrideKY3PFormService();
+  console.log(`[RegisterStandardizedServices] KY3P form service override ${ky3pOverrideSuccess ? 'successful' : 'failed'}`);
+  
+  // Add more overrides here as they become available
+}
+
+/**
+ * Override the KY3P form service with our enhanced version
+ */
+function overrideKY3PFormService(): boolean {
   try {
-    // Override KY3P form service
-    if (typeof window !== 'undefined') {
-      // Only run this in browser environment
-      if ((window as any).KY3PFormService) {
-        logger.info('Overriding standard KY3P form service with standardized version');
-        const originalKY3PService = (window as any).KY3PFormService;
-        
-        // Store original for potential fallback
-        (window as any)._originalKY3PFormService = originalKY3PService;
-        
-        // Replace with standardized service
-        (window as any).KY3PFormService = StandardizedKY3PFormService;
-      } else {
-        logger.warn('Standard KY3P form service not available for override');
-      }
-      
-      // Future service overrides would go here
+    // Check if KY3P form service is available in the ComponentFactory
+    const existingKY3PService = ComponentFactory.lookupService('ky3p');
+    
+    if (!existingKY3PService) {
+      console.warn('[RegisterStandardizedServices] Standard KY3P form service not available for override');
+      return false;
     }
+    
+    console.log('[RegisterStandardizedServices] Overriding KY3P form service with enhanced version');
+    
+    // Register our enhanced service for all KY3P form types
+    standardizedServiceRegistrations.forEach(registration => {
+      if (registration.serviceName === 'EnhancedKY3PFormService') {
+        registration.formTypes.forEach(formType => {
+          ComponentFactory.registerService(formType, registration.serviceType);
+        });
+      }
+    });
+    
+    return true;
   } catch (error) {
-    logger.error('Error overriding standard services:', error);
+    console.error('[RegisterStandardizedServices] Error overriding KY3P form service:', error);
+    return false;
   }
 }
