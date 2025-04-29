@@ -1,0 +1,30 @@
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "2. S&P KY3P Security Assessment: DevTest36"
+[TaskPage] Extracted company name (colon split): "DevTest36"
+[TaskPage] Found current company name from API: "DevTest36"
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest36", extractedName: "DevTest36", metadataName: undefined, currentCompanyName: "DevTest36", taskTitle: "2. S&P KY3P Security Assessment: DevTest36"}
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest36", extractedName: "DevTest36", metadataName: undefined, taskTitle: "2. S&P KY3P Security Assessment: DevTest36"}
+[WebSocket] Received message: 
+Object {type: "task_updated", payload: {…}}
+[TaskPage] [TaskPage] WebSocket message received: 
+Object {type: "task_updated", payload: {…}}
+[TaskPage] [TaskPage] Task update received via WebSocket: 
+Object {taskId: 658, status: "not_started", progress: 0}
+[TaskPage] Fetching task data by ID: 
+Object {taskId: 658, fullUrl: "/api/tasks.json/658", timestamp: "2025-04-28T10:32:20.649Z"}
+[TaskPage] Task data received: 
+Object {taskId: 658, taskType: "ky3p", title: "2. S&P KY3P Security Assessment: DevTest36", status: "not_started", timestamp: "2025-04-28T10:32:20.865Z"}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[TaskPage] Extracting company name from title: "2. S&P KY3P Security Assessment: DevTest36"
+[TaskPage] Extracted company name (colon split): "DevTest36"
+[TaskPage] Found current company name from API: "DevTest36"
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest36", extractedName: "DevTest36", metadataName: undefined, currentCompanyName: "DevTest36", taskTitle: "2. S&P KY3P Security Assessment: DevTest36"}
+[TaskPage] Company name set for ky3p form: 
+Object {displayNameValue: "DevTest36", extractedName: "DevTest36", metadataName: undefined, taskTitle: "2. S&P KY3P Security Assessment: DevTest36"}
