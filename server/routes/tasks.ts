@@ -13,6 +13,8 @@ import { FileCreationService } from '../services/file-creation';
 import { CompanyTabsService } from '../services/company-tabs';
 import { isCompanyDemo } from '../utils/demo-helpers';
 import { processDependencies, unlockOpenBankingTasks } from './task-dependencies';
+import { submitFormWithImmediateUnlock } from '../services/form-submission-handler';
+import { unlockDependentTasksImmediately } from '../services/synchronous-task-dependencies';
 
 const logger = new Logger('TasksRoutes');
 
