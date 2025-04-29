@@ -1798,6 +1798,45 @@ router.post('/api/tasks/:taskId/open-banking-submit', requireAuth, async (req, r
   }
 });
 
+// Compatibility endpoint for KY3P form submission
+// This endpoint matches the client-side endpoint used in standardized-ky3p-form-service.ts
+router.post('/api/ky3p-task/:taskId/submit', requireAuth, async (req, res) => {
+  try {
+    const taskId = Number(req.params.taskId);
+    
+    // Simply forward the request to the standardized endpoint
+    logger.info('[Tasks Routes] Compatibility route: forwarding to standardized KY3P submit endpoint', {
+      originalUrl: req.originalUrl,
+      targetEndpoint: `/api/tasks/${taskId}/ky3p-submit-standard`
+    });
+    
+    // Use the same request body
+    const { formData, fileName } = req.body;
+    
+    // Make internal request to the standardized endpoint
+    const response = await fetch(`http://localhost:${process.env.PORT || 5000}/api/tasks/${taskId}/ky3p-submit-standard`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': req.headers.cookie || '' // Forward authentication cookies
+      },
+      body: JSON.stringify({ formData, fileName })
+    });
+    
+    // Get the response from the standardized endpoint
+    const result = await response.json();
+    
+    // Return the response to the client
+    res.status(response.status).json(result);
+  } catch (error) {
+    logger.error('Error in KY3P compatibility endpoint:', error);
+    res.status(500).json({
+      error: 'Failed to submit form',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // Emergency endpoint to directly unlock a specific Open Banking task
 // This is a temporary endpoint to fix an issue with task 614
 router.post('/api/tasks/unlock-open-banking/:taskId', requireAuth, async (req, res) => {
