@@ -493,17 +493,20 @@ export class KY3PFormService extends EnhancedKybFormService {
    * This method is typically called by the Clear Fields action
    * to reset all fields to their initial empty state
    */
-  async clearFields(): Promise<boolean> {
-    if (!this.taskId) {
+  async clearFields(taskId?: number): Promise<boolean> {
+    // Use the provided taskId parameter if available, otherwise use the one from the instance
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
       logger.error('[KY3P Form Service] Cannot clear fields - no task ID available');
       return false;
     }
     
     try {
-      logger.info(`[KY3P Form Service] Clearing all fields for task ${this.taskId}`);
+      logger.info(`[KY3P Form Service] Clearing all fields for task ${effectiveTaskId}`);
       
       // Call the specific clear API endpoint for KY3P
-      const clearResponse = await fetch(`/api/ky3p/clear/${this.taskId}`, {
+      const clearResponse = await fetch(`/api/ky3p/clear/${effectiveTaskId}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -522,7 +525,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         // Force a progress recalculation and save
         const progress = this.calculateProgress();
         await this.save({
-          taskId: this.taskId,
+          taskId: effectiveTaskId,
           progress,
           status: progress >= 100 ? 'ready_for_submission' : 'not_started'
         });
@@ -532,14 +535,14 @@ export class KY3PFormService extends EnhancedKybFormService {
       
       // Clear successful via API
       const clearResult = await clearResponse.json();
-      logger.info(`[KY3P Form Service] Fields cleared successfully via API for task ${this.taskId}`);
+      logger.info(`[KY3P Form Service] Fields cleared successfully via API for task ${effectiveTaskId}`);
       
       // Empty our local data as well to match the server state
       this.formData = {};
       
       // Also make sure to refresh our cached progress
       if (this.progressCache) {
-        this.progressCache.delete(this.taskId);
+        this.progressCache.delete(effectiveTaskId);
       }
       
       // Trigger a load to refresh data from server
@@ -556,7 +559,7 @@ export class KY3PFormService extends EnhancedKybFormService {
         // Force a progress recalculation and save with explicit status reset
         const progress = 0;
         await this.save({
-          taskId: this.taskId,
+          taskId: effectiveTaskId,
           progress,
           status: 'not_started'
         });
