@@ -48,14 +48,39 @@ export function useStandardizedServices(): void {
     // Import componentFactory to register standardized services
     const { componentFactory } = require('./componentFactory');
     
+    // Import the factory for isolated instances
+    const { standardizedKy3pFormServiceFactory } = require('./standardized-ky3p-form-service');
+    
     // Register the StandardizedKY3PFormService directly with componentFactory
     logger.info('Registering standardized KY3P form service with componentFactory');
-    componentFactory.registerFormService('ky3p', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
     
-    // Also register for alternate task types
-    componentFactory.registerFormService('security', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
-    componentFactory.registerFormService('sp_ky3p_assessment', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
-    componentFactory.registerFormService('security_assessment', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
+    // Use a single QueryClient for all service instances
+    const queryClient = new (require('@tanstack/react-query').QueryClient)();
+    
+    // Create a standardized KY3P service instance for global registration
+    const standardizedKy3pService = new StandardizedKY3PFormService(queryClient);
+    
+    // Register for all KY3P task types
+    componentFactory.registerFormService('ky3p', standardizedKy3pService);
+    componentFactory.registerFormService('security', standardizedKy3pService);
+    componentFactory.registerFormService('sp_ky3p_assessment', standardizedKy3pService);
+    componentFactory.registerFormService('security_assessment', standardizedKy3pService);
+    
+    // Also override the factory's getIsolatedFormService method to ensure it uses our standardized service
+    logger.info('Patching ComponentFactory.getIsolatedFormService to use standardized services');
+    
+    // Save the original method for tasks we don't handle
+    const originalGetIsolatedFormService = componentFactory.getIsolatedFormService;
+    
+    // Override with our version
+    componentFactory.getIsolatedFormService = function(taskType, companyId, taskId) {
+      if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment' || taskType === 'security' || taskType === 'security_assessment') {
+        logger.info(`Creating isolated StandardizedKY3PFormService for ${taskType} task ${taskId}`);
+        return standardizedKy3pFormServiceFactory.getServiceInstance(companyId, taskId);
+      }
+      // Otherwise use the original method
+      return originalGetIsolatedFormService.call(this, taskType, companyId, taskId);
+    };
     
     // Override KY3P form service globally
     if (typeof window !== 'undefined') {
