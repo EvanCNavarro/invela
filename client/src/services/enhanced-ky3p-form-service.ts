@@ -69,6 +69,16 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   }
   
   /**
+   * Get the task ID
+   */
+  get taskId(): number | undefined {
+    // Get task ID from the original service if available
+    const originalTaskId = (this.originalService as any).taskId;
+    logger.info(`[EnhancedKY3P] Getting task ID: ${originalTaskId || 'undefined'}`);
+    return originalTaskId;
+  }
+  
+  /**
    * Get all fields
    * Delegates to the original service
    */
