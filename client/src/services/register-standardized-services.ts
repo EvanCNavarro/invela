@@ -5,7 +5,7 @@
  * interface with string-based field keys across all form types.
  */
 
-import { ComponentFactory } from './componentFactory';
+import { ComponentFactory, componentFactory } from './componentFactory';
 import { EnhancedKY3PFormService } from './enhanced-ky3p-form-service';
 
 // List of service registrations to set up
@@ -33,7 +33,7 @@ export function registerStandardizedServices() {
       // Register for each form type
       formTypes.forEach(formType => {
         console.log(`[RegisterStandardizedServices] Registering ${serviceName} for task type: ${formType}`);
-        ComponentFactory.registerService(formType, serviceType);
+        componentFactory.registerFormService(formType, serviceType);
       });
       
       // Mark as registered
@@ -77,7 +77,7 @@ export function useStandardizedServices() {
 function overrideKY3PFormService(): boolean {
   try {
     // Check if KY3P form service is available in the ComponentFactory
-    const existingKY3PService = ComponentFactory.lookupService('ky3p');
+    const existingKY3PService = componentFactory.getFormService('ky3p');
     
     if (!existingKY3PService) {
       console.warn('[RegisterStandardizedServices] Standard KY3P form service not available for override');
@@ -90,7 +90,7 @@ function overrideKY3PFormService(): boolean {
     standardizedServiceRegistrations.forEach(registration => {
       if (registration.serviceName === 'EnhancedKY3PFormService') {
         registration.formTypes.forEach(formType => {
-          ComponentFactory.registerService(formType, registration.serviceType);
+          componentFactory.registerFormService(formType, registration.serviceType);
         });
       }
     });
