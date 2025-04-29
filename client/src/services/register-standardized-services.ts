@@ -22,17 +22,25 @@ export function registerStandardizedServices(): void {
   try {
     logger.info('Registering standardized form services');
     
-    // Register the enhanced KY3P form service
+    // Register the enhanced KY3P form service for all KY3P form types
     logger.info('Registering enhanced KY3P form service');
     
-    // We use the ComponentFactory instance (not static methods)
-    // to register the service, which avoids the "is not a constructor" error
-    componentFactory.registerFormService('ky3p', (companyId, taskId) => {
+    // Define a factory function that creates enhanced KY3P form services
+    const ky3pServiceFactory = (companyId: number | string | undefined, taskId: number | string | undefined) => {
       logger.info(`Creating enhanced KY3P form service via factory for company ${companyId}, task ${taskId}`);
       return formServiceFactory.getServiceInstance('ky3p', companyId, taskId, true);
+    };
+    
+    // Register for all KY3P-related task types
+    const ky3pTaskTypes = ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'];
+    
+    ky3pTaskTypes.forEach(taskType => {
+      logger.info(`Registering enhanced KY3P form service for task type: ${taskType}`);
+      componentFactory.registerFormService(taskType, ky3pServiceFactory);
     });
     
-    logger.info('Successfully registered enhanced KY3P form service');
+    logger.info('Successfully registered enhanced KY3P form service for all task types');
+
     
     // Additional service registrations can go here
     
@@ -52,10 +60,18 @@ export function useStandardizedServices(): void {
   try {
     logger.info('Setting standardized form services as default');
     
-    // Re-register the KY3P service to replace the original implementation
-    componentFactory.registerFormService('ky3p', (companyId, taskId) => {
+    // Define a factory function that creates enhanced KY3P form services
+    const ky3pServiceFactory = (companyId: number | string | undefined, taskId: number | string | undefined) => {
       logger.info(`Creating enhanced KY3P form service (default) for company ${companyId}, task ${taskId}`);
       return formServiceFactory.getServiceInstance('ky3p', companyId, taskId, true);
+    };
+    
+    // Register for all KY3P-related task types
+    const ky3pTaskTypes = ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'];
+    
+    ky3pTaskTypes.forEach(taskType => {
+      logger.info(`Re-registering enhanced KY3P form service as default for task type: ${taskType}`);
+      componentFactory.registerFormService(taskType, ky3pServiceFactory);
     });
     
     logger.info('Standardized form services are now the default');

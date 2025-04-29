@@ -11,6 +11,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { registerServices } from "./services/registerServices";
+import { registerStandardizedServices, useStandardizedServices } from "./services/register-standardized-services";
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
 import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
 
@@ -368,25 +369,20 @@ export default function App() {
     
     // Properly initialize services with explicit context to avoid deprecated warnings
     try {
-      // Register standard services first
+      // Register services in the correct order to ensure our enhanced services
+      // are used as the default
+      
+      // 1. Register standard services first
+      console.log('[App] Registering standard form services');
       registerServices();
       
-      // Register our standardized services as alternatives
-      // Import and register our improved standardized services
-      import('./services/register-standardized-services')
-        .then((module) => {
-          console.log('[App] Registering standardized form services');
-          // The module is already auto-registered when imported
-          
-          // Use our standardized services as the default
-          if (typeof module.useStandardizedServices === 'function') {
-            console.log('[App] Using standardized form services by default');
-            module.useStandardizedServices();
-          }
-        })
-        .catch(error => {
-          console.error('[App] Error loading standardized services:', error);
-        });
+      // 2. Register our standardized services 
+      console.log('[App] Registering standardized form services');
+      registerStandardizedServices();
+      
+      // 3. Explicitly set our enhanced services as the default
+      console.log('[App] Using standardized form services by default');
+      useStandardizedServices();
       
       // Initialize app-wide services with explicit context values
       // This prevents "Using deprecated default instance" warnings
