@@ -94,13 +94,17 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     
     logger.info('Task status updated to submitted', { taskId, formType });
     
-    // 2. Broadcast the task update via WebSocket
+    // 2. Broadcast the task update via WebSocket with enhanced submission metadata
     await broadcastTaskUpdate({
       id: taskId,
       status: 'submitted',
       progress: 100,
       metadata: {
-        lastUpdated: now.toISOString()
+        lastUpdated: now.toISOString(),
+        submittedAt: now.toISOString(),
+        submittedBy: userId,
+        status: 'submitted',
+        explicitlySubmitted: explicitSubmission
       }
     });
     
