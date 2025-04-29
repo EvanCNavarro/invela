@@ -1712,25 +1712,80 @@ router.post('/api/tasks/:taskId/open-banking-submit', requireAuth, async (req, r
       return res.status(404).json({ error: 'Task not found' });
     }
     
+    logger.info('Processing Open Banking form submission with synchronous task dependencies', {
+      taskId,
+      companyId: task.company_id
+    });
+    
     // Get all Open Banking fields
     const fields = await db.select()
       .from(openBankingFields)
       .orderBy(openBankingFields.order);
     
-    // Use the standardized form submission process
-    const result = await standardFormSubmission({
+    // Save responses to database
+    for (const field of fields) {
+      const fieldKey = field.field_key;
+      const value = formData[fieldKey];
+      const status = value ? 'COMPLETE' : 'EMPTY';
+      
+      try {
+        // First try to insert
+        await db.insert(openBankingResponses)
+          .values({
+            task_id: taskId,
+            field_id: field.id,
+            response_value: value || null,
+            status,
+            version: 1,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+      } catch (err) {
+        const error = err as Error;
+        if (error.message.includes('duplicate key value violates unique constraint')) {
+          // If duplicate, update instead
+          await db.update(openBankingResponses)
+            .set({
+              response_value: value || null,
+              status,
+              version: sql`${openBankingResponses.version} + 1`,
+              updated_at: new Date()
+            })
+            .where(
+              and(
+                eq(openBankingResponses.task_id, taskId),
+                eq(openBankingResponses.field_id, field.id)
+              )
+            );
+        } else {
+          throw error;
+        }
+      }
+    }
+    
+    // Use our enhanced form submission handler with immediate task unlocking
+    const result = await submitFormWithImmediateUnlock({
       taskId,
-      formData,
-      fileName,
       userId: req.user.id,
       companyId: task.company_id,
+      formData,
       formType: 'open_banking',
-      fields,
-      convertToCSV: convertOpenBankingToCSV
+      fileName
+    });
+    
+    logger.info('Open Banking form submission completed with synchronous task unlocking', {
+      taskId,
+      companyId: task.company_id,
+      success: result.success
     });
     
     // Return the standardized response
-    res.json(result);
+    res.json({
+      ...result,
+      fileId: result.fileId || null,
+      success: true,
+      message: 'Form submitted successfully'
+    });
   } catch (error) {
     logger.error('Error submitting Open Banking form', {
       error: error instanceof Error ? error.message : 'Unknown error'
