@@ -374,13 +374,15 @@ export default function App() {
       // Register our standardized services as alternatives
       // Import and register our improved standardized services
       import('./services/register-standardized-services')
-        .then(({ registerStandardizedServices, useStandardizedServices }) => {
+        .then((module) => {
           console.log('[App] Registering standardized form services');
-          registerStandardizedServices();
+          // The module is already auto-registered when imported
           
           // Use our standardized services as the default
-          console.log('[App] Using standardized form services by default');
-          useStandardizedServices();
+          if (typeof module.useStandardizedServices === 'function') {
+            console.log('[App] Using standardized form services by default');
+            module.useStandardizedServices();
+          }
         })
         .catch(error => {
           console.error('[App] Error loading standardized services:', error);

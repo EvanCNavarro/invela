@@ -1,267 +1,248 @@
 /**
  * KY3P Test Form Component
  * 
- * This component demonstrates the enhanced KY3P form service with standardized
- * field keys across all form types.
+ * This component demonstrates the use of the enhanced KY3P form service
+ * and provides a way to test the form clearing functionality.
  */
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
+import { formServiceFactory } from '@/services/form-service-factory';
+import { AlertCircle } from 'lucide-react';
 import { EnhancedKY3PFormService } from '@/services/enhanced-ky3p-form-service';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import '../services/register-standardized-services';
 
 interface KY3PTestFormProps {
-  taskId: number;
+  taskId?: number;
+  templateId?: number;
 }
 
-export default function KY3PTestForm({ taskId }: KY3PTestFormProps) {
+/**
+ * KY3P Test Form Component
+ * 
+ * This component demonstrates the enhanced KY3P form service and provides
+ * buttons to test the form clearing functionality and navigation.
+ */
+export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestFormProps) {
   const [formService, setFormService] = useState<EnhancedKY3PFormService | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const [fields, setFields] = useState<any[]>([]);
+  const [initialized, setInitialized] = useState(false);
   const [sections, setSections] = useState<any[]>([]);
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [progress, setProgress] = useState(0);
-  const [actionInProgress, setActionInProgress] = useState(false);
-  const { toast } = useToast();
-
-  // Initialize the form service
+  
+  // Create and initialize the form service
   useEffect(() => {
-    const initializeForm = async () => {
+    async function initializeFormService() {
       try {
-        setLoading(true);
-        const service = new EnhancedKY3PFormService();
-        service.initialize(taskId);
-        await service.loadFormData();
+        console.log('Creating enhanced KY3P form service for task', taskId);
+        const service = formServiceFactory.getServiceInstance('ky3p', 248, taskId) as EnhancedKY3PFormService;
+        
+        if (!service) {
+          console.error('Failed to create enhanced KY3P form service');
+          return;
+        }
         
         setFormService(service);
-        setFields(service.getFields());
-        setSections(service.getSections());
-        setProgress(service.getFormProgress());
         
-        // Extract initial form data
-        const initialData: Record<string, any> = {};
-        service.getFields().forEach(field => {
-          initialData[field.field_key] = field.response || '';
-        });
-        setFormData(initialData);
+        console.log('Initializing form service with template', templateId);
+        await service.initialize(templateId);
+        
+        const serviceSections = service.getSections();
+        setSections(serviceSections);
+        
+        const serviceFormData = service.getFormData();
+        setFormData(serviceFormData);
+        
+        const serviceProgress = service.calculateProgress();
+        setProgress(serviceProgress);
+        
+        setInitialized(true);
+        console.log('Form service initialized successfully');
       } catch (error) {
-        console.error('Error initializing form:', error);
+        console.error('Error initializing form service:', error);
         toast({
-          title: 'Form Load Error',
-          description: 'Failed to load the KY3P form data.',
+          title: 'Error',
+          description: 'Failed to initialize form service: ' + (error as Error).message,
           variant: 'destructive'
         });
-      } finally {
-        setLoading(false);
       }
-    };
-
-    if (taskId) {
-      initializeForm();
     }
-  }, [taskId, toast]);
-
-  // Handle field change
-  const handleFieldChange = (key: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  // Handle bulk update
-  const handleBulkUpdate = async () => {
-    if (!formService) return;
     
-    try {
-      setActionInProgress(true);
-      
-      // Filter out empty values to avoid unnecessary updates
-      const dataToSend = Object.entries(formData).reduce((acc, [key, value]) => {
-        if (value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {} as Record<string, any>);
-      
-      const success = await formService.bulkUpdate(taskId, dataToSend);
-      
-      if (success) {
-        toast({
-          title: 'Form Updated',
-          description: 'KY3P form data was successfully updated.',
-          variant: 'default'
-        });
-        
-        // Reload form to get fresh data
-        await formService.loadFormData();
-        setProgress(formService.getFormProgress());
-      } else {
-        toast({
-          title: 'Update Failed',
-          description: 'Failed to update the KY3P form data.',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error updating form:', error);
+    initializeFormService();
+  }, [taskId, templateId]);
+  
+  // Handle form clearing
+  const handleClearForm = async () => {
+    if (!formService) {
       toast({
-        title: 'Update Error',
-        description: 'An error occurred while updating the form.',
+        title: 'Error',
+        description: 'Form service not initialized',
         variant: 'destructive'
       });
-    } finally {
-      setActionInProgress(false);
-    }
-  };
-
-  // Handle clear fields
-  const handleClearFields = async () => {
-    if (!formService) return;
-    
-    if (!confirm('Are you sure you want to clear all fields? This action cannot be undone.')) {
       return;
     }
     
     try {
-      setActionInProgress(true);
+      console.log('Clearing form fields');
+      const result = await formService.clearFields(taskId);
       
-      const success = await formService.clearFields(taskId);
-      
-      if (success) {
+      if (result) {
+        console.log('Form fields cleared successfully');
+        
+        // Refresh the form data and sections
+        const updatedFormData = formService.getFormData();
+        setFormData(updatedFormData);
+        
+        const updatedProgress = formService.calculateProgress();
+        setProgress(updatedProgress);
+        
         toast({
-          title: 'Fields Cleared',
-          description: 'All KY3P form fields were successfully cleared.',
+          title: 'Success',
+          description: 'Form fields cleared successfully',
           variant: 'default'
         });
-        
-        // Reload form to get fresh data
-        await formService.loadFormData();
-        
-        // Reset form data
-        const initialData: Record<string, any> = {};
-        formService.getFields().forEach(field => {
-          initialData[field.field_key] = field.response || '';
-        });
-        setFormData(initialData);
-        setProgress(formService.getFormProgress());
-        
-        // Navigate to first section
-        const firstSection = formService.getFirstSection();
-        if (firstSection) {
-          console.log('Navigating to first section:', firstSection.title);
-        }
       } else {
+        console.error('Failed to clear form fields');
         toast({
-          title: 'Clear Failed',
-          description: 'Failed to clear the KY3P form fields.',
+          title: 'Error',
+          description: 'Failed to clear form fields',
           variant: 'destructive'
         });
       }
     } catch (error) {
-      console.error('Error clearing fields:', error);
+      console.error('Error clearing form fields:', error);
       toast({
-        title: 'Clear Error',
-        description: 'An error occurred while clearing the form fields.',
+        title: 'Error',
+        description: 'Error clearing form fields: ' + (error as Error).message,
         variant: 'destructive'
       });
-    } finally {
-      setActionInProgress(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-6">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading form data...</span>
-      </div>
-    );
-  }
-
-  // Group fields by section for better display
-  const fieldsBySection = fields.reduce((acc, field) => {
-    const sectionId = field.section || 'default';
-    if (!acc[sectionId]) {
-      acc[sectionId] = [];
+  
+  // Handle demo auto-fill
+  const handleDemoAutoFill = async () => {
+    if (!formService) {
+      toast({
+        title: 'Error',
+        description: 'Form service not initialized',
+        variant: 'destructive'
+      });
+      return;
     }
-    acc[sectionId].push(field);
-    return acc;
-  }, {} as Record<string, any[]>);
-
+    
+    try {
+      console.log('Performing demo auto-fill');
+      
+      // Call the KY3P demo auto-fill endpoint
+      const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Demo auto-fill failed:', errorText);
+        toast({
+          title: 'Error',
+          description: 'Demo auto-fill failed: ' + errorText,
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      const result = await response.json();
+      console.log('Demo auto-fill result:', result);
+      
+      // Refresh the form data and progress
+      await formService.loadResponses(taskId);
+      const updatedFormData = formService.getFormData();
+      setFormData(updatedFormData);
+      
+      const updatedProgress = formService.calculateProgress();
+      setProgress(updatedProgress);
+      
+      toast({
+        title: 'Success',
+        description: 'Demo auto-fill completed successfully',
+        variant: 'default'
+      });
+    } catch (error) {
+      console.error('Error performing demo auto-fill:', error);
+      toast({
+        title: 'Error',
+        description: 'Error performing demo auto-fill: ' + (error as Error).message,
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  // Render the component
   return (
-    <div className="container mx-auto py-6">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>KY3P Form Test</CardTitle>
-          <CardDescription>
-            Test the enhanced KY3P form service with standardized field keys.
-            Progress: {progress.toFixed(0)}%
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          {/* Form fields grouped by section */}
-          {Object.entries(fieldsBySection).map(([sectionId, sectionFields]) => {
-            // Find section info
-            const section = sections.find(s => s.id === sectionId) || { title: 'Default Section' };
-            
-            return (
-              <div key={sectionId} className="mb-6">
-                <h3 className="text-lg font-medium mb-2">{section.title}</h3>
-                <Separator className="mb-4" />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sectionFields.slice(0, 5).map(field => (
-                    <div key={field.id} className="space-y-2">
-                      <Label htmlFor={field.field_key}>
-                        {field.display_name || field.question || field.field_key}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                      </Label>
-                      <Input
-                        id={field.field_key}
-                        value={formData[field.field_key] || ''}
-                        onChange={(e) => handleFieldChange(field.field_key, e.target.value)}
-                        placeholder={`Enter ${field.display_name || field.question || field.field_key}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-                
-                {sectionFields.length > 5 && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {sectionFields.length - 5} more fields in this section are hidden for brevity.
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={handleClearFields}
-            disabled={actionInProgress}
-          >
-            {actionInProgress ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Clear All Fields
-          </Button>
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle>Enhanced KY3P Form Service Test</CardTitle>
+        <CardDescription>
+          Test the enhanced KY3P form service functionality for task {taskId}
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Form Status</AlertTitle>
+            <AlertDescription>
+              {initialized ? 
+                `Form service initialized with ${sections.length} sections and ${Object.keys(formData).length} form data entries. Progress: ${progress}%` : 
+                'Form service not yet initialized'}
+            </AlertDescription>
+          </Alert>
           
-          <Button 
-            onClick={handleBulkUpdate}
-            disabled={actionInProgress}
-          >
-            {actionInProgress ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Save Changes
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+          <div className="flex space-x-4">
+            <Button
+              onClick={handleClearForm}
+              variant="outline"
+              disabled={!initialized}
+            >
+              Clear Form Fields
+            </Button>
+            
+            <Button
+              onClick={handleDemoAutoFill}
+              variant="default"
+              disabled={!initialized}
+            >
+              Demo Auto-Fill
+            </Button>
+          </div>
+          
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Form Sections</h3>
+            <div className="space-y-2">
+              {sections.map((section, index) => (
+                <div key={section.id} className="p-2 border rounded">
+                  <h4 className="font-medium">{section.title}</h4>
+                  <p className="text-sm text-gray-500">{section.fields.length} fields</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Form Data Sample</h3>
+            <div className="p-2 border rounded bg-gray-50 overflow-auto max-h-40">
+              <pre className="text-xs">
+                {JSON.stringify(Object.entries(formData).slice(0, 5), null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
