@@ -18,14 +18,18 @@ async function updateTaskProgress(taskId: number): Promise<number> {
   try {
     // Direct database update to calculate and update progress
     // Get all fields count (we're not using is_visible at this time)
-    const [totalResult] = await db.execute<{ count: number }>(
+    const totalResultQuery = await db.execute<{ count: number }>(
       sql`SELECT COUNT(*) as count FROM ky3p_fields`
     );
     
     // Get completed responses count
-    const [completedResult] = await db.execute<{ count: number }>(
+    const completedResultQuery = await db.execute<{ count: number }>(
       sql`SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId} AND status = 'complete'`
     );
+    
+    // Safely extract count values, handle different result formats
+    const totalResult = Array.isArray(totalResultQuery) ? totalResultQuery[0] : totalResultQuery;
+    const completedResult = Array.isArray(completedResultQuery) ? completedResultQuery[0] : completedResultQuery;
     
     const total = Number(totalResult?.count || 0);
     const completed = Number(completedResult?.count || 0);
