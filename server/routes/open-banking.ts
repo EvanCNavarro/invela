@@ -350,8 +350,13 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
           
           onboardingCompleted = true;
           
-          // Complete company onboarding (standardized approach)
-          await completeCompanyOnboarding(companyId);
+          // Mark company as onboarded directly (avoiding accreditation_status_enum issues)
+          await db.update(companies)
+            .set({
+              onboarding_company_completed: true,
+              updated_at: new Date()
+            })
+            .where(eq(companies.id, companyId));
         }
         
         // Get the file record to return in the response
@@ -1576,18 +1581,29 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
         // Continue with submission even if risk score generation fails
       }
       
-      // 2. Mark company as onboarded and set accreditation status
+      // 2. Mark company as onboarded (without setting accreditation status which causes enum validation errors)
       try {
-        const updatedCompany = await completeCompanyOnboarding(companyId);
-        logger.info('[OpenBankingRoutes] Company onboarding completed', {
+        // Directly update the company record instead of using completeCompanyOnboarding
+        // This avoids the accreditation_status_enum error
+        const [updatedCompany] = await db
+          .update(companies)
+          .set({
+            onboarding_company_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId))
+          .returning();
+          
+        logger.info('[OpenBankingRoutes] Company onboarding completed directly', {
           companyId,
           onboardingCompleted: updatedCompany.onboarding_company_completed,
-          accreditationStatus: updatedCompany.accreditation_status
+          timestamp: new Date().toISOString()
         });
       } catch (onboardingError) {
-        logger.error('[OpenBankingRoutes] Error completing company onboarding', {
-          error: onboardingError,
-          companyId
+        logger.error('[OpenBankingRoutes] Error updating company onboarding status', {
+          error: onboardingError instanceof Error ? onboardingError.message : 'Unknown error',
+          companyId,
+          timestamp: new Date().toISOString()
         });
         // Continue with submission even if onboarding completion fails
       }
