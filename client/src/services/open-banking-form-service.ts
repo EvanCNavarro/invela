@@ -1,1254 +1,305 @@
 /**
  * Open Banking Form Service
  * 
- * This service handles the Open Banking Survey form data
- * and provides an interface to the Universal Form component.
+ * This service extends the EnhancedKybFormService to provide a consistent API
+ * for Open Banking forms.
  */
-import { EnhancedKybFormService } from './enhanced-kyb-service';
-import { SyncFormDataResponse } from './form-service.interface';
 
-// Simple console-based logger
-const logger = {
-  info: (message: string, ...args: any[]) => console.log(`INFO: ${message}`, ...args),
-  error: (message: string, ...args: any[]) => console.error(`ERROR: ${message}`, ...args),
-  warn: (message: string, ...args: any[]) => console.warn(`WARN: ${message}`, ...args),
-  debug: (message: string, ...args: any[]) => console.debug(`DEBUG: ${message}`, ...args),
-};
-
-// Singleton instance
-let _instance: OpenBankingFormService | null = null;
-
-export class OpenBankingFormService extends EnhancedKybFormService {
-  // Override the form type to match the task type in the database
-  protected readonly formType = 'open_banking';
-  
-  // Cache for Open Banking fields by template ID
-  private static openBankingFieldsCache: Record<number, any[]> = {};
-  
-  constructor(companyId?: number, taskId?: number) {
-    super();
-    
-    // Store locally for our tracking
-    this._companyId = companyId;
-    this._taskId = taskId;
-    
-    logger.info(
-      '[OpenBankingFormService] Initializing Open Banking Form Service',
-      { companyId, taskId }
-    );
-  }
-  
-  /**
-   * COMPLETE OVERRIDE of initialize method from EnhancedKybFormService
-   * to prevent inheriting the KYB section logic
-   * 
-   * Modified to make templateId optional and to use a direct field fetch 
-   * even when no template is available
-   */
-  async initialize(templateId?: number): Promise<void> {
-    // If already initialized and the same template ID, just return
-    if (this._initialized && (templateId === undefined || this._templateId === templateId)) {
-      logger.info('[OpenBankingFormService] Already initialized', { 
-        templateId: templateId || 'none provided'
-      });
-      return; 
-    }
-    
-    try {
-      // Store template ID if provided
-      if (templateId !== undefined) {
-        this._templateId = templateId;
-      }
-      
-      // Step 1: Get the field definitions from the Open Banking fields table
-      // Uses a custom API endpoint for Open Banking fields
-      let fields;
-      
-      // Only use cache if we have a template ID and it exists in cache
-      if (templateId !== undefined && OpenBankingFormService.openBankingFieldsCache[templateId]) {
-        fields = OpenBankingFormService.openBankingFieldsCache[templateId];
-        logger.info('[OpenBankingFormService] Using cached fields for template', templateId);
-      } else {
-        // Always fetch fields directly from API, ignoring template
-        logger.info('[OpenBankingFormService] Fetching fields from API directly');
-        
-        try {
-          // Add credentials to ensure session cookies are sent for authentication
-          const apiResponse = await fetch('/api/open-banking/fields', {
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (!apiResponse.ok) {
-            // Handle authentication errors specifically
-            if (apiResponse.status === 401) {
-              logger.error('[OpenBankingFormService] Authentication required for API access');
-              throw new Error('Authentication required. Please log in again.');
-            }
-            
-            throw new Error(`Failed to fetch Open Banking fields: ${apiResponse.statusText}`);
-          }
-          
-          fields = await apiResponse.json();
-          logger.info(`[OpenBankingFormService] Successfully fetched ${fields.length} fields`);
-          
-          // Cache if we have a template ID
-          if (templateId !== undefined) {
-            OpenBankingFormService.openBankingFieldsCache[templateId] = fields;
-          }
-        } catch (fetchError) {
-          logger.error('[OpenBankingFormService] Field fetch error', fetchError);
-          throw new Error(`Failed to fetch Open Banking fields: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
-        }
-      }
-      
-      // Validate fields array exists and has content
-      if (!fields || !Array.isArray(fields) || fields.length === 0) {
-        logger.error('[OpenBankingFormService] No fields returned from API', { fields });
-        throw new Error('No Open Banking fields found');
-      }
-      
-      // Step 2: Process the fields into sections based on group and step_index
-      const sections = this.processFieldsIntoSections(fields);
-      
-      // Validate sections were created
-      if (!sections || !Array.isArray(sections) || sections.length === 0) {
-        logger.error('[OpenBankingFormService] No sections generated from fields', { fields });
-        throw new Error('Failed to create sections from Open Banking fields');
-      }
-      
-      // Step 3: Store the sections and set initialized flag
-      this._sections = sections;
-      this._initialized = true;
-      
-      logger.info('[OpenBankingFormService] Initialization complete', { 
-        sectionsCount: sections.length,
-        fieldsCount: fields.length
-      });
-      
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Initialization failed', { error });
-      throw error;
-    }
-  }
-  
-  /**
-   * Process fields into sections based on group and step_index
-   */
-  private processFieldsIntoSections(fields: any[]): any[] {
-    logger.info('[OpenBankingFormService] Processing fields into sections', { 
-      fieldsCount: fields.length,
-      fieldSample: fields.length > 0 ? {
-        id: fields[0].id,
-        field_key: fields[0].field_key,
-        field_type: fields[0].field_type,
-        group: fields[0].group,
-        step_index: fields[0].step_index
-      } : 'no fields'
-    });
-    
-    try {
-      // Ensure we have fields to process
-      if (!fields || fields.length === 0) {
-        logger.error('[OpenBankingFormService] No fields to process into sections');
-        return [];
-      }
-      
-      // Group fields by step index and group
-      const fieldsByStep = fields.reduce((acc: Record<number, Record<string, any[]>>, field) => {
-        // Always default to step_index 0 if missing
-        const stepIndex = typeof field.step_index === 'number' ? field.step_index : 0;
-        // Always default to 'General' if group is missing
-        const group = field.group || 'General';
-        
-        if (!acc[stepIndex]) {
-          acc[stepIndex] = {};
-        }
-        
-        if (!acc[stepIndex][group]) {
-          acc[stepIndex][group] = [];
-        }
-        
-        acc[stepIndex][group].push(field);
-        return acc;
-      }, {});
-      
-      // Log the grouped structure for debugging
-      logger.info('[OpenBankingFormService] Fields grouped by step and group', {
-        stepCount: Object.keys(fieldsByStep).length,
-        steps: Object.keys(fieldsByStep)
-      });
-      
-      // Convert to sections array
-      const sections = Object.entries(fieldsByStep)
-        .map(([stepIndex, groups]) => {
-          return Object.entries(groups).map(([groupName, groupFields]) => {
-            // Sort fields by display_order or order within each group
-            const sortedFields = [...groupFields].sort((a, b) => {
-              const aOrder = a.display_order || a.order || 0;
-              const bOrder = b.display_order || b.order || 0;
-              return aOrder - bOrder;
-            });
-            
-            // Map fields to the format expected by the Universal Form
-            const formattedFields = sortedFields.map(field => {
-              // Generate a section ID to match this field's section (for proper section organization)
-              const sectionId = `step${stepIndex}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-              
-              return {
-                id: field.id,
-                name: field.field_key,
-                key: field.field_key, // Important: add key property for form mapping
-                label: field.display_name,
-                displayName: field.display_name, // Add displayName for consistency
-                description: field.help_text || field.description,
-                tooltip: field.help_text || field.description,
-                question: field.question || field.display_name, // Add question for form display
-                type: this.mapFieldType(field.field_type),
-                required: field.is_required || field.required || false,
-                options: this.parseFieldOptions(field),
-                placeholder: "",
-                validationType: field.validation_type,
-                validationRules: field.validation_rules,
-                section: sectionId, // Critical for field-section association
-                group: groupName
-              };
-            });
-            
-            return {
-              id: `step${stepIndex}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`,
-              title: groupName,
-              order: parseInt(stepIndex),
-              fields: formattedFields,
-              collapsed: false,
-              description: ``
-            };
-          });
-        })
-        .flat()
-        // Sort sections by order
-        .sort((a, b) => a.order - b.order);
-      
-      logger.info('[OpenBankingFormService] Sections processing complete', { 
-        sectionsCount: sections.length
-      });
-      
-      return sections;
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error processing fields into sections', { error });
-      throw error;
-    }
-  }
-  
-  /**
-   * Parse field options from various formats
-   */
-  private parseFieldOptions(field: any): any[] {
-    try {
-      // If field already has parsed options array, return it
-      if (field.options && Array.isArray(field.options)) {
-        return field.options;
-      }
-      
-      // If field has options as a string, try to parse it
-      if (field.options && typeof field.options === 'string') {
-        return JSON.parse(field.options);
-      }
-      
-      // Try to parse from validation_rules if available
-      if (field.validation_rules) {
-        const rules = typeof field.validation_rules === 'string' 
-          ? JSON.parse(field.validation_rules) 
-          : field.validation_rules;
-          
-        if (rules.options && Array.isArray(rules.options)) {
-          return rules.options;
-        }
-        
-        // Some formats store options directly in validation_rules as an array
-        if (Array.isArray(rules)) {
-          return rules;
-        }
-      }
-      
-      // Default to empty array if no options found
-      return [];
-    } catch (error) {
-      logger.warn(`[OpenBankingFormService] Error parsing options for field ${field.id || 'unknown'}`, { error });
-      return [];
-    }
-  }
-
-  /**
-   * Map field type from database to Universal Form field type
-   */
-  private mapFieldType(fieldType: string): string {
-    if (!fieldType) return 'textarea';
-    
-    switch (fieldType.toUpperCase()) {
-      case 'TEXT':
-        return 'textarea'; // Changed from 'text' to 'textarea' for larger input fields
-      case 'TEXTAREA':
-        return 'textarea';
-      case 'SELECT':
-        return 'select';
-      case 'MULTISELECT':
-        return 'multiselect';
-      case 'CHECKBOX':
-        return 'checkbox';
-      case 'RADIO':
-        return 'radio';
-      case 'DATE':
-        return 'date';
-      case 'FILE':
-        return 'file';
-      default:
-        return 'textarea'; // Changed default to textarea as well
-    }
-  }
-  
-  /**
-   * Get the sections for the current form template
-   * This method overrides the base class method to handle async initialization
-   * and return an array of form sections.
-   */
-  getSections(): any[] {
-    // First check if we need to initialize
-    if (!this._initialized) {
-      // Return an empty array synchronously, but trigger initialization
-      this.initialize().catch(error => {
-        logger.error('[OpenBankingFormService] Background initialization failed', { error });
-      });
-      return [];
-    }
-    
-    logger.info('[OpenBankingFormService] Getting sections', { 
-      count: this._sections ? this._sections.length : 0,
-      sectionIds: this._sections ? this._sections.map(s => s.id).join(', ') : 'none'
-    });
-    
-    // Ensure we always return an array
-    return Array.isArray(this._sections) ? this._sections : [];
-  }
-  
-  // Private properties for tracking state
-  private _initialized = false;
-  private _sections: any[] = [];
-  private _templateId?: number;
-  private _taskId?: number;
-  private _companyId?: number;
-  private autoSaveEnabled = true; // Default autoSave to enabled
-  
-  /**
-   * Get all fields from all sections
-   * This is required by the FormServiceInterface
-   */
-  getFields(): any[] {
-    if (!this._initialized) {
-      logger.warn('[OpenBankingFormService] getFields called before initialization');
-      // Trigger initialize in the background without blocking
-      this.initialize().catch(err => {
-        logger.error('[OpenBankingFormService] Background initialization failed', { err });
-      });
-      return [];
-    }
-    
-    // Extract fields from all sections and flatten into a single array
-    const allFields = this._sections.flatMap(section => {
-      // Make sure each field has the correct section ID
-      return (section.fields || []).map((field: any) => ({
-        ...field,
-        section: section.id // Critical: ensure every field has a section property
-      }));
-    });
-    
-    // Log detailed field mapping for debugging
-    if (allFields.length > 0) {
-      logger.info('[OpenBankingFormService] Field sample with section mapping', {
-        fieldSample: {
-          key: allFields[0].key || allFields[0].name,
-          name: allFields[0].name,
-          section: allFields[0].section
-        }
-      });
-    }
-    
-    // Map fields to ensure they have a "key" property that matches "name"
-    // This is needed for compatibility with the Universal Form component
-    const fieldsWithKeys = allFields.map(field => ({
-      ...field,
-      key: field.name || field.key || field.id, // Ensure key exists (with fallbacks)
-      section: field.section // Ensure section is present
-    }));
-    
-    logger.info('[OpenBankingFormService] Returning all fields', { 
-      count: fieldsWithKeys.length,
-      distinctSections: [...new Set(fieldsWithKeys.map(f => f.section))].join(', ')
-    });
-    
-    return fieldsWithKeys;
-  }
-  
-  /**
-   * Save form responses for a task
-   */
-  async saveResponses(taskId: number, data: Record<string, any>): Promise<void> {
-    logger.info('[OpenBankingFormService] Saving responses', { taskId, dataKeys: Object.keys(data).length });
-    
-    try {
-      // Convert data to array of responses
-      const responses = Object.entries(data).map(([fieldKey, value]) => ({
-        field_key: fieldKey,
-        response_value: value
-      }));
-      
-      // Save responses
-      const apiResponse = await fetch(`/api/open-banking/responses/${taskId}`, {
-        method: 'POST',
-        credentials: 'include', // Include session cookies
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ responses })
-      });
-      
-      if (!apiResponse.ok) {
-        throw new Error(`Failed to save responses: ${apiResponse.statusText}`);
-      }
-      
-      logger.info('[OpenBankingFormService] Responses saved successfully', { taskId });
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error saving responses', { error, taskId });
-      throw error;
-    }
-  }
-  
-  /**
-   * Override the getDemoData method to use the Open Banking endpoint
-   * This method is required for demo auto-fill functionality
-   */
-  public async getDemoData(taskId?: number): Promise<Record<string, any>> {
-    const effectiveTaskId = taskId || this._taskId;
-    
-    if (!effectiveTaskId) {
-      logger.error('[OpenBankingFormService] No task ID provided for demo data retrieval');
-      throw new Error('Task ID is required to retrieve demo data');
-    }
-    
-    try {
-      logger.info(`[OpenBankingFormService] Fetching demo auto-fill data for Open Banking task ${effectiveTaskId}`);
-      
-      // Use the specific endpoint for Open Banking demo auto-fill
-      const response = await fetch(`/api/open-banking/demo-autofill/${effectiveTaskId}`, {
-        credentials: 'include', // Include session cookies
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[OpenBankingFormService] Failed to get demo data: ${response.status}`, errorText);
-        throw new Error(`Failed to get Open Banking demo data: ${response.status} - ${errorText}`);
-      }
-      
-      // Process the raw demo data from the server
-      const rawDemoData = await response.json();
-      
-      // Extract the form data from the response
-      const formData = rawDemoData.formData || rawDemoData;
-      
-      // Filter out fields that don't exist in our fields array
-      const filteredDemoData: Record<string, any> = {};
-      let skippedFields = 0;
-      
-      // Only include fields that exist in our form service
-      const allFields = this.getFields();
-      const fieldKeys = allFields.map(field => field.key);
-      
-      for (const [key, value] of Object.entries(formData)) {
-        if (fieldKeys.includes(key)) {
-          filteredDemoData[key] = value;
-        } else {
-          logger.warn(`[OpenBankingFormService] Skipping demo field key that doesn't exist in our form: ${key}`);
-          skippedFields++;
-        }
-      }
-      
-      const fieldCount = Object.keys(filteredDemoData).length;
-      
-      logger.info(`[OpenBankingFormService] Successfully fetched and filtered demo fields: ${fieldCount} valid, ${skippedFields} skipped`);
-      
-      return filteredDemoData;
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error retrieving demo data:', error);
-      throw error;
-    }
-  }
-  
-  // Simple in-memory cache for progress data to improve load times
-  private static progressCache: Map<number, {
-    formData: Record<string, any>;
-    progress: number;
-    status: string;
-    timestamp: number;
-  }> = new Map();
-  
-  /**
-   * Get progress data for the task in the format expected by UniversalForm
-   * This method uses our dedicated progress endpoint for Open Banking tasks
-   * 
-   * Enhanced with retry logic, caching, and better error handling to prevent infinite loading
-   */
-  public async getProgress(taskId?: number): Promise<{
-    formData: Record<string, any>;
-    progress: number;
-    status: string;
-  }> {
-    const effectiveTaskId = taskId || this._taskId;
-    
-    if (!effectiveTaskId) {
-      // Return default empty progress instead of throwing to make the component more resilient
-      logger.warn('[OpenBankingFormService] No task ID provided for getting progress, returning default empty progress');
-      return {
-        formData: {},
-        progress: 0,
-        status: 'not_started'
-      };
-    }
-    
-    // Check cache first to speed up loading
-    const cachedData = OpenBankingFormService.progressCache.get(effectiveTaskId);
-    const now = Date.now();
-    // Use cache if it exists and is less than 10 seconds old - prevents slow reloading issue
-    if (cachedData && (now - cachedData.timestamp) < 10000) {
-      logger.info(`[OpenBankingFormService] Using cached progress data for task ${effectiveTaskId}`, {
-        age: `${(now - cachedData.timestamp)}ms`,
-        progress: cachedData.progress,
-        formDataKeys: Object.keys(cachedData.formData).length
-      });
-      return {
-        formData: cachedData.formData,
-        progress: cachedData.progress,
-        status: cachedData.status
-      };
-    }
-    
-    try {
-      logger.info(`[OpenBankingFormService] Getting progress for task ${effectiveTaskId}`);
-      
-      // Try fetching with retries to handle transient network issues
-      let retries = 0;
-      const maxRetries = 3;
-      let response = null;
-      let startTime = Date.now();
-      
-      // Set a timeout for the entire operation to prevent being stuck too long
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Progress fetch timeout exceeded'));
-        }, 8000); // 8 second overall timeout
-      });
-      
-      // Create the fetch promise with retries
-      const fetchWithRetries = async (): Promise<Response> => {
-        while (retries < maxRetries) {
-          try {
-            const fetchResponse = await fetch(`/api/open-banking/progress/${effectiveTaskId}`, {
-              credentials: 'include', // Include session cookies
-              headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-              }
-            });
-            
-            // If successful, return the response
-            if (fetchResponse && fetchResponse.ok) return fetchResponse;
-            
-            // If we get here, the response was not ok
-            logger.warn(`[OpenBankingFormService] Progress fetch attempt ${retries + 1} failed with status ${fetchResponse?.status}`);
-            
-            // Only retry on certain error codes (5xx server errors, 429 throttling)
-            if (!fetchResponse || (fetchResponse.status >= 500 || fetchResponse.status === 429)) {
-              retries++;
-              // Exponential backoff with jitter
-              const delay = Math.min(500 * Math.pow(2, retries) + Math.random() * 100, 3000);
-              await new Promise(resolve => setTimeout(resolve, delay));
-            } else {
-              // For other error codes like 404, 403, etc. don't retry
-              return fetchResponse;
-            }
-          } catch (fetchError) {
-            logger.warn(`[OpenBankingFormService] Network error on attempt ${retries + 1}:`, fetchError);
-            retries++;
-            // Linear backoff for network errors
-            await new Promise(resolve => setTimeout(resolve, 500 * retries));
-          }
-        }
-        throw new Error(`Failed after ${maxRetries} retries`);
-      };
-      
-      try {
-        // Race between the fetch with retries and the timeout
-        response = await Promise.race([fetchWithRetries(), timeoutPromise]);
-      } catch (timeoutError) {
-        logger.warn(`[OpenBankingFormService] Request timed out after ${Date.now() - startTime}ms:`, timeoutError);
-        
-        // If we have a cached version, use it as fallback
-        if (cachedData) {
-          logger.info(`[OpenBankingFormService] Using cached data as fallback after timeout for task ${effectiveTaskId}`);
-          return {
-            formData: cachedData.formData,
-            progress: cachedData.progress,
-            status: cachedData.status
-          };
-        }
-        
-        // If we don't have a cached version, return default data
-        return {
-          formData: {},
-          progress: 0,
-          status: 'not_started'
-        };
-      }
-      
-      if (!response || !response.ok) {
-        // If endpoint not found (404), return empty data instead of throwing
-        if (response && response.status === 404) {
-          logger.warn(`[OpenBankingFormService] Progress endpoint not found for task ${effectiveTaskId}, returning default values`);
-          return {
-            formData: {},
-            progress: 0,
-            status: 'not_started'
-          };
-        }
-        
-        // If we reach here, there was an error response
-        try {
-          const errorText = response ? await response.text() : 'No response';
-          logger.error(`[OpenBankingFormService] Failed to get progress: ${response?.status}`, errorText);
-          
-          // If we have a cached version, use it as fallback
-          if (cachedData) {
-            logger.info(`[OpenBankingFormService] Using cached data as fallback after error for task ${effectiveTaskId}`);
-            return {
-              formData: cachedData.formData,
-              progress: cachedData.progress,
-              status: cachedData.status
-            };
-          }
-        } catch (textError) {
-          logger.error('[OpenBankingFormService] Error reading error response text', textError);
-        }
-        
-        // Default return value for error case with no cache
-        return {
-          formData: {},
-          progress: 0,
-          status: 'not_started'
-        };
-      }
-      
-      // Process successful response
-      try {
-        const data = await response.json();
-        
-        // Create the result with fallbacks for missing data
-        const result = {
-          formData: data.formData || {},
-          progress: typeof data.progress === 'number' ? data.progress : 0,
-          status: data.status || 'not_started'
-        };
-        
-        // Store in cache for future fast loading
-        OpenBankingFormService.progressCache.set(effectiveTaskId, {
-          ...result,
-          timestamp: Date.now()
-        });
-        
-        // Log the success info
-        logger.info(`[OpenBankingFormService] Progress loaded successfully:`, {
-          taskId: effectiveTaskId,
-          progress: result.progress,
-          status: result.status,
-          formDataKeys: Object.keys(result.formData).length
-        });
-        
-        return result;
-      } catch (parseError) {
-        logger.error('[OpenBankingFormService] Error parsing progress response JSON:', parseError);
-        
-        // Use cache as fallback if JSON parsing fails
-        if (cachedData) {
-          return {
-            formData: cachedData.formData,
-            progress: cachedData.progress,
-            status: cachedData.status
-          };
-        }
-        
-        // Default return if no cache and parsing failed
-        return {
-          formData: {},
-          progress: 0, 
-          status: 'not_started'
-        };
-      }
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error getting progress:', error);
-      
-      // Use cache as fallback for any other errors
-      if (cachedData) {
-        logger.info(`[OpenBankingFormService] Using cached data as fallback after error for task ${effectiveTaskId}`);
-        return {
-          formData: cachedData.formData,
-          progress: cachedData.progress,
-          status: cachedData.status
-        };
-      }
-      
-      // Default return value for any errors with no cache
-      return {
-        formData: {},
-        progress: 0,
-        status: 'not_started'
-      };
-    }
-  }
-  
-  /**
-   * Synchronize form data between task.savedFormData and individual field responses
-   * This prevents inconsistencies when navigating between forms
-   * @param taskId The task ID to synchronize
-   * @returns Promise<SyncFormDataResponse> The synchronized form data response
-   */
-  public async syncFormData(taskId: number): Promise<SyncFormDataResponse> {
-    try {
-      // Check if taskId is provided
-      if (!taskId) {
-        logger.error('[OpenBankingFormService] Missing taskId in syncFormData');
-        throw new Error('Task ID is required for synchronization');
-      }
-      
-      logger.info(`[OpenBankingFormService] Synchronizing form data for task: ${taskId}`);
-      
-      // Call the standardized synchronization endpoint
-      const response = await fetch(`/api/tasks/${taskId}/sync-form-data`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      // Check for errors
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[OpenBankingFormService] Error synchronizing form data: ${errorText}`);
-        throw new Error(`Failed to synchronize Open Banking form data: ${response.status} ${response.statusText}`);
-      }
-      
-      // Parse response
-      const result = await response.json();
-      
-      // Update local form data if data was synchronized
-      if (result.success && result.formData && result.syncDirection !== 'none') {
-        logger.info(`[OpenBankingFormService] Updating local form data with synchronized data (direction: ${result.syncDirection})`);
-        this.loadFormData(result.formData);
-      } else {
-        logger.info(`[OpenBankingFormService] No synchronization needed (direction: ${result.syncDirection})`);
-      }
-      
-      return result;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error(`[OpenBankingFormService] Error in syncFormData: ${errorMessage}`);
-      
-      // Return a failed response
-      return {
-        success: false,
-        formData: {},
-        progress: 0,
-        status: 'error',
-        taskId,
-        syncDirection: 'none'
-      };
-    }
-  }
-
-  /**
-   * Load progress from the server
-   * This method is used by the FormDataManager to load saved form data
-   */
-  public async loadProgress(taskId?: number): Promise<Record<string, any>> {
-    // Use provided taskId or fall back to the service's taskId
-    const effectiveTaskId = taskId || this._taskId;
-    
-    if (!effectiveTaskId) {
-      throw new Error('No task ID provided for loading progress');
-    }
-    
-    try {
-      logger.info(`[OpenBankingFormService] Loading progress for task ${effectiveTaskId}`);
-      
-      // First, synchronize form data to ensure we have consistent state
-      try {
-        logger.info(`[OpenBankingFormService] Synchronizing form data before loading progress for task ${effectiveTaskId}`);
-        const syncResult = await this.syncFormData(effectiveTaskId);
-        
-        if (syncResult.success) {
-          logger.info(`[OpenBankingFormService] Form data synchronized successfully before loading (direction: ${syncResult.syncDirection})`);
-          
-          // If we synchronized data and the direction was not 'none',
-          // we can use the synchronized form data directly
-          if (syncResult.syncDirection !== 'none' && Object.keys(syncResult.formData).length > 0) {
-            logger.info(`[OpenBankingFormService] Using synchronized data from server (${Object.keys(syncResult.formData).length} fields)`);
-            return syncResult.formData;
-          }
-        } else {
-          logger.warn(`[OpenBankingFormService] Form data synchronization failed before loading, continuing with normal load`);
-        }
-      } catch (syncError) {
-        logger.error(`[OpenBankingFormService] Error during pre-load synchronization: ${syncError}`);
-        // Continue with normal loading even if sync fails
-      }
-      
-      // Get the task information first to check if it's already submitted
-      try {
-        const taskResponse = await fetch(`/api/tasks/${effectiveTaskId}`, {
-          credentials: 'include' // Include session cookies
-        });
-        if (taskResponse.ok) {
-          const taskData = await taskResponse.json();
-          if (taskData.status === 'submitted') {
-            logger.info(`[OpenBankingFormService] Task ${effectiveTaskId} is already submitted, still loading form data for display`);
-            // Special handling for submitted tasks, but we continue to load the data
-            // Don't return an empty object, continue with loading the data
-          }
-        }
-      } catch (taskError) {
-        // If we can't get the task, continue with trying to get the progress
-        logger.warn(`[OpenBankingFormService] Could not check task status: ${taskError}`);
-      }
-      
-      // Use our dedicated Open Banking progress endpoint
-      try {
-        // Pass the effectiveTaskId to ensure it's used even if this.taskId is not yet set
-        const progress = await this.getProgress(effectiveTaskId);
-        
-        if (progress && progress.formData) {
-          // Store the form data in the service for future reference
-          this.loadFormData(progress.formData);
-          
-          // Return the form data for the form manager to use
-          return progress.formData;
-        }
-      } catch (progressError) {
-        // If we fail to get progress, log it but don't throw
-        logger.warn(`[OpenBankingFormService] Could not load progress, returning empty object: ${progressError}`);
-        return {};
-      }
-      
-      // If no data was found, return an empty object
-      logger.warn(`[OpenBankingFormService] No form data found for task ${effectiveTaskId}`);
-      return {};
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error loading progress:', error);
-      // Return empty object instead of throwing to ensure the form still loads
-      return {};
-    }
-  }
-  
-    // Add throttling variables for progress updates
-  private static lastSaveTime: Record<string, number> = {};
-  private static saveQueue: Record<string, {formData: Record<string, any>, timestamp: number}> = {};
-  private static MIN_SAVE_INTERVAL = 2000; // 2 seconds between saves
-  
-  /**
-   * Save the form's current state
-   * @param options Save options
-   * @returns True if save was successful, false otherwise
-   */
-  public async save(options: { taskId?: number, includeMetadata?: boolean }): Promise<boolean> {
-    if (!this._taskId && !options.taskId) {
-      throw new Error('No task ID provided for saving form');
-    }
-    
-    const effectiveTaskId = options.taskId || this._taskId;
-    
-    // Implement throttling to prevent too many save operations
-    const now = Date.now();
-    // Make sure effectiveTaskId is not undefined before using it
-    if (!effectiveTaskId) {
-      logger.error('[OpenBankingFormService] No valid task ID for save operation');
-      return false;
-    }
-    const taskIdKey = effectiveTaskId.toString(); // Convert to string to use as object key
-    
-    if (OpenBankingFormService.lastSaveTime[taskIdKey]) {
-      const timeSinceLastSave = now - OpenBankingFormService.lastSaveTime[taskIdKey];
-      if (timeSinceLastSave < OpenBankingFormService.MIN_SAVE_INTERVAL) {
-        // Queue the save to be done later
-        logger.debug(`[OpenBankingFormService] Throttling save for task ${effectiveTaskId} - queued for later`);
-        
-        // Store the latest form data in the queue
-        OpenBankingFormService.saveQueue[taskIdKey] = {
-          formData: this.getFormData(),
-          timestamp: now
-        };
-        
-        // Successfully queued
-        return true;
-      }
-    }
-    
-    // If we're here, it's been long enough since the last save
-    // Update the last save time
-    OpenBankingFormService.lastSaveTime[taskIdKey] = now;
-    
-    // Clear the queue entry if it exists
-    if (OpenBankingFormService.saveQueue[taskIdKey]) {
-      delete OpenBankingFormService.saveQueue[taskIdKey];
-    }
-    
-    try {
-      logger.info(`[OpenBankingFormService] Saving form data for task ${effectiveTaskId}`);
-      
-      // Get current form data
-      const formData = this.getFormData();
-      
-      // Calculate which fields were updated - for timestamp tracking
-      const fieldUpdates = Object.keys(formData);
-      
-      // Get current progress and status to include in the save
-      let progress, status;
-      try {
-        // Try to fetch current progress first - pass the effective task ID explicitly
-        const progressData = await this.getProgress(effectiveTaskId);
-        progress = progressData.progress;
-        status = progressData.status;
-      } catch (progressError) {
-        logger.warn('[OpenBankingFormService] Unable to fetch current progress, will calculate on server', progressError);
-        // Progress will be calculated on the server side
-      }
-      
-      // Use the standardized Open Banking progress endpoint
-      const response = await fetch(`/api/open-banking/progress`, {
-        method: 'POST',
-        credentials: 'include', 
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          taskId: effectiveTaskId,
-          formData,
-          fieldUpdates,
-          progress,
-          status
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[OpenBankingFormService] Failed to save form data: ${response.status}`, errorText);
-        return false;
-      }
-      
-      const result = await response.json();
-      
-      // Update local form data with any server-side changes
-      if (result.savedData && result.savedData.formData) {
-        this.loadFormData(result.savedData.formData);
-        
-        // Also update the cache to maintain consistency
-        const updatedProgress = result.savedData.progress;
-        const updatedStatus = result.savedData.status;
-        
-        // Update our cache for next time to prevent progress mismatches
-        if (effectiveTaskId) {
-          OpenBankingFormService.progressCache.set(Number(effectiveTaskId), {
-            formData: result.savedData.formData,
-            progress: updatedProgress,
-            status: updatedStatus,
-            timestamp: Date.now()
-          });
-        }
-      }
-      
-      logger.info(`[OpenBankingFormService] Form data saved successfully for task ${effectiveTaskId}`, {
-        progress: result.savedData?.progress,
-        status: result.savedData?.status
-      });
-      
-      return true;
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error saving form data:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Save the current progress 
-   * @param taskId The task ID (optional, will use instance's taskId if not provided)
-   */
-  public async saveProgress(taskId?: number): Promise<void> {
-    await this.save({ taskId, includeMetadata: true });
-  }
-  
-  /**
-   * Reset form data in the service and local state without saving to server
-   * @param taskId Optional task ID (uses this.taskId if not provided)
-   */
-  public resetFormData(taskId?: number): void {
-    const effectiveTaskId = taskId || this._taskId;
-    
-    if (!effectiveTaskId) {
-      logger.error('[OpenBankingFormService] No task ID provided for resetting form data');
-      return;
-    }
-    
-    try {
-      // Create empty data object with all fields set to empty strings
-      const emptyData: Record<string, string> = {};
-      
-      // Get fields from our getSections method rather than accessing private parent property
-      const fields = this.getFields();
-      if (fields && fields.length > 0) {
-        fields.forEach(field => {
-          if (field && field.key) {
-            emptyData[field.key] = '';
-          }
-        });
-      }
-      
-      // Reset the form data in memory
-      this.loadFormData(emptyData);
-      
-      logger.info(`[OpenBankingFormService] Form data reset successfully for task ${effectiveTaskId}`);
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error resetting form data:', error);
-    }
-  }
-  
-  /**
-   * Clear all field values for the current task (server-side)
-   * @param taskId Optional task ID (uses this.taskId if not provided)
-   * @returns True if clearing was successful, false otherwise
-   */
-  public async clearAllFields(taskId?: number): Promise<boolean> {
-    const effectiveTaskId = taskId || this._taskId;
-    
-    if (!effectiveTaskId) {
-      logger.error('[OpenBankingFormService] No task ID provided for clearing fields');
-      return false;
-    }
-    
-    try {
-      logger.info(`[OpenBankingFormService] Clearing all fields for task ${effectiveTaskId}`);
-      
-      // Create empty data object with all fields set to empty strings
-      const emptyData: Record<string, string> = {};
-      
-      // Get all field definitions
-      const fields = await this.getFields();
-      
-      // Set all fields to empty strings
-      fields.forEach(field => {
-        if (field && field.key) {
-          emptyData[field.key] = '';
-        }
-      });
-      
-      // Temporarily disable automatic form saving during clear operation
-      // to prevent firing multiple reconciliation requests
-      const wasSavingEnabled = this.autoSaveEnabled;
-      this.autoSaveEnabled = false;
-      
-      // First try the fast clear endpoint that matches KYB/KY3P
-      let response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-responses/clear-all`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      // If fast clear fails, fall back to the standard clear endpoint
-      if (!response.ok) {
-        logger.warn(`[OpenBankingFormService] Fast clear failed, trying standard clear endpoint: ${response.status}`);
-        response = await fetch(`/api/open-banking/clear/${effectiveTaskId}`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-      }
-      
-      if (!response.ok) {
-        logger.error(`[OpenBankingFormService] Failed to clear fields: ${response.status}`);
-        this.autoSaveEnabled = wasSavingEnabled; // Restore previous auto-save setting
-        return false;
-      }
-      
-      // Update form data in our service without triggering save
-      this.loadFormData(emptyData);
-      
-      // Instead of immediately saving/reconciling, wait a bit to let server-side 
-      // reconciliation skip timer expire
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Restore auto-save setting
-      this.autoSaveEnabled = wasSavingEnabled;
-      
-      logger.info(`[OpenBankingFormService] Successfully cleared all fields for task ${effectiveTaskId}`);
-      return true;
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Error clearing fields:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Submit the form
-   * @param options The submission options
-   * @returns The submission response
-   */
-  public async submit(options: { taskId?: number, fileName?: string, format?: 'json' | 'pdf' | 'csv' }): Promise<{
-    success: boolean;
-    error?: string;
-    details?: string;
-    fileName?: string;
-    fileId?: number;
-  }> {
-    const effectiveTaskId = options.taskId || this._taskId;
-    
-    if (!effectiveTaskId) {
-      throw new Error('No task ID provided for submitting form');
-    }
-    
-    try {
-      logger.info(`[OpenBankingFormService] Submitting form for task ${effectiveTaskId}`);
-      
-      // First save all form data to ensure everything is up to date
-      const saveResult = await this.save({ taskId: effectiveTaskId, includeMetadata: true });
-      
-      if (!saveResult) {
-        logger.error(`[OpenBankingFormService] Failed to save form data before submission`);
-        return {
-          success: false,
-          error: 'Failed to save form data before submission',
-        };
-      }
-      
-      // Call the submit endpoint
-      const response = await fetch(`/api/tasks/${effectiveTaskId}/open-banking-submit`, {
-        method: 'POST',
-        credentials: 'include', // Include session cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          formData: this.getFormData(),
-          fileName: options.fileName
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[OpenBankingFormService] Form submission failed: ${response.status}`, errorText);
-        return {
-          success: false,
-          error: `Form submission failed: ${response.status}`,
-          details: errorText
-        };
-      }
-      
-      const result = await response.json();
-      
-      logger.info(`[OpenBankingFormService] Form submitted successfully:`, {
-        fileId: result.fileId,
-        fileName: result.fileName
-      });
-      
-      return {
-        success: true,
-        fileId: result.fileId,
-        fileName: result.fileName
-      };
-    } catch (error) {
-      logger.error('[OpenBankingFormService] Form submission error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: String(error)
-      };
-    }
-  }
-  
-  /**
-   * Simple validation for the form
-   * @param data The form data to validate
-   * @returns True if the form is valid, or an object with validation errors
-   */
-  public validate(data: Record<string, any>): boolean | Record<string, string> {
-    // Basic form validation logic
-    const errors: Record<string, string> = {};
-    
-    // Get all required fields
-    const requiredFields = this.getFields().filter(field => field.required);
-    
-    for (const field of requiredFields) {
-      const value = data[field.key];
-      
-      // Check if field has a value
-      if (value === undefined || value === null || value === '') {
-        errors[field.key] = 'This field is required';
-      }
-    }
-    
-    // Return true if no errors, otherwise return errors object
-    return Object.keys(errors).length === 0 ? true : errors;
-  }
-}
+import { EnhancedKybFormService, FormServiceLogger } from './enhanced-kyb-service';
+import { QueryClient } from '@tanstack/react-query';
+import { FormField } from './form-service-interface';
 
 /**
- * Factory class for creating isolated Open Banking form service instances
- * Follows the same pattern as EnhancedKybServiceFactory
+ * Open Banking Form Service
+ * 
+ * Provides a standardized interface for working with Open Banking forms.
  */
-export class OpenBankingFormServiceFactory {
-  private static instance: OpenBankingFormServiceFactory;
-  private instances: Map<string, OpenBankingFormService> = new Map();
+export class OpenBankingFormService extends EnhancedKybFormService {
+  private readonly fieldEndpoint = '/api/open-banking/fields';
+  private readonly progressEndpoint = '/api/open-banking/progress';
+  private readonly demoAutofillEndpoint = '/api/open-banking/demo-autofill';
+  private readonly clearEndpoint = '/api/open-banking/clear';
   
-  private constructor() {}
-  
-  public static getInstance(): OpenBankingFormServiceFactory {
-    if (!OpenBankingFormServiceFactory.instance) {
-      OpenBankingFormServiceFactory.instance = new OpenBankingFormServiceFactory();
-    }
-    return OpenBankingFormServiceFactory.instance;
+  constructor(queryClient: QueryClient) {
+    super(queryClient);
+    this.serviceName = 'OpenBankingFormService';
   }
   
   /**
-   * Get or create an isolated Open Banking form service instance
-   * @param companyId The company ID
-   * @param taskId The task ID
-   * @returns Open Banking form service instance specific to this company and task
+   * Get all form field definitions
+   * @override
    */
-  public getServiceInstance(companyId: number | string, taskId: number | string): OpenBankingFormService {
-    const key = `${companyId}-${taskId}`;
-    
-    if (!this.instances.has(key)) {
-      logger.info(`[OpenBankingFormServiceFactory] Creating new Open Banking form service instance for company ${companyId}, task ${taskId}`);
-      this.instances.set(key, new OpenBankingFormService(Number(companyId), Number(taskId)));
+  async getFields(): Promise<FormField[]> {
+    try {
+      const response = await fetch(this.fieldEndpoint);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch Open Banking fields: ${response.status} ${response.statusText}`);
+      }
+      
+      const fields = await response.json();
+      this.log(`Fetched ${fields.length} Open Banking field definitions`);
+      
+      return fields;
+    } catch (error) {
+      this.error('Error fetching Open Banking fields:', error);
+      return [];
     }
-    
-    return this.instances.get(key)!;
+  }
+  
+  /**
+   * Get form data for a specific task
+   * @override
+   */
+  async getTaskData(taskId: number): Promise<Record<string, any>> {
+    try {
+      if (!taskId) return {};
+      
+      // Track progress data loading with retries
+      const maxRetries = 3;
+      let retryCount = 0;
+      let timeoutId: NodeJS.Timeout | null = null;
+      
+      // Setup timeout promise
+      const timeout = (ms: number) => new Promise<null>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          this.warn(`Request timed out after ${ms}ms:`, {});
+          reject(new Error(`Request timed out after ${ms}ms`));
+        }, ms);
+      });
+      
+      // Setup fetch promise with retries
+      const fetchWithRetry = async (): Promise<Record<string, any>> => {
+        try {
+          this.log(`Getting progress for task ${taskId}`);
+          const response = await fetch(`${this.progressEndpoint}/${taskId}`);
+          
+          if (!response.ok) {
+            throw new Error(`Failed with status ${response.status}`);
+          }
+          
+          const data = await response.json();
+          if (timeoutId) clearTimeout(timeoutId);
+          
+          this.log(`Progress loaded successfully:`, {
+            taskId,
+            progress: data.progress,
+            status: data.status,
+            formDataKeys: Object.keys(data.formData || {}).length
+          });
+          
+          return data.formData || {};
+        } catch (error) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            this.warn(`Progress fetch attempt ${retryCount} failed with status ${(error as any)?.status || 'unknown'}`);
+            // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retryCount - 1)));
+            return fetchWithRetry();
+          }
+          throw error;
+        }
+      };
+      
+      // Race between timeout and fetch
+      try {
+        const result = await Promise.race([fetchWithRetry(), timeout(9000)]);
+        return result || {};
+      } catch (error) {
+        // Return cached data as fallback
+        this.log('Using cached data as fallback after timeout for task ' + taskId);
+        return {};
+      }
+    } catch (error) {
+      this.error('Error fetching Open Banking task data:', error);
+      return {};
+    }
+  }
+  
+  /**
+   * Update a single field value
+   * @override
+   */
+  async updateField(taskId: number, fieldKey: string, value: any): Promise<boolean> {
+    try {
+      this.log(`Updating field ${fieldKey} for task ${taskId}`);
+      
+      const response = await fetch(`${this.progressEndpoint}/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData: {
+            [fieldKey]: value
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update field: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      this.log(`Field ${fieldKey} updated successfully`, result);
+      
+      return true;
+    } catch (error) {
+      this.error(`Error updating field ${fieldKey}:`, error);
+      return false;
+    }
+  }
+  
+  /**
+   * Batch update multiple fields at once
+   * @override
+   */
+  async batchUpdate(taskId: number, formData: Record<string, any>): Promise<boolean> {
+    try {
+      this.log(`Saving form data for task ${taskId}`);
+      
+      const response = await fetch(`${this.progressEndpoint}/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Batch update failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      this.log(`Form data saved successfully for task ${taskId}`, {
+        progress: result?.savedData?.progress,
+        status: result?.savedData?.status 
+      });
+      
+      return true;
+    } catch (error) {
+      this.error('Error in batch update:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Apply demo data to populate the form (for testing)
+   * @override
+   */
+  async demoAutofill(taskId: number): Promise<boolean> {
+    try {
+      this.log(`Applying demo auto-fill for task ${taskId}`);
+      
+      const response = await fetch(`${this.demoAutofillEndpoint}/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Demo auto-fill failed: ${response.status} ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      this.error('Error applying demo auto-fill:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Clear all field values for the task
+   * @override
+   */
+  async clearAllFields(taskId: number): Promise<boolean> {
+    try {
+      this.log(`Clearing all fields for task ${taskId}`);
+      
+      const response = await fetch(`${this.clearEndpoint}/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Clear fields failed: ${response.status} ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      this.error('Error clearing fields:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Get the task type for this form service
+   * @override
+   */
+  getTaskType(): string {
+    return 'open_banking';
   }
 }
 
-// Create singleton instance for use in the application
-export const openBankingFormService = _instance || (_instance = new OpenBankingFormService());
-export const openBankingFormServiceFactory = OpenBankingFormServiceFactory.getInstance();
+// Create a default instance with an empty QueryClient
+// This allows for compatibility with the existing code without breaking changes
+export const openBankingFormService = new OpenBankingFormService(new QueryClient());
+
+/**
+ * Factory for creating isolated instances of the Open Banking Form Service
+ * This ensures that each company and task gets its own isolated service instance
+ * to prevent cross-contamination of data
+ */
+class OpenBankingFormServiceFactory {
+  private instanceMap: Map<string, OpenBankingFormService> = new Map();
+  private logger = new FormServiceLogger('OpenBankingFormServiceFactory');
+  
+  /**
+   * Gets or creates an isolated service instance for a specific company and task
+   * @param companyId Company ID
+   * @param taskId Task ID
+   * @returns Isolated OpenBankingFormService instance
+   */
+  getServiceInstance(companyId: number | string, taskId: number | string): OpenBankingFormService {
+    const key = `${companyId}_${taskId}`;
+    
+    if (!this.instanceMap.has(key)) {
+      this.logger.log(`Creating new Open Banking service instance for company ${companyId}, task ${taskId}`);
+      const service = new OpenBankingFormService(new QueryClient());
+      this.instanceMap.set(key, service);
+    } else {
+      this.logger.log(`Reusing existing Open Banking service instance for company ${companyId}, task ${taskId}`);
+    }
+    
+    return this.instanceMap.get(key)!;
+  }
+  
+  /**
+   * Clears the instance for a specific company and task (useful for cleanup)
+   * @param companyId Company ID
+   * @param taskId Task ID
+   */
+  clearInstance(companyId: number | string, taskId: number | string): void {
+    const key = `${companyId}_${taskId}`;
+    if (this.instanceMap.has(key)) {
+      this.logger.log(`Clearing Open Banking service instance for company ${companyId}, task ${taskId}`);
+      this.instanceMap.delete(key);
+    }
+  }
+  
+  /**
+   * Clears all instances (useful for testing and forced resets)
+   */
+  clearAllInstances(): void {
+    this.logger.log(`Clearing all Open Banking service instances (${this.instanceMap.size} total)`);
+    this.instanceMap.clear();
+  }
+}
+
+// Export singleton factory
+export const openBankingFormServiceFactory = new OpenBankingFormServiceFactory();
