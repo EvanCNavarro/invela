@@ -1,238 +1,154 @@
 /**
- * KY3P Batch Update API Routes
+ * KY3P Batch Update Routes
  * 
- * This file implements the API routes for batch updating KY3P form responses
- * using the standardized approach with string-based field keys.
+ * This module provides a standardized batch update endpoint for KY3P forms
+ * that accepts string field keys instead of numeric field IDs.
  */
 
-import express from 'express';
-import { db, pool } from '../../db';
-import { ky3pFields, ky3pResponses } from '../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { Request, Response, Router } from 'express';
+import { db } from '../db';
+import { ky3p_fields, ky3p_responses } from '../models';
+import { eq } from 'drizzle-orm';
+import getLogger from '../utils/logger';
 
-// Logger setup
-const PREFIX = '[KY3P-BATCH-UPDATE]';
-const log = {
-  info: (message: string, ...args: any[]) => console.log(`${PREFIX} ${message}`, ...args),
-  error: (message: string, ...args: any[]) => console.error(`${PREFIX} ERROR: ${message}`, ...args),
-  debug: (message: string, ...args: any[]) => console.log(`${PREFIX} DEBUG: ${message}`, ...args),
-};
+const logger = getLogger('KY3P-BATCH-UPDATE');
+
+const router = Router();
 
 /**
- * Register the KY3P batch update routes
+ * Register batch update routes for KY3P forms
  */
-export function registerKY3PBatchUpdateRoutes(app: express.Express) {
-  log.info('Registering KY3P batch update routes');
-
-  /**
-   * Standardized batch update endpoint for KY3P forms
-   * Accepts string-based field keys and handles the proper database operations
-   * 
-   * POST /api/ky3p/batch-update/:taskId
-   */
-  app.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
+export function registerKY3PBatchUpdateRoutes() {
+  logger.info('Registering KY3P batch update routes');
+  
+  // Endpoint for batch updating KY3P responses using string field keys
+  router.post('/api/ky3p/batch-update/:taskId', async (req: Request, res: Response) => {
     try {
-      const taskId = parseInt(req.params.taskId);
+      const taskId = parseInt(req.params.taskId, 10);
       const { responses } = req.body;
-
+      
       if (!responses || typeof responses !== 'object') {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid request format. Expected { responses: { field_key: value, ... } }' 
+        return res.status(400).json({
+          error: 'Invalid request format. Expected { responses: { [fieldKey]: value, ... } }'
         });
       }
-
-      log.info(`Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
-
-      // Begin a transaction for all database operations
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-
-        // Get all updates processed count
-        let processedCount = 0;
+      
+      // Log the request for debugging
+      logger.info(`Batch update request for task ${taskId} with ${Object.keys(responses).length} fields`);
+      
+      // First, we need to get the field ID mapping
+      const fields = await db.select({
+        id: ky3p_fields.id,
+        field_key: ky3p_fields.field_key
+      }).from(ky3p_fields);
+      
+      // Create a mapping from field keys to field IDs
+      const fieldKeyToIdMap = new Map(
+        fields.map(field => [field.field_key, field.id])
+      );
+      
+      // Track statistics for validation
+      let foundFieldCount = 0;
+      let notFoundFieldCount = 0;
+      const notFoundFields = [];
+      
+      // Process each response
+      const processedResponses = [];
+      
+      for (const [fieldKey, value] of Object.entries(responses)) {
+        const fieldId = fieldKeyToIdMap.get(fieldKey);
         
-        // Process each field in the responses object
-        for (const [fieldKey, value] of Object.entries(responses)) {
-          // First, find the field ID using the field_key
-          const fieldResults = await db.select()
-            .from(ky3p_template_fields)
-            .where(eq(ky3p_template_fields.field_key, fieldKey))
-            .limit(1);
-
-          if (fieldResults.length === 0) {
-            log.error(`Field not found for key: ${fieldKey}`);
-            continue;
-          }
-
-          const fieldId = fieldResults[0].id;
+        if (fieldId) {
+          // We found a matching field ID, so we can add this response
+          processedResponses.push({
+            task_id: taskId,
+            field_id: fieldId,
+            value: typeof value === 'string' ? value : JSON.stringify(value)
+          });
           
-          // Check if a response already exists for this task and field
-          const existingResponses = await db.select()
-            .from(ky3p_responses)
-            .where(
-              and(
-                eq(ky3p_responses.task_id, taskId),
-                eq(ky3p_responses.field_id, fieldId)
-              )
-            );
-
-          if (existingResponses.length > 0) {
-            // Update existing response
-            await db.update(ky3p_responses)
-              .set({ 
-                response_value: value, 
-                updated_at: new Date() 
-              })
-              .where(
-                and(
-                  eq(ky3p_responses.task_id, taskId),
-                  eq(ky3p_responses.field_id, fieldId)
-                )
-              );
-          } else {
-            // Insert new response
-            await db.insert(ky3p_responses)
-              .values({
-                task_id: taskId,
-                field_id: fieldId,
-                response_value: value,
-                created_at: new Date(),
-                updated_at: new Date()
-              });
-          }
-
-          processedCount++;
+          foundFieldCount++;
+        } else {
+          // Log the missing field for debugging purposes
+          logger.warn(`Field key not found in mapping: ${fieldKey}`);
+          notFoundFields.push(fieldKey);
+          notFoundFieldCount++;
         }
-
-        // Commit the transaction
-        await client.query('COMMIT');
-        
-        log.info(`Successfully processed ${processedCount} fields for task ${taskId}`);
-        
-        return res.status(200).json({ 
-          success: true, 
-          message: `Successfully updated ${processedCount} fields` 
-        });
-      } catch (error) {
-        // Rollback the transaction on error
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        // Release the client back to the pool
-        client.release();
       }
+      
+      if (processedResponses.length === 0) {
+        return res.status(400).json({
+          error: 'No valid field keys found in the request',
+          notFoundFields
+        });
+      }
+      
+      // Delete existing responses for these fields to ensure a clean update
+      if (processedResponses.length > 0) {
+        const fieldIds = processedResponses.map(pr => pr.field_id);
+        
+        await db.delete(ky3p_responses)
+          .where(
+            ky3p_responses.task_id.equals(taskId).and(
+              ky3p_responses.field_id.in(fieldIds)
+            )
+          );
+          
+        logger.info(`Deleted existing responses for task ${taskId} with fields: ${fieldIds.join(', ')}`);
+      }
+      
+      // Insert the new responses
+      if (processedResponses.length > 0) {
+        const result = await db.insert(ky3p_responses).values(processedResponses);
+        
+        logger.info(`Inserted ${processedResponses.length} responses for task ${taskId}`);
+      }
+      
+      // Return success with stats
+      return res.status(200).json({
+        success: true,
+        message: `Updated ${processedResponses.length} fields successfully`,
+        stats: {
+          requested: Object.keys(responses).length,
+          updated: processedResponses.length,
+          notFound: notFoundFieldCount
+        }
+      });
     } catch (error) {
-      log.error('Error processing batch update:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      logger.error('Error in KY3P batch update:', error);
+      return res.status(500).json({
+        error: 'Internal server error during batch update',
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
-
-  /**
-   * Alternative endpoint path for the same functionality
-   * POST /api/tasks/:taskId/ky3p-batch-update  
-   */
-  app.post('/api/tasks/:taskId/ky3p-batch-update', async (req, res) => {
+  
+  // Endpoint for clearing all KY3P responses for a task
+  router.post('/api/ky3p/clear-fields/:taskId', async (req: Request, res: Response) => {
     try {
-      const taskId = parseInt(req.params.taskId);
-      const { responses } = req.body;
-
-      if (!responses || typeof responses !== 'object') {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid request format. Expected { responses: { field_key: value, ... } }' 
-        });
-      }
-
-      log.info(`Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields (alt path)`);
-
-      // Begin a transaction for all database operations
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-
-        // Get all updates processed count
-        let processedCount = 0;
+      const taskId = parseInt(req.params.taskId, 10);
+      
+      // Log the request for debugging
+      logger.info(`Clear fields request for task ${taskId}`);
+      
+      // Delete all responses for this task
+      const result = await db.delete(ky3p_responses)
+        .where(eq(ky3p_responses.task_id, taskId));
         
-        // Process each field in the responses object
-        for (const [fieldKey, value] of Object.entries(responses)) {
-          // First, find the field ID using the field_key
-          const fieldResults = await db.select()
-            .from(ky3p_template_fields)
-            .where(eq(ky3p_template_fields.field_key, fieldKey))
-            .limit(1);
-
-          if (fieldResults.length === 0) {
-            log.error(`Field not found for key: ${fieldKey}`);
-            continue;
-          }
-
-          const fieldId = fieldResults[0].id;
-          
-          // Check if a response already exists for this task and field
-          const existingResponses = await db.select()
-            .from(ky3p_responses)
-            .where(
-              and(
-                eq(ky3p_responses.task_id, taskId),
-                eq(ky3p_responses.field_id, fieldId)
-              )
-            );
-
-          if (existingResponses.length > 0) {
-            // Update existing response
-            await db.update(ky3p_responses)
-              .set({ 
-                response_value: value, 
-                updated_at: new Date() 
-              })
-              .where(
-                and(
-                  eq(ky3p_responses.task_id, taskId),
-                  eq(ky3p_responses.field_id, fieldId)
-                )
-              );
-          } else {
-            // Insert new response
-            await db.insert(ky3p_responses)
-              .values({
-                task_id: taskId,
-                field_id: fieldId,
-                response_value: value,
-                created_at: new Date(),
-                updated_at: new Date()
-              });
-          }
-
-          processedCount++;
-        }
-
-        // Commit the transaction
-        await client.query('COMMIT');
-        
-        log.info(`Successfully processed ${processedCount} fields for task ${taskId}`);
-        
-        return res.status(200).json({ 
-          success: true, 
-          message: `Successfully updated ${processedCount} fields` 
-        });
-      } catch (error) {
-        // Rollback the transaction on error
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        // Release the client back to the pool
-        client.release();
-      }
+      logger.info(`Cleared ${result.rowCount || 'all'} responses for task ${taskId}`);
+      
+      return res.status(200).json({
+        success: true,
+        message: `Cleared all fields for task ${taskId}`,
+        count: result.rowCount
+      });
     } catch (error) {
-      log.error('Error processing batch update:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      logger.error('Error in KY3P clear fields:', error);
+      return res.status(500).json({
+        error: 'Internal server error during clear fields',
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
+  
+  return router;
 }
