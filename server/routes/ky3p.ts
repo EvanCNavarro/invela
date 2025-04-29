@@ -532,9 +532,9 @@ router.post('/api/tasks/:taskId/ky3p-responses/:fieldId', requireAuth, hasTaskAc
     
     // If we have a response value that's not empty or undefined
     if (response_value !== null && response_value !== undefined && response_value !== '') {
-      status = 'COMPLETE';
+      status = KYBFieldStatus.COMPLETE; // FIXED: Using enum instead of string literal
     } else {
-      status = 'EMPTY';
+      status = KYBFieldStatus.EMPTY; // FIXED: Using enum instead of string literal
     }
     
     // Get current task to check its status
