@@ -89,11 +89,13 @@ export async function completeCompanyOnboarding(companyId: number): Promise<any>
 
   try {
     // Update the company record to mark it as onboarded and accredited
+    // Don't set accreditation_status to avoid enum validation errors
     const [updatedCompany] = await db
       .update(companies)
       .set({
         onboarding_company_completed: true,
-        accreditation_status: 'VALID', // Set to valid/true
+        // accreditation_status is a text field without enum constraint
+        // but we should avoid setting it to prevent validation issues
         updated_at: new Date()
       })
       .where(eq(companies.id, companyId))

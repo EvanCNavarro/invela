@@ -251,10 +251,22 @@ export function StandardizedUniversalForm({
       submissionTracker.startTracking(taskId, taskType);
       submissionTracker.trackEvent('Submit button clicked');
       
-      // Get current progress to check if form is already submitted
+      // Get current progress to check if form is already submitted - critical check
       try {
-        const progressData = await formService.getProgress ? formService.getProgress(taskId) : null;
-        if (progressData && progressData.status === 'submitted') {
+        submissionTracker.trackEvent('Checking form submission status');
+        // Require getProgress to be implemented
+        if (!formService.getProgress) {
+          throw new Error('Form service does not implement getProgress method');
+        }
+        
+        const progressData = await formService.getProgress(taskId);
+        logger.info('Form status check result:', progressData);
+        
+        // More specific status check to prevent any resubmission attempts
+        if (progressData && 
+            (progressData.status === 'submitted' || 
+             progressData.status === 'completed' || 
+             progressData.status === 'approved')) {
           submissionTracker.trackEvent('Form already submitted, preventing resubmission');
           toast({
             title: 'Form Already Submitted',
@@ -266,8 +278,9 @@ export function StandardizedUniversalForm({
           return;
         }
       } catch (progressError) {
-        // Continue with submission if we can't check the status
+        // Log detailed error but continue with submission if we can't check the status
         logger.warn('Could not check form submission status:', progressError);
+        submissionTracker.trackEvent(`Error checking form status: ${progressError instanceof Error ? progressError.message : 'unknown error'}`);
       }
       
       // Validate the form data
