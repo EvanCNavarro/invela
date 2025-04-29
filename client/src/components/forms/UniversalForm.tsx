@@ -1066,8 +1066,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             
                             <Button 
                               type="button" 
-                              disabled={false} /* Force enable for testing */
-                              className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
+                              disabled={!form.getValues('agreement_confirmation')}
+                              className={`flex items-center gap-1 ${form.getValues('agreement_confirmation') ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
                               onClick={() => {
                                 // TEST ALERT to see if the button works at all
                                 alert('SUBMIT BUTTON CLICKED - Testing the button event');
