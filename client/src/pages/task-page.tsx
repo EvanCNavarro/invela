@@ -83,102 +83,46 @@ export default function TaskPage({ params }: TaskPageProps) {
   // The url for fetching tasks
   const apiEndpoint = taskId ? `/api/tasks.json/${taskId}` : '/api/tasks';
   
-  // WebSocket connection for real-time updates
-  const webSocketRef = useRef<WebSocket | null>(null);
-  const webSocketReconnectTimerRef = useRef<number | null>(null);
+  // Use the shared WebSocket service instead of creating a separate connection
+  const websocketSubscription = useRef<(() => void) | undefined>();
   
-  // Function to initialize WebSocket connection for real-time updates
-  const setupWebSocket = useCallback(() => {
+  // Import shared WebSocket service at the top level to avoid issues
+  const setupWebSocketSubscription = useCallback(async () => {
     if (!taskId) return;
     
     try {
-      // Close existing connection if any
-      if (webSocketRef.current) {
-        try {
-          webSocketRef.current.close();
-        } catch (e) {
-          // Ignore errors when closing
-        }
+      // Import the WebSocket service dynamically to avoid module resolution issues
+      const { default: wsService } = await import('@/lib/websocket');
+      
+      // First unsubscribe from any existing subscription
+      if (websocketSubscription.current) {
+        websocketSubscription.current();
+        websocketSubscription.current = undefined;
       }
       
-      // Clear any pending reconnect timer
-      if (webSocketReconnectTimerRef.current !== null) {
-        window.clearTimeout(webSocketReconnectTimerRef.current);
-        webSocketReconnectTimerRef.current = null;
-      }
-      
-      // Setup WebSocket connection
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      logger.info(`[TaskPage] Connecting to WebSocket: ${wsUrl}`);
-      
-      const socket = new WebSocket(wsUrl);
-      webSocketRef.current = socket;
-      
-      socket.onopen = () => {
-        logger.info('[TaskPage] WebSocket connection established');
-      };
-      
-      // Add a timestamp tracking mechanism to avoid duplicate processing
-      const lastMessageTimestamps = new Map<string, number>();
-      
-      socket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          
-          // Implement de-duplication for messages
-          const messageTimestamp = message.timestamp ? new Date(message.timestamp).getTime() : Date.now();
-          const messageKey = `${message.type}-${message.payload?.id || message.payload?.taskId || 'unknown'}`;
-          const lastTimestamp = lastMessageTimestamps.get(messageKey) || 0;
-          
-          // Ignore messages that are too close together (within 300ms)
-          if (messageTimestamp - lastTimestamp < 300) {
-            // Skip this message as it's too close to the previous one
-            return;
-          }
-          
-          // Update the timestamp for this message type
-          lastMessageTimestamps.set(messageKey, messageTimestamp);
-          
-          logger.info('[TaskPage] WebSocket message received:', message);
-          
-          // Handle task update messages
-          if (message.type === 'task_updated' && 
-              message.payload && 
-              (message.payload.id === taskId || message.payload.taskId === taskId)) {
-            
-            logger.info('[TaskPage] Task update received via WebSocket:', {
-              taskId: message.payload.id || message.payload.taskId,
-              status: message.payload.status,
-              progress: message.payload.progress
-            });
-            
-            // Refresh task data to get the latest state
-            refetch();
-          }
-        } catch (e) {
-          logger.error('[TaskPage] Error processing WebSocket message:', e);
-        }
-      };
-      
-      socket.onclose = (event) => {
-        logger.warn(`[TaskPage] WebSocket connection closed: ${event.code}`, event);
+      // Subscribe to task update events for this specific task
+      websocketSubscription.current = await wsService.subscribe('task_updated', (data) => {
+        // Ensure the message is for this task
+        if (!data || (data.id !== taskId && data.taskId !== taskId)) return;
         
-        // Schedule reconnection
-        webSocketReconnectTimerRef.current = window.setTimeout(() => {
-          logger.info('[TaskPage] Attempting to reconnect WebSocket...');
-          setupWebSocket();
-        }, 3000);
-      };
+        logger.info('[TaskPage] Task update received via WebSocket:', {
+          taskId: data.id || data.taskId,
+          status: data.status,
+          progress: data.progress
+        });
+        
+        // Refresh task data to get the latest state
+        if (refetch) {
+          refetch();
+        }
+      });
       
-      socket.onerror = (error) => {
-        logger.error('[TaskPage] WebSocket error:', error);
-      };
+      logger.info('[TaskPage] WebSocket subscription set up successfully');
       
     } catch (err) {
-      logger.error('[TaskPage] Error setting up WebSocket:', err);
+      logger.error('[TaskPage] Error setting up WebSocket subscription:', err);
     }
-  }, [taskId]);
+  }, [taskId, refetch]);
   
   // Function to extract company name from task title
   const extractCompanyNameFromTitle = useCallback((title: string): string => {
@@ -239,26 +183,18 @@ export default function TaskPage({ params }: TaskPageProps) {
     });
   }, [params.taskSlug, parsedId, taskId, apiEndpoint]);
   
-  // Setup WebSocket connection when component mounts or taskId changes
+  // Setup WebSocket subscription when component mounts or taskId changes
   useEffect(() => {
-    setupWebSocket();
+    setupWebSocketSubscription();
     
-    // Cleanup function to close the WebSocket connection when component unmounts
+    // Cleanup function to unsubscribe when component unmounts
     return () => {
-      if (webSocketRef.current) {
-        try {
-          webSocketRef.current.close();
-        } catch (e) {
-          // Ignore errors when closing
-        }
-      }
-      
-      if (webSocketReconnectTimerRef.current !== null) {
-        window.clearTimeout(webSocketReconnectTimerRef.current);
-        webSocketReconnectTimerRef.current = null;
+      if (websocketSubscription.current) {
+        websocketSubscription.current();
+        websocketSubscription.current = undefined;
       }
     };
-  }, [setupWebSocket]);
+  }, [setupWebSocketSubscription]);
   
   // Handle back button click
   const handleBackClick = useCallback(() => {
