@@ -160,6 +160,18 @@ export interface FormServiceInterface {
   loadProgress(taskId: number): Promise<FormData>;
   
   /**
+   * Get progress status for a task
+   * Optional method to retrieve current progress and status
+   * @param taskId ID of the task
+   * @returns Promise that resolves with task progress and status
+   */
+  getProgress?(taskId: number): Promise<{
+    progress: number;
+    status: string;
+    formDataKeys?: number;
+  }>;
+  
+  /**
    * Save the form data
    * @param options Form submission options
    * @returns Promise that resolves when form data is saved
