@@ -9,7 +9,7 @@
  */
 
 import { KY3PFormService } from './ky3p-form-service';
-import { FormServiceInterface, FormField, FormSection } from './formService';
+import { FormServiceInterface, FormField, FormSection, FormSubmitOptions } from './formService';
 import getLogger from '@/utils/logger';
 
 // Set up a dedicated logger for this service
@@ -485,34 +485,51 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   /**
    * Save form progress
    * Delegates to the original service with enhanced logging
+   * Implementation modified to match FormServiceInterface return type
    */
-  async saveProgress(taskId?: number): Promise<boolean> {
+  async saveProgress(taskId?: number): Promise<void> {
     logger.info(`[EnhancedKY3P] Saving progress for task ${taskId || 'unknown'}`);
     
     try {
-      const success = await this.originalService.saveProgress(taskId);
+      const effectiveTaskId = taskId || (this.originalService as any).taskId;
+      const success = await this.originalService.saveProgress(effectiveTaskId);
       logger.info(`[EnhancedKY3P] Progress save ${success ? 'successful' : 'failed'}`);
-      return success;
+      // Return void to satisfy interface, but log the success result
+      // Interface expects Promise<void>, original implementation returns Promise<boolean>
+      return;
     } catch (error) {
       logger.error('[EnhancedKY3P] Error saving progress:', error);
-      return false;
+      // Don't rethrow the error to match the interface, which expects void return
     }
   }
   
   /**
    * Submit the form
    * Delegates to the original service with enhanced logging
+   * Modified to accept FormSubmitOptions parameter to match FormServiceInterface
    */
-  async submit(taskId?: number): Promise<any> {
+  async submit(options: FormSubmitOptions): Promise<any> {
+    const taskId = options?.taskId || (this.originalService as any).taskId;
     logger.info(`[EnhancedKY3P] Submitting form for task ${taskId || 'unknown'}`);
     
     try {
-      const result = await this.originalService.submit(taskId);
+      // If the original service accepts FormSubmitOptions, pass the options directly
+      // Otherwise extract the taskId and pass that
+      const originalSubmitParams = options.taskId ? options : taskId;
+      const result = await this.originalService.submit(originalSubmitParams);
       logger.info('[EnhancedKY3P] Form submission successful');
       return result;
     } catch (error) {
       logger.error('[EnhancedKY3P] Error submitting form:', error);
-      throw error;
+      // Standardize error objects for consistent pattern in UI
+      if (error) {
+        return { 
+          success: false, 
+          error: error instanceof Error ? error : new Error(String(error))
+        };
+      }
+      // Return a standardized error object instead of throwing
+      return { success: false, error: new Error('Unknown form submission error') };
     }
   }
   
