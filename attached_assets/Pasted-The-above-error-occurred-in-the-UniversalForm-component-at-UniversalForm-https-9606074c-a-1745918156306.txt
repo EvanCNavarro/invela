@@ -1,0 +1,48 @@
+The above error occurred in the <UniversalForm> component:
+
+    at UniversalForm (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/forms/UniversalForm.tsx:68:3)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at PageTemplate (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/page-template.tsx:21:3)
+    at div
+    at main
+    at div
+    at div
+    at DashboardLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/layouts/DashboardLayout.tsx:28:35)
+    at TaskPage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/task-page.tsx:37:36)
+    at div
+    at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=PURcg4nFZW0Reu5nFGGnE:76:28)
+    at component (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=PURcg4nFZW0Reu5nFGGnE:326:25)
+    at Route (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f99a929d:191:16)
+    at ProtectedRoute (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f99a929d:247:17)
+    at div
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=PURcg4nFZW0Reu5nFGGnE:86:22)
+    at WebSocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/contexts/WebSocketContext.tsx:31:37)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:176:32)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-ICA7ZJMY.js?v=f99a929d:38:15)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=f99a929d:28:15)
+    at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=f99a929d:89:13)
+    at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=f99a929d:104:5)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f99a929d:2805:3)
+    at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=PURcg4nFZW0Reu5nFGGnE:761:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+formService.getFormData is not a function
+[WebSocket] Connection closed: 1005 
+[WebSocket] Scheduling reconnection attempt in 3 seconds...
+[TaskPage] [TaskPage] WebSocket connection closed: 1005 
+CloseEvent {isTrusted: true}
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[TaskPage] [TaskPage] Attempting to reconnect WebSocket...
+[TaskPage] [TaskPage] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", payload: {…}}
+[TaskPage] [TaskPage] WebSocket connection established
+[TaskPage] [TaskPage] WebSocket message received: 
+Object {type: "connection_established", payload: {…}}
