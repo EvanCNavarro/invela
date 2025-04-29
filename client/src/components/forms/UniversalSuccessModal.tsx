@@ -12,6 +12,12 @@ export interface SubmissionResult {
   nextTaskId?: number;
   riskScore?: number;
   completedActions?: SubmissionAction[];
+  // For KYB responses which may contain nested data property
+  data?: {
+    fileId?: number;
+    downloadUrl?: string;
+    [key: string]: any; // Other data properties
+  };
   // Add other task-specific fields here
 }
 
@@ -182,12 +188,16 @@ export function UniversalSuccessModal({
     // File download button (if a file was generated)
     const fileAction = submissionResult.completedActions?.find(a => a.type === "file_generation");
     const hasFileAction = fileAction || submissionResult.fileId || submissionResult.downloadUrl;
-    const hasFileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId;
+    // Look for fileId in different locations, including nested in a data property if it's from the KYB response
+    const hasFileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId || 
+                      (submissionResult.data && typeof submissionResult.data === 'object' ? submissionResult.data.fileId : undefined);
     
     if (hasFileAction || hasFileId) {
       // First, add a direct download button for this specific file
       if (hasFileId) {
-        const fileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId;
+        // Get the fileId from any of the possible locations
+        const fileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId || 
+                      (submissionResult.data && typeof submissionResult.data === 'object' ? submissionResult.data.fileId : undefined);
         const buttonText = fileAction?.data?.buttonText || "Download File";
         
         buttons.push(
