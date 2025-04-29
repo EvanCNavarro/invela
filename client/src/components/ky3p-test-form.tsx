@@ -38,7 +38,10 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
     async function initializeFormService() {
       try {
         console.log('Creating enhanced KY3P form service for task', taskId);
-        const service = formServiceFactory.getServiceInstance('ky3p', 248, taskId) as EnhancedKY3PFormService;
+        // Default company ID for testing purposes
+        const companyId = 248; // This should match a valid company in your database
+        console.log('Creating enhanced KY3P form service for company', companyId, 'and task', taskId);
+        const service = formServiceFactory.getServiceInstance('ky3p', companyId, taskId) as EnhancedKY3PFormService;
         
         if (!service) {
           console.error('Failed to create enhanced KY3P form service');
@@ -50,13 +53,22 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
         console.log('Initializing form service with template', templateId);
         await service.initialize(templateId);
         
-        const serviceSections = service.getSections();
+        // Add error checking for sections and data
+        const serviceSections = service.getSections() || [];
+        console.log('Retrieved sections:', serviceSections);
         setSections(serviceSections);
         
-        const serviceFormData = service.getFormData();
+        const serviceFormData = service.getFormData() || {};
+        console.log('Retrieved form data keys:', Object.keys(serviceFormData).length);
         setFormData(serviceFormData);
         
-        const serviceProgress = service.calculateProgress();
+        // Calculate progress safely
+        let serviceProgress = 0;
+        try {
+          serviceProgress = service.calculateProgress();
+        } catch (progressError) {
+          console.error('Error calculating progress:', progressError);
+        }
         setProgress(serviceProgress);
         
         setInitialized(true);
@@ -92,11 +104,18 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
       if (result) {
         console.log('Form fields cleared successfully');
         
-        // Refresh the form data and sections
-        const updatedFormData = formService.getFormData();
+        // Refresh the form data and sections safely
+        const updatedFormData = formService.getFormData() || {};
+        console.log('Updated form data after clearing:', Object.keys(updatedFormData).length);
         setFormData(updatedFormData);
         
-        const updatedProgress = formService.calculateProgress();
+        // Calculate progress safely
+        let updatedProgress = 0;
+        try {
+          updatedProgress = formService.calculateProgress();
+        } catch (progressError) {
+          console.error('Error calculating progress after clearing:', progressError);
+        }
         setProgress(updatedProgress);
         
         toast({
@@ -158,13 +177,26 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
       const result = await response.json();
       console.log('Demo auto-fill result:', result);
       
-      // Refresh the form data and progress
-      await formService.loadResponses(taskId);
-      const updatedFormData = formService.getFormData();
-      setFormData(updatedFormData);
-      
-      const updatedProgress = formService.calculateProgress();
-      setProgress(updatedProgress);
+      // Refresh the form data and progress safely
+      try {
+        await formService.loadResponses(taskId);
+        console.log('Responses loaded successfully after demo auto-fill');
+        
+        const updatedFormData = formService.getFormData() || {};
+        console.log('Updated form data after demo auto-fill:', Object.keys(updatedFormData).length);
+        setFormData(updatedFormData);
+        
+        // Calculate progress safely
+        let updatedProgress = 0;
+        try {
+          updatedProgress = formService.calculateProgress();
+        } catch (progressError) {
+          console.error('Error calculating progress after demo auto-fill:', progressError);
+        }
+        setProgress(updatedProgress);
+      } catch (loadError) {
+        console.error('Error loading responses after demo auto-fill:', loadError);
+      }
       
       toast({
         title: 'Success',
