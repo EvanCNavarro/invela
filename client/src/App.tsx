@@ -42,6 +42,7 @@ import TestKy3pPage from "@/pages/test-ky3p-page";
 import { TestStandardizedKy3pUpdate } from "@/components/test/TestStandardizedKy3pUpdate";
 import TestStandardizedServicePage from "@/pages/test-standardized-service-page";
 import TestStandardizedUniversalFormPage from "@/pages/test-standardized-universal-form";
+import KY3PTestPage from "@/pages/ky3p-test-page";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -325,6 +326,11 @@ function Router() {
         {/* Standardized Universal Form Test Page - For Testing Across Different Form Types */}
         <Route path="/test-standardized-universal-form">
           <TestStandardizedUniversalFormPage />
+        </Route>
+        
+        {/* Enhanced KY3P Form Test Page - For Testing String-Based Field Keys and Batch Update */}
+        <Route path="/ky3p-test">
+          <KY3PTestPage />
         </Route>
         
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
