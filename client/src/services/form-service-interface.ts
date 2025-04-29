@@ -83,4 +83,10 @@ export interface FormServiceInterface {
    * This is used to reset the service state when needed
    */
   clearCache(): void;
+  
+  /**
+   * Load saved progress for a task
+   * This is used by FormDataManager to retrieve saved form data
+   */
+  loadProgress?(taskId: number): Promise<Record<string, any>>;
 }
