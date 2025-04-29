@@ -71,4 +71,16 @@ export interface FormServiceInterface {
    * Get the task type for this form service
    */
   getTaskType(): string;
+  
+  /**
+   * Get the current form data from cache or memory
+   * This is used by form components to access the current state of the form
+   */
+  getFormData(): Record<string, any>;
+  
+  /**
+   * Clear the service cache
+   * This is used to reset the service state when needed
+   */
+  clearCache(): void;
 }

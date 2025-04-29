@@ -48,6 +48,7 @@ interface Ky3PUpdateOptions {
  */
 export class StandardizedKY3PFormService extends EnhancedKybFormService {
   private fieldMappingCache: Ky3PFieldMappingCache | null = null;
+  private cachedFormData: Record<string, any> = {};
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   private readonly fieldEndpoint = '/api/ky3p/fields';
   private readonly batchUpdateEndpoint = '/api/ky3p/batch-update';
@@ -181,6 +182,7 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
   
   /**
    * Get form data for a specific task
+   * @override
    */
   async getTaskData(taskId: number): Promise<Record<string, any>> {
     try {
@@ -210,6 +212,10 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
         }
       }
       
+      // Update the cached form data with the fetched data
+      this.cachedFormData = formData;
+      this.log(`Updated cached form data with ${Object.keys(formData).length} entries`);
+      
       return formData;
     } catch (error) {
       this.error('Error fetching KY3P task data:', error);
@@ -219,6 +225,7 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
   
   /**
    * Update a single field value
+   * @override
    */
   async updateField(taskId: number, fieldKey: string, value: any, options?: Ky3PUpdateOptions): Promise<boolean> {
     try {
@@ -239,6 +246,9 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
         });
         
         if (response.ok) {
+          // Update the cached data
+          this.cachedFormData[fieldKey] = value;
+          this.log(`Updated cached form data for field ${fieldKey}`);
           return true;
         }
         
@@ -247,7 +257,15 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
       }
       
       // Use field ID approach
-      return this.updateFieldById(taskId, fieldKey, value);
+      const success = await this.updateFieldById(taskId, fieldKey, value);
+      
+      // If successful, update the cached data
+      if (success) {
+        this.cachedFormData[fieldKey] = value;
+        this.log(`Updated cached form data for field ${fieldKey}`);
+      }
+      
+      return success;
     } catch (error) {
       this.error(`Error updating field ${fieldKey}:`, error);
       return false;
@@ -492,6 +510,40 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
    */
   getTaskType(): string {
     return 'ky3p';
+  }
+  
+  /**
+   * Get the current form data
+   * 
+   * This method is required by the UniversalForm component.
+   * Returns the cached form data or an empty object if no data is available.
+   * @override
+   */
+  getFormData(): Record<string, any> {
+    try {
+      if (!this.cachedFormData || Object.keys(this.cachedFormData).length === 0) {
+        this.log('No cached form data available, returning empty object');
+        return {};
+      }
+      
+      this.log(`Returning cached form data with ${Object.keys(this.cachedFormData).length} fields`);
+      return this.cachedFormData;
+    } catch (error) {
+      this.error('Error getting form data:', error);
+      return {};
+    }
+  }
+  
+  /**
+   * Clear the service cache
+   * 
+   * This method is used by the UniversalForm to clear cached data when needed.
+   * @override
+   */
+  clearCache(): void {
+    this.log('Clearing KY3P form service cache');
+    this.cachedFormData = {};
+    this.fieldMappingCache = null;
   }
 }
 
