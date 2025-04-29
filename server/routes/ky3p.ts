@@ -1103,11 +1103,12 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, hasTaskAccess, async 
         
         if (existingResponse) {
           // Update existing response
+          // FIXED: Setting status to COMPLETED instead of EMPTY to ensure proper progress calculation
           await db
             .update(ky3pResponses)
             .set({
               response_value: String(fieldValue),
-              status: KYBFieldStatus.COMPLETED,
+              status: KYBFieldStatus.COMPLETED, // Always set to COMPLETED when a value exists
               updated_at: new Date()
             })
             .where(eq(ky3pResponses.id, existingResponse.id));
