@@ -113,19 +113,59 @@ export async function handleDemoAutoFill({
         }
         
         // Use the standardized bulk update to send all the data at once
-        logger.info(`Using standardized bulk update for KY3P demo data with ${Object.keys(demoData).length} fields`);
+        const fieldCount = Object.keys(demoData).length;
+        logger.info(`Using standardized bulk update for KY3P demo data with ${fieldCount} fields`);
         
         // Show progress toast
         toast({
           title: 'Demo Auto-Fill',
-          description: `Populating ${Object.keys(demoData).length} fields...`,
+          description: `Populating ${fieldCount} fields...`,
           variant: 'default'
         });
         
+        try {
+          // CRITICAL IMPROVEMENT: Use a direct fetch with the exact format 
+          // observed in server logs to ensure compatibility
+          const directResponse = await fetch(`/api/ky3p/batch-update/${taskId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              taskIdRaw: String(taskId),
+              fieldIdRaw: 'bulk',
+              responseValue: JSON.stringify(demoData),
+              responseValueType: 'object'
+            }),
+          });
+          
+          if (directResponse.ok) {
+            logger.info('Direct KY3P batch update successful');
+            
+            // Force re-render and update UI without waiting for further operations
+            resetForm(demoData);
+            setForceRerender(prev => !prev);
+            await refreshStatus();
+            
+            toast({
+              title: 'Demo Auto-Fill Complete',
+              description: `Successfully filled ${fieldCount} fields with demo data`,
+              variant: 'success'
+            });
+            
+            return;
+          }
+          
+          logger.warn(`Direct approach failed with status ${directResponse.status}, trying standardized approach`);
+        } catch (directError) {
+          logger.warn('Error with direct approach:', directError);
+        }
+        
+        // Fall back to our standard approach if direct method fails
         const success = await standardizedBulkUpdate(taskId, demoData);
         
         if (success) {
-          logger.info('KY3P demo data successfully applied');
+          logger.info('KY3P demo data successfully applied using standardized approach');
           
           // Reset the form with the demo data
           resetForm(demoData);
@@ -139,7 +179,7 @@ export async function handleDemoAutoFill({
           // Show success toast
           toast({
             title: 'Demo Auto-Fill Complete',
-            description: `Successfully filled ${Object.keys(demoData).length} fields with demo data`,
+            description: `Successfully filled ${fieldCount} fields with demo data`,
             variant: 'success'
           });
           
