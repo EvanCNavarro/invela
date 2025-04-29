@@ -92,10 +92,36 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
    * Get all form data
    * Delegates to the original service
    */
+  // Cache for form data to avoid excessive retrievals
+  private cachedFormData: Record<string, any> | null = null;
+  private lastFormDataRetrievalTime = 0;
+  private formDataCacheTTL = 500; // milliseconds
+
+  /**
+   * Get all form data with caching to prevent retrieval cycles
+   * This is a critical method that prevents the update-retrieve cycle
+   */
   getFormData(): Record<string, any> {
-    const formData = this.originalService.getFormData();
-    logger.info(`[EnhancedKY3P] Retrieved form data with ${Object.keys(formData).length} entries`);
-    return formData;
+    const now = Date.now();
+    const cacheExpired = now - this.lastFormDataRetrievalTime > this.formDataCacheTTL;
+    
+    // If we have pending updates, always use cached data to prevent loops
+    if (Object.keys(this.pendingUpdates).length > 0 && this.cachedFormData) {
+      return this.cachedFormData;
+    }
+    
+    // If cache is empty or expired, retrieve fresh data
+    if (!this.cachedFormData || cacheExpired) {
+      this.cachedFormData = this.originalService.getFormData() || {};
+      this.lastFormDataRetrievalTime = now;
+      
+      // Avoid excessive logging - only log when actually retrieving
+      if (Object.keys(this.cachedFormData).length > 0) {
+        logger.info(`[EnhancedKY3P] Retrieved form data with ${Object.keys(this.cachedFormData).length} entries`);
+      }
+    }
+    
+    return this.cachedFormData;
   }
   
   /**
@@ -140,24 +166,35 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
    * This optimizes updates to avoid making 120+ separate API calls
    */
   updateFormData(fieldKey: string, value: any, taskId?: number): void {
-    logger.info(`[EnhancedKY3P] Queuing update for field ${fieldKey}`);
+    // Collect metrics less frequently for better debugging
+    if (Object.keys(this.pendingUpdates).length === 0 || Object.keys(this.pendingUpdates).length % 10 === 0) {
+      logger.info(`[EnhancedKY3P] Queuing update for field ${fieldKey} (${Object.keys(this.pendingUpdates).length + 1} pending)`);
+    }
     
     // Store update in pending updates
     this.pendingUpdates[fieldKey] = value;
     
-    // Also update the local form data immediately for UI consistency
+    // Also update the local form data cache immediately for UI consistency
     try {
-      // Get the current form data
-      const formData = this.getFormData() || {};
-      
-      // Update the field locally
-      formData[fieldKey] = value;
-      
-      // Set the updated form data back to the service
-      if (this.originalService.loadFormData) {
-        this.originalService.loadFormData(formData);
+      // Directly update the cached form data to avoid retrieving it again
+      if (this.cachedFormData) {
+        this.cachedFormData[fieldKey] = value;
       } else {
-        (this.originalService as any).formData = formData;
+        // Initialize cache if needed
+        this.cachedFormData = this.originalService.getFormData() || {};
+        this.lastFormDataRetrievalTime = Date.now();
+        this.cachedFormData[fieldKey] = value;
+      }
+      
+      // Also update the original service's form data for consistency
+      try {
+        if (this.originalService.loadFormData) {
+          this.originalService.loadFormData(this.cachedFormData);
+        } else {
+          (this.originalService as any).formData = this.cachedFormData;
+        }
+      } catch (innerError) {
+        logger.warn(`[EnhancedKY3P] Could not update original service form data: ${innerError}`);
       }
     } catch (error) {
       logger.error(`[EnhancedKY3P] Error updating local form data for field ${fieldKey}:`, error);
@@ -502,28 +539,66 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
         }
       });
       
+      if (Object.keys(cleanData).length === 0) {
+        logger.info('[EnhancedKY3P] No valid fields to update after filtering');
+        return true; // No updates needed, return success
+      }
+      
       logger.info(`[EnhancedKY3P] Using standardized bulk update for ${Object.keys(cleanData).length} fields`);
       
-      // Convert to array format expected by the batch endpoint
-      const arrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => ({
-        fieldKey,
-        value
-      }));
+      // Get field mappings to improve compatibility with server expectations
+      const fieldMappings = this.getFieldIdMappings();
       
-      const response = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
+      // Convert to array format expected by the batch endpoint
+      // Add both fieldKey and numeric fieldId when possible to improve server handling
+      const arrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => {
+        const fieldId = fieldMappings.get(fieldKey);
+        return {
+          fieldKey,
+          fieldId: fieldId || undefined, // Include numeric ID when available
+          fieldIdRaw: fieldId ? String(fieldId) : undefined, // Include string ID when available
+          value
+        };
+      });
+      
+      // Use the universal endpoint that supports both key and ID-based updates
+      const response = await fetch(`/api/ky3p/universal-batch-update/${effectiveTaskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          responses: arrayResponses
+          responses: arrayResponses,
+          options: {
+            preferStringKeys: true, // Hint to server to prefer string keys
+            fallbackToNumericIds: true // But allow fallback to numeric IDs
+          }
         }),
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        logger.error(`[EnhancedKY3P] Standardized bulk update failed: ${response.status}`, errorText);
-        return false;
+        // Try alternative endpoint if first one fails
+        logger.warn(`[EnhancedKY3P] Primary batch update failed with status ${response.status}, trying alternative endpoint`);
+        
+        const fallbackResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            responses: arrayResponses
+          }),
+        });
+        
+        if (!fallbackResponse.ok) {
+          const errorText = await fallbackResponse.text();
+          logger.error(`[EnhancedKY3P] All batch update methods failed: ${fallbackResponse.status}`, errorText);
+          return false;
+        }
+        
+        const fallbackJson = await fallbackResponse.json();
+        logger.info(`[EnhancedKY3P] Fallback batch update succeeded: ${fallbackJson.updatedCount || 0} fields updated`);
+        return true;
       }
       
       const responseJson = await response.json();
@@ -532,6 +607,9 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       // Update local data for any successfully updated fields
       if (responseJson.updatedKeys && Array.isArray(responseJson.updatedKeys)) {
         responseJson.updatedKeys.forEach((key: string) => {
+          if (this.cachedFormData) {
+            this.cachedFormData[key] = cleanData[key];
+          }
           (this.originalService as any).formData[key] = cleanData[key];
         });
       }
@@ -541,6 +619,33 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       logger.error('[EnhancedKY3P] Error in standardized bulk update:', error);
       return false;
     }
+  }
+  
+  /**
+   * Get mappings between field keys and IDs to improve update compatibility
+   */
+  private getFieldIdMappings(): Map<string, number> {
+    const mappings = new Map<string, number>();
+    
+    try {
+      const fields = this.getFields();
+      
+      // Process all fields to create mappings both ways
+      fields.forEach(field => {
+        const id = typeof field.id === 'string' ? parseInt(field.id, 10) : field.id;
+        const key = field.key || (field as any).fieldKey || String(field.id);
+        
+        if (!isNaN(id) && key) {
+          mappings.set(key, id);
+        }
+      });
+      
+      logger.info(`[EnhancedKY3P] Created ${mappings.size} field mappings for compatibility`);
+    } catch (error) {
+      logger.warn('[EnhancedKY3P] Error creating field mappings:', error);
+    }
+    
+    return mappings;
   }
   
   /**
