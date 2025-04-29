@@ -431,7 +431,8 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
     
     try {
       // First, use the original service's method to clear fields
-      const result = await this.originalService.clearFields();
+      // Make sure to pass the effectiveTaskId parameter to ensure it works
+      const result = await this.originalService.clearFields(effectiveTaskId);
       
       if (!result) {
         logger.warn('[EnhancedKY3P] Failed to clear fields using original service');
