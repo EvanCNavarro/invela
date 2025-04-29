@@ -36,8 +36,14 @@ export function determineStatusFromProgress(
   }
   
   // Handle explicit submission request via metadata
-  if (metadata?.status === 'submitted') {
-    console.log(`[STATUS DETERMINATION] Task has explicit 'submitted' status in metadata, setting to SUBMITTED`);
+  // Check both the legacy 'status' flag and our new 'explicitlySubmitted' flag
+  if (metadata?.status === 'submitted' || metadata?.explicitlySubmitted === true) {
+    console.log(`[STATUS DETERMINATION] Task has explicit submission flags in metadata, setting to SUBMITTED`);
+    console.log(`[STATUS DETERMINATION] Metadata submission flags:`, { 
+      status: metadata?.status,
+      explicitlySubmitted: metadata?.explicitlySubmitted,
+      submittedAt: metadata?.submittedAt 
+    });
     return TaskStatus.SUBMITTED;
   }
   
@@ -110,14 +116,19 @@ export function broadcastProgressUpdate(
   // Validate the progress value
   const validatedProgress = Math.max(0, Math.min(100, progress));
   
-  // If metadata has submissionDate, always use SUBMITTED status
+  // If metadata has submission indicators, always use SUBMITTED status
   let finalStatus = status;
   if (metadata?.submissionDate) {
     finalStatus = TaskStatus.SUBMITTED;
     console.log(`[Progress Utils] Task has submissionDate, overriding status to SUBMITTED`);
-  } else if (metadata?.status === 'submitted') {
+  } else if (metadata?.status === 'submitted' || metadata?.explicitlySubmitted === true) {
     finalStatus = TaskStatus.SUBMITTED;
-    console.log(`[Progress Utils] Task has 'submitted' flag in metadata, overriding status to SUBMITTED`);
+    console.log(`[Progress Utils] Task has submission flags in metadata, overriding status to SUBMITTED`);
+    console.log(`[Progress Utils] Metadata submission flags:`, { 
+      status: metadata?.status,
+      explicitlySubmitted: metadata?.explicitlySubmitted,
+      submittedAt: metadata?.submittedAt 
+    });
   }
   
   // Log the broadcast action with detailed information
