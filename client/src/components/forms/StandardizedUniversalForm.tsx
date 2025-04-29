@@ -18,6 +18,7 @@ import { getFormServiceForTaskType } from '@/services/standardized-service-regis
 import { standardizedBulkUpdate } from './standardized-ky3p-update';
 import { fixedUniversalSaveProgress } from './fix-universal-bulk-save';
 import getLogger from '@/utils/logger';
+import submissionTracker from '@/utils/submission-tracker';
 
 const logger = getLogger('StandardizedUniversalForm');
 
@@ -239,12 +240,17 @@ export function StandardizedUniversalForm({
 
   // Handle form submission
   const handleSubmit = useCallback(async () => {
-    if (!formService) return;
+    if (!formService || !taskId) return;
     
     try {
       setLoading(true);
       
+      // Start submission tracking
+      submissionTracker.startTracking(taskId, taskType);
+      submissionTracker.trackEvent('Submit button clicked');
+      
       // Validate the form data
+      submissionTracker.trackEvent('Running form validation');
       const validationResult = formService.validate(formData);
       
       if (validationResult !== true) {
@@ -255,6 +261,8 @@ export function StandardizedUniversalForm({
         if (errorKeys.length > 0) {
           const errorKey = errorKeys[0];
           const errorField = sections.flatMap(s => s.fields).find(f => f.key === errorKey);
+          
+          submissionTracker.trackEvent('Validation failed', { errorKey, errorMessage: errors[errorKey] });
           
           if (errorField) {
             const errorSection = sections.find(s => s.id === errorField.sectionId || s.id === errorField.section);
@@ -280,19 +288,28 @@ export function StandardizedUniversalForm({
             });
           }
           
+          submissionTracker.stopTracking();
           return;
         }
       }
       
+      submissionTracker.trackEvent('Validation passed');
+      
       // Save progress first
+      submissionTracker.trackEvent('Saving progress before submission');
       await saveProgress();
+      submissionTracker.trackEvent('Progress saved successfully');
       
       // If onSubmit is provided, call it
       if (onSubmit) {
+        submissionTracker.trackEvent('Calling custom onSubmit handler');
         await onSubmit(formData);
+        submissionTracker.trackEvent('Custom onSubmit handler completed');
       } else {
         // Otherwise, use the form service submit method
+        submissionTracker.trackEvent('Calling form service submit method', { taskType, taskId });
         await formService.submit({ taskId });
+        submissionTracker.trackEvent('Form service submit completed');
         
         toast({
           title: 'Form Submitted',
@@ -300,9 +317,14 @@ export function StandardizedUniversalForm({
         });
         
         // Refresh the form status
+        submissionTracker.trackEvent('Refreshing form status');
         await refreshStatus();
+        submissionTracker.trackEvent('Form status refreshed');
       }
+      
+      submissionTracker.trackEvent('Form submission completed successfully');
     } catch (error) {
+      submissionTracker.trackEvent('Error during form submission', { error: error instanceof Error ? error.message : 'Unknown error' });
       logger.error('Error submitting form:', error);
       toast({
         title: 'Error Submitting Form',
@@ -311,8 +333,9 @@ export function StandardizedUniversalForm({
       });
     } finally {
       setLoading(false);
+      submissionTracker.stopTracking();
     }
-  }, [formService, formData, sections, saveProgress, onSubmit, taskId, refreshStatus]);
+  }, [formService, formData, sections, saveProgress, onSubmit, taskId, taskType, refreshStatus]);
 
   // Handle demo auto-fill
   const handleDemoAutoFill = useCallback(async () => {
