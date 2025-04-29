@@ -440,9 +440,48 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       
       logger.info('[EnhancedKY3P] Fields successfully cleared');
       
-      // Important: The navigation to the first section will be handled by the
-      // UniversalForm component after it receives the result, so we don't need
-      // to do anything else here.
+      // Send a WebSocket event to notify the client to navigate to the first section
+      // This ensures navigation happens AFTER fields have been cleared
+      try {
+        // Use the internal WebSocket connection if available
+        if (window && window.WebSocket) {
+          // First make sure we have sections to navigate to
+          const sections = this.getSections();
+          if (sections && sections.length > 0) {
+            const firstSectionId = sections[0].id;
+            
+            // Try to send a navigation message via WebSocket
+            logger.info(`[EnhancedKY3P] Sending navigation event to first section: ${firstSectionId}`);
+            
+            // Create a generic navigation event that can be handled by the form components
+            const navigationEvent = {
+              type: 'form_navigation',
+              payload: {
+                action: 'navigate_to_section',
+                sectionId: firstSectionId,
+                taskId: effectiveTaskId,
+                formType: this.formType,
+                timestamp: new Date().toISOString()
+              }
+            };
+            
+            // Dispatch an event for local components to pick up
+            // This is a fallback in case WebSocket is not available
+            const event = new CustomEvent('form-navigation', { 
+              detail: navigationEvent,
+              bubbles: true
+            });
+            document.dispatchEvent(event);
+            
+            logger.info('[EnhancedKY3P] Navigation event dispatched successfully');
+          } else {
+            logger.warn('[EnhancedKY3P] No sections found for navigation after clearing fields');
+          }
+        }
+      } catch (navError) {
+        logger.error('[EnhancedKY3P] Error sending navigation event:', navError);
+        // Don't fail the entire clear operation if navigation fails
+      }
       
       return true;
     } catch (error) {
