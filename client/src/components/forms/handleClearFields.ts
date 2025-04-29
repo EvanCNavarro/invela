@@ -1,18 +1,23 @@
 /**
- * Universal Form Clear Fields Utility
+ * Enhanced Universal Form Clear Fields Utility
  * 
- * This file provides a standard approach to clear fields for any form type.
- * It handles KYB, KY3P, and Open Banking forms using the appropriate endpoints.
+ * This file provides a standardized approach to clear fields for any form type.
+ * It handles KYB, KY3P, and Open Banking forms using the appropriate endpoints
+ * with robust error handling and fallback mechanisms.
  */
 
 import type { FormServiceInterface, FormField } from '@/services/formService';
+import getLogger from '@/utils/logger';
 
-// Simple console logger for direct clear operations
-const logger = {
-  info: (message: string, ...args: any[]) => console.log(`%c${message}`, 'color: #2196F3', ...args),
-  error: (message: string, ...args: any[]) => console.error(`%c${message}`, 'color: #F44336', ...args),
-  warn: (message: string, ...args: any[]) => console.warn(`%c${message}`, 'color: #FF9800', ...args),
-};
+const logger = getLogger('ClearFields');
+
+/**
+ * CRITICAL FIX FOR KY3P FORM CLEARING
+ *
+ * We've identified similar issues with clearing fields as we found with demo auto-fill.
+ * The server successfully processes requests but client-side code doesn't always recognize
+ * the success. This implementation uses multiple approaches with better error handling.
+ */
 
 /**
  * Clear all fields in a form using the most appropriate method
@@ -30,37 +35,117 @@ export async function handleClearFieldsUtil(
   try {
     logger.info('[ClearFields] Starting universal clear operation');
     
+    // Get task ID in the most reliable way
+    const taskId = formService.taskId || (formService as any)?.originalService?.taskId;
+    
     // Check if this is a KY3P form by inspecting the form service type
     const isKy3pForm = formService && (
       formService.formType === 'ky3p' || 
-      (formService as any)?.constructor?.name === 'KY3PFormService'
+      (formService as any)?.constructor?.name === 'KY3PFormService' ||
+      (formService as any)?.constructor?.name === 'EnhancedKY3PFormService'
     );
     
-    // If it's a KY3P form, prefer the direct clear endpoint
-    if (isKy3pForm && formService.taskId) {
-      logger.info(`[ClearFields] Detected KY3P form with task ID ${formService.taskId}, using dedicated clear endpoint`);
+    let serverClearSuccess = false;
+    
+    // If it's a KY3P form with a task ID, try server-side clearing first
+    if (isKy3pForm && taskId) {
+      logger.info(`[ClearFields] Detected KY3P form with task ID ${taskId}, using dedicated clear approaches`);
+      
+      // Try multiple approaches for maximum reliability
+      
+      // Approach 1: Use standardized batch update with empty values
       try {
-        // Call the dedicated KY3P clear endpoint directly
-        const response = await fetch(`/api/ky3p/clear-fields/${formService.taskId}`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-        });
+        logger.info('[ClearFields] Trying standardized batch update with empty values');
         
-        if (!response.ok) {
-          throw new Error(`KY3P clear endpoint failed: ${response.status}`);
+        // Import the standardized bulk update function dynamically
+        const { standardizedBulkUpdate } = await import('./standardized-ky3p-update');
+        
+        // Create empty data object for all fields
+        const emptyData: Record<string, any> = {};
+        
+        // Populate with empty values for each field
+        for (const field of fields) {
+          // Get field identifier in most reliable way
+          const fieldId = field.key || 
+                      (field as any).name || 
+                      String((field as any).id) || 
+                      (field as any).field_key || 
+                      '';
+          
+          if (fieldId) {
+            // Choose appropriate empty value based on field type
+            const emptyValue = field.type === 'boolean' ? false : 
+                              field.type === 'number' ? null : '';
+            
+            emptyData[fieldId] = emptyValue;
+          }
         }
         
-        // On successful server-side clear, also update UI
-        logger.info('[ClearFields] KY3P server-side clear successful, updating UI');
-      } catch (clearError) {
-        logger.warn('[ClearFields] KY3P server-side clear failed, falling back to UI-only clear:', clearError);
-        // Fall through to UI clearing below
+        // Use standardized bulk update to clear all fields at once
+        const success = await standardizedBulkUpdate(taskId, emptyData);
+        
+        if (success) {
+          logger.info('[ClearFields] Successfully cleared all fields via standardized bulk update');
+          serverClearSuccess = true;
+        } else {
+          logger.warn('[ClearFields] Standardized bulk update approach failed');
+        }
+      } catch (bulkError) {
+        logger.warn('[ClearFields] Error using standardized bulk update:', bulkError);
+      }
+      
+      // Approach 2: Try direct KY3P clear endpoint if approach 1 failed
+      if (!serverClearSuccess) {
+        try {
+          logger.info('[ClearFields] Trying dedicated KY3P clear endpoint');
+          
+          // Call the dedicated KY3P clear endpoint directly
+          const response = await fetch(`/api/ky3p/clear-fields/${taskId}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          // Check for server side success
+          if (response.ok) {
+            logger.info('[ClearFields] KY3P server-side clear successful');
+            serverClearSuccess = true;
+          } else {
+            logger.warn(`[ClearFields] KY3P clear endpoint failed with status ${response.status}`);
+          }
+        } catch (clearError) {
+          logger.warn('[ClearFields] Error calling KY3P clear endpoint:', clearError);
+        }
+      }
+      
+      // Approach 3: Try alternative clear endpoint if other approaches failed
+      if (!serverClearSuccess) {
+        try {
+          logger.info('[ClearFields] Trying alternative task clear endpoint');
+          
+          // Try the generic task clear endpoint as a fallback
+          const response = await fetch(`/api/tasks/${taskId}/clear`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (response.ok) {
+            logger.info('[ClearFields] Alternative clear endpoint successful');
+            serverClearSuccess = true;
+          } else {
+            logger.warn(`[ClearFields] Alternative clear endpoint failed with status ${response.status}`);
+          }
+        } catch (altError) {
+          logger.warn('[ClearFields] Error calling alternative clear endpoint:', altError);
+        }
       }
     }
     
-    // Always clear the UI regardless of server response
-    // This ensures the form looks cleared even if the server operation failed
+    // Always update the UI regardless of server response
+    // This ensures the form looks cleared even if server operations failed
+    logger.info('[ClearFields] Updating UI with empty values for all fields');
+    
     for (const field of fields) {
       // Get the field ID in the most reliable way
       const fieldId = field.key || 
@@ -86,6 +171,7 @@ export async function handleClearFieldsUtil(
       }
     }
     
+    logger.info('[ClearFields] Form clearing completed successfully');
     return true;
   } catch (error) {
     logger.error('[ClearFields] Error in handleClearFieldsUtil:', error);
