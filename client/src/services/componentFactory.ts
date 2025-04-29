@@ -4,7 +4,6 @@ import { getFieldComponentType } from '@/utils/formUtils';
 import { TaskTemplateWithConfigs } from './taskTemplateService';
 import { enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { ky3pFormServiceFactory } from './ky3p-form-service';
-import { standardizedKy3pFormServiceFactory } from './standardized-ky3p-form-service';
 import { openBankingFormServiceFactory } from './open-banking-form-service';
 import getLogger from '@/utils/logger';
 
@@ -108,9 +107,9 @@ export class ComponentFactory {
       logger.info(`Getting isolated KYB service instance for company ${companyId}, task ${taskId}`);
       return enhancedKybServiceFactory.getInstance(companyId, taskId);
     } else if (taskType === 'sp_ky3p_assessment' || taskType === 'ky3p') {
-      // Get instance from Standardized KY3P factory (modern implementation with field keys support)
-      logger.info(`Getting isolated Standardized KY3P service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
-      return standardizedKy3pFormServiceFactory.getServiceInstance(companyId, taskId);
+      // Get instance from KY3P factory
+      logger.info(`Getting isolated KY3P service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
+      return ky3pFormServiceFactory.getServiceInstance(companyId, taskId);
     } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
       // Get instance from OpenBanking factory
       logger.info(`Getting isolated Open Banking service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);

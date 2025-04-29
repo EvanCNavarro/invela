@@ -1058,17 +1058,8 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, hasTaskAccess, async 
     
     logger.info(`[KY3P API] Received batch update request for task ${taskId}`, {
       requestBody: typeof req.body === 'object' ? 'object' : typeof req.body,
-      requestFormat: req.body && req.body.responses ? 'responses object format' : 'direct format',
-      useFieldKeys: req.body.useFieldKeys === true,
-      useFieldIds: req.body.useFieldIds === true
+      requestFormat: req.body && req.body.responses ? 'responses object format' : 'direct format'
     });
-    
-    // Handle the "bulk" fieldIdRaw special case at the top level
-    // This addresses the issue with demo auto-fill
-    if (req.body.fieldIdRaw === 'bulk' && (req.body.responseValue === 'undefined' || req.body.responseValue === undefined)) {
-      logger.info(`[KY3P API] Detected special case with fieldIdRaw="bulk" and responseValue="undefined" for task ${taskId}`);
-      return res.redirect(307, `/api/ky3p/demo-autofill/${taskId}`);
-    }
     
     // Extract responses from request body
     const responses = req.body.responses || req.body;
@@ -1077,132 +1068,26 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, hasTaskAccess, async 
       return res.status(400).json({ message: 'Invalid request format' });
     }
     
-    // Process based on response format - array format has field keys or IDs
-    const isArrayFormat = Array.isArray(responses);
-    const useFieldKeys = req.body.useFieldKeys === true;
-    const useFieldIds = req.body.useFieldIds === true;
-    
-    logger.info(`[KY3P API] Processing batch update: format=${isArrayFormat ? 'array' : 'object'}, useFieldKeys=${useFieldKeys}, useFieldIds=${useFieldIds}`);
-    
     // Process each field response one by one - using batch processing
     const fieldUpdates = [];
     let processedCount = 0;
     
-    // For array format, process responses directly
-    if (isArrayFormat) {
-      for (const response of responses) {
-        try {
-          let field = null;
-          
-          // Different handling based on whether fieldKey, fieldId or both are provided
-          if (response.fieldKey) {
-            // Find field by key
-            [field] = await db
-              .select()
-              .from(ky3pFields)
-              .where(eq(ky3pFields.field_key, response.fieldKey))
-              .limit(1);
-              
-            if (!field) {
-              logger.warn(`[KY3P API] Field not found by key in batch update: ${response.fieldKey}`);
-              continue;
-            }
-          } else if (response.fieldId) {
-            // Find field by ID
-            [field] = await db
-              .select()
-              .from(ky3pFields)
-              .where(eq(ky3pFields.id, response.fieldId))
-              .limit(1);
-              
-            if (!field) {
-              logger.warn(`[KY3P API] Field not found by ID in batch update: ${response.fieldId}`);
-              continue;
-            }
-          } else {
-            logger.warn(`[KY3P API] Invalid response format in batch update array: missing fieldKey or fieldId`);
-            continue;
-          }
-          
-          // Process field response directly here
-          // Check if a response already exists
-          const [existingResponse] = await db
-            .select()
-            .from(ky3pResponses)
-            .where(
-              and(
-                eq(ky3pResponses.task_id, taskId),
-                eq(ky3pResponses.field_id, field.id)
-              )
-            )
-            .limit(1);
-          
-          if (existingResponse) {
-            // Update existing response
-            await db
-              .update(ky3pResponses)
-              .set({
-                response_value: String(response.value),
-                status: KYBFieldStatus.COMPLETED,
-                updated_at: new Date()
-              })
-              .where(eq(ky3pResponses.id, existingResponse.id));
-          } else {
-            // Create new response
-            await db
-              .insert(ky3pResponses)
-              .values({
-                task_id: taskId,
-                field_id: field.id,
-                response_value: String(response.value),
-                status: KYBFieldStatus.COMPLETED,
-                created_at: new Date(),
-                updated_at: new Date(),
-                version: 1
-              });
-          }
-          
-          processedCount++;
-          fieldUpdates.push(field.field_key);
-        } catch (responseError) {
-          logger.error(`[KY3P API] Error processing array response in batch update:`, responseError);
-        }
-      }
-    } else {
-      // For object format with field keys, process each key-value pair
-      for (const [fieldKeyOrId, fieldValue] of Object.entries(responses)) {
-        // Skip metadata fields
-        if (fieldKeyOrId.startsWith('_')) continue;
+    for (const [fieldKey, fieldValue] of Object.entries(responses)) {
+      // Skip metadata fields
+      if (fieldKey.startsWith('_')) continue;
+      
+      try {
+        // Find the field by its key
+        const [field] = await db
+          .select()
+          .from(ky3pFields)
+          .where(eq(ky3pFields.field_key, fieldKey))
+          .limit(1);
         
-        try {
-          let field = null;
-          
-          if (useFieldIds) {
-            // If explicitly using field IDs, find field by ID
-            const fieldId = parseInt(fieldKeyOrId);
-            if (isNaN(fieldId)) {
-              logger.warn(`[KY3P API] Invalid field ID format in batch update: ${fieldKeyOrId}`);
-              continue;
-            }
-            
-            [field] = await db
-              .select()
-              .from(ky3pFields)
-              .where(eq(ky3pFields.id, fieldId))
-              .limit(1);
-          } else {
-            // Default behavior - find field by key
-            [field] = await db
-              .select()
-              .from(ky3pFields)
-              .where(eq(ky3pFields.field_key, fieldKeyOrId))
-              .limit(1);
-          }
-          
-          if (!field) {
-            logger.warn(`[KY3P API] Field not found in batch update: ${fieldKeyOrId}`);
-            continue;
-          }
+        if (!field) {
+          logger.warn(`[KY3P API] Field not found in batch update: ${fieldKey}`);
+          continue;
+        }
         
         // Check if a response already exists
         const [existingResponse] = await db
@@ -1242,9 +1127,9 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, hasTaskAccess, async 
         }
         
         processedCount++;
-        fieldUpdates.push(fieldKeyOrId);
+        fieldUpdates.push(fieldKey);
       } catch (fieldError) {
-        logger.error(`[KY3P API] Error updating field ${fieldKeyOrId} in batch:`, fieldError);
+        logger.error(`[KY3P API] Error updating field ${fieldKey} in batch:`, fieldError);
       }
     }
     
