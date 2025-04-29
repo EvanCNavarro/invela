@@ -1,199 +1,130 @@
 /**
- * Company Tabs Service
+ * Company Tabs Management
  * 
- * This service manages company tabs and provides utility functions
- * for unlocking the file vault and other tabs.
+ * This service handles WebSocket broadcasting for company tab updates
+ * and unlocking specific tabs based on form submission types.
  */
 
-import { companies } from '@db/schema';
 import { db } from '@db';
+import { companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { broadcastMessage } from './websocket';
+import { sql } from 'drizzle-orm/sql';
+import { broadcastCompanyTabsUpdate as wsBroadcastCompanyTabsUpdate } from './websocket';
 import { Logger } from '../utils/logger';
 
-const logger = new Logger('CompanyTabsService');
+const logger = new Logger('CompanyTabs');
 
 /**
- * Service class for managing company tabs
+ * Broadcast company tabs update via WebSocket
+ * 
+ * @param companyId The company ID
+ * @param availableTabs The list of available tabs or null to read from database
  */
-export class CompanyTabsService {
-  /**
-   * Unlock file vault for a specific company
-   * This method adds ONLY the 'file-vault' tab to the company's available tabs
-   * and broadcasts a WebSocket message to notify clients
-   * @param companyId The company ID
-   * @returns The updated company record
-   */
-  static async unlockFileVault(companyId: number) {
-    logger.info(`Unlocking file vault for company ${companyId}`);
-    
-    try {
-      // Get current company to check existing tabs
-      const [currentCompany] = await db.select()
+export async function broadcastCompanyTabsUpdate(
+  companyId: number,
+  availableTabs?: string[]
+): Promise<boolean> {
+  try {
+    // If tabs not provided, get them from the database
+    if (!availableTabs) {
+      const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, companyId));
-        
-      if (!currentCompany) {
-        logger.error(`Company not found: ${companyId}`);
-        return null;
+      
+      if (!company || !company.metadata) {
+        logger.error('Company not found or no metadata available', { companyId });
+        return false;
       }
       
-      // Define tabs that should be available after KYB form submission
-      // Only add file-vault, not dashboard or insights yet
-      const desiredTabs = ['task-center', 'file-vault'];
-      
-      // Check which tabs need to be added
-      const currentTabs = currentCompany.available_tabs || ['task-center'];
-      const tabsToAdd = desiredTabs.filter(tab => !currentTabs.includes(tab));
-      
-      // If no new tabs to add, return current company
-      if (tabsToAdd.length === 0) {
-        logger.info(`File vault already unlocked for company ${companyId}`, {
-          availableTabs: currentTabs
-        });
-        return currentCompany;
-      }
-      
-      // Update available tabs
-      const updatedTabs = [...currentTabs, ...tabsToAdd];
-      
-      const [updatedCompany] = await db.update(companies)
-        .set({
-          available_tabs: updatedTabs,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, companyId))
-        .returning();
-      
-      logger.info(`Updated company tabs - File Vault unlocked`, {
-        companyId,
-        previousTabs: currentTabs,
-        updatedTabs
-      });
-      
-      // Broadcast the update via WebSocket
-      broadcastMessage('company_tabs_updated', {
-        companyId,
-        availableTabs: updatedTabs,
-        timestamp: new Date().toISOString(),
-        cache_invalidation: true // Important flag to ensure client cache is invalidated
-      });
-      
-      return updatedCompany;
-    } catch (error) {
-      logger.error(`Error unlocking file vault`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        companyId
-      });
-      return null;
+      availableTabs = company.metadata.availableTabs as string[] || [];
     }
-  }
-  
-  /**
-   * Unlock dashboard and insights tabs for a specific company
-   * This method is specifically called after Open Banking Survey submission
-   * @param companyId The company ID
-   * @returns The updated company record
-   */
-  static async unlockDashboardAndInsights(companyId: number) {
-    logger.info(`Unlocking dashboard and insights for company ${companyId}`);
     
-    try {
-      // Get current company to check existing tabs
-      const [currentCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, companyId));
-        
-      if (!currentCompany) {
-        logger.error(`Company not found: ${companyId}`);
-        return null;
-      }
-      
-      // Define all tabs that should be available after Open Banking submission
-      const desiredTabs = ['task-center', 'file-vault', 'dashboard', 'insights'];
-      
-      // Check which tabs need to be added
-      const currentTabs = currentCompany.available_tabs || ['task-center'];
-      const tabsToAdd = desiredTabs.filter(tab => !currentTabs.includes(tab));
-      
-      // If no new tabs to add, return current company
-      if (tabsToAdd.length === 0) {
-        logger.info(`Dashboard tabs already unlocked for company ${companyId}`, {
-          availableTabs: currentTabs
-        });
-        return currentCompany;
-      }
-      
-      // Update available tabs
-      const updatedTabs = [...currentTabs, ...tabsToAdd];
-      
-      const [updatedCompany] = await db.update(companies)
-        .set({
-          available_tabs: updatedTabs,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, companyId))
-        .returning();
-      
-      logger.info(`Updated company tabs - Dashboard and Insights unlocked`, {
-        companyId,
-        previousTabs: currentTabs,
-        updatedTabs
-      });
-      
-      // Broadcast the update via WebSocket
-      broadcastMessage('company_tabs_updated', {
-        companyId,
-        availableTabs: updatedTabs,
-        timestamp: new Date().toISOString(),
-        cache_invalidation: true // Important flag to ensure client cache is invalidated
-      });
-      
-      return updatedCompany;
-    } catch (error) {
-      logger.error(`Error unlocking dashboard tabs`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        companyId
-      });
-      return null;
-    }
-  }
-  
-  /**
-   * Update company available tabs
-   * @param companyId The company ID 
-   * @param tabs The tabs to set
-   * @returns The updated company record
-   */
-  static async updateTabs(companyId: number, tabs: string[]) {
-    logger.info(`Updating tabs for company ${companyId}`, {
-      tabs
+    // Broadcast the update
+    wsBroadcastCompanyTabsUpdate(companyId, availableTabs);
+    
+    logger.info('Company tabs update broadcasted', { 
+      companyId, 
+      tabsCount: availableTabs.length,
+      tabs: availableTabs
     });
     
-    try {
-      const [updatedCompany] = await db.update(companies)
-        .set({
-          available_tabs: tabs,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, companyId))
-        .returning();
-      
-      // Broadcast the update via WebSocket
-      broadcastMessage('company_tabs_updated', {
-        companyId,
-        availableTabs: tabs,
-        timestamp: new Date().toISOString(),
-        cache_invalidation: true
-      });
-      
-      return updatedCompany;
-    } catch (error) {
-      logger.error(`Error updating company tabs`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        companyId
-      });
-      return null;
+    return true;
+  } catch (error) {
+    logger.error('Error broadcasting company tabs update', {
+      companyId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    return false;
+  }
+}
+
+/**
+ * Unlock dashboard and insights tabs after Open Banking form submission
+ * 
+ * @param companyId The company ID
+ * @returns Promise<boolean> Whether the operation was successful
+ */
+export async function unlockDashboardAndInsightsTabs(companyId: number): Promise<boolean> {
+  logger.info('Unlocking dashboard and insights tabs', { companyId });
+  
+  try {
+    // Get current company data
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, companyId));
+    
+    if (!company) {
+      logger.error('Company not found', { companyId });
+      return false;
     }
+    
+    // Extract current available tabs or initialize empty array
+    const currentTabs = ((company.metadata?.availableTabs as string[]) || []).slice();
+    
+    // Add dashboard and insights tabs if not already present
+    let tabsChanged = false;
+    const tabsToAdd = ['dashboard', 'insights'];
+    
+    for (const tab of tabsToAdd) {
+      if (!currentTabs.includes(tab)) {
+        currentTabs.push(tab);
+        tabsChanged = true;
+      }
+    }
+    
+    if (!tabsChanged) {
+      logger.info('Dashboard and insights tabs already unlocked', { companyId });
+      return true;
+    }
+    
+    // Update company metadata with new tabs
+    await db.update(companies)
+      .set({
+        metadata: sql`jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{availableTabs}',
+          ${JSON.stringify(currentTabs)}::jsonb
+        )`,
+        updated_at: new Date()
+      })
+      .where(eq(companies.id, companyId));
+    
+    logger.info('Dashboard and insights tabs unlocked successfully', { 
+      companyId,
+      availableTabs: currentTabs
+    });
+    
+    // Broadcast the update
+    await broadcastCompanyTabsUpdate(companyId, currentTabs);
+    
+    return true;
+  } catch (error) {
+    logger.error('Error unlocking dashboard and insights tabs', {
+      companyId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    return false;
   }
 }

@@ -9,7 +9,8 @@ import { tasks, companies } from '@db/schema';
 import { db } from '@db';
 import { eq } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
-import { CompanyTabsService } from '../services/company-tabs';
+import { broadcastCompanyTabsUpdate } from '../services/company-tabs';
+import { unlockFileVaultAccess } from '../services/synchronous-task-dependencies';
 import { broadcastMessage } from '../services/websocket';
 import { broadcastTaskUpdate } from '../utils/task-broadcast';
 import { Logger } from '../utils/logger';
@@ -217,25 +218,28 @@ export async function standardFormSubmission(options: FormSubmissionOptions) {
     // 5. Unlock file vault and other tabs
     try {
       logger.info(`Unlocking file vault for company ${companyId}`);
-      const fileVaultResult = await CompanyTabsService.unlockFileVault(companyId);
+      const success = await unlockFileVaultAccess(companyId);
       
-      if (fileVaultResult) {
-        logger.info(`Successfully unlocked file vault for company ${companyId}`, {
-          tabs: fileVaultResult.available_tabs
-        });
+      if (success) {
+        logger.info(`Successfully unlocked file vault for company ${companyId}`);
         
         // 6. Broadcast WebSocket update with cache invalidation
-        broadcastMessage('company_tabs_updated', {
-          companyId,
-          availableTabs: fileVaultResult.available_tabs,
-          cache_invalidation: true,
-          timestamp: new Date().toISOString(),
-          source: `${formType}_submit_standardized`
-        });
+        const [company] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, companyId))
+          .limit(1);
+        
+        if (company) {
+          // Broadcasting update with cache invalidation
+          await broadcastCompanyTabsUpdate(companyId);
+        }
       }
     } catch (fileVaultError) {
       // Log error but don't fail the submission
-      logger.error(`Error unlocking file vault:`, fileVaultError);
+      logger.error(`Error unlocking file vault:`, {
+        error: fileVaultError instanceof Error ? fileVaultError.message : 'Unknown error',
+        companyId
+      });
     }
 
     // 7. Broadcast task update

@@ -30,7 +30,8 @@ import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../serv
 import path from 'path';
 import fs from 'fs';
 import { openai } from '../utils/openaiUtils';
-import { CompanyTabsService } from '../services/company-tabs';
+import { unlockDashboardAndInsightsTabs, broadcastCompanyTabsUpdate } from '../services/company-tabs';
+import { unlockFileVaultAccess } from '../services/synchronous-task-dependencies';
 
 // Create a logger instance
 const logger = new Logger('OpenBankingRoutes');
@@ -321,15 +322,14 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
         // This is consistent with the dedicated submission endpoint
         try {
           // First ensure file vault is unlocked
-          await CompanyTabsService.unlockFileVault(task.company_id);
+          await unlockFileVaultAccess(task.company_id);
           
           // Then unlock dashboard and insights tabs
-          const updatedCompany = await CompanyTabsService.unlockDashboardAndInsights(task.company_id);
+          const success = await unlockDashboardAndInsightsTabs(task.company_id);
           
-          if (updatedCompany) {
+          if (success) {
             logger.info('[OpenBankingRoutes] Successfully unlocked all tabs via direct endpoint', {
-              companyId: task.company_id,
-              availableTabs: updatedCompany.available_tabs
+              companyId: task.company_id
             });
           }
         } catch (tabError) {
@@ -1540,12 +1540,11 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
       try {
         // Use the dedicated CompanyTabsService method for unlocking dashboard and insights
         // This maintains consistency with how other form types handle tab unlocking
-        const updatedCompany = await CompanyTabsService.unlockDashboardAndInsights(companyId);
+        const success = await unlockDashboardAndInsightsTabs(companyId);
         
-        if (updatedCompany) {
+        if (success) {
           logger.info('[OpenBankingRoutes] Successfully unlocked dashboard and insights tabs', {
-            companyId,
-            availableTabs: updatedCompany.available_tabs
+            companyId
           });
         } else {
           logger.warn('[OpenBankingRoutes] Failed to unlock dashboard and insights tabs', {
