@@ -23,6 +23,7 @@ interface SubmitFormOptions {
   formData: Record<string, any>;
   formType: string;
   fileName?: string;
+  explicitSubmission?: boolean; // Flag to indicate an explicit form submission
 }
 
 /**
@@ -46,7 +47,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
   error?: string;
   fileId?: number;
 }> {
-  const { taskId, userId, companyId, formData, formType, fileName } = options;
+  const { taskId, userId, companyId, formData, formType, fileName, explicitSubmission = true } = options;
   
   logger.info('Starting enhanced form submission with immediate unlocking', {
     taskId,
@@ -71,7 +72,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       submittedAt: now.toISOString(),
       submittedBy: userId,
       status: 'submitted',         // Explicit status flag in metadata
-      explicitlySubmitted: true,   // Flag to prevent status reconciliation from changing it back
+      explicitlySubmitted: explicitSubmission,   // Flag to prevent status reconciliation from changing it back
       statusFlow: [...(currentMetadata.statusFlow || []), 'submitted']
     };
     

@@ -340,13 +340,37 @@ export function StandardizedUniversalForm({
         await onSubmit(formData);
         submissionTracker.trackEvent('Custom onSubmit handler completed');
       } else {
-        // Otherwise, use the form service submit method
-        submissionTracker.trackEvent('Calling form service submit method', { taskType, taskId });
-        const result = await formService.submit({ taskId });
-        submissionTracker.trackEvent('Form service submit completed', { result });
+        // Otherwise, use the form service submit method with enhanced status tracking
+        submissionTracker.trackEvent('Calling enhanced form service submit method', { taskType, taskId });
         
-        // Check if we've got a structured result with success property (e.g., from KY3P)
+        // Log detailed submission intent for debugging
+        logger.info('Starting form submission with enhanced status tracking', {
+          taskId,
+          taskType,
+          fieldsCount: Object.keys(formData).length,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Execute the submission with enhanced error handling
+        const result = await formService.submit({ 
+          taskId,
+          explicitSubmission: true // Add flag to ensure submission is tracked properly
+        });
+        
+        submissionTracker.trackEvent('Form service submit completed', { 
+          result: typeof result === 'object' ? JSON.stringify(result) : result 
+        });
+        
+        // Check if we've got a structured result with success property
         const success = typeof result === 'object' && result !== null ? result.success : result;
+        
+        // Additional logging for status tracking
+        logger.info('Form submission result received', {
+          success,
+          resultType: typeof result,
+          hasTaskId: typeof result === 'object' && result !== null ? !!result.taskId : false,
+          timestamp: new Date().toISOString()
+        });
         
         // If success is true, show toast and continue
         if (success) {
