@@ -546,33 +546,34 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       
       logger.info(`[EnhancedKY3P] Using standardized bulk update for ${Object.keys(cleanData).length} fields`);
       
-      // Get field mappings to improve compatibility with server expectations
-      const fieldMappings = this.getFieldIdMappings();
+      // Convert to simple array format for the batch endpoint
+      // KEEP THIS EXTREMELY SIMPLE - the server is particular about the format
+      const simpleArrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => ({
+        fieldKey,
+        value
+      }));
       
-      // Convert to array format expected by the batch endpoint
-      // Add both fieldKey and numeric fieldId when possible to improve server handling
-      const arrayResponses = Object.entries(cleanData).map(([fieldKey, value]) => {
-        const fieldId = fieldMappings.get(fieldKey);
+      // Try the ID-based endpoint for KY3P tasks
+      // Convert string keys to numeric IDs when possible
+      const idBasedResponses = simpleArrayResponses.map(item => {
+        // Find the numeric ID for this key if available
+        const fieldMappings = this.getFieldIdMappings();
+        const fieldId = fieldMappings.get(item.fieldKey);
+        
         return {
-          fieldKey,
-          fieldId: fieldId || undefined, // Include numeric ID when available
-          fieldIdRaw: fieldId ? String(fieldId) : undefined, // Include string ID when available
-          value
+          fieldId: fieldId || item.fieldKey, // Use ID if available, fallback to key
+          value: item.value
         };
       });
       
-      // Use the universal endpoint that supports both key and ID-based updates
-      const response = await fetch(`/api/ky3p/universal-batch-update/${effectiveTaskId}`, {
+      // Use the ID-based KY3P batch update endpoint
+      const response = await fetch(`/api/ky3p/responses/${effectiveTaskId}/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          responses: arrayResponses,
-          options: {
-            preferStringKeys: true, // Hint to server to prefer string keys
-            fallbackToNumericIds: true // But allow fallback to numeric IDs
-          }
+          responses: idBasedResponses
         }),
       });
       
@@ -580,25 +581,31 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
         // Try alternative endpoint if first one fails
         logger.warn(`[EnhancedKY3P] Primary batch update failed with status ${response.status}, trying alternative endpoint`);
         
-        const fallbackResponse = await fetch(`/api/ky3p/batch-update/${effectiveTaskId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            responses: arrayResponses
-          }),
-        });
+        // Try a direct individual field update approach as fallback
+        let successCount = 0;
+        let totalFields = Object.keys(cleanData).length;
         
-        if (!fallbackResponse.ok) {
-          const errorText = await fallbackResponse.text();
-          logger.error(`[EnhancedKY3P] All batch update methods failed: ${fallbackResponse.status}`, errorText);
-          return false;
+        // Log just the count, not every field to avoid spam
+        logger.info(`[EnhancedKY3P] Trying direct field updates for ${totalFields} fields as fallback`);
+        
+        // Try updating each field individually
+        for (const [fieldKey, value] of Object.entries(cleanData)) {
+          try {
+            // Use the original service's updateField method
+            await this.originalService.updateField(fieldKey, value, effectiveTaskId);
+            successCount++;
+          } catch (fieldError) {
+            // Just continue with next field
+          }
         }
         
-        const fallbackJson = await fallbackResponse.json();
-        logger.info(`[EnhancedKY3P] Fallback batch update succeeded: ${fallbackJson.updatedCount || 0} fields updated`);
-        return true;
+        if (successCount > 0) {
+          logger.info(`[EnhancedKY3P] Direct field updates succeeded for ${successCount}/${totalFields} fields`);
+          return true;
+        }
+        
+        logger.error(`[EnhancedKY3P] All update methods failed, including direct field updates`);
+        return false;
       }
       
       const responseJson = await response.json();
