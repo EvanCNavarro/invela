@@ -22,6 +22,11 @@ const logger = getLogger('EnhancedKY3PFormService');
  * inheritance issues. It delegates most methods to the original service but
  * enhances key functionality like bulkUpdate and clearFields.
  */
+/**
+ * Type alias for form data
+ */
+type FormData = Record<string, any>;
+
 export class EnhancedKY3PFormService implements FormServiceInterface {
   private originalService: KY3PFormService;
   private _formType = 'ky3p';
@@ -94,6 +99,66 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   }
   
   /**
+   * Load form data into the service
+   * @param data Form data to load
+   */
+  loadFormData(data: FormData): void {
+    logger.info(`[EnhancedKY3P] Loading form data with ${Object.keys(data).length} entries`);
+    
+    // Check if the original service has a loadFormData method
+    if (typeof this.originalService.loadFormData === 'function') {
+      this.originalService.loadFormData(data);
+      logger.info('[EnhancedKY3P] Used original service loadFormData method');
+      return;
+    }
+    
+    // Fall back to directly setting the form data property
+    try {
+      logger.info('[EnhancedKY3P] Using fallback method to load form data');
+      // Set the form data directly on the original service
+      (this.originalService as any).formData = data;
+      logger.info('[EnhancedKY3P] Successfully set form data directly');
+    } catch (error) {
+      logger.error('[EnhancedKY3P] Error directly setting form data:', error);
+    }
+  }
+  
+  /**
+   * Update a specific field in the form data
+   * @param fieldKey Field key to update
+   * @param value New value for the field
+   * @param taskId Optional task ID for immediate saving
+   */
+  updateFormData(fieldKey: string, value: any, taskId?: number): void {
+    logger.info(`[EnhancedKY3P] Updating form data for field ${fieldKey}`);
+    
+    // Check if the original service has an updateFormData method
+    if (typeof this.originalService.updateFormData === 'function') {
+      this.originalService.updateFormData(fieldKey, value, taskId);
+      logger.info('[EnhancedKY3P] Used original service updateFormData method');
+      return;
+    }
+    
+    // Fall back to directly updating the form data
+    try {
+      logger.info('[EnhancedKY3P] Using fallback method to update form data');
+      
+      // Get the current form data
+      const formData = this.getFormData() || {};
+      
+      // Update the field
+      formData[fieldKey] = value;
+      
+      // Set the updated form data back to the service
+      (this.originalService as any).formData = formData;
+      
+      logger.info(`[EnhancedKY3P] Successfully updated field ${fieldKey} directly`);
+    } catch (error) {
+      logger.error(`[EnhancedKY3P] Error directly updating field ${fieldKey}:`, error);
+    }
+  }
+  
+  /**
    * Get specific field value
    * Delegates to the original service
    */
@@ -112,6 +177,37 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       return this.originalService.syncFormData(taskId);
     }
     logger.warn('[EnhancedKY3P] Original service does not have syncFormData method');
+  }
+  
+  /**
+   * Load form data for this form
+   * @param taskId The task ID to load data for
+   * @returns The loaded form data
+   */
+  async loadProgress(taskId: number): Promise<FormData> {
+    logger.info(`[EnhancedKY3P] Loading progress for task ${taskId}`);
+    
+    try {
+      // First try using the original service's loadProgress method
+      if (typeof this.originalService.loadProgress === 'function') {
+        const result = await this.originalService.loadProgress(taskId);
+        logger.info(`[EnhancedKY3P] Successfully loaded progress using original service method`);
+        return result;
+      }
+      
+      // Fall back to loadResponses and then return the form data
+      logger.info(`[EnhancedKY3P] Original service does not have loadProgress method, using loadResponses fallback`);
+      await this.loadResponses(taskId);
+      
+      // Return the form data from the original service
+      const formData = this.originalService.getFormData() || {};
+      logger.info(`[EnhancedKY3P] Loaded ${Object.keys(formData).length} form data entries from loadResponses fallback`);
+      
+      return formData;
+    } catch (error) {
+      logger.error(`[EnhancedKY3P] Error loading progress:`, error);
+      return {}; // Return empty form data on error
+    }
   }
   
   /**
