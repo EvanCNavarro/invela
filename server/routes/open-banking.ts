@@ -184,7 +184,7 @@ async function unlockDependentTasks(taskId: number) {
   }
 }
 
-export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer) {
+export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | null) {
   logger.info('[OpenBankingRoutes] Setting up routes...');
   
   // Direct endpoint for open banking form submissions
