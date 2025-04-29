@@ -311,9 +311,12 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
   
   /**
    * Batch update multiple fields at once
+   * @override
    */
   async batchUpdate(taskId: number, formData: Record<string, any>, options?: Ky3PUpdateOptions): Promise<boolean> {
     try {
+      this.log(`Batch updating ${Object.keys(formData).length} fields for task ${taskId}`);
+      
       // Try with field keys first (if specified)
       if (options?.useFieldKeys) {
         this.log(`Batch updating for task ${taskId} using field keys`);
@@ -334,6 +337,12 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
         });
         
         if (response.ok) {
+          // Update the cached form data with all the fields
+          Object.entries(formData).forEach(([key, value]) => {
+            this.cachedFormData[key] = value;
+          });
+          
+          this.log(`Updated cached form data with ${Object.keys(formData).length} fields from batch update`);
           return true;
         }
         
@@ -342,7 +351,19 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
       }
       
       // Use field ID approach
-      return this.batchUpdateWithFieldIds(taskId, formData);
+      const success = await this.batchUpdateWithFieldIds(taskId, formData);
+      
+      // If successful, update the cached data
+      if (success) {
+        // Update the cached form data with all the fields
+        Object.entries(formData).forEach(([key, value]) => {
+          this.cachedFormData[key] = value;
+        });
+        
+        this.log(`Updated cached form data with ${Object.keys(formData).length} fields from batch update`);
+      }
+      
+      return success;
     } catch (error) {
       this.error('Error in batch update:', error);
       return false;
@@ -395,6 +416,7 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
   
   /**
    * Apply demo data to populate the form (for testing)
+   * @override
    */
   async demoAutofill(taskId: number): Promise<boolean> {
     try {
@@ -411,6 +433,15 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
         throw new Error(`Demo auto-fill failed: ${response.status} ${response.statusText}`);
       }
       
+      // After successful demo auto-fill, fetch the latest data to update the cache
+      try {
+        const formData = await this.getTaskData(taskId);
+        this.log(`Refreshed form data after demo auto-fill with ${Object.keys(formData).length} fields`);
+      } catch (fetchError) {
+        // Log the error but don't fail the operation
+        this.warn('Failed to refresh data after demo auto-fill:', fetchError);
+      }
+      
       return true;
     } catch (error) {
       this.error('Error applying KY3P demo auto-fill:', error);
@@ -420,6 +451,7 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
   
   /**
    * Clear all field values for the task
+   * @override
    */
   async clearAllFields(taskId: number): Promise<boolean> {
     try {
@@ -435,6 +467,10 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
       if (!response.ok) {
         throw new Error(`Clear fields failed: ${response.status} ${response.statusText}`);
       }
+      
+      // Clear the cached form data
+      this.clearCache();
+      this.log('Cleared cached form data as part of clearAllFields');
       
       return true;
     } catch (error) {
