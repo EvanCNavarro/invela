@@ -360,8 +360,8 @@ export async function reconcileTaskProgress(
     const formattedResponses = responses.map((response) => {
       // Normalize the status value to ensure consistent capitalization
       const normalizedStatus = response.response_value 
-        ? 'COMPLETE'  // Always use uppercase for consistency
-        : 'EMPTY';     // Always use uppercase for consistency
+        ? KYBFieldStatus.COMPLETE.toUpperCase()  // Use enum value but convert to uppercase for consistency
+        : KYBFieldStatus.EMPTY.toUpperCase();    // Use enum value but convert to uppercase for consistency
         
       return {
         field: response.field_key,
@@ -390,7 +390,7 @@ export async function reconcileTaskProgress(
         currentStatus: task.status,
         calculatedStatus,
         responseCount: responses.length,
-        completeCount: formattedResponses.filter(r => r.status.toUpperCase() === 'COMPLETE' && r.hasValue).length
+        completeCount: formattedResponses.filter(r => r.status.toUpperCase() === KYBFieldStatus.COMPLETE.toUpperCase() && r.hasValue).length
       });
     }
     

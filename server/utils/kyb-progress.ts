@@ -1,4 +1,5 @@
 import { TaskStatus } from '../types';
+import { KYBFieldStatus } from '@db/schema';
 
 /**
  * Calculate accurate progress for KYB form based on field completion
@@ -14,7 +15,7 @@ export function calculateKybFormProgress(
   if (!responses || !allFields || allFields.length === 0) return 0;
   
   const completedFields = responses.filter(
-    response => response.status === 'COMPLETE' && response.hasValue === true
+    response => (response.status.toUpperCase() === KYBFieldStatus.COMPLETE.toUpperCase()) && response.hasValue === true
   ).length;
   
   return Math.floor((completedFields / allFields.length) * 100);
@@ -34,7 +35,7 @@ export function hasAllRequiredFields(
   
   // Check if any required fields are empty
   const hasEmptyRequiredFields = responses.some(
-    response => response.required && (response.status === 'EMPTY' || !response.hasValue)
+    response => response.required && (response.status.toUpperCase() === KYBFieldStatus.EMPTY.toUpperCase() || !response.hasValue)
   );
   
   return !hasEmptyRequiredFields;
