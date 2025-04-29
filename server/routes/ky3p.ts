@@ -822,7 +822,8 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
           const sanitizedValue = value !== null && value !== undefined ? String(value) : '';
           
           // Determine field status based on value
-          const status = sanitizedValue ? 'COMPLETE' : 'EMPTY';
+          // FIXED: Using KYBFieldStatus enum instead of string literals for consistency
+          const status = sanitizedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
           
           try {
             // Check if response already exists for this field
