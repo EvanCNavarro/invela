@@ -327,12 +327,12 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
    * @param options Submit options with task ID
    * @returns Object with success status and fileId if available
    */
-  async submit(options: { taskId?: number }): Promise<{ success: boolean; fileId?: number }> {
+  async submit(options: { taskId?: number }): Promise<{ success: boolean; fileId?: number; message?: string }> {
     const taskId = options.taskId || this.taskId;
     
     if (!taskId) {
       logger.error('Cannot submit without a task ID');
-      return { success: false };
+      return { success: false, message: 'Task ID is required' };
     }
     
     try {
@@ -349,23 +349,35 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
         
         // Parse response to get the file ID
         const result = await response.json();
-        const fileId = result?.fileId;
+        const fileId = result?.fileId || result?.file_id; // Support both formats
         
-        logger.info(`KY3P submission result:`, { fileId });
+        logger.info(`KY3P submission result:`, { fileId, result });
         
         // Invalidate task cache to reflect updated status
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
         queryClient.invalidateQueries({ queryKey: [`/api/ky3p-task/${taskId}`] });
         
-        return { success: true, fileId };
+        // Always return a consistent structure with all fields
+        return { 
+          success: true, 
+          fileId: fileId,
+          message: result?.message || 'Form submitted successfully'
+        };
       } else {
         const errorData = await response.json();
         logger.error(`Error submitting form for task ${taskId}:`, errorData);
-        return { success: false };
+        return { 
+          success: false, 
+          message: errorData?.message || errorData?.error || 'Failed to submit form'
+        };
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to submit form for task ${taskId}:`, error);
-      return { success: false };
+      return { 
+        success: false, 
+        message: `Failed to submit form: ${errorMessage}`
+      };
     }
   }
 
