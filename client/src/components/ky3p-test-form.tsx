@@ -104,19 +104,8 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
       if (result) {
         console.log('Form fields cleared successfully');
         
-        // Refresh the form data and sections safely
-        const updatedFormData = formService.getFormData() || {};
-        console.log('Updated form data after clearing:', Object.keys(updatedFormData).length);
-        setFormData(updatedFormData);
-        
-        // Calculate progress safely
-        let updatedProgress = 0;
-        try {
-          updatedProgress = formService.calculateProgress();
-        } catch (progressError) {
-          console.error('Error calculating progress after clearing:', progressError);
-        }
-        setProgress(updatedProgress);
+        // Use our comprehensive refresh method to ensure UI is updated
+        await refreshFormData();
         
         toast({
           title: 'Success',
@@ -141,6 +130,61 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
     }
   };
   
+  // Force refresh form data from the service
+  const refreshFormData = async () => {
+    if (!formService) return;
+    
+    try {
+      // First, try to get the form data directly from the service
+      let serviceFormData = formService.getFormData() || {};
+      
+      // If that's empty, try to access the internal formData property 
+      if (Object.keys(serviceFormData).length === 0) {
+        serviceFormData = (formService as any).originalService?.formData || {};
+      }
+      
+      // Make a direct API call to get responses if still empty
+      if (Object.keys(serviceFormData).length === 0) {
+        console.log('Form data still empty, attempting to fetch responses directly');
+        const directResponse = await fetch(`/api/ky3p/responses/${taskId}`);
+        
+        if (directResponse.ok) {
+          const responseData = await directResponse.json();
+          if (responseData.success && responseData.responses) {
+            // Create a form data object from the responses
+            const directFormData: Record<string, any> = {};
+            responseData.responses.forEach((resp: any) => {
+              if (resp.field_id && resp.response_value) {
+                directFormData[String(resp.field_id)] = resp.response_value;
+              }
+            });
+            
+            // Use this form data
+            serviceFormData = directFormData;
+            
+            // Also set it directly on the form service
+            (formService as any).originalService.formData = directFormData;
+          }
+        }
+      }
+      
+      // Now update our state with the form data
+      console.log(`Refreshed form data contains ${Object.keys(serviceFormData).length} entries`);
+      setFormData(serviceFormData);
+      
+      // Calculate progress safely
+      let updatedProgress = 0;
+      try {
+        updatedProgress = formService.calculateProgress();
+      } catch (progressError) {
+        console.error('Error calculating progress during refresh:', progressError);
+      }
+      setProgress(updatedProgress);
+    } catch (error) {
+      console.error('Error refreshing form data:', error);
+    }
+  };
+
   // Handle demo auto-fill
   const handleDemoAutoFill = async () => {
     if (!formService) {
@@ -179,23 +223,17 @@ export default function KY3PTestForm({ taskId = 662, templateId = 1 }: KY3PTestF
       
       // Refresh the form data and progress safely
       try {
+        // First try the standard response loading
         await formService.loadResponses(taskId);
         console.log('Responses loaded successfully after demo auto-fill');
         
-        const updatedFormData = formService.getFormData() || {};
-        console.log('Updated form data after demo auto-fill:', Object.keys(updatedFormData).length);
-        setFormData(updatedFormData);
-        
-        // Calculate progress safely
-        let updatedProgress = 0;
-        try {
-          updatedProgress = formService.calculateProgress();
-        } catch (progressError) {
-          console.error('Error calculating progress after demo auto-fill:', progressError);
-        }
-        setProgress(updatedProgress);
+        // Then force a full refresh of the form data
+        await refreshFormData();
       } catch (loadError) {
         console.error('Error loading responses after demo auto-fill:', loadError);
+        
+        // Still attempt a refresh even if the standard loading failed
+        await refreshFormData();
       }
       
       toast({
