@@ -461,10 +461,10 @@ export class EnhancedKybFormService implements FormServiceInterface {
       },
       // Fallback implementation (original)
       () => this.fields,
-      // Operation name for health check
-      'getFields',
-      // Feature flag key
-      'PROGRESSIVE_LOADING'
+      // Error handler
+      (error: Error) => {
+        this.logger.error(`[EnhancedKybService] Error in getFields optimization:`, error);
+      }
     );
   }
   
@@ -552,10 +552,10 @@ export class EnhancedKybFormService implements FormServiceInterface {
       },
       // Fallback implementation (original)
       () => this.sections,
-      // Operation name for health check
-      'getSections',
-      // Feature flag key
-      'PROGRESSIVE_LOADING'
+      // Error handler
+      (error: Error) => {
+        this.logger.error(`[EnhancedKybService] Error in getSections optimization:`, error);
+      }
     );
   }
   
