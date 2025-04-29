@@ -970,24 +970,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           onClick={() => {
                             // Toggle the agreement checked state
                             const newValue = !agreementChecked;
-                            console.log('[KYB Form] Toggling agreement confirmation:', newValue);
                             
-                            // Update React state
+                            // Log the action with task context for debugging and tracking
+                            logger.info(`Toggling agreement confirmation to ${newValue} for task type: ${taskType}, task ID: ${taskId || 'unknown'}`);
+                            
+                            // Update React state - this will automatically update the UI
                             setAgreementChecked(newValue);
                             
-                            // Also update form value for consistency
+                            // Also update the form value for consistency and submission handling
                             form.setValue("agreement_confirmation", newValue);
                             
-                            // Set explicit submission flag for tracking
+                            // Set explicit submission flag for tracking when enabled
                             if (newValue) {
                               form.setValue("explicitSubmission", true);
-                              console.log('[KYB Form] Set explicitSubmission flag:', true);
-                            }
-                            
-                            // Directly update checkbox
-                            const checkbox = document.getElementById("consent-checkbox") as HTMLInputElement;
-                            if (checkbox) {
-                              checkbox.checked = newValue;
                             }
                           }}
                           id="consent-box"
@@ -999,11 +994,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 id="consent-checkbox"
                                 checked={agreementChecked}
                                 className="mt-0.5 h-4 w-4" 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Allow the checkbox to be clicked directly too
-                                  const checkbox = e.target as HTMLInputElement;
-                                  const newChecked = checkbox.checked;
+                                onChange={(e) => {
+                                  const newChecked = e.target.checked;
                                   
                                   // Update React state
                                   setAgreementChecked(newChecked);
@@ -1015,6 +1007,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   if (newChecked) {
                                     form.setValue("explicitSubmission", true);
                                   }
+                                }}
+                                onClick={(e) => {
+                                  // Prevent click from bubbling up to parent div
+                                  e.stopPropagation();
                                 }}
                               />
                               <div className="font-semibold text-gray-700">
@@ -1064,47 +1060,40 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               disabled={!agreementChecked}
                               className={`flex items-center gap-1 ${agreementChecked ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
                               onClick={() => {
-                                // TEST ALERT to see if the button works at all
-                                alert('SUBMIT BUTTON CLICKED - Testing the button event');
+                                // Add structured logging for tracking form submission
+                                logger.info(`Universal Form Submit button clicked for task type: ${taskType}, task ID: ${taskId}`);
                                 
-                                // Add extensive logging for debugging
-                                console.log('[KYB Form] Submit button clicked for final submission');
-                                
-                                // Set the submission flag explicitly 
+                                // Set the submission flag explicitly to ensure proper status tracking
                                 form.setValue('explicitSubmission', true);
                                 
-                                // Show immediate feedback
+                                // Show immediate feedback to the user
                                 toast({
                                   title: 'Processing Submission',
-                                  description: 'TEST TOAST - Working on submitting your data...',
+                                  description: 'Working on submitting your data...',
                                   variant: 'default',
                                 });
                                 
-                                // Try to call parent handler directly
+                                // Call the parent handler with proper error handling
                                 try {
                                   if (onSubmit) {
-                                    console.log('[KYB Form] Calling parent component onSubmit handler directly');
+                                    logger.info(`Calling parent component onSubmit handler for ${taskType} form`);
                                     const formData = form.getValues();
-                                    onSubmit({...formData, explicitSubmission: true});
                                     
-                                    toast({
-                                      title: 'Direct submission attempt',
-                                      description: 'Attempted direct handler call',
-                                      variant: 'default',
-                                    });
+                                    // Add explicit submission flag to ensure server knows this is a final submission
+                                    onSubmit({...formData, explicitSubmission: true});
                                   } else {
-                                    console.error('[KYB Form] No onSubmit handler provided');
+                                    logger.error(`No onSubmit handler provided for ${taskType} form submission`);
                                     toast({
                                       title: 'Submission Error',
-                                      description: 'No submission handler available',
+                                      description: 'No submission handler available. Please try again later.',
                                       variant: 'destructive',
                                     });
                                   }
                                 } catch (error) {
-                                  console.error('[KYB Form] Error in submission:', error);
+                                  logger.error(`Error in ${taskType} form submission:`, error);
                                   toast({
                                     title: 'Submission Error',
-                                    description: 'An error occurred during submission',
+                                    description: 'An error occurred during submission. Please try again later.',
                                     variant: 'destructive',
                                   });
                                 }
