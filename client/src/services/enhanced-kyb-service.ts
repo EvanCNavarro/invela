@@ -204,6 +204,31 @@ export class EnhancedKybFormService implements FormServiceInterface {
     return 'kyb';
   }
   
+  /**
+   * Get the current form data
+   * 
+   * This method is required by form components to access the current state
+   * without making a new API request.
+   */
+  getFormData(): Record<string, any> {
+    // In the base class, we don't have cached data, so we return an empty object
+    // Subclasses should override this to return their cached data
+    this.log('Getting form data (base implementation returns empty object)');
+    return {};
+  }
+  
+  /**
+   * Clear the service cache
+   * 
+   * This method is used to reset the service state when needed.
+   * Subclasses should override this to clear their specific cached data.
+   */
+  clearCache(): void {
+    this.log('Clearing cache (base implementation does nothing)');
+    // In the base class, there's no cache to clear
+    // Subclasses should override this to clear their specific caches
+  }
+  
   // Logging methods
   protected log(message: string, ...args: any[]): void {
     this.logger.log(message, ...args);
