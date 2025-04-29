@@ -36,53 +36,16 @@ export interface FormField {
   };
 }
 
-/**
- * Represents a section or group of fields in a form
- */
-export interface FormSection {
-  id?: number | string;
-  key?: string;
-  name?: string;
-  title?: string;
-  description?: string;
-  step_index?: number;
-  order?: number;
-  fields?: FormField[];
-}
-
-/**
- * Standard interface for all form services
- */
 export interface FormServiceInterface {
-  /**
-   * Initialize the form service with optional configuration
-   */
-  initialize?(config?: Record<string, any>): Promise<boolean>;
-  
   /**
    * Get all form field definitions
    */
   getFields(): Promise<FormField[]>;
   
   /**
-   * Get form sections (groups of fields)
-   */
-  getSections?(): Promise<FormSection[]>;
-  
-  /**
    * Get form data for a specific task
    */
   getTaskData(taskId: number): Promise<Record<string, any>>;
-  
-  /**
-   * Load form data for a specific task
-   */
-  loadFormData?(taskId: number): Promise<Record<string, any>>;
-  
-  /**
-   * Update form data for a task (batch update)
-   */
-  updateFormData?(taskId: number, formData: Record<string, any>): Promise<boolean>;
   
   /**
    * Update a single field value
@@ -108,14 +71,4 @@ export interface FormServiceInterface {
    * Get the task type for this form service
    */
   getTaskType(): string;
-  
-  /**
-   * Validate the entire form
-   */
-  validateForm?(taskId: number): Promise<{valid: boolean, errors: Record<string, string>}>;
-  
-  /**
-   * Submit the form (mark as complete)
-   */
-  submitForm?(taskId: number): Promise<boolean>;
 }
