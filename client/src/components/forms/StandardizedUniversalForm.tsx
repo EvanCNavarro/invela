@@ -350,12 +350,21 @@ export function StandardizedUniversalForm({
         
         // If success is true, show toast and continue
         if (success) {
-          // Check if we have a fileId in the response (for KY3P forms)
+          // Check if we have a fileId in the response (needed for success modal)
           const fileId = typeof result === 'object' && result !== null ? result.fileId : undefined;
           
-          // If we have a fileId, call onSuccess with it (needed for KY3P success modal)
+          // Log the response structure for debugging
+          logger.info('Form submission successful, response:', result);
+          
+          // If we have a fileId, call onSuccess with it
           if (fileId && onSuccess) {
+            logger.info('Calling onSuccess with fileId:', fileId);
             onSuccess(fileId);
+          } else if (onSuccess) {
+            // If there's no fileId but we have a response object, call onSuccess with result
+            // This is needed for KYB forms which may not return a fileId directly
+            logger.info('No fileId found but calling onSuccess with result object');
+            onSuccess(result);
           }
           
           toast({
