@@ -130,8 +130,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  // We no longer need to redirect users - all tabs are accessible
-  // This effect has been removed as part of removing the locking logic
+  // Add redirection functionality to automatically redirect users from locked tabs to the Task Center
+  useEffect(() => {
+    if (!isLoadingCompany && currentCompany) {
+      const availableTabs = currentCompany?.available_tabs || ['task-center'];
+      const currentTab = getCurrentTab();
+      
+      // Check if the current tab is accessible
+      const isCurrentTabAccessible = currentTab === 'task-center' || availableTabs.includes(currentTab);
+      
+      // If the current tab is not accessible, redirect to the Task Center
+      if (!isCurrentTabAccessible) {
+        console.log(`[DashboardLayout] Tab "${currentTab}" is locked. Redirecting to task-center.`);
+        navigate('/task-center');
+      }
+    }
+  }, [currentCompany, isLoadingCompany, location, navigate]);
   
   // Override tab visibility on route change to prevent any flickering issues
   useEffect(() => {
