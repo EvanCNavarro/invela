@@ -308,18 +308,34 @@ export function StandardizedUniversalForm({
       } else {
         // Otherwise, use the form service submit method
         submissionTracker.trackEvent('Calling form service submit method', { taskType, taskId });
-        await formService.submit({ taskId });
-        submissionTracker.trackEvent('Form service submit completed');
+        const result = await formService.submit({ taskId });
+        submissionTracker.trackEvent('Form service submit completed', { result });
         
-        toast({
-          title: 'Form Submitted',
-          description: 'Your form has been submitted successfully.',
-        });
+        // Check if we've got a structured result with success property (e.g., from KY3P)
+        const success = typeof result === 'object' && result !== null ? result.success : result;
         
-        // Refresh the form status
-        submissionTracker.trackEvent('Refreshing form status');
-        await refreshStatus();
-        submissionTracker.trackEvent('Form status refreshed');
+        // If success is true, show toast and continue
+        if (success) {
+          // Check if we have a fileId in the response (for KY3P forms)
+          const fileId = typeof result === 'object' && result !== null ? result.fileId : undefined;
+          
+          // If we have a fileId, call onSuccess with it (needed for KY3P success modal)
+          if (fileId && onSuccess) {
+            onSuccess(fileId);
+          }
+          
+          toast({
+            title: 'Form Submitted',
+            description: 'Your form has been submitted successfully.',
+          });
+          
+          // Refresh the form status
+          submissionTracker.trackEvent('Refreshing form status');
+          await refreshStatus();
+          submissionTracker.trackEvent('Form status refreshed');
+        } else {
+          throw new Error('Form submission failed');
+        }
       }
       
       submissionTracker.trackEvent('Form submission completed successfully');

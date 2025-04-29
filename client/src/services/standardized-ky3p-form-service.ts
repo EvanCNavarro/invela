@@ -325,14 +325,14 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
    * Submit the form for a task
    * 
    * @param options Submit options with task ID
-   * @returns Success status
+   * @returns Object with success status and fileId if available
    */
-  async submit(options: { taskId?: number }): Promise<boolean> {
+  async submit(options: { taskId?: number }): Promise<{ success: boolean; fileId?: number }> {
     const taskId = options.taskId || this.taskId;
     
     if (!taskId) {
       logger.error('Cannot submit without a task ID');
-      return false;
+      return { success: false };
     }
     
     try {
@@ -347,19 +347,25 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
       if (response.ok) {
         logger.info(`Successfully submitted form for task ${taskId}`);
         
+        // Parse response to get the file ID
+        const result = await response.json();
+        const fileId = result?.fileId;
+        
+        logger.info(`KY3P submission result:`, { fileId });
+        
         // Invalidate task cache to reflect updated status
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
         queryClient.invalidateQueries({ queryKey: [`/api/ky3p-task/${taskId}`] });
         
-        return true;
+        return { success: true, fileId };
       } else {
         const errorData = await response.json();
         logger.error(`Error submitting form for task ${taskId}:`, errorData);
-        return false;
+        return { success: false };
       }
     } catch (error) {
       logger.error(`Failed to submit form for task ${taskId}:`, error);
-      return false;
+      return { success: false };
     }
   }
 
