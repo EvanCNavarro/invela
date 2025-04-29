@@ -7,7 +7,8 @@ import {
   ky3pResponses, 
   ky3pFields, 
   openBankingResponses, 
-  openBankingFields 
+  openBankingFields,
+  KYBFieldStatus  // Import the enum for status values
 } from "@db/schema";
 import { TaskStatus } from '../types';
 import { calculateKybFormProgress } from './kyb-progress';
@@ -170,10 +171,8 @@ export async function reconcileTaskProgress(
           .where(
             and(
               eq(openBankingResponses.task_id, taskId),
-              or(
-                sql`${openBankingResponses.status} = 'COMPLETE'`,
-                sql`${openBankingResponses.status} = 'complete'`
-              )
+              // Use UPPER function to handle both capitalization variants consistently
+              sql`UPPER(${openBankingResponses.status}) = 'COMPLETE'`
             )
           );
         
@@ -264,11 +263,12 @@ export async function reconcileTaskProgress(
             and(
               eq(ky3pResponses.task_id, taskId),
               or(
-                sql`${ky3pResponses.status} = 'COMPLETE'`,
-                sql`${ky3pResponses.status} = 'FILLED'`,
-                sql`${ky3pResponses.status} = 'complete'`,
-                sql`${ky3pResponses.status} = 'filled'`
+                // Handle both capitalization variants for maximum compatibility
+                // This ensures we count all completed fields regardless of status format
+                sql`UPPER(${ky3pResponses.status}) = 'COMPLETE'`,
+                sql`UPPER(${ky3pResponses.status}) = 'FILLED'`
               ),
+              // Only count fields with non-empty values
               sql`${ky3pResponses.response_value} IS NOT NULL`,
               sql`${ky3pResponses.response_value} != ''`
             )
@@ -357,12 +357,19 @@ export async function reconcileTaskProgress(
     }
     
     // 4. Build the response array in the format expected by our utilities
-    const formattedResponses = responses.map((response) => ({
-      field: response.field_key,
-      status: response.response_value ? 'COMPLETE' : 'EMPTY',
-      hasValue: !!response.response_value,
-      required: !!response.required
-    }));
+    const formattedResponses = responses.map((response) => {
+      // Normalize the status value to ensure consistent capitalization
+      const normalizedStatus = response.response_value 
+        ? 'COMPLETE'  // Always use uppercase for consistency
+        : 'EMPTY';     // Always use uppercase for consistency
+        
+      return {
+        field: response.field_key,
+        status: normalizedStatus,
+        hasValue: !!response.response_value,
+        required: !!response.required
+      };
+    });
     
     // 5. Calculate accurate progress - percentage of completed fields
     const calculatedProgress = calculateKybFormProgress(formattedResponses, formattedResponses);
@@ -383,7 +390,7 @@ export async function reconcileTaskProgress(
         currentStatus: task.status,
         calculatedStatus,
         responseCount: responses.length,
-        completeCount: formattedResponses.filter(r => r.status === 'COMPLETE' && r.hasValue).length
+        completeCount: formattedResponses.filter(r => r.status.toUpperCase() === 'COMPLETE' && r.hasValue).length
       });
     }
     
