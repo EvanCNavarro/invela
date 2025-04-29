@@ -964,7 +964,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           onClick={() => {
                             // Toggle the value
                             const newValue = !form.getValues("agreement_confirmation");
+                            console.log('[KYB Form] Toggling agreement confirmation:', newValue);
                             form.setValue("agreement_confirmation", newValue);
+                            
+                            // Set explicit submission flag for tracking
+                            if (newValue) {
+                              form.setValue("explicitSubmission", true);
+                              console.log('[KYB Form] Set explicitSubmission flag:', true);
+                            }
                             
                             // Directly update checkbox
                             const checkbox = document.getElementById("consent-checkbox") as HTMLInputElement;
@@ -979,9 +986,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               container.style.borderColor = newValue ? "#93C5FD" : "#E5E7EB";
                             }
                             
-                            // Update submit button state
+                            // Update submit button state - use direct querySelector for type="submit"
                             const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
                             if (submitButton) {
+                              console.log('[KYB Form] Updating submit button state:', !newValue);
                               submitButton.disabled = !newValue;
                             }
                           }}
@@ -1059,7 +1067,32 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             <Button 
                               type="submit"
                               disabled={!form.getValues('agreement_confirmation')}
-                              className="flex items-center gap-1"
+                              className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
+                              onClick={() => {
+                                // Add logging for debugging
+                                console.log('[KYB Form] Submit button clicked for final submission');
+                                
+                                // Set the submission flag explicitly
+                                form.setValue('explicitSubmission', true);
+                                
+                                // Manually trigger form submission
+                                form.handleSubmit(async (data) => {
+                                  console.log('[KYB Form] Explicitly calling handleSubmit with form data');
+                                  
+                                  // Call parent's onSubmit with the enhanced data
+                                  if (onSubmit) {
+                                    console.log('[KYB Form] Calling parent component onSubmit handler');
+                                    await onSubmit({...data, explicitSubmission: true});
+                                    
+                                    // Show toast notification
+                                    toast({
+                                      title: 'Form submitted successfully',
+                                      description: 'Your submission has been received. Thank you!',
+                                      variant: 'default',
+                                    });
+                                  }
+                                })();
+                              }}
                             >
                               Submit
                               <Check className="h-4 w-4 ml-1" />
