@@ -114,6 +114,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   const [forceRerender, setForceRerender] = useState(false);
+  const [agreementChecked, setAgreementChecked] = useState(false);
   
   // Use our new form data manager hook to handle form data
   const {
@@ -136,6 +137,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   });
   
   // Make sure agreement_confirmation is set to false by default
+  // and sync the agreementChecked React state with form value
   useEffect(() => {
     if (dataHasLoaded && form) {
       // Initialize agreement to false if undefined
@@ -144,6 +146,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // If value is undefined in the form, initialize it to false
       if (currentValue === undefined) {
         form.setValue('agreement_confirmation', false, { shouldValidate: false });
+        setAgreementChecked(false);
+      } else {
+        // If there is a value, sync React state with it
+        setAgreementChecked(!!currentValue);
       }
     }
   }, [dataHasLoaded, form]);
@@ -958,13 +964,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         <div 
                           className="p-4 rounded-lg border cursor-pointer"
                           style={{
-                            backgroundColor: form.getValues("agreement_confirmation") ? "#EFF6FF" : "white",
-                            borderColor: form.getValues("agreement_confirmation") ? "#93C5FD" : "#E5E7EB"
+                            backgroundColor: agreementChecked ? "#EFF6FF" : "white",
+                            borderColor: agreementChecked ? "#93C5FD" : "#E5E7EB"
                           }}
                           onClick={() => {
-                            // Toggle the value
-                            const newValue = !form.getValues("agreement_confirmation");
+                            // Toggle the agreement checked state
+                            const newValue = !agreementChecked;
                             console.log('[KYB Form] Toggling agreement confirmation:', newValue);
+                            
+                            // Update React state
+                            setAgreementChecked(newValue);
+                            
+                            // Also update form value for consistency
                             form.setValue("agreement_confirmation", newValue);
                             
                             // Set explicit submission flag for tracking
@@ -978,20 +989,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             if (checkbox) {
                               checkbox.checked = newValue;
                             }
-                            
-                            // Update container style
-                            const container = document.getElementById("consent-box");
-                            if (container) {
-                              container.style.backgroundColor = newValue ? "#EFF6FF" : "white";
-                              container.style.borderColor = newValue ? "#93C5FD" : "#E5E7EB";
-                            }
-                            
-                            // Update submit button state - use direct querySelector for type="submit"
-                            const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-                            if (submitButton) {
-                              console.log('[KYB Form] Updating submit button state:', !newValue);
-                              submitButton.disabled = !newValue;
-                            }
                           }}
                           id="consent-box"
                         >
@@ -1000,25 +997,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               <input 
                                 type="checkbox" 
                                 id="consent-checkbox"
-                                defaultChecked={form.getValues("agreement_confirmation") || false}
+                                checked={agreementChecked}
                                 className="mt-0.5 h-4 w-4" 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   // Allow the checkbox to be clicked directly too
                                   const checkbox = e.target as HTMLInputElement;
-                                  form.setValue("agreement_confirmation", checkbox.checked);
+                                  const newChecked = checkbox.checked;
                                   
-                                  // Update container style
-                                  const container = document.getElementById("consent-box");
-                                  if (container) {
-                                    container.style.backgroundColor = checkbox.checked ? "#EFF6FF" : "white";
-                                    container.style.borderColor = checkbox.checked ? "#93C5FD" : "#E5E7EB";
-                                  }
+                                  // Update React state
+                                  setAgreementChecked(newChecked);
                                   
-                                  // Update submit button state
-                                  const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-                                  if (submitButton) {
-                                    submitButton.disabled = !checkbox.checked;
+                                  // Also update form value for consistency
+                                  form.setValue("agreement_confirmation", newChecked);
+                                  
+                                  // Set explicit submission flag for tracking
+                                  if (newChecked) {
+                                    form.setValue("explicitSubmission", true);
                                   }
                                 }}
                               />
@@ -1066,8 +1061,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             
                             <Button 
                               type="button" 
-                              disabled={!form.getValues('agreement_confirmation')}
-                              className={`flex items-center gap-1 ${form.getValues('agreement_confirmation') ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                              disabled={!agreementChecked}
+                              className={`flex items-center gap-1 ${agreementChecked ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
                               onClick={() => {
                                 // TEST ALERT to see if the button works at all
                                 alert('SUBMIT BUTTON CLICKED - Testing the button event');
