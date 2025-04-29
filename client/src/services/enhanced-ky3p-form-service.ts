@@ -165,16 +165,66 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
         logger.info(`[EnhancedKY3P] Processing ${responseData.responses.length} responses from fallback method`);
         
         // Update form data in the original service
+        // Create a new form data object directly
+        const formData: Record<string, any> = {};
+        
+        // Process the responses and build form data object
         responseData.responses.forEach((response: any) => {
           if (response.field_id && response.response_value) {
             try {
-              // Update through the original service's internal method if available
+              // Try to update the original service internal data
               (this.originalService as any).updateInternalFormData(response.field_id, response.response_value);
+              
+              // Also add to our backup form data structure using field ID as string key
+              formData[String(response.field_id)] = response.response_value;
+              logger.info(`[EnhancedKY3P] Added form data for field ID ${response.field_id}`);
             } catch (updateError) {
               logger.warn(`[EnhancedKY3P] Could not update form data for field ${response.field_id}`);
+              
+              // Still try to add to our backup form data structure
+              formData[String(response.field_id)] = response.response_value;
+              logger.info(`[EnhancedKY3P] Added form data for field ID ${response.field_id} via fallback`);
             }
           }
         });
+        
+        // Get the current fields from the original service to ensure we have the correct data structure
+        try {
+          const fields = this.originalService.getFields() || [];
+          
+          // Create a mapping from field ID to field key
+          const fieldIdToKeyMap = new Map(fields.map(field => [
+            typeof field.id === 'string' ? parseInt(field.id, 10) : field.id, 
+            typeof field.key === 'string' ? field.key : String(field.id)
+          ]));
+          
+          // Create field-key based data for the form data object
+          const keyBasedData: Record<string, any> = {};
+          
+          // Try to map numeric field IDs to field keys for better form display
+          Object.entries(formData).forEach(([fieldIdStr, value]) => {
+            const fieldId = parseInt(fieldIdStr, 10);
+            if (!isNaN(fieldId)) {
+              const fieldKey = fieldIdToKeyMap.get(fieldId);
+              if (fieldKey) {
+                keyBasedData[fieldKey] = value;
+                logger.info(`[EnhancedKY3P] Mapped field ID ${fieldId} to key ${fieldKey}`);
+              }
+            }
+          });
+          
+          // Merge the key-based data back into the form data
+          Object.assign(formData, keyBasedData);
+          
+        } catch (mappingError) {
+          logger.warn('[EnhancedKY3P] Error mapping field IDs to keys:', mappingError);
+        }
+        
+        // Update the original service's form data directly
+        if (Object.keys(formData).length > 0) {
+          logger.info(`[EnhancedKY3P] Setting form data directly with ${Object.keys(formData).length} entries`);
+          (this.originalService as any).formData = formData;
+        }
         
         logger.info('[EnhancedKY3P] Fallback response loading and processing completed successfully');
         return true;
