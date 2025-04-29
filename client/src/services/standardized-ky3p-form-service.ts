@@ -67,19 +67,42 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
    */
   async getFields(): Promise<FormField[]> {
     try {
+      this.log('Fetching KY3P field definitions');
       const response = await fetch(this.fieldEndpoint);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch KY3P fields: ${response.status} ${response.statusText}`);
       }
       
-      const fields = await response.json() as Ky3PField[];
-      this.log(`Fetched ${fields.length} KY3P field definitions`);
+      const rawFields = await response.json() as Ky3PField[];
+      this.log(`Fetched ${rawFields.length} raw KY3P field definitions`);
       
       // Initialize the field mapping cache
-      this.initFieldCache(fields);
+      this.initFieldCache(rawFields);
       
-      return fields;
+      // Transform the fields to ensure they have all required properties for FormField
+      const standardizedFields = rawFields.map(field => {
+        return {
+          ...field,
+          // Ensure consistent property names
+          key: field.field_key || `field-${field.id}`,
+          label: field.display_name || field.label || `Field ${field.id}`,
+          type: field.field_type || 'text',
+          validation: {
+            required: field.is_required || field.required || false
+          },
+          placeholder: field.placeholder || '',
+          helpText: field.help_text || '',
+          default: field.default_value || '',
+          // Use field.section as fallback for field.group
+          group: field.group || field.section || 'Default',
+          // Create a section ID from the group name or field.section
+          sectionId: `section-${(field.group || field.section || 'default').toLowerCase().replace(/\s+/g, '-')}`
+        };
+      });
+      
+      this.log(`Processed ${standardizedFields.length} standardized KY3P fields`);
+      return standardizedFields;
     } catch (error) {
       this.error('Error fetching KY3P fields:', error);
       return [];
@@ -407,39 +430,57 @@ export class StandardizedKY3PFormService extends EnhancedKybFormService {
    */
   async getSections(): Promise<FormSection[]> {
     try {
+      this.log('Getting KY3P form sections');
+      
       // Get all fields first
       const fields = await this.getFields();
+      this.log(`Retrieved ${fields.length} KY3P fields for section grouping`);
       
       // Group fields by their 'group' property
       const groupMap = new Map<string, FormField[]>();
       
       fields.forEach(field => {
-        const group = field.group || 'Default';
+        // Handle different property names between versions (group vs section)
+        const group = field.group || field.section || 'Default';
+        
         if (!groupMap.has(group)) {
           groupMap.set(group, []);
         }
         groupMap.get(group)!.push(field);
       });
       
+      this.log(`Grouped fields into ${groupMap.size} sections`);
+      
       // Convert groups to sections
       const sections: FormSection[] = [];
       
+      let sectionIndex = 0;
       groupMap.forEach((groupFields, groupName) => {
-        // Take first field's step_index or 0 for the section
-        const stepIndex = groupFields[0]?.step_index || 0;
+        // Take first field's step_index or increment index for the section
+        const stepIndex = groupFields[0]?.step_index || sectionIndex++;
+        
+        // Create a unique section ID
+        const sectionId = `ky3p-section-${groupName.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        this.log(`Creating section: ${sectionId} with ${groupFields.length} fields`);
         
         sections.push({
+          id: sectionId,
           key: groupName.toLowerCase().replace(/\s+/g, '-'),
           name: groupName,
           title: groupName,
           description: `KY3P section for ${groupName}`,
           step_index: stepIndex,
+          order: stepIndex,
           fields: groupFields,
         });
       });
       
       // Sort sections by step_index
-      return sections.sort((a, b) => (a.step_index || 0) - (b.step_index || 0));
+      const sortedSections = sections.sort((a, b) => (a.step_index || 0) - (b.step_index || 0));
+      this.log(`Returning ${sortedSections.length} sorted KY3P sections`);
+      
+      return sortedSections;
     } catch (error) {
       this.error('Error getting KY3P sections:', error);
       return [];
