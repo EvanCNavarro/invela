@@ -45,7 +45,19 @@ export function useStandardizedServices(): void {
   logger.info('Using standardized form services as default');
   
   try {
-    // Override KY3P form service
+    // Import componentFactory to register standardized services
+    const { componentFactory } = require('./componentFactory');
+    
+    // Register the StandardizedKY3PFormService directly with componentFactory
+    logger.info('Registering standardized KY3P form service with componentFactory');
+    componentFactory.registerFormService('ky3p', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
+    
+    // Also register for alternate task types
+    componentFactory.registerFormService('security', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
+    componentFactory.registerFormService('sp_ky3p_assessment', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
+    componentFactory.registerFormService('security_assessment', new StandardizedKY3PFormService(require('@tanstack/react-query').QueryClient()));
+    
+    // Override KY3P form service globally
     if (typeof window !== 'undefined') {
       // Only run this in browser environment
       if ((window as any).KY3PFormService) {
