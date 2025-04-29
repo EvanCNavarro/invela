@@ -5,7 +5,7 @@
  * interface with string-based field keys across all form types.
  */
 
-import { ComponentFactory } from '@/components/forms/component-factory';
+import { ComponentFactory } from './componentFactory';
 import { EnhancedKY3PFormService } from './enhanced-ky3p-form-service';
 
 // List of service registrations to set up
