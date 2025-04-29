@@ -451,6 +451,56 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
   }
 
   /**
+   * Get progress status for a task
+   * Implementation of the optional method from FormServiceInterface
+   * @param taskId ID of the task
+   * @returns Promise that resolves with task progress and status
+   */
+  async getProgress(taskId?: number): Promise<{
+    progress: number;
+    status: string;
+    formDataKeys?: number;
+  }> {
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      // Return default empty progress
+      logger.warn('No task ID provided for getting progress, returning default empty progress');
+      return {
+        progress: 0,
+        status: 'not_started',
+        formDataKeys: 0
+      };
+    }
+    
+    try {
+      // Get the task details from the API
+      const response = await apiRequest('GET', `/api/ky3p-task/${effectiveTaskId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get task status: ${response.statusText}`);
+      }
+      
+      const taskData = await response.json();
+      
+      return {
+        progress: taskData.progress || 0,
+        status: taskData.status || 'not_started',
+        formDataKeys: this.cache.formData ? Object.keys(this.cache.formData).length : 0
+      };
+    } catch (error) {
+      logger.error(`Failed to get progress for task ${effectiveTaskId}:`, error);
+      
+      // Return current calculated progress as fallback
+      return {
+        progress: this.calculateProgress(),
+        status: 'in_progress', // Default to in_progress if we can't determine status
+        formDataKeys: this.cache.formData ? Object.keys(this.cache.formData).length : 0
+      };
+    }
+  }
+
+  /**
    * Get demo data for the form
    * 
    * @param taskId Optional task ID
