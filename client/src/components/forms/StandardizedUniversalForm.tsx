@@ -251,6 +251,25 @@ export function StandardizedUniversalForm({
       submissionTracker.startTracking(taskId, taskType);
       submissionTracker.trackEvent('Submit button clicked');
       
+      // Get current progress to check if form is already submitted
+      try {
+        const progressData = await formService.getProgress ? formService.getProgress(taskId) : null;
+        if (progressData && progressData.status === 'submitted') {
+          submissionTracker.trackEvent('Form already submitted, preventing resubmission');
+          toast({
+            title: 'Form Already Submitted',
+            description: 'This form has already been submitted and cannot be submitted again.',
+            variant: 'warning',
+          });
+          setLoading(false);
+          submissionTracker.stopTracking();
+          return;
+        }
+      } catch (progressError) {
+        // Continue with submission if we can't check the status
+        logger.warn('Could not check form submission status:', progressError);
+      }
+      
       // Validate the form data
       submissionTracker.trackEvent('Running form validation');
       const validationResult = formService.validate(formData);
