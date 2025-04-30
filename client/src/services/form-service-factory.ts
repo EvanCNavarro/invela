@@ -46,8 +46,15 @@ export function createFormService(
         return enhancedKY3PFormServiceFactory.getServiceInstance(companyIdNum, taskIdNum);
       }
       
+      // Enhanced KYB implementation
+      if (formType === 'kyb') {
+        // Import directly here to avoid circular dependencies
+        const { enhancedKybServiceFactory } = require('./enhanced-kyb-service');
+        logger.info(`Using enhanced KYB form service for company ${companyIdNum}, task ${taskIdNum}`);
+        return enhancedKybServiceFactory.getInstance(companyIdNum, taskIdNum);
+      }
+      
       // Add other enhanced implementations here as they become available
-      // e.g., if (formType === 'kyb') { return enhancedKYBFormServiceFactory... }
     }
     
     // Fall back to standard ComponentFactory implementation for other types

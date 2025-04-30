@@ -260,14 +260,43 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           logger.info('Will try to continue with available services');
         }
         
-        // Find the appropriate form service
-        logger.debug(`Looking for form service for task type: ${taskType}`);
-        let service = componentFactory.getFormService(taskType);
+        // Find the appropriate form service with proper data isolation by company
+        // CRITICAL DATA ISOLATION FIX: Use proper factory with company/task IDs
+        logger.debug(`Looking for company-specific form service for task type: ${taskType}`);
+        
+        // Import to avoid circular references
+        const { formServiceFactory } = await import('@/services/form-service-factory');
+        
+        // Get current company ID from user context
+        let companyId;
+        try {
+          const userContext = sessionStorage.getItem('user-context');
+          if (userContext) {
+            const parsedContext = JSON.parse(userContext);
+            companyId = parsedContext?.companyId;
+            logger.info(`Data isolation: Using company ID ${companyId} for form service`);
+          }
+        } catch (error) {
+          logger.warn('Error accessing company context:', error);
+        }
+        
+        // Try to get a company-specific form service instance
+        let service = formServiceFactory.getServiceInstance(taskType, companyId, taskId);
         
         if (!service) {
           // Try with mapped DB task type
           logger.debug(`No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
-          service = componentFactory.getFormService(dbTaskType);
+          service = formServiceFactory.getServiceInstance(dbTaskType, companyId, taskId);
+        }
+        
+        // Fall back to component factory if needed (but log a warning)
+        if (!service) {
+          logger.warn(`Could not create isolated form service, falling back to legacy factory`);
+          service = componentFactory.getFormService(taskType);
+          
+          if (!service) {
+            service = componentFactory.getFormService(dbTaskType);
+          }
         }
         
         if (!service) {
@@ -286,7 +315,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     };
     
     fetchTemplate();
-  }, [taskType]);
+  }, [taskType, taskId]);
   
   // Step 2: Initialize form with fields and sections from template or service
   useEffect(() => {
