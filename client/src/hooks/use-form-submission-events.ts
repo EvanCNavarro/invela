@@ -19,6 +19,7 @@ export interface FormSubmissionEvent {
   fileName?: string;
   fileId?: number;
   timestamp?: string;
+  error?: string;
 }
 
 /**

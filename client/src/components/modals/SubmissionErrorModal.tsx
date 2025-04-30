@@ -1,100 +1,63 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertCircle, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+/**
+ * Submission Error Modal
+ * 
+ * This component displays an error message when form submission fails,
+ * including details about the error and guidance on how to proceed.
+ */
 
-interface SubmissionErrorModalProps {
-  /** Whether the modal is open */
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from '@/components/ui/dialog';
+import { AlertTriangle } from 'lucide-react';
+
+export interface SubmissionErrorModalProps {
   open: boolean;
-  
-  /** Callback when the modal is closed */
   onClose: () => void;
-  
-  /** Title of the modal */
   title: string;
-  
-  /** Description/error message */
-  description: string;
-  
-  /** Detailed error information (for developers) */
-  errorDetails?: string;
-  
-  /** Label for the primary action button */
-  buttonText?: string;
-  
-  /** Callback when the retry button is clicked */
-  onRetry?: () => void;
+  details: string[] | string;
+  actionText?: string;
 }
 
-/**
- * SubmissionErrorModal Component
- * 
- * This component displays an error modal when form submission fails,
- * with error details and retry functionality.
- */
 export function SubmissionErrorModal({
   open,
   onClose,
   title,
-  description,
-  errorDetails,
-  buttonText = 'Try Again',
-  onRetry
+  details,
+  actionText = 'Close'
 }: SubmissionErrorModalProps) {
-  const [showDetails, setShowDetails] = useState(false);
-  
+  // Format details to always be an array
+  const detailsArray = Array.isArray(details) ? details : [details];
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <XCircle className="h-6 w-6 text-red-500" />
+            <AlertTriangle className="h-6 w-6 text-amber-600" />
             <DialogTitle>{title}</DialogTitle>
           </div>
-          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         
-        {errorDetails && (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setShowDetails(!showDetails)}
-              className={cn(
-                "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium",
-                "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                <span>Technical Details</span>
-              </div>
-              {showDetails ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
-            
-            {showDetails && (
-              <div className="max-h-[200px] overflow-auto rounded-md bg-muted p-3">
-                <pre className="text-xs text-muted-foreground">
-                  {errorDetails}
-                </pre>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="py-4">
+          {detailsArray.map((detail, index) => (
+            <DialogDescription key={index} className="my-2 text-red-600">
+              {detail}
+            </DialogDescription>
+          ))}
+          
+          <DialogDescription className="mt-4">
+            Please try again or contact support if the issue persists.
+          </DialogDescription>
+        </div>
         
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-          {onRetry && (
-            <Button onClick={onRetry}>
-              {buttonText}
-            </Button>
-          )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{actionText}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
