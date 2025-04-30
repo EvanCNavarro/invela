@@ -1,237 +1,143 @@
 /**
  * WebSocket Provider
  * 
- * This component provides WebSocket functionality to the entire app through
- * React Context, allowing components to subscribe to WebSocket events.
+ * This component provides WebSocket connectivity to the entire app.
+ * It uses React Context to share the WebSocket connection and manages reconnection logic.
  */
 
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import getLogger from '@/utils/logger';
 
-// WebSocket message types
-export interface WebSocketMessage {
-  type: string;
-  payload?: any;
-}
+const logger = getLogger('WebSocket');
 
-// WebSocket connection states
-type ConnectionState = 'connecting' | 'connected' | 'disconnected';
-
-// WebSocket context interface
-interface WebSocketContextType {
-  connectionState: ConnectionState;
-  lastMessage: WebSocketMessage | null;
-  sendMessage: (message: WebSocketMessage) => void;
+export interface WebSocketContextType {
+  socket: WebSocket | null;
+  isConnected: boolean;
+  lastMessage: any | null;
+  sendMessage: (message: any) => void;
 }
 
 // Create the WebSocket context
 export const WebSocketContext = createContext<WebSocketContextType>({
-  connectionState: 'disconnected',
+  socket: null,
+  isConnected: false,
   lastMessage: null,
   sendMessage: () => {}
 });
 
-// WebSocket provider props
 interface WebSocketProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * WebSocket Provider Component
- * 
- * Wraps the application with WebSocket functionality and exposes
- * a React context for components to use.
- */
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
-  // Connection state management
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  
-  // WebSocket instance reference
-  const socketRef = useRef<WebSocket | null>(null);
-  
-  // Reconnection management
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastMessage, setLastMessage] = useState<any | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttempts = useRef<number>(0);
-  const MAX_RECONNECT_ATTEMPTS = 10;
-  const RECONNECT_BASE_DELAY = 3000; // 3 seconds base delay
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
   
-  /**
-   * Calculate reconnection delay with exponential backoff
-   * 
-   * @returns Delay in milliseconds
-   */
-  const calculateReconnectDelay = useCallback((): number => {
-    // Exponential backoff with jitter
-    const exponentialDelay = RECONNECT_BASE_DELAY * Math.pow(1.5, Math.min(reconnectAttempts.current, 8));
-    const jitter = 0.2; // 20% jitter
-    const randomFactor = 1 - jitter + (Math.random() * jitter * 2);
-    
-    return Math.min(exponentialDelay * randomFactor, 30000); // Cap at 30 seconds
-  }, []);
+  // Connect to WebSocket
+  const connectWebSocket = () => {
+    try {
+      // Create WebSocket URL based on current protocol and host
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      logger.info('Connecting to WebSocket:', wsUrl);
+      
+      const newSocket = new WebSocket(wsUrl);
+      
+      // Set up event handlers
+      newSocket.addEventListener('open', () => {
+        logger.info('WebSocket connection established');
+        setIsConnected(true);
+        reconnectAttempts.current = 0;
+      });
+      
+      newSocket.addEventListener('close', (event) => {
+        logger.info('WebSocket connection closed:', event.code, event.reason);
+        setIsConnected(false);
+        
+        // Attempt reconnection if not a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+          scheduleReconnect();
+        }
+      });
+      
+      newSocket.addEventListener('error', (error) => {
+        logger.error('WebSocket error:', error);
+        setIsConnected(false);
+      });
+      
+      newSocket.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setLastMessage(data);
+        } catch (error) {
+          logger.error('Error parsing WebSocket message:', error);
+        }
+      });
+      
+      setSocket(newSocket);
+      
+    } catch (error) {
+      logger.error('Error creating WebSocket connection:', error);
+      scheduleReconnect();
+    }
+  };
   
-  /**
-   * Connect to the WebSocket server
-   */
-  const connect = useCallback(() => {
-    // If we already have a connection, don't create another one
-    if (socketRef.current?.readyState === WebSocket.OPEN || 
-        socketRef.current?.readyState === WebSocket.CONNECTING) {
+  // Schedule a reconnection attempt
+  const scheduleReconnect = () => {
+    if (reconnectAttempts.current >= maxReconnectAttempts) {
+      logger.warn('Maximum reconnection attempts reached');
       return;
     }
     
-    setConnectionState('connecting');
-    
-    // Close any existing socket
-    if (socketRef.current) {
-      socketRef.current.close();
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
     }
     
-    try {
-      // Determine WebSocket URL based on current connection
-      // Use explicit hostname and port detection for Replit environment
-      let host = window.location.host;
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      
-      // In Replit environment, use the current domain instead of 'localhost'
-      if (host.includes('replit')) {
-        console.log('[WebSocket] Detected Replit environment, using current domain');
-      } else if (!host || host.includes('undefined')) {
-        // Fallback if host is undefined or contains 'undefined'
-        console.log('[WebSocket] Using fallback host configuration');
-        host = window.location.hostname || 'localhost';
-        
-        // Check if we have a port available
-        const port = window.location.port || '5000';
-        host = `${host}:${port}`;
-      }
-      
-      const wsUrl = `${protocol}//${host}/ws`;
-      console.log('[WebSocket] Connecting to:', wsUrl, {
-        originalHost: window.location.host,
-        protocol: window.location.protocol,
-        hostname: window.location.hostname,
-        port: window.location.port
-      });
-      
-      // Create new WebSocket connection
-      const socket = new WebSocket(wsUrl);
-      socketRef.current = socket;
-      
-      // Connection event handlers
-      socket.onopen = () => {
-        console.log('[WebSocket] Connection established');
-        setConnectionState('connected');
-        reconnectAttempts.current = 0; // Reset reconnect attempts on successful connection
-      };
-      
-      socket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data) as WebSocketMessage;
-          console.log('[WebSocket] Received message:', message);
-          
-          // Store the last message in state
-          setLastMessage(message);
-          
-          // Handle ping messages with pong responses
-          if (message.type === 'ping') {
-            sendMessage({ type: 'pong' });
-          }
-        } catch (error) {
-          console.error('[WebSocket] Error parsing message:', error);
-        }
-      };
-      
-      socket.onclose = (event) => {
-        console.log('[WebSocket] Connection closed:', event.code, event.reason);
-        setConnectionState('disconnected');
-        
-        // Schedule reconnection attempt
-        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-          const delay = calculateReconnectDelay();
-          console.log(`[WebSocket] Scheduling reconnection attempt in ${delay / 1000} seconds...`);
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttempts.current++;
-            connect();
-          }, delay);
-        } else {
-          console.log('[WebSocket] Maximum reconnection attempts reached');
-        }
-      };
-      
-      socket.onerror = (error) => {
-        console.error('[WebSocket] Connection error:', error);
-        console.error('%c[WebSocket] Error:', 'color: #F44336', {
-          error,
-          connectionId: `ws_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
-          timestamp: new Date().toISOString()
-        });
-      };
-    } catch (error) {
-      console.error('[WebSocket] Error creating WebSocket connection:', error);
-      setConnectionState('disconnected');
-      
-      // Schedule reconnection attempt
-      if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-        const delay = calculateReconnectDelay();
-        reconnectTimeoutRef.current = setTimeout(() => {
-          reconnectAttempts.current++;
-          connect();
-        }, delay);
-      }
-    }
-  }, [calculateReconnectDelay]);
+    const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts.current), 30000);
+    reconnectAttempts.current += 1;
+    
+    logger.info(`Scheduling reconnection attempt in ${delay / 1000} seconds...`);
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      logger.info(`Attempting to reconnect (attempt ${reconnectAttempts.current})...`);
+      connectWebSocket();
+    }, delay);
+  };
   
-  /**
-   * Send a message to the WebSocket server
-   * 
-   * @param message The message to send
-   */
-  const sendMessage = useCallback((message: WebSocketMessage) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(message));
+  // Send a message to the server
+  const sendMessage = (message: any) => {
+    if (socket && isConnected) {
+      socket.send(typeof message === 'string' ? message : JSON.stringify(message));
     } else {
-      console.warn('[WebSocket] Cannot send message, socket not connected');
+      logger.warn('Cannot send message: WebSocket not connected');
     }
-  }, []);
+  };
   
-  // Connect to WebSocket on component mount
+  // Connect on component mount
   useEffect(() => {
-    connect();
+    logger.info('Smart WebSocket connection manager initialized');
+    connectWebSocket();
     
-    // Cleanup function to close WebSocket connection and clear timeouts
+    // Clean up on unmount
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
+      if (socket) {
+        socket.close();
       }
       
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
       }
     };
-  }, [connect]);
+  }, []);
   
-  // Handle window focus/blur events to reconnect when tab becomes active
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && connectionState !== 'connected') {
-        console.log('[WebSocket] Tab became visible, attempting to reconnect');
-        connect();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [connectionState, connect]);
-  
-  // Provide WebSocket context to children
   const contextValue: WebSocketContextType = {
-    connectionState,
+    socket,
+    isConnected,
     lastMessage,
     sendMessage
   };
@@ -244,35 +150,17 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 };
 
 /**
- * Hook for accessing the WebSocket context directly
- * 
- * @returns WebSocket context for more direct access to connection methods
+ * Custom hook to use the WebSocket context
+ * @returns WebSocketContextType
  */
-export function useWebSocketContext() {
+export const useWebSocketContext = (): WebSocketContextType => {
   const context = useContext(WebSocketContext);
   
   if (!context) {
     throw new Error('useWebSocketContext must be used within a WebSocketProvider');
   }
   
-  // For compatibility with existing components using the old context
-  return {
-    ...context,
-    isConnected: context.connectionState === 'connected',
-    status: context.connectionState,
-    connect: () => console.log('[WebSocket] Connect requested - auto-connect is enabled'),
-    disconnect: () => console.log('[WebSocket] Disconnect requested - not implemented'),
-    subscribe: (type: string, callback: (data: any) => void) => {
-      console.log(`[WebSocket] Subscribe requested for ${type} - not implemented`);
-      return () => {};
-    },
-    unsubscribe: (type: string) => {
-      console.log(`[WebSocket] Unsubscribe requested for ${type} - not implemented`);
-    },
-    send: (type: string, payload?: any) => {
-      context.sendMessage({ type, payload });
-    }
-  };
-}
+  return context;
+};
 
 export default WebSocketProvider;

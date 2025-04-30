@@ -1,103 +1,63 @@
 /**
  * WebSocket Service
  * 
- * This service provides a centralized way to interact with WebSockets in the application.
- * It handles:
- * - Broadcasting events to all connected clients
- * - Broadcasting events to specific clients based on criteria
- * - Managing WebSocket connections
+ * This module provides functions for managing WebSocket connections
+ * and broadcasting messages to connected clients.
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
-import { Server } from 'http';
-import type { Express } from 'express';
+import { WebSocketServer } from 'ws';
+import http from 'http';
+import getLogger from '../utils/logger';
 
-// Types
-interface WebSocketMessage {
-  type: string;
-  data?: any;
-  payload?: any; // For legacy support
-}
-
+const logger = getLogger('WebSocket');
 let wss: WebSocketServer | null = null;
 
 /**
  * Initialize WebSocket server
- * @param server HTTP server instance
- * @param app Express app instance
+ * @param server HTTP server to attach the WebSocket server to
+ * @param path Path for the WebSocket server (e.g., '/ws')
  */
-export function setupWebSocket(server: Server, app?: Express) {
-  if (wss) {
-    console.warn('[WebSocket] Server already initialized');
-    return wss;
-  }
-  
+export function initWebSocketServer(server: http.Server, path: string = '/ws'): WebSocketServer {
+  // Create WebSocket server
   wss = new WebSocketServer({ 
     server, 
-    path: '/ws',
-    // Ignore Vite HMR WebSocket connections
-    verifyClient: (info: any) => {
-      const protocol = info.req.headers['sec-websocket-protocol'];
-      return protocol !== 'vite-hmr';
-    }
+    path
   });
 
-  console.log('[WebSocket] Server initialized on path: /ws');
+  logger.info(`Server initialized on path: ${path}`);
   
-  // Set up connection handling
+  // Set up connection handler
   wss.on('connection', (ws) => {
-    console.log('New WebSocket client connected');
+    logger.info('New WebSocket client connected');
     
-    // Send connected message
-    ws.send(JSON.stringify({
+    // Send a welcome message
+    sendToClient(ws, {
       type: 'connection_established',
-      payload: {  // Changed from 'data' to 'payload' for consistency
+      payload: {
         timestamp: new Date().toISOString()
-      }
-    }));
-    
-    // Handle messages
-    ws.on('message', (message) => {
-      try {
-        const parsedMessage = JSON.parse(message.toString());
-        
-        // Handle ping/pong for client heartbeats
-        if (parsedMessage.type === 'ping') {
-          console.log('[WebSocket] Received ping');
-          ws.send(JSON.stringify({ type: 'pong' }));
-          return;
-        }
-        
-        console.log('[WebSocket] Received message:', parsedMessage);
-        
-        // Process different message types
-        // Add more handlers as needed
-      } catch (error) {
-        console.error('[WebSocket] Error parsing message:', error);
       }
     });
     
-    // Handle disconnection
+    // Handle messages from clients
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        logger.info('Received message from client:', data);
+      } catch (error) {
+        logger.error('Error parsing client message:', error);
+      }
+    });
+    
+    // Handle client disconnection
     ws.on('close', (code, reason) => {
-      console.log('WebSocket client disconnected with code', code, 'and reason:', reason.toString());
+      logger.info(`WebSocket client disconnected with code ${code} and reason: ${reason}`);
     });
     
     // Handle errors
     ws.on('error', (error) => {
-      console.error('[WebSocket] Client connection error:', error);
+      logger.error('WebSocket client error:', error);
     });
   });
-  
-  // Register global error handler
-  wss.on('error', (error) => {
-    console.error('[WebSocket] Server error:', error);
-  });
-  
-  if (app) {
-    // Expose WSS instance for testing endpoints
-    console.log('[WebSocket] WebSocketServer instance exported for test endpoints');
-    (app as any).wsServer = wss;
-  }
   
   return wss;
 }
@@ -110,225 +70,225 @@ export function getWebSocketServer(): WebSocketServer | null {
 }
 
 /**
- * Broadcast a message to all connected clients
- * @param type Message type
- * @param data Message data
+ * Send a message to a specific WebSocket client
  */
-export function broadcast(type: string, data: any) {
-  if (!wss) {
-    console.warn('[WebSocket] Cannot broadcast, server not initialized');
+export function sendToClient(client: any, message: any): boolean {
+  try {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      client.send(typeof message === 'string' ? message : JSON.stringify(message));
+      return true;
+    }
+    return false;
+  } catch (error) {
+    logger.error('Error sending message to client:', error);
     return false;
   }
+}
+
+/**
+ * Broadcast a message to all connected WebSocket clients
+ */
+export function broadcastMessage(type: string, payload: any): { clientCount: number } {
+  if (!wss) {
+    logger.error('Cannot broadcast: WebSocket server not initialized');
+    return { clientCount: 0 };
+  }
   
-  const message = JSON.stringify({ 
-    type, 
-    payload: data  // Using 'payload' to match client expectations
-  });
   let clientCount = 0;
   
   // Add timestamp if not provided
-  if (data && !data.timestamp) {
-    data.timestamp = new Date().toISOString();
+  if (!payload.timestamp) {
+    payload.timestamp = new Date().toISOString();
   }
   
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      try {
-        client.send(message);
-        clientCount++;
-      } catch (err) {
-        console.error('[WebSocket] Error sending message to client:', err);
-      }
-    }
-  });
-  
-  console.log(`[WebSocket] Broadcast "${type}" sent to ${clientCount} clients`, {
+  const message = {
     type,
-    dataKeys: data ? Object.keys(data) : [],
-    timestamp: data?.timestamp || new Date().toISOString(),
-    clientCount
-  });
+    payload
+  };
   
-  return clientCount > 0;
-}
-
-/**
- * Broadcast a submission status update for a task
- * @param taskId Task ID
- * @param status Submission status
- */
-export function broadcastSubmissionStatus(taskId: number, status: string) {
-  broadcast('submission_status', {
-    taskId,
-    status,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * Broadcast a task update
- * @param data Task data (must include an id property)
- */
-export function broadcastTaskUpdate(data: any) {
-  if (!data || !data.id) {
-    console.error('[WebSocket] broadcastTaskUpdate: Missing task ID in data');
-    return;
-  }
+  const messageStr = JSON.stringify(message);
   
-  broadcast('task_updated', {
-    ...data,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * Broadcast a company tabs update
- * This is a specialized function for handling company tab updates
- * which is a critical workflow for the application
- * 
- * @param companyId Company ID
- * @param availableTabs Available tabs array
- */
-export function broadcastCompanyTabsUpdate(
-  companyId: number, 
-  availableTabs: string[], 
-  options: { cache_invalidation?: boolean, source?: string } = {}
-) {
-  if (!wss) {
-    console.warn('[WebSocket] Cannot broadcast company tabs update, server not initialized');
-    return;
-  }
-  
-  // Create message with the correct format expected by the client
-  const message = JSON.stringify({
-    type: 'company_tabs_updated',
-    payload: {  // Changed 'data' to 'payload' to match client expectations
-      companyId,
-      availableTabs,
-      timestamp: new Date().toISOString(),
-      cache_invalidation: options.cache_invalidation === true,
-      source: options.source || 'server'
-    }
-  });
-  
-  let clientCount = 0;
-  
-  // Send to all connected clients
   wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
+    if (client.readyState === 1) { // WebSocket.OPEN
+      client.send(messageStr);
       clientCount++;
     }
   });
   
-  console.log(`[WebSocket] Broadcast "company_tabs_updated" sent to ${clientCount} clients for company ${companyId}`, {
-    availableTabs,
-    clientCount,
-    timestamp: new Date().toISOString(),
-    cache_invalidation: options.cache_invalidation === true,
-    source: options.source || 'server'
+  // Log details about the broadcast
+  const dataKeys = Object.keys(payload);
+  logger.info(`Broadcast "${type}" sent to ${clientCount} clients`, {
+    type,
+    dataKeys,
+    timestamp: payload.timestamp,
+    clientCount
   });
   
-  // For debugging, also log out the available tabs
-  if (clientCount === 0) {
-    console.warn(`[WebSocket] No connected clients to receive company tabs update for company ${companyId}`);
-  }
+  return { clientCount };
 }
 
-// Add broadcastMessage as an alias for broadcast to maintain compatibility
-export const broadcastMessage = broadcast;
-
-// Add broadcastDocumentCountUpdate for files.ts
-export function broadcastDocumentCountUpdate(companyId: number, count: number) {
-  broadcast('document_count_update', {
-    companyId,
-    count,
-    timestamp: new Date().toISOString()
-  });
+/**
+ * Alias for broadcastMessage for backward compatibility
+ * 
+ * @deprecated Use broadcastMessage() instead
+ */
+export function broadcast(type: string, payload: any): { clientCount: number } {
+  return broadcastMessage(type, payload);
 }
 
-// Add broadcastFieldUpdate for kyb.ts
-export function broadcastFieldUpdate(taskId: number, fieldId: number, data: any) {
-  broadcast('field_update', {
+/**
+ * Broadcast a form submission status update
+ */
+export function broadcastFormSubmission(
+  taskId: number, 
+  formType: string, 
+  status: 'success' | 'error' | 'in_progress',
+  companyId: number = 0,
+  payload: Record<string, any> = {}
+): { clientCount: number } {
+  return broadcastMessage('form_submission', {
     taskId,
-    fieldId,
-    ...data,
+    formType,
+    status,
+    companyId,
+    ...payload,
     timestamp: new Date().toISOString()
   });
 }
 
 /**
- * Broadcast form submission status
- * This specialized function is used by the unified form submission endpoint
- * to notify clients about form submission events.
+ * Broadcast a submission status update to all connected WebSocket clients
  * 
- * @param taskId Task ID
- * @param formType Form type (kyb, ky3p, card, open_banking)
- * @param status Status of the submission (success, error, in_progress)
- * @param companyId Company ID
- * @param data Additional data to include in the payload
+ * @deprecated Use broadcastMessage('submission_status', payload) instead
  */
-export function broadcastFormSubmission(
+export function broadcastSubmissionStatus(
   taskId: number,
   formType: string,
-  status: 'success' | 'error' | 'in_progress',
-  companyId: number,
-  data: {
-    submissionDate?: string;
-    unlockedTabs?: string[];
-    unlockedTasks?: number[];
-    fileName?: string;
-    fileId?: number;
-    error?: string;
-  } = {}
-) {
-  // Create standardized payload for form submission events
-  const payload = {
+  status: 'submitted' | 'pending' | 'in_progress' | 'failed',
+  metadata: Record<string, any> = {}
+): { clientCount: number } {
+  return broadcastMessage('submission_status', {
     taskId,
     formType,
     status,
-    companyId,
-    submissionDate: data.submissionDate || new Date().toISOString(),
-    ...data
-  };
-  
-  // Broadcast using the form_submitted event type
-  broadcast('form_submitted', payload);
-  
-  console.log(`[WebSocket] Form submission broadcast: taskId=${taskId}, formType=${formType}, status=${status}`);
-  console.log(`[WebSocket] Form submission details:`, {
-    taskId,
-    formType,
-    status,
-    companyId,
-    submissionDate: data.submissionDate || new Date().toISOString(),
-    unlockedTabs: data.unlockedTabs || [],
-    unlockedTasks: data.unlockedTasks || [],
-    fileInfo: data.fileName ? { fileName: data.fileName, fileId: data.fileId } : 'No file generated',
-    error: data.error || null,
+    metadata,
     timestamp: new Date().toISOString()
   });
+}
+
+/**
+ * Broadcast a document count update to all connected WebSocket clients
+ * 
+ * @deprecated Use broadcastMessage('document_count_update', payload) instead
+ */
+export function broadcastDocumentCountUpdate(
+  companyId: number,
+  counts: Record<string, number>
+): { clientCount: number } {
+  return broadcastMessage('document_count_update', {
+    companyId,
+    counts,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Broadcast a company tabs update to all connected WebSocket clients
+ * 
+ * @deprecated Use broadcastMessage('company_tabs_update', payload) instead
+ */
+export function broadcastCompanyTabsUpdate(
+  companyId: number,
+  availableTabs: string[]
+): { clientCount: number } {
+  return broadcastMessage('company_tabs_update', {
+    companyId,
+    availableTabs,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Broadcast a field update to all connected WebSocket clients
+ * 
+ * @deprecated Use broadcastMessage('field_update', payload) instead
+ */
+export function broadcastFieldUpdate(
+  taskId: number,
+  formType: string,
+  fieldId: string,
+  value: any,
+  metadata: Record<string, any> = {}
+): { clientCount: number } {
+  return broadcastMessage('field_update', {
+    taskId,
+    formType,
+    fieldId,
+    value,
+    metadata,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Close all WebSocket connections and shut down the server
+ */
+export function closeWebSocketServer(): void {
+  if (!wss) {
+    return;
+  }
   
-  // For successful submissions, also broadcast a task update to ensure UI reflects new status
-  if (status === 'success') {
-    console.log(`[WebSocket] Broadcasting task status update for task ${taskId} to 'submitted' with 100% progress`);
-    broadcastTaskUpdate({
-      id: taskId,
-      status: 'submitted',
-      progress: 100
+  logger.info('Closing WebSocket server');
+  
+  wss.clients.forEach((client) => {
+    client.terminate();
+  });
+  
+  wss.close();
+  wss = null;
+}
+
+/**
+ * Broadcast a task update to all connected WebSocket clients
+ * 
+ * @deprecated Use broadcastMessage('task_update', payload) instead
+ */
+export function broadcastTaskUpdate(
+  taskDataOrId: { 
+    id: number; 
+    status?: string; 
+    progress?: number; 
+    metadata?: Record<string, any>;
+  } | number,
+  progress?: number,
+  status?: string,
+  metadata?: Record<string, any>
+): { clientCount: number } {
+  // Handle both object-based and parameter-based calling styles
+  if (typeof taskDataOrId === 'object') {
+    // Object-based call: broadcastTaskUpdate({ id: 123, status: 'completed' })
+    return broadcastMessage('task_update', taskDataOrId);
+  } else {
+    // Parameter-based call: broadcastTaskUpdate(123, 100, 'completed')
+    return broadcastMessage('task_update', {
+      id: taskDataOrId,
+      progress,
+      status,
+      metadata: metadata || {}
     });
   }
 }
 
 export default {
-  setupWebSocket,
+  initWebSocketServer,
   getWebSocketServer,
-  broadcast,
   broadcastMessage,
-  broadcastSubmissionStatus,
+  broadcast,
   broadcastTaskUpdate,
-  broadcastCompanyTabsUpdate,
+  broadcastFormSubmission,
+  broadcastSubmissionStatus,
   broadcastDocumentCountUpdate,
+  broadcastCompanyTabsUpdate,
   broadcastFieldUpdate,
-  broadcastFormSubmission
+  closeWebSocketServer
 };
