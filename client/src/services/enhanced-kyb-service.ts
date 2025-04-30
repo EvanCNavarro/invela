@@ -1487,20 +1487,52 @@ class EnhancedKybServiceFactory {
   /**
    * Get the current active instance or create a default one
    * This is provided for backward compatibility with existing code
-   * Note: This used to show deprecation warnings, but we've updated it to use
-   * the app-level instance to avoid confusing end users with console warnings
+   * Data isolation fix: Now properly uses company-specific instances when possible.
    */
   getDefaultInstance(): EnhancedKybFormService {
-    // Use the app-level instance without showing any warnings
-    // This provides a consistent experience for users
+    // CRITICAL DATA ISOLATION FIX: Check for company ID in session storage
+    try {
+      const userContext = sessionStorage.getItem('user-context');
+      if (userContext) {
+        const parsedContext = JSON.parse(userContext);
+        if (parsedContext && parsedContext.companyId) {
+          this.logger.info(`Data isolation: Using company-specific instance for: ${parsedContext.companyId}`);
+          // Use a placeholder taskId when we don't have a specific one
+          return this.getInstance(parsedContext.companyId, 'default-context');
+        }
+      }
+    } catch (error) {
+      this.logger.warn('Error extracting company from session storage:', error);
+    }
+
+    // When no company ID is available, fall back to app instance while logging a warning
+    this.logger.warn('No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES');
     return this.getAppInstance();
   }
   
   /**
    * Get an application-level instance for global operations
-   * This is more explicit than getDefaultInstance and should be preferred
+   * This is more explicit than getDefaultInstance and should be preferred.
+   * WARNING: This should only be used for operations that don't require company-specific data isolation!
+   * Data isolation fix: now checks for company ID in session storage before returning a global instance.
    */
   getAppInstance(): EnhancedKybFormService {
+    // CRITICAL DATA ISOLATION FIX: Check for company ID in session storage
+    try {
+      const userContext = sessionStorage.getItem('user-context');
+      if (userContext) {
+        const parsedContext = JSON.parse(userContext);
+        if (parsedContext && parsedContext.companyId) {
+          this.logger.info(`Data isolation: Using company-specific instance for: ${parsedContext.companyId}`);
+          // Use a placeholder taskId when we don't have a specific one
+          return this.getInstance(parsedContext.companyId, 'global-context');
+        }
+      }
+    } catch (error) {
+      this.logger.warn('Error extracting company from session storage:', error);
+    }
+
+    // Fallback to truly global instance when no company context found
     const instanceKey = 'app-global-context';
     
     if (!this.instances.has(instanceKey)) {
@@ -1516,7 +1548,8 @@ class EnhancedKybServiceFactory {
 export const enhancedKybServiceFactory = new EnhancedKybServiceFactory();
 
 // For backward compatibility with a better naming convention
-export const enhancedKybService = enhancedKybServiceFactory.getAppInstance();
+// DATA ISOLATION FIX: Now uses getDefaultInstance which has company isolation logic
+export const enhancedKybService = enhancedKybServiceFactory.getDefaultInstance();
 
 // Updated convenience functions that accept company and task IDs
 export const getKybService = (companyId: number | string, taskId: number | string): EnhancedKybFormService => 
