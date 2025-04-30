@@ -152,32 +152,52 @@ export function Sidebar({
     };
   }, [company?.id, queryClient]);
   
-  // CRITICAL FIX: Special auto-unlocking logic for KYB forms and File Vault tab
+  // IMPROVED: Better tab state management to prevent unlock/lock flickering
   useEffect(() => {
-    // If we're on the file-vault route, we need to ensure the tab is considered 'unlocked'
-    // regardless of what the server says - this is crucial for a smooth user experience
+    // Get company ID from context for tracking state changes
+    const currentCompanyId = company?.id;
+    // Log basic state for debugging
+    console.log(`[Sidebar] Tab state check: company=${currentCompanyId}, path=${location}, file-vault-unlocked=${availableTabs.includes('file-vault')}`);
+    
+    // Special case: If we're already ON the file-vault route but it's not available in tabs
+    // This can happen during page loads or when switching between companies
     if (location.includes('file-vault') && !availableTabs.includes('file-vault')) {
-      console.log('[Sidebar] 🚨 CRITICAL: On file-vault route but tab not in availableTabs, forcing tab to be visible');
-      // Force a server refresh to make sure our tabs are up to date
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-      queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+      console.log('[Sidebar] 🚨 Tab state mismatch: On file-vault route but tab not in availableTabs');
       
-      // CRITICAL FIX: Add a class to the body to flag that we're in an inconsistent state
-      // This helps us debug cases where we need to adjust the server-side tab unlocking
-      document.body.classList.add('file-vault-forced-access');
+      // CRITICAL: Check that we're not in a company transition (don't force if company ID is changing)
+      // This is crucial to prevent incorrect forcing during company switches
+      const lastCompanyId = parseInt(localStorage.getItem('last_company_id') || '0');
       
-      // Set a flag in localStorage to persist file vault access across page refreshes
-      try {
-        localStorage.setItem('file_vault_access_timestamp', new Date().toISOString());
-      } catch (error) {
-        console.error('[Sidebar] Failed to store file-vault access timestamp:', error);
+      // Only force if we're still in the same company
+      if (currentCompanyId && lastCompanyId === currentCompanyId) {
+        console.log(`[Sidebar] ✅ Same company (${currentCompanyId}), safe to force tab visibility`);
+        // Force a server refresh to make sure our tabs are up to date
+        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+        queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+        
+        // This is a development-only flag to help us track forced access paths
+        document.body.classList.add('file-vault-forced-access');
+        
+        // Important diagnostic - this helps us see if we're in a mismatch state
+        console.log('[SidebarTab] Special case: File Vault tab appears unlocked');
+      } else {
+        console.log(`[Sidebar] ⚠️ Company transition detected (${lastCompanyId} → ${currentCompanyId}), not forcing tab visibility`);
       }
     } else if (location.includes('file-vault')) {
       // We're on file vault and it's in available tabs - normal state
       document.body.classList.remove('file-vault-forced-access');
     }
     
-    // Also check for form submission success from localStorage
+    // Update last company ID for next check
+    if (currentCompanyId) {
+      try {
+        localStorage.setItem('last_company_id', String(currentCompanyId));
+      } catch (error) {
+        // Ignore localStorage errors
+      }
+    }
+    
+    // Also check for form submission success from localStorage, but only for current company
     try {
       const lastFormSubmission = localStorage.getItem('lastFormSubmission');
       if (lastFormSubmission) {
@@ -186,23 +206,28 @@ export function Sidebar({
         const currentTime = new Date().getTime();
         const fiveMinutesAgo = currentTime - (5 * 60 * 1000); // 5 minutes ago
         
-        // If submission was recent (within 5 minutes) and was a KYB form
-        if (submissionTime > fiveMinutesAgo && 
-            (submission.formType === 'kyb' || submission.formType === 'company_kyb')) {
-          console.log(`[Sidebar] 🔑 Recent KYB form submission detected, unlocking File Vault tab:`, submission);
-          
-          if (!availableTabs.includes('file-vault')) {
-            console.log('[Sidebar] 🚨 File Vault tab not in available tabs despite recent KYB form submission');
-            // Force a server refresh
-            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+        // Only process if the submission is for the current company
+        if (submission.companyId === currentCompanyId) {
+          // If submission was recent (within 5 minutes) and was a KYB form
+          if (submissionTime > fiveMinutesAgo && 
+              (submission.formType === 'kyb' || submission.formType === 'company_kyb')) {
+            console.log(`[Sidebar] 🔑 Recent KYB form submission detected, unlocking File Vault tab:`, submission);
+            
+            if (!availableTabs.includes('file-vault')) {
+              console.log('[Sidebar] 🚨 File Vault tab not in available tabs despite recent KYB form submission');
+              // Force a server refresh
+              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+            }
           }
+        } else {
+          console.log(`[Sidebar] Form submission was for company ${submission.companyId}, but current company is ${currentCompanyId}`);
         }
       }
     } catch (error) {
       console.error('[Sidebar] Error checking localStorage for recent form submissions:', error);
     }
-  }, [location, availableTabs, queryClient]);
+  }, [location, availableTabs, queryClient, company?.id]);
   
   // Update taskCount when tasks data changes
   useEffect(() => {
