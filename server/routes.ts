@@ -57,6 +57,7 @@ import testKy3pUpdateRouter from './routes/test-ky3p-update';
 import { createUnifiedFormSubmissionRouter } from './routes/index';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
+import { createTestRouter } from './routes/test-routes';
 
 // Create PDFExtract instance
 const pdfExtract = new PDFExtract();
@@ -393,6 +394,16 @@ export function registerRoutes(app: Express): Express {
     console.log('[Routes] Successfully registered test WebSocket routes');
   } catch (error) {
     console.error('[Routes] Error setting up test WebSocket routes:', error);
+  }
+  
+  // Register our form submission test routes
+  try {
+    console.log('[Routes] Setting up form submission test routes');
+    const testRouter = createTestRouter();
+    app.use('/api/test', testRouter);
+    console.log('[Routes] Successfully registered form submission test routes');
+  } catch (error) {
+    console.error('[Routes] Error setting up form submission test routes:', error);
   }
   
   // Register submission status API - reliable form submission status checking
