@@ -211,14 +211,20 @@ export default function TaskPage({ params }: TaskPageProps) {
       }
     }
     
-    // Set the display name based on metadata or fallback to title
+    // Set the display name based on metadata or extract from title
     let companyDisplayName = '';
     if (taskData.metadata?.companyName) {
       companyDisplayName = taskData.metadata.companyName;
     } else if (taskData.metadata?.company?.name) {
       companyDisplayName = taskData.metadata.company.name;
     } else {
-      companyDisplayName = 'Your Company';
+      // Extract company name from title if possible (e.g., "KY3P Assessment: CompanyName")
+      const titleMatch = taskData.title.match(/:\s*([^:]+)$/);
+      if (titleMatch && titleMatch[1]) {
+        companyDisplayName = titleMatch[1].trim();
+      } else {
+        companyDisplayName = 'Company'; // Generic fallback
+      }
     }
     
     setDisplayName(companyDisplayName);
