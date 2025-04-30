@@ -258,7 +258,7 @@ export function createFormSubmissionRouter(): Router {
                           try {
                             // Try to parse as JSON string
                             currentTabs = JSON.parse(company.available_tabs);
-                            logger.info(`Parsed JSON string tabs for company ${companyId}:`, {tabs: currentTabs});
+                            logger.info(`Parsed JSON string tabs for company ${companyId}:`, {tabs: currentTabs} as any);
                           } catch (innerParseError) {
                             logger.warn(`Error parsing JSON available_tabs for company ${companyId}, trying PostgreSQL array format`);
                             
