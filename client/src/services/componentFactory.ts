@@ -167,7 +167,10 @@ export class ComponentFactory {
     
     // Log information about each service
     Object.entries(services).forEach(([type, service]) => {
-      console.log(`[ComponentFactory] Registered service: ${type} -> ${service.constructor.name}`);
+      const serviceType = typeof service === 'function' 
+        ? 'factory function' 
+        : (service?.constructor?.name || 'unknown');
+      console.log(`[ComponentFactory] Registered service: ${type} -> ${serviceType}`);
     });
     
     return services;
