@@ -514,7 +514,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Try to use submission tracker for error logging if available
       try {
         const submissionTracker = (await import('@/utils/submission-tracker')).default;
-        if (submissionTracker.isActive()) {
+        if (submissionTracker.isActive) {
           submissionTracker.trackEvent('Submission error', { error: message });
           submissionTracker.stopTracking(false);
         }
@@ -1169,17 +1169,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                     const formData = form.getValues();
                                     
                                     // Add explicit submission flag to ensure server knows this is a final submission
-                                    onSubmit({...formData, explicitSubmission: true})
-                                      .catch(error => {
-                                        logger.error(`Error in ${taskType} form submission:`, error);
-                                        toast({
-                                          title: 'Submission Error',
-                                          description: 'An error occurred during submission. Please try again later.',
-                                          variant: 'destructive',
-                                        });
-                                        // Reset submission state on error
-                                        setIsSubmitting(false);
+                                    try {
+                                      onSubmit({...formData, explicitSubmission: true});
+                                    } catch (error) {
+                                      logger.error(`Error in ${taskType} form submission:`, error);
+                                      toast({
+                                        title: 'Submission Error',
+                                        description: 'An error occurred during submission. Please try again later.',
+                                        variant: 'destructive',
                                       });
+                                      // Reset submission state on error
+                                      setIsSubmitting(false);
+                                    }
                                   } else {
                                     logger.error(`No onSubmit handler provided for ${taskType} form submission`);
                                     toast({
