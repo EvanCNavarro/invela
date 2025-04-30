@@ -499,6 +499,9 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              onSubmit={(data) => {
+                console.log('[TaskPage] KY3P form submission handler called', { taskId: task.id });
+              }}
             />
           </PageTemplate>
         </DashboardLayout>
@@ -555,6 +558,9 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              onSubmit={(data) => {
+                console.log('[TaskPage] Open Banking form submission handler called', { taskId: task.id });
+              }}
             />
           </PageTemplate>
         </DashboardLayout>
