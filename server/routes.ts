@@ -48,12 +48,13 @@ import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
+import { createTestWebSocketRoutes } from './routes/test-websocket';
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
 import broadcastRouter from './routes/broadcast';
 import testKy3pUpdateRouter from './routes/test-ky3p-update';
-import unifiedFormSubmissionRouter from './routes/unified-form-submission';
+import { createUnifiedFormSubmissionRouter } from './routes/index';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -363,8 +364,18 @@ export function registerRoutes(app: Express): Express {
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
+  
   // Register our unified form submission router - centralized endpoint for all form types
-  app.use(unifiedFormSubmissionRouter);
+  // Since we're now using the global WebSocket functions directly, we don't need to pass the WSS instance
+  try {
+    console.log('[Routes] Setting up unified form submission router');
+    const unifiedFormSubmissionRouter = createUnifiedFormSubmissionRouter();
+    app.use('/api/form-submission', unifiedFormSubmissionRouter);
+    console.log('[Routes] Successfully registered unified form submission router');
+  } catch (error) {
+    console.error('[Routes] Error setting up unified form submission router:', error);
+  }
+  
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);
   
@@ -373,6 +384,16 @@ export function registerRoutes(app: Express): Express {
   
   // Register test endpoints for WebSocket functionality
   app.use('/api/ws-test', wsTestRouter);
+  
+  // Register our test WebSocket routes for form submission testing
+  try {
+    console.log('[Routes] Setting up test WebSocket routes');
+    const testWebSocketRoutes = createTestWebSocketRoutes();
+    app.use('/api/test/websocket', testWebSocketRoutes);
+    console.log('[Routes] Successfully registered test WebSocket routes');
+  } catch (error) {
+    console.error('[Routes] Error setting up test WebSocket routes:', error);
+  }
   
   // Register submission status API - reliable form submission status checking
   app.use('/api/submissions', submissionsRouter);
