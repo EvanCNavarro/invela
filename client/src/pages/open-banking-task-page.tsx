@@ -169,14 +169,7 @@ export default function OpenBankingTaskPage() {
             initialData={task.savedFormData}
             onSubmit={handleFormSubmit}
             // Disable the form during both prepare and submit phases
-            formProps={{ 
-              disabled: isPreparing || isSubmitting,
-              submissionState: {
-                isSubmitting: isPreparing || isSubmitting,
-                submitText: isPreparing ? "Preparing..." : (isSubmitting ? "Submitting..." : "Submit"),
-                showSpinner: isPreparing || isSubmitting
-              } 
-            }}
+            disabled={isPreparing || isSubmitting}
           />
         </div>
       </div>
