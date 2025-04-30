@@ -1,118 +1,131 @@
 /**
- * Modal Service
+ * Modal Service for Form Submission
  * 
- * This service provides a consistent interface for displaying modal dialogs
- * throughout the application, particularly for form submission results.
+ * This service manages the state of success and error modals that appear after form submissions.
+ * It provides a centralized way to show/hide modals and manage their content across the application.
  */
-
 import { create } from 'zustand';
-import getLogger from '@/utils/logger';
-import { SuccessAction } from './formSubmissionService';
 
-const logger = getLogger('ModalService');
-
-interface SuccessModalOptions {
+export interface SuccessModalProps {
+  isOpen: boolean;
   title: string;
   description: string;
-  actions?: SuccessAction[];
+  actions: string[];
+  returnPath?: string;
+  returnLabel?: string;
   onClose?: () => void;
 }
 
-interface ErrorModalOptions {
+export interface ErrorModalProps {
+  isOpen: boolean;
   title: string;
   description: string;
+  returnPath?: string;
+  returnLabel?: string;
   onClose?: () => void;
 }
 
 interface ModalState {
-  isSuccessModalOpen: boolean;
-  isErrorModalOpen: boolean;
-  modalData: {
-    title: string;
-    description: string;
-    actions?: SuccessAction[];
-    onClose?: () => void;
-  };
-  showSuccessModal: (options: SuccessModalOptions) => void;
-  showErrorModal: (options: ErrorModalOptions) => void;
-  closeModals: () => void;
+  // Success modal state
+  successModal: SuccessModalProps;
+  showSuccessModal: (props: Omit<SuccessModalProps, 'isOpen'>) => void;
+  hideSuccessModal: () => void;
+  
+  // Error modal state
+  errorModal: ErrorModalProps;
+  showErrorModal: (props: Omit<ErrorModalProps, 'isOpen'>) => void;
+  hideErrorModal: () => void;
 }
 
-/**
- * Zustand store for managing modal state
- */
-export const useModalStore = create<ModalState>((set) => ({
-  isSuccessModalOpen: false,
-  isErrorModalOpen: false,
-  modalData: {
-    title: '',
-    description: '',
-    actions: []
-  },
-  showSuccessModal: (options) => {
-    logger.info(`Showing success modal: ${options.title}`, {
-      actionCount: options.actions?.length || 0
-    });
+const defaultSuccessModal: SuccessModalProps = {
+  isOpen: false,
+  title: 'Success',
+  description: 'Operation completed successfully',
+  actions: [],
+  returnPath: '/tasks',
+  returnLabel: 'Return to Tasks'
+};
+
+const defaultErrorModal: ErrorModalProps = {
+  isOpen: false,
+  title: 'Error',
+  description: 'An error occurred',
+  returnPath: '/tasks',
+  returnLabel: 'Return to Tasks'
+};
+
+const useModalStore = create<ModalState>((set) => ({
+  // Success modal state and actions
+  successModal: defaultSuccessModal,
+  showSuccessModal: (props) => set({ 
+    successModal: { 
+      ...props, 
+      isOpen: true 
+    } 
+  }),
+  hideSuccessModal: () => {
+    // Call the onClose callback if it exists
+    const onClose = useModalStore.getState().successModal.onClose;
+    if (onClose) {
+      onClose();
+    }
     
-    set({
-      isSuccessModalOpen: true,
-      isErrorModalOpen: false,
-      modalData: {
-        ...options
-      }
+    // Reset the modal state
+    set({ 
+      successModal: defaultSuccessModal 
     });
   },
-  showErrorModal: (options) => {
-    logger.info(`Showing error modal: ${options.title}`);
+  
+  // Error modal state and actions
+  errorModal: defaultErrorModal,
+  showErrorModal: (props) => set({ 
+    errorModal: { 
+      ...props, 
+      isOpen: true 
+    } 
+  }),
+  hideErrorModal: () => {
+    // Call the onClose callback if it exists
+    const onClose = useModalStore.getState().errorModal.onClose;
+    if (onClose) {
+      onClose();
+    }
     
-    set({
-      isSuccessModalOpen: false,
-      isErrorModalOpen: true,
-      modalData: {
-        ...options,
-        actions: []
-      }
-    });
-  },
-  closeModals: () => {
-    set(state => {
-      // Call onClose callback if provided and if a modal is currently open
-      if ((state.isSuccessModalOpen || state.isErrorModalOpen) && state.modalData.onClose) {
-        logger.debug('Executing modal onClose callback');
-        state.modalData.onClose();
-      }
-      
-      return {
-        isSuccessModalOpen: false,
-        isErrorModalOpen: false
-      };
+    // Reset the modal state
+    set({ 
+      errorModal: defaultErrorModal 
     });
   }
 }));
 
-/**
- * Modal service for managing modals throughout the application
- */
+// Export a service object for easier consumption elsewhere in the codebase
 export const modalService = {
-  /**
-   * Show a success modal
-   */
-  showSuccessModal: (options: SuccessModalOptions) => {
-    useModalStore.getState().showSuccessModal(options);
+  // Success modal methods
+  showSuccessModal: (props: Omit<SuccessModalProps, 'isOpen'>) => {
+    useModalStore.getState().showSuccessModal(props);
   },
-  
-  /**
-   * Show an error modal
-   */
-  showErrorModal: (options: ErrorModalOptions) => {
-    useModalStore.getState().showErrorModal(options);
+  hideSuccessModal: () => {
+    useModalStore.getState().hideSuccessModal();
   },
+  getSuccessModalState: () => useModalStore.getState().successModal,
   
-  /**
-   * Close all modals
-   */
-  closeModals: () => {
-    useModalStore.getState().closeModals();
+  // Error modal methods
+  showErrorModal: (props: Omit<ErrorModalProps, 'isOpen'>) => {
+    useModalStore.getState().showErrorModal(props);
+  },
+  hideErrorModal: () => {
+    useModalStore.getState().hideErrorModal();
+  },
+  getErrorModalState: () => useModalStore.getState().errorModal,
+  
+  // Hooks for consuming in components
+  useSuccessModal: () => {
+    const { successModal, hideSuccessModal } = useModalStore();
+    return { ...successModal, onClose: hideSuccessModal };
+  },
+  useErrorModal: () => {
+    const { errorModal, hideErrorModal } = useModalStore();
+    return { ...errorModal, onClose: hideErrorModal };
   }
 };
 

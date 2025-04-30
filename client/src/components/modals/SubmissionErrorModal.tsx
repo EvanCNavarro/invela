@@ -1,58 +1,73 @@
 /**
  * SubmissionErrorModal Component
  * 
- * This component displays an error message after a failed form submission.
+ * This modal displays after a failed form submission, showing details
+ * about what went wrong and how to proceed.
  */
-
-import React from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useModalStore } from '@/services/modalService';
-import { AlertCircle } from 'lucide-react';
-import getLogger from '@/utils/logger';
-
-const logger = getLogger('SubmissionErrorModal');
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
+import { modalService } from '@/services/modalService';
 
 export function SubmissionErrorModal() {
-  const { isErrorModalOpen, modalData, closeModals } = useModalStore();
-  
-  React.useEffect(() => {
-    if (isErrorModalOpen) {
-      logger.debug('Error modal opened', { title: modalData.title });
-    }
-  }, [isErrorModalOpen, modalData.title]);
-  
+  const { isOpen, title, description, returnPath, returnLabel, onClose } = modalService.useErrorModal();
+
   return (
-    <Dialog open={isErrorModalOpen} onOpenChange={(open) => {
-      if (!open) {
-        logger.debug('Modal closed by user');
-        closeModals();
-      }
-    }}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex flex-col items-center text-center">
-          <div className="bg-red-100 p-3 rounded-full mb-4">
-            <AlertCircle className="h-12 w-12 text-red-600" />
-          </div>
-          <DialogTitle className="text-2xl">{modalData.title}</DialogTitle>
-          <DialogDescription className="text-center mt-2">
-            {modalData.description}
+          <AlertTriangle className="h-16 w-16 text-red-500 mb-2" />
+          <DialogTitle className="text-xl">{title}</DialogTitle>
+          <DialogDescription className="text-center pt-2">
+            {description}
           </DialogDescription>
         </DialogHeader>
-        
-        <DialogFooter>
-          <Button onClick={closeModals} className="w-full">
-            Close
+
+        <div className="space-y-4 my-2">
+          <div className="p-3 rounded-md bg-red-50 dark:bg-gray-800 text-sm">
+            <p className="text-red-700 dark:text-red-300 font-medium mb-1">Troubleshooting:</p>
+            <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1">
+              <li>Check that all required fields are completed correctly</li>
+              <li>There might be an issue with your network connection</li>
+              <li>The server might be experiencing temporary issues</li>
+            </ul>
+          </div>
+        </div>
+
+        <DialogFooter className="sm:justify-start flex flex-col sm:flex-row gap-2 pt-4">
+          <Button 
+            type="button" 
+            onClick={() => onClose?.()} 
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            Try Again
           </Button>
+          
+          {returnPath && (
+            <Link href={returnPath}>
+              <Button 
+                type="button" 
+                onClick={() => onClose?.()} 
+                className="w-full sm:w-auto"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {returnLabel || 'Return to Tasks'}
+              </Button>
+            </Link>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+export default SubmissionErrorModal;

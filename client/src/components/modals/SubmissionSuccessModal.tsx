@@ -1,73 +1,74 @@
 /**
  * SubmissionSuccessModal Component
  * 
- * This component displays a success message after a form submission,
- * along with detailed information about what happened during the submission.
+ * This modal displays after a successful form submission, showing details
+ * about what was created or changed as a result of the submission.
  */
-
-import React from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useModalStore } from '@/services/modalService';
-import { CheckCircle } from 'lucide-react';
-import getLogger from '@/utils/logger';
-
-const logger = getLogger('SubmissionSuccessModal');
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { CheckCircle2 } from 'lucide-react';
+import { Link } from 'wouter';
+import { modalService } from '@/services/modalService';
 
 export function SubmissionSuccessModal() {
-  const { isSuccessModalOpen, modalData, closeModals } = useModalStore();
-  
-  React.useEffect(() => {
-    if (isSuccessModalOpen) {
-      logger.debug('Success modal opened', { 
-        title: modalData.title,
-        actionCount: modalData.actions?.length || 0
-      });
-    }
-  }, [isSuccessModalOpen, modalData.title, modalData.actions]);
-  
+  const { isOpen, title, description, actions, returnPath, returnLabel, onClose } = modalService.useSuccessModal();
+
   return (
-    <Dialog open={isSuccessModalOpen} onOpenChange={(open) => {
-      if (!open) {
-        logger.debug('Modal closed by user');
-        closeModals();
-      }
-    }}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex flex-col items-center text-center">
-          <div className="bg-green-100 p-3 rounded-full mb-4">
-            <CheckCircle className="h-12 w-12 text-green-600" />
-          </div>
-          <DialogTitle className="text-2xl">{modalData.title}</DialogTitle>
-          <DialogDescription className="text-center mt-2">
-            {modalData.description}
+          <CheckCircle2 className="h-16 w-16 text-green-500 mb-2" />
+          <DialogTitle className="text-xl">{title}</DialogTitle>
+          <DialogDescription className="text-center pt-2">
+            {description}
           </DialogDescription>
         </DialogHeader>
-        
-        {modalData.actions && modalData.actions.length > 0 && (
-          <div className="grid gap-3 py-4">
-            {modalData.actions.map((action, index) => (
-              <div key={index} className="bg-slate-50 p-3 rounded-md">
-                <h4 className="font-semibold text-sm">{action.label}</h4>
-                <p className="text-sm text-slate-600 mt-1">{action.description}</p>
+
+        {actions && actions.length > 0 && (
+          <div className="space-y-2 my-2">
+            {actions.map((action, index) => (
+              <div 
+                key={`action-${index}`} 
+                className="flex items-center p-3 rounded-md bg-green-50 dark:bg-gray-800 text-sm"
+              >
+                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span>{action}</span>
               </div>
             ))}
           </div>
         )}
-        
-        <DialogFooter>
-          <Button onClick={closeModals} className="w-full">
-            Continue
-          </Button>
+
+        <DialogFooter className="sm:justify-center pt-4">
+          {returnPath ? (
+            <Link href={returnPath}>
+              <Button 
+                type="button" 
+                onClick={() => onClose?.()} 
+                className="w-full"
+              >
+                {returnLabel || 'Return to Dashboard'}
+              </Button>
+            </Link>
+          ) : (
+            <Button 
+              type="button" 
+              onClick={() => onClose?.()} 
+              className="w-full"
+            >
+              {returnLabel || 'Close'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+export default SubmissionSuccessModal;
