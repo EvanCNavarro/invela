@@ -7,9 +7,10 @@
  * It doesn't render anything visible, it just acts as a listener.
  */
 
-import React from 'react';
-import { useFormSubmissionEvents, FormSubmissionEvent } from '@/hooks/use-form-submission-events';
+import React, { useEffect } from 'react';
+import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
 import { useToast } from '@/hooks/use-toast';
+import { useWebSocket } from '@/hooks/use-websocket';
 
 interface FormSubmissionListenerProps {
   taskId: number;
@@ -18,6 +19,13 @@ interface FormSubmissionListenerProps {
   onError?: (event: FormSubmissionEvent) => void;
   onInProgress?: (event: FormSubmissionEvent) => void;
   showToasts?: boolean; // Whether to show toast notifications for events
+}
+
+interface WebSocketMessage {
+  type: string;
+  payload?: any;
+  data?: any;
+  lastMessage?: any;
 }
 
 /**
@@ -33,87 +41,98 @@ const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   showToasts = true,
 }) => {
   const { toast } = useToast();
+  const { lastMessage } = useWebSocket();
   
   console.log(`[FormSubmissionListener] Initializing for taskId ${taskId}, formType ${formType}`);
   
-  // Use our custom hook to listen for form submission events
-  const { lastEvent, eventHistory } = useFormSubmissionEvents({
-    taskId,
-    formType,
-    onSuccess: (event) => {
-      console.log(`[FormSubmissionListener] Received success event for task ${taskId}:`, event);
+  // Process messages directly from WebSocket
+  useEffect(() => {
+    if (!lastMessage) return;
+    
+    const message = lastMessage as WebSocketMessage;
+    
+    // Only handle form submission messages
+    if (message.type !== 'form_submitted' && message.type !== 'form_submission_update') {
+      return;
+    }
+    
+    // Extract the event data
+    const event = message.payload || message.data;
+    if (!event) {
+      console.log('[FormSubmissionListener] Message has no payload:', message);
+      return;
+    }
+    
+    // Verify this event is for our task and form
+    if (taskId && event.taskId !== taskId) {
+      console.log(`[FormSubmissionListener] Ignoring event for different task: ${event.taskId} vs ${taskId}`);
+      return;
+    }
+    
+    if (formType && event.formType !== formType) {
+      console.log(`[FormSubmissionListener] Ignoring event for different form: ${event.formType} vs ${formType}`);
+      return;
+    }
+    
+    const submissionEvent = event as FormSubmissionEvent;
+    console.log(`[FormSubmissionListener] Processing event for task ${taskId}:`, submissionEvent);
+    
+    // Handle based on status
+    if (submissionEvent.status === 'success') {
       console.log(`[FormSubmissionListener] Success event details:`, {
-        taskId: event.taskId, 
-        formType: event.formType,
-        companyId: event.companyId,
-        submissionDate: event.submissionDate,
-        unlockedTabs: event.unlockedTabs,
-        fileName: event.fileName,
-        fileId: event.fileId,
+        taskId: submissionEvent.taskId, 
+        formType: submissionEvent.formType,
+        companyId: submissionEvent.companyId,
         timestamp: new Date().toISOString()
       });
       
-      // Show a success toast if enabled
       if (showToasts) {
         toast({
           title: "Form Submitted Successfully",
           description: `Your ${formType} form has been successfully submitted.`,
           variant: "success",
         });
-        console.log('[FormSubmissionListener] Success toast displayed');
       }
       
-      // Call the success handler if provided
       if (onSuccess) {
-        console.log('[FormSubmissionListener] Calling provided onSuccess handler');
-        onSuccess(event);
+        onSuccess(submissionEvent);
       }
-    },
-    onError: (event) => {
-      console.error(`[FormSubmissionListener] Received error event for task ${taskId}:`, event);
+    } 
+    else if (submissionEvent.status === 'error') {
       console.error(`[FormSubmissionListener] Error details:`, { 
-        error: event.error,
-        taskId: event.taskId,
-        formType: event.formType,
-        timestamp: new Date().toISOString()
+        error: submissionEvent.error,
+        taskId: submissionEvent.taskId,
+        formType: submissionEvent.formType
       });
       
-      // Show an error toast if enabled
       if (showToasts) {
         toast({
           title: "Form Submission Failed",
-          description: event.error || "An error occurred during form submission.",
+          description: submissionEvent.error || "An error occurred during form submission.",
           variant: "destructive",
         });
-        console.log('[FormSubmissionListener] Error toast displayed');
       }
       
-      // Call the error handler if provided
       if (onError) {
-        console.log('[FormSubmissionListener] Calling provided onError handler');
-        onError(event);
+        onError(submissionEvent);
       }
-    },
-    onInProgress: (event) => {
-      console.log(`[FormSubmissionListener] Received in-progress event for task ${taskId}:`, event);
+    } 
+    else if (submissionEvent.status === 'in_progress') {
+      console.log(`[FormSubmissionListener] In-progress event for task ${taskId}`);
       
-      // Show an in-progress toast if enabled
       if (showToasts) {
         toast({
           title: "Form Submission In Progress",
           description: `Your ${formType} form is being processed...`,
           variant: "info",
         });
-        console.log('[FormSubmissionListener] In-progress toast displayed');
       }
       
-      // Call the in-progress handler if provided
       if (onInProgress) {
-        console.log('[FormSubmissionListener] Calling provided onInProgress handler');
-        onInProgress(event);
+        onInProgress(submissionEvent);
       }
     }
-  });
+  }, [lastMessage, taskId, formType, onSuccess, onError, onInProgress, showToasts, toast]);
   
   // This component doesn't render anything visible
   return null;
