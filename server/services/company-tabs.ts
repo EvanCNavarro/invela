@@ -3,6 +3,10 @@
  * 
  * This service handles WebSocket broadcasting for company tab updates
  * and unlocking specific tabs based on form submission types.
+ * 
+ * Functions included:
+ * - broadcastCompanyTabsUpdate: Broadcast tab updates via WebSocket
+ * - unlockDashboardAndInsightsTabs: Unlock dashboard and insights tabs
  */
 
 import { db } from '@db';

@@ -11,7 +11,7 @@ import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { synchronizeTasks, unlockFileVaultAccess } from './synchronous-task-dependencies';
 import { broadcastTaskUpdate } from './websocket';
-import { broadcastCompanyTabsUpdate } from './company-tabs';
+import { broadcastCompanyTabsUpdate, unlockDashboardAndInsightsTabs } from './company-tabs';
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('FormSubmissionHandler');
