@@ -13,7 +13,7 @@ import {
   FileArchive, 
   Folder 
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export interface SubmissionResult {
   fileId?: number;
@@ -41,7 +41,7 @@ export interface SubmissionAction {
   description: string; // Human-readable description
   icon?: string;      // Icon name for this action
   data?: {
-    details: string;   // Human-readable details about this action
+    details?: string;   // Human-readable details about this action
     buttonText?: string; // Optional button text for navigation actions
     url?: string;      // Optional URL for navigation actions
     fileId?: number;   // Optional file ID for file-related actions
@@ -123,7 +123,7 @@ export function UniversalSuccessModal({
   
   // Helper function to get the appropriate action cards based on completed actions
   const getActionCards = () => {
-    const cards = [];
+    const cards: React.ReactNode[] = [];
     
     // Always check completedActions first
     if (submissionResult.completedActions && submissionResult.completedActions.length > 0) {
@@ -231,7 +231,7 @@ export function UniversalSuccessModal({
     // Fallback to the old implementation if completedActions is not available
     } else {
       // Start with basic task completion card if not already added
-      if (!cards.find(card => card.key === "task-completed")) {
+      if (!cards.some(card => React.isValidElement(card) && card.key === "task-completed")) {
         cards.push(
           <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
             <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -249,7 +249,7 @@ export function UniversalSuccessModal({
       const fileName = submissionResult.fileName || 
                      (submissionResult.data && 'fileName' in submissionResult.data ? submissionResult.data.fileName : undefined);
       
-      if (fileId && !cards.find(card => card.key === "file-generated")) {
+      if (fileId && !cards.some(card => React.isValidElement(card) && card.key === "file-generated")) {
         cards.push(
           <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-white border-gray-200">
             <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
@@ -269,7 +269,7 @@ export function UniversalSuccessModal({
       const unlockedTabs = submissionResult.unlockedTabs || 
                          (submissionResult.data && 'unlockedTabs' in submissionResult.data ? submissionResult.data.unlockedTabs : undefined);
       
-      if (unlockedTabs && unlockedTabs.length > 0 && !cards.find(card => card.key === "tabs-unlocked")) {
+      if (unlockedTabs && unlockedTabs.length > 0 && !cards.some(card => React.isValidElement(card) && card.key === "tabs-unlocked")) {
         // Function to get tab display info
         const getTabDisplayInfo = (tabName: string): { name: string; icon: typeof LayoutDashboard } => {
           switch(tabName) {
@@ -363,7 +363,7 @@ export function UniversalSuccessModal({
   
   // Determine the best action buttons based on completed actions
   const getActionButtons = () => {
-    const buttons = [];
+    const buttons: React.ReactNode[] = [];
     
     // Get unlocked tabs
     const unlockedTabs = submissionResult.unlockedTabs || 

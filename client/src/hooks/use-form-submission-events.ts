@@ -9,14 +9,15 @@ import { useEffect, useState } from 'react';
 import { useWebSocket } from '@/hooks/use-websocket';
 
 export interface SubmissionAction {
-  type: string;
-  description: string;
-  fileId?: number;
+  type: string;       // Type of action: "task_completion", "file_generation", etc.
+  description: string; // Human-readable description
+  icon?: string;      // Icon name for this action
+  fileId?: number;    // Optional file ID passed directly for CSV or PDF files
   data?: {
-    details: string;
-    buttonText?: string;
-    url?: string;
-    fileId?: number;
+    details: string;   // Human-readable details about this action
+    buttonText?: string; // Optional button text for navigation actions
+    url?: string;      // Optional URL for navigation actions
+    fileId?: number;   // Optional file ID for file-related actions
   };
 }
 
