@@ -28,6 +28,8 @@ import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed'
 import { registerKY3PBatchUpdateRoutes as registerNewKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update';
 // Import the enhanced KY3P demo auto-fill routes
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
+// Import enhanced Open Banking routes with improved reliability
+import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
@@ -39,7 +41,6 @@ import debugRouter from './routes/debug';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
-import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';

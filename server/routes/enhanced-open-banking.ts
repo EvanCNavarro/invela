@@ -6,23 +6,121 @@
  */
 
 import express from 'express';
-import { tasks, openBankingFields, openBankingResponses } from '@db/schema';
+import { tasks, openBankingFields, openBankingResponses, TaskStatus } from '@db/schema';
 import { db } from '@db';
 import { eq, and, or } from 'drizzle-orm';
 import { processSubmission } from '../services/enhanced-form-submission-handler';
 import { executeWithRetry } from '../services/db-connection-service';
 import { Logger } from '../services/logger';
 import { WebSocketService } from '../websocket-server';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 const logger = new Logger('EnhancedOpenBankingRoutes');
+
+/**
+ * Prepare a task for submission by marking it as "ready_for_submission"
+ * 
+ * This is the first step in the two-step submission process:
+ * 1. Mark task as ready_for_submission
+ * 2. Submit the task
+ * 
+ * POST /api/enhanced-open-banking/prepare/:taskId
+ */
+router.post('/prepare/:taskId', requireAuth, async (req, res) => {
+  const taskId = parseInt(req.params.taskId, 10);
+  
+  if (isNaN(taskId)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid task ID'
+    });
+  }
+  
+  try {
+    logger.info(`Preparing Open Banking task ${taskId} for submission`, {
+      taskId,
+      userId: req.user?.id
+    });
+    
+    // Get the current task
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: `Task ${taskId} not found`
+      });
+    }
+    
+    // Check if task is already in a suitable state
+    if (task.status === 'ready_for_submission' || task.status === 'submitted') {
+      return res.status(200).json({
+        success: true,
+        message: `Task is already in ${task.status} state`,
+        taskId,
+        status: task.status
+      });
+    }
+    
+    // Update the task to ready_for_submission
+    await executeWithRetry(
+      async () => {
+        await db
+          .update(tasks)
+          .set({
+            status: 'ready_for_submission' as TaskStatus,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+      },
+      { operationName: `mark task ${taskId} as ready for submission` }
+    );
+    
+    // Broadcast update via WebSocket
+    WebSocketService.broadcastTaskUpdate({
+      taskId,
+      status: 'ready_for_submission',
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.info(`Task ${taskId} marked as ready for submission`, {
+      taskId,
+      userId: req.user?.id
+    });
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Task is now ready for submission',
+      taskId,
+      status: 'ready_for_submission'
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    logger.error(`Failed to prepare task ${taskId} for submission`, {
+      taskId,
+      error: errorMessage
+    });
+    
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to prepare task for submission',
+      details: errorMessage
+    });
+  }
+});
 
 /**
  * Submit an Open Banking Survey form with improved error handling
  * 
  * POST /api/enhanced-open-banking/submit/:taskId
  */
-router.post('/submit/:taskId', async (req, res) => {
+router.post('/submit/:taskId', requireAuth, async (req, res) => {
   const taskId = parseInt(req.params.taskId, 10);
   const { formData, fileName } = req.body;
   
