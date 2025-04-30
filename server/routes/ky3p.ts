@@ -758,6 +758,334 @@ router.post('/api/tasks/ky3p', requireAuth, async (req, res) => {
 /**
  * Submit a KY3P assessment task
  */
+/**
+ * Direct endpoint for KY3P form submission
+ * This endpoint matches the client-side fetch call in ky3p-task-page.tsx
+ */
+router.post('/api/ky3p/submit/:taskId', requireAuth, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    // Get the task to check access
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Check if user has access
+    if (task.assigned_to !== req.user?.id && task.created_by !== req.user?.id && task.company_id !== req.user?.company_id) {
+      return res.status(403).json({ error: 'You do not have access to this task' });
+    }
+    
+    // Forward to the standardized endpoint
+    logger.info('[KY3P API] Processing form submission request from /api/ky3p/submit/:taskId endpoint', {
+      taskId,
+      userId: req.user?.id
+    });
+    
+    // Simply use the same implementation as the standardized endpoint
+    return processKy3pSubmission(req, res, task);
+  } catch (error) {
+    logger.error('[KY3P API] Error in direct submission endpoint:', error);
+    return res.status(500).json({
+      error: 'Failed to submit KY3P form',
+      details: error instanceof Error ? error.message : 'Internal server error'
+    });
+  }
+});
+
+/**
+ * Helper function to process KY3P submissions from multiple endpoints
+ */
+async function processKy3pSubmission(req: any, res: any, task: any) {
+  const taskId = task.id;
+  const userId = req.user?.id;
+  const companyId = task.company_id;
+  
+  // Extract form data from request body
+  const { formData, fileName } = req.body;
+  
+  try {
+    // Continue with existing submission logic...
+    
+    // Get company information for the file metadata
+    const [company] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+    
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    
+    // Get all KY3P field definitions
+    const allFields = await db
+      .select()
+      .from(ky3pFields);
+    
+    // Rest of the submission logic handled by the original endpoint implementation
+    // continues below...
+    
+    logger.info(`[KY3P API] Processing submission for task ${taskId} with ${Object.keys(formData || {}).length} fields`);
+    
+    // Call the original endpoint handler directly
+    const taskId = task.id;
+    const userId = req.user?.id;
+    
+    // ENHANCEMENT: Process any pending form data updates before CSV creation
+    // This ensures the CSV file contains the latest data, including auto-filled values
+    if (formData && typeof formData === 'object') {
+      logger.info(`[KY3P API] Synchronizing form data from submission request for task ${taskId}`, {
+        fieldCount: Object.keys(formData).length
+      });
+      
+      try {
+        // Get field key to ID mapping
+        const fieldKeyToIdMap = new Map(allFields.map(field => [field.field_key, field.id]));
+        
+        // Track how many fields we update
+        let fieldUpdatesCount = 0;
+        
+        // Process each field in the form data
+        for (const [fieldKey, value] of Object.entries(formData)) {
+          const fieldId = fieldKeyToIdMap.get(fieldKey);
+          
+          if (!fieldId) {
+            logger.warn(`[KY3P API] Field key not found during pre-submission sync: ${fieldKey}`);
+            continue;
+          }
+          
+          // Value sanitization - convert to string and handle null/undefined
+          const sanitizedValue = value !== null && value !== undefined ? String(value) : '';
+          
+          // Determine field status based on value
+          // FIXED: Using KYBFieldStatus enum instead of string literals for consistency
+          const status = sanitizedValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY;
+          
+          try {
+            // Check if response already exists for this field
+            const [existingResponse] = await db
+              .select()
+              .from(ky3pResponses)
+              .where(
+                and(
+                  eq(ky3pResponses.task_id, taskId),
+                  eq(ky3pResponses.field_id, fieldId)
+                )
+              )
+              .limit(1);
+              
+            if (existingResponse) {
+              // Update existing response
+              await db
+                .update(ky3pResponses)
+                .set({
+                  response_value: sanitizedValue,
+                  status: status as any,
+                  version: existingResponse.version + 1,
+                  updated_at: new Date()
+                })
+                .where(eq(ky3pResponses.id, existingResponse.id));
+            } else {
+              // Create new response
+              await db
+                .insert(ky3pResponses)
+                .values({
+                  task_id: taskId,
+                  field_id: fieldId,
+                  response_value: sanitizedValue,
+                  status: status as any,
+                  version: 1,
+                  created_at: new Date(),
+                  updated_at: new Date()
+                });
+            }
+            
+            fieldUpdatesCount++;
+          } catch (updateError) {
+            logger.error(`[KY3P API] Error updating field ${fieldKey} during pre-submission sync:`, updateError);
+          }
+        }
+        
+        logger.info(`[KY3P API] Pre-submission sync complete: updated ${fieldUpdatesCount} fields`);
+      } catch (syncError) {
+        logger.error(`[KY3P API] Error during pre-submission form data sync:`, syncError);
+        // Continue with CSV generation even if sync fails
+      }
+    }
+    
+    // Get all KY3P responses for this task AFTER any updates above
+    const responses = await db
+      .select()
+      .from(ky3pResponses)
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    // Format the data for file creation
+    const formattedData: Record<string, any> = {};
+    
+    // Build a map of field ID to field metadata
+    const fieldMap = new Map<number, typeof ky3pFields.$inferSelect>();
+    allFields.forEach(field => {
+      fieldMap.set(field.id, field);
+    });
+    
+    // Add all responses to the formatted data
+    responses.forEach(response => {
+      const field = fieldMap.get(response.field_id);
+      if (field) {
+        // Always include the field even if response_value is empty
+        // This ensures all answered questions appear in the CSV, even if answered with empty string
+        formattedData[field.field_key] = response.response_value || '';
+      }
+    });
+    
+    // For debugging, log the number of responses
+    console.log(`[KY3P API] Total responses for task ${taskId}: ${responses.length}`);
+    console.log(`[KY3P API] Total fields added to formattedData: ${Object.keys(formattedData).length}`);
+    
+    console.log(`[KY3P API] Creating KY3P assessment file for task ${taskId}`);
+    
+    // Import the form type mapper and fileCreationService
+    const { fileCreationService } = await import('../services/fileCreation');
+    const { mapClientFormTypeToSchemaType } = await import('../utils/form-type-mapper');
+    
+    // Convert client-side form type 'ky3p' to schema type 'sp_ky3p_assessment'
+    const schemaTaskType = mapClientFormTypeToSchemaType('ky3p');
+    
+    console.log(`[KY3P API] Mapped form type: from 'ky3p' to '${schemaTaskType}' for file creation`);
+    
+    // Generate a file from the form data using the proper schema task type
+    const fileResult = await fileCreationService.createTaskFile(
+      userId,
+      task.company_id,
+      formattedData,
+      {
+        taskType: schemaTaskType, // Use the schema-compatible task type
+        taskId,
+        companyName: company.name,
+        additionalData: {
+          fields: allFields
+        }
+      }
+    );
+    
+    if (!fileResult.success) {
+      logger.error('Failed to create KY3P file', {
+        error: fileResult.error,
+        taskId,
+        companyId: task.company_id
+      });
+    }
+    
+    // Update the task status and include the file ID in metadata
+    // Store under both ky3pFormFile and securityFormFile keys for backward compatibility
+    const updatedMetadata = {
+      ...task.metadata,
+      ky3pFormFile: fileResult.success ? fileResult.fileId : undefined,
+      securityFormFile: fileResult.success ? fileResult.fileId : undefined // For backward compatibility
+    };
+    
+    // Add logging for file information
+    if (fileResult.success) {
+      console.log(`[KY3P API] File generated successfully:`, {
+        fileId: fileResult.fileId,
+        fileName: fileResult.fileName,
+        taskId,
+        companyId: task.company_id
+      });
+    }
+    
+    // Get current date for consistent timestamps
+    const submissionDate = new Date();
+    
+    // Add submission metadata markers that match KYB task format
+    const enhancedMetadata = {
+      ...updatedMetadata,
+      status: 'submitted', // Explicit status flag
+      submissionDate: submissionDate.toISOString(), // Match KYB format
+      lastStatusUpdate: submissionDate.toISOString(),
+      ky3pSubmitted: true, // Add explicit KY3P flag for queries
+    };
+    
+    // Update the task with completion data and file reference
+    // Make sure to mark it as submitted and include the file reference
+    const [updatedTask] = await db
+      .update(tasks)
+      .set({
+        status: 'submitted',
+        completion_date: submissionDate,
+        progress: 100, // Set to 100% explicitly
+        updated_at: submissionDate,
+        metadata: enhancedMetadata as any
+      })
+      .where(eq(tasks.id, taskId))
+      .returning();
+    
+    console.log(`[KY3P API] Successfully submitted KY3P assessment for task ${taskId}`, {
+      fileId: fileResult.success ? fileResult.fileId : undefined,
+      fileName: fileResult.success ? fileResult.fileName : undefined,
+      metadata: enhancedMetadata
+    });
+    
+    // Broadcast update via the standard progress update utility
+    try {
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      broadcastProgressUpdate(
+        taskId, 
+        100,
+        'submitted'
+      );
+      
+      // Also broadcast a full task update to ensure UI catches up
+      const { broadcastTaskUpdate } = await import('../services/websocket.js');
+      await broadcastTaskUpdate(taskId);
+      
+      console.log(`[KY3P API] Broadcast update sent for task ${taskId}`);
+    } catch (broadcastError) {
+      console.error(`[KY3P API] Error broadcasting task update:`, broadcastError);
+      // Continue with response, don't fail if broadcast fails
+    }
+    
+    // Unlock any dependent tasks
+    try {
+      const result = await unlockDependentTasks(task.company_id, taskId, userId);
+      console.log('[KY3P API] Dependent task unlock result:', result);
+    } catch (unlockError) {
+      console.error('[KY3P API] Error unlocking dependent tasks:', unlockError);
+      // Continue execution even if dependent task unlock fails
+    }
+    
+    // Return success response with useful data
+    return res.status(200).json({
+      success: true,
+      message: 'KY3P assessment submitted successfully',
+      taskId,
+      status: 'submitted',
+      fileId: fileResult.success ? fileResult.fileId : undefined,
+      fileName: fileResult.success ? fileResult.fileName : undefined,
+      details: "Your S&P KY3P Security Assessment has been successfully submitted."
+    });
+  } catch (error) {
+    logger.error('[KY3P API] Error in submission processing:', error);
+    return res.status(500).json({
+      error: 'Failed to process KY3P submission',
+      details: error instanceof Error ? error.message : 'Internal server error'
+    });
+  }
+}
+
+/**
+ * Standard endpoint for KY3P form submission
+ * This is the original endpoint with the full implementation
+ */
 router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
