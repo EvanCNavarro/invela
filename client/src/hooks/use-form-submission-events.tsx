@@ -47,19 +47,34 @@ export function useFormSubmissionEvents({
   
   // Process incoming WebSocket messages
   const processMessage = useCallback((message: any) => {
-    // Only process form_submission_update events
-    if (message?.type !== 'form_submission_update') {
+    console.log('[FormSubmissionEvents] Processing message:', message);
+    
+    // Check for both legacy 'form_submission_update' and new 'form_submitted' event types
+    if (message?.type !== 'form_submission_update' && message?.type !== 'form_submitted') {
+      console.log('[FormSubmissionEvents] Ignoring non-form submission message of type:', message?.type);
       return;
     }
     
-    const event = message.payload as FormSubmissionEvent;
+    // Access payload properly (could be in data or payload property)
+    const event = message.payload || message.data as FormSubmissionEvent;
+    
+    console.log('[FormSubmissionEvents] Processing form submission event:', {
+      messageType: message.type,
+      eventTaskId: event.taskId,
+      expectedTaskId: taskId,
+      eventFormType: event.formType,
+      expectedFormType: formType,
+      status: event.status
+    });
     
     // Filter events if taskId or formType is specified
     if (taskId && event.taskId !== taskId) {
+      console.log('[FormSubmissionEvents] Ignoring event for different task ID');
       return;
     }
     
     if (formType && event.formType !== formType) {
+      console.log('[FormSubmissionEvents] Ignoring event for different form type');
       return;
     }
     
@@ -67,12 +82,17 @@ export function useFormSubmissionEvents({
     setEventHistory(prev => [...prev, event]);
     setLastEvent(event);
     
+    console.log(`[FormSubmissionEvents] Handling ${event.status} event for task ${event.taskId}, form type ${event.formType}`);
+    
     // Call appropriate callback based on status
     if (event.status === 'success' && onSuccess) {
+      console.log('[FormSubmissionEvents] Calling onSuccess handler');
       onSuccess(event);
     } else if (event.status === 'error' && onError) {
+      console.log('[FormSubmissionEvents] Calling onError handler');
       onError(event);
     } else if (event.status === 'in_progress' && onInProgress) {
+      console.log('[FormSubmissionEvents] Calling onInProgress handler');
       onInProgress(event);
     }
   }, [taskId, formType, onSuccess, onError, onInProgress]);
