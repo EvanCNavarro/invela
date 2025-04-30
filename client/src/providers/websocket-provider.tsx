@@ -5,7 +5,7 @@
  * React Context, allowing components to subscribe to WebSocket events.
  */
 
-import React, { createContext, useEffect, useState, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 
 // WebSocket message types
 export interface WebSocketMessage {
@@ -88,10 +88,30 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     
     try {
       // Determine WebSocket URL based on current connection
+      // Use explicit hostname and port detection for Replit environment
+      let host = window.location.host;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      console.log('[WebSocket] Connecting to:', wsUrl);
+      // In Replit environment, use the current domain instead of 'localhost'
+      if (host.includes('replit')) {
+        console.log('[WebSocket] Detected Replit environment, using current domain');
+      } else if (!host || host.includes('undefined')) {
+        // Fallback if host is undefined or contains 'undefined'
+        console.log('[WebSocket] Using fallback host configuration');
+        host = window.location.hostname || 'localhost';
+        
+        // Check if we have a port available
+        const port = window.location.port || '5000';
+        host = `${host}:${port}`;
+      }
+      
+      const wsUrl = `${protocol}//${host}/ws`;
+      console.log('[WebSocket] Connecting to:', wsUrl, {
+        originalHost: window.location.host,
+        protocol: window.location.protocol,
+        hostname: window.location.hostname,
+        port: window.location.port
+      });
       
       // Create new WebSocket connection
       const socket = new WebSocket(wsUrl);
