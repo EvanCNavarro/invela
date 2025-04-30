@@ -269,7 +269,15 @@ export function UniversalSuccessModal({
       const unlockedTabs = submissionResult.unlockedTabs || 
                          (submissionResult.data && 'unlockedTabs' in submissionResult.data ? submissionResult.data.unlockedTabs : undefined);
       
-      if (unlockedTabs && unlockedTabs.length > 0 && !cards.some(card => React.isValidElement(card) && card.key === "tabs-unlocked")) {
+      // CRITICAL FIX: For KYB forms, explicitly filter out 'dashboard' tab which should not be shown
+      // This ensures KYB forms only show File Vault, not Dashboard in the success modal
+      let filteredUnlockedTabs = unlockedTabs;
+      if (taskType === 'kyb' || taskType === 'company_kyb') {
+        console.log('[UniversalSuccessModal] KYB form - filtering out dashboard tab from display');
+        filteredUnlockedTabs = unlockedTabs?.filter(tab => tab !== 'dashboard');
+      }
+      
+      if (filteredUnlockedTabs && filteredUnlockedTabs.length > 0 && !cards.some(card => React.isValidElement(card) && card.key === "tabs-unlocked")) {
         // Function to get tab display info
         const getTabDisplayInfo = (tabName: string): { name: string; icon: typeof LayoutDashboard } => {
           switch(tabName) {
@@ -288,22 +296,25 @@ export function UniversalSuccessModal({
         };
         
         // Format the list of unlocked tabs
-        const tabDescriptions = unlockedTabs.map(tab => {
+        const tabDescriptions = filteredUnlockedTabs.map(tab => {
           const tabInfo = getTabDisplayInfo(tab);
           return tabInfo.name;
         }).join(', ');
         
-        cards.push(
-          <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
-            <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-gray-900">New Access Granted</p>
-              <p className="text-gray-600">
-                You now have access to: <span className="font-medium text-blue-700">{tabDescriptions}</span>
-              </p>
+        // Only show the card if there are tabs to display after filtering
+        if (tabDescriptions) {
+          cards.push(
+            <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
+              <Archive className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-gray-900">New Access Granted</p>
+                <p className="text-gray-600">
+                  You now have access to: <span className="font-medium text-blue-700">{tabDescriptions}</span>
+                </p>
+              </div>
             </div>
-          </div>
-        );
+          );
+        }
       }
     }
     
@@ -393,18 +404,29 @@ export function UniversalSuccessModal({
       };
       
       // Determine which tab to prioritize for navigation
-      // We'll prioritize in this order: dashboard, insights, file-vault
+      // CRITICAL FIX: For KYB, we should prioritize file-vault, not dashboard
+      // For other forms, prioritize in this order: dashboard, insights, file-vault
       let primaryTab = null;
       
-      if (unlockedTabs.includes('dashboard')) {
-        primaryTab = 'dashboard';
-      } else if (unlockedTabs.includes('insights')) {
-        primaryTab = 'insights';
-      } else if (unlockedTabs.includes('file-vault')) {
-        primaryTab = 'file-vault';
-      } else if (unlockedTabs.length > 0) {
-        // Just use the first unlocked tab
-        primaryTab = unlockedTabs[0];
+      if (taskType === 'kyb' || taskType === 'company_kyb') {
+        if (unlockedTabs.includes('file-vault')) {
+          primaryTab = 'file-vault';
+        } else if (unlockedTabs.length > 0) {
+          // Use the first tab for KYB forms if file-vault isn't available
+          primaryTab = unlockedTabs[0];
+        }
+      } else {
+        // Standard priority for non-KYB forms
+        if (unlockedTabs.includes('dashboard')) {
+          primaryTab = 'dashboard';
+        } else if (unlockedTabs.includes('insights')) {
+          primaryTab = 'insights';
+        } else if (unlockedTabs.includes('file-vault')) {
+          primaryTab = 'file-vault';
+        } else if (unlockedTabs.length > 0) {
+          // Just use the first unlocked tab
+          primaryTab = unlockedTabs[0];
+        }
       }
       
       if (primaryTab) {
