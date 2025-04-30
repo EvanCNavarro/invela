@@ -1,68 +1,99 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertCircle, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface SubmissionErrorModalProps {
+  /** Whether the modal is open */
+  open: boolean;
+  
+  /** Callback when the modal is closed */
+  onClose: () => void;
+  
+  /** Title of the modal */
+  title: string;
+  
+  /** Description/error message */
+  description: string;
+  
+  /** Detailed error information (for developers) */
+  errorDetails?: string;
+  
+  /** Label for the primary action button */
+  buttonText?: string;
+  
+  /** Callback when the retry button is clicked */
+  onRetry?: () => void;
+}
+
 /**
  * SubmissionErrorModal Component
  * 
- * This modal displays after a failed form submission, showing details
- * about what went wrong and how to proceed.
+ * This component displays an error modal when form submission fails,
+ * with error details and retry functionality.
  */
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
-import { Link } from 'wouter';
-import { modalService } from '@/services/modalService';
-
-export function SubmissionErrorModal() {
-  const { isOpen, title, description, returnPath, returnLabel, onClose } = modalService.useErrorModal();
-
+export function SubmissionErrorModal({
+  open,
+  onClose,
+  title,
+  description,
+  errorDetails,
+  buttonText = 'Try Again',
+  onRetry
+}: SubmissionErrorModalProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-col items-center text-center">
-          <AlertTriangle className="h-16 w-16 text-red-500 mb-2" />
-          <DialogTitle className="text-xl">{title}</DialogTitle>
-          <DialogDescription className="text-center pt-2">
-            {description}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 my-2">
-          <div className="p-3 rounded-md bg-red-50 dark:bg-gray-800 text-sm">
-            <p className="text-red-700 dark:text-red-300 font-medium mb-1">Troubleshooting:</p>
-            <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1">
-              <li>Check that all required fields are completed correctly</li>
-              <li>There might be an issue with your network connection</li>
-              <li>The server might be experiencing temporary issues</li>
-            </ul>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <XCircle className="h-6 w-6 text-red-500" />
+            <DialogTitle>{title}</DialogTitle>
           </div>
-        </div>
-
-        <DialogFooter className="sm:justify-start flex flex-col sm:flex-row gap-2 pt-4">
-          <Button 
-            type="button" 
-            onClick={() => onClose?.()} 
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            Try Again
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        
+        {errorDetails && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowDetails(!showDetails)}
+              className={cn(
+                "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium",
+                "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                <span>Technical Details</span>
+              </div>
+              {showDetails ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+            
+            {showDetails && (
+              <div className="max-h-[200px] overflow-auto rounded-md bg-muted p-3">
+                <pre className="text-xs text-muted-foreground">
+                  {errorDetails}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Close
           </Button>
-          
-          {returnPath && (
-            <Link href={returnPath}>
-              <Button 
-                type="button" 
-                onClick={() => onClose?.()} 
-                className="w-full sm:w-auto"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {returnLabel || 'Return to Tasks'}
-              </Button>
-            </Link>
+          {onRetry && (
+            <Button onClick={onRetry}>
+              {buttonText}
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>
