@@ -70,6 +70,12 @@ export default function FormSubmissionTestPage() {
   const handleModalClose = () => {
     setShowModal(false);
     modalShownRef.current = false;
+    
+    // Optionally add a small delay before allowing new modals
+    // This prevents rapid reopening if multiple events arrive
+    setTimeout(() => {
+      modalShownRef.current = false;
+    }, 500);
   };
   
   // Send test events
