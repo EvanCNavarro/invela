@@ -189,7 +189,7 @@ export default function OpenBankingTaskPage() {
           navigate('/task-center');
         }}
         title="Open Banking Survey Submitted"
-        description="Your form has been successfully submitted."
+        message="Your form has been successfully submitted."
         returnPath="/task-center"
         returnLabel="Return to Tasks"
         taskType="open_banking"

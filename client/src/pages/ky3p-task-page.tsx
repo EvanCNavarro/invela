@@ -215,8 +215,10 @@ export default function KY3PTaskPage() {
           navigate('/task-center');
         }}
         title="KY3P Assessment Submitted"
-        description="Your KY3P security assessment has been successfully submitted. The task has been marked as completed."
-        buttonText="Return to Task Center"
+        message="Your KY3P security assessment has been successfully submitted. The task has been marked as completed."
+        returnPath="/task-center"
+        returnLabel="Return to Task Center"
+        taskType="ky3p"
       />
     </DashboardLayout>
   );
