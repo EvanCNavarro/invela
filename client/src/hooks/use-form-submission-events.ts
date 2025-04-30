@@ -1,120 +1,83 @@
-import { useEffect } from 'react';
-import { useWebSocket } from '@/contexts/WebSocketContext';
-import { useToast } from '@/hooks/use-toast';
+/**
+ * Form Submission Events Hook
+ * 
+ * This hook provides access to form submission events from WebSocket.
+ * It allows components to react to real-time form submission updates.
+ */
 
-export interface FormSubmissionEventCallbacks {
-  /**
-   * Called when a form submission event is received
-   * 
-   * @param taskId The task ID
-   * @param formType The form type ('kyb', 'ky3p', 'open_banking')
-   * @param status The new task status
-   * @param data The complete submission data
-   */
-  onFormSubmitted?: (taskId: number, formType: string, status: string, data: any) => void;
-  
-  /**
-   * Called when file vault is unlocked for a company
-   * 
-   * @param companyId The company ID
-   * @param taskId The task ID that triggered the unlock
-   */
-  onFileVaultUnlocked?: (companyId: number, taskId: number) => void;
-  
-  /**
-   * Called when additional tasks are unlocked as a result of submission
-   * 
-   * @param taskIds The IDs of newly unlocked tasks
-   * @param triggerTaskId The ID of the task that triggered the unlock
-   */
-  onDependentTasksUnlocked?: (taskIds: number[], triggerTaskId: number) => void;
-  
-  /**
-   * Called when specific company tabs are unlocked (like "File Vault", "Dashboard", "Insights")
-   * 
-   * @param companyId The company ID
-   * @param tabs The list of newly unlocked tabs
-   */
-  onCompanyTabsUnlocked?: (companyId: number, tabs: string[]) => void;
+import { useState, useEffect } from 'react';
+import { useWebSocket } from './use-websocket';
+
+export interface FormSubmissionEvent {
+  taskId: number;
+  formType: string;
+  status: string;
+  companyId: number;
+  unlockedTabs?: string[];
+  unlockedTasks?: number[];
+  submissionDate?: string;
+  fileName?: string;
+  fileId?: number;
+  timestamp?: string;
 }
 
 /**
- * Hook for listening to and reacting to form submission events
+ * Hook to access form submission events from WebSocket
  * 
- * @param callbacks Callback functions for different form submission events
- * @param showToasts Whether to show toast notifications for events (default: false)
+ * @param taskId Optional task ID to filter events for
+ * @returns Form submission event data
  */
-export function useFormSubmissionEvents(callbacks: FormSubmissionEventCallbacks, showToasts = false) {
-  const { lastFormSubmission } = useWebSocket();
-  const { toast } = useToast();
-  
+export function useFormSubmissionEvents(taskId?: number) {
+  const { socket, lastMessage } = useWebSocket();
+  const [submissionEvent, setSubmissionEvent] = useState<FormSubmissionEvent | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+
+  // Handle connection status
   useEffect(() => {
-    // Return early if there is no form submission data
-    if (!lastFormSubmission) {
-      return;
-    }
-    
-    const {
-      taskId,
-      formType,
-      status,
-      companyId,
-      unlockedTabs,
-      unlockedTasks,
-    } = lastFormSubmission;
-    
-    // Trigger form submission callback
-    if (callbacks.onFormSubmitted) {
-      callbacks.onFormSubmitted(taskId, formType, status, lastFormSubmission);
-    }
-    
-    // Trigger file vault unlock callback
-    if (unlockedTabs?.includes('file-vault') && callbacks.onFileVaultUnlocked) {
-      callbacks.onFileVaultUnlocked(companyId, taskId);
-      
-      if (showToasts) {
-        toast({
-          title: 'File Vault Unlocked',
-          description: `File Vault has been unlocked for company #${companyId}`,
-        });
-      }
-    }
-    
-    // Trigger dependent tasks unlock callback
-    if (unlockedTasks?.length && callbacks.onDependentTasksUnlocked) {
-      callbacks.onDependentTasksUnlocked(unlockedTasks, taskId);
-      
-      if (showToasts) {
-        toast({
-          title: 'Tasks Unlocked',
-          description: `${unlockedTasks.length} dependent task(s) have been unlocked`,
-        });
-      }
-    }
-    
-    // Trigger company tabs unlock callback
-    if (unlockedTabs?.length && callbacks.onCompanyTabsUnlocked) {
-      callbacks.onCompanyTabsUnlocked(companyId, unlockedTabs);
-      
-      if (showToasts) {
-        const readableTabs = unlockedTabs.map(tab => {
-          // Convert kebab-case to title case
-          return tab
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-        });
+    setIsConnected(socket?.readyState === WebSocket.OPEN);
+  }, [socket]);
+
+  // Process incoming WebSocket messages
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    try {
+      // Check if this is a form_submitted event
+      if (lastMessage.type === 'form_submitted' && lastMessage.payload) {
+        const eventData = lastMessage.payload as FormSubmissionEvent;
         
-        toast({
-          title: 'Company Features Unlocked',
-          description: `New features unlocked: ${readableTabs.join(', ')}`,
-        });
+        // If taskId is provided, only process events for that task
+        if (taskId !== undefined && eventData.taskId !== taskId) {
+          return;
+        }
+        
+        // Update state with submission event data
+        setSubmissionEvent(eventData);
+        
+        // Log the event
+        console.info(
+          `[FormSubmission] Received submission event for task ${eventData.taskId} (${eventData.formType})`,
+          eventData
+        );
       }
+    } catch (error) {
+      console.error('[FormSubmission] Error processing WebSocket message:', error);
     }
-  }, [lastFormSubmission, callbacks, toast, showToasts]);
-  
+  }, [lastMessage, taskId]);
+
   return {
-    lastFormSubmission,
+    submissionEvent,
+    isConnected,
+    
+    // Add a helper function to check if the event matches a specific task
+    isForTask: (id: number) => submissionEvent?.taskId === id,
+    
+    // Add a helper to check for specific unlocked tabs
+    hasUnlockedTab: (tabName: string) => 
+      submissionEvent?.unlockedTabs?.includes(tabName) || false,
+    
+    // Reset the event state
+    resetEvent: () => setSubmissionEvent(null)
   };
 }
 

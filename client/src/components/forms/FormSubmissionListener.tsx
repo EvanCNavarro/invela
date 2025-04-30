@@ -1,130 +1,124 @@
-import React, { useEffect, useState } from 'react';
-import { useFormSubmissionEvents } from '@/hooks/use-form-submission-events';
-import { useToast } from '@/hooks/use-toast';
+/**
+ * Form Submission Listener
+ * 
+ * This component listens for form submission events from WebSocket
+ * and displays appropriate feedback (success/error modals) to the user.
+ */
 
-interface FormSubmissionListenerProps {
-  /** Optional task ID to filter events for a specific task */
-  taskId?: number;
-  
-  /** Optional company ID to filter events for a specific company */
-  companyId?: number;
-  
-  /** Whether to show toast notifications for events */
-  showToasts?: boolean;
-  
-  /** Child components to render */
-  children?: React.ReactNode;
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'wouter';
+import { useFormSubmissionEvents } from '@/hooks/use-form-submission-events';
+import { formatSuccessActions } from '@/services/formSubmissionService';
+import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
+import { SubmissionErrorModal } from '@/components/modals/SubmissionErrorModal';
+
+export interface FormSubmissionListenerProps {
+  taskId: number;
+  formType: string;
+  onSuccess?: () => void;
+  navigateTo?: string;
+  successMessage?: string;
+  errorMessage?: string;
 }
 
 /**
- * FormSubmissionListener Component
+ * Form Submission Listener Component
  * 
- * This component listens for form submission events via WebSocket and
- * can trigger callbacks or display toast notifications when events occur.
- * 
- * You can place this component near the root of your application to handle
- * global form submission events, or within specific pages to handle
- * localized events.
- * 
- * @example
- * ```tsx
- * // Global listener with toasts
- * <FormSubmissionListener showToasts={true}>
- *   <App />
- * </FormSubmissionListener>
- * 
- * // Task-specific listener
- * <FormSubmissionListener taskId={123}>
- *   <TaskPage />
- * </FormSubmissionListener>
- * ```
+ * This component monitors WebSocket events for form submissions
+ * and triggers the appropriate UI feedback.
  */
 export function FormSubmissionListener({
   taskId,
-  companyId,
-  showToasts = false,
-  children
+  formType,
+  onSuccess,
+  navigateTo,
+  successMessage = 'Form submitted successfully',
+  errorMessage = 'There was an error submitting the form'
 }: FormSubmissionListenerProps) {
-  const { toast } = useToast();
-  const [unlockedTabs, setUnlockedTabs] = useState<string[]>([]);
-  const [unlockedTasks, setUnlockedTasks] = useState<number[]>([]);
+  const [submissionSuccessOpen, setSubmissionSuccessOpen] = useState(false);
+  const [submissionErrorOpen, setSubmissionErrorOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState(successMessage);
+  const [modalDetails, setModalDetails] = useState<string[]>([]);
+  const [errorDetails, setErrorDetails] = useState('');
   
-  const { lastFormSubmission } = useFormSubmissionEvents({
-    onFormSubmitted: (eventTaskId, formType, status, data) => {
-      // Only process events for the specified task ID if provided
-      if (taskId && eventTaskId !== taskId) {
-        return;
-      }
-      
-      // Only process events for the specified company ID if provided
-      if (companyId && data.companyId !== companyId) {
-        return;
-      }
-      
-      console.log(`[FormSubmissionListener] Form submitted: Task #${eventTaskId}, Type: ${formType}, Status: ${status}`);
-      
-      if (showToasts) {
-        toast({
-          title: 'Form Submitted',
-          description: `Task #${eventTaskId} (${formType}) has been successfully submitted!`,
-          variant: 'default',
-        });
-      }
-    },
-    
-    onFileVaultUnlocked: (eventCompanyId, eventTaskId) => {
-      // Only process events for the specified company ID if provided
-      if (companyId && eventCompanyId !== companyId) {
-        return;
-      }
-      
-      // Only process events for the specified task ID if provided
-      if (taskId && eventTaskId !== taskId) {
-        return;
-      }
-      
-      console.log(`[FormSubmissionListener] File Vault unlocked for company #${eventCompanyId} by task #${eventTaskId}`);
-    },
-    
-    onDependentTasksUnlocked: (eventTaskIds, triggerTaskId) => {
-      // Only process events for the specified task ID if provided
-      if (taskId && triggerTaskId !== taskId) {
-        return;
-      }
-      
-      console.log(`[FormSubmissionListener] ${eventTaskIds.length} tasks unlocked by task #${triggerTaskId}: ${eventTaskIds.join(', ')}`);
-      
-      // Update state with the newly unlocked tasks
-      setUnlockedTasks(prev => [...prev, ...eventTaskIds]);
-    },
-    
-    onCompanyTabsUnlocked: (eventCompanyId, tabs) => {
-      // Only process events for the specified company ID if provided
-      if (companyId && eventCompanyId !== companyId) {
-        return;
-      }
-      
-      console.log(`[FormSubmissionListener] Tabs unlocked for company #${eventCompanyId}: ${tabs.join(', ')}`);
-      
-      // Update state with the newly unlocked tabs
-      setUnlockedTabs(prev => [...prev, ...tabs]);
-    }
-  }, showToasts);
+  const { submissionEvent, isForTask, resetEvent } = useFormSubmissionEvents(taskId);
+  const navigate = useNavigate();
   
-  // For debugging purposes
+  // Process submission events
   useEffect(() => {
-    if (unlockedTabs.length > 0) {
-      console.log(`[FormSubmissionListener] Unlocked tabs: ${unlockedTabs.join(', ')}`);
-    }
+    if (!submissionEvent) return;
     
-    if (unlockedTasks.length > 0) {
-      console.log(`[FormSubmissionListener] Unlocked tasks: ${unlockedTasks.join(', ')}`);
+    // Check if this event is for our task
+    if (submissionEvent.taskId === taskId) {
+      console.log(`[FormSubmissionListener] Processing event for task ${taskId}`, submissionEvent);
+      
+      if (submissionEvent.status === 'submitted') {
+        // Format success actions
+        const actions = formatSuccessActions({
+          success: true,
+          taskId: submissionEvent.taskId,
+          formType: submissionEvent.formType,
+          status: submissionEvent.status,
+          fileId: submissionEvent.fileId,
+          fileName: submissionEvent.fileName,
+          unlockedTabs: submissionEvent.unlockedTabs,
+          unlockedTasks: submissionEvent.unlockedTasks
+        });
+        
+        // Set modal content
+        setModalTitle(`${formType} form submitted successfully`);
+        setModalDetails(actions);
+        
+        // Show success modal
+        setSubmissionSuccessOpen(true);
+        
+        // Call success callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else if (submissionEvent.status === 'error') {
+        // Set error details and show error modal
+        setErrorDetails(submissionEvent.error || 'Unknown error occurred');
+        setSubmissionErrorOpen(true);
+      }
+      
+      // Reset the event to avoid showing the modal multiple times
+      resetEvent();
     }
-  }, [unlockedTabs, unlockedTasks]);
+  }, [submissionEvent, taskId, formType, onSuccess, resetEvent]);
+  
+  // Handle success modal close
+  const handleSuccessClose = () => {
+    setSubmissionSuccessOpen(false);
+    
+    // Navigate if a destination is provided
+    if (navigateTo) {
+      navigate(navigateTo);
+    }
+  };
+  
+  // Handle error modal close
+  const handleErrorClose = () => {
+    setSubmissionErrorOpen(false);
+  };
   
   return (
     <>
-      {children}
+      {/* Success Modal */}
+      <SubmissionSuccessModal
+        open={submissionSuccessOpen}
+        onClose={handleSuccessClose}
+        title={modalTitle}
+        details={modalDetails}
+      />
+      
+      {/* Error Modal */}
+      <SubmissionErrorModal
+        open={submissionErrorOpen}
+        onClose={handleErrorClose}
+        title={errorMessage}
+        details={errorDetails}
+      />
     </>
   );
 }
