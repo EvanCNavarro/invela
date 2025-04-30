@@ -36,7 +36,7 @@ export function setupWebSocket(server: Server, app?: Express) {
     server, 
     path: '/ws',
     // Ignore Vite HMR WebSocket connections
-    verifyClient: (info) => {
+    verifyClient: (info: any) => {
       const protocol = info.req.headers['sec-websocket-protocol'];
       return protocol !== 'vite-hmr';
     }
@@ -296,9 +296,22 @@ export function broadcastFormSubmission(
   broadcast('form_submitted', payload);
   
   console.log(`[WebSocket] Form submission broadcast: taskId=${taskId}, formType=${formType}, status=${status}`);
+  console.log(`[WebSocket] Form submission details:`, {
+    taskId,
+    formType,
+    status,
+    companyId,
+    submissionDate: data.submissionDate || new Date().toISOString(),
+    unlockedTabs: data.unlockedTabs || [],
+    unlockedTasks: data.unlockedTasks || [],
+    fileInfo: data.fileName ? { fileName: data.fileName, fileId: data.fileId } : 'No file generated',
+    error: data.error || null,
+    timestamp: new Date().toISOString()
+  });
   
   // For successful submissions, also broadcast a task update to ensure UI reflects new status
   if (status === 'success') {
+    console.log(`[WebSocket] Broadcasting task status update for task ${taskId} to 'submitted' with 100% progress`);
     broadcastTaskUpdate({
       id: taskId,
       status: 'submitted',

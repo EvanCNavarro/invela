@@ -35,6 +35,8 @@ export function createUnifiedFormSubmissionRouter(): Router {
       }
       
       console.log(`[FormSubmission] Received ${formType} submission for task ${taskId}`);
+      console.log(`[FormSubmission] Form data keys: ${Object.keys(formData).length} fields included`);
+      console.log(`[FormSubmission] Additional metadata: ${JSON.stringify(metadata || {})}`);
       
       // Check task status before processing
       const [task] = await db.select({
@@ -45,6 +47,8 @@ export function createUnifiedFormSubmissionRouter(): Router {
       .from(tasks)
       .where(eq(tasks.id, taskId))
       .limit(1);
+      
+      console.log(`[FormSubmission] Task found: ${task ? 'Yes' : 'No'}, Status: ${task?.status}, CompanyID: ${task?.company_id}`);
       
       if (!task) {
         return res.status(404).json({
@@ -70,7 +74,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
         taskId,
         formType,
         'success',
-        task.company_id,
+        task.company_id || 0, // Ensure company_id is never null
         {
           submissionDate: new Date().toISOString(),
           unlockedTabs: ['file-vault', 'dashboard'],
@@ -205,7 +209,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
         taskId,
         formType,
         'success',
-        task.company_id,
+        task.company_id || 0, // Ensure company_id is never null
         {
           submissionDate: new Date().toISOString(),
           unlockedTabs: ['file-vault', 'dashboard'],

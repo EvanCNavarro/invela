@@ -34,12 +34,24 @@ const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
 }) => {
   const { toast } = useToast();
   
+  console.log(`[FormSubmissionListener] Initializing for taskId ${taskId}, formType ${formType}`);
+  
   // Use our custom hook to listen for form submission events
-  const lastEvent = useFormSubmissionEvents(
+  const { lastEvent, eventHistory } = useFormSubmissionEvents({
     taskId,
     formType,
-    (event) => {
+    onSuccess: (event) => {
       console.log(`[FormSubmissionListener] Received success event for task ${taskId}:`, event);
+      console.log(`[FormSubmissionListener] Success event details:`, {
+        taskId: event.taskId, 
+        formType: event.formType,
+        companyId: event.companyId,
+        submissionDate: event.submissionDate,
+        unlockedTabs: event.unlockedTabs,
+        fileName: event.fileName,
+        fileId: event.fileId,
+        timestamp: new Date().toISOString()
+      });
       
       // Show a success toast if enabled
       if (showToasts) {
@@ -48,15 +60,23 @@ const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           description: `Your ${formType} form has been successfully submitted.`,
           variant: "success",
         });
+        console.log('[FormSubmissionListener] Success toast displayed');
       }
       
       // Call the success handler if provided
       if (onSuccess) {
+        console.log('[FormSubmissionListener] Calling provided onSuccess handler');
         onSuccess(event);
       }
     },
-    (event) => {
+    onError: (event) => {
       console.error(`[FormSubmissionListener] Received error event for task ${taskId}:`, event);
+      console.error(`[FormSubmissionListener] Error details:`, { 
+        error: event.error,
+        taskId: event.taskId,
+        formType: event.formType,
+        timestamp: new Date().toISOString()
+      });
       
       // Show an error toast if enabled
       if (showToasts) {
@@ -65,14 +85,16 @@ const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           description: event.error || "An error occurred during form submission.",
           variant: "destructive",
         });
+        console.log('[FormSubmissionListener] Error toast displayed');
       }
       
       // Call the error handler if provided
       if (onError) {
+        console.log('[FormSubmissionListener] Calling provided onError handler');
         onError(event);
       }
     },
-    (event) => {
+    onInProgress: (event) => {
       console.log(`[FormSubmissionListener] Received in-progress event for task ${taskId}:`, event);
       
       // Show an in-progress toast if enabled
@@ -82,14 +104,16 @@ const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           description: `Your ${formType} form is being processed...`,
           variant: "info",
         });
+        console.log('[FormSubmissionListener] In-progress toast displayed');
       }
       
       // Call the in-progress handler if provided
       if (onInProgress) {
+        console.log('[FormSubmissionListener] Calling provided onInProgress handler');
         onInProgress(event);
       }
     }
-  );
+  });
   
   // This component doesn't render anything visible
   return null;
