@@ -373,10 +373,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
-              
-              <h1 className="text-2xl font-bold tracking-tight">
-                KYB Form: {displayName}
-              </h1>
             </div>
             
             <UniversalForm
@@ -384,6 +380,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               taskType="kyb"
               initialData={{}}
               onProgress={updateTaskProgress}
+              companyName={displayName}
             />
           </PageTemplate>
         </DashboardLayout>
@@ -432,10 +429,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
-              
-              <h1 className="text-2xl font-bold tracking-tight">
-                Card Industry Questionnaire: {displayName}
-              </h1>
             </div>
             
             <UniversalForm
@@ -443,6 +436,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               taskType="card"
               initialData={{}}
               onProgress={updateTaskProgress}
+              companyName={displayName}
             />
           </PageTemplate>
         </DashboardLayout>
@@ -491,10 +485,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
-              
-              <h1 className="text-2xl font-bold tracking-tight">
-                KY3P Security Assessment: {displayName}
-              </h1>
             </div>
             
             <UniversalForm
@@ -502,6 +492,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               taskType="ky3p"
               initialData={{}}
               onProgress={updateTaskProgress}
+              companyName={displayName}
             />
           </PageTemplate>
         </DashboardLayout>
@@ -550,10 +541,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
-              
-              <h1 className="text-2xl font-bold tracking-tight">
-                Open Banking Survey: {displayName}
-              </h1>
             </div>
             
             <UniversalForm
@@ -561,6 +548,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               taskType="open_banking"
               initialData={{}}
               onProgress={updateTaskProgress}
+              companyName={displayName}
             />
           </PageTemplate>
         </DashboardLayout>
