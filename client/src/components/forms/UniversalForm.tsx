@@ -50,6 +50,11 @@ import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { useUser } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 
+// Import WebSocket-based form submission listener and related components
+import FormSubmissionListener from './FormSubmissionListener';
+import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
+import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
+
 import SectionContent from './SectionContent';
 
 // Task interface for the task query
@@ -847,9 +852,70 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
+  // State for WebSocket-based form submission listener
+  const [showWebSocketSuccessModal, setShowWebSocketSuccessModal] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
+  
+  // Handle form submission events from WebSocket
+  const handleSubmissionSuccess = (event: FormSubmissionEvent) => {
+    logger.info(`Received WebSocket form submission success event for task ${taskId}`, event);
+    setSubmissionResult(event);
+    setShowWebSocketSuccessModal(true);
+    
+    // Update UI to reflect the submitted state
+    setIsSubmitting(false);
+    
+    // Show a toast notification
+    toast({
+      title: "Form Submitted Successfully",
+      description: `Your ${taskType} form has been successfully submitted.`,
+      variant: "success",
+    });
+  };
+  
+  const handleSubmissionError = (event: FormSubmissionEvent) => {
+    logger.error(`Received WebSocket form submission error event for task ${taskId}`, event);
+    
+    // Update UI to reflect the error state
+    setIsSubmitting(false);
+    
+    // Show a toast notification with the error message
+    toast({
+      title: "Form Submission Failed",
+      description: event.error || "An error occurred during form submission.",
+      variant: "destructive",
+    });
+  };
+  
+  const handleSubmissionInProgress = (event: FormSubmissionEvent) => {
+    logger.info(`Received WebSocket form submission in-progress event for task ${taskId}`, event);
+    
+    // Update UI to reflect the in-progress state
+    setIsSubmitting(true);
+    
+    // Show a toast notification
+    toast({
+      title: "Form Submission In Progress",
+      description: `Your ${taskType} form is being processed...`,
+      variant: "info",
+    });
+  };
+
   // Render main form
   return (
     <div className="w-full mx-auto">
+      {/* WebSocket-based Form Submission Listener */}
+      {taskId && (
+        <FormSubmissionListener
+          taskId={taskId}
+          formType={taskType}
+          onSuccess={handleSubmissionSuccess}
+          onError={handleSubmissionError}
+          onInProgress={handleSubmissionInProgress}
+          showToasts={false} // We handle toasts manually above
+        />
+      )}
+      
       {/* Form title and subtitle */}
       <div className="bg-gray-50 p-6 rounded-t-md mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
