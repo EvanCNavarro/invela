@@ -7,7 +7,7 @@ import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastDocumentCountUpdate } from '../services/websocket';
+import { broadcastDocumentCountUpdate, broadcastFileVaultUpdate } from '../services/websocket';
 import { aggregateAnswers } from '../services/answerAggregation';
 import { FileCreationService } from '../services/file-creation';
 import { FileDetectionService } from '../services/file-detection';
@@ -368,6 +368,20 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       category: documentCategory,
       count: 1,
       companyId: req.user.company_id.toString()
+    });
+    
+    // Broadcast file vault update to notify clients of new file
+    broadcastFileVaultUpdate(
+      req.user.company_id,
+      fileRecord.id,
+      'added'
+    );
+    
+    console.log('[Files] Broadcasted WebSocket notification for file vault update:', {
+      companyId: req.user.company_id,
+      fileId: fileRecord.id,
+      action: 'added',
+      timestamp: new Date().toISOString()
     });
 
     res.status(201).json(fileRecord);
