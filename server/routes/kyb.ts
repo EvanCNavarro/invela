@@ -183,6 +183,11 @@ async function loadFormDataFromCsv(fileId: number) {
 
 // Add CSV conversion helper function at the top of the file
 function convertResponsesToCSV(fields: any[], formData: any) {
+  console.log('[CSV Generation] Starting CSV conversion with', { 
+    fieldsCount: fields.length, 
+    formDataKeys: Object.keys(formData) 
+  });
+  
   // CSV headers
   const headers = ['Question Number', 'Group', 'Question', 'Answer', 'Type'];
   const rows = [headers];
@@ -192,26 +197,45 @@ function convertResponsesToCSV(fields: any[], formData: any) {
   const totalQuestions = fields.length;
   
   for (const field of fields) {
+    // Skip fields without a valid field_key
+    if (!field.field_key) {
+      console.log('[CSV Generation] Skipping field without field_key:', field);
+      continue;
+    }
+    
     // Just use the number itself (1, 2, 3, etc.) instead of fraction format
     const formattedNumber = `${questionNumber}`;
+    
+    const answer = formData[field.field_key] || '';
     
     rows.push([
       formattedNumber,
       field.group || 'Uncategorized',
-      field.display_name,
-      formData[field.field_key] || '',
-      field.field_type
+      field.display_name || field.label || field.question || field.field_key,
+      answer,
+      field.field_type || 'text'
     ]);
     
     questionNumber++;
   }
 
-  // Convert to CSV string
-  return rows.map(row =>
-    row.map(cell =>
-      typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
-    ).join(',')
+  // Convert to CSV string - properly handle all special characters
+  const csvContent = rows.map(row => 
+    row.map(cell => {
+      // Properly escape cells with special characters (commas, quotes, newlines)
+      if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
+        return `"${cell.replace(/"/g, '""')}"`; // Double quotes to escape quotes
+      }
+      return String(cell); // Ensure all values are strings
+    }).join(',')
   ).join('\n');
+  
+  console.log('[CSV Generation] CSV generation complete', {
+    rowCount: rows.length,
+    byteSize: Buffer.from(csvContent).length
+  });
+  
+  return csvContent;
 }
 
 // Utility function to unlock security tasks after KYB is completed

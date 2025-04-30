@@ -72,16 +72,45 @@ export class FileCreationService {
         fileSize = content.length;
       }
 
-      // For text/csv files, we store the actual content
+      // For text/csv files, we store the actual content in the database
+      // This is a fix to ensure CSV files are properly stored and accessible
       if (type === 'text/csv') {
         try {
-          // Only store the content itself for text files
-          storagePath = content.toString();
+          // First, log the content size for debugging
+          const contentStr = content.toString();
+          const contentSize = Buffer.from(contentStr).length;
+          
+          console.log(`[FileCreationService] 📄 CSV content preparation`, {
+            size: contentSize,
+            sizeInKB: Math.round(contentSize / 1024 * 100) / 100,
+            previewLength: Math.min(contentStr.length, 100)
+          });
+          
+          // Store the full content directly in the database for CSV files
+          // This ensures it's available without relying on file system
+          storagePath = contentStr;
+          
+          console.log(`[FileCreationService] ✅ CSV content stored successfully`, {
+            size: contentSize,
+            timestamp: new Date().toISOString()
+          });
         } catch (writeError) {
-          logger.error('Failed to write file to disk', { 
+          logger.error('Failed to process CSV content', { 
             error: writeError instanceof Error ? writeError.message : 'Unknown error'
           });
-          storagePath = content.toString().substring(0, 500) + '...(truncated)';
+          // Fallback to storing a truncated version if there was an error
+          try {
+            storagePath = content.toString().substring(0, 500) + '...(truncated)';
+            console.error(`[FileCreationService] 🚨 Had to truncate CSV content due to error`, {
+              error: writeError instanceof Error ? writeError.message : 'Unknown error',
+              truncatedSize: storagePath.length
+            });
+          } catch (truncateError) {
+            console.error(`[FileCreationService] 🚨 Critical error even during truncation`, {
+              error: truncateError instanceof Error ? truncateError.message : 'Unknown error'
+            });
+            storagePath = 'Error processing content';
+          }
         }
       }
       
