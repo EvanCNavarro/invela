@@ -1,95 +1,63 @@
-/**
- * ConnectionIssueModal Component
- * 
- * A modal that appears when there's a database connection issue during form submission.
- * Provides information about the error and offers retry options.
- */
-import React from 'react';
+import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { WifiOff, RefreshCw, ArrowLeft } from 'lucide-react';
-import { useLocation } from 'wouter';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
 interface ConnectionIssueModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onRetry: () => void;
-  retryCount: number;
-  formType: string;
-  error?: Error | null;
+  errorMessage?: string;
 }
 
-export function ConnectionIssueModal({
-  isOpen,
+/**
+ * Modal to display when there's a connection issue with the database
+ * 
+ * This modal provides the user with information about connection issues
+ * and gives them options to retry or cancel the operation.
+ */
+export default function ConnectionIssueModal({
+  open,
   onClose,
   onRetry,
-  retryCount,
-  formType,
-  error
+  errorMessage = "We're having trouble connecting to the database. This might be due to a temporary connection issue."
 }: ConnectionIssueModalProps) {
-  const [, navigate] = useLocation();
-  const formTypeName = formType
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-  const returnToTaskCenter = () => {
-    navigate('/task-center');
-    onClose();
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-col items-center text-center">
-          <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-            <WifiOff className="h-8 w-8 text-amber-600" />
+    <AlertDialog open={open} onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <AlertDialogTitle>Connection Issue</AlertDialogTitle>
           </div>
-          <DialogTitle className="text-xl">Connection Issue</DialogTitle>
-          <DialogDescription className="pt-2 text-center max-w-sm">
-            We're having trouble connecting to our database to submit your {formTypeName} form. 
-            <strong className="block mt-2">Your progress is saved</strong> and you can try again.
-          </DialogDescription>
-        </DialogHeader>
-
-        {error && (
-          <div className="bg-gray-50 p-3 rounded-md text-sm text-gray-700 max-h-24 overflow-y-auto">
-            <p className="font-mono text-xs">{error.message}</p>
+          <AlertDialogDescription className="text-base">
+            {errorMessage}
+          </AlertDialogDescription>
+          <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-md text-sm text-muted-foreground">
+            <p className="font-medium mb-2">What you can do:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Try submitting again - many connection issues resolve on their own</li>
+              <li>Check your internet connection</li>
+              <li>If the problem persists, contact support</li>
+            </ul>
           </div>
-        )}
-
-        <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-800 my-2">
-          <p>
-            <strong>What to do:</strong> You can either retry submitting now, or return to the Task Center 
-            and try again later. Your form data is saved.
-          </p>
-        </div>
-
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2" 
-            onClick={returnToTaskCenter}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Return to Task Center
-          </Button>
-          <Button 
-            onClick={onRetry} 
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Retry Submission {retryCount > 0 ? `(${retryCount + 1})` : ''}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="mt-4">
+          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onRetry} className="bg-primary">
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Retry
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

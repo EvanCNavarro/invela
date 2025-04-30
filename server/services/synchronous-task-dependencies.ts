@@ -57,7 +57,7 @@ export async function synchronizeTasks(
       .where(
         and(
           eq(tasksTable.company_id, companyId),
-          eq(tasksTable.status, 'locked')
+          sql`${tasksTable.status} = 'locked'`
         )
       );
 
@@ -195,13 +195,10 @@ export async function unlockFileVaultAccess(companyId: number): Promise<boolean>
     logger.info(`File vault access unlocked for company ${companyId}`);
     
     // Broadcast WebSocket message to update UI
-    broadcastMessage({
-      type: 'company_tabs_updated',
-      payload: {
-        companyId,
-        availableTabs: updatedTabs,
-        timestamp: new Date().toISOString()
-      }
+    broadcastMessage('company_tabs_updated', {
+      companyId,
+      availableTabs: updatedTabs,
+      timestamp: new Date().toISOString()
     });
     
     return true;
