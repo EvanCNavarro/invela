@@ -13,6 +13,8 @@ import { synchronizeTasks, unlockFileVaultAccess } from './synchronous-task-depe
 import { broadcastTaskUpdate } from './websocket';
 import { broadcastCompanyTabsUpdate, unlockDashboardAndInsightsTabs } from './company-tabs';
 import { Logger } from '../utils/logger';
+import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
+import { fileCreationService } from './fileCreation';
 
 const logger = new Logger('FormSubmissionHandler');
 
@@ -152,7 +154,78 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     }
     // KY3P doesn't unlock anything by itself
     
-    // 4. Return success response with appropriate message
+    // 4. Create form data file if needed
+    let fileId: number | undefined;
+    
+    // Get the company name for file creation
+    const [company] = await db.select().from(companies).where(eq(companies.id, companyId));
+    const companyName = company?.name || 'Unknown Company';
+    
+    try {
+      // Map the client form type to schema-compatible task type
+      const schemaTaskType = mapClientFormTypeToSchemaType(formType);
+      
+      logger.info('Mapped form type for file creation', {
+        originalType: formType,
+        schemaType: schemaTaskType,
+        taskId
+      });
+      
+      // Check if this form type should create a file
+      if (formType === 'kyb' || formType === 'ky3p' || formType === 'open_banking') {
+        logger.info('Creating form submission file', {
+          taskId,
+          formType,
+          schemaTaskType,
+          companyName 
+        });
+        
+        const fileResult = await fileCreationService.createTaskFile(
+          userId,
+          companyId,
+          formData,
+          {
+            taskType: schemaTaskType, // Use mapped type to match zod validation schema
+            taskId,
+            companyName,
+            additionalData: {
+              fileName,
+              submissionTime: new Date().toISOString()
+            }
+          }
+        );
+        
+        if (fileResult.success) {
+          fileId = fileResult.fileId;
+          logger.info('File created successfully', {
+            fileId,
+            fileName: fileResult.fileName
+          });
+          
+          // Update task metadata with file reference
+          await db.update(tasks)
+            .set({
+              metadata: sql`jsonb_set(metadata, '{fileId}', to_jsonb(${fileId}))`,
+            })
+            .where(eq(tasks.id, taskId));
+        } else {
+          logger.error('Failed to create file', {
+            taskId,
+            formType,
+            error: fileResult.error
+          });
+        }
+      }
+    } catch (fileError) {
+      logger.error('Error creating form submission file', {
+        taskId,
+        formType,
+        error: fileError instanceof Error ? fileError.message : 'Unknown error'
+      });
+      // Continue with submission process even if file creation fails
+    }
+    
+    // 5. Return success response with appropriate message
     let message = `Form submitted successfully.`;
     if (formType === 'kyb') {
       message += ` File vault ${fileVaultUnlocked ? 'unlocked' : 'unchanged'}.`;
@@ -161,9 +234,11 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       message += ` Dashboard and Insights tabs are now accessible.`;
     }
     
+    // Include file ID in response if available
     return {
       success: true,
-      message
+      message,
+      fileId
     };
   } catch (error) {
     logger.error('Error in enhanced form submission', {
