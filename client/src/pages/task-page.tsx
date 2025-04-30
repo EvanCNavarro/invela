@@ -20,6 +20,9 @@ import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
 import { queryClient } from '@/lib/queryClient';
 import createLogger from '@/utils/logger';
+import { SubmissionSuccessModal } from "@/components/modals/SubmissionSuccessModal";
+import FormSubmissionListener from "@/components/forms/FormSubmissionListener";
+import { FormSubmissionEvent } from "@/hooks/use-form-submission-events";
 
 // Create a logger instance for this component
 const logger = createLogger('TaskPage');
