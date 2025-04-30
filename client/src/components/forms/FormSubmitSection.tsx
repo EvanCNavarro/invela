@@ -1,215 +1,234 @@
-/**
- * FormSubmitSection Component
- * 
- * A standardized form submission section that uses the unified form submission system
- * to provide consistent submission behavior across all form types.
- */
-import { useState } from 'react';
-import { useLocation } from 'wouter';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Loader2, CheckCircle2, Send } from 'lucide-react';
-import { 
-  formSubmissionService, 
-  formatSuccessActions,
-  FormSubmissionResponse
-} from '@/services/formSubmissionService';
-import { modalService } from '@/services/modalService';
-import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import { SubmissionErrorModal } from '@/components/modals/SubmissionErrorModal';
+import { Loader2 } from 'lucide-react';
+import { formSubmissionService, formatSuccessActions, FormSubmissionResponse } from '@/services/formSubmissionService';
+import { useToast } from '@/hooks/use-toast';
 
-export interface FormSubmitSectionProps {
-  taskId: number;
-  taskType: 'kyb' | 'ky3p' | 'open_banking';
+// Import modals for success and error feedback
+import SubmissionSuccessModal from '@/components/modals/SubmissionSuccessModal';
+import SubmissionErrorModal from '@/components/modals/SubmissionErrorModal';
+
+interface FormSubmitSectionProps {
+  /** The form data to submit */
   formData: Record<string, any>;
+  
+  /** The task ID associated with this form */
+  taskId: number;
+  
+  /** The form type (e.g., 'kyb', 'ky3p', 'open_banking') */
   formType: string;
-  title?: string;
-  description?: string;
-  submitButtonText?: string;
-  returnPath?: string;
+  
+  /** Optional file name for generated files */
   fileName?: string;
-  canSubmit?: boolean;
-  onBeforeSubmit?: () => boolean | Promise<boolean>;
-  onSuccess?: (result: FormSubmissionResponse) => void;
-  onError?: (error: Error) => void;
+  
+  /** Whether the form is disabled (e.g., already submitted or not ready) */
+  disabled?: boolean;
+  
+  /** Whether the form is currently being submitted */
+  isSubmitting?: boolean;
+  
+  /** Custom text for the submit button */
+  submitText?: string;
+  
+  /** Path to redirect after successful submission */
+  returnPath?: string;
+  
+  /** Label for the return button after successful submission */
+  returnLabel?: string;
+  
+  /** Callback after successful submission */
+  onSubmitSuccess?: (result: FormSubmissionResponse) => void;
+  
+  /** Callback after submission error */
+  onSubmitError?: (error: Error) => void;
 }
 
+/**
+ * Form Submit Section Component
+ * 
+ * This component provides a standardized submit button with loading state,
+ * error handling, and success feedback for form submissions.
+ * 
+ * @example
+ * ```tsx
+ * <FormSubmitSection
+ *   formData={formData}
+ *   taskId={123}
+ *   formType="kyb"
+ *   disabled={!formIsComplete}
+ *   isSubmitting={isSubmitting}
+ *   submitText="Submit KYB Form"
+ *   returnPath="/tasks"
+ *   returnLabel="Back to Tasks"
+ *   onSubmitSuccess={(result) => console.log('Form submitted:', result)}
+ * />
+ * ```
+ */
 export function FormSubmitSection({
-  taskId,
-  taskType,
   formData,
-  formType = '',
-  title = 'Submit Form',
-  description = 'Please review your form data before submission. This action cannot be undone.',
-  submitButtonText = 'Submit Form',
-  returnPath = '/tasks',
+  taskId,
+  formType,
   fileName,
-  canSubmit = true,
-  onBeforeSubmit,
-  onSuccess,
-  onError
+  disabled = false,
+  isSubmitting = false,
+  submitText = 'Submit Form',
+  returnPath = '/tasks',
+  returnLabel = 'Return to Tasks',
+  onSubmitSuccess,
+  onSubmitError
 }: FormSubmitSectionProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [, navigate] = useLocation();
-
+  const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(isSubmitting);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<FormSubmissionResponse | null>(null);
+  const [submissionError, setSubmissionError] = useState<Error | null>(null);
+  
+  // Determine if the button should be disabled
+  const buttonDisabled = disabled || submitting;
+  
+  // Handle form submission
   const handleSubmit = async () => {
-    // If already submitting, prevent multiple submissions
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
+    setSubmitting(true);
     
     try {
-      // Run optional pre-submission hook
-      if (onBeforeSubmit) {
-        const shouldContinue = await onBeforeSubmit();
-        if (!shouldContinue) {
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
-      // Submit the form using the unified submission service
+      // Submit the form using the form submission service
       const result = await formSubmissionService.submitForm({
         taskId,
-        formType: taskType,
+        formType,
         formData,
         fileName,
         onSuccess: (result) => {
-          // Set local success state
-          setSuccess(true);
+          // Call the onSubmitSuccess callback if provided
+          if (onSubmitSuccess) {
+            onSubmitSuccess(result);
+          }
           
-          // Show success modal
-          modalService.showSuccessModal({
-            title: 'Form Submitted Successfully',
-            description: `Your ${formType} has been submitted.`,
-            actions: formatSuccessActions(result),
-            returnPath,
-            returnLabel: 'Return to Tasks',
-            onClose: () => {
-              // Navigate back to the task list after closing the modal
-              navigate(returnPath);
-            }
+          // Show success toast notification
+          toast({
+            title: 'Form Submitted',
+            description: 'Your form has been successfully submitted.',
+            variant: 'default',
           });
           
-          // Call custom success handler if provided
-          if (onSuccess) {
-            onSuccess(result);
-          }
+          // Store the result and show success modal
+          setSubmissionResult(result);
+          setShowSuccessModal(true);
         },
         onError: (error) => {
-          // Show error modal
-          modalService.showErrorModal({
-            title: 'Submission Failed',
-            description: error.message || 'An unexpected error occurred during submission.',
-            returnPath,
-            returnLabel: 'Return to Tasks',
-            onClose: () => {
-              setIsSubmitting(false);
-            }
+          // Call the onSubmitError callback if provided
+          if (onSubmitError) {
+            onSubmitError(error);
+          }
+          
+          // Show error toast notification
+          toast({
+            title: 'Submission Error',
+            description: error.message || 'An error occurred while submitting the form.',
+            variant: 'destructive',
           });
           
-          // Call custom error handler if provided
-          if (onError) {
-            onError(error);
-          }
+          // Store the error and show error modal
+          setSubmissionError(error);
+          setShowErrorModal(true);
         }
       });
       
-      // Reset submitting state if the submission service didn't call onSuccess or onError
-      setIsSubmitting(false);
+      // If no callbacks were provided, handle the result here
+      if (!onSubmitSuccess && !onSubmitError) {
+        if (result.success) {
+          // Show success toast notification
+          toast({
+            title: 'Form Submitted',
+            description: 'Your form has been successfully submitted.',
+            variant: 'default',
+          });
+          
+          // Store the result and show success modal
+          setSubmissionResult(result);
+          setShowSuccessModal(true);
+        } else {
+          // Show error toast notification
+          toast({
+            title: 'Submission Error',
+            description: result.error || 'An error occurred while submitting the form.',
+            variant: 'destructive',
+          });
+          
+          // Store the error and show error modal
+          setSubmissionError(new Error(result.error || 'Form submission failed'));
+          setShowErrorModal(true);
+        }
+      }
     } catch (error) {
-      console.error('Error in form submission:', error);
+      console.error('[FormSubmitSection] Error submitting form:', error);
       
-      // Show error modal for uncaught errors
-      modalService.showErrorModal({
-        title: 'Unexpected Error',
-        description: error instanceof Error 
-          ? error.message 
-          : 'An unexpected error occurred during form submission. Please try again.',
-        onClose: () => {
-          setIsSubmitting(false);
-        }
-      });
-      
-      // Call custom error handler if provided
-      if (onError && error instanceof Error) {
-        onError(error);
+      // Call the onSubmitError callback if provided
+      if (onSubmitError) {
+        onSubmitError(error as Error);
       }
       
-      setIsSubmitting(false);
+      // Show error toast notification
+      toast({
+        title: 'Submission Error',
+        description: (error as Error).message || 'An error occurred while submitting the form.',
+        variant: 'destructive',
+      });
+      
+      // Store the error and show error modal
+      setSubmissionError(error as Error);
+      setShowErrorModal(true);
+    } finally {
+      setSubmitting(false);
     }
   };
-
+  
   return (
-    <>
-      <Card className="mt-8 border-2 border-gray-200 dark:border-gray-800">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          {success ? (
-            <div className="flex flex-col items-center justify-center py-4">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-              <p className="text-lg font-medium text-center">Form submitted successfully!</p>
-              <p className="text-sm text-gray-500 text-center mt-2">
-                You will be redirected to the next step shortly.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Before submitting, ensure all required fields are complete and accurate.
-              </p>
-              <ul className="text-sm space-y-2 list-disc list-inside text-gray-700 dark:text-gray-300">
-                <li>The form will be marked as submitted and can't be edited afterwards</li>
-                <li>A CSV file will be generated with your responses</li>
-                <li>Additional tabs may be unlocked based on your submission</li>
-              </ul>
-            </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex justify-end">
-          <Button
-            className="w-full md:w-auto"
-            size="lg"
-            onClick={handleSubmit}
-            disabled={isSubmitting || success || !canSubmit}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : success ? (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Submitted
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                {submitButtonText}
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
+    <div className="flex flex-col gap-4">
+      <Button
+        type="button"
+        disabled={buttonDisabled}
+        onClick={handleSubmit}
+        className="w-full md:w-auto"
+        size="lg"
+      >
+        {submitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Submitting...
+          </>
+        ) : (
+          submitText
+        )}
+      </Button>
       
-      {/* Include the modals for form submission feedback */}
-      <SubmissionSuccessModal />
-      <SubmissionErrorModal />
-    </>
+      {/* Success Modal */}
+      {showSuccessModal && submissionResult && (
+        <SubmissionSuccessModal
+          open={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="Form Submitted Successfully"
+          description="Your form has been successfully submitted."
+          actions={formatSuccessActions(submissionResult)}
+          returnPath={returnPath}
+          returnLabel={returnLabel}
+          taskType={formType}
+        />
+      )}
+      
+      {/* Error Modal */}
+      {showErrorModal && submissionError && (
+        <SubmissionErrorModal
+          open={showErrorModal}
+          onClose={() => setShowErrorModal(false)}
+          title="Form Submission Error"
+          description={submissionError.message || 'An error occurred while submitting the form.'}
+          errorDetails={submissionError.stack}
+          buttonText="Try Again"
+          onRetry={handleSubmit}
+        />
+      )}
+    </div>
   );
 }
 
