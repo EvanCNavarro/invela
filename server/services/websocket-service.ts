@@ -1,80 +1,203 @@
 /**
  * WebSocket Service
  * 
- * This service provides functions for sending messages to WebSocket clients,
- * including broadcasting form submission events.
+ * This service manages WebSocket connections and provides methods
+ * for broadcasting messages to clients.
  */
 
-// We'll implement a singleton pattern so the service can be used throughout the app
-let webSocketServer: any = null;
+import { WebSocketServer, WebSocket } from 'ws';
 
-interface FormSubmissionPayload {
+/**
+ * WebSocket message interface
+ */
+export interface WebSocketMessage {
+  type: string;
+  payload?: any;
+}
+
+/**
+ * Form submission payload interface
+ */
+export interface FormSubmissionPayload {
   taskId: number;
   formType: string;
-  status: string;
+  status: 'success' | 'error';
   companyId: number;
   unlockedTabs?: string[];
   unlockedTasks?: number[];
-  fileId?: number;
+  submissionDate?: string;
   fileName?: string;
+  fileId?: number;
   error?: string;
-  timestamp: string;
 }
 
+/**
+ * WebSocket Service for broadcasting messages to clients
+ */
 export class WebSocketService {
+  private wss: WebSocketServer | null;
+  private clients: Set<WebSocket> = new Set();
+  private isEnabled = false;
+  
   /**
-   * Set the WebSocket server instance
+   * Create a new WebSocketService
    * 
-   * @param wss WebSocket server instance
+   * @param wss The WebSocket server to use
    */
-  static setServer(wss: any) {
-    webSocketServer = wss;
-    console.log('[WebSocketService] WebSocket server registered');
+  constructor(wss: WebSocketServer | null) {
+    this.wss = wss;
+    
+    if (this.wss) {
+      this.isEnabled = true;
+      this.setupConnectionHandlers();
+      console.log('[WebSocketService] Initialized successfully');
+    } else {
+      this.isEnabled = false;
+      console.log('[WebSocketService] Initialized in fallback mode (WebSocket server not available)');
+    }
   }
   
   /**
-   * Send a message to all connected clients
-   * 
-   * @param type Message type
-   * @param payload Message payload
+   * Set up WebSocket connection handlers
    */
-  static broadcast(type: string, payload: any) {
-    if (!webSocketServer) {
-      console.error('[WebSocketService] WebSocket server not initialized');
+  private setupConnectionHandlers() {
+    if (!this.wss) {
+      console.log('[WebSocketService] Cannot set up connection handlers: WebSocket server is null');
       return;
     }
     
-    const message = JSON.stringify({ type, payload });
-    let clientCount = 0;
+    this.wss.on('connection', (ws: WebSocket) => {
+      console.log('[WebSocketService] New client connected');
+      this.clients.add(ws);
+      
+      // Send connection established message
+      this.sendToClient(ws, {
+        type: 'connection_established',
+        payload: {
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      // Handle client disconnection
+      ws.on('close', () => {
+        console.log('[WebSocketService] Client disconnected');
+        this.clients.delete(ws);
+      });
+      
+      // Handle connection errors
+      ws.on('error', (error: Error) => {
+        console.error('[WebSocketService] WebSocket error:', error);
+      });
+    });
+  }
+  
+  /**
+   * Send a message to a specific client
+   * 
+   * @param client The client to send the message to
+   * @param message The message to send
+   */
+  private sendToClient(client: WebSocket, message: WebSocketMessage) {
+    try {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(message));
+      }
+    } catch (error) {
+      console.error('[WebSocketService] Error sending message to client:', error);
+    }
+  }
+  
+  /**
+   * Broadcast a message to all connected clients
+   * 
+   * @param message The message to broadcast
+   */
+  broadcast(message: WebSocketMessage) {
+    console.log(`[WebSocketService] Broadcasting message: ${message.type}`);
     
-    webSocketServer.clients.forEach((client: any) => {
-      if (client.readyState === 1) { // WebSocket.OPEN
-        client.send(message);
-        clientCount++;
+    // If WebSocket is not enabled, log a message and skip broadcasting
+    if (!this.isEnabled) {
+      console.log(`[WebSocketService] WebSocket is not enabled, skipping broadcast: ${message.type}`);
+      return;
+    }
+    
+    if (this.clients.size === 0) {
+      console.log(`[WebSocketService] No connected clients, skipping broadcast: ${message.type}`);
+      return;
+    }
+    
+    this.clients.forEach(client => {
+      this.sendToClient(client, message);
+    });
+  }
+  
+  /**
+   * Broadcast a form submission event
+   * 
+   * @param payload The form submission payload
+   */
+  broadcastFormSubmission(payload: FormSubmissionPayload) {
+    console.log(`[WebSocketService] Broadcasting form submission: ${payload.formType} for task ${payload.taskId}`);
+    
+    if (!this.isEnabled) {
+      console.log(`[WebSocketService] WebSocket is not enabled, skipping form submission broadcast for task ${payload.taskId}`);
+      return;
+    }
+    
+    this.broadcast({
+      type: 'form_submission_update',
+      payload
+    });
+  }
+  
+  /**
+   * Broadcast a company tabs update
+   * 
+   * @param companyId The company ID
+   * @param tabs The updated tabs
+   */
+  broadcastCompanyTabsUpdate(companyId: number, tabs: string[]) {
+    console.log(`[WebSocketService] Broadcasting company tabs update for company ${companyId}`);
+    
+    if (!this.isEnabled) {
+      console.log(`[WebSocketService] WebSocket is not enabled, skipping company tabs update broadcast for company ${companyId}`);
+      return;
+    }
+    
+    this.broadcast({
+      type: 'company_tabs_updated',
+      payload: {
+        companyId,
+        availableTabs: tabs,
+        timestamp: new Date().toISOString()
       }
     });
+  }
+  
+  /**
+   * Broadcast a task update
+   * 
+   * @param taskId The task ID
+   * @param status The updated status
+   * @param progress The updated progress
+   */
+  broadcastTaskUpdate(taskId: number, status: string, progress: number) {
+    console.log(`[WebSocketService] Broadcasting task update for task ${taskId}: ${status} (${progress}%)`);
     
-    console.log(`[WebSocketService] Broadcast "${type}" sent to ${clientCount} client(s)`);
-  }
-  
-  /**
-   * Send a form submission event to all connected clients
-   * 
-   * @param payload Form submission event data
-   */
-  static broadcastFormSubmission(payload: FormSubmissionPayload) {
-    this.broadcast('form_submitted', payload);
-    console.log(`[WebSocketService] Form submission event broadcast for task ${payload.taskId}`);
-  }
-  
-  /**
-   * Send a task update event to all connected clients
-   * 
-   * @param payload Task update event data
-   */
-  static broadcastTaskUpdate(payload: any) {
-    this.broadcast('task_update', payload);
-    console.log(`[WebSocketService] Task update event broadcast for task ${payload.id}`);
+    if (!this.isEnabled) {
+      console.log(`[WebSocketService] WebSocket is not enabled, skipping task update broadcast for task ${taskId}`);
+      return;
+    }
+    
+    this.broadcast({
+      type: 'task_update',
+      payload: {
+        taskId,
+        status,
+        progress,
+        timestamp: new Date().toISOString()
+      }
+    });
   }
 }
 
