@@ -14,7 +14,7 @@ import {
   BarChart2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
@@ -111,11 +111,14 @@ export function Sidebar({
         subscriptions.push(unsubTaskUpdate);
         
         // Subscribe to company tabs updates
-        const unsubCompanyTabs = await wsService.subscribe('company_tabs_updated', (data: any) => {
-          console.log('[Sidebar] Received company_tabs_updated event:', data);
+        const unsubCompanyTabs = await wsService.subscribe('company_tabs_update', (data: any) => {
+          console.log('[Sidebar] Received company_tabs_update event:', data);
           
-          // React Query will automatically update the cache when WebSocket events come in
-          // No need to manually force re-renders
+          // If the received tabs data is for our company, update the available tabs
+          if (data.companyId === company?.id && Array.isArray(data.availableTabs)) {
+            // Trigger a refetch to update the tabs data
+            queryClient.invalidateQueries(['availableTabs']);
+          }
         });
         subscriptions.push(unsubCompanyTabs);
       } catch (error) {
