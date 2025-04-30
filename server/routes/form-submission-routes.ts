@@ -17,7 +17,8 @@ import { fileCreationService } from '../services/fileCreation';
 const { 
   broadcastFormSubmission, 
   broadcastCompanyTabsUpdate, 
-  broadcastTaskUpdate 
+  broadcastTaskUpdate,
+  broadcastMessage
 } = websocketService;
 
 const logger = getLogger('FormSubmissionRoutes');
