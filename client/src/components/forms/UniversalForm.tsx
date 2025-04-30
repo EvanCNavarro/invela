@@ -390,58 +390,116 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Handle form submission
   const handleSubmit = useCallback(async (data: FormData) => {
     try {
+      // Import and use our enhanced submission tracker
+      const submissionTracker = (await import('@/utils/submission-tracker')).default;
+      submissionTracker.startTracking(taskId || 'unknown', taskType);
+      submissionTracker.trackEvent('Begin form submission', { formType: taskType });
+      
       // Verify form is complete before submitting
       if (overallProgress < 100) {
+        submissionTracker.trackEvent('Form incomplete, submission aborted', { progress: overallProgress });
         toast({
           title: "Form incomplete",
           description: "Please complete all required fields before submitting.",
           variant: "warning",
         });
+        submissionTracker.stopTracking(false);
         return;
       }
       
-      logger.info('Form submitted');
+      // Explicit logging for form submission
+      logger.info(`Universal form submission started for ${taskType}`, { taskId, overallProgress });
+      submissionTracker.trackEvent('Form validation passed', { progress: overallProgress });
       
-      // Show submission toast
+      // Show submission toast for user feedback
       toast({
-        title: 'Submitting Form',
+        title: 'Processing Submission',
         description: 'Please wait while we process your submission...',
       });
       
       // First save the current progress
+      submissionTracker.trackEvent('Saving progress before submission');
       const saveResult = await saveProgress();
-      logger.info('Form progress saved, moving to submit phase');
+      
+      logger.info(`Form progress saved for ${taskType}`, { 
+        taskId, 
+        saveResult,
+        timestamp: new Date().toISOString()
+      });
+      submissionTracker.trackEvent('Progress saved', { saveResult });
       
       // Force the UI to show the review tab by manually setting active section to the last tab
       // This ensures the form shows as "submitted" with the review content visible
       if (allSections.length > 0) {
         setActiveSection(allSections.length - 1);
+        submissionTracker.trackEvent('Navigated to review section');
       }
       
       // Wait a moment for the UI to update before triggering any callbacks
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // CRITICAL: This is where we need to handle the actual form submission
-      logger.info('Initiating final submission process - critical step');
+      logger.info(`Initiating final submission process for ${taskType}`, { 
+        taskId,
+        timestamp: new Date().toISOString() 
+      });
+      submissionTracker.trackEvent('Preparing for API submission');
+      
+      // Add explicit submission flag to ensure server knows this is a final submission
+      // This is critical for all task types to get properly processed
+      const submissionData = {
+        ...data,
+        explicitSubmission: true,
+        submissionTimestamp: new Date().toISOString(),
+        taskType,
+      };
       
       // Then call the onSubmit callback if provided - THIS IS THE MOST IMPORTANT PART
       // This makes sure we call the parent component's submission handler which contains
-      // the actual API call to /api/kyb/submit endpoint
+      // the actual API call to the appropriate submission endpoint based on task type:
+      // - KYB: /api/kyb/submit/:taskId
+      // - KY3P: /api/ky3p/submit/:taskId
+      // - Open Banking: /api/open-banking/submit/:taskId
       if (onSubmit) {
-        logger.info('Calling onSubmit callback from parent component to trigger actual submission');
-        onSubmit(data);
+        logger.info(`Calling onSubmit callback for ${taskType} submission`, { taskId });
+        submissionTracker.trackEvent('Calling parent submission handler');
+        
+        // Pass the enhanced data to the parent submission handler
+        onSubmit(submissionData);
+        
+        // We don't call stopTracking here because the parent component should handle that
+        // after the actual API call completes
       } else {
         // Only show this toast if we don't have an onSubmit handler
         // Otherwise the parent component will handle success messaging
+        logger.warn(`No onSubmit handler provided for ${taskType} form`, { taskId });
+        submissionTracker.trackEvent('No submission handler available');
+        
         toast({
-          title: 'Form submitted',
-          description: 'Your form has been successfully submitted.',
+          title: 'Form submission status',
+          description: 'Your form data was processed, but we could not complete the submission process.',
+          variant: 'warning',
         });
+        
+        submissionTracker.stopTracking(false);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Form submission failed';
-      logger.error('Form submission error:', message);
+      logger.error(`Form submission error for ${taskType}:`, err);
       
+      // Try to use submission tracker for error logging if available
+      try {
+        const submissionTracker = (await import('@/utils/submission-tracker')).default;
+        if (submissionTracker.isActive()) {
+          submissionTracker.trackEvent('Submission error', { error: message });
+          submissionTracker.stopTracking(false);
+        }
+      } catch (trackerError) {
+        // If submission tracker fails, just log the error
+        logger.error('Failed to log with submission tracker:', trackerError);
+      }
+      
+      // Show error toast to the user
       toast({
         title: 'Submission failed',
         description: message,
