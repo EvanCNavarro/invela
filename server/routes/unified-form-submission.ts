@@ -9,6 +9,7 @@ import { db } from '@db';
 import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
+import { broadcastFormSubmission } from '../websocket-server';
 
 // Create a simple logger for this module
 class Logger {
@@ -157,14 +158,29 @@ router.post('/api/tasks/:taskId/submit', requireAuth, async (req, res) => {
     
     logger.info(`Successfully submitted ${formType} form for task ${taskId}`);
     
-    // Return success response with processing results
-    return res.json({
+    // Prepare the response data
+    const responseData = {
       success: true,
       taskId,
       formType,
       status: 'submitted',
       ...result
+    };
+    
+    // Broadcast the form submission event via WebSocket
+    broadcastFormSubmission({
+      taskId,
+      formType,
+      status: 'submitted',
+      companyId: task.company_id,
+      timestamp: new Date().toISOString(),
+      ...result
     });
+    
+    logger.info(`Broadcasting form submission event for task ${taskId}`);
+    
+    // Return success response with processing results
+    return res.json(responseData);
   } catch (error) {
     logger.error(`Error processing ${formType} submission for task ${taskId}:`, error);
     
