@@ -1,4 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { userContext } from '@/lib/user-context';
+import { useEffect } from 'react';
+import getLogger from '@/utils/logger';
+
+const logger = getLogger('CurrentCompany');
 
 export interface Company {
   id: number;
