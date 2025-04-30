@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from '../utils/logger';
+import { broadcastFileVaultUpdate } from '../services/websocket';
 
 const logger = new Logger('FileCreationService');
 
@@ -147,6 +148,22 @@ export class FileCreationService {
         fileName: name,
         size: fileSize
       });
+
+      // Broadcast file vault update to notify all clients about the new file
+      try {
+        const result = broadcastFileVaultUpdate(companyId, fileRecord.id, 'added');
+        logger.info(`Broadcasted file vault update to ${result.clientCount} clients`, {
+          fileId: fileRecord.id,
+          companyId,
+          action: 'added'
+        });
+      } catch (broadcastError) {
+        logger.warn('Failed to broadcast file vault update, but file was created successfully', {
+          error: broadcastError instanceof Error ? broadcastError.message : 'Unknown error',
+          fileId: fileRecord.id,
+          companyId
+        });
+      }
 
       return {
         success: true,

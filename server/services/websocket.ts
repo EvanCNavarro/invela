@@ -193,6 +193,23 @@ export function broadcastDocumentCountUpdate(
 }
 
 /**
+ * Broadcast a file vault update to all connected WebSocket clients
+ * This notifies clients when files are added or updated in the vault
+ */
+export function broadcastFileVaultUpdate(
+  companyId: number,
+  fileId?: number,
+  action: 'added' | 'updated' | 'deleted' | 'refresh' = 'refresh'
+): { clientCount: number } {
+  return broadcastMessage('file_vault_update', {
+    companyId,
+    fileId,
+    action,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
  * Broadcast a company tabs update to all connected WebSocket clients
  * 
  * @deprecated Use broadcastMessage('company_tabs_update', payload) instead
@@ -309,6 +326,7 @@ export default {
   broadcastFormSubmission,
   broadcastSubmissionStatus,
   broadcastDocumentCountUpdate,
+  broadcastFileVaultUpdate,
   broadcastCompanyTabsUpdate,
   broadcastFieldUpdate,
   closeWebSocketServer
