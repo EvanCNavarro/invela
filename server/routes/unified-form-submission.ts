@@ -6,7 +6,7 @@
  */
 
 import { Request, Response, Router } from 'express';
-import { broadcast } from '../services/websocket';
+import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { db } from '@db';
 import { tasks, TaskStatus } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -65,17 +65,19 @@ export function createUnifiedFormSubmissionRouter(): Router {
       const fileName = `${formType}-submission-${taskId}.csv`;
       const fileId = Math.floor(Math.random() * 10000) + 1; // Simulated file ID
       
-      // Broadcast submission status update via WebSocket
-      broadcast('form_submitted', {
+      // Broadcast submission status update via WebSocket using enhanced function
+      broadcastFormSubmission(
         taskId,
         formType,
-        status: 'success',
-        companyId: task.company_id,
-        submissionDate: new Date().toISOString(),
-        unlockedTabs: ['file-vault', 'dashboard'],
-        fileName,
-        fileId
-      });
+        'success',
+        task.company_id,
+        {
+          submissionDate: new Date().toISOString(),
+          unlockedTabs: ['file-vault', 'dashboard'],
+          fileName,
+          fileId
+        }
+      );
       
       // Return success response
       res.json({
@@ -94,15 +96,15 @@ export function createUnifiedFormSubmissionRouter(): Router {
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      // Broadcast error event if we have the taskId and formType
+      // Broadcast error event if we have the taskId and formType using enhanced function
       if (req.body.taskId && req.body.formType) {
-        broadcast('form_submitted', {
-          taskId: req.body.taskId,
-          formType: req.body.formType,
-          status: 'error',
-          companyId: req.user?.company_id || 0,
-          error: errorMessage
-        });
+        broadcastFormSubmission(
+          req.body.taskId,
+          req.body.formType,
+          'error',
+          req.user?.company_id || 0,
+          { error: errorMessage }
+        );
       }
       
       res.status(500).json({
@@ -198,17 +200,19 @@ export function createUnifiedFormSubmissionRouter(): Router {
       const fileName = `${formType}-submission-${taskId}-retry.csv`;
       const fileId = Math.floor(Math.random() * 10000) + 1000; // Simulated file ID
       
-      // Broadcast submission success event
-      broadcast('form_submitted', {
+      // Broadcast submission success event using enhanced function
+      broadcastFormSubmission(
         taskId,
         formType,
-        status: 'success',
-        companyId: task.company_id,
-        submissionDate: new Date().toISOString(),
-        unlockedTabs: ['file-vault', 'dashboard'],
-        fileName,
-        fileId
-      });
+        'success',
+        task.company_id,
+        {
+          submissionDate: new Date().toISOString(),
+          unlockedTabs: ['file-vault', 'dashboard'],
+          fileName,
+          fileId
+        }
+      );
       
       // Return success response
       res.json({
