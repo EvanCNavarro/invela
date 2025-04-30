@@ -315,6 +315,52 @@ export const FileVault: React.FC = () => {
       });
     }
   }, [currentPage, queryClient, searchQuery, statusFilter, uploadingFiles.length, user?.company_id, itemsPerPage]);
+  
+  // Listen for WebSocket file_vault_update events to refresh file list automatically
+  useEffect(() => {
+    console.log('[FileVault Debug] Setting up WebSocket listener for file vault updates');
+    
+    // This function will be called whenever a file_vault_update event is received
+    const handleFileVaultUpdate = (payload: any) => {
+      console.log('[FileVault Debug] Received file_vault_update event:', payload);
+      
+      // Check if this update is for our company
+      if (payload.companyId && user?.company_id && payload.companyId === user.company_id) {
+        console.log('[FileVault Debug] Refreshing file list for company:', payload.companyId);
+        
+        // Invalidate and refetch the files query
+        queryClient.invalidateQueries({ 
+          queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+        });
+      }
+    };
+    
+    // We need to access the global WebSocket service
+    if (typeof window !== 'undefined') {
+      // Add event listener for the file_vault_update message type
+      window.addEventListener('file_vault_update', (event: any) => {
+        if (event.detail) {
+          handleFileVaultUpdate(event.detail);
+        }
+      });
+      
+      // Also listen for generic ws_message events that might contain file_vault_update
+      window.addEventListener('ws_message', (event: any) => {
+        // Check if this is a file vault update event
+        if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
+          handleFileVaultUpdate(event.detail.payload);
+        }
+      });
+    }
+    
+    return () => {
+      // Clean up event listeners when component unmounts
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('file_vault_update', handleFileVaultUpdate);
+        window.removeEventListener('ws_message', handleFileVaultUpdate);
+      }
+    };
+  }, [queryClient, user?.company_id, currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
