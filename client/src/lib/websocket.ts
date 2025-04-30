@@ -398,7 +398,8 @@ class WebSocketService {
     }
     
     // Special handling for company tab updates
-    if (type === 'company_tabs_updated') {
+    if (type === 'company_tabs_update' || type === 'company_tabs_updated') {
+      logger.info(`🔄 Received company tabs update event type: ${type}`);
       // Log the received data for debugging
       console.log(`[WebSocket] 🔄 Received company tabs update:`, data);
       
