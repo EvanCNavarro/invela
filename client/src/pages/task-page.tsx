@@ -751,21 +751,33 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
                 onSubmit={async (formData) => {
                   try {
+                    // Show submission toast
+                    toast({
+                      title: "Processing Submission",
+                      description: "Please wait while we process your form...",
+                    });
+                    
                     // Create standardized filename with company name
                     const fileName = `KYB_Form_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
                     
-                    console.log(`[KYB] Starting form submission for task ${task.id}`);
+                    console.log(`[KYB] Starting form submission for task ${task.id} using unified endpoint`);
                     
-                    // Use our new standardized endpoint
-                    const response = await fetch(`/api/tasks/${task.id}/kyb-submit`, {
+                    // Use our unified form submission endpoint
+                    const response = await fetch(`/api/form-submission`, {
                       method: 'POST',
                       credentials: 'include',
                       headers: {
                         'Content-Type': 'application/json',
                       },
                       body: JSON.stringify({
+                        taskId: task.id,
+                        formType: 'kyb',
                         formData,
-                        fileName
+                        metadata: {
+                          fileName,
+                          companyName: displayName,
+                          companyId: task.metadata?.companyId
+                        }
                       }),
                     });
                     
@@ -952,21 +964,33 @@ export default function TaskPage({ params }: TaskPageProps) {
                   }}
                   onSubmit={async (formData) => {
                     try {
+                      // Show submission toast
+                      toast({
+                        title: "Processing Submission",
+                        description: "Please wait while we process your form...",
+                      });
+                      
                       // Create standardized filename with company name
                       const fileName = `Card_Industry_Questionnaire_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
                       
-                      console.log(`[Card] Starting form submission for task ${task.id}`);
+                      console.log(`[Card] Starting form submission for task ${task.id} using unified endpoint`);
                       
-                      // Use our new standardized endpoint
-                      const response = await fetch(`/api/tasks/${task.id}/card-submit`, {
+                      // Use our unified form submission endpoint
+                      const response = await fetch(`/api/form-submission`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
+                          taskId: task.id,
+                          formType: 'card',
                           formData,
-                          fileName
+                          metadata: {
+                            fileName,
+                            companyName: displayName,
+                            companyId: task.metadata?.companyId
+                          }
                         }),
                       });
                       
@@ -1150,21 +1174,33 @@ export default function TaskPage({ params }: TaskPageProps) {
                   }}
                   onSubmit={async (formData) => {
                     try {
+                      // Show submission toast
+                      toast({
+                        title: "Processing Submission",
+                        description: "Please wait while we process your form...",
+                      });
+                      
                       // Create standardized filename with company name
                       const fileName = `S&P_KY3P_Security_Assessment_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
                       
-                      console.log(`[KY3P] Starting form submission for task ${task.id}`);
+                      console.log(`[KY3P] Starting form submission for task ${task.id} using unified endpoint`);
                       
-                      // Use our new standardized endpoint
-                      const response = await fetch(`/api/tasks/${task.id}/ky3p-submit`, {
+                      // Use our unified form submission endpoint
+                      const response = await fetch(`/api/form-submission`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
+                          taskId: task.id,
+                          formType: 'ky3p',
                           formData,
-                          fileName
+                          metadata: {
+                            fileName,
+                            companyName: displayName,
+                            companyId: task.metadata?.companyId
+                          }
                         }),
                       });
                       
