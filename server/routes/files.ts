@@ -805,6 +805,16 @@ router.get("/api/files/:id/download", async (req, res) => {
       console.log('[Files] File not found:', fileId);
       return res.status(404).json({ error: "File not found" });
     }
+    
+    console.log('[Files] File found:', {
+      id: fileRecord.id,
+      name: fileRecord.name,
+      type: fileRecord.type,
+      size: fileRecord.size,
+      pathType: typeof fileRecord.path,
+      pathLength: fileRecord.path ? fileRecord.path.length : 0,
+      pathFirstChars: fileRecord.path ? fileRecord.path.substring(0, Math.min(20, fileRecord.path.length)) + '...' : ''
+    });
 
     console.log('[Files] File found:', {
       id: fileRecord.id,
@@ -821,6 +831,50 @@ router.get("/api/files/:id/download", async (req, res) => {
     await db.update(files)
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
+      
+    // For files with content stored directly in the path field - handle this case first
+    if (fileRecord.path && (
+        fileRecord.path.startsWith('database:') || 
+        (fileRecord.type === 'text/csv' && fileRecord.path.includes(',')) ||
+        fileRecord.path.length > 100
+      )) {
+      console.log('[Files] Content appears to be stored directly in database field', {
+        fileId,
+        contentLength: fileRecord.path.length,
+        firstChars: fileRecord.path.substring(0, 30) + '...'
+      });
+      
+      // Set appropriate content type
+      res.setHeader('Content-Type', fileRecord.type || 'text/csv');
+      
+      // Remove 'database:' prefix if present
+      const content = fileRecord.path.startsWith('database:') 
+        ? fileRecord.path.substring(9) 
+        : fileRecord.path;
+      
+      // Set filename and send content
+      const taskType = fileRecord.name.toLowerCase().includes('kyb') ? 'KYB' : 
+                      fileRecord.name.toLowerCase().includes('ky3p') ? 'ky3p' :
+                      fileRecord.name.toLowerCase().includes('open_banking') ? 'open_banking' : 'FORM';
+      
+      const taskId = Number(req.query.taskId) || 
+                    (fileRecord.metadata && fileRecord.metadata.taskId ? Number(fileRecord.metadata.taskId) : 0);
+      
+      const companyName = fileRecord.company_id ? await getCompanyName(fileRecord.company_id) : 'Company';
+      
+      // Create standardized filename
+      const standardizedFilename = FileCreationService.generateStandardFileName(
+        taskType, 
+        taskId, 
+        companyName,
+        '1.0',
+        'csv'
+      );
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${standardizedFilename}"`);
+      console.log('[Files] Sending content from database field, length:', content.length);
+      return res.send(content);
+    }
 
     // Check if this is a form CSV file using the new unified naming scheme
     const isKybCsvFile = (fileRecord.name.toLowerCase().includes('kyb_assessment') || 
