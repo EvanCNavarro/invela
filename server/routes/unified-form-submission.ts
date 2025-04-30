@@ -20,10 +20,11 @@ export function createUnifiedFormSubmissionRouter(): Router {
 
   /**
    * POST /api/form-submission
+   * POST /api/form-submission/submit/:formType/:taskId
    * 
    * Submit a form for processing
    */
-  router.post('/', requireAuth, async (req: Request, res: Response) => {
+  router.post(['/', '/submit/:formType/:taskId'], requireAuth, async (req: Request, res: Response) => {
     try {
       const { taskId, formType, formData, metadata } = req.body;
       
@@ -121,10 +122,11 @@ export function createUnifiedFormSubmissionRouter(): Router {
 
   /**
    * GET /api/form-submission/status/:taskId
+   * GET /api/form-submission/status/:formType/:taskId
    * 
    * Check the status of a form submission
    */
-  router.get('/status/:taskId', requireAuth, async (req: Request, res: Response) => {
+  router.get(['/status/:taskId', '/status/:formType/:taskId'], requireAuth, async (req: Request, res: Response) => {
     try {
       const taskId = parseInt(req.params.taskId);
       
