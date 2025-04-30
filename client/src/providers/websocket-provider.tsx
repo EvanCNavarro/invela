@@ -223,4 +223,36 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   );
 };
 
+/**
+ * Hook for accessing the WebSocket context directly
+ * 
+ * @returns WebSocket context for more direct access to connection methods
+ */
+export function useWebSocketContext() {
+  const context = useContext(WebSocketContext);
+  
+  if (!context) {
+    throw new Error('useWebSocketContext must be used within a WebSocketProvider');
+  }
+  
+  // For compatibility with existing components using the old context
+  return {
+    ...context,
+    isConnected: context.connectionState === 'connected',
+    status: context.connectionState,
+    connect: () => console.log('[WebSocket] Connect requested - auto-connect is enabled'),
+    disconnect: () => console.log('[WebSocket] Disconnect requested - not implemented'),
+    subscribe: (type: string, callback: (data: any) => void) => {
+      console.log(`[WebSocket] Subscribe requested for ${type} - not implemented`);
+      return () => {};
+    },
+    unsubscribe: (type: string) => {
+      console.log(`[WebSocket] Unsubscribe requested for ${type} - not implemented`);
+    },
+    send: (type: string, payload?: any) => {
+      context.sendMessage({ type, payload });
+    }
+  };
+}
+
 export default WebSocketProvider;
