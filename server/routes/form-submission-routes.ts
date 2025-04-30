@@ -100,39 +100,79 @@ export function createFormSubmissionRouter(): Router {
           return forward(req, res, '/api/card/submit/' + taskId);
           
         default:
-          // For test purposes, simulate a successful submission with WebSocket broadcast
-          logger.info(`Simulating successful submission for unsupported form type: ${formType}`);
+          logger.info(`Processing submission for form type: ${formType}`);
           
-          // Update task status to submitted
-          await db.update(tasks)
-            .set({ 
-              status: 'submitted',
-              progress: 100,
-              updated_at: new Date() 
+          try {
+            // Import the fileCreationService
+            const { fileCreationService } = await import('../services/fileCreation');
+            
+            // Update task status to submitted
+            await db.update(tasks)
+              .set({ 
+                status: 'submitted',
+                progress: 100,
+                updated_at: new Date() 
+              })
+              .where(eq(tasks.id, taskId));
+            
+            // Get company info for the file
+            const [company] = await db.select({
+              name: tasks.company_name
             })
+            .from(tasks)
             .where(eq(tasks.id, taskId));
-          
-          // Broadcast success status via WebSocket
-          broadcastFormSubmission(
-            taskId, 
-            formType, 
-            'success', 
-            companyId, 
-            { 
-              submissionDate: new Date().toISOString(),
-              unlockedTabs: ['file_vault', 'risk_assessment'],
-              fileName: `${formType.toUpperCase()}_Submission_${taskId}.csv`,
-              fileId: 1234
+            
+            const companyName = company?.name || 'Company';
+            
+            // Create an actual file from the form data
+            const fileResult = await fileCreationService.createTaskFile(
+              req.user?.id || 0,
+              companyId,
+              formData, // Use the submitted form data
+              {
+                taskType: formType,
+                taskId,
+                companyName
+              }
+            );
+            
+            if (!fileResult.success) {
+              logger.error(`Failed to create file for ${formType} submission:`, fileResult.error);
+              throw new Error(`File creation failed: ${fileResult.error?.message || 'Unknown error'}`);
             }
-          );
-          
-          return res.json({
-            success: true,
-            message: `Form submitted successfully (${formType})`,
-            taskId,
-            formType,
-            status: 'submitted'
-          });
+            
+            logger.info(`File created successfully:`, {
+              fileId: fileResult.fileId,
+              fileName: fileResult.fileName
+            });
+            
+            // Broadcast success status via WebSocket with actual file info
+            broadcastFormSubmission(
+              taskId, 
+              formType, 
+              'success', 
+              companyId, 
+              { 
+                submissionDate: new Date().toISOString(),
+                unlockedTabs: ['file_vault', 'risk_assessment'],
+                fileName: fileResult.fileName,
+                fileId: fileResult.fileId
+              }
+            );
+            
+            return res.json({
+              success: true,
+              message: `Form submitted successfully (${formType})`,
+              taskId,
+              formType,
+              status: 'submitted',
+              fileId: fileResult.fileId,
+              fileName: fileResult.fileName
+            });
+          } catch (fileError) {
+            logger.error(`Error creating file for ${formType} submission:`, fileError);
+            throw fileError; // Let the outer catch block handle this
+          }
       }
       
     } catch (error) {
