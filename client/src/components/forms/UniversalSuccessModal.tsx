@@ -487,8 +487,23 @@ export function UniversalSuccessModal({
           onClick={() => {
             // CRITICAL FIX: Navigate to file-vault instead of directly downloading (which can fail)
             // This ensures users still have access to the file in the File Vault
-            navigate('/file-vault');
+            // Use controlled navigation to prevent potential refresh issues
+            console.log('[UniversalSuccessModal] Navigating to file-vault using controlled pattern');
+            
+            // Set localStorage flag to enable file-vault access
+            try {
+              localStorage.setItem('navigated_to_file_vault', 'true');
+              localStorage.setItem('file_vault_access_timestamp', new Date().toISOString());
+            } catch (error) {
+              console.error('[UniversalSuccessModal] Failed to update localStorage:', error);
+            }
+            
+            // Close modal first (better UX) then navigate
             onOpenChange(false);
+            
+            // Use controlled navigation with wouter - same pattern as SidebarTab.tsx
+            window.history.pushState({}, '', '/file-vault');
+            window.dispatchEvent(new PopStateEvent('popstate'));
             
             // Show a toast message to let the user know about the file
             // Note: Importing and using toast directly inside onClick handler
