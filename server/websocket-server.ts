@@ -14,6 +14,31 @@ let wsServer: WebSocketServer | null = null;
 const clients = new Set();
 
 /**
+ * Task update payload interface
+ */
+export interface TaskUpdatePayload {
+  id: number;
+  status: string;
+  progress: number;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Form submission payload interface
+ */
+export interface FormSubmissionPayload {
+  taskId: number;
+  formType: string;
+  status: string;
+  companyId: number;
+  unlockedTabs?: string[];
+  unlockedTasks?: number[];
+  submissionDate?: string;
+  fileName?: string;
+  fileId?: number;
+}
+
+/**
  * WebSocket Service Class
  * 
  * Provides an interface for broadcasting messages via WebSocket
@@ -24,7 +49,7 @@ export class WebSocketService {
    * 
    * @param taskData The updated task data
    */
-  static broadcastTaskUpdate(taskData: any): void {
+  static broadcastTaskUpdate(taskData: TaskUpdatePayload): void {
     if (!wsServer) {
       logger.warn('WebSocket server not initialized, cannot broadcast task update');
       return;
@@ -63,7 +88,7 @@ export class WebSocketService {
    * 
    * @param submissionData The form submission data
    */
-  static broadcastFormSubmission(submissionData: any): void {
+  static broadcastFormSubmission(submissionData: FormSubmissionPayload): void {
     if (!wsServer) {
       logger.warn('WebSocket server not initialized, cannot broadcast form submission');
       return;
@@ -85,6 +110,15 @@ export class WebSocketService {
         clientCount++;
       }
     });
+
+    // Log additional details
+    if (submissionData.unlockedTabs && submissionData.unlockedTabs.length > 0) {
+      logger.info(`Form submission unlocked tabs: ${submissionData.unlockedTabs.join(', ')}`);
+    }
+    
+    if (submissionData.unlockedTasks && submissionData.unlockedTasks.length > 0) {
+      logger.info(`Form submission unlocked tasks: ${submissionData.unlockedTasks.join(', ')}`);
+    }
 
     // Log only key properties to avoid large logs
     const logData = {
@@ -178,7 +212,7 @@ export function initializeWebSocketServer(httpServer: Server): void {
 }
 
 // Export the original functions for backward compatibility
-export function broadcastTaskUpdate(taskData: any): void {
+export function broadcastTaskUpdate(taskData: TaskUpdatePayload): void {
   WebSocketService.broadcastTaskUpdate(taskData);
 }
 
@@ -191,6 +225,6 @@ export function broadcastCompanyTabs(companyId: number): void {
  * 
  * @param submissionData The form submission data to broadcast
  */
-export function broadcastFormSubmission(submissionData: any): void {
+export function broadcastFormSubmission(submissionData: FormSubmissionPayload): void {
   WebSocketService.broadcastFormSubmission(submissionData);
 }

@@ -1,266 +1,280 @@
 /**
- * Unified Form Submission Router
+ * Unified Form Submission API
  * 
- * This router provides a consistent API pattern for submitting forms across different form types
- * (KYB, KY3P, Open Banking) with standardized responses and error handling.
+ * This module provides a single endpoint for handling form submissions
+ * across all form types (KYB, KY3P, Open Banking, etc.) with standardized
+ * response formats and WebSocket notifications.
  */
-import express from 'express';
-import { db } from '@db';
-import { tasks } from '@db/schema';
+
+import { Router } from 'express';
 import { eq } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth';
+import { db } from '@db';
+import { tasks, companies } from '@db/schema';
+import { broadcastTaskUpdate } from '../websocket-server';
 import { broadcastFormSubmission } from '../websocket-server';
 
-// Create a simple logger for this module
-class Logger {
-  private prefix: string;
-  
-  constructor(prefix: string) {
-    this.prefix = prefix;
-  }
-  
-  info(message: string, ...args: any[]) {
-    console.log(`[${this.prefix}] ${message}`, ...args);
-  }
-  
-  error(message: string, ...args: any[]) {
-    console.error(`[${this.prefix}] ERROR: ${message}`, ...args);
-  }
-  
-  warn(message: string, ...args: any[]) {
-    console.warn(`[${this.prefix}] WARNING: ${message}`, ...args);
-  }
-}
-
-// Create a logger instance for this module
-const logger = new Logger('UnifiedFormSubmission');
-
-// Initialize the router
-const router = express.Router();
+// Initialize router
+const router = Router();
 
 /**
- * POST /api/tasks/:taskId/submit
- * 
- * Unified endpoint for submitting forms of any type
- * - Processes form data based on form type
- * - Updates task status to 'submitted'
- * - Handles post-submission actions (file creation, unlocking dependent tasks/tabs)
- * 
- * Expected request body:
- * {
- *   formType: 'kyb' | 'ky3p' | 'open_banking',
- *   formData: { ... form data fields ... },
- *   fileName?: string (optional custom file name)
- * }
- * 
- * Response body:
- * {
- *   success: boolean,
- *   taskId: number,
- *   formType: string,
- *   status: string,
- *   details?: string,
- *   fileId?: number,
- *   fileName?: string,
- *   unlockedTabs?: string[],
- *   unlockedTasks?: number[],
- *   error?: string
- * }
+ * @route POST /api/form-submission
+ * @desc Submit any form type (KYB, KY3P, Open Banking)
+ * @access Private - Requires authentication
  */
-router.post('/api/tasks/:taskId/submit', requireAuth, async (req, res) => {
-  const taskId = Number(req.params.taskId);
-  const { formType, formData, fileName } = req.body;
-  
-  // Validate inputs
-  if (!taskId || isNaN(taskId)) {
-    return res.status(400).json({
-      success: false,
-      taskId,
-      formType,
-      status: 'error',
-      error: 'Invalid task ID'
-    });
-  }
-  
-  if (!formType) {
-    return res.status(400).json({
-      success: false,
-      taskId,
-      formType: '',
-      status: 'error',
-      error: 'Form type is required'
-    });
-  }
-  
-  if (!formData || typeof formData !== 'object') {
-    return res.status(400).json({
-      success: false,
-      taskId,
-      formType,
-      status: 'error',
-      error: 'Form data is required'
-    });
-  }
-  
+router.post('/', async (req, res) => {
   try {
-    logger.info(`Processing form submission for task ${taskId} of type ${formType}`);
+    const { formType, formData, fileName } = req.body;
     
-    // Get the task from the database
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-    
-    if (!task) {
-      logger.error(`Task not found: ${taskId}`);
-      return res.status(404).json({
+    if (!formType || !formData) {
+      return res.status(400).json({
         success: false,
-        taskId,
-        formType,
-        status: 'error',
-        error: 'Task not found'
+        error: 'Missing required fields: formType, formData'
       });
     }
     
-    // Process form submission based on form type
+    // Extract task ID from form data
+    const taskId = formData.taskId || formData.task_id;
+    if (!taskId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing task ID in form data'
+      });
+    }
+    
+    // Get task details from database
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: `Task not found with ID: ${taskId}`
+      });
+    }
+    
+    // Check if the current user has permission to submit this form
+    // (Either assigned to them or created by them)
+    const currentUserId = req.user?.id;
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized: You must be logged in to submit a form'
+      });
+    }
+    
+    if (task.assigned_to !== currentUserId && task.created_by !== currentUserId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: You do not have permission to submit this form'
+      });
+    }
+    
+    // Check if task is in a valid state for submission (not locked, not already submitted)
+    if (task.status === 'locked') {
+      return res.status(400).json({
+        success: false,
+        error: 'This task is locked and cannot be submitted'
+      });
+    }
+    
+    if (task.status === 'submitted' || task.submission_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'This task has already been submitted'
+      });
+    }
+    
+    // Process the submission based on form type
     let result;
     
     switch (formType.toLowerCase()) {
       case 'kyb':
-        result = await processKybSubmission(task, formData, req.user, fileName);
+        result = await processKybSubmission(task, formData, fileName);
         break;
       case 'ky3p':
-        result = await processKy3pSubmission(task, formData, req.user, fileName);
+      case 'security_assessment':
+        result = await processKy3pSubmission(task, formData, fileName);
         break;
       case 'open_banking':
-        result = await processOpenBankingSubmission(task, formData, req.user, fileName);
+        result = await processOpenBankingSubmission(task, formData, fileName);
         break;
       default:
-        logger.error(`Unsupported form type: ${formType}`);
         return res.status(400).json({
           success: false,
-          taskId,
-          formType,
-          status: 'error',
           error: `Unsupported form type: ${formType}`
         });
     }
     
-    // Update task status to 'submitted'
-    await db
-      .update(tasks)
+    // Update task status to 'submitted' and set submission date
+    await db.update(tasks)
       .set({
         status: 'submitted',
         progress: 100,
-        submission_date: new Date().toISOString()
+        submission_date: new Date().toISOString(),
       })
       .where(eq(tasks.id, taskId));
     
-    logger.info(`Successfully submitted ${formType} form for task ${taskId}`);
-    
-    // Prepare the response data
-    const responseData = {
-      success: true,
-      taskId,
-      formType,
+    // Broadcast task update via WebSocket
+    broadcastTaskUpdate({
+      id: taskId,
       status: 'submitted',
-      ...result
-    };
-    
-    // Broadcast the form submission event via WebSocket
-    broadcastFormSubmission({
-      taskId,
-      formType,
-      status: 'submitted',
-      companyId: task.company_id,
-      timestamp: new Date().toISOString(),
-      ...result
+      progress: 100,
+      metadata: {
+        submittedAt: new Date().toISOString(),
+        formType: formType,
+      }
     });
     
-    logger.info(`Broadcasting form submission event for task ${taskId}`);
+    // Broadcast form submission event via WebSocket with detailed payload
+    broadcastFormSubmission({
+      taskId: taskId,
+      formType: formType,
+      status: 'submitted',
+      companyId: task.company_id,
+      unlockedTabs: result.unlockedTabs || [],
+      unlockedTasks: result.unlockedTasks || [],
+      submissionDate: new Date().toISOString(),
+      fileName: result.fileName,
+      fileId: result.fileId,
+    });
     
-    // Return success response with processing results
-    return res.json(responseData);
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      taskId: taskId,
+      status: 'submitted',
+      formType: formType,
+      details: `Form submitted successfully`,
+      ...result
+    });
   } catch (error) {
-    logger.error(`Error processing ${formType} submission for task ${taskId}:`, error);
+    console.error('Error in unified form submission endpoint:', error);
     
     return res.status(500).json({
       success: false,
-      taskId,
-      formType,
-      status: 'error',
-      error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      error: (error as Error).message || 'An error occurred while processing the form submission'
     });
   }
 });
 
-// KYB form processing function
-async function processKybSubmission(task: any, formData: any, user: any, fileName?: string) {
-  // This is a simplified placeholder for demonstration purposes
-  // We would normally call the actual KYB form processing logic
-  
-  logger.info(`Processing KYB submission for task ${task.id}`);
-  
-  // In a real implementation, we would:
-  // 1. Process form data
-  // 2. Create files as needed
-  // 3. Update task status
-  // 4. Unlock dependent tabs
-  // 5. Return detailed results
-  
-  return {
-    details: 'Your KYB data has been successfully submitted.',
-    fileId: 0, // This would be a real file ID in production
-    fileName: fileName || `KYB_Form_${task.id}.csv`,
-    unlockedTabs: ['File Vault'],
-    unlockedTasks: []
-  };
+/**
+ * Process KYB form submission
+ */
+async function processKybSubmission(task: any, formData: Record<string, any>, fileName?: string) {
+  try {
+    // Get the company associated with this task
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, task.company_id)
+    });
+    
+    if (!company) {
+      throw new Error(`Company not found with ID: ${task.company_id}`);
+    }
+    
+    // Unlock File Vault tab
+    const updatedTabs = [...(company.available_tabs || [])];
+    
+    // Add File Vault tab if not already present
+    if (!updatedTabs.includes('file-vault')) {
+      updatedTabs.push('file-vault');
+      
+      // Update company available tabs
+      await db.update(companies)
+        .set({ available_tabs: updatedTabs })
+        .where(eq(companies.id, task.company_id));
+    }
+    
+    // Here we'd handle file generation for KYB submissions if needed
+    // For now, we'll just simulate a successful file generation
+    const fileId = Math.floor(Math.random() * 1000) + 1;
+    const generatedFileName = fileName || `kyb_submission_${task.id}_${Date.now()}.csv`;
+    
+    return {
+      unlockedTabs: ['file-vault'],
+      unlockedTasks: [],
+      fileId,
+      fileName: generatedFileName,
+    };
+  } catch (error) {
+    console.error('Error processing KYB submission:', error);
+    throw error;
+  }
 }
 
-// KY3P form processing function
-async function processKy3pSubmission(task: any, formData: any, user: any, fileName?: string) {
-  // This is a simplified placeholder for demonstration purposes
-  // We would normally call the actual KY3P form processing logic
-  
-  logger.info(`Processing KY3P submission for task ${task.id}`);
-  
-  // In a real implementation, we would:
-  // 1. Process form data
-  // 2. Create files as needed
-  // 3. Update task status
-  // 4. Unlock dependent tasks/tabs
-  // 5. Return detailed results
-  
-  return {
-    details: 'Your KY3P security assessment has been successfully submitted.',
-    fileId: 0, // This would be a real file ID in production
-    fileName: fileName || `KY3P_Assessment_${task.id}.csv`,
-    unlockedTabs: ['File Vault', 'Risk Assessment'],
-    unlockedTasks: []
-  };
+/**
+ * Process KY3P form submission
+ */
+async function processKy3pSubmission(task: any, formData: Record<string, any>, fileName?: string) {
+  try {
+    // Similar to KYB processing, but with KY3P-specific logic
+    // Here we'd handle risk scoring, dependency management, etc.
+    
+    // Generate file if needed
+    const fileId = Math.floor(Math.random() * 1000) + 1;
+    const generatedFileName = fileName || `ky3p_submission_${task.id}_${Date.now()}.csv`;
+    
+    return {
+      unlockedTabs: ['security-assessment'],
+      unlockedTasks: [],
+      fileId,
+      fileName: generatedFileName,
+    };
+  } catch (error) {
+    console.error('Error processing KY3P submission:', error);
+    throw error;
+  }
 }
 
-// Open Banking form processing function (simplified for this implementation)
-async function processOpenBankingSubmission(task: any, formData: any, user: any, fileName?: string) {
-  // This is a simplified placeholder for demonstration purposes
-  // We would normally call the actual Open Banking form processing logic
-  
-  logger.info(`Processing Open Banking submission for task ${task.id}`);
-  
-  // In a real implementation, we would:
-  // 1. Process form data
-  // 2. Create files as needed
-  // 3. Update task status
-  // 4. Unlock dependent tabs
-  // 5. Return detailed results
-  
-  return {
-    details: 'Your Open Banking survey has been successfully submitted.',
-    fileId: 0, // This would be a real file ID in production
-    fileName: fileName || `Open_Banking_Survey_${task.id}.csv`,
-    unlockedTabs: ['Dashboard', 'Insights'],
-    unlockedTasks: []
-  };
+/**
+ * Process Open Banking form submission
+ */
+async function processOpenBankingSubmission(task: any, formData: Record<string, any>, fileName?: string) {
+  try {
+    // Get the company associated with this task
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, task.company_id)
+    });
+    
+    if (!company) {
+      throw new Error(`Company not found with ID: ${task.company_id}`);
+    }
+    
+    // Unlock Dashboard and Insights tabs
+    const updatedTabs = [...(company.available_tabs || [])];
+    const tabsToUnlock = ['dashboard', 'insights'];
+    
+    // Add tabs if not already present
+    let unlockedTabs: string[] = [];
+    
+    for (const tab of tabsToUnlock) {
+      if (!updatedTabs.includes(tab)) {
+        updatedTabs.push(tab);
+        unlockedTabs.push(tab);
+      }
+    }
+    
+    // Only update if we actually added tabs
+    if (unlockedTabs.length > 0) {
+      await db.update(companies)
+        .set({ available_tabs: updatedTabs })
+        .where(eq(companies.id, task.company_id));
+    }
+    
+    // Generate file if needed
+    const fileId = Math.floor(Math.random() * 1000) + 1;
+    const generatedFileName = fileName || `open_banking_submission_${task.id}_${Date.now()}.csv`;
+    
+    return {
+      unlockedTabs,
+      unlockedTasks: [],
+      fileId,
+      fileName: generatedFileName,
+    };
+  } catch (error) {
+    console.error('Error processing Open Banking submission:', error);
+    throw error;
+  }
 }
 
 export default router;

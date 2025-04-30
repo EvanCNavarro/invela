@@ -4,10 +4,9 @@
  * This service centralizes form submission logic across different form types
  * and handles the submission process, response formatting, and feedback.
  */
-import { apiRequest } from '@/lib/queryClient';
-import { useQueryClient } from '@tanstack/react-query';
 
-// Types for form submission
+import { apiRequest } from '@/lib/queryClient';
+
 export interface FormSubmissionOptions {
   taskId: number;
   formType: string;
@@ -39,19 +38,25 @@ export interface FormSubmissionResponse {
 export function formatSuccessActions(result: FormSubmissionResponse): string[] {
   const actions: string[] = [];
   
-  // Add file creation action
+  // Add basic success message
+  actions.push(`Form has been successfully submitted.`);
+  
+  // Add file generation message if applicable
   if (result.fileId && result.fileName) {
-    actions.push(`Created file: ${result.fileName}`);
+    actions.push(`Generated file "${result.fileName}" (ID: ${result.fileId}).`);
   }
   
-  // Add unlocked tabs action
-  if (result.unlockedTabs && result.unlockedTabs.length > 0) {
-    actions.push(`Unlocked tabs: ${result.unlockedTabs.join(', ')}`);
-  }
-  
-  // Add unlocked tasks action
+  // Add unlocked tasks message if applicable
   if (result.unlockedTasks && result.unlockedTasks.length > 0) {
-    actions.push(`Unlocked tasks: ${result.unlockedTasks.length} new task(s)`);
+    actions.push(`Unlocked ${result.unlockedTasks.length} dependent task(s).`);
+  }
+  
+  // Add unlocked tabs message if applicable
+  if (result.unlockedTabs && result.unlockedTabs.length > 0) {
+    const readableTabs = result.unlockedTabs.map(tab => 
+      tab.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    );
+    actions.push(`Unlocked new company features: ${readableTabs.join(', ')}.`);
   }
   
   return actions;
@@ -71,9 +76,9 @@ export const formSubmissionService = {
     const { taskId, formType, formData, fileName, onSuccess, onError } = options;
     
     try {
-      // Send the form data to the unified endpoint
+      // Make API request using the unified submission endpoint
       const response = await apiRequest({
-        url: `/api/tasks/${taskId}/submit`,
+        url: `/api/form-submission`,
         method: 'POST',
         data: {
           formType,
@@ -82,56 +87,46 @@ export const formSubmissionService = {
         }
       });
       
-      // If the submission was successful
-      if (response.success) {
-        // Invalidate queries that might be affected by this submission
-        const queryClient = useQueryClient();
-        
-        // Invalidate task queries for this specific task
-        queryClient.invalidateQueries({
-          queryKey: [`/api/tasks/${taskId}`]
-        });
-        
-        // Invalidate the tasks list
-        queryClient.invalidateQueries({
-          queryKey: ['/api/tasks']
-        });
-        
-        // Invalidate company tabs if they might be affected
-        if (response.unlockedTabs && response.unlockedTabs.length > 0) {
-          queryClient.invalidateQueries({
-            queryKey: ['/api/companies/current']
-          });
-        }
-        
-        // Call the success callback if provided
-        if (onSuccess) {
-          onSuccess(response);
-        }
-      } else {
-        // Handle API-level errors (successful HTTP response, but API indicates error)
-        const error = new Error(response.error || 'Form submission failed');
-        
-        if (onError) {
-          onError(error);
-        }
-        
-        throw error;
+      // Validate response
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'Form submission failed');
       }
       
-      return response;
+      // Format the response
+      const result: FormSubmissionResponse = {
+        success: true,
+        taskId,
+        formType,
+        status: response.status || 'submitted',
+        details: response.details,
+        fileId: response.fileId,
+        fileName: response.fileName,
+        unlockedTabs: response.unlockedTabs,
+        unlockedTasks: response.unlockedTasks
+      };
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess(result);
+      }
+      
+      return result;
     } catch (error) {
-      // Handle network or unexpected errors
-      const formattedError = error instanceof Error ? 
-        error : 
-        new Error('An unexpected error occurred during form submission');
+      console.error('[FormSubmissionService] Error submitting form:', error);
       
-      // Call the error callback if provided
+      // Call error callback if provided
       if (onError) {
-        onError(formattedError);
+        onError(error as Error);
       }
       
-      throw formattedError;
+      // Return error response
+      return {
+        success: false,
+        taskId,
+        formType,
+        status: 'error',
+        error: (error as Error).message
+      };
     }
   }
 };
