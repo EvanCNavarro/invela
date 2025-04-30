@@ -162,36 +162,52 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  // Simple in-memory cache for user session data with reduced logging
+  /**
+   * Enhanced session cache with proper TTL and minimal database access
+   * 
+   * This implementation addresses excessive database queries by:
+   * 1. Implementing a proper TTL-based cache for user data
+   * 2. Using a request-based throttling mechanism to reduce deserializer calls
+   * 3. Completely eliminating logging for normal cache operations
+   * 4. Using a separate debugging flag for development troubleshooting
+   */
   const userCache = new Map<number, { user: Express.User, timestamp: number }>();
-  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes - longer cache to reduce DB load
   
-  // Add counters to reduce excessive logging
-  let totalCacheHits = 0;
-  let lastLogTimestamp = Date.now();
-  const LOG_INTERVAL = 60 * 1000; // Log summary every minute instead of individual hits
+  // Request deduplication to prevent multiple deserializer calls in the same request cycle
+  // This is the key improvement: we track recently processed user IDs to avoid duplicate processing
+  const recentlyProcessed = new Set<number>();
+  const DEDUPE_TTL = 2000; // 2 seconds to prevent duplicate deserializer calls
+  
+  // Debug mode flag - set to false in production
+  const DEBUG_AUTH = process.env.NODE_ENV === 'development' && false; // disable even in dev by default
   
   passport.deserializeUser(async (id: number, done) => {
     try {
+      // Skip deserializing if this user was just processed (deduplication)
+      if (recentlyProcessed.has(id)) {
+        // Silent fast-path - no logging at all for recently processed users
+        const cachedData = userCache.get(id);
+        if (cachedData) {
+          return done(null, cachedData.user);
+        }
+      }
+      
       const now = Date.now();
       const cachedData = userCache.get(id);
       
       // Use cached data if it exists and is not expired
       if (cachedData && (now - cachedData.timestamp) < CACHE_TTL) {
-        totalCacheHits++;
+        // Add to recently processed set with automatic cleanup
+        recentlyProcessed.add(id);
+        setTimeout(() => recentlyProcessed.delete(id), DEDUPE_TTL);
         
-        // Log a summary occasionally rather than individual hits
-        if ((now - lastLogTimestamp) > LOG_INTERVAL) {
-          console.log(`[Auth] Session cache summary - Hits in last minute: ${totalCacheHits}`);
-          lastLogTimestamp = now;
-          totalCacheHits = 0;
-        }
-        
+        // No logging for normal cache hits
         return done(null, cachedData.user);
       }
       
-      // If not in cache or expired, query the database
-      console.log('[Auth] Cache miss - Deserializing user:', id);
+      // Cache miss or expired - query the database
+      if (DEBUG_AUTH) console.log('[Auth] Cache miss - Deserializing user:', id);
       const [user] = await db
         .select()
         .from(users)
