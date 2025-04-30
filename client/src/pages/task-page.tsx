@@ -26,6 +26,11 @@ import { fireEnhancedConfetti } from '@/utils/confetti';
 import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { submitForm } from '@/api/form-submission-api';
+import { userContext } from '@/lib/user-context';
+import { useCurrentCompany } from '@/hooks/use-current-company';
+import getLogger from '@/utils/logger';
+
+const logger = getLogger('TaskPage');
 
 interface TaskPageProps {
   params: {
@@ -251,8 +256,15 @@ export default function TaskPage({ params }: TaskPageProps) {
       return;
     }
     
-    const taskId = taskIdMatch[0];
-    console.log(`[TaskPage] Fetching task data for ID: ${taskId}`);
+    const taskId = parseInt(taskIdMatch[0], 10);
+    logger.info(`Fetching task data for ID: ${taskId}`);
+    
+    // Set the task ID in user context for proper data isolation
+    // This is CRITICAL for ensuring each task only accesses its own data
+    userContext.setContext({
+      taskId: taskId
+    });
+    logger.info(`Set task context: taskId=${taskId}`);
     
     fetch(`/api/tasks/${taskId}`)
       .then(response => {
