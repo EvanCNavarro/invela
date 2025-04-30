@@ -30,6 +30,15 @@ export function useCurrentCompany() {
     refetchOnWindowFocus: false
   });
 
+  // Store company ID in user context when it changes
+  // This is CRITICAL for proper data isolation between companies
+  useEffect(() => {
+    if (company?.id) {
+      logger.info(`Setting company context: ${company.id}`);
+      userContext.setCompanyId(company.id);
+    }
+  }, [company]);
+
   return {
     company,
     isLoading,
