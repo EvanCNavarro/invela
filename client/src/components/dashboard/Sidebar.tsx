@@ -130,35 +130,80 @@ export function Sidebar({
         });
         subscriptions.push(unsubTaskUpdate);
         
+        // CRITICAL FIX: Enhanced WebSocket handling for sidebar updates
+        // This function is shared between both event handlers to ensure consistent behavior
+        const handleCompanyTabsUpdate = (data: any, eventName: string) => {
+          console.log(`[Sidebar] Received ${eventName} event:`, data);
+          
+          // First, check if this is for our company
+          if (data.companyId === company?.id) {
+            // Log detailed info for debugging
+            console.log(`[Sidebar] ✅ Matched company ID ${company?.id}, processing update`);
+            
+            // Check if availableTabs is an array
+            if (Array.isArray(data.availableTabs)) {
+              console.log(`[Sidebar] 📋 Received tabs update:`, data.availableTabs);
+              
+              // Check if file-vault is included in the tabs
+              const hasFileVault = data.availableTabs.includes('file-vault');
+              console.log(`[Sidebar] File vault tab is ${hasFileVault ? 'included' : 'not included'} in update`);
+              
+              // Force immediate cache invalidation to ensure sidebar gets refreshed
+              console.log(`[Sidebar] 🔄 Invalidating and refetching company data`);
+              
+              // First remove any stale data
+              queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+              
+              // Then trigger an immediate refetch
+              queryClient.fetchQuery({ queryKey: ['/api/companies/current'] })
+                .then(() => {
+                  console.log(`[Sidebar] ✅ Company data refreshed successfully`);
+                })
+                .catch(error => {
+                  console.error(`[Sidebar] ❌ Error refreshing company data:`, error);
+                  // Fallback to a standard refetch
+                  queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+                });
+            } else {
+              console.warn(`[Sidebar] ⚠️ Received ${eventName} but availableTabs is not an array:`, data.availableTabs);
+              // Still try to refresh the data in case it's a format issue
+              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+            }
+          } else {
+            console.log(`[Sidebar] Ignoring ${eventName} for different company: ${data.companyId} (our ID: ${company?.id})`);
+          }
+        };
+        
         // Subscribe to company tabs updates - both event names for compatibility
         const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: any) => {
-          console.log('[Sidebar] Received company_tabs_update event:', data);
-          
-          // If the received tabs data is for our company, update the available tabs
-          if (data.companyId === company?.id && Array.isArray(data.availableTabs)) {
-            console.log('[Sidebar] Received availableTabs update:', data.availableTabs);
-            // Trigger a refetch to update the tabs data
-            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-            // Force immediate refetch to update the UI
-            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-          }
+          handleCompanyTabsUpdate(data, 'company_tabs_update');
         });
         subscriptions.push(unsubCompanyTabsUpdate);
         
         // Also subscribe to the alternative event name
         const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: any) => {
-          console.log('[Sidebar] Received company_tabs_updated event:', data);
-          
-          // If the received tabs data is for our company, update the available tabs
-          if (data.companyId === company?.id && Array.isArray(data.availableTabs)) {
-            console.log('[Sidebar] Received availableTabs update:', data.availableTabs);
-            // Trigger a refetch to update the tabs data
-            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-            // Force immediate refetch to update the UI
-            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-          }
+          handleCompanyTabsUpdate(data, 'company_tabs_updated');
         });
         subscriptions.push(unsubCompanyTabsUpdated);
+        
+        // CRITICAL FIX: Also listen for form submission success events as they often trigger tab changes
+        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: any) => {
+          console.log(`[Sidebar] Received form_submitted event:`, data);
+          
+          // Check if this event includes unlockedTabs information
+          if (data.unlockedTabs && Array.isArray(data.unlockedTabs) && data.unlockedTabs.length > 0) {
+            console.log(`[Sidebar] Form submission unlocked tabs:`, data.unlockedTabs);
+            
+            // Form submission unlocked tabs, we should refresh company data
+            if (data.unlockedTabs.includes('file-vault')) {
+              console.log(`[Sidebar] 🚨 File vault tab unlocked, refreshing company data...`);
+              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+              queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+            }
+          }
+        });
+        subscriptions.push(unsubFormSubmitted);
       } catch (error) {
         console.error('Error setting up WebSocket subscriptions:', error);
       }
