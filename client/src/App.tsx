@@ -338,6 +338,11 @@ function Router() {
           <KY3PTestPage />
         </Route>
         
+        {/* Form Submission Test Page - For Testing WebSocket Form Submission Events */}
+        <Route path="/form-submission-test">
+          <FormSubmissionTestPage />
+        </Route>
+        
         {/* Specialized task routes for form types */}
         <ProtectedRoute 
           path="/ky3p-task/:taskId"
