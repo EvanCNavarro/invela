@@ -1,6 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import { Link } from "wouter";
 import { 
   CheckCircle, 
   FileText, 
@@ -11,7 +13,9 @@ import {
   LayoutDashboard, 
   PieChart, 
   FileArchive, 
-  Folder 
+  Folder,
+  Download,
+  FolderOpen
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
