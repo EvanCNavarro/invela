@@ -908,14 +908,22 @@ router.post('/api/tasks/:taskId/ky3p-submit', requireAuth, hasTaskAccess, async 
     
     console.log(`[KY3P API] Creating KY3P assessment file for task ${taskId}`);
     
-    // Generate a file from the form data
+    // Import the form type mapper and fileCreationService
     const { fileCreationService } = await import('../services/fileCreation');
+    const { mapClientFormTypeToSchemaType } = await import('../utils/form-type-mapper');
+    
+    // Convert client-side form type 'ky3p' to schema type 'sp_ky3p_assessment'
+    const schemaTaskType = mapClientFormTypeToSchemaType('ky3p');
+    
+    console.log(`[KY3P API] Mapped form type: from 'ky3p' to '${schemaTaskType}' for file creation`);
+    
+    // Generate a file from the form data using the proper schema task type
     const fileResult = await fileCreationService.createTaskFile(
       userId,
       companyId,
       formattedData,
       {
-        taskType: 'ky3p',
+        taskType: schemaTaskType, // Use the schema-compatible task type
         taskId,
         companyName: company.name,
         additionalData: {

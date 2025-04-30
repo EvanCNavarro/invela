@@ -1658,13 +1658,20 @@ router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, 
       }
     }
     
+    // Import form type mapper to ensure consistent task type usage
+    const { mapClientFormTypeToSchemaType } = await import('../utils/form-type-mapper');
+    const schemaTaskType = mapClientFormTypeToSchemaType('ky3p');
+    
+    console.log(`[Tasks Routes] Mapped KY3P form type from 'ky3p' to '${schemaTaskType}' for submission`);
+    
     // Use our enhanced form submission handler with immediate task unlocking
+    // Pass the schema-compatible task type to ensure consistent handling
     const result = await submitFormWithImmediateUnlock({
       taskId,
       userId: req.user.id,
       companyId: task.company_id,
       formData,
-      formType: 'ky3p',
+      formType: schemaTaskType, // Use the schema-compatible task type
       fileName
     });
     
