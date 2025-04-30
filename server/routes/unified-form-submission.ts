@@ -31,7 +31,7 @@ const validFormTypes = ['kyb', 'ky3p', 'security_assessment', 'open_banking'];
  *   fileName?: string
  * }
  */
-router.post('/form-submission', async (req, res) => {
+router.post('/api/form-submission', async (req, res) => {
   try {
     const { formType, formData, fileName } = req.body;
     
