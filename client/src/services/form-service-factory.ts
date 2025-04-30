@@ -9,6 +9,7 @@ import { FormServiceInterface } from './formService';
 import { componentFactory } from './componentFactory';
 import { enhancedKY3PFormServiceFactory } from './enhanced-ky3p-form-service';
 import getLogger from '@/utils/logger';
+import { userContext } from '@/lib/user-context';
 
 const logger = getLogger('FormServiceFactory');
 
@@ -27,10 +28,24 @@ export function createFormService(
   taskId?: number | string,
   useEnhanced: boolean = true
 ): FormServiceInterface | null {
+  // Get IDs from user context if not explicitly provided
+  // This ensures data isolation between companies/tasks
+  const contextData = userContext.getContext();
+  if (!companyId && contextData.companyId) {
+    companyId = contextData.companyId;
+    logger.info(`Using company ID from user context: ${companyId}`);
+  }
+  
+  if (!taskId && contextData.taskId) {
+    taskId = contextData.taskId;
+    logger.info(`Using task ID from user context: ${taskId}`);
+  }
+  
   logger.info(`Creating form service for type: ${formType}`, {
     companyId,
     taskId,
-    useEnhanced
+    useEnhanced,
+    fromContext: !!((!companyId && contextData.companyId) || (!taskId && contextData.taskId))
   });
   
   try {
