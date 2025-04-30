@@ -12,6 +12,7 @@ import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
 import { fileCreationService } from '../services/fileCreation';
+import { CompanyTabsService } from '../services/companyTabsService';
 
 // Destructure websocket service functions
 const { 
@@ -198,77 +199,112 @@ export function createFormSubmissionRouter(): Router {
               logger.info('Unlocking tabs for Card submission:', unlockedTabs);
             }
             
-            // If there are tabs to unlock, update the company record and broadcast the update
-            if (unlockedTabs.length > 0) {
+            // For KYB forms, explicitly use the unlockFileVault method to ensure proper tab unlocking
+            if (formType === 'kyb' || formType === 'company_kyb') {
+              logger.info(`🔐 KYB form submitted - explicitly unlocking File Vault tab for company ${companyId}`);
+              
+              try {
+                // Use the dedicated CompanyTabsService to unlock the file vault, which includes:
+                // - Database update with the file-vault tab
+                // - Cache invalidation
+                // - WebSocket broadcasting
+                // - Redundant broadcast mechanisms
+                // - Error handling
+                const result = await CompanyTabsService.unlockFileVault(companyId);
+                
+                if (result) {
+                  logger.info(`✅ Successfully unlocked File Vault tab for company ${companyId}`);
+                } else {
+                  logger.warn(`⚠️ Failed to unlock File Vault tab for company ${companyId} - CompanyTabsService.unlockFileVault returned null`);
+                }
+              } catch (fileVaultUnlockError) {
+                logger.error(`🔴 Error unlocking File Vault tab for company ${companyId}:`, fileVaultUnlockError);
+                // Continue with the form submission even if tab unlock fails
+              }
+            }
+            // For other form types, use the general tabs update logic
+            else if (unlockedTabs.length > 0) {
               logger.info(`Updating and broadcasting company tabs for company ${companyId}:`, unlockedTabs);
               
               try {
-                // First, get the current company data
-                const company = await db.query.companies.findFirst({
-                  where: eq(companies.id, companyId)
-                });
+                // Use the CompanyTabsService to add the tabs to the company
+                const result = await CompanyTabsService.addTabsToCompany(companyId, unlockedTabs);
                 
-                if (company) {
-                  // Get current available_tabs or initialize empty array
-                  let currentTabs: string[] = [];
+                if (result) {
+                  logger.info(`✅ Successfully updated tabs for company ${companyId} using CompanyTabsService:`, result.available_tabs);
+                } else {
+                  logger.warn(`⚠️ Failed to update tabs for company ${companyId} - CompanyTabsService.addTabsToCompany returned null`);
                   
-                  try {
-                    if (company.available_tabs) {
-                      // Handle available_tabs, which can be a PostgreSQL text array or JSON string
-                      if (Array.isArray(company.available_tabs)) {
-                        // It's already an array, use it directly
-                        currentTabs = company.available_tabs;
-                        logger.info(`Using existing array tabs for company ${companyId}:`, {tabs: currentTabs});
-                      } else if (typeof company.available_tabs === 'string') {
-                        try {
-                          // Try to parse as JSON string
-                          currentTabs = JSON.parse(company.available_tabs);
-                          logger.info(`Parsed JSON string tabs for company ${companyId}:`, {tabs: currentTabs});
-                        } catch (innerParseError) {
-                          logger.warn(`Error parsing JSON available_tabs for company ${companyId}, trying PostgreSQL array format`);
-                          
-                          // If JSON parsing fails, it might be a PostgreSQL array string format like "{tab1,tab2}"
-                          // Remove the curly braces and split by comma
-                          const pgArrayStr = company.available_tabs.trim();
-                          if (pgArrayStr.startsWith('{') && pgArrayStr.endsWith('}')) {
-                            const innerStr = pgArrayStr.substring(1, pgArrayStr.length - 1);
-                            currentTabs = innerStr.split(',').map(s => s.trim());
-                            logger.info(`Parsed PostgreSQL array tabs for company ${companyId}:`, {tabs: currentTabs});
+                  // Fallback to the old implementation if the service fails
+                  logger.info(`Falling back to direct database update for company ${companyId}`);
+                  
+                  // First, get the current company data
+                  const company = await db.query.companies.findFirst({
+                    where: eq(companies.id, companyId)
+                  });
+                  
+                  if (company) {
+                    // Get current available_tabs or initialize empty array
+                    let currentTabs: string[] = [];
+                    
+                    try {
+                      if (company.available_tabs) {
+                        // Handle available_tabs, which can be a PostgreSQL text array or JSON string
+                        if (Array.isArray(company.available_tabs)) {
+                          // It's already an array, use it directly
+                          currentTabs = company.available_tabs;
+                          logger.info(`Using existing array tabs for company ${companyId}:`, {tabs: currentTabs} as any);
+                        } else if (typeof company.available_tabs === 'string') {
+                          try {
+                            // Try to parse as JSON string
+                            currentTabs = JSON.parse(company.available_tabs);
+                            logger.info(`Parsed JSON string tabs for company ${companyId}:`, {tabs: currentTabs});
+                          } catch (innerParseError) {
+                            logger.warn(`Error parsing JSON available_tabs for company ${companyId}, trying PostgreSQL array format`);
+                            
+                            // If JSON parsing fails, it might be a PostgreSQL array string format like "{tab1,tab2}"
+                            // Remove the curly braces and split by comma
+                            const pgArrayStr = company.available_tabs.trim();
+                            if (pgArrayStr.startsWith('{') && pgArrayStr.endsWith('}')) {
+                              const innerStr = pgArrayStr.substring(1, pgArrayStr.length - 1);
+                              currentTabs = innerStr.split(',').map(s => s.trim());
+                              logger.info(`Parsed PostgreSQL array tabs for company ${companyId}:`, {tabs: currentTabs} as any);
+                            }
                           }
                         }
                       }
+                    } catch (parseError) {
+                      logger.warn(`Error handling available_tabs for company ${companyId}:`, {error: parseError instanceof Error ? parseError.message : 'Unknown error'});
+                      // Continue with empty array if parsing fails
+                      currentTabs = [];
                     }
-                  } catch (parseError) {
-                    logger.warn(`Error handling available_tabs for company ${companyId}:`, {error: parseError instanceof Error ? parseError.message : 'Unknown error'});
-                    // Continue with empty array if parsing fails
-                    currentTabs = [];
+                    
+                    // Add new tabs if they're not already included
+                    const updatedTabs = [...new Set([...currentTabs, ...unlockedTabs])];
+                    logger.info(`Updating company ${companyId} tabs from [${currentTabs.join(', ')}] to [${updatedTabs.join(', ')}]`);
+                    
+                    // Update the company record with the new tabs
+                    // Store as a native PostgreSQL array instead of JSON string
+                    await db.update(companies)
+                      .set({ 
+                        available_tabs: updatedTabs, // Store directly as array
+                        updated_at: new Date()
+                      })
+                      .where(eq(companies.id, companyId));
+                    
+                    logger.info(`Successfully updated available tabs for company ${companyId}`);
+                    
+                    // Broadcast the company tabs update
+                    broadcastCompanyTabsUpdate(
+                      companyId,
+                      updatedTabs
+                    );
+                  } else {
+                    logger.warn(`Company ${companyId} not found, skipping tab update`);
                   }
-                  
-                  // Add new tabs if they're not already included
-                  const updatedTabs = [...new Set([...currentTabs, ...unlockedTabs])];
-                  logger.info(`Updating company ${companyId} tabs from [${currentTabs.join(', ')}] to [${updatedTabs.join(', ')}]`);
-                  
-                  // Update the company record with the new tabs
-                  // Store as a native PostgreSQL array instead of JSON string
-                  await db.update(companies)
-                    .set({ 
-                      available_tabs: updatedTabs, // Store directly as array
-                      updated_at: new Date()
-                    })
-                    .where(eq(companies.id, companyId));
-                  
-                  logger.info(`Successfully updated available tabs for company ${companyId}`);
-                  
-                  // Broadcast the company tabs update
-                  broadcastCompanyTabsUpdate(
-                    companyId,
-                    updatedTabs
-                  );
-                } else {
-                  logger.warn(`Company ${companyId} not found, skipping tab update`);
                 }
               } catch (dbError) {
-                logger.error(`Error updating company tabs for company ${companyId}:`, dbError);
+                logger.error(`Error updating company tabs for company ${companyId}:`, dbError as any);
                 // Continue with the form submission even if tab update fails
               }
             }
@@ -352,7 +388,7 @@ export function createFormSubmissionRouter(): Router {
                     ? companyRecord.available_tabs 
                     : [];
                   
-                  logger.info(`Broadcasting tabs from database: ${currentTabsFromDb.join(', ')}`);
+                  logger.info(`Broadcasting tabs from database: ${currentTabsFromDb.join(', ')}` as any);
                   
                   // Broadcast with the tabs directly from the database
                   broadcastCompanyTabsUpdate(
@@ -388,7 +424,7 @@ export function createFormSubmissionRouter(): Router {
               submissionDate: new Date().toISOString()
             });
           } catch (fileError) {
-            logger.error(`Error creating file for ${formType} submission:`, fileError);
+            logger.error(`Error creating file for ${formType} submission:`, fileError as any);
             throw fileError; // Let the outer catch block handle this
           }
       }
