@@ -99,7 +99,37 @@ export function UniversalSuccessModal({
       // This helps maintain tab state during WebSocket disruptions or page reloads
       try {
         const { taskId, unlockedTabs, fileId } = submissionResult;
-        const companyId = submissionResult.data?.companyId;
+        // Get companyId from multiple possible sources
+        let companyId = submissionResult.data?.companyId;
+        
+        // CRITICAL FIX: If companyId is missing, get it from the current context
+        if (!companyId) {
+          // Try to get from global user context
+          const userDataStr = localStorage.getItem('user_data');
+          if (userDataStr) {
+            try {
+              const userData = JSON.parse(userDataStr);
+              companyId = userData.company_id;
+              console.log(`[UniversalSuccessModal] Retrieved companyId ${companyId} from user_data`);
+            } catch (err) {
+              console.error('[UniversalSuccessModal] Failed to parse user_data:', err);
+            }
+          }
+          
+          // If still not found, try the URL
+          if (!companyId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const companyIdFromUrl = urlParams.get('companyId');
+            if (companyIdFromUrl) {
+              companyId = parseInt(companyIdFromUrl);
+              console.log(`[UniversalSuccessModal] Retrieved companyId ${companyId} from URL`);
+            }
+          }
+          
+          if (!companyId) {
+            console.warn('[UniversalSuccessModal] ⚠️ Could not determine companyId for form submission!');
+          }
+        }
         
         if (taskType) {
           // Store minimal info to avoid bloating localStorage
