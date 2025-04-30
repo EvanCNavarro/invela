@@ -6,7 +6,7 @@
  */
 import { useState } from 'react';
 import { useToast } from './use-toast';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 
 interface SubmissionOptions {
@@ -29,7 +29,7 @@ interface SubmissionResult {
 
 export function useFormSubmission() {
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);

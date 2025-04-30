@@ -9,7 +9,7 @@ import { db } from '@db';
 import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
-import { unlockDependentTasksImmediately, unlockFileVaultAccess } from './synchronous-task-dependencies';
+import { synchronizeTasks, unlockFileVaultAccess } from './synchronous-task-dependencies';
 import { broadcastTaskUpdate } from './websocket';
 import { broadcastCompanyTabsUpdate } from './company-tabs';
 import { Logger } from '../utils/logger';
@@ -128,11 +128,13 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       });
       
       // Unlock KY3P and Open Banking tasks
-      unlockedCount = await unlockDependentTasksImmediately(companyId, taskId, 'kyb');
+      const unlockedTaskIds = await synchronizeTasks(companyId, taskId);
+      unlockedCount = unlockedTaskIds.length;
       logger.info('KYB dependent tasks unlocked immediately', { 
         taskId, 
         companyId, 
-        unlockedCount 
+        unlockedCount,
+        unlockedTaskIds
       });
     } 
     else if (formType === 'open_banking') {
