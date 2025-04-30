@@ -40,20 +40,9 @@ export async function submitForm(
     companyId
   };
   
-  const response = await apiRequest(url, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || `Form submission failed with status: ${response.status}`);
-  }
-  
-  return response.json();
+  // Use the correct signature for apiRequest: (method, url, data)
+  // apiRequest already returns the parsed JSON response
+  return await apiRequest('POST', url, payload);
 }
 
 /**
@@ -74,12 +63,6 @@ export async function getFormSubmissionStatus(
 }> {
   const url = `/api/submissions/status/${formType}/${taskId}`;
   
-  const response = await apiRequest(url);
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || `Failed to get submission status: ${response.status}`);
-  }
-  
-  return response.json();
+  // apiRequest already handles error checking and JSON parsing
+  return await apiRequest(url);
 }
