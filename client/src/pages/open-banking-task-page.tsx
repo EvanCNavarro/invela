@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useRoute } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { useFormSubmission } from '@/hooks/use-form-submission';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { UniversalForm } from '@/components/forms/UniversalForm';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
+import { ConnectionIssueModal } from '@/components/modals/ConnectionIssueModal';
 import getLogger from '@/utils/logger';
 import submissionTracker from '@/utils/submission-tracker';
 
