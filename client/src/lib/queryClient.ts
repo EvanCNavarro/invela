@@ -60,7 +60,29 @@ export async function apiRequest<T>(
     console.log(`[API Response] ${method} ${url} - Status: ${res.status}`);
     
     await throwIfResNotOk(res);
-    return await res.json() as T;
+    
+    // Get the text first to check for HTML content
+    const text = await res.text();
+    
+    // Check if the response is HTML (likely a login redirect or error page)
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+      console.error(`[API Error] ${method} ${url} - Received HTML response instead of JSON`);
+      throw new Error('Server returned HTML instead of JSON. This could be due to an authentication issue or server error.');
+    }
+    
+    // If empty response, return empty object
+    if (!text.trim()) {
+      console.warn(`[API Response] ${method} ${url} - Empty response, returning empty object`);
+      return {} as T;
+    }
+    
+    // Try to parse JSON
+    try {
+      return JSON.parse(text) as T;
+    } catch (jsonError) {
+      console.error(`[API Error] ${method} ${url} - Invalid JSON:`, text.substring(0, 100));
+      throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
+    }
   } catch (error) {
     console.error(`[API Error] ${method} ${url} - Failed:`, error);
     throw error;
