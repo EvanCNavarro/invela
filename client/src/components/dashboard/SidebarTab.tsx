@@ -133,23 +133,55 @@ export function SidebarTab({
   // which is visually unlocked (via localStorage) but server-side locked as disabled
   // and using window.location.href which causes a full page reload.
   // Instead, use wouter navigation and clean up the disabled logic.
+  // CRITICAL ROOT CAUSE FIX: The issue is that isDisabled uses server-side lock status,
+  // but our code in Sidebar.tsx uses localStorage to visually unlock the tab.
+  // This creates a conflict where the link APPEARS clickable but is actually disabled.
+  
+  // Create a special check for File Vault to ensure consistent behavior
+  const isFileVaultSpecialCase = (!isDisabled && label === "File Vault");
+  
+  if (isFileVaultSpecialCase) {
+    console.log(`[SidebarTab] Special case: File Vault tab appears unlocked`);
+  }
+  
   return (
     <Link 
       href={href} 
       onClick={(e) => {
+        // Log all sidebar tab clicks for debugging
+        console.log(`[SidebarTab] Clicked ${label} tab, href=${href}, isDisabled=${isDisabled}`);
+        
         if (isDisabled) {
           e.preventDefault();
           console.log(`[SidebarTab] Tab "${label}" is locked. Redirecting to task-center.`);
           // Don't use window.location.href as it causes full page refresh
-          // Use router navigation instead which is cleaner
+          // Use the wouter routing mechanism which preserves React state
           window.history.pushState({}, '', '/task-center');
-          // Manually trigger a navigation event so that wouter picks up the change
           window.dispatchEvent(new PopStateEvent('popstate'));
+          return;
         }
         
-        // DEBUG: Log clicks on the File Vault tab
+        // Special handling for File Vault tab
         if (href === '/file-vault') {
-          console.log(`[SidebarTab] File Vault tab clicked. isDisabled: ${isDisabled}`);
+          // Since we've shown the File Vault tab as unlocked, we need to ensure it works
+          // properly even if server thinks it's still locked. This prevents the app refresh
+          // issue that happened before.
+          e.preventDefault(); // Stop the default navigation 
+          
+          console.log(`[SidebarTab] File Vault tab clicked - using controlled navigation`);
+          
+          // Use client-side routing instead to avoid the full refresh 
+          window.history.pushState({}, '', '/file-vault');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+          
+          // Also store that we've navigated to file vault in localStorage
+          // This helps with maintaining state across potential refreshes
+          try {
+            localStorage.setItem('navigated_to_file_vault', 'true');
+            localStorage.setItem('file_vault_access_timestamp', new Date().toISOString());
+          } catch (error) {
+            console.error('[SidebarTab] Failed to update localStorage:', error);
+          }
         }
       }}
     >
