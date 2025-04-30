@@ -89,8 +89,8 @@ export const submissionTracker = {
     const eventData: SubmissionEvent = {
       timestamp,
       event,
-      taskId: currentTaskId || undefined,
-      taskType: currentTaskType || undefined,
+      taskId: currentTaskId,  // currentTaskId is already typed as number | string | null
+      taskType: currentTaskType,  // currentTaskType is already typed as string | null
       details,
     };
     
