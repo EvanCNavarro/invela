@@ -81,6 +81,77 @@ export function Sidebar({
     }
   }, [availableTabs, location, company?.id]);
   
+  // IMPROVED: Listen for WebSocket tab unlock updates
+  useEffect(() => {
+    if (!company?.id) return;
+    
+    // Define handler for company tabs updates from WebSocket
+    const handleTabsUpdate = (data: any) => {
+      console.log('[Sidebar] 🔔 WebSocket company_tabs_update received:', data);
+      
+      // Only process if it's for our company
+      if (data.companyId === company.id) {
+        // Force immediate data refresh
+        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+        queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+        
+        console.log('[Sidebar] 🔄 Forcing tabs refresh for company ' + company.id);
+      }
+    };
+    
+    // Define handler for special immediate sidebar refresh event
+    const handleSidebarRefresh = (data: any) => {
+      console.log('[Sidebar] 🚀 WebSocket sidebar_refresh_tabs received:', data);
+      
+      // This is a critical path for IMMEDIATE visual updates
+      if (data.companyId === company.id && data.forceRefresh) {
+        // Force immediate data refresh
+        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+        queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+        
+        console.log('[Sidebar] 🔥 PRIORITY Tabs refresh triggered');
+      }
+    };
+    
+    // Register WebSocket listeners using the subscribe method instead of addMessageHandler
+    // Create an array to hold all the unsubscribe functions
+    const unsubscribeFunctions: Array<() => void> = [];
+    
+    // Subscribe to the company_tabs_update event
+    wsService.subscribe('company_tabs_update', handleTabsUpdate)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to company_tabs_update:', err));
+    
+    // Subscribe to the company_tabs_updated event (alternative format)
+    wsService.subscribe('company_tabs_updated', handleTabsUpdate)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to company_tabs_updated:', err));
+    
+    // Subscribe to the sidebar_refresh_tabs event
+    wsService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to sidebar_refresh_tabs:', err));
+    
+    // Start polling more frequently when we know an update might be coming
+    const intervalId = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+    }, 3000); // Check every 3 seconds instead of 10 seconds
+    
+    return () => {
+      // Unsubscribe from all WebSocket subscriptions
+      unsubscribeFunctions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (e) {
+          console.error('[Sidebar] Error unsubscribing from WebSocket:', e);
+        }
+      });
+      
+      // Clear the polling interval
+      clearInterval(intervalId);
+    };
+  }, [company?.id, queryClient]);
+  
   // CRITICAL FIX: Special auto-unlocking logic for KYB forms and File Vault tab
   useEffect(() => {
     // If we're on the file-vault route, we need to ensure the tab is considered 'unlocked'
