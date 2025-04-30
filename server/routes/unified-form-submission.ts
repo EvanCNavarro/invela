@@ -66,7 +66,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
       const fileId = Math.floor(Math.random() * 10000) + 1; // Simulated file ID
       
       // Broadcast submission status update via WebSocket
-      broadcast('form_submission_update', {
+      broadcast('form_submitted', {
         taskId,
         formType,
         status: 'success',
@@ -96,7 +96,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
       
       // Broadcast error event if we have the taskId and formType
       if (req.body.taskId && req.body.formType) {
-        broadcast('form_submission_update', {
+        broadcast('form_submitted', {
           taskId: req.body.taskId,
           formType: req.body.formType,
           status: 'error',
@@ -199,7 +199,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
       const fileId = Math.floor(Math.random() * 10000) + 1000; // Simulated file ID
       
       // Broadcast submission success event
-      broadcast('form_submission_update', {
+      broadcast('form_submitted', {
         taskId,
         formType,
         status: 'success',

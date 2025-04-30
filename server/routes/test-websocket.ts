@@ -37,7 +37,7 @@ export function createTestWebSocketRoutes(): Router {
       const fileId = Math.floor(Math.random() * 10000) + 1;
       
       // Broadcast the test event
-      broadcast('form_submission_update', {
+      broadcast('form_submitted', {
         taskId,
         formType,
         status: 'success',
@@ -85,7 +85,7 @@ export function createTestWebSocketRoutes(): Router {
       console.log(`[TestWebSocket] Broadcasting test form error event: taskId=${taskId}, formType=${formType}, companyId=${companyId}`);
       
       // Broadcast the test error event
-      broadcast('form_submission_update', {
+      broadcast('form_submitted', {
         taskId,
         formType,
         status: 'error',
@@ -130,7 +130,7 @@ export function createTestWebSocketRoutes(): Router {
       console.log(`[TestWebSocket] Broadcasting test in-progress event: taskId=${taskId}, formType=${formType}, companyId=${companyId}`);
       
       // Broadcast the test in-progress event
-      broadcast('form_submission_update', {
+      broadcast('form_submitted', {
         taskId,
         formType,
         status: 'in_progress',
