@@ -33,7 +33,7 @@ export async function submitForm(
   error?: string;
   timestamp?: string;
 }> {
-  const url = `/api/forms/submit/${formType}/${taskId}`;
+  const url = `/api/form-submission/submit/${formType}/${taskId}`;
   
   const payload = {
     formData,
@@ -61,7 +61,7 @@ export async function getFormSubmissionStatus(
   message: string;
   submissionDate?: string;
 }> {
-  const url = `/api/forms/status/${formType}/${taskId}`;
+  const url = `/api/form-submission/status/${formType}/${taskId}`;
   
   // apiRequest already handles error checking and JSON parsing
   return await apiRequest(url);
