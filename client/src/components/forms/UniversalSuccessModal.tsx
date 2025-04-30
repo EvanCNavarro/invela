@@ -1,21 +1,36 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { CheckCircle, FileText, ArrowRight, Shield, Check, Archive } from "lucide-react";
+import { 
+  CheckCircle, 
+  FileText, 
+  ArrowRight, 
+  Shield, 
+  Check, 
+  Archive, 
+  LayoutDashboard, 
+  PieChart, 
+  FileArchive, 
+  Folder 
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 export interface SubmissionResult {
   fileId?: number;
+  fileName?: string; // Added explicit fileName for generated files
   downloadUrl?: string;
   taskId?: number;
   taskStatus?: string;
   nextTaskId?: number;
   riskScore?: number;
+  unlockedTabs?: string[]; // Added to track which tabs were unlocked
   completedActions?: SubmissionAction[];
   // For KYB responses which may contain nested data property
   data?: {
     fileId?: number;
+    fileName?: string;
     downloadUrl?: string;
+    unlockedTabs?: string[];
     [key: string]: any; // Other data properties
   };
   // Add other task-specific fields here
@@ -108,125 +123,217 @@ export function UniversalSuccessModal({
   
   // Helper function to get the appropriate action cards based on completed actions
   const getActionCards = () => {
-    // Default actions - always show "task completed" if no specific actions provided
-    if (!submissionResult.completedActions || submissionResult.completedActions.length === 0) {
-      return [
-        <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
-          <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-gray-900">Task Completed</p>
-            <p className="text-gray-600">Your form has been successfully submitted and marked as complete.</p>
-          </div>
-        </div>
-      ];
-    }
+    const cards = [];
     
-    // Map the completed actions to UI cards
-    return submissionResult.completedActions.map((action, index) => {
-      // Select icon based on action type
-      let ActionIcon = FileText;
-      let bgClass = "bg-white";
-      let borderClass = "border-gray-200";
-      let iconColor = "text-gray-600";
-      
-      // Customize appearance based on action type
-      switch(action.type) {
-        case "task_completion":
-          ActionIcon = Check;
-          bgClass = "bg-green-50";
-          borderClass = "border-green-200";
-          iconColor = "text-green-600";
-          break;
-        case "file_generation":
-          ActionIcon = FileText;
-          // White background for middle components
-          bgClass = "bg-white";
-          borderClass = "border-gray-200";
-          iconColor = "text-gray-600";
-          break;
-        case "file_vault_unlocked":
-          // Use the Archive icon from lucide-react
-          ActionIcon = Archive;
-          // White background for middle components
-          bgClass = "bg-white";
-          borderClass = "border-gray-200";
-          iconColor = "text-gray-600";
-          break;
-        case "next_task":
-          ActionIcon = ArrowRight;
-          bgClass = "bg-indigo-50";
-          borderClass = "border-indigo-200";
-          iconColor = "text-indigo-600";
-          break;
-        case "risk_assessment":
-          ActionIcon = Shield;
-          // White background for middle components
-          bgClass = "bg-white";
-          borderClass = "border-gray-200";
-          iconColor = "text-gray-600";
-          break;
-      }
-      
-      return (
-        <div key={`action-${index}`} className={`flex items-start gap-3 border rounded-md p-3 ${bgClass} ${borderClass}`}>
-          <ActionIcon className={`h-5 w-5 ${iconColor} mt-0.5 flex-shrink-0`} />
+    // Start with basic task completion card
+    cards.push(
+      <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
+        <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="font-medium text-gray-900">Task Completed</p>
+          <p className="text-gray-600">Your form has been successfully submitted and marked as complete.</p>
+        </div>
+      </div>
+    );
+    
+    // Add file generation card if a file was generated
+    const fileId = submissionResult.fileId || 
+                   (submissionResult.data && 'fileId' in submissionResult.data ? submissionResult.data.fileId : undefined);
+    const fileName = submissionResult.fileName || 
+                     (submissionResult.data && 'fileName' in submissionResult.data ? submissionResult.data.fileName : undefined);
+    
+    if (fileId) {
+      cards.push(
+        <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-white border-gray-200">
+          <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-medium text-gray-900">{action.description}</p>
-            {action.data?.details && (
-              <p className="text-gray-600">{action.data.details}</p>
-            )}
+            <p className="font-medium text-gray-900">Report Generated</p>
+            <p className="text-gray-600">
+              {fileName 
+                ? `The file "${fileName}" has been created and saved to your file vault.` 
+                : `A report has been generated and saved to your file vault.`}
+            </p>
           </div>
         </div>
       );
-    });
+    }
+    
+    // Add tab unlocking card if tabs were unlocked
+    const unlockedTabs = submissionResult.unlockedTabs || 
+                         (submissionResult.data && 'unlockedTabs' in submissionResult.data ? submissionResult.data.unlockedTabs : undefined);
+    
+    if (unlockedTabs && unlockedTabs.length > 0) {
+      // Function to get tab display info
+      const getTabDisplayInfo = (tabName: string): { name: string; icon: typeof LayoutDashboard } => {
+        switch(tabName) {
+          case 'dashboard':
+            return { name: 'Dashboard', icon: LayoutDashboard };
+          case 'insights':
+            return { name: 'Insights', icon: PieChart };
+          case 'file-vault':
+            return { name: 'File Vault', icon: Folder };
+          case 'documents':
+            return { name: 'Documents', icon: FileArchive };
+          default:
+            // Default case for unknown tabs
+            return { name: tabName.replace(/-/g, ' '), icon: Shield };
+        }
+      };
+      
+      // Format the list of unlocked tabs
+      const tabDescriptions = unlockedTabs.map(tab => {
+        const tabInfo = getTabDisplayInfo(tab);
+        return tabInfo.name;
+      }).join(', ');
+      
+      cards.push(
+        <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
+          <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-gray-900">New Access Granted</p>
+            <p className="text-gray-600">
+              You now have access to: <span className="font-medium text-blue-700">{tabDescriptions}</span>
+            </p>
+          </div>
+        </div>
+      );
+    }
+    
+    // Add any additional cards from completedActions
+    if (submissionResult.completedActions && submissionResult.completedActions.length > 0) {
+      submissionResult.completedActions.forEach((action, index) => {
+        // Skip actions that we've already covered with our custom cards
+        if (action.type === 'file_generation' && fileId) return;
+        if (action.type === 'tabs_unlocked' && unlockedTabs) return;
+        if (action.type === 'task_completion') return; // Already have a default task completion card
+        
+        // Select icon based on action type
+        let ActionIcon = FileText;
+        let bgClass = "bg-white";
+        let borderClass = "border-gray-200";
+        let iconColor = "text-gray-600";
+        
+        // Customize appearance based on action type
+        switch(action.type) {
+          case "next_task":
+            ActionIcon = ArrowRight;
+            bgClass = "bg-indigo-50";
+            borderClass = "border-indigo-200";
+            iconColor = "text-indigo-600";
+            break;
+          case "risk_assessment":
+            ActionIcon = Shield;
+            bgClass = "bg-white";
+            borderClass = "border-gray-200";
+            iconColor = "text-gray-600";
+            break;
+          case "file_vault_unlocked":
+            ActionIcon = Archive;
+            bgClass = "bg-blue-50";
+            borderClass = "border-blue-200";
+            iconColor = "text-blue-600";
+            break;
+        }
+        
+        cards.push(
+          <div key={`action-${index}`} className={`flex items-start gap-3 border rounded-md p-3 ${bgClass} ${borderClass}`}>
+            <ActionIcon className={`h-5 w-5 ${iconColor} mt-0.5 flex-shrink-0`} />
+            <div>
+              <p className="font-medium text-gray-900">{action.description}</p>
+              {action.data?.details && (
+                <p className="text-gray-600">{action.data.details}</p>
+              )}
+            </div>
+          </div>
+        );
+      });
+    }
+    
+    return cards;
   };
   
   // Determine the best action buttons based on completed actions
   const getActionButtons = () => {
     const buttons = [];
     
-    // File download button (if a file was generated)
-    const fileAction = submissionResult.completedActions?.find(a => a.type === "file_generation");
-    const hasFileAction = fileAction || submissionResult.fileId || submissionResult.downloadUrl;
-    // Look for fileId in different locations, including nested in a data property if it's from the KYB response
-    const hasFileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId || 
-                      (submissionResult.data && typeof submissionResult.data === 'object' ? submissionResult.data.fileId : undefined);
+    // Get unlocked tabs
+    const unlockedTabs = submissionResult.unlockedTabs || 
+                        (submissionResult.data && 'unlockedTabs' in submissionResult.data ? submissionResult.data.unlockedTabs : undefined);
     
-    if (hasFileAction || hasFileId) {
-      // First, add a direct download button for this specific file
-      if (hasFileId) {
-        // Get the fileId from any of the possible locations
-        const fileId = fileAction?.fileId || fileAction?.data?.fileId || submissionResult.fileId || 
-                      (submissionResult.data && typeof submissionResult.data === 'object' ? submissionResult.data.fileId : undefined);
-        const buttonText = fileAction?.data?.buttonText || "Download File";
+    // File download button (if a file was generated)
+    const fileId = submissionResult.fileId || 
+                  (submissionResult.data && 'fileId' in submissionResult.data ? submissionResult.data.fileId : undefined);
+    
+    // Prioritize specific navigation based on task type and unlocked tabs
+    if (unlockedTabs && unlockedTabs.length > 0) {
+      // Function to get tab route info
+      const getTabRouteInfo = (tabName: string): { path: string; displayName: string; icon: typeof LayoutDashboard } => {
+        switch(tabName) {
+          case 'dashboard':
+            return { path: '/dashboard', displayName: 'View Dashboard', icon: LayoutDashboard };
+          case 'insights':
+            return { path: '/insights', displayName: 'View Insights', icon: PieChart };
+          case 'file-vault':
+            return { path: '/file-vault', displayName: 'View File Vault', icon: Folder };
+          case 'documents':
+            return { path: '/documents', displayName: 'View Documents', icon: FileArchive };
+          default:
+            // Default case for unknown tabs
+            return { path: `/${tabName}`, displayName: `View ${tabName.replace(/-/g, ' ')}`, icon: Folder };
+        }
+      };
+      
+      // Determine which tab to prioritize for navigation
+      // We'll prioritize in this order: dashboard, insights, file-vault
+      let primaryTab = null;
+      
+      if (unlockedTabs.includes('dashboard')) {
+        primaryTab = 'dashboard';
+      } else if (unlockedTabs.includes('insights')) {
+        primaryTab = 'insights';
+      } else if (unlockedTabs.includes('file-vault')) {
+        primaryTab = 'file-vault';
+      } else if (unlockedTabs.length > 0) {
+        // Just use the first unlocked tab
+        primaryTab = unlockedTabs[0];
+      }
+      
+      if (primaryTab) {
+        const tabInfo = getTabRouteInfo(primaryTab);
+        const TabIcon = tabInfo.icon;
         
         buttons.push(
           <Button
-            key="download-file"
-            variant="outline" 
+            key={`view-${primaryTab}`}
             onClick={() => {
-              // Use the /api/files/:id/download endpoint for direct download
-              window.open(`/api/files/${fileId}/download`, '_blank');
+              navigate(tabInfo.path);
+              onOpenChange(false);
             }}
             className="flex-1"
           >
-            {buttonText}
+            {tabInfo.displayName}
+            <TabIcon className="ml-2 h-4 w-4" />
           </Button>
         );
       }
-      
-      // Also include a button to navigate to the file vault
+    }
+    
+    // If we have a generated file, offer download
+    if (fileId) {
+      const fileName = submissionResult.fileName || 
+                      (submissionResult.data && 'fileName' in submissionResult.data ? submissionResult.data.fileName : undefined);
+                      
       buttons.push(
         <Button
-          key="view-files"
-          variant="outline"
+          key="download-file"
+          variant={buttons.length > 0 ? "outline" : "default"}
           onClick={() => {
-            navigate('/file-vault');
-            onOpenChange(false);
+            // Use the /api/files/:id/download endpoint for direct download
+            window.open(`/api/files/${fileId}/download`, '_blank');
           }}
           className="flex-1"
         >
-          View File Vault
+          {fileName ? `Download ${fileName.split('.')[0]}` : "Download Report"}
         </Button>
       );
     }
@@ -237,6 +344,7 @@ export function UniversalSuccessModal({
       buttons.push(
         <Button
           key="next-task"
+          variant={buttons.length > 0 ? "outline" : "default"}
           onClick={() => {
             navigate(nextTaskAction.data?.url || '/task-center');
             onOpenChange(false);
@@ -247,8 +355,10 @@ export function UniversalSuccessModal({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       );
-    } else {
-      // Default: go to task center
+    }
+    
+    // If no specific buttons were added, add default "Go to Task Center" button
+    if (buttons.length === 0) {
       buttons.push(
         <Button
           key="task-center"
