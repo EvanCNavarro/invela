@@ -49,6 +49,7 @@ import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { useUser } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
+import { userContext } from '@/lib/user-context';
 
 // Import WebSocket-based form submission listener and related components
 import FormSubmissionListener from './FormSubmissionListener';
@@ -270,14 +271,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Get current company ID from user context
         let companyId;
         try {
-          const userContext = sessionStorage.getItem('user-context');
-          if (userContext) {
-            const parsedContext = JSON.parse(userContext);
-            companyId = parsedContext?.companyId;
-            logger.info(`Data isolation: Using company ID ${companyId} for form service`);
+          // Use the proper userContext utility instead of direct sessionStorage access
+          const contextData = userContext.getContext();
+          companyId = contextData?.companyId;
+          if (companyId) {
+            logger.info(`Data isolation: Using company ID ${companyId} from user context`);
+          } else if (company?.id) {
+            // Fallback to company from useCurrentCompany hook if available
+            companyId = company.id;
+            logger.info(`Data isolation: Using company ID ${companyId} from current company`);
           }
         } catch (error) {
-          logger.warn('Error accessing company context:', error);
+          logger.warn('Error accessing user context:', error);
         }
         
         // Try to get a company-specific form service instance
@@ -315,7 +320,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     };
     
     fetchTemplate();
-  }, [taskType, taskId]);
+  }, [taskType, taskId, company]);
   
   // Step 2: Initialize form with fields and sections from template or service
   useEffect(() => {
