@@ -1,209 +1,349 @@
 /**
  * Synchronous Task Dependencies Service
  * 
- * This service handles synchronous task dependency unlocking
- * to ensure that once a task is completed, dependent tasks
- * are immediately unlocked without the previous 30-second delay.
- * 
- * It also provides utility functions for unlocking other company features
- * like File Vault access.
+ * This service provides immediate task unlocking after form submissions,
+ * ensuring users can proceed to the next step without delay.
  */
-import { db } from '@db';
-import { tasks as tasksTable, companies } from '@db/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { Logger } from './logger';
-import { broadcastMessage } from './websocket';
 
-const logger = new Logger('SynchronousTaskDeps');
+import { db } from "@db";
+import { tasks } from "@db/schema";
+import { eq, and, sql } from "drizzle-orm";
+import { Logger } from "./logger";
+import { withRetry } from "../utils/db-retry";
+import { broadcastTaskUpdate } from "../services/websocket";
+
+const logger = new Logger("TaskDependencies");
 
 /**
- * Synchronously unlock dependent tasks for a company
- * after a task is completed
+ * Unlock dependent tasks based on completed task type
  * 
  * @param companyId The company ID
- * @param completedTaskId The ID of the task that was just completed
- * @returns Promise resolving to an array of unlocked task IDs
+ * @param completedTaskType The type of task that was completed
+ * @returns Array of IDs of tasks that were unlocked
+ */
+/**
+ * Synchronize tasks based on dependencies
+ * This is an alias for unlockDependentTasks for backward compatibility
+ * 
+ * @param companyId Company ID
+ * @param triggeredByTaskId The task ID that triggered the synchronization (optional)
+ * @returns Array of unlocked task IDs
  */
 export async function synchronizeTasks(
+  companyId: number, 
+  triggeredByTaskId?: number
+): Promise<number[]> {
+  logger.info(`[TaskDependencies] Synchronizing tasks for company ${companyId}`, {
+    triggeredByTaskId
+  });
+  
+  // Get the task type of the triggering task if provided
+  let completedTaskType = "unknown";
+  if (triggeredByTaskId) {
+    try {
+      const [triggeringTask] = await db
+        .select({ task_type: tasks.task_type })
+        .from(tasks)
+        .where(eq(tasks.id, triggeredByTaskId))
+        .limit(1);
+        
+      if (triggeringTask) {
+        completedTaskType = triggeringTask.task_type;
+      }
+    } catch (error) {
+      logger.error(`[TaskDependencies] Error getting triggering task type:`, error);
+    }
+  }
+  
+  // Call the main unlockDependentTasks function
+  return unlockDependentTasks(companyId, completedTaskType);
+}
+
+export async function unlockDependentTasks(
   companyId: number,
-  completedTaskId: number
+  completedTaskType: string
+): Promise<number[]> {
+  logger.info(`[TaskDependencies] Unlocking dependent tasks for ${completedTaskType}`, { companyId });
+  
+  try {
+    const now = new Date().toISOString();
+    let tasksToUnlock: number[] = [];
+    
+    // Determine which tasks to unlock based on the completed task type
+    switch (completedTaskType) {
+      case "kyb":
+        // Unlock KY3P and Open Banking after KYB completion
+        tasksToUnlock = await findLockedTasksByType(companyId, ["ky3p", "open_banking"]);
+        break;
+        
+      case "ky3p":
+        // Specific dependencies for KY3P
+        if (await checkKybCompleted(companyId)) {
+          // Only unlock Open Banking if KYB is also completed
+          tasksToUnlock = await findLockedTasksByType(companyId, ["open_banking"]);
+        }
+        break;
+        
+      case "open_banking":
+        // Unlock dashboard access and File Vault
+        await unlockDashboardAndInsightsTabs(companyId);
+        await unlockFileVaultAccess(companyId);
+        break;
+    }
+    
+    // No tasks to unlock
+    if (tasksToUnlock.length === 0) {
+      logger.info(`[TaskDependencies] No dependent tasks to unlock for ${completedTaskType}`, { companyId });
+      return [];
+    }
+    
+    // Update task metadata to unlock tasks
+    const unlockedTasks = await withRetry(
+      async () => {
+        const updates = [];
+        
+        for (const taskId of tasksToUnlock) {
+          // Update each task individually
+          const [updated] = await db
+            .update(tasks)
+            .set({
+              metadata: {
+                locked: false,
+                prerequisite_completed: true,
+                prerequisite_completed_at: now
+              }
+            })
+            .where(eq(tasks.id, taskId))
+            .returning({ id: tasks.id });
+            
+          if (updated) {
+            updates.push(updated.id);
+            
+            // Broadcast WebSocket update
+            broadcastTaskUpdate({
+              id: taskId,
+              status: "not_started",
+              metadata: {
+                locked: false,
+                prerequisite_completed: true,
+                prerequisite_completed_at: now
+              }
+            });
+            
+            logger.info(`[TaskDependencies] Unlocked task ${taskId}`);
+          }
+        }
+        
+        return updates;
+      },
+      {
+        maxRetries: 3,
+        operation: `Unlock dependent tasks for company ${companyId}`
+      }
+    );
+    
+    logger.info(`[TaskDependencies] Successfully unlocked ${unlockedTasks.length} tasks`, { 
+      companyId, 
+      taskIds: unlockedTasks 
+    });
+    
+    return unlockedTasks;
+  } catch (error) {
+    logger.error(`[TaskDependencies] Failed to unlock dependent tasks:`, error);
+    return [];
+  }
+}
+
+/**
+ * Find locked tasks by type
+ * 
+ * @param companyId Company ID
+ * @param taskTypes Array of task types to find
+ * @returns Array of task IDs
+ */
+async function findLockedTasksByType(
+  companyId: number,
+  taskTypes: string[]
 ): Promise<number[]> {
   try {
-    // First, find the completed task to determine its type
-    const [completedTask] = await db
-      .select()
-      .from(tasksTable)
-      .where(
-        and(
-          eq(tasksTable.id, completedTaskId),
-          eq(tasksTable.company_id, companyId)
-        )
-      )
-      .limit(1);
-
-    if (!completedTask) {
-      logger.warn(`Task ${completedTaskId} not found for company ${companyId}`);
-      return [];
-    }
-
-    logger.info(`Task ${completedTaskId} (${completedTask.task_type}) completed for company ${companyId}`);
-
-    // Find dependent tasks that could be unlocked
-    // For simplicity, here we're unlocking based on task order/sequence
-    // In a real implementation, this would have more complex dependency rules
-    const dependentTasks = await db
-      .select()
-      .from(tasksTable)
-      .where(
-        and(
-          eq(tasksTable.company_id, companyId),
-          sql`${tasksTable.status} = 'locked'`
-        )
-      );
-
-    if (dependentTasks.length === 0) {
-      logger.info(`No locked tasks found for company ${companyId}`);
-      return [];
-    }
-
-    // Determine which tasks should be unlocked based on the type of task that was completed
-    const tasksToUnlock = determineDependentTasks(completedTask.task_type, dependentTasks);
+    const lockedTasks = await withRetry(
+      async () => {
+        return db
+          .select({ id: tasks.id, type: tasks.task_type })
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.company_id, companyId),
+              // Only include tasks where metadata.locked is true or undefined
+              sql`tasks.metadata->>'locked' = 'true' OR tasks.metadata->>'locked' IS NULL`
+            )
+          );
+      },
+      {
+        maxRetries: 2,
+        operation: "Find locked tasks"
+      }
+    );
     
-    if (tasksToUnlock.length === 0) {
-      logger.info(`No dependent tasks found for task type: ${completedTask.task_type}`);
-      return [];
-    }
-
-    // Unlock the dependent tasks
-    const unlockedTaskIds: number[] = [];
-    
-    for (const taskId of tasksToUnlock) {
-      await db
-        .update(tasksTable)
-        .set({ status: 'not_started' })
-        .where(eq(tasksTable.id, taskId));
+    // Filter tasks by requested types
+    return lockedTasks
+      .filter(task => taskTypes.includes(task.type))
+      .map(task => task.id);
       
-      unlockedTaskIds.push(taskId);
-      
-      logger.info(`Unlocked dependent task: ${taskId}`);
-    }
-
-    return unlockedTaskIds;
   } catch (error) {
-    logger.error(`Error synchronizing tasks for company ${companyId}:`, error);
-    throw error;
+    logger.error(`[TaskDependencies] Error finding locked tasks:`, error);
+    return [];
   }
 }
 
 /**
- * Helper function to determine which tasks should be unlocked
- * based on the type of task that was completed
+ * Check if KYB is completed for a company
  * 
- * @param completedTaskType The type of the completed task
- * @param lockedTasks Array of locked tasks
- * @returns Array of task IDs that should be unlocked
+ * @param companyId Company ID
+ * @returns Boolean indicating if KYB is completed
  */
-function determineDependentTasks(
-  completedTaskType: string,
-  lockedTasks: any[]
-): number[] {
-  // For this implementation, we're using a simple ruleset
-  // In a real system, this would be more sophisticated
-  const taskIdsToUnlock: number[] = [];
-
-  // Example rules:
-  // 1. When a 'kyb' task is completed, unlock 'ky3p' and 'security' tasks
-  // 2. When a 'ky3p' task is completed, unlock 'open_banking' tasks
-  // 3. When an 'open_banking' task is completed, there's nothing to unlock
-
-  switch(completedTaskType) {
-    case 'kyb':
-      // Find and unlock KY3P and security tasks
-      lockedTasks.forEach(task => {
-        if (task.task_type === 'ky3p' || task.task_type === 'security') {
-          taskIdsToUnlock.push(task.id);
-        }
-      });
-      break;
-      
-    case 'ky3p':
-    case 'security':
-      // Find and unlock Open Banking tasks
-      lockedTasks.forEach(task => {
-        if (task.task_type === 'open_banking') {
-          taskIdsToUnlock.push(task.id);
-        }
-      });
-      break;
-      
-    default:
-      // No tasks to unlock for other task types
-      break;
+async function checkKybCompleted(companyId: number): Promise<boolean> {
+  try {
+    const kybTasks = await withRetry(
+      async () => {
+        return db
+          .select({ status: tasks.status })
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.company_id, companyId),
+              eq(tasks.task_type, "kyb")
+            )
+          );
+      },
+      {
+        maxRetries: 2,
+        operation: "Check KYB completion"
+      }
+    );
+    
+    // Check if any KYB task is completed or submitted
+    return kybTasks.some(task => 
+      task.status === "completed" || task.status === "submitted"
+    );
+    
+  } catch (error) {
+    logger.error(`[TaskDependencies] Error checking KYB completion:`, error);
+    return false;
   }
-
-  return taskIdsToUnlock;
 }
 
 /**
- * Unlock File Vault access for a company
+ * Unlock File Vault access for the company
  * 
- * This function updates the company record to enable file vault access
- * and broadcasts a WebSocket message to update the UI
- * 
- * @param companyId The company ID
- * @returns Promise resolving to true if successful, false otherwise
+ * @param companyId Company ID
  */
 export async function unlockFileVaultAccess(companyId: number): Promise<boolean> {
   try {
-    logger.info(`Unlocking file vault access for company ${companyId}`);
+    logger.info(`[TaskDependencies] Unlocking File Vault access for company:`, { companyId });
     
-    // Get current company data
-    const companyData = await db
-      .select()
-      .from(companies)
-      .where(eq(companies.id, companyId))
-      .limit(1);
+    // Update company settings to enable file_vault access
+    await withRetry(
+      async () => {
+        return db.execute(sql`
+          UPDATE companies
+          SET available_tabs = jsonb_set(
+            COALESCE(available_tabs, '[]'::jsonb),
+            '{-1}',
+            '"file_vault"',
+            true
+          )
+          WHERE id = ${companyId}
+        `);
+      },
+      {
+        maxRetries: 2,
+        operation: "Unlock File Vault access"
+      }
+    );
     
-    if (companyData.length === 0) {
-      logger.warn(`Company ${companyId} not found when unlocking file vault`);
-      return false;
-    }
+    // Broadcast company update to refresh UI
+    broadcastCompanyUpdate(companyId);
     
-    const company = companyData[0];
-    
-    // Check if file vault tab exists in available_tabs
-    const availableTabs = company.available_tabs || [];
-    const fileVaultAlreadyUnlocked = availableTabs.includes('file_vault');
-    
-    if (fileVaultAlreadyUnlocked) {
-      logger.info(`File vault already unlocked for company ${companyId}`);
-      return true;
-    }
-    
-    // Add file_vault to available_tabs
-    const updatedTabs = [...availableTabs, 'file_vault'];
-    
-    // Update company record
-    await db
-      .update(companies)
-      .set({ 
-        available_tabs: updatedTabs,
-        updated_at: new Date()
-      })
-      .where(eq(companies.id, companyId));
-    
-    logger.info(`File vault access unlocked for company ${companyId}`);
-    
-    // Broadcast WebSocket message to update UI
-    broadcastMessage('company_tabs_updated', {
-      companyId,
-      availableTabs: updatedTabs,
-      timestamp: new Date().toISOString()
-    });
-    
+    // Return success
     return true;
   } catch (error) {
-    logger.error(`Error unlocking file vault access for company ${companyId}:`, error);
+    logger.error(`[TaskDependencies] Error unlocking File Vault access:`, error);
     return false;
+  }
+}
+
+/**
+ * Unlock Dashboard and Insights tabs for the company
+ * 
+ * @param companyId Company ID
+ */
+export async function unlockDashboardAndInsightsTabs(companyId: number): Promise<boolean> {
+  try {
+    logger.info(`[TaskDependencies] Unlocking Dashboard and Insights tabs for company:`, { companyId });
+    
+    // Update company settings to enable dashboard and insights access
+    await withRetry(
+      async () => {
+        // First add dashboard tab
+        await db.execute(sql`
+          UPDATE companies
+          SET available_tabs = jsonb_set(
+            COALESCE(available_tabs, '[]'::jsonb),
+            '{-1}',
+            '"dashboard"',
+            true
+          )
+          WHERE id = ${companyId}
+        `);
+        
+        // Then add insights tab
+        return db.execute(sql`
+          UPDATE companies
+          SET available_tabs = jsonb_set(
+            available_tabs,
+            '{-1}',
+            '"insights"',
+            true
+          )
+          WHERE id = ${companyId}
+        `);
+      },
+      {
+        maxRetries: 2,
+        operation: "Unlock Dashboard and Insights tabs"
+      }
+    );
+    
+    // Broadcast company update to refresh UI
+    broadcastCompanyUpdate(companyId);
+    
+    // Return success
+    return true;
+  } catch (error) {
+    logger.error(`[TaskDependencies] Error unlocking Dashboard and Insights tabs:`, error);
+    return false;
+  }
+}
+
+/**
+ * Broadcast company update to all connected clients
+ * 
+ * @param companyId Company ID
+ */
+function broadcastCompanyUpdate(companyId: number): void {
+  try {
+    // Import the WebSocket broadcast function
+    const { broadcastCompanyTabsUpdate } = require("./websocket");
+    
+    // Broadcast update to refresh company tabs in the UI
+    if (typeof broadcastCompanyTabsUpdate === "function") {
+      broadcastCompanyTabsUpdate(companyId, ["file-vault"], { 
+        cache_invalidation: true,
+        source: "task_dependency_unlock"
+      });
+    }
+  } catch (error) {
+    logger.error(`[TaskDependencies] Error broadcasting company update:`, error);
   }
 }

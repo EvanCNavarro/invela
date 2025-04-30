@@ -1,30 +1,26 @@
 /**
- * Database Connection Retry Utility
+ * Database Retry Utility
  * 
- * This utility provides retry logic with exponential backoff for database operations
- * to handle temporary connection issues with Neon PostgreSQL.
+ * This utility provides a way to retry database operations when they fail
+ * due to connection issues, with exponential backoff.
  */
 
-import { db } from "@db";
-import { sql } from "drizzle-orm";
-import { Logger } from "../services/logger";
+import { Logger } from '../services/logger';
 
-const logger = new Logger("DBRetry");
+const logger = new Logger('DBRetry');
 
 interface RetryOptions {
   maxRetries?: number;
-  initialDelay?: number;
-  maxDelay?: number;
+  baseDelay?: number;
   operation?: string;
-  logErrors?: boolean;
 }
 
 /**
- * Execute a database operation with retry logic
+ * Execute a database operation with retry capabilities
  * 
- * @param operation Function that performs the database operation
- * @param options Retry configuration options
- * @returns Result of the database operation
+ * @param operation Function to execute
+ * @param options Retry options
+ * @returns Result of the operation
  */
 export async function withRetry<T>(
   operation: () => Promise<T>,
@@ -32,95 +28,74 @@ export async function withRetry<T>(
 ): Promise<T> {
   const {
     maxRetries = 3,
-    initialDelay = 500,
-    maxDelay = 5000,
-    operation: operationName = "Database operation",
-    logErrors = true,
+    baseDelay = 500,
+    operation: operationName = 'database operation'
   } = options;
-
-  let attempt = 0;
-  let delay = initialDelay;
-  let lastError: Error = new Error("Retry failed");
-
-  while (attempt < maxRetries) {
+  
+  let retryCount = 0;
+  let lastError: Error | null = null;
+  
+  while (retryCount <= maxRetries) {
     try {
-      return await operation();
+      const result = await operation();
+      
+      if (retryCount > 0) {
+        // Log success after retries
+        logger.info(`Successfully completed ${operationName} after ${retryCount} retries`);
+      }
+      
+      return result;
     } catch (error) {
-      attempt++;
       lastError = error instanceof Error ? error : new Error(String(error));
+      retryCount++;
       
-      // Determine if this error is retryable
-      const isConnectionError = isRetryableError(lastError);
-      
-      if (!isConnectionError || attempt >= maxRetries) {
-        if (logErrors) {
-          logger.error(`${operationName} failed after ${attempt} attempts:`, lastError);
-        }
+      if (retryCount <= maxRetries) {
+        // Calculate backoff delay with jitter
+        const delay = Math.floor(
+          baseDelay * Math.pow(2, retryCount - 1) * (1 + Math.random() * 0.1)
+        );
+        
+        logger.warn(
+          `Retry attempt ${retryCount}/${maxRetries} for ${operationName} after ${delay}ms delay: ${lastError.message}`
+        );
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Max retries reached
+        logger.error(
+          `Failed ${operationName} after ${maxRetries} retry attempts: ${lastError.message}`,
+          lastError
+        );
         throw lastError;
       }
-      
-      if (logErrors) {
-        logger.warn(`${operationName} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms:`, 
-          lastError.message);
-      }
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Exponential backoff with jitter
-      delay = Math.min(delay * 2, maxDelay) * (0.8 + Math.random() * 0.4);
     }
   }
   
-  throw lastError;
+  // This should never happen, but TypeScript needs it
+  throw lastError || new Error(`Unknown error in ${operationName}`);
 }
 
 /**
- * Test the database connection with a simple query
+ * Check if an error is a database connection error
  * 
- * @returns True if connection is successful, false otherwise
+ * @param error Error to check
+ * @returns True if it's a connection error
  */
-export async function testDatabaseConnection(): Promise<boolean> {
-  try {
-    // Simple test query
-    const result = await withRetry(
-      () => db.execute(sql`SELECT 1 AS test`), 
-      { 
-        maxRetries: 1, 
-        operation: "Test database connection",
-        logErrors: false 
-      }
-    );
-    return true;
-  } catch (error) {
-    logger.error("Database connection test failed:", error);
-    return false;
-  }
-}
-
-/**
- * Determine if an error is retryable based on error message patterns
- * 
- * @param error The error to check
- * @returns True if the error is retryable
- */
-function isRetryableError(error: Error): boolean {
-  if (!error || !error.message) return false;
+export function isConnectionError(error: Error): boolean {
+  const message = error.message.toLowerCase();
   
-  const errorMessage = error.message.toLowerCase();
-  
-  // Connection-related errors that are typically transient
   return (
-    errorMessage.includes("connection") ||
-    errorMessage.includes("timeout") ||
-    errorMessage.includes("socket") ||
-    errorMessage.includes("network") ||
-    errorMessage.includes("econnreset") ||
-    errorMessage.includes("econnrefused") ||
-    errorMessage.includes("could not connect") ||
-    errorMessage.includes("connection terminated") ||
-    errorMessage.includes("terminating connection") ||
-    errorMessage.includes("pool") ||
-    errorMessage.includes("too many clients")
+    message.includes('connection') ||
+    message.includes('timeout') ||
+    message.includes('network') ||
+    message.includes('econnrefused') ||
+    message.includes('socket') ||
+    message.includes('unreachable')
   );
 }
+
+export default {
+  withRetry,
+  isConnectionError
+};
