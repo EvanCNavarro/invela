@@ -877,21 +877,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const handleSubmissionSuccess = (event: FormSubmissionEvent) => {
     logger.info(`Received WebSocket form submission success event for task ${taskId}`, event);
     
-    // Only show modal and toast if not already shown
+    // Only update state and let parent component handle the modal display
+    // This prevents duplicate modals since the parent TaskPage also listens for these events
     if (!modalShownRef.current) {
       setSubmissionResult(event);
-      setShowSuccessModal(true);
-      modalShownRef.current = true;
       
-      // Update UI to reflect the submitted state
+      // Let the parent TaskPage handle showing the modal to prevent duplicates
+      // setShowSuccessModal(true);
+      
+      modalShownRef.current = true;
       setIsSubmitting(false);
       
-      // Show a toast notification
-      toast({
-        title: "Form Submitted Successfully",
-        description: `Your ${taskType} form has been successfully submitted.`,
-        variant: "success",
-      });
+      // Let the parent component handle displaying notifications
+      // to avoid duplicate toasts and modals
     }
   };
   
