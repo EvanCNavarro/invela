@@ -15,6 +15,7 @@ import { registerStandardizedServices, useStandardizedServices } from "./service
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
 import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
 import WebSocketTestPage from "@/pages/websocket-test";
+import FormSubmissionTestPage from "@/pages/form-submission-test";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
