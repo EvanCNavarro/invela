@@ -46,7 +46,9 @@ interface SubmissionAction {
 interface SubmissionResult {
   taskId: number;
   fileId?: number;
+  fileName?: string;
   taskStatus: string;
+  unlockedTabs?: string[];
   completedActions?: SubmissionAction[];
 }
 
@@ -142,14 +144,15 @@ export default function TaskPage({ params }: TaskPageProps) {
       setFileId(event.fileId);
     }
     
-    if (event.actions) {
-      setSubmissionResult({
-        taskId: event.taskId,
-        fileId: event.fileId,
-        taskStatus: 'submitted',
-        completedActions: event.actions
-      });
-    }
+    // Store the submission result with all needed data for the UniversalSuccessModal
+    setSubmissionResult({
+      taskId: event.taskId,
+      fileId: event.fileId,
+      fileName: event.fileName,
+      taskStatus: 'submitted',
+      unlockedTabs: event.unlockedTabs,
+      completedActions: event.actions || []
+    });
     
     // Set state to update UI
     setIsSubmitted(true);
@@ -345,15 +348,20 @@ export default function TaskPage({ params }: TaskPageProps) {
           onError={handleFormSubmissionError}
         />
         
-        {/* Success modal */}
-        <SubmissionSuccessModal
+        {/* Success modal - Using enhanced UniversalSuccessModal for better dynamic content */}
+        <UniversalSuccessModal
           open={showSuccessModal}
-          onClose={() => setShowSuccessModal(false)}
-          title="KYB Form Submitted"
-          actions={submissionResult.completedActions || []}
-          returnPath="/task-center"
-          returnLabel="Back to Task Center"
-          onDownload={handleDownload}
+          onOpenChange={(open) => setShowSuccessModal(open)}
+          taskType="kyb"
+          companyName={displayName}
+          submissionResult={{
+            fileId: fileId || undefined,
+            fileName: submissionResult.fileName,
+            taskId: task?.id,
+            taskStatus: 'submitted',
+            unlockedTabs: submissionResult.unlockedTabs,
+            completedActions: submissionResult.completedActions || []
+          }}
         />
         
         <DashboardLayout>
