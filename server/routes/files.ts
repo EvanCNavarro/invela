@@ -178,6 +178,27 @@ async function processDocument(
       })
       .where(eq(files.id, fileId));
 
+    // Get the file record to access company_id for WebSocket broadcast
+    const updatedFile = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
+
+    if (updatedFile?.company_id) {
+      // Broadcast file vault update for processed file
+      broadcastFileVaultUpdate(
+        updatedFile.company_id, 
+        fileId, 
+        'updated'
+      );
+
+      console.log('[Document Processing] Broadcasted WebSocket update for processed file:', {
+        fileId,
+        companyId: updatedFile.company_id,
+        action: 'updated',
+        timestamp: new Date().toISOString()
+      });
+    }
+
     console.log('[Document Processing] Processing completed:', {
       fileId,
       totalAnswers: allAnswers.length,
@@ -504,6 +525,22 @@ router.post("/api/documents/:id/process", async (req, res) => {
           }
         })
         .where(eq(files.id, fileId));
+
+      // Broadcast file error status via WebSocket
+      if (fileRecord.company_id) {
+        broadcastFileVaultUpdate(
+          fileRecord.company_id, 
+          fileId, 
+          'updated'
+        );
+
+        console.log('[Document Processing] Broadcasted WebSocket update for error file:', {
+          fileId,
+          companyId: fileRecord.company_id,
+          action: 'updated',
+          timestamp: new Date().toISOString()
+        });
+      }
         
       return res.status(404).json({ error: "File not found on disk" });
     }
@@ -585,8 +622,29 @@ router.post("/api/documents/:id/process", async (req, res) => {
             }
           })
           .where(eq(files.id, fileId))
-          .then(() => {
+          .then(async () => {
             console.log('[Document Processing] Updated file status to error:', { fileId });
+            
+            // Get the file record to access company_id for WebSocket broadcast
+            const errorFile = await db.query.files.findFirst({
+              where: eq(files.id, fileId)
+            });
+            
+            if (errorFile?.company_id) {
+              // Broadcast file vault update for error file
+              broadcastFileVaultUpdate(
+                errorFile.company_id, 
+                fileId, 
+                'updated'
+              );
+              
+              console.log('[Document Processing] Broadcasted WebSocket update for error file:', {
+                fileId,
+                companyId: errorFile.company_id,
+                action: 'updated',
+                timestamp: new Date().toISOString()
+              });
+            }
           })
           .catch(updateError => {
             console.error('[Document Processing] Failed to update file status:', {
@@ -614,6 +672,22 @@ router.post("/api/documents/:id/process", async (req, res) => {
           }
         })
         .where(eq(files.id, fileId));
+        
+      // Broadcast error status via WebSocket
+      if (fileRecord.company_id) {
+        broadcastFileVaultUpdate(
+          fileRecord.company_id, 
+          fileId, 
+          'updated'
+        );
+        
+        console.log('[Document Processing] Broadcasted WebSocket update for chunking error:', {
+          fileId,
+          companyId: fileRecord.company_id,
+          action: 'updated',
+          timestamp: new Date().toISOString()
+        });
+      }
       
       // If response hasn't been sent yet
       if (!res.headersSent) {
