@@ -1,204 +1,54 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import getLogger from '@/utils/logger';
+/**
+ * WebSocket Hook
+ * 
+ * This hook provides access to the WebSocket context functionality
+ * and WebSocket server messages.
+ */
 
-const logger = getLogger('WebSocketHook', {
-  levels: { debug: true, info: true, warn: true, error: true }
-});
+import { useWebSocket as useWebSocketContext } from '@/contexts/WebSocketContext';
+import { useEffect, useState } from 'react';
 
-// Interface for configuration options
-interface WebSocketOptions {
-  // Auto-reconnect if connection is closed
-  autoReconnect?: boolean;
-  // Time in ms between reconnection attempts
-  reconnectInterval?: number;
-  // Maximum number of reconnection attempts (0 = unlimited)
-  maxReconnectAttempts?: number;
-  // Callback when connection is established
-  onConnect?: () => void;
-  // Callback when connection is closed
-  onDisconnect?: () => void;
-  // Callback when error occurs
-  onError?: (error: Event) => void;
+export interface WebSocketMessage {
+  type: string;
+  payload?: any;
 }
 
-// Message handler type
-type MessageHandler = (event: MessageEvent) => void;
+export interface WebSocketHookReturn {
+  socket: WebSocket | null;
+  connected: boolean;
+  lastMessage: WebSocketMessage | null;
+  sendMessage: (type: string, payload?: any) => void;
+  connectionState: 'connecting' | 'connected' | 'disconnected';
+}
 
 /**
- * Custom hook for WebSocket usage
+ * Hook to access the WebSocket connection and message data
  * 
- * @param url WebSocket URL to connect to
- * @param options Configuration options
- * @returns Object with connection status and methods to send messages
+ * @returns WebSocket connection and data access tools
  */
-export function useWebSocket(url: string, options: WebSocketOptions = {}) {
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<Event | null>(null);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+export function useWebSocket(): WebSocketHookReturn {
+  const {
+    connected,
+    lastMessage,
+    sendMessage
+  } = useWebSocketContext();
   
-  const wsRef = useRef<WebSocket | null>(null);
-  const messageHandlersRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
+  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected'>(
+    connected ? 'connected' : 'connecting'
+  );
   
-  // Default options
-  const defaultOptions: Required<WebSocketOptions> = {
-    autoReconnect: true,
-    reconnectInterval: 3000,
-    maxReconnectAttempts: 5,
-    onConnect: () => {},
-    onDisconnect: () => {},
-    onError: () => {},
-  };
-  
-  // Merge user options with defaults
-  const mergedOptions = { ...defaultOptions, ...options };
-  
-  // Create a new WebSocket connection
-  const connect = useCallback(() => {
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-      logger.warn('WebSocket connection already exists');
-      return;
-    }
-    
-    logger.info(`Creating WebSocket connection to ${url}`);
-    
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-    
-    ws.addEventListener('open', () => {
-      logger.info('WebSocket connection established');
-      setIsConnected(true);
-      setError(null);
-      setReconnectAttempts(0);
-      mergedOptions.onConnect();
-    });
-    
-    ws.addEventListener('close', (event) => {
-      logger.info(`WebSocket connection closed: ${event.code} ${event.reason}`);
-      setIsConnected(false);
-      mergedOptions.onDisconnect();
-      
-      // Auto-reconnect logic
-      if (mergedOptions.autoReconnect && 
-          (!mergedOptions.maxReconnectAttempts || reconnectAttempts < mergedOptions.maxReconnectAttempts)) {
-        logger.info(`Attempting to reconnect (${reconnectAttempts + 1}/${mergedOptions.maxReconnectAttempts || 'unlimited'})`);
-        setReconnectAttempts(prev => prev + 1);
-        setTimeout(connect, mergedOptions.reconnectInterval);
-      }
-    });
-    
-    ws.addEventListener('error', (err) => {
-      logger.error('WebSocket error:', err);
-      setError(err);
-      mergedOptions.onError(err);
-    });
-    
-    ws.addEventListener('message', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const messageType = data.type;
-        
-        // Handle messages by type
-        if (messageType && messageHandlersRef.current.has(messageType)) {
-          const handlers = messageHandlersRef.current.get(messageType);
-          if (handlers) {
-            handlers.forEach(handler => handler(event));
-          }
-        }
-        
-        logger.debug('WebSocket message received:', data);
-      } catch (error) {
-        logger.warn('Error processing WebSocket message:', error);
-      }
-    });
-  }, [url, mergedOptions, reconnectAttempts]);
-  
-  // Disconnect WebSocket
-  const disconnect = useCallback(() => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
-      wsRef.current = null;
-      logger.info('WebSocket disconnected by user');
-    }
-  }, []);
-  
-  // Send a message via the WebSocket
-  const sendMessage = useCallback((data: any) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      const message = typeof data === 'string' ? data : JSON.stringify(data);
-      wsRef.current.send(message);
-      logger.debug('WebSocket message sent:', data);
-      return true;
-    } else {
-      logger.warn('Cannot send message: WebSocket not connected');
-      return false;
-    }
-  }, []);
-  
-  // Add event handler for specific message type
-  const addMessageHandler = useCallback((messageType: string, handler: MessageHandler) => {
-    if (!messageHandlersRef.current.has(messageType)) {
-      messageHandlersRef.current.set(messageType, new Set());
-    }
-    messageHandlersRef.current.get(messageType)?.add(handler);
-    
-    return () => {
-      messageHandlersRef.current.get(messageType)?.delete(handler);
-      if (messageHandlersRef.current.get(messageType)?.size === 0) {
-        messageHandlersRef.current.delete(messageType);
-      }
-    };
-  }, []);
-  
-  // Connect on mount and cleanup on unmount
+  // Update connection state based on connected status
   useEffect(() => {
-    connect();
-    
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [connect]);
+    setConnectionState(connected ? 'connected' : 'disconnected');
+  }, [connected]);
   
   return {
-    isConnected,
-    error,
+    socket: null, // The actual socket is encapsulated in the context
+    connected,
+    lastMessage,
     sendMessage,
-    addMessageHandler,
-    disconnect,
-    reconnect: connect,
+    connectionState
   };
 }
 
-/**
- * Hook for listening to WebSocket messages of a specific type
- * 
- * @param messageType The message type to listen for
- * @param onMessage Message handler function 
- * @param deps Dependencies that should trigger re-subscription
- */
-export function useWebSocketListener(messageType: string, onMessage: (data: any) => void, deps: any[] = []) {
-  // Build WebSocket URL once
-  const getWebSocketUrl = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws`;
-  };
-  
-  const { addMessageHandler } = useWebSocket(getWebSocketUrl());
-  
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-      } catch (error) {
-        logger.warn(`Error parsing WebSocket message for type ${messageType}:`, error);
-      }
-    };
-    
-    return addMessageHandler(messageType, handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-}
-
-export default useWebSocketListener;
+export default useWebSocket;
