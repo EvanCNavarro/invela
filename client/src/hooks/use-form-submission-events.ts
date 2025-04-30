@@ -8,6 +8,16 @@
 import { useEffect, useState } from 'react';
 import { useWebSocket } from '@/hooks/use-websocket';
 
+export interface SubmissionAction {
+  type: string;
+  description: string;
+  fileId?: number;
+  data?: {
+    details?: string;
+    buttonText?: string;
+  };
+}
+
 export interface FormSubmissionEvent {
   taskId: number;
   formType: string;
@@ -19,6 +29,7 @@ export interface FormSubmissionEvent {
   fileName?: string;
   fileId?: number;
   error?: string;
+  actions?: SubmissionAction[];
 }
 
 export function useFormSubmissionEvents(
@@ -62,7 +73,8 @@ export function useFormSubmissionEvents(
         unlockedTasks: data.unlockedTasks,
         fileName: data.fileName,
         fileId: data.fileId,
-        error: data.details
+        error: data.details,
+        actions: data.actions || []
       };
       
       setLastEvent(formEvent);
