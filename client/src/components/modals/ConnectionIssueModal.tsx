@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { WifiOff, RefreshCw, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 interface ConnectionIssueModalProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export function ConnectionIssueModal({
   formType,
   error
 }: ConnectionIssueModalProps) {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const formTypeName = formType
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))

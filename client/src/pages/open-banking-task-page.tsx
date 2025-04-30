@@ -91,8 +91,22 @@ export default function OpenBankingTaskPage() {
     );
   }
   
-  // Handle form submission
-  const handleFormSubmit = (formData: any) => {
+  // UseFormSubmission hook for enhanced submission handling
+  const { toast } = useToast();
+  const { 
+    submitForm, 
+    retrySubmission, 
+    isSubmitting: submittingForm, 
+    error: submissionError,
+    retryCount,
+    hasLastSubmission
+  } = useFormSubmission();
+
+  // State to show connection issue modal
+  const [showConnectionIssueModal, setShowConnectionIssueModal] = useState(false);
+
+  // Handle form submission with improved error handling
+  const handleFormSubmit = async (formData: any) => {
     // Start tracking this submission
     submissionTracker.startTracking(taskId, 'open_banking');
     submissionTracker.trackEvent('Begin Open Banking form submission', { companyName });
@@ -103,91 +117,53 @@ export default function OpenBankingTaskPage() {
     const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
     const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
     const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+    const fileName = `OpenBanking_Survey_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}.json`;
     
-    // Prepare request data
-    const requestData = {
-      fileName: `OpenBanking_Survey_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}.json`,
-      formData,
+    submissionTracker.trackEvent('Preparing Open Banking submission', { fileName, taskId });
+    
+    // Use enhanced form submission
+    const result = await submitForm({
       taskId,
-      explicitSubmission: true // Explicitly mark this as a submission
-    };
-    
-    // Show initial toast
-    toast({
-      title: 'Processing Submission',
-      description: 'Working on submitting your data...',
-    });
-    
-    submissionTracker.trackEvent('Sending Open Banking submission request', { 
-      fileName: requestData.fileName,
-      taskId: requestData.taskId 
-    });
-    
-    // Submit form data
-    fetch(`/api/open-banking/submit/${taskId}`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json' 
-      },
-      credentials: 'include',
-      body: JSON.stringify(requestData)
-    })
-    .then(async response => {
-      submissionTracker.trackEvent('Received server response', { 
-        status: response.status, 
-        ok: response.ok 
-      });
-      
-      if (!response.ok) {
-        // Handle error responses
-        let errorMessage = 'Failed to submit Open Banking survey';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError);
-        }
-        throw new Error(errorMessage);
+      formType: 'open_banking',
+      formData,
+      fileName,
+      onSuccess: (result) => {
+        // Show success modal on successful submission
+        setShowSuccessModal(true);
+        submissionTracker.trackEvent('Open Banking form submission successful', result);
+        submissionTracker.stopTracking(true);
       }
-      
-      // Parse successful response
-      return response.json();
-    })
-    .then(result => {
-      // Show success state
-      submissionTracker.trackEvent('Open Banking form submission successful', result);
-      setSubmitting(false);
-      
-      // Show success toast immediately
-      toast({
-        title: 'Open Banking Survey Submitted',
-        description: 'Your Open Banking survey has been successfully submitted.',
-        variant: 'success',
-      });
-      
-      // Show success modal
-      setShowSuccessModal(true);
-      
-      // Stop tracking with success
-      submissionTracker.stopTracking(true);
-    })
-    .catch(error => {
-      // Handle submission failures
-      submissionTracker.trackEvent('Open Banking form submission failed', { 
-        error: error.message 
-      });
-      setSubmitting(false);
-      
-      toast({
-        title: 'Submission Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-      
-      // Stop tracking with failure
-      submissionTracker.stopTracking(false);
     });
+    
+    setSubmitting(false);
+    
+    // Handle connection issues
+    if (!result.success && result.connectionIssue) {
+      setShowConnectionIssueModal(true);
+      submissionTracker.trackEvent('Open Banking form submission had connection issue', { 
+        error: result.message,
+        retryCount 
+      });
+    } else if (!result.success) {
+      // Other errors are handled by the toast notifications from the hook
+      submissionTracker.trackEvent('Open Banking form submission failed', { 
+        error: result.message 
+      });
+      submissionTracker.stopTracking(false);
+    }
+  };
+  
+  // Handler for retry from connection issue modal
+  const handleRetrySubmission = async () => {
+    submissionTracker.trackEvent('Retrying Open Banking form submission', { retryCount });
+    const result = await retrySubmission();
+    
+    if (result?.success) {
+      setShowConnectionIssueModal(false);
+      setShowSuccessModal(true);
+      submissionTracker.trackEvent('Open Banking retry submission successful', result);
+      submissionTracker.stopTracking(true);
+    }
   };
   
   // Render the form

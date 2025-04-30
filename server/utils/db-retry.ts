@@ -38,7 +38,7 @@ export async function withRetry<T>(
   } = options;
 
   let retryCount = 0;
-  let lastError: Error;
+  let lastError: Error = new Error("Retry failed");
 
   while (retryCount < maxRetries) {
     try {
