@@ -1,165 +1,225 @@
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface UseFormSubmissionOptions {
+  endpoint: string;
+  invalidateQueries?: string[];
+  maxRetries?: number;
+  retryDelay?: number;
+  onSuccess?: (data: any) => void;
+  onError?: (error: Error) => void;
+}
+
+interface SubmissionState {
+  isSubmitting: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  error: Error | null;
+  showSuccessModal: boolean;
+  showConnectionIssueModal: boolean;
+  retryCount: number;
+  data: any;
+}
+
 /**
- * Custom hook for handling form submissions with improved error handling
+ * Custom hook for resilient form submissions with feedback
  * 
- * This hook provides a consistent way to handle form submissions with
- * improved user feedback for connection issues and other errors.
+ * This hook provides a consistent way to handle form submissions,
+ * with built-in retry logic, loading states, and user feedback.
+ * 
+ * Features:
+ * - Loading states (isSubmitting)
+ * - Success/error states 
+ * - Toast notifications
+ * - Automatic query invalidation
+ * - Automatic retries for connection issues
+ * - Success and connection issue modals
  */
-import { useState } from 'react';
-import { useToast } from './use-toast';
-import { useLocation } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
-
-interface SubmissionOptions {
-  taskId: number;
-  formType: string;
-  formData: Record<string, any>;
-  fileName?: string;
-  onSuccess?: (result: any) => void;
-  redirectPath?: string;
-}
-
-interface SubmissionResult {
-  success: boolean;
-  message: string;
-  connectionIssue?: boolean;
-  taskId?: number;
-  taskStatus?: string;
-  [key: string]: any;
-}
-
-export function useFormSubmission() {
+export default function useFormSubmission({
+  endpoint,
+  invalidateQueries = [],
+  maxRetries = 3,
+  retryDelay = 2000,
+  onSuccess,
+  onError,
+}: UseFormSubmissionOptions) {
   const { toast } = useToast();
-  const [, navigate] = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [lastSubmissionData, setLastSubmissionData] = useState<SubmissionOptions | null>(null);
+  const queryClient = useQueryClient();
+  const [state, setState] = useState<SubmissionState>({
+    isSubmitting: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    showSuccessModal: false,
+    showConnectionIssueModal: false,
+    retryCount: 0,
+    data: null,
+  });
 
-  const submitForm = async (options: SubmissionOptions): Promise<SubmissionResult> => {
-    const { taskId, formType, formData, fileName, onSuccess, redirectPath } = options;
-    
-    if (isSubmitting) {
-      return {
-        success: false,
-        message: 'A submission is already in progress'
-      };
-    }
+  // Main submit function
+  const submitForm = async (formData: any) => {
+    // Reset state at the start of submission
+    setState(prev => ({
+      ...prev,
+      isSubmitting: true,
+      isSuccess: false,
+      isError: false,
+      error: null,
+      showConnectionIssueModal: false,
+    }));
 
-    setIsSubmitting(true);
-    setError(null);
-    setLastSubmissionData(options);
-
-    // Show initial toast
-    const toastId = toast({
-      title: 'Processing Submission',
-      description: 'Working on submitting your data...',
-      duration: 10000, // Longer duration in case of slower connections
+    // Show initial toast to indicate submission is being processed
+    const submittingToast = toast({
+      title: "Submitting...",
+      description: "Working on submitting your data...",
+      duration: 3000,
     });
 
     try {
-      // Determine the API endpoint based on form type
-      const endpoint = `/api/${formType}/submit/${taskId}`;
-      
-      // Make the API request
-      const response = await apiRequest('POST', endpoint, {
-        formData,
-        fileName: fileName || `${formType}_submission_${new Date().toISOString()}.json`,
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        // Handle HTTP errors
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || `Server returned ${response.status}`;
+        const errorText = await response.text();
+        throw new Error(errorText || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Parse the response data
+      const responseData = await response.json();
+
+      // Handle success
+      if (responseData?.success) {
+        // Clear the submitting toast
+        toast({
+          title: "Submission Successful",
+          description: responseData.message || "Your form has been submitted successfully.",
+          variant: "success",
+          duration: 5000,
+        });
+
+        // Invalidate relevant queries to refresh data
+        if (invalidateQueries.length > 0) {
+          for (const query of invalidateQueries) {
+            queryClient.invalidateQueries({ queryKey: [query] });
+          }
+        }
+
+        // Call the success callback if provided
+        if (onSuccess) {
+          onSuccess(responseData);
+        }
+
+        // Update state to show success modal
+        setState(prev => ({
+          ...prev,
+          isSubmitting: false,
+          isSuccess: true,
+          showSuccessModal: true,
+          data: responseData,
+        }));
+      } else {
+        // API returned success: false
+        throw new Error(responseData.error || "An error occurred while processing your submission.");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      
+      // Determine if it's a connection issue
+      const isConnectionIssue = 
+        errorMessage.includes("Failed to fetch") || 
+        errorMessage.includes("Network Error") ||
+        errorMessage.includes("database connection") ||
+        errorMessage.toLowerCase().includes("timeout") ||
+        (error instanceof TypeError && error.message === "Failed to fetch");
+      
+      // Handle connection issues with retry
+      if (isConnectionIssue && state.retryCount < maxRetries) {
+        setState(prev => ({
+          ...prev,
+          isSubmitting: false,
+          showConnectionIssueModal: true,
+          retryCount: prev.retryCount + 1,
+          error: error instanceof Error ? error : new Error(errorMessage),
+        }));
+      } else {
+        // Regular error or too many retries
+        toast({
+          title: "Submission Failed",
+          description: errorMessage,
+          variant: "destructive",
+          duration: 5000,
+        });
         
-        throw new Error(errorMessage);
+        if (onError) {
+          onError(error instanceof Error ? error : new Error(errorMessage));
+        }
+        
+        setState(prev => ({
+          ...prev,
+          isSubmitting: false,
+          isError: true,
+          error: error instanceof Error ? error : new Error(errorMessage),
+        }));
       }
-
-      // Success!
-      const result = await response.json();
-      
-      // Clear any existing error toasts
-      toast({
-        id: toastId,
-        title: `${formType.toUpperCase()} Submitted`,
-        description: result.message || 'Your form has been successfully submitted.',
-        variant: 'success',
-      });
-
-      // Reset retry count on success
-      setRetryCount(0);
-      
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess(result);
-      }
-
-      // Navigate if redirect path provided
-      if (redirectPath) {
-        navigate(redirectPath);
-      }
-
-      setIsSubmitting(false);
-      return {
-        success: true,
-        message: result.message || 'Form submitted successfully',
-        ...result
-      };
-    } catch (err: any) {
-      setError(err);
-      
-      // Different handling for connection issues
-      const isConnectionIssue = err.message?.includes('timeout') || 
-                               err.message?.includes('connection') ||
-                               err.message?.includes('network') ||
-                               err.message?.includes('failed to fetch');
-      
-      // Update toast for error
-      toast({
-        id: toastId,
-        title: isConnectionIssue ? 'Connection Issue' : 'Submission Error',
-        description: isConnectionIssue
-          ? 'Database connection issue. Your progress is saved. Please try submitting again.'
-          : `Error: ${err.message}`,
-        variant: 'destructive',
-        duration: 8000,
-      });
-
-      // Increment retry count for connection issues
-      if (isConnectionIssue) {
-        setRetryCount(prev => prev + 1);
-      }
-
-      setIsSubmitting(false);
-      return {
-        success: false,
-        message: err.message,
-        connectionIssue: isConnectionIssue,
-        taskId
-      };
     }
   };
 
-  const retrySubmission = async (): Promise<SubmissionResult | null> => {
-    if (!lastSubmissionData) {
-      return null;
-    }
+  // Retry submission function
+  const retrySubmission = (formData: any) => {
+    setState(prev => ({
+      ...prev,
+      showConnectionIssueModal: false,
+    }));
     
-    // Show retry toast
-    toast({
-      title: 'Retrying Submission',
-      description: `Attempting to submit again (try ${retryCount + 1})...`,
-      duration: 3000,
+    // Retry with a delay to give the connection a moment to recover
+    setTimeout(() => {
+      submitForm(formData);
+    }, retryDelay);
+  };
+
+  // Reset the entire state
+  const resetState = () => {
+    setState({
+      isSubmitting: false,
+      isSuccess: false,
+      isError: false,
+      error: null,
+      showSuccessModal: false,
+      showConnectionIssueModal: false,
+      retryCount: 0,
+      data: null,
     });
-    
-    return submitForm(lastSubmissionData);
+  };
+
+  // Modal handlers
+  const closeSuccessModal = () => {
+    setState(prev => ({
+      ...prev,
+      showSuccessModal: false,
+    }));
+  };
+
+  const closeConnectionIssueModal = () => {
+    setState(prev => ({
+      ...prev,
+      showConnectionIssueModal: false,
+    }));
   };
 
   return {
+    ...state,
     submitForm,
     retrySubmission,
-    isSubmitting,
-    error,
-    retryCount,
-    hasLastSubmission: !!lastSubmissionData
+    resetState,
+    closeSuccessModal,
+    closeConnectionIssueModal,
   };
 }

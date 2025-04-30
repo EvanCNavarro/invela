@@ -4,11 +4,12 @@
  * This utility provides retry logic with exponential backoff for database operations
  * to handle temporary connection issues with Neon PostgreSQL.
  */
-import { db } from '@db';
-import { sql } from 'drizzle-orm';
-import { Logger } from '../services/logger';
 
-const logger = new Logger('DatabaseRetry');
+import { db } from "@db";
+import { sql } from "drizzle-orm";
+import { Logger } from "../services/logger";
+
+const logger = new Logger("DBRetry");
 
 interface RetryOptions {
   maxRetries?: number;
@@ -31,58 +32,46 @@ export async function withRetry<T>(
 ): Promise<T> {
   const {
     maxRetries = 3,
-    initialDelay = 1000,
-    maxDelay = 10000,
-    operation: operationName = 'Database operation',
-    logErrors = true
+    initialDelay = 500,
+    maxDelay = 5000,
+    operation: operationName = "Database operation",
+    logErrors = true,
   } = options;
 
-  let retryCount = 0;
+  let attempt = 0;
+  let delay = initialDelay;
   let lastError: Error = new Error("Retry failed");
 
-  while (retryCount < maxRetries) {
+  while (attempt < maxRetries) {
     try {
-      // Attempt the database operation
       return await operation();
-    } catch (error: any) {
-      lastError = error;
+    } catch (error) {
+      attempt++;
+      lastError = error instanceof Error ? error : new Error(String(error));
       
-      // Only retry on connection timeout errors
-      if (!error.message?.includes('timeout') && !error.message?.includes('connection')) {
-        if (logErrors) {
-          logger.error(`${operationName} failed with non-connection error:`, error);
-        }
-        throw error;
-      }
-
-      retryCount++;
+      // Determine if this error is retryable
+      const isConnectionError = isRetryableError(lastError);
       
-      if (retryCount >= maxRetries) {
+      if (!isConnectionError || attempt >= maxRetries) {
         if (logErrors) {
-          logger.error(`${operationName} failed after ${maxRetries} retries:`, error);
+          logger.error(`${operationName} failed after ${attempt} attempts:`, lastError);
         }
-        break;
+        throw lastError;
       }
-
-      // Calculate delay with exponential backoff and jitter
-      const delay = Math.min(
-        initialDelay * Math.pow(2, retryCount - 1) + Math.random() * 1000,
-        maxDelay
-      );
       
       if (logErrors) {
-        logger.warn(
-          `${operationName} failed with connection error, retrying in ${Math.round(delay)}ms (attempt ${retryCount}/${maxRetries}):`,
-          error.message
-        );
+        logger.warn(`${operationName} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms:`, 
+          lastError.message);
       }
-
+      
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Exponential backoff with jitter
+      delay = Math.min(delay * 2, maxDelay) * (0.8 + Math.random() * 0.4);
     }
   }
-
-  // If we get here, all retries failed
+  
   throw lastError;
 }
 
@@ -93,12 +82,45 @@ export async function withRetry<T>(
  */
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
-    await withRetry(
-      () => db.execute(sql`SELECT 1`),
-      { operation: 'Connection test', logErrors: false, maxRetries: 1 }
+    // Simple test query
+    const result = await withRetry(
+      () => db.execute(sql`SELECT 1 AS test`), 
+      { 
+        maxRetries: 1, 
+        operation: "Test database connection",
+        logErrors: false 
+      }
     );
     return true;
   } catch (error) {
+    logger.error("Database connection test failed:", error);
     return false;
   }
+}
+
+/**
+ * Determine if an error is retryable based on error message patterns
+ * 
+ * @param error The error to check
+ * @returns True if the error is retryable
+ */
+function isRetryableError(error: Error): boolean {
+  if (!error || !error.message) return false;
+  
+  const errorMessage = error.message.toLowerCase();
+  
+  // Connection-related errors that are typically transient
+  return (
+    errorMessage.includes("connection") ||
+    errorMessage.includes("timeout") ||
+    errorMessage.includes("socket") ||
+    errorMessage.includes("network") ||
+    errorMessage.includes("econnreset") ||
+    errorMessage.includes("econnrefused") ||
+    errorMessage.includes("could not connect") ||
+    errorMessage.includes("connection terminated") ||
+    errorMessage.includes("terminating connection") ||
+    errorMessage.includes("pool") ||
+    errorMessage.includes("too many clients")
+  );
 }
