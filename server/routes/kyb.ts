@@ -1129,6 +1129,75 @@ router.post('/api/kyb/progress', async (req, res) => {
     
     console.log(`[SERVER DEBUG] Sending response with ${Object.keys(updatedFormData).length} fields, status: ${newStatus}, progress: ${calculatedProgress}%`);
     
+    // CRITICAL NEW FEATURE: If form is ready_for_submission, also unlock the file vault tab
+    // This ensures the tab is unlocked when the form is ready to submit, not just after submission
+    if (newStatus === 'ready_for_submission') {
+      try {
+        console.log(`[KYB API] 🔑 PRE-UNLOCK: Unlocking File Vault tab for company during ready_for_submission`);
+        
+        // First, get the company ID from the task
+        const [task] = await db.select()
+          .from(tasks)
+          .where(eq(tasks.id, taskId));
+          
+        if (task && task.company_id) {
+          const companyId = task.company_id;
+          
+          // Get the company's current tabs
+          const [company] = await db.select()
+            .from(companies)
+            .where(eq(companies.id, companyId));
+            
+          if (company) {
+            const currentTabs = Array.isArray(company.available_tabs) ? company.available_tabs : ['task-center'];
+            
+            if (!currentTabs.includes('file-vault')) {
+              // Add file-vault to tabs
+              const updatedTabs = [...currentTabs, 'file-vault'];
+              
+              // Update database
+              await db.update(companies)
+                .set({
+                  available_tabs: updatedTabs,
+                  updated_at: new Date()
+                })
+                .where(eq(companies.id, companyId));
+                
+              console.log(`[KYB API] ✅ File vault tab unlocked in database when form reached ready_for_submission`);
+              
+              // Broadcast the update
+              try {
+                const { broadcastMessage, broadcastCompanyTabsUpdate } = require('../services/websocket');
+                
+                // Both formats for backward compatibility
+                broadcastCompanyTabsUpdate(companyId, updatedTabs);
+                broadcastMessage('company_tabs_updated', {
+                  companyId, 
+                  availableTabs: updatedTabs,
+                  cache_invalidation: true,
+                  timestamp: new Date().toISOString(),
+                  source: 'kyb_progress_ready_for_submission'
+                });
+                
+                console.log(`[KYB API] 📣 Successfully broadcasted tab update for ready_for_submission`);
+              } catch (wsError) {
+                console.error(`[KYB API] Failed to broadcast tab update:`, wsError);
+              }
+            } else {
+              console.log(`[KYB API] File vault tab already unlocked for company ${companyId}`);
+            }
+          } else {
+            console.error(`[KYB API] Company ${companyId} not found`);
+          }
+        } else {
+          console.error(`[KYB API] Task ${taskId} not found or missing company_id`);
+        }
+      } catch (unlockError) {
+        console.error(`[KYB API] Error unlocking file vault during ready_for_submission:`, unlockError);
+        // Don't let this error block the main response
+      }
+    }
+    
     // CRITICAL FIX: Also update the savedFormData in the task table
     // This ensures data persistence across navigation
     try {
