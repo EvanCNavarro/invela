@@ -158,7 +158,17 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
-const PORT = Number(process.env.PORT) || 5000;
-server.listen(PORT, () => {
-  log(`Server running on port ${PORT}`);
+// Import deployment helpers for port and host configuration
+import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
+
+// Get the appropriate port and host for the current environment
+const PORT = getDeploymentPort();
+const HOST = getDeploymentHost();
+
+// Start the server with the configured port and host
+server.listen(PORT, HOST, () => {
+  log(`Server running on ${HOST}:${PORT}`);
+  log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  // Log additional deployment information
+  logDeploymentInfo(PORT, HOST);
 });

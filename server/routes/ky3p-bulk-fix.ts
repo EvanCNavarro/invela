@@ -12,9 +12,9 @@ import { Request, Response } from 'express';
 import { db } from '@db';
 import { ky3pFields, ky3pResponses } from '@db/schema';
 import { and, eq } from 'drizzle-orm';
-import getLogger from '../utils/logger';
+import { createLogger } from '../utils/logger';
 
-const logger = getLogger('KY3P-Bulk-Fix');
+const logger = createLogger('KY3P-Bulk-Fix');
 
 /**
  * Handle the special case where fieldIdRaw is "bulk" and responseValue is "undefined"
