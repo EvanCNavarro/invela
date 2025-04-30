@@ -11,7 +11,7 @@ import { broadcast } from '../services/websocket';
 /**
  * Create a router for WebSocket test endpoints
  */
-export function createTestWebSocketRouter(): Router {
+export function createTestWebSocketRoutes(): Router {
   const router = Router();
   
   /**
@@ -150,6 +150,44 @@ export function createTestWebSocketRouter(): Router {
       res.status(500).json({
         success: false,
         message: 'Error broadcasting test in-progress event',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  /**
+   * POST /api/test/websocket/custom-message
+   * 
+   * Broadcast a custom WebSocket message
+   */
+  router.post('/custom-message', async (req: Request, res: Response) => {
+    try {
+      const { type, payload } = req.body;
+      
+      if (!type) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required field: type'
+        });
+      }
+      
+      console.log(`[TestWebSocket] Broadcasting custom message type: ${type}`, payload);
+      
+      // Broadcast the custom message
+      broadcast(type, payload || {});
+      
+      // Return success response
+      res.json({
+        success: true,
+        message: `Custom message "${type}" broadcast successfully`,
+        type,
+        payload
+      });
+    } catch (error) {
+      console.error('[TestWebSocket] Error broadcasting custom message:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error broadcasting custom message',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

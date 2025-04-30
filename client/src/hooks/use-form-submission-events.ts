@@ -12,7 +12,7 @@ import type { WebSocketMessage } from '../providers/websocket-provider';
 export interface FormSubmissionEvent {
   taskId: number;
   formType: string;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'in_progress';
   companyId: number;
   submissionDate?: string;
   unlockedTabs?: string[];
@@ -26,7 +26,8 @@ export function useFormSubmissionEvents(
   taskId: number | undefined,
   formType: string | undefined,
   onSuccess?: (event: FormSubmissionEvent) => void,
-  onError?: (event: FormSubmissionEvent) => void
+  onError?: (event: FormSubmissionEvent) => void,
+  onInProgress?: (event: FormSubmissionEvent) => void
 ) {
   const [lastEvent, setLastEvent] = useState<FormSubmissionEvent | null>(null);
   const { connectionState, lastMessage } = useWebSocket();
@@ -52,8 +53,12 @@ export function useFormSubmissionEvents(
       if (data.status === 'error' && onError) {
         onError(data);
       }
+      
+      if (data.status === 'in_progress' && onInProgress) {
+        onInProgress(data);
+      }
     }
-  }, [lastMessage, taskId, formType, onSuccess, onError]);
+  }, [lastMessage, taskId, formType, onSuccess, onError, onInProgress]);
   
   return {
     connected: connectionState === 'connected',
