@@ -290,30 +290,7 @@ export function Sidebar({
       icon: FileIcon,
       label: "File Vault",
       href: "/file-vault",
-      locked: !availableTabs.includes('file-vault') && !location.includes('file-vault')
-              // CRITICAL FIX: Also check localStorage for recent KYB submissions
-              && (() => {
-                try {
-                  const lastFormSubmission = localStorage.getItem('lastFormSubmission');
-                  if (lastFormSubmission) {
-                    const submission = JSON.parse(lastFormSubmission);
-                    const submissionTime = new Date(submission.timestamp).getTime();
-                    const currentTime = new Date().getTime();
-                    // Consider form submissions from the last 10 minutes
-                    const tenMinutesAgo = currentTime - (10 * 60 * 1000);
-                    
-                    // If we've recently submitted a KYB form, always unlock File Vault
-                    if (submissionTime > tenMinutesAgo && 
-                        (submission.formType === 'kyb' || submission.formType === 'company_kyb')) {
-                      console.log(`[Sidebar] Recent KYB submission found in localStorage, unlocking File Vault tab`);
-                      return false; // Not locked
-                    }
-                  }
-                } catch (error) {
-                  console.error('[Sidebar] Error checking localStorage for KYB submissions:', error);
-                }
-                return true; // Default is locked unless conditions are met
-              })()
+      locked: !availableTabs.includes('file-vault') // Strict database check only
     },
     {
       icon: BarChartIcon,
