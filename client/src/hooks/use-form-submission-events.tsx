@@ -34,13 +34,8 @@ interface UseFormSubmissionEventsOptions {
  * @param options Configuration options for the hook
  * @returns Object with the last event and event history
  */
-export function useFormSubmissionEvents({
-  taskId,
-  formType,
-  onSuccess,
-  onError,
-  onInProgress,
-}: UseFormSubmissionEventsOptions = {}) {
+export function useFormSubmissionEvents(options: UseFormSubmissionEventsOptions = {}) {
+  const { taskId, formType, onSuccess, onError, onInProgress } = options;
   const { lastMessage } = useWebSocket();
   const [lastEvent, setLastEvent] = useState<FormSubmissionEvent | null>(null);
   const [eventHistory, setEventHistory] = useState<FormSubmissionEvent[]>([]);
