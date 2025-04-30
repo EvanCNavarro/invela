@@ -1167,10 +1167,15 @@ router.post('/api/kyb/progress', async (req, res) => {
               
               // Broadcast the update
               try {
-                const { broadcastMessage, broadcastCompanyTabsUpdate } = require('../services/websocket');
+                // Use the imported WebSocket functions directly instead of trying to re-require them
+                // First broadcast using the standard tab update function
+                broadcastMessage('company_tabs_update', {
+                  companyId, 
+                  availableTabs: updatedTabs,
+                  timestamp: new Date().toISOString(),
+                });
                 
-                // Both formats for backward compatibility
-                broadcastCompanyTabsUpdate(companyId, updatedTabs);
+                // Then use the more comprehensive message with cache_invalidation flag
                 broadcastMessage('company_tabs_updated', {
                   companyId, 
                   availableTabs: updatedTabs,
@@ -1179,7 +1184,30 @@ router.post('/api/kyb/progress', async (req, res) => {
                   source: 'kyb_progress_ready_for_submission'
                 });
                 
+                // Also broadcast a special immediate event to force UI refresh
+                broadcastMessage('sidebar_refresh_tabs', {
+                  companyId,
+                  availableTabs: updatedTabs,
+                  forceRefresh: true,
+                  timestamp: new Date().toISOString()
+                });
+                
                 console.log(`[KYB API] 📣 Successfully broadcasted tab update for ready_for_submission`);
+                
+                // Schedule a delayed broadcast for reliability
+                setTimeout(() => {
+                  try {
+                    broadcastMessage('company_tabs_updated', {
+                      companyId, 
+                      availableTabs: updatedTabs,
+                      cache_invalidation: true,
+                      timestamp: new Date().toISOString(),
+                      source: 'kyb_progress_ready_for_submission_delayed'
+                    });
+                  } catch (delayedError) {
+                    console.error(`[KYB API] Failed to send delayed broadcast:`, delayedError);
+                  }
+                }, 1000);
               } catch (wsError) {
                 console.error(`[KYB API] Failed to broadcast tab update:`, wsError);
               }
