@@ -160,13 +160,13 @@ export function Sidebar({
         
         // CRITICAL FIX: Enhanced WebSocket handling for sidebar updates
         // This function is shared between both event handlers to ensure consistent behavior
-        const handleCompanyTabsUpdate = (data: any, eventName: string) => {
+        const handleCompanyTabsUpdate = (data: { companyId?: number; availableTabs?: string[] }, eventName: string) => {
           console.log(`[Sidebar] Received ${eventName} event:`, data);
           
           // First, check if this is for our company
-          if (data.companyId === company?.id) {
+          if (company && data.companyId === company.id) {
             // Log detailed info for debugging
-            console.log(`[Sidebar] ✅ Matched company ID ${company?.id}, processing update`);
+            console.log(`[Sidebar] ✅ Matched company ID ${company.id}, processing update`);
             
             // Check if availableTabs is an array
             if (Array.isArray(data.availableTabs)) {
@@ -204,19 +204,19 @@ export function Sidebar({
         };
         
         // Subscribe to company tabs updates - both event names for compatibility
-        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: any) => {
+        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: { companyId?: number; availableTabs?: string[] }) => {
           handleCompanyTabsUpdate(data, 'company_tabs_update');
         });
         subscriptions.push(unsubCompanyTabsUpdate);
         
         // Also subscribe to the alternative event name
-        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: any) => {
+        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: { companyId?: number; availableTabs?: string[] }) => {
           handleCompanyTabsUpdate(data, 'company_tabs_updated');
         });
         subscriptions.push(unsubCompanyTabsUpdated);
         
         // CRITICAL FIX: Also listen for form submission success events as they often trigger tab changes
-        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: any) => {
+        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: { unlockedTabs?: string[] }) => {
           console.log(`[Sidebar] Received form_submitted event:`, data);
           
           // Check if this event includes unlockedTabs information
@@ -277,6 +277,29 @@ export function Sidebar({
       label: "File Vault",
       href: "/file-vault",
       locked: !availableTabs.includes('file-vault') && !location.includes('file-vault')
+              // CRITICAL FIX: Also check localStorage for recent KYB submissions
+              && (() => {
+                try {
+                  const lastFormSubmission = localStorage.getItem('lastFormSubmission');
+                  if (lastFormSubmission) {
+                    const submission = JSON.parse(lastFormSubmission);
+                    const submissionTime = new Date(submission.timestamp).getTime();
+                    const currentTime = new Date().getTime();
+                    // Consider form submissions from the last 10 minutes
+                    const tenMinutesAgo = currentTime - (10 * 60 * 1000);
+                    
+                    // If we've recently submitted a KYB form, always unlock File Vault
+                    if (submissionTime > tenMinutesAgo && 
+                        (submission.formType === 'kyb' || submission.formType === 'company_kyb')) {
+                      console.log(`[Sidebar] Recent KYB submission found in localStorage, unlocking File Vault tab`);
+                      return false; // Not locked
+                    }
+                  }
+                } catch (error) {
+                  console.error('[Sidebar] Error checking localStorage for KYB submissions:', error);
+                }
+                return true; // Default is locked unless conditions are met
+              })()
     },
     {
       icon: BarChartIcon,

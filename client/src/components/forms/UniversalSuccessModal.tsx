@@ -124,7 +124,7 @@ export function UniversalSuccessModal({
       // Clean up timeout if modal is closed
       return () => clearTimeout(animationTimeout);
     }
-  }, [open]);
+  }, [open, submissionResult, taskType]); // Include necessary dependencies
   
   // Determine the appropriate title based on task type
   useEffect(() => {
