@@ -1,243 +1,137 @@
 /**
- * Universal Form Submission Service
+ * Form Submission Service
  * 
- * This service provides a standardized interface for submitting all form types
- * (KYB, KY3P, Open Banking) using a consistent pattern.
- * 
- * Features:
- * - Uses a single endpoint pattern for all form types
- * - Handles all form submission states (loading, success, error)
- * - Provides detailed feedback and standardized response format
- * - Logs all submission steps for debugging and verification
+ * This service centralizes form submission logic across different form types
+ * and handles the submission process, response formatting, and feedback.
  */
+import { apiRequest } from '@/lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { toast } from '@/hooks/use-toast';
-import getLogger from '@/utils/logger';
-
-const logger = getLogger('FormSubmissionService');
-
-export interface SubmissionOptions {
+// Types for form submission
+export interface FormSubmissionOptions {
   taskId: number;
   formType: string;
   formData: Record<string, any>;
   fileName?: string;
-  showToasts?: boolean;
-  onSuccess?: (result: SubmissionResult) => void;
+  onSuccess?: (result: FormSubmissionResponse) => void;
   onError?: (error: Error) => void;
 }
 
-export interface SubmissionResult {
+export interface FormSubmissionResponse {
   success: boolean;
   taskId: number;
   formType: string;
   status: string;
+  details?: string;
   fileId?: number;
   fileName?: string;
-  details?: string;
   unlockedTabs?: string[];
-  unlockedTasks?: Array<{id: number, title: string}>;
+  unlockedTasks?: number[];
   error?: string;
 }
 
 /**
- * Success action displayed in the success modal
+ * Format success actions to display in the success modal
+ * 
+ * @param result The form submission response
+ * @returns Array of formatted action strings
  */
-export interface SuccessAction {
-  label: string;
-  description: string;
-}
-
-/**
- * Format success actions for the modal based on the submission result
- */
-export function formatSuccessActions(result: any): SuccessAction[] {
-  const actions: SuccessAction[] = [
-    { 
-      label: "Form Submitted", 
-      description: "Your form has been successfully processed and submitted." 
-    }
-  ];
+export function formatSuccessActions(result: FormSubmissionResponse): string[] {
+  const actions: string[] = [];
   
-  // Add file creation action if a file was created
-  if (result.fileId) {
-    actions.push({
-      label: "File Created",
-      description: `A file of your submission has been created${result.fileName ? `: ${result.fileName}` : '.'}`
-    });
+  // Add file creation action
+  if (result.fileId && result.fileName) {
+    actions.push(`Created file: ${result.fileName}`);
   }
   
-  // Add unlocked tabs if any
+  // Add unlocked tabs action
   if (result.unlockedTabs && result.unlockedTabs.length > 0) {
-    actions.push({
-      label: "Tabs Unlocked",
-      description: `The following tabs are now available: ${result.unlockedTabs.join(', ')}`
-    });
+    actions.push(`Unlocked tabs: ${result.unlockedTabs.join(', ')}`);
   }
   
-  // Add unlocked tasks if any
+  // Add unlocked tasks action
   if (result.unlockedTasks && result.unlockedTasks.length > 0) {
-    actions.push({
-      label: "Tasks Unlocked",
-      description: `The following tasks are now available: ${result.unlockedTasks.map(t => t.title).join(', ')}`
-    });
-  }
-  
-  // Add risk score if generated
-  if (result.riskScore) {
-    actions.push({
-      label: "Risk Score Generated",
-      description: `A risk score of ${result.riskScore} has been calculated based on your submission.`
-    });
+    actions.push(`Unlocked tasks: ${result.unlockedTasks.length} new task(s)`);
   }
   
   return actions;
 }
 
 /**
- * Universal Form Submission Service
+ * Centralized form submission service
  */
 export const formSubmissionService = {
   /**
-   * Submit any form type using the unified endpoint
+   * Submit a form of any type using the unified endpoint
+   * 
+   * @param options Form submission options
+   * @returns Promise with submission result
    */
-  submitForm: async (options: SubmissionOptions): Promise<SubmissionResult> => {
-    const { 
-      taskId, 
-      formType, 
-      formData, 
-      fileName, 
-      showToasts = true,
-      onSuccess, 
-      onError 
-    } = options;
-    
-    logger.info(`Starting ${formType} form submission for task ${taskId}`, { 
-      taskId, 
-      formType, 
-      timestamp: new Date().toISOString() 
-    });
-    
-    // Show loading toast if enabled
-    if (showToasts) {
-      toast({
-        title: `Submitting ${formType.toUpperCase()} Form`,
-        description: "Please wait while we process your submission...",
-        variant: "default",
-        duration: null, // Infinite duration for loading toasts
-      });
-    }
+  submitForm: async (options: FormSubmissionOptions): Promise<FormSubmissionResponse> => {
+    const { taskId, formType, formData, fileName, onSuccess, onError } = options;
     
     try {
-      // Always use the universal endpoint for all form types
-      const endpoint = `/api/tasks/${taskId}/submit`;
-      
-      logger.info(`Submitting to unified endpoint: ${endpoint}`, { 
-        taskId, 
-        formType, 
-        fieldCount: Object.keys(formData).length 
-      });
-      
-      const response = await fetch(endpoint, {
+      // Send the form data to the unified endpoint
+      const response = await apiRequest({
+        url: `/api/tasks/${taskId}/submit`,
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+        data: {
           formType,
           formData,
-          fileName,
-          timestamp: new Date().toISOString()
-        })
+          fileName
+        }
       });
       
-      // Handle non-successful responses
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          error: `Server returned status ${response.status}` 
-        }));
+      // If the submission was successful
+      if (response.success) {
+        // Invalidate queries that might be affected by this submission
+        const queryClient = useQueryClient();
         
-        const errorMessage = errorData.error || `Failed to submit ${formType} form`;
-        
-        logger.error(`Submission failed with status ${response.status}`, { 
-          error: errorMessage, 
-          status: response.status,
-          response: errorData
+        // Invalidate task queries for this specific task
+        queryClient.invalidateQueries({
+          queryKey: [`/api/tasks/${taskId}`]
         });
         
-        throw new Error(errorMessage);
-      }
-      
-      // Parse successful response
-      const result = await response.json();
-      
-      logger.info(`${formType} form submission successful`, { 
-        taskId, 
-        formType,
-        fileId: result.fileId,
-        fileName: result.fileName
-      });
-      
-      // Show success toast if enabled
-      if (showToasts) {
-        // Clear existing toasts first
-        toast.dismiss();
-        
-        toast({
-          title: 'Form Submitted',
-          description: `Your ${formType.toUpperCase()} form has been successfully submitted.`,
-          variant: 'success',
-          duration: 5000,
+        // Invalidate the tasks list
+        queryClient.invalidateQueries({
+          queryKey: ['/api/tasks']
         });
+        
+        // Invalidate company tabs if they might be affected
+        if (response.unlockedTabs && response.unlockedTabs.length > 0) {
+          queryClient.invalidateQueries({
+            queryKey: ['/api/companies/current']
+          });
+        }
+        
+        // Call the success callback if provided
+        if (onSuccess) {
+          onSuccess(response);
+        }
+      } else {
+        // Handle API-level errors (successful HTTP response, but API indicates error)
+        const error = new Error(response.error || 'Form submission failed');
+        
+        if (onError) {
+          onError(error);
+        }
+        
+        throw error;
       }
       
-      // Call success callback if provided
-      if (onSuccess) {
-        onSuccess(result);
-      }
-      
-      // Return standardized result
-      return {
-        success: true,
-        taskId,
-        formType,
-        status: 'submitted',
-        ...result
-      };
+      return response;
     } catch (error) {
-      logger.error(`Submission error`, { 
-        taskId, 
-        formType, 
-        error: error instanceof Error ? error.message : String(error)
-      });
+      // Handle network or unexpected errors
+      const formattedError = error instanceof Error ? 
+        error : 
+        new Error('An unexpected error occurred during form submission');
       
-      // Show error toast if enabled
-      if (showToasts) {
-        // Clear existing toasts first
-        toast.dismiss();
-        
-        toast({
-          title: 'Submission Failed',
-          description: error instanceof Error ? error.message : String(error),
-          variant: 'destructive',
-          duration: 8000,
-        });
-      }
-      
-      // Call error callback if provided
+      // Call the error callback if provided
       if (onError) {
-        onError(error instanceof Error ? error : new Error(String(error)));
+        onError(formattedError);
       }
       
-      // Return error result
-      return {
-        success: false,
-        taskId,
-        formType,
-        status: 'error',
-        error: error instanceof Error ? error.message : String(error)
-      };
+      throw formattedError;
     }
   }
 };
