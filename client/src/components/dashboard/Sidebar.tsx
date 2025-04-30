@@ -90,6 +90,20 @@ export function Sidebar({
       // Force a server refresh to make sure our tabs are up to date
       queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
       queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+      
+      // CRITICAL FIX: Add a class to the body to flag that we're in an inconsistent state
+      // This helps us debug cases where we need to adjust the server-side tab unlocking
+      document.body.classList.add('file-vault-forced-access');
+      
+      // Set a flag in localStorage to persist file vault access across page refreshes
+      try {
+        localStorage.setItem('file_vault_access_timestamp', new Date().toISOString());
+      } catch (error) {
+        console.error('[Sidebar] Failed to store file-vault access timestamp:', error);
+      }
+    } else if (location.includes('file-vault')) {
+      // We're on file vault and it's in available tabs - normal state
+      document.body.classList.remove('file-vault-forced-access');
     }
     
     // Also check for form submission success from localStorage

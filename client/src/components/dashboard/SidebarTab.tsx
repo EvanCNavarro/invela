@@ -129,14 +129,27 @@ export function SidebarTab({
   }
   
   // Use Wouter Link for internal navigation
+  // CRITICAL FIX: The problem happens because we're incorrectly treating the File Vault tab
+  // which is visually unlocked (via localStorage) but server-side locked as disabled
+  // and using window.location.href which causes a full page reload.
+  // Instead, use wouter navigation and clean up the disabled logic.
   return (
     <Link 
-      href={isDisabled ? "/task-center" : href} 
+      href={href} 
       onClick={(e) => {
         if (isDisabled) {
           e.preventDefault();
           console.log(`[SidebarTab] Tab "${label}" is locked. Redirecting to task-center.`);
-          window.location.href = '/task-center';
+          // Don't use window.location.href as it causes full page refresh
+          // Use router navigation instead which is cleaner
+          window.history.pushState({}, '', '/task-center');
+          // Manually trigger a navigation event so that wouter picks up the change
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+        
+        // DEBUG: Log clicks on the File Vault tab
+        if (href === '/file-vault') {
+          console.log(`[SidebarTab] File Vault tab clicked. isDisabled: ${isDisabled}`);
         }
       }}
     >
