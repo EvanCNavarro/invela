@@ -26,9 +26,26 @@ export function createUnifiedFormSubmissionRouter(): Router {
    */
   router.post(['/', '/submit/:formType/:taskId'], requireAuth, async (req: Request, res: Response) => {
     try {
-      const { taskId, formType, formData, metadata } = req.body;
+      // Set correct content-type for response
+      res.setHeader('Content-Type', 'application/json');
+      
+      // Get values from either URL params or request body
+      const taskId = req.params.taskId ? parseInt(req.params.taskId) : (req.body.taskId || 0);
+      const formType = req.params.formType || req.body.formType;
+      const { formData, metadata } = req.body;
+      
+      console.log(`[FormSubmission] Request received: path params:`, { 
+        pathTaskId: req.params.taskId,
+        pathFormType: req.params.formType
+      });
+      console.log(`[FormSubmission] Request body:`, {
+        bodyTaskId: req.body.taskId,
+        bodyFormType: req.body.formType,
+        formDataKeysCount: formData ? Object.keys(formData).length : 0
+      });
       
       if (!taskId || !formType || !formData) {
+        console.error(`[FormSubmission] Missing required fields: taskId=${taskId}, formType=${formType}, formData=${!!formData}`);
         return res.status(400).json({
           success: false,
           message: 'Missing required fields: taskId, formType, or formData'
@@ -128,6 +145,9 @@ export function createUnifiedFormSubmissionRouter(): Router {
    */
   router.get(['/status/:taskId', '/status/:formType/:taskId'], requireAuth, async (req: Request, res: Response) => {
     try {
+      // Set correct content-type for response
+      res.setHeader('Content-Type', 'application/json');
+      
       const taskId = parseInt(req.params.taskId);
       
       if (isNaN(taskId)) {
@@ -176,6 +196,9 @@ export function createUnifiedFormSubmissionRouter(): Router {
    */
   router.post('/retry/:taskId', requireAuth, async (req: Request, res: Response) => {
     try {
+      // Set correct content-type for response
+      res.setHeader('Content-Type', 'application/json');
+      
       const taskId = parseInt(req.params.taskId);
       const { formType } = req.body;
       

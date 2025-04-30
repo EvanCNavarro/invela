@@ -36,13 +36,30 @@ export async function submitForm(
   const url = `/api/form-submission/submit/${formType}/${taskId}`;
   
   const payload = {
+    taskId,        // Include taskId from function parameters
+    formType,      // Include formType from function parameters
     formData,
-    companyId
+    companyId: companyId || 0
   };
   
+  console.log('[FormSubmissionAPI] Submitting form data:', { 
+    url, 
+    taskId, 
+    formType, 
+    companyId,
+    formDataKeys: Object.keys(formData)
+  });
+
   // Use the correct signature for apiRequest: (method, url, data)
   // apiRequest already returns the parsed JSON response
-  return await apiRequest('POST', url, payload);
+  try {
+    const response = await apiRequest('POST', url, payload);
+    console.log('[FormSubmissionAPI] Submission successful:', response);
+    return response;
+  } catch (error) {
+    console.error('[FormSubmissionAPI] Submission failed:', error);
+    throw error;
+  }
 }
 
 /**
