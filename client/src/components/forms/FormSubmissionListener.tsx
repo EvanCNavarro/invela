@@ -85,13 +85,13 @@ const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   };
   
   // Use the form submission events hook
-  const { lastEvent } = useFormSubmissionEvents({
+  const { lastEvent } = useFormSubmissionEvents(
     taskId,
     formType,
-    onSuccess: handleSuccess,
-    onError: handleError,
-    onInProgress: handleInProgress,
-  });
+    handleSuccess,
+    handleError,
+    handleInProgress
+  );
   
   // Debug output for component lifecycle
   useEffect(() => {
