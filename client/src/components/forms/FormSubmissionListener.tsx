@@ -91,6 +91,9 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         
         // Handle the event based on status
         if (payload.status === 'success') {
+          // We've disabled toasts here to prevent duplication with parent components
+          // Parent components can handle their own toast/modal UI
+          // Only show toast if explicitly enabled (disabled by default for most cases)
           if (showToasts) {
             toast({
               title: 'Form submitted successfully',
@@ -104,6 +107,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             onSuccess(submissionEvent);
           }
         } else if (payload.status === 'error') {
+          // Always show error toasts since errors need to be visible
           if (showToasts) {
             toast({
               title: 'Form submission failed',
@@ -117,6 +121,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             onError(submissionEvent);
           }
         } else if (payload.status === 'in_progress') {
+          // In-progress toasts are less important for duplicate UI
           if (showToasts) {
             toast({
               title: 'Form submission in progress',
