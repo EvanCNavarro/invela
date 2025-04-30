@@ -1,176 +1,101 @@
 /**
- * Submission Tracker Utility
+ * Submission Tracker
  * 
- * A specialized utility for tracking form submission performance and flow
- * with timestamps for accurate timing measurements. This helps diagnose
- * performance issues in the form submission process.
- * 
- * This tracker is task-type agnostic and works with all form types:
- * - KYB (Know Your Business)
- * - KY3P (Know Your Third Party)
- * - Open Banking
- * 
- * Usage:
- * 1. Call startTracking() at the beginning of the submission process
- * 2. Call trackEvent() for each important step in the process
- * 3. Call stopTracking() when submission is complete
+ * This utility helps track form submission events and timing for performance monitoring.
+ * It logs events with timestamps to help measure and optimize the submission process.
  */
 
 import getLogger from './logger';
 
-// Create a dedicated logger for submission tracking
-const logger = getLogger('SubmissionTracker', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
+// Create a dedicated logger instance for submission tracking
+const logger = getLogger('SubmissionTracker', {
+  levels: { debug: true, info: true, warn: true, error: true }
 });
 
-type SubmissionEvent = {
-  timestamp: string;
-  event: string;
-  taskType?: string | null;
-  taskId?: number | string | null;
-  details?: any;
-  durationMs?: number;
-};
+class SubmissionTracker {
+  private taskId: string | number = '';
+  private taskType: string = '';
+  private events: Array<{ event: string; timestamp: string; data?: any }> = [];
+  private isTracking: boolean = false;
+  private startTime: number = 0;
 
-// Submission tracking state
-let submissionEvents: SubmissionEvent[] = [];
-let startTime: number | null = null;
-let isTracking = false;
-let currentTaskId: number | string | null = null;
-let currentTaskType: string | null = null;
+  /**
+   * Start tracking a submission
+   */
+  startTracking(taskId: string | number, taskType: string): void {
+    this.taskId = taskId;
+    this.taskType = taskType;
+    this.isTracking = true;
+    this.startTime = Date.now();
+    this.events = [];
+    
+    logger.info(`Started tracking submission for ${taskType} task ${taskId}`);
+    this.trackEvent('Tracking started');
+  }
 
-export const submissionTracker = {
   /**
-   * Start tracking submission events for a specific task
-   * 
-   * @param taskId - The ID of the task being submitted
-   * @param formType - The type of form being submitted (kyb, ky3p, open_banking, etc.)
+   * Track a submission event with optional data
    */
-  startTracking: (taskId: number | string, formType: string) => {
-    if (isTracking) {
-      logger.warn('Submission tracker already active, clearing previous events', { 
-        previousTaskId: currentTaskId,
-        previousTaskType: currentTaskType,
-        newTaskId: taskId,
-        newTaskType: formType
-      });
-      submissionEvents = [];
-    }
-    
-    // Store task information
-    currentTaskId = taskId;
-    currentTaskType = formType;
-    
-    // Initialize tracking
-    startTime = Date.now();
-    isTracking = true;
-    
-    // Log the start of tracking
-    submissionTracker.trackEvent('Start submission tracking', { taskId, formType });
-    logger.info(`Started tracking ${formType} submission for task ${taskId}`);
-  },
-  
-  /**
-   * Track a specific event during the submission process
-   * 
-   * @param event - The name/description of the event
-   * @param details - Optional additional details about the event
-   */
-  trackEvent: (event: string, details?: any) => {
-    if (!isTracking) {
-      logger.warn(`Attempted to track event "${event}" but tracking is not active`);
+  trackEvent(event: string, data?: any): void {
+    if (!this.isTracking) {
+      logger.warn('Attempted to track event when not tracking');
       return;
     }
     
-    const now = Date.now();
-    const timestamp = new Date(now).toISOString();
+    const timestamp = new Date().toISOString();
+    const elapsedMs = Date.now() - this.startTime;
     
-    // Create event data with task context
-    const eventData: SubmissionEvent = {
-      timestamp,
-      event,
-      taskId: currentTaskId,  // currentTaskId is already typed as number | string | null
-      taskType: currentTaskType,  // currentTaskType is already typed as string | null
-      details,
-    };
+    this.events.push({ event, timestamp, data });
     
-    // Calculate duration from start
-    if (startTime) {
-      eventData.durationMs = now - startTime;
-    }
-    
-    // Store and log the event
-    submissionEvents.push(eventData);
-    logger.info(`${timestamp} | ${event} (${eventData.durationMs}ms)`, details);
-  },
-  
+    logger.info(`[+${elapsedMs}ms] ${event}`, data);
+  }
+
   /**
-   * Stop tracking and print summary information
-   * 
-   * @param success - Whether the submission was successful (optional)
+   * Stop tracking and report submission results
    */
-  stopTracking: (success?: boolean | null) => {
-    if (!isTracking) {
-      logger.warn('Attempted to stop tracking but tracking is not active');
+  stopTracking(success: boolean): void {
+    if (!this.isTracking) {
       return;
     }
     
-    // Log end event with success status if provided
-    // Handle both undefined and null for success status
-    const finalEvent = success !== undefined && success !== null
-      ? `End submission tracking (${success ? 'success' : 'failed'})`
-      : 'End submission tracking';
-      
-    submissionTracker.trackEvent(finalEvent);
+    const endTime = Date.now();
+    const totalDuration = endTime - this.startTime;
     
-    // Calculate and log summary statistics
-    const totalDuration = startTime ? Date.now() - startTime : 0;
-    logger.info('======== SUBMISSION TRACKING SUMMARY ========');
-    logger.info(`Task: ${currentTaskType} #${currentTaskId}`);
-    logger.info(`Total events: ${submissionEvents.length}`);
-    logger.info(`Total duration: ${totalDuration}ms`);
+    this.trackEvent(success ? 'Submission completed successfully' : 'Submission failed');
     
-    // Log detailed events table
-    console.table(submissionEvents.map(event => ({
-      Time: event.timestamp,
-      Event: event.event,
-      'Duration (ms)': event.durationMs,
-      'Details': JSON.stringify(event.details || {}).substring(0, 50)
-    })));
+    logger.info(`Submission ${success ? 'completed' : 'failed'} in ${totalDuration}ms`, {
+      taskId: this.taskId,
+      taskType: this.taskType,
+      eventCount: this.events.length,
+      totalDuration
+    });
     
-    logger.info('============================================');
+    // Send telemetry if needed
+    if (typeof window !== 'undefined' && window.gtag) {
+      try {
+        window.gtag('event', 'form_submission', {
+          event_category: 'forms',
+          event_label: this.taskType,
+          value: success ? 1 : 0,
+          metric_duration: totalDuration
+        });
+      } catch (e) {
+        // Ignore telemetry errors
+      }
+    }
     
-    // Reset state for future tracking
-    isTracking = false;
-    startTime = null;
-    currentTaskId = null;  // Use null instead of undefined for consistency
-    currentTaskType = null;  // Use null instead of undefined for consistency
-    submissionEvents = [];
-  },
-  
+    this.isTracking = false;
+  }
+
   /**
-   * Get all tracked events (for testing/debugging)
-   * 
-   * @returns A copy of the current events array
+   * Get all tracked events
    */
-  getEvents: () => [...submissionEvents],
-  
-  /**
-   * Check if tracking is currently active
-   * 
-   * @returns Boolean indicating if tracking is active
-   */
-  isActive: () => isTracking,
-  
-  /**
-   * Get current task information
-   * 
-   * @returns Object with current taskId and taskType
-   */
-  getCurrentTask: () => ({
-    taskId: currentTaskId,
-    taskType: currentTaskType
-  })
-};
+  getEvents() {
+    return [...this.events];
+  }
+}
+
+// Create singleton instance
+const submissionTracker = new SubmissionTracker();
 
 export default submissionTracker;
