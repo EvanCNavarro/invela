@@ -10,7 +10,7 @@ import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './ty
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import { broadcastTaskUpdate, broadcastMessage, getWebSocketServer } from './services/websocket';
+import { broadcastMessage, getWebSocketServer } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -48,6 +48,7 @@ import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
+import { createTestFormSubmissionRouter } from './routes/test-form-submission';
 import { createTestWebSocketRoutes } from './routes/test-websocket';
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
@@ -396,14 +397,22 @@ export function registerRoutes(app: Express): Express {
     console.error('[Routes] Error setting up test WebSocket routes:', error);
   }
   
-  // Register our form submission test routes
+  // Register our test form submission routes
   try {
     console.log('[Routes] Setting up form submission test routes');
-    const testRouter = createTestRouter();
-    app.use('/api/test', testRouter);
+    const testFormSubmissionRouter = createTestFormSubmissionRouter();
+    app.use('/api/test', testFormSubmissionRouter);
     console.log('[Routes] Successfully registered form submission test routes');
   } catch (error) {
     console.error('[Routes] Error setting up form submission test routes:', error);
+  }
+  
+  // Register general test routes
+  try {
+    const testRouter = createTestRouter();
+    app.use('/api/test', testRouter);
+  } catch (error) {
+    console.error('[Routes] Error setting up test routes:', error);
   }
   
   // Register submission status API - reliable form submission status checking
@@ -1723,7 +1732,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           progress: updatedTask.progress
         });
 
-        broadcastTaskUpdate(updatedTask);
+        broadcastMessage('task_update', updatedTask);
       }
 
       // Update invitation status
@@ -2346,7 +2355,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           });
 
           // Broadcast task update
-          broadcastTaskUpdate({
+          broadcastMessage('task_update', {
             id: onboardingTask.id,
             status: onboardingTask.status,
             progress: onboardingTask.progress,
@@ -2774,11 +2783,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             answers.push(...chunkAnswers);
 
             // Send progress update via WebSocket
-            broadcastTaskUpdate({
-              type: 'CLASSIFICATION_UPDATE',
-              fileId: file.id.toString(),
-              category: file.category || 'unknown',
-              confidence: 0.95
+            broadcastMessage('task_update', {
+              id: taskId, // Using the task ID
+              metadata: {
+                type: 'CLASSIFICATION_UPDATE',
+                fileId: file.id.toString(),
+                category: file.status || 'unknown', // Using status instead of category
+                confidence: 0.95
+              }
             });
           }
 

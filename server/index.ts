@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
-import { setupWebSocket } from "./services/websocket";
+import { setupWebSocket } from "./services/websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
