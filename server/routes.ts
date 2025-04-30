@@ -53,6 +53,7 @@ import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
 import broadcastRouter from './routes/broadcast';
 import testKy3pUpdateRouter from './routes/test-ky3p-update';
+import unifiedFormSubmissionRouter from './routes/unified-form-submission';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -362,6 +363,8 @@ export function registerRoutes(app: Express): Express {
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
+  // Register our unified form submission router - centralized endpoint for all form types
+  app.use(unifiedFormSubmissionRouter);
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);
   
