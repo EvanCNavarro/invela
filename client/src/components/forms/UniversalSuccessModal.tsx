@@ -459,12 +459,24 @@ export function UniversalSuccessModal({
           key="download-file"
           variant={buttons.length > 0 ? "outline" : "default"}
           onClick={() => {
-            // Use the /api/files/:id/download endpoint for direct download
-            window.open(`/api/files/${fileId}/download`, '_blank');
+            // CRITICAL FIX: Navigate to file-vault instead of directly downloading (which can fail)
+            // This ensures users still have access to the file in the File Vault
+            navigate('/file-vault');
+            onOpenChange(false);
+            
+            // Show a toast message to let the user know about the file
+            // Note: Importing and using toast directly inside onClick handler
+            import('@/hooks/use-toast').then(({ toast }) => {
+              toast({
+                title: "File Available in File Vault",
+                description: `The file ${fileName || 'generated report'} is available in your File Vault`,
+                duration: 5000
+              });
+            });
           }}
           className="flex-1"
         >
-          {fileName ? `Download ${fileName.split('.')[0]}` : "Download Report"}
+          {fileName ? `View in File Vault` : "View in File Vault"}
         </Button>
       );
     }
