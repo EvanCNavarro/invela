@@ -1369,21 +1369,33 @@ export default function TaskPage({ params }: TaskPageProps) {
                   initialData={task.savedFormData}
                   onSubmit={async (formData) => {
                     try {
+                      // Show submission toast
+                      toast({
+                        title: "Processing Submission",
+                        description: "Please wait while we process your form...",
+                      });
+                      
                       // Create standardized filename with company name
                       const fileName = `Open_Banking_Survey_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
                       
-                      console.log(`[OpenBanking] Starting form submission for task ${task.id}`);
+                      console.log(`[OpenBanking] Starting form submission for task ${task.id} using unified endpoint`);
                       
-                      // Use our new standardized endpoint
-                      const response = await fetch(`/api/tasks/${task.id}/open-banking-submit`, {
+                      // Use our unified form submission endpoint
+                      const response = await fetch(`/api/form-submission`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
+                          taskId: task.id,
+                          formType: 'open_banking',
                           formData,
-                          fileName
+                          metadata: {
+                            fileName,
+                            companyName: displayName,
+                            companyId: task.metadata?.companyId
+                          }
                         }),
                       });
                       
