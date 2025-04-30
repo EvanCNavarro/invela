@@ -175,8 +175,8 @@ export function createFormSubmissionRouter(): Router {
             
             // Set the appropriate tabs to unlock based on form type
             if (formType === 'kyb' || formType === 'company_kyb') {
-              // KYB forms unlock file-vault and dashboard
-              unlockedTabs = ['file-vault', 'dashboard'];
+              // KYB forms unlock only file-vault (not dashboard)
+              unlockedTabs = ['file-vault'];
               logger.info('Unlocking tabs for KYB submission:', unlockedTabs);
             } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
               // KY3P forms don't unlock any tabs
