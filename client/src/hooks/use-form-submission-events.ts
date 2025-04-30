@@ -13,8 +13,10 @@ export interface SubmissionAction {
   description: string;
   fileId?: number;
   data?: {
-    details?: string;
+    details: string;
     buttonText?: string;
+    url?: string;
+    fileId?: number;
   };
 }
 
@@ -22,14 +24,14 @@ export interface FormSubmissionEvent {
   taskId: number;
   formType: string;
   status: 'success' | 'error' | 'in_progress';
-  companyId: number;
+  companyId?: number;
   submissionDate?: string;
   unlockedTabs?: string[];
   unlockedTasks?: number[];
   fileName?: string;
   fileId?: number;
   error?: string;
-  actions?: SubmissionAction[];
+  completedActions?: SubmissionAction[];
 }
 
 export function useFormSubmissionEvents(
@@ -74,7 +76,8 @@ export function useFormSubmissionEvents(
         fileName: data.fileName,
         fileId: data.fileId,
         error: data.details,
-        actions: data.actions || []
+        // Use completedActions if available, otherwise try to use actions
+        completedActions: data.completedActions || data.actions || []
       };
       
       setLastEvent(formEvent);
