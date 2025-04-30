@@ -91,9 +91,90 @@ export async function testFormSubmissionBroadcast(
   });
 }
 
+/**
+ * Test function to broadcast a form error event via WebSocket
+ * This is used for testing only and should not be used in production
+ * 
+ * @param taskId The task ID
+ * @param formType The form type
+ * @param companyId The company ID
+ * @param errorMessage Optional error message
+ * @returns Promise with the test response
+ */
+export async function testFormErrorBroadcast(
+  taskId: number,
+  formType: string,
+  companyId: number,
+  errorMessage?: string
+) {
+  return apiRequest('/api/test/websocket/broadcast-form-error', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      taskId,
+      formType,
+      companyId,
+      errorMessage,
+    }),
+  });
+}
+
+/**
+ * Test function to broadcast a form in-progress event via WebSocket
+ * This is used for testing only and should not be used in production
+ * 
+ * @param taskId The task ID
+ * @param formType The form type
+ * @param companyId The company ID
+ * @returns Promise with the test response
+ */
+export async function testFormInProgressBroadcast(
+  taskId: number,
+  formType: string,
+  companyId: number
+) {
+  return apiRequest('/api/test/websocket/broadcast-in-progress', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      taskId,
+      formType,
+      companyId,
+    }),
+  });
+}
+
+/**
+ * Function to send a direct WebSocket message for testing
+ * This is used to test custom WebSocket message types
+ * 
+ * @param type The message type
+ * @param payload The message payload
+ * @returns Promise that resolves when the message is sent
+ */
+export async function sendWebSocketTestMessage(type: string, payload: any) {
+  return apiRequest('/api/test/websocket/custom-message', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      type,
+      payload,
+    }),
+  });
+}
+
 export default {
   submitForm,
   checkSubmissionStatus,
   retrySubmission,
   testFormSubmissionBroadcast,
+  testFormErrorBroadcast,
+  testFormInProgressBroadcast,
+  sendWebSocketTestMessage,
 };
