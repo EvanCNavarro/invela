@@ -57,8 +57,8 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
       try {
         const data = JSON.parse(event.data);
         
-        // Only process form_submission events
-        if (data.type !== 'form_submission') {
+        // Process both 'form_submission' and 'form_submitted' events
+        if (data.type !== 'form_submission' && data.type !== 'form_submitted') {
           return;
         }
         
