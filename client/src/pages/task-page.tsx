@@ -381,6 +381,9 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              onSubmit={(data) => {
+                console.log('[TaskPage] KYB form submission handler called', { taskId: task.id });
+              }}
             />
           </PageTemplate>
         </DashboardLayout>
@@ -437,6 +440,9 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              onSubmit={(data) => {
+                console.log('[TaskPage] Card form submission handler called', { taskId: task.id });
+              }}
             />
           </PageTemplate>
         </DashboardLayout>
