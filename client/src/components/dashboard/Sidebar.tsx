@@ -49,6 +49,13 @@ export function Sidebar({
 }: SidebarProps) {
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
+  const queryClient = useQueryClient();
+  
+  // Get current company data
+  const { data: company } = useQuery({
+    queryKey: ['/api/companies/current'],
+    enabled: !isPlayground
+  });
 
   // Only fetch real data if not in playground mode
   const { data: tasks = [] } = useQuery({
@@ -116,8 +123,9 @@ export function Sidebar({
           
           // If the received tabs data is for our company, update the available tabs
           if (data.companyId === company?.id && Array.isArray(data.availableTabs)) {
+            console.log('[Sidebar] Received availableTabs update:', data.availableTabs);
             // Trigger a refetch to update the tabs data
-            queryClient.invalidateQueries(['availableTabs']);
+            queryClient.invalidateQueries({ queryKey: ['availableTabs'] });
           }
         });
         subscriptions.push(unsubCompanyTabs);
@@ -137,7 +145,7 @@ export function Sidebar({
         }
       });
     };
-  }, [isPlayground]);
+  }, [isPlayground, queryClient, company?.id]);
 
   const menuItems = [
     {
