@@ -97,18 +97,30 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     logger.info('Task status updated to submitted', { taskId, formType });
     
     // 2. Broadcast the task update via WebSocket with enhanced submission metadata
-    await broadcastTaskUpdate({
-      id: taskId,
-      status: 'submitted',
-      progress: 100,
-      metadata: {
-        lastUpdated: now.toISOString(),
-        submittedAt: now.toISOString(),
-        submittedBy: userId,
+    try {
+      logger.info('Sending WebSocket notification for task submission', { taskId });
+      
+      await broadcastTaskUpdate({
+        id: taskId,
         status: 'submitted',
-        explicitlySubmitted: explicitSubmission
-      }
-    });
+        progress: 100,
+        metadata: {
+          lastUpdated: now.toISOString(),
+          submittedAt: now.toISOString(),
+          submittedBy: userId,
+          status: 'submitted',
+          explicitlySubmitted: explicitSubmission
+        }
+      });
+      
+      logger.info('WebSocket notification sent successfully', { taskId });
+    } catch (wsError) {
+      logger.error('Error broadcasting WebSocket notification', {
+        error: wsError instanceof Error ? wsError.message : 'Unknown error',
+        taskId
+      });
+      // Continue execution even if WebSocket notification fails
+    }
     
     logger.info('WebSocket notification sent for task update', { taskId });
     
@@ -203,11 +215,34 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
           });
           
           // Update task metadata with file reference
-          await db.update(tasks)
-            .set({
-              metadata: sql`jsonb_set(metadata, '{fileId}', to_jsonb(${fileId}))`,
-            })
+          // Get current metadata first to ensure we're not losing data
+          const [currentTaskData] = await db.select()
+            .from(tasks)
             .where(eq(tasks.id, taskId));
+            
+          if (currentTaskData) {
+            // Create a new metadata object with the fileId added
+            const updatedMetadata = {
+              ...currentTaskData.metadata,
+              fileId: fileId,
+              fileGenerated: true,
+              fileGeneratedAt: new Date().toISOString(),
+              fileName: fileResult.fileName
+            };
+            
+            // Update the task with the new metadata object
+            await db.update(tasks)
+              .set({
+                metadata: updatedMetadata
+              })
+              .where(eq(tasks.id, taskId));
+              
+            logger.info('Updated task metadata with file information', {
+              taskId,
+              fileId,
+              fileName: fileResult.fileName
+            });
+          }
         } else {
           logger.error('Failed to create file', {
             taskId,

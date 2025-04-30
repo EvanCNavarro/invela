@@ -240,35 +240,89 @@ async function checkKybCompleted(companyId: number): Promise<boolean> {
  */
 export async function unlockFileVaultAccess(companyId: number): Promise<boolean> {
   try {
-    logger.info(`[TaskDependencies] Unlocking File Vault access for company:`, { companyId });
+    logger.info(`[TaskDependencies] Unlocking File Vault access for company`, { companyId });
     
-    // Update company settings to enable file_vault access
-    await withRetry(
+    // First get the current company data to check if file vault is already unlocked
+    const currentCompany = await db.execute(sql`
+      SELECT available_tabs FROM companies WHERE id = ${companyId}
+    `);
+    
+    logger.info(`[TaskDependencies] Current company tabs before unlock`, { 
+      companyId,
+      company: currentCompany.rows[0],
+      available_tabs: currentCompany.rows[0]?.available_tabs
+    });
+    
+    // Update using a more robust JSONB array append approach
+    const result = await withRetry(
       async () => {
+        // First ensure we have an array
+        await db.execute(sql`
+          UPDATE companies
+          SET available_tabs = COALESCE(available_tabs, '[]'::jsonb)
+          WHERE id = ${companyId} AND (available_tabs IS NULL OR available_tabs = 'null'::jsonb)
+        `);
+        
+        // Then add file_vault if it doesn't exist in the array
         return db.execute(sql`
           UPDATE companies
-          SET available_tabs = jsonb_set(
-            COALESCE(available_tabs, '[]'::jsonb),
-            '{-1}',
-            '"file_vault"',
-            true
-          )
+          SET available_tabs = (
+            CASE 
+              WHEN available_tabs @> '"file_vault"' THEN available_tabs
+              ELSE available_tabs || '"file_vault"'
+            END
+          ),
+          onboarding_completed = true
           WHERE id = ${companyId}
         `);
       },
       {
-        maxRetries: 2,
-        operation: "Unlock File Vault access"
+        maxRetries: 3,
+        operation: "Unlock File Vault access with array verification"
       }
     );
+    
+    logger.info(`[TaskDependencies] File vault update query result`, { 
+      companyId,
+      rowCount: result.rowCount,
+      command: result.command
+    });
+    
+    // Verify the update was successful
+    const updatedCompany = await db.execute(sql`
+      SELECT available_tabs FROM companies WHERE id = ${companyId}
+    `);
+    
+    logger.info(`[TaskDependencies] Company tabs after unlock`, { 
+      companyId,
+      available_tabs: updatedCompany.rows[0]?.available_tabs
+    });
+    
+    const tabsAfterUpdate = updatedCompany.rows[0]?.available_tabs || [];
+    const fileVaultIsUnlocked = 
+      Array.isArray(tabsAfterUpdate) ? 
+      tabsAfterUpdate.includes("file_vault") : 
+      String(tabsAfterUpdate).includes("file_vault");
+    
+    logger.info(`[TaskDependencies] File vault unlock status check`, { 
+      companyId,
+      fileVaultIsUnlocked 
+    });
     
     // Broadcast company update to refresh UI
     broadcastCompanyUpdate(companyId);
     
-    // Return success
-    return true;
+    // Return whether the file vault is now unlocked
+    return fileVaultIsUnlocked;
   } catch (error) {
-    logger.error(`[TaskDependencies] Error unlocking File Vault access:`, error);
+    logger.error(`[TaskDependencies] Error unlocking File Vault access`, error);
+    // Log detailed error information
+    if (error instanceof Error) {
+      logger.error(`[TaskDependencies] Error details: ${error.message}`, {
+        stack: error.stack,
+        companyId
+      });
+    }
     return false;
   }
 }
@@ -280,40 +334,74 @@ export async function unlockFileVaultAccess(companyId: number): Promise<boolean>
  */
 export async function unlockDashboardAndInsightsTabs(companyId: number): Promise<boolean> {
   try {
-    logger.info(`[TaskDependencies] Unlocking Dashboard and Insights tabs for company:`, { companyId });
+    logger.info(`[TaskDependencies] Unlocking Dashboard and Insights tabs for company`, { companyId });
     
-    // Update company settings to enable dashboard and insights access
-    await withRetry(
+    // First get the current company data to check available tabs
+    const currentCompany = await db.execute(sql`
+      SELECT available_tabs FROM companies WHERE id = ${companyId}
+    `);
+    
+    logger.info(`[TaskDependencies] Current company tabs before dashboard/insights unlock`, { 
+      companyId,
+      available_tabs: currentCompany.rows[0]?.available_tabs
+    });
+    
+    // Update using same robust JSONB array approach as file vault unlock
+    const result = await withRetry(
       async () => {
-        // First add dashboard tab
+        // First ensure we have an array
         await db.execute(sql`
           UPDATE companies
-          SET available_tabs = jsonb_set(
-            COALESCE(available_tabs, '[]'::jsonb),
-            '{-1}',
-            '"dashboard"',
-            true
+          SET available_tabs = COALESCE(available_tabs, '[]'::jsonb)
+          WHERE id = ${companyId} AND (available_tabs IS NULL OR available_tabs = 'null'::jsonb)
+        `);
+        
+        // Add dashboard if it doesn't exist in the array
+        await db.execute(sql`
+          UPDATE companies
+          SET available_tabs = (
+            CASE 
+              WHEN available_tabs @> '"dashboard"' THEN available_tabs
+              ELSE available_tabs || '"dashboard"'
+            END
           )
           WHERE id = ${companyId}
         `);
         
-        // Then add insights tab
+        // Add insights if it doesn't exist in the array
         return db.execute(sql`
           UPDATE companies
-          SET available_tabs = jsonb_set(
-            available_tabs,
-            '{-1}',
-            '"insights"',
-            true
-          )
+          SET available_tabs = (
+            CASE 
+              WHEN available_tabs @> '"insights"' THEN available_tabs
+              ELSE available_tabs || '"insights"'
+            END
+          ),
+          onboarding_completed = true
           WHERE id = ${companyId}
         `);
       },
       {
-        maxRetries: 2,
-        operation: "Unlock Dashboard and Insights tabs"
+        maxRetries: 3,
+        operation: "Unlock Dashboard and Insights tabs with array verification"
       }
     );
+    
+    logger.info(`[TaskDependencies] Dashboard/Insights update query result`, { 
+      companyId,
+      rowCount: result.rowCount,
+      command: result.command
+    });
+    
+    // Verify the update was successful
+    const updatedCompany = await db.execute(sql`
+      SELECT available_tabs FROM companies WHERE id = ${companyId}
+    `);
+    
+    logger.info(`[TaskDependencies] Company tabs after dashboard/insights unlock`, { 
+      companyId,
+      available_tabs: updatedCompany.rows[0]?.available_tabs
+    });
     
     // Broadcast company update to refresh UI
     broadcastCompanyUpdate(companyId);
@@ -321,7 +409,13 @@ export async function unlockDashboardAndInsightsTabs(companyId: number): Promise
     // Return success
     return true;
   } catch (error) {
-    logger.error(`[TaskDependencies] Error unlocking Dashboard and Insights tabs:`, error);
+    logger.error(`[TaskDependencies] Error unlocking Dashboard and Insights tabs`, error);
+    if (error instanceof Error) {
+      logger.error(`[TaskDependencies] Error details: ${error.message}`, {
+        stack: error.stack,
+        companyId
+      });
+    }
     return false;
   }
 }
@@ -333,17 +427,38 @@ export async function unlockDashboardAndInsightsTabs(companyId: number): Promise
  */
 function broadcastCompanyUpdate(companyId: number): void {
   try {
-    // Import the WebSocket broadcast function
-    const { broadcastCompanyTabsUpdate } = require("./websocket");
+    // Import the WebSocket broadcast function directly
+    const { broadcastCompanyTabsUpdate } = require("./company-tabs");
+    
+    logger.info(`[TaskDependencies] Broadcasting company update for tab access`, { 
+      companyId, 
+      operation: "task_dependency_unlock" 
+    });
     
     // Broadcast update to refresh company tabs in the UI
     if (typeof broadcastCompanyTabsUpdate === "function") {
-      broadcastCompanyTabsUpdate(companyId, ["file-vault"], { 
+      // Use file_vault (with underscore) to match the database field name
+      broadcastCompanyTabsUpdate(companyId, ["file_vault", "dashboard", "insights"], { 
         cache_invalidation: true,
-        source: "task_dependency_unlock"
+        source: "task_dependency_unlock",
+        timestamp: new Date().toISOString()
+      });
+      
+      logger.info(`[TaskDependencies] Company tabs broadcast completed`, { companyId });
+    } else {
+      logger.error(`[TaskDependencies] broadcastCompanyTabsUpdate is not a function`, { 
+        companyId,
+        type: typeof broadcastCompanyTabsUpdate 
       });
     }
   } catch (error) {
     logger.error(`[TaskDependencies] Error broadcasting company update:`, error);
+    // Log specific details about the error
+    if (error instanceof Error) {
+      logger.error(`[TaskDependencies] Error details: ${error.message}`, {
+        stack: error.stack,
+        companyId
+      });
+    }
   }
 }
