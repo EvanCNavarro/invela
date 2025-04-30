@@ -25,6 +25,7 @@ import { UniversalSuccessModal } from '@/components/forms/UniversalSuccessModal'
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { submitForm } from '@/api/form-submission-api';
 
 interface TaskPageProps {
   params: {
@@ -381,8 +382,48 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 console.log('[TaskPage] KYB form submission handler called', { taskId: task.id });
+                try {
+                  // Get company ID from task metadata if available
+                  const companyId = task.company_id || task.metadata?.company?.id;
+                  
+                  // Use the submitForm API function to submit the form
+                  const result = await submitForm(task.id, 'kyb', data, companyId);
+                  
+                  // Dispatch a custom event to notify the form submission listener
+                  const event = new CustomEvent('form-submission-success', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'kyb',
+                      result,
+                      fileId: result.fileId,
+                      actions: result.completedActions || []
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  console.log('[TaskPage] KYB form submission completed successfully', result);
+                } catch (error) {
+                  console.error('[TaskPage] KYB form submission error:', error);
+                  
+                  // Dispatch error event
+                  const event = new CustomEvent('form-submission-error', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'kyb',
+                      error: error instanceof Error ? error.message : String(error)
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  // Show toast
+                  toast({
+                    title: "Form Submission Failed",
+                    description: error instanceof Error ? error.message : String(error),
+                    variant: "destructive"
+                  });
+                }
               }}
             />
           </PageTemplate>
@@ -440,8 +481,48 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 console.log('[TaskPage] Card form submission handler called', { taskId: task.id });
+                try {
+                  // Get company ID from task metadata if available
+                  const companyId = task.company_id || task.metadata?.company?.id;
+                  
+                  // Use the submitForm API function to submit the form
+                  const result = await submitForm(task.id, 'card', data, companyId);
+                  
+                  // Dispatch a custom event to notify the form submission listener
+                  const event = new CustomEvent('form-submission-success', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'card',
+                      result,
+                      fileId: result.fileId,
+                      actions: result.completedActions || []
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  console.log('[TaskPage] Card form submission completed successfully', result);
+                } catch (error) {
+                  console.error('[TaskPage] Card form submission error:', error);
+                  
+                  // Dispatch error event
+                  const event = new CustomEvent('form-submission-error', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'card',
+                      error: error instanceof Error ? error.message : String(error)
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  // Show toast
+                  toast({
+                    title: "Form Submission Failed",
+                    description: error instanceof Error ? error.message : String(error),
+                    variant: "destructive"
+                  });
+                }
               }}
             />
           </PageTemplate>
@@ -499,8 +580,48 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 console.log('[TaskPage] KY3P form submission handler called', { taskId: task.id });
+                try {
+                  // Get company ID from task metadata if available
+                  const companyId = task.company_id || task.metadata?.company?.id;
+                  
+                  // Use the submitForm API function to submit the form
+                  const result = await submitForm(task.id, 'ky3p', data, companyId);
+                  
+                  // Dispatch a custom event to notify the form submission listener
+                  const event = new CustomEvent('form-submission-success', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'ky3p',
+                      result,
+                      fileId: result.fileId,
+                      actions: result.completedActions || []
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  console.log('[TaskPage] KY3P form submission completed successfully', result);
+                } catch (error) {
+                  console.error('[TaskPage] KY3P form submission error:', error);
+                  
+                  // Dispatch error event
+                  const event = new CustomEvent('form-submission-error', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'ky3p',
+                      error: error instanceof Error ? error.message : String(error)
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  // Show toast
+                  toast({
+                    title: "Form Submission Failed",
+                    description: error instanceof Error ? error.message : String(error),
+                    variant: "destructive"
+                  });
+                }
               }}
             />
           </PageTemplate>
@@ -558,8 +679,48 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 console.log('[TaskPage] Open Banking form submission handler called', { taskId: task.id });
+                try {
+                  // Get company ID from task metadata if available
+                  const companyId = task.company_id || task.metadata?.company?.id;
+                  
+                  // Use the submitForm API function to submit the form
+                  const result = await submitForm(task.id, 'open_banking', data, companyId);
+                  
+                  // Dispatch a custom event to notify the form submission listener
+                  const event = new CustomEvent('form-submission-success', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'open_banking',
+                      result,
+                      fileId: result.fileId,
+                      actions: result.completedActions || []
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  console.log('[TaskPage] Open Banking form submission completed successfully', result);
+                } catch (error) {
+                  console.error('[TaskPage] Open Banking form submission error:', error);
+                  
+                  // Dispatch error event
+                  const event = new CustomEvent('form-submission-error', {
+                    detail: {
+                      taskId: task.id,
+                      formType: 'open_banking',
+                      error: error instanceof Error ? error.message : String(error)
+                    }
+                  });
+                  document.dispatchEvent(event);
+                  
+                  // Show toast
+                  toast({
+                    title: "Form Submission Failed",
+                    description: error instanceof Error ? error.message : String(error),
+                    variant: "destructive"
+                  });
+                }
               }}
             />
           </PageTemplate>
