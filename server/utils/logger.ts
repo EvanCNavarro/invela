@@ -57,3 +57,6 @@ export function error(message: string, context?: LogContext) {
   const defaultLogger = new Logger('Default');
   defaultLogger.error(message, context);
 }
+
+// Export createLogger as default for modules that import using default syntax
+export default createLogger;
