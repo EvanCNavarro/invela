@@ -750,6 +750,15 @@ router.get('/api/files', async (req, res) => {
     
     const totalFiles = Number(countResult[0]?.count || 0);
     
+    // CRITICAL FIX: Enhanced file query with detailed debugging for company files
+    console.log(`[Files] ⚠️ ENHANCED DEBUGGING: Fetching files for company ${parsedCompanyId}`, {
+      companyId: parsedCompanyId,
+      userId: req.user?.id,
+      pagination: { page, pageSize, offset },
+      totalFilesCount: totalFiles,
+      timestamp: new Date().toISOString()
+    });
+    
     // Query files for the company with pagination
     const fileRecords = await db.query.files.findMany({
       where: eq(files.company_id, parsedCompanyId),
@@ -758,13 +767,25 @@ router.get('/api/files', async (req, res) => {
       offset: offset
     });
 
-    console.log('[Files] Query results:', {
+    // Check if records have proper metadata and company_id
+    const fileIds = fileRecords.map(f => f.id);
+    console.log(`[Files] ✅ Query returned ${fileRecords.length} files`, {
       recordCount: fileRecords.length,
       totalFiles,
       page,
       pageSize,
-      firstRecord: fileRecords[0],
-      lastRecord: fileRecords[fileRecords.length - 1]
+      fileIds,
+      company: {
+        id: parsedCompanyId,
+        name: req.user?.company_name
+      },
+      firstRecord: fileRecords.length > 0 ? {
+        id: fileRecords[0].id,
+        name: fileRecords[0].name,
+        companyId: fileRecords[0].company_id,
+        createdAt: fileRecords[0].created_at
+      } : null,
+      timestamp: new Date().toISOString()
     });
 
     res.json({
