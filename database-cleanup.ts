@@ -264,33 +264,100 @@ async function cleanupDatabase() {
     await db.execute(sql`DELETE FROM invitations WHERE id BETWEEN 217 AND 300`);
     console.log('Test users and invitations deleted.');
     
-    // 7. Delete test companies and tasks
-    // First delete any tasks associated with companies to avoid foreign key constraints
+    // Delete test tasks
     console.log('Deleting test tasks...');
+    
+    // Check if task_dependencies table exists
+    const taskDepsTableExists = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'task_dependencies'
+      )
+    `);
+    
+    if (taskDepsTableExists.rows[0]?.exists) {
+      console.log('Deleting task dependencies...');
+      await db.execute(sql`DELETE FROM task_dependencies WHERE task_id BETWEEN 347 AND 675 OR dependent_task_id BETWEEN 347 AND 675`);
+      console.log('Task dependencies deleted.');
+    } else {
+      console.log('task_dependencies table does not exist, skipping...');
+    }
+    
+    // Delete the tasks
     await db.execute(sql`DELETE FROM tasks WHERE id BETWEEN 347 AND 675`);
     console.log('Test tasks deleted.');
     
-    // Delete any task dependencies
-    console.log('Deleting task dependencies...');
-    await db.execute(sql`DELETE FROM task_dependencies WHERE task_id BETWEEN 347 AND 675 OR dependent_task_id BETWEEN 347 AND 675`);
-    
-    // Delete any company-related records
+    // Delete any company-related records in correct order
     console.log('Deleting company-related foreign key references...');
     
-    // Delete relationships
-    await db.execute(sql`DELETE FROM relationships WHERE company_id BETWEEN 169 AND 251 OR related_company_id BETWEEN 169 AND 251`);
+    // Check if relationships table exists
+    const relationshipsTableExists = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'relationships'
+      )
+    `);
     
-    // Delete company logos
-    await db.execute(sql`DELETE FROM company_logos WHERE company_id BETWEEN 169 AND 251`);
+    if (relationshipsTableExists.rows[0]?.exists) {
+      console.log('Deleting relationships...');
+      await db.execute(sql`DELETE FROM relationships WHERE company_id BETWEEN 169 AND 251 OR related_company_id BETWEEN 169 AND 251`);
+      console.log('Relationships deleted.');
+    } else {
+      console.log('relationships table does not exist, skipping...');
+    }
     
-    // Delete files associated with test companies
-    await db.execute(sql`DELETE FROM files WHERE company_id BETWEEN 169 AND 251`);
+    // Check if company_logos table exists
+    const companyLogosTableExists = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'company_logos'
+      )
+    `);
     
-    // Delete openai_search_analytics for test companies
-    await db.execute(sql`DELETE FROM openai_search_analytics WHERE company_id BETWEEN 169 AND 251`);
+    if (companyLogosTableExists.rows[0]?.exists) {
+      console.log('Deleting company logos...');
+      await db.execute(sql`DELETE FROM company_logos WHERE company_id BETWEEN 169 AND 251`);
+      console.log('Company logos deleted.');
+    } else {
+      console.log('company_logos table does not exist, skipping...');
+    }
     
-    // Delete security_responses for test companies
-    await db.execute(sql`DELETE FROM security_responses WHERE company_id BETWEEN 169 AND 251`);
+    // Check if openai_search_analytics table exists
+    const openaiSearchTableExists = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'openai_search_analytics'
+      )
+    `);
+    
+    if (openaiSearchTableExists.rows[0]?.exists) {
+      console.log('Deleting OpenAI search analytics...');
+      await db.execute(sql`DELETE FROM openai_search_analytics WHERE company_id BETWEEN 169 AND 251`);
+      console.log('OpenAI search analytics deleted.');
+    } else {
+      console.log('openai_search_analytics table does not exist, skipping...');
+    }
+    
+    // Check if security_responses table exists
+    const securityResponsesTableExists = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'security_responses'
+      )
+    `);
+    
+    if (securityResponsesTableExists.rows[0]?.exists) {
+      console.log('Deleting security responses...');
+      await db.execute(sql`DELETE FROM security_responses WHERE company_id BETWEEN 169 AND 251`);
+      console.log('Security responses deleted.');
+    } else {
+      console.log('security_responses table does not exist, skipping...');
+    }
     
     // Now delete companies
     console.log('Deleting test companies...');
