@@ -916,6 +916,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         />
       )}
       
+      {/* Submission Success Modal - shown via WebSocket events */}
+      {submissionResult && (
+        <SubmissionSuccessModal
+          open={showWebSocketSuccessModal}
+          onClose={() => setShowWebSocketSuccessModal(false)}
+          title="Form Submitted Successfully"
+          message={`Your ${taskType} form has been successfully submitted.`}
+          actions={submissionResult.actions || []}
+          fileName={submissionResult.fileName}
+          fileId={submissionResult.fileId}
+          returnPath="/task-center"
+          returnLabel="Return to Task Center"
+          taskType={taskType}
+          onDownload={() => {
+            // Handle download functionality if needed
+            if (submissionResult.fileId) {
+              window.open(`/api/files/${submissionResult.fileId}/download`, '_blank');
+            }
+          }}
+        />
+      )}
+      
       {/* Form title and subtitle */}
       <div className="bg-gray-50 p-6 rounded-t-md mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
