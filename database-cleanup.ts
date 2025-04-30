@@ -193,7 +193,18 @@ async function cleanupDatabase() {
       }
     }
     
-    // 4. Delete task templates for card and security
+    // 4. Delete component configurations first (due to foreign key constraint)
+    console.log('Deleting component configurations linked to unused task templates...');
+    await db.execute(sql`
+      DELETE FROM component_configurations 
+      WHERE template_id IN (
+        SELECT id FROM task_templates 
+        WHERE task_type IN ('company_card', 'security_assessment', 'card_application')
+      )
+    `);
+    console.log('Component configurations deleted.');
+    
+    // Now delete the task templates
     console.log('Deleting unused task templates...');
     await db.execute(sql`
       DELETE FROM task_templates 
@@ -203,6 +214,40 @@ async function cleanupDatabase() {
     
     // 5. Delete test users and invitations
     console.log('Deleting test users...');
+    // First delete any foreign key references to users
+    console.log('Deleting user-related foreign key references...');
+    
+    // Delete session records for test users
+    console.log('Deleting session records for test users...');
+    await db.execute(sql`
+      DELETE FROM session
+      WHERE sess::text LIKE ANY (ARRAY[
+        '%"user":209%', '%"user":210%', '%"user":211%', '%"user":212%',
+        '%"user":213%', '%"user":214%', '%"user":215%', '%"user":216%',
+        '%"user":217%', '%"user":218%', '%"user":219%', '%"user":220%',
+        '%"user":221%', '%"user":222%', '%"user":223%', '%"user":224%',
+        '%"user":225%', '%"user":226%', '%"user":227%', '%"user":228%',
+        '%"user":229%', '%"user":230%', '%"user":231%', '%"user":232%',
+        '%"user":233%', '%"user":234%', '%"user":235%', '%"user":236%',
+        '%"user":237%', '%"user":238%', '%"user":239%', '%"user":240%',
+        '%"user":241%', '%"user":242%', '%"user":243%', '%"user":244%',
+        '%"user":245%', '%"user":246%', '%"user":247%', '%"user":248%',
+        '%"user":249%', '%"user":250%', '%"user":251%', '%"user":252%',
+        '%"user":253%', '%"user":254%', '%"user":255%', '%"user":256%',
+        '%"user":257%', '%"user":258%', '%"user":259%', '%"user":260%',
+        '%"user":261%', '%"user":262%', '%"user":263%', '%"user":264%',
+        '%"user":265%', '%"user":266%', '%"user":267%', '%"user":268%',
+        '%"user":269%', '%"user":270%', '%"user":271%', '%"user":272%',
+        '%"user":273%', '%"user":274%', '%"user":275%', '%"user":276%',
+        '%"user":277%', '%"user":278%', '%"user":279%', '%"user":280%',
+        '%"user":281%', '%"user":282%', '%"user":283%', '%"user":284%',
+        '%"user":285%', '%"user":286%', '%"user":287%', '%"user":288%',
+        '%"user":289%', '%"user":290%', '%"user":291%', '%"user":292%',
+        '%"user":293%'
+      ])
+    `);
+    
+    // Now delete users
     await db.execute(sql`DELETE FROM users WHERE id BETWEEN 209 AND 293`);
     await db.execute(sql`DELETE FROM invitations WHERE id BETWEEN 217 AND 300`);
     console.log('Test users and invitations deleted.');
@@ -213,13 +258,23 @@ async function cleanupDatabase() {
     console.log('Files table truncated.');
     
     // 7. Delete test companies and tasks
-    console.log('Deleting test companies...');
-    await db.execute(sql`DELETE FROM companies WHERE id BETWEEN 169 AND 251`);
-    console.log('Test companies deleted.');
-    
+    // First delete any tasks associated with companies to avoid foreign key constraints
     console.log('Deleting test tasks...');
     await db.execute(sql`DELETE FROM tasks WHERE id BETWEEN 347 AND 675`);
     console.log('Test tasks deleted.');
+    
+    // Delete any task dependencies
+    console.log('Deleting task dependencies...');
+    await db.execute(sql`DELETE FROM task_dependencies WHERE task_id BETWEEN 347 AND 675 OR dependent_task_id BETWEEN 347 AND 675`);
+    
+    // Delete any user-company relationships first
+    console.log('Deleting company-related foreign key references...');
+    await db.execute(sql`DELETE FROM user_company_roles WHERE company_id BETWEEN 169 AND 251`);
+    
+    // Now delete companies
+    console.log('Deleting test companies...');
+    await db.execute(sql`DELETE FROM companies WHERE id BETWEEN 169 AND 251`);
+    console.log('Test companies deleted.');
     
     // Commit transaction
     await db.execute(sql`COMMIT`);
