@@ -24,11 +24,15 @@ export function getDeploymentPort(): number {
 
 /**
  * Get the host interface to bind to:
- * - In production: '0.0.0.0' to bind to all network interfaces
- * - In development: 'localhost' for local development
+ * 
+ * In Replit, we always bind to '0.0.0.0' (all interfaces) to ensure the server
+ * is accessible from any source including the Replit preview tab. This is critical
+ * because the preview system in Replit needs to access the server through a different
+ * mechanism than direct browser tabs.
  */
 export function getDeploymentHost(): string {
-  return process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  // Always return '0.0.0.0' regardless of environment to support Replit preview
+  return '0.0.0.0';
 }
 
 /**
