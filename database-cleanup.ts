@@ -129,16 +129,17 @@ async function cleanupDatabase() {
     // Begin transaction
     await db.execute(sql`BEGIN`);
     
-    // 1. Truncate response tables
+    // 1. Truncate response tables - this should be safe as they have no dependencies
     console.log('Truncating response tables...');
-    await db.execute(sql`TRUNCATE TABLE kyb_responses`);
-    await db.execute(sql`TRUNCATE TABLE ky3p_responses`);
-    await db.execute(sql`TRUNCATE TABLE open_banking_responses`);
+    await db.execute(sql`TRUNCATE TABLE kyb_responses CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE ky3p_responses CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE open_banking_responses CASCADE`);
     console.log('Response tables truncated successfully.');
     
-    // 2. Truncate field timestamp tables
+    // 2. Truncate field timestamp tables - this should remove foreign key constraints on tasks
     console.log('Truncating field timestamp tables...');
-    await db.execute(sql`TRUNCATE TABLE kyb_field_timestamps`);
+    await db.execute(sql`TRUNCATE TABLE kyb_field_timestamps CASCADE`);
+    await db.execute(sql`TRUNCATE TABLE open_banking_field_timestamps CASCADE`);
     console.log('Field timestamp tables truncated successfully.');
     
     // 3. Check if tables exist before dropping them
@@ -212,10 +213,19 @@ async function cleanupDatabase() {
     `);
     console.log('Task templates deleted.');
     
+    // Delete all files first to prevent foreign key constraints
+    console.log('Truncating files table...');
+    await db.execute(sql`TRUNCATE TABLE files CASCADE`);
+    console.log('Files table truncated.');
+    
     // 5. Delete test users and invitations
-    console.log('Deleting test users...');
-    // First delete any foreign key references to users
-    console.log('Deleting user-related foreign key references...');
+    console.log('Preparing to delete test users...');
+    
+    // Fix tasks assigned to test users - the most important part!
+    // We need to handle this FIRST to avoid foreign key constraint violations
+    console.log('Updating tasks assigned to test users...');
+    await db.execute(sql`UPDATE tasks SET assigned_to = NULL WHERE assigned_to BETWEEN 209 AND 293`);
+    console.log('Tasks unassigned from test users.');
     
     // Delete session records for test users
     console.log('Deleting session records for test users...');
@@ -246,16 +256,13 @@ async function cleanupDatabase() {
         '%"user":293%'
       ])
     `);
+    console.log('Session records deleted.');
     
-    // Now delete users
+    // Now safe to delete users and invitations
+    console.log('Deleting test users and invitations...');
     await db.execute(sql`DELETE FROM users WHERE id BETWEEN 209 AND 293`);
     await db.execute(sql`DELETE FROM invitations WHERE id BETWEEN 217 AND 300`);
     console.log('Test users and invitations deleted.');
-    
-    // 6. Delete all files
-    console.log('Truncating files table...');
-    await db.execute(sql`TRUNCATE TABLE files`);
-    console.log('Files table truncated.');
     
     // 7. Delete test companies and tasks
     // First delete any tasks associated with companies to avoid foreign key constraints
@@ -267,9 +274,23 @@ async function cleanupDatabase() {
     console.log('Deleting task dependencies...');
     await db.execute(sql`DELETE FROM task_dependencies WHERE task_id BETWEEN 347 AND 675 OR dependent_task_id BETWEEN 347 AND 675`);
     
-    // Delete any user-company relationships first
+    // Delete any company-related records
     console.log('Deleting company-related foreign key references...');
-    await db.execute(sql`DELETE FROM user_company_roles WHERE company_id BETWEEN 169 AND 251`);
+    
+    // Delete relationships
+    await db.execute(sql`DELETE FROM relationships WHERE company_id BETWEEN 169 AND 251 OR related_company_id BETWEEN 169 AND 251`);
+    
+    // Delete company logos
+    await db.execute(sql`DELETE FROM company_logos WHERE company_id BETWEEN 169 AND 251`);
+    
+    // Delete files associated with test companies
+    await db.execute(sql`DELETE FROM files WHERE company_id BETWEEN 169 AND 251`);
+    
+    // Delete openai_search_analytics for test companies
+    await db.execute(sql`DELETE FROM openai_search_analytics WHERE company_id BETWEEN 169 AND 251`);
+    
+    // Delete security_responses for test companies
+    await db.execute(sql`DELETE FROM security_responses WHERE company_id BETWEEN 169 AND 251`);
     
     // Now delete companies
     console.log('Deleting test companies...');
