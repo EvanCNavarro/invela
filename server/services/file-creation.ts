@@ -1,10 +1,9 @@
-import { db } from '@db';
 import { files } from '@db/schema';
+import { db } from '@db';
 import { eq } from 'drizzle-orm';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Logger } from '../utils/logger';
-import fs from 'fs';
-import path from 'path';
-import { FileDetectionService } from './file-detection';
 
 const logger = new Logger('FileCreationService');
 
@@ -27,34 +26,27 @@ export interface FileCreationResult {
   metadata?: Record<string, any>;
 }
 
+/**
+ * Service for handling file creation, including storage and database operations
+ */
 export class FileCreationService {
   /**
-   * Generate a standardized filename with a unified format for all assessment types
-   * Format: [assessment_type]_[company_name]_[taskId]_[timestamp].[extension]
+   * Generate a standardized file name based on content type and metadata
    */
   static generateStandardFileName(
-    taskType: string, 
-    taskId: number, 
-    companyName: string = 'Company',
+    prefix: string,
+    id: number,
+    companyName?: string,
     version: string = '1.0',
-    extension: string = 'csv',
-    questionNumber?: number
+    extension: string = 'csv'
   ): string {
-    const now = new Date();
-    const formattedDateTime = now.toISOString().split('.')[0]; // YYYY-MM-DDThh:mm:ss
-    
-    // Clean company name (remove spaces, special characters)
-    const cleanCompanyName = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
-    
-    // Use FileDetectionService to standardize assessment type name
-    const assessmentType = FileDetectionService.standardizeAssessmentTypeName(taskType);
-    
-    // Generate unified filename format for all assessment types
-    return `${assessmentType}_${cleanCompanyName}_${taskId}_${formattedDateTime}.${extension}`;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const sanitizedCompanyName = companyName ? companyName.replace(/[^a-zA-Z0-9]/g, '_') : 'unknown';
+    return `${prefix}_${sanitizedCompanyName}_${id}_v${version}_${timestamp}.${extension}`;
   }
-  
+
   /**
-   * Creates a file record with standardized error handling and logging
+   * Create a new file with database entry and storage
    */
   static async createFile(options: FileCreationOptions): Promise<FileCreationResult> {
     const {
@@ -67,60 +59,23 @@ export class FileCreationService {
       status = 'uploaded'
     } = options;
 
-    try {
-      logger.debug('Starting file creation', {
-        fileName: name,
-        fileType: type,
-        userId,
-        companyId
-      });
+    const timestamp = new Date();
+    let fileSize = 0;
+    let storagePath = '';
 
-      // Validate inputs
-      if (!name || !content || !type || !userId || !companyId) {
-        throw new Error('Missing required file creation parameters');
+    try {
+      // Calculate file size
+      if (typeof content === 'string') {
+        fileSize = Buffer.from(content).length;
+      } else if (Buffer.isBuffer(content)) {
+        fileSize = content.length;
       }
 
-      // Convert content to Buffer if it's a string
-      const contentBuffer = typeof content === 'string' ? Buffer.from(content) : content;
-      const fileSize = contentBuffer.length;
-
-      // Create timestamp
-      const timestamp = new Date();
-
-      // Check if we need to write the file to disk or store in DB directly
-      let storagePath: string;
-      
-      // Store CSV files directly in the database for immediate access using FileDetectionService
-      // This applies to all assessment forms (KYB, KY3P, Open Banking, CARD)
-      if (type === 'text/csv' && FileDetectionService.isFormCsvFile(name, type)) {
-        logger.debug('Storing CSV content directly in database', { 
-          fileName: name, 
-          contentType: type,
-          fileSize: Buffer.from(content.toString()).length
-        });
-        
-        // Add a database marker prefix to help the file download handler for ky3p assessment
-        if (name.toLowerCase().includes('spglobal_ky3p_assessment')) {
-          storagePath = `database:${content.toString()}`;
-          logger.debug('Added database prefix marker to KY3P CSV content');
-        } else {
-          storagePath = content.toString();
-        }
-      } else {
-        // For other files, create a unique path and write to disk
-        const uniqueFileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}_${name}`;
-        storagePath = uniqueFileName;
-        
-        // Ensure we have an uploads directory
-        const uploadDir = path.join(process.cwd(), 'uploads');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        
-        // Write the file to disk
+      // For text/csv files, we store the actual content
+      if (type === 'text/csv') {
         try {
-          fs.writeFileSync(path.join(uploadDir, uniqueFileName), content);
-          logger.debug('Wrote file to disk', { path: uniqueFileName });
+          // Only store the content itself for text files
+          storagePath = content.toString();
         } catch (writeError) {
           logger.error('Failed to write file to disk', { 
             error: writeError instanceof Error ? writeError.message : 'Unknown error'
@@ -129,7 +84,39 @@ export class FileCreationService {
         }
       }
       
-      // Insert file record
+      // CRITICAL FIX: Add detailed debugging to diagnose file creation issues
+      console.log(`[FileCreationService] ⚠️ CRITICAL DEBUGGING: Creating file record in database`, {
+        name,
+        type,
+        size: fileSize,
+        userId,
+        companyId, // Critical field for File Vault visibility
+        status,
+        timestamp: timestamp.toISOString(),
+        metadata: metadata || {}
+      });
+      
+      // Validate company ID before insert to ensure it's not undefined
+      if (!companyId || typeof companyId !== 'number' || isNaN(companyId)) {
+        console.error(`[FileCreationService] 🚨 CRITICAL ERROR: Invalid companyId for file creation:`, {
+          companyId,
+          name,
+          userId,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error(`Invalid company ID ${companyId} for file creation`);
+      }
+
+      // Extra safety - ensure metadata has companyId explicitly to help debugging
+      const enhancedMetadata = {
+        ...(metadata || {}),
+        fileCreationInfo: {
+          timestamp: timestamp.toISOString(),
+          companyId // Explicitly include companyId to make sure it's accessible
+        }
+      };
+
+      // Insert file record with enhanced metadata
       const [fileRecord] = await db.insert(files).values({
         name: name,
         size: fileSize,
@@ -137,13 +124,23 @@ export class FileCreationService {
         path: storagePath,
         status: status,
         user_id: userId,
-        company_id: companyId,
+        company_id: companyId, // Critical field for File Vault visibility
+        metadata: enhancedMetadata,
         upload_time: timestamp,
         created_at: timestamp,
         updated_at: timestamp,
         version: 1.0,
         download_count: 0
       }).returning();
+      
+      // Log success in detail
+      console.log(`[FileCreationService] ✅ File record created successfully with ID ${fileRecord.id}`, {
+        fileId: fileRecord.id,
+        companyId,
+        userId,
+        status,
+        timestamp: new Date().toISOString()
+      });
 
       logger.info('File created successfully', {
         fileId: fileRecord.id,

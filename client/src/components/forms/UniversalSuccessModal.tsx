@@ -212,14 +212,53 @@ export function UniversalSuccessModal({
         );
       }
       
-      // File generation card
+      // File generation card with improved visibility and File Vault link
       if (fileGeneratedAction) {
         cards.push(
-          <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-white border-gray-200">
-            <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-gray-900">Report Generated</p>
-              <p className="text-gray-600">{fileGeneratedAction.description}</p>
+          <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-12 w-12 -mt-4 -mr-4 bg-blue-100 rounded-full opacity-50"></div>
+            <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0 z-10" />
+            <div className="z-10 w-full">
+              <div className="flex justify-between items-start">
+                <p className="font-medium text-gray-900">Report Generated</p>
+                <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-200 text-xs">
+                  {submissionResult.fileId ? `File #${submissionResult.fileId}` : 'New File'}
+                </Badge>
+              </div>
+              <p className="text-gray-600 mb-2">{fileGeneratedAction.description}</p>
+              
+              {/* CRITICAL FIX: Clear instructions for accessing files in File Vault */}
+              <p className="text-sm text-gray-500 mb-1">
+                Your file has been saved to the File Vault and is available for download.
+              </p>
+              
+              <div className="flex gap-2 mt-2">
+                {/* Direct download if URL is available */}
+                {submissionResult.downloadUrl && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(submissionResult.downloadUrl, '_blank')}
+                    className="text-xs h-8"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    Download File
+                  </Button>
+                )}
+                
+                {/* Link to File Vault */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  asChild
+                  className="text-xs h-8 border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100"
+                >
+                  <Link href="/file-vault">
+                    <FolderOpen className="h-3.5 w-3.5 mr-1" />
+                    View in File Vault
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         );
