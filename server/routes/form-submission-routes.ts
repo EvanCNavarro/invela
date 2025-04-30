@@ -259,6 +259,53 @@ export function createFormSubmissionRouter(): Router {
               }
             );
             
+            // CRITICAL FIX: Explicitly broadcast the company tabs update as a separate event
+            // This ensures the tab update event is sent regardless of whether clients are listening
+            // for form submission events
+            if (unlockedTabs.length > 0) {
+              try {
+                logger.info(`Broadcasting company_tabs_update for company ${companyId} with new tabs: ${unlockedTabs.join(', ')}`);
+                
+                // Import the correct function to broadcast company tabs update
+                const { broadcastCompanyTabsUpdate } = require('../services/websocket');
+                
+                // Get the current tabs from the database again to ensure accuracy
+                const [companyRecord] = await db.select()
+                  .from(companies)
+                  .where(eq(companies.id, companyId));
+                  
+                if (companyRecord && companyRecord.available_tabs) {
+                  // Parse the tabs from the database
+                  let currentTabsFromDb: string[] = [];
+                  try {
+                    currentTabsFromDb = JSON.parse(companyRecord.available_tabs);
+                  } catch (parseError) {
+                    logger.error(`Error parsing available_tabs from database: ${parseError}`);
+                    currentTabsFromDb = [];
+                  }
+                  
+                  logger.info(`Broadcasting tabs from database: ${currentTabsFromDb.join(', ')}`);
+                  
+                  // Broadcast with the tabs directly from the database
+                  broadcastCompanyTabsUpdate(
+                    companyId,
+                    currentTabsFromDb
+                  );
+                } else {
+                  // Fallback to just using unlockedTabs
+                  broadcastCompanyTabsUpdate(
+                    companyId, 
+                    unlockedTabs
+                  );
+                }
+                
+                logger.info(`Successfully broadcasted company tabs update for company ${companyId}`);
+              } catch (wsError) {
+                logger.error(`Error broadcasting company tabs update: ${wsError instanceof Error ? wsError.message : 'Unknown error'}`);
+                // Don't throw here - we don't want a WebSocket error to prevent form submission
+              }
+            }
+            
             return res.json({
               success: true,
               message: `Form submitted successfully (${formType})`,
