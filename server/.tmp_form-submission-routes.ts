@@ -6,19 +6,16 @@
  */
 
 import { Router, Request, Response } from 'express';
-import websocketService from '../services/websocket';
+import { 
+  broadcastFormSubmission, 
+  broadcastCompanyTabsUpdate,
+  broadcastTaskUpdate
+} from '../services/websocket';
 import { db } from '@db';
 import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
 import fileCreationService from '../services/fileCreation';
-
-// Destructure websocket service functions
-const { 
-  broadcastFormSubmission, 
-  broadcastCompanyTabsUpdate, 
-  broadcastTaskUpdate 
-} = websocketService;
 
 const logger = getLogger('FormSubmissionRoutes');
 
