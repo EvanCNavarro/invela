@@ -94,6 +94,32 @@ export function UniversalSuccessModal({
           });
         });
       }, 100); // Quick delay to ensure modal has started appearing
+      
+      // CRITICAL FIX: Store the form submission info in localStorage for the Sidebar to use
+      // This helps maintain tab state during WebSocket disruptions or page reloads
+      try {
+        const { taskId, unlockedTabs, fileId } = submissionResult;
+        const companyId = submissionResult.data?.companyId;
+        
+        if (taskType) {
+          // Store minimal info to avoid bloating localStorage
+          const submissionInfo = {
+            taskId,
+            taskType,
+            formType: taskType, // Use taskType for formType for consistency
+            companyId,
+            fileId,
+            timestamp: new Date().toISOString(),
+            unlockedTabs: unlockedTabs || submissionResult.data?.unlockedTabs || []
+          };
+          
+          // Store in localStorage to help with connection issues
+          localStorage.setItem('lastFormSubmission', JSON.stringify(submissionInfo));
+          console.log(`[UniversalSuccessModal] Stored form submission info in localStorage:`, submissionInfo);
+        }
+      } catch (error) {
+        console.error('[UniversalSuccessModal] Error storing form submission in localStorage:', error);
+      }
 
       // Clean up timeout if modal is closed
       return () => clearTimeout(animationTimeout);

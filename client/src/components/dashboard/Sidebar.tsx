@@ -52,7 +52,7 @@ export function Sidebar({
   const queryClient = useQueryClient();
   
   // Get current company data
-  const { data: company } = useQuery({
+  const { data: company } = useQuery<{ id: number; name: string; available_tabs?: string[] }>({
     queryKey: ['/api/companies/current'],
     enabled: !isPlayground
   });
@@ -81,15 +81,43 @@ export function Sidebar({
     }
   }, [availableTabs, location, company?.id]);
   
-  // Special case for file-vault route - ensure tab is unlocked
+  // CRITICAL FIX: Special auto-unlocking logic for KYB forms and File Vault tab
   useEffect(() => {
-    // Always show File Vault when on the File Vault route
+    // If we're on the file-vault route, we need to ensure the tab is considered 'unlocked'
+    // regardless of what the server says - this is crucial for a smooth user experience
     if (location.includes('file-vault') && !availableTabs.includes('file-vault')) {
-      console.log('[Sidebar] On file-vault route - ensuring tab is visible');
-      // We're already using this tab, so it should be visible
-      // No need to modify taskCount here
+      console.log('[Sidebar] 🚨 CRITICAL: On file-vault route but tab not in availableTabs, forcing tab to be visible');
+      // Force a server refresh to make sure our tabs are up to date
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
     }
-  }, [location, availableTabs]);
+    
+    // Also check for form submission success from localStorage
+    try {
+      const lastFormSubmission = localStorage.getItem('lastFormSubmission');
+      if (lastFormSubmission) {
+        const submission = JSON.parse(lastFormSubmission);
+        const submissionTime = new Date(submission.timestamp).getTime();
+        const currentTime = new Date().getTime();
+        const fiveMinutesAgo = currentTime - (5 * 60 * 1000); // 5 minutes ago
+        
+        // If submission was recent (within 5 minutes) and was a KYB form
+        if (submissionTime > fiveMinutesAgo && 
+            (submission.formType === 'kyb' || submission.formType === 'company_kyb')) {
+          console.log(`[Sidebar] 🔑 Recent KYB form submission detected, unlocking File Vault tab:`, submission);
+          
+          if (!availableTabs.includes('file-vault')) {
+            console.log('[Sidebar] 🚨 File Vault tab not in available tabs despite recent KYB form submission');
+            // Force a server refresh
+            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Sidebar] Error checking localStorage for recent form submissions:', error);
+    }
+  }, [location, availableTabs, queryClient]);
   
   // Update taskCount when tasks data changes
   useEffect(() => {
