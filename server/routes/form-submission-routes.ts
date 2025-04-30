@@ -277,9 +277,52 @@ export function createFormSubmissionRouter(): Router {
                 submissionDate: new Date().toISOString(),
                 unlockedTabs,
                 fileName: fileResult.fileName,
-                fileId: fileResult.fileId
+                fileId: fileResult.fileId,
+                // Add completed actions array to match what UniversalSuccessModal expects
+                completedActions: [
+                  {
+                    type: 'form_submitted',
+                    description: `${formType.toUpperCase()} form submitted successfully`
+                  },
+                  {
+                    type: 'file_generated',
+                    description: `Generated ${fileResult.fileName}`,
+                    fileId: fileResult.fileId
+                  },
+                  ...(unlockedTabs && unlockedTabs.length > 0 ? [{
+                    type: 'tabs_unlocked',
+                    description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
+                  }] : [])
+                ]
               }
             );
+            
+            // Also broadcast with the form_submitted event type for compatibility
+            broadcastMessage('form_submitted', {
+              taskId,
+              formType,
+              status: 'success',
+              companyId,
+              submissionDate: new Date().toISOString(),
+              unlockedTabs,
+              fileName: fileResult.fileName,
+              fileId: fileResult.fileId,
+              completedActions: [
+                {
+                  type: 'form_submitted',
+                  description: `${formType.toUpperCase()} form submitted successfully`
+                },
+                {
+                  type: 'file_generated',
+                  description: `Generated ${fileResult.fileName}`,
+                  fileId: fileResult.fileId
+                },
+                ...(unlockedTabs && unlockedTabs.length > 0 ? [{
+                  type: 'tabs_unlocked',
+                  description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
+                }] : [])
+              ]
+            });
             
             // CRITICAL FIX: Explicitly broadcast the company tabs update as a separate event
             // This ensures the tab update event is sent regardless of whether clients are listening
