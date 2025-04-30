@@ -18,6 +18,8 @@ import {
   FolderOpen
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { userContext } from "@/lib/user-context";
+import getLogger from "@/utils/logger";
 
 export interface SubmissionResult {
   fileId?: number;
@@ -106,32 +108,42 @@ export function UniversalSuccessModal({
         // Get companyId from multiple possible sources
         let companyId = submissionResult.data?.companyId;
         
-        // CRITICAL FIX: If companyId is missing, get it from the current context
+        // CRITICAL FIX: If companyId is missing, get it from the user context
         if (!companyId) {
-          // Try to get from global user context
-          const userDataStr = localStorage.getItem('user_data');
-          if (userDataStr) {
-            try {
-              const userData = JSON.parse(userDataStr);
-              companyId = userData.company_id;
-              console.log(`[UniversalSuccessModal] Retrieved companyId ${companyId} from user_data`);
-            } catch (err) {
-              console.error('[UniversalSuccessModal] Failed to parse user_data:', err);
+          // Try to get from our userContext utility which is the most reliable source
+          const contextCompanyId = userContext.getCompanyId();
+          if (contextCompanyId) {
+            companyId = contextCompanyId;
+            getLogger('UniversalSuccessModal').info(`Retrieved companyId ${companyId} from userContext`);
+          }
+          
+          // If still not found, try fallbacks
+          if (!companyId) {
+            // Try to get from localStorage user_data
+            const userDataStr = localStorage.getItem('user_data');
+            if (userDataStr) {
+              try {
+                const userData = JSON.parse(userDataStr);
+                companyId = userData.company_id;
+                getLogger('UniversalSuccessModal').info(`Retrieved companyId ${companyId} from user_data`);
+              } catch (err) {
+                getLogger('UniversalSuccessModal').error('Failed to parse user_data:', err);
+              }
+            }
+            
+            // If still not found, try the URL
+            if (!companyId) {
+              const urlParams = new URLSearchParams(window.location.search);
+              const companyIdFromUrl = urlParams.get('companyId');
+              if (companyIdFromUrl) {
+                companyId = parseInt(companyIdFromUrl);
+                getLogger('UniversalSuccessModal').info(`Retrieved companyId ${companyId} from URL`);
+              }
             }
           }
           
-          // If still not found, try the URL
           if (!companyId) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const companyIdFromUrl = urlParams.get('companyId');
-            if (companyIdFromUrl) {
-              companyId = parseInt(companyIdFromUrl);
-              console.log(`[UniversalSuccessModal] Retrieved companyId ${companyId} from URL`);
-            }
-          }
-          
-          if (!companyId) {
-            console.warn('[UniversalSuccessModal] ⚠️ Could not determine companyId for form submission!');
+            getLogger('UniversalSuccessModal').warn('⚠️ Could not determine companyId for form submission!');
           }
         }
         
@@ -149,10 +161,10 @@ export function UniversalSuccessModal({
           
           // Store in localStorage to help with connection issues
           localStorage.setItem('lastFormSubmission', JSON.stringify(submissionInfo));
-          console.log(`[UniversalSuccessModal] Stored form submission info in localStorage:`, submissionInfo);
+          getLogger('UniversalSuccessModal').info(`Stored form submission info in localStorage:`, submissionInfo);
         }
       } catch (error) {
-        console.error('[UniversalSuccessModal] Error storing form submission in localStorage:', error);
+        getLogger('UniversalSuccessModal').error('Error storing form submission in localStorage:', error);
       }
 
       // Clean up timeout if modal is closed
@@ -372,7 +384,7 @@ export function UniversalSuccessModal({
       // This ensures KYB forms only show File Vault, not Dashboard in the success modal
       let filteredUnlockedTabs = unlockedTabs;
       if (taskType === 'kyb' || taskType === 'company_kyb') {
-        console.log('[UniversalSuccessModal] KYB form - filtering out dashboard tab from display');
+        getLogger('UniversalSuccessModal').info('KYB form - filtering out dashboard tab from display');
         filteredUnlockedTabs = unlockedTabs?.filter(tab => tab !== 'dashboard');
       }
       
@@ -561,14 +573,14 @@ export function UniversalSuccessModal({
             // CRITICAL FIX: Navigate to file-vault instead of directly downloading (which can fail)
             // This ensures users still have access to the file in the File Vault
             // Use controlled navigation to prevent potential refresh issues
-            console.log('[UniversalSuccessModal] Navigating to file-vault using controlled pattern');
+            getLogger('UniversalSuccessModal').info('Navigating to file-vault using controlled pattern');
             
             // Set localStorage flag to enable file-vault access
             try {
               localStorage.setItem('navigated_to_file_vault', 'true');
               localStorage.setItem('file_vault_access_timestamp', new Date().toISOString());
             } catch (error) {
-              console.error('[UniversalSuccessModal] Failed to update localStorage:', error);
+              getLogger('UniversalSuccessModal').error('Failed to update localStorage:', error);
             }
             
             // Close modal first (better UX) then navigate
