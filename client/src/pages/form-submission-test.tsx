@@ -30,7 +30,7 @@ const FormSubmissionTestPage: React.FC = () => {
   const { lastEvent: hookLastEvent, eventHistory: hookEventHistory } = useFormSubmissionEvents({
     taskId,
     formType,
-    onSuccess: (event) => {
+    onSuccess: (event: FormSubmissionEvent) => {
       console.log('[FormSubmissionTest] Success event received:', event);
       setShowSuccessModal(true);
       toast({
@@ -39,7 +39,7 @@ const FormSubmissionTestPage: React.FC = () => {
         variant: 'success',
       });
     },
-    onError: (event) => {
+    onError: (event: FormSubmissionEvent) => {
       console.log('[FormSubmissionTest] Error event received:', event);
       toast({
         title: 'Error',
@@ -47,7 +47,7 @@ const FormSubmissionTestPage: React.FC = () => {
         variant: 'destructive',
       });
     },
-    onInProgress: (event) => {
+    onInProgress: (event: FormSubmissionEvent) => {
       console.log('[FormSubmissionTest] In Progress event received:', event);
       toast({
         title: 'In Progress',
