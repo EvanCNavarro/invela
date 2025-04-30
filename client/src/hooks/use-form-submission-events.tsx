@@ -103,5 +103,6 @@ export function useFormSubmissionEvents(options: UseFormSubmissionEventsOptions 
     lastEvent,
     eventHistory,
     clearHistory: () => setEventHistory([]),
+    connected: true, // For compatibility with some components that expect this property
   };
 }
