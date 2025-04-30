@@ -47,51 +47,80 @@ export const SubmissionSuccessModal: React.FC<SubmissionSuccessModalProps> = ({
   onClose,
   title,
   message,
+  actions = [],
   fileName,
   fileId,
-  returnPath,
-  returnLabel,
-  taskType,
+  returnPath = '/task-center',
+  returnLabel = 'Return to Task Center',
+  taskType = 'task',
+  onDownload
 }) => {
-  // Format the task type for display (e.g., "kyb" -> "KYB")
-  const formatTaskType = (type: string) => {
-    return type.toUpperCase().replace('_', ' ');
+  // Format a task type string for display (e.g., 'kyb' -> 'KYB', 'ky3p' -> 'KY3P')
+  const formatTaskType = (type: string): string => {
+    if (!type) return 'Form';
+    
+    if (type.toLowerCase() === 'kyb') return 'KYB';
+    if (type.toLowerCase() === 'ky3p') return 'KY3P';
+    if (type.toLowerCase() === 'open_banking') return 'Open Banking';
+    
+    // Convert snake_case or kebab-case to Title Case
+    return type
+      .replace(/[-_]/g, ' ')
+      .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
   };
-
+  
+  // Default message if none provided
+  const defaultMessage = `Your ${formatTaskType(taskType)} form has been successfully submitted.`;
+  
+  // Check if we have file information from actions or props
+  const hasFileInfo = Boolean((fileName && fileId) || actions?.some(action => 
+    action.type === 'file_generated' && action.fileId
+  ));
+  
+  // Check if we have any completed actions to show
+  const hasActions = Array.isArray(actions) && actions.length > 0;
+  
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CheckCircleIcon className="w-6 h-6 text-green-500" />
-            {title}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         
-        <div className="py-4">
+        <div className="space-y-4 my-2">
           <div className="mb-4">
-            <p className="text-gray-700">{message}</p>
+            <p className="text-gray-700">{message || defaultMessage}</p>
           </div>
           
-          {fileName && fileId && (
+          {/* Show file information if available */}
+          {hasFileInfo && (
             <div className="bg-gray-50 p-4 rounded-md border mb-4">
               <div className="flex items-start gap-3">
                 <div className="bg-blue-100 p-2 rounded">
                   <FileIcon className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-sm">{fileName}</h4>
+                  {/* Use file info from actions or fallback to props */}
+                  <h4 className="font-medium text-sm">
+                    {fileName || `${formatTaskType(taskType)} Submission.csv`}
+                  </h4>
                   <p className="text-xs text-gray-500 mt-1">
                     Generated {formatTaskType(taskType)} submission file
                   </p>
+                  
+                  {/* Download button */}
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     className="mt-2 text-xs h-7 px-2"
                     onClick={() => {
-                      // In a real app, this would download the file
-                      console.log(`Downloading file ID: ${fileId}`);
-                      window.open(`/api/files/${fileId}`, '_blank');
+                      // Use the onDownload callback if provided
+                      if (onDownload) {
+                        onDownload('csv');
+                      } else if (fileId) {
+                        console.log(`Downloading file ID: ${fileId}`);
+                        window.open(`/api/files/${fileId}`, '_blank');
+                      }
                     }}
                   >
                     Download File
@@ -101,6 +130,22 @@ export const SubmissionSuccessModal: React.FC<SubmissionSuccessModalProps> = ({
             </div>
           )}
           
+          {/* Show completed actions if available */}
+          {hasActions && (
+            <div className="bg-gray-50 p-4 rounded-md border mb-4">
+              <h4 className="font-medium text-sm mb-2">Completed Actions</h4>
+              <ul className="space-y-2 text-sm">
+                {actions.map((action, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCircleIcon className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>{action.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* Next steps section */}
           <div className="bg-gray-50 p-4 rounded-md border">
             <h4 className="font-medium text-sm mb-2">Next Steps</h4>
             <p className="text-xs text-gray-600">
