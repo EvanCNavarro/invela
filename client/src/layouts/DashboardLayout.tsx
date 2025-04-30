@@ -9,6 +9,7 @@ import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
+import { WebSocketEventBridge } from "@/components/websocket/WebSocketEventBridge";
 
 interface Company {
   id: number;
@@ -239,6 +240,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <WelcomeModal />
+      
+      {/* Bridge WebSocket events to DOM events */}
+      <WebSocketEventBridge eventTypes={[
+        'file_vault_update',
+        'form_submission',
+        'company_tabs_update',
+        'company_tabs_updated'
+      ]} />
     </div>
   );
 }
