@@ -162,9 +162,14 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  // Simple in-memory cache for user session data
+  // Simple in-memory cache for user session data with reduced logging
   const userCache = new Map<number, { user: Express.User, timestamp: number }>();
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+  
+  // Add counters to reduce excessive logging
+  let totalCacheHits = 0;
+  let lastLogTimestamp = Date.now();
+  const LOG_INTERVAL = 60 * 1000; // Log summary every minute instead of individual hits
   
   passport.deserializeUser(async (id: number, done) => {
     try {
@@ -173,15 +178,20 @@ export function setupAuth(app: Express) {
       
       // Use cached data if it exists and is not expired
       if (cachedData && (now - cachedData.timestamp) < CACHE_TTL) {
-        // Only log cache hits occasionally to reduce log noise
-        if (Math.random() < 0.05) { // Log ~5% of cache hits
-          console.log('[Auth] Using cached user data:', id);
+        totalCacheHits++;
+        
+        // Log a summary occasionally rather than individual hits
+        if ((now - lastLogTimestamp) > LOG_INTERVAL) {
+          console.log(`[Auth] Session cache summary - Hits in last minute: ${totalCacheHits}`);
+          lastLogTimestamp = now;
+          totalCacheHits = 0;
         }
+        
         return done(null, cachedData.user);
       }
       
       // If not in cache or expired, query the database
-      console.log('[Auth] Deserializing user:', id);
+      console.log('[Auth] Cache miss - Deserializing user:', id);
       const [user] = await db
         .select()
         .from(users)
