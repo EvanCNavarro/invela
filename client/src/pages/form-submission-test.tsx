@@ -5,7 +5,7 @@
  * without having to go through the full form submission process.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,17 +25,25 @@ export default function FormSubmissionTestPage() {
   const [showModal, setShowModal] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
   
+  // Use refs to prevent duplicate modals and toasts
+  const modalShownRef = useRef(false);
+  
   // Handle WebSocket form submission events
   const handleSuccess = (event: FormSubmissionEvent) => {
     console.log('Received WebSocket form submission success event:', event);
-    setSubmissionResult(event);
-    setShowModal(true);
     
-    toast({
-      title: "Form Submitted Successfully",
-      description: `Your ${formType} form has been successfully submitted.`,
-      variant: "success",
-    });
+    // Prevent duplicate modals
+    if (!modalShownRef.current) {
+      setSubmissionResult(event);
+      setShowModal(true);
+      modalShownRef.current = true;
+      
+      toast({
+        title: "Form Submitted Successfully",
+        description: `Your ${formType} form has been successfully submitted.`,
+        variant: "success",
+      });
+    }
   };
   
   const handleError = (event: FormSubmissionEvent) => {
@@ -56,6 +64,12 @@ export default function FormSubmissionTestPage() {
       description: `Your ${formType} form is being processed...`,
       variant: "info",
     });
+  };
+  
+  // Reset modal state when modal is closed
+  const handleModalClose = () => {
+    setShowModal(false);
+    modalShownRef.current = false;
   };
   
   // Send test events
@@ -204,7 +218,7 @@ export default function FormSubmissionTestPage() {
       {submissionResult && (
         <SubmissionSuccessModal
           open={showModal}
-          onClose={() => setShowModal(false)}
+          onClose={handleModalClose}
           title="Form Submitted Successfully"
           message={`Your ${formType} form has been successfully submitted.`}
           actions={submissionResult.actions || []}
