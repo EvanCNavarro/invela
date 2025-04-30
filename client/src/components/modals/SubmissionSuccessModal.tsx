@@ -18,16 +18,28 @@ import {
 import { Button } from '@/components/ui/button';
 import { FileIcon, ArrowRightIcon, CheckCircleIcon } from 'lucide-react';
 
+export interface SubmissionAction {
+  type: string;
+  description: string;
+  fileId?: number;
+  data?: {
+    details?: string;
+    buttonText?: string;
+  };
+}
+
 export interface SubmissionSuccessModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  message: string;
+  message?: string;
+  actions?: SubmissionAction[];
   fileName?: string;
   fileId?: number;
   returnPath: string;
   returnLabel: string;
-  taskType: string;
+  taskType?: string;
+  onDownload?: (format?: 'csv' | 'txt' | 'json') => void;
 }
 
 export const SubmissionSuccessModal: React.FC<SubmissionSuccessModalProps> = ({
