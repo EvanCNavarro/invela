@@ -39,6 +39,7 @@ import debugRouter from './routes/debug';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
+import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
@@ -353,6 +354,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register Open Banking Timestamps routes for field-level timestamp conflict resolution
   registerOpenBankingTimestampRoutes(app);
+  
+  // Register Enhanced Open Banking routes with improved error handling and retry logic
+  app.use('/api/enhanced-open-banking', enhancedOpenBankingRouter);
   
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);

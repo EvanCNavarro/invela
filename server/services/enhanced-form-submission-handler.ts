@@ -1,138 +1,151 @@
 /**
  * Enhanced Form Submission Handler
  * 
- * This service provides an improved form submission experience with:
- * - Robust error handling
- * - Connection retries with exponential backoff
- * - Synchronous task dependency unlocking
- * - Automatic file generation
- * - WebSocket broadcast notifications
+ * This service handles form submissions with improved error handling,
+ * retry logic, and standardized processing across all form types.
  */
 
-import { db } from "@db";
-import { tasks } from "@db/schema";
-import { sql, eq } from "drizzle-orm";
-import { Logger } from "./logger";
-import { withRetry } from "../utils/db-retry";
-import { unlockDependentTasks } from "./synchronous-task-dependencies";
+import { tasks, TaskStatus } from '@db/schema';
+import { db } from '@db';
+import { eq, and, or } from 'drizzle-orm';
+import { executeWithRetry } from './db-connection-service';
+import { Logger } from './logger';
+import { WebSocketService } from '../websocket-server';
 
-const logger = new Logger("EnhancedFormSubmission");
+const logger = new Logger('EnhancedFormSubmissionHandler');
 
-interface FormSubmissionData {
-  task_id: number;
-  task_type: string;
-  data: Record<string, any>;
-  file_name?: string;
-  user_id?: number;
-  company_id?: number;
+export interface SubmissionOptions {
+  taskId: number;
+  userId?: number;
+  formData: Record<string, any>;
+  skipStatusCheck?: boolean;
+  broadcastUpdate?: boolean;
 }
 
-interface SubmissionResult {
-  success: boolean;
-  message?: string;
-  error?: string;
-  task?: any;
-  unlockedTasks?: number[];
+interface TaskUpdateParams {
+  status?: TaskStatus;
+  progress?: number;
+  metadata?: Record<string, any>;
+  savedFormData?: Record<string, any>;
 }
 
 /**
- * Process form submission with enhanced reliability and user feedback
+ * Process form submission with enhanced error handling and retry logic
  * 
- * @param submissionData Form submission data
- * @returns Submission result with status and details
+ * @param options Submission options
+ * @returns Result of the submission process
  */
-export async function processFormSubmission(
-  submissionData: FormSubmissionData
-): Promise<SubmissionResult> {
-  const { task_id, task_type, data, file_name } = submissionData;
-  
-  logger.info(`Processing ${task_type} form submission for task ID: ${task_id}`);
-  
+export async function processSubmission(options: SubmissionOptions): Promise<{
+  success: boolean;
+  taskId: number;
+  status: string | null;
+  error?: string;
+}> {
+  const { 
+    taskId, 
+    formData, 
+    userId, 
+    skipStatusCheck = false,
+    broadcastUpdate = true
+  } = options;
+
   try {
-    // 1. Validate the submission
-    if (!task_id || !task_type || !data) {
-      throw new Error("Missing required submission data");
-    }
-    
-    // 2. Fetch the current task with retry logic
-    const [taskToUpdate] = await withRetry(
+    logger.info(`Processing form submission for task ${taskId}`, {
+      taskId,
+      dataKeys: Object.keys(formData).length,
+      timestamp: new Date().toISOString()
+    });
+
+    // Get task info with retry
+    const task = await executeWithRetry(
       async () => {
-        return db
+        const [taskRecord] = await db
           .select()
           .from(tasks)
-          .where(eq(tasks.id, task_id))
+          .where(eq(tasks.id, taskId))
           .limit(1);
+        
+        return taskRecord;
       },
-      { 
-        maxRetries: 3,
-        operation: `Fetch task ${task_id}` 
-      }
+      { operationName: `get task ${taskId}` }
     );
-    
-    if (!taskToUpdate) {
-      throw new Error(`Task with ID ${task_id} not found`);
+
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
     }
-    
-    // 3. Update the task with form data and mark as submitted
-    const now = new Date().toISOString();
-    
-    const [updatedTask] = await withRetry(
-      async () => {
-        return db
-          .update(tasks)
-          .set({
-            status: "submitted",
-            progress: 100,
-            savedFormData: data,
-            submitted_at: now,
-            metadata: {
-              ...taskToUpdate.metadata,
-              lastSubmission: now,
-              file_name: file_name || null
-            },
-          })
-          .where(eq(tasks.id, task_id))
-          .returning();
-      },
-      { 
-        maxRetries: 3,
-        operation: `Update task ${task_id} submission` 
-      }
-    );
-    
-    // 4. Unlock dependent tasks synchronously
-    const companyId = updatedTask.company_id;
-    if (companyId) {
-      logger.info(`Unlocking dependent tasks for company ${companyId} after ${task_type} submission`);
-      
-      // This will synchronously unlock tasks and return those that were unlocked
-      const unlockedTasks = await unlockDependentTasks(companyId, task_type);
-      
-      logger.info(`Successfully unlocked ${unlockedTasks.length} dependent tasks`, {
-        taskIds: unlockedTasks
+
+    // Check if task is ready for submission
+    if (!skipStatusCheck && task.status !== 'ready_for_submission') {
+      logger.warn(`Task ${taskId} is not ready for submission`, {
+        currentStatus: task.status,
+        taskId
       });
       
       return {
-        success: true,
-        message: `${task_type} form submitted successfully`,
-        task: updatedTask,
-        unlockedTasks
+        success: false,
+        taskId,
+        status: task.status,
+        error: `Task ${taskId} is not ready for submission (current status: ${task.status})`
       };
     }
-    
+
+    // Update task with form data and mark as submitted
+    const updateParams: TaskUpdateParams = {
+      status: 'submitted' as TaskStatus,
+      progress: 100,
+      savedFormData: formData
+    };
+
+    // Update the task with retry
+    await executeWithRetry(
+      async () => {
+        await db
+          .update(tasks)
+          .set(updateParams)
+          .where(eq(tasks.id, taskId));
+      },
+      { operationName: `update task ${taskId} status to submitted` }
+    );
+
+    // Broadcast update via WebSocket
+    if (broadcastUpdate) {
+      WebSocketService.broadcastTaskUpdate({
+        taskId,
+        status: 'submitted',
+        progress: 100,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    logger.info(`Successfully submitted form for task ${taskId}`, {
+      taskId,
+      status: 'submitted',
+      timestamp: new Date().toISOString()
+    });
+
     return {
       success: true,
-      message: `${task_type} form submitted successfully`,
-      task: updatedTask
+      taskId,
+      status: 'submitted'
     };
-    
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`Form submission failed for task ${task_id}:`, error);
     
+    logger.error(`Form submission failed for task ${taskId}`, {
+      taskId,
+      error: errorMessage,
+      timestamp: new Date().toISOString()
+    });
+
     return {
       success: false,
+      taskId,
+      status: null,
       error: errorMessage
     };
   }
 }
+
+export default {
+  processSubmission
+};

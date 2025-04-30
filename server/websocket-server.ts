@@ -14,6 +14,83 @@ let wsServer: WebSocketServer | null = null;
 const clients = new Set();
 
 /**
+ * WebSocket Service Class
+ * 
+ * Provides an interface for broadcasting messages via WebSocket
+ */
+export class WebSocketService {
+  /**
+   * Broadcast a task update to all connected clients
+   * 
+   * @param taskData The updated task data
+   */
+  static broadcastTaskUpdate(taskData: any): void {
+    if (!wsServer) {
+      logger.warn('WebSocket server not initialized, cannot broadcast task update');
+      return;
+    }
+
+    const message = JSON.stringify({
+      type: 'task_updated',
+      payload: {
+        ...taskData,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    let clientCount = 0;
+    
+    wsServer.clients.forEach((client) => {
+      if (client.readyState === 1) { // WebSocket.OPEN
+        client.send(message);
+        clientCount++;
+      }
+    });
+
+    // Log only key properties to avoid large logs
+    const logData = {
+      type: 'task_updated',
+      dataKeys: Object.keys(taskData),
+      timestamp: new Date().toISOString(),
+      clientCount
+    };
+    
+    logger.info('Broadcast "task_updated" sent to ' + clientCount + ' clients', logData);
+  }
+
+  /**
+   * Broadcast company tabs update to all connected clients
+   * 
+   * @param companyId Company ID to update
+   */
+  static broadcastCompanyTabs(companyId: number): void {
+    if (!wsServer) {
+      logger.warn('WebSocket server not initialized, cannot broadcast company tabs update');
+      return;
+    }
+
+    const message = JSON.stringify({
+      type: 'company_tabs_updated',
+      payload: {
+        companyId,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    let clientCount = 0;
+    
+    wsServer.clients.forEach((client) => {
+      if (client.readyState === 1) { // WebSocket.OPEN
+        client.send(message);
+        clientCount++;
+      }
+    });
+
+    logger.info(`Broadcast "company_tabs_updated" sent to ${clientCount} clients for company ${companyId}`);
+  }
+}
+
+/**
  * Initialize the WebSocket server
  * 
  * @param httpServer The HTTP server to attach the WebSocket server to
@@ -28,7 +105,7 @@ export function initializeWebSocketServer(httpServer: Server): void {
   logger.info('Server initialized on path: /ws');
 
   wsServer.on('connection', (socket) => {
-    logger.info(`New client connected to the pool (${clients.size + 1}/${wsServer.clients.size})`);
+    logger.info(`New client connected to the pool (${clients.size + 1}/${wsServer?.clients.size || 0})`);
     clients.add(socket);
 
     // Setup event handlers
@@ -61,72 +138,11 @@ export function initializeWebSocketServer(httpServer: Server): void {
   });
 }
 
-/**
- * Broadcast a task update to all connected clients
- * 
- * @param taskData The updated task data
- */
+// Export the original functions for backward compatibility
 export function broadcastTaskUpdate(taskData: any): void {
-  if (!wsServer) {
-    logger.warn('WebSocket server not initialized, cannot broadcast task update');
-    return;
-  }
-
-  const message = JSON.stringify({
-    type: 'task_updated',
-    payload: {
-      ...taskData,
-      timestamp: new Date().toISOString()
-    }
-  });
-
-  let clientCount = 0;
-  
-  wsServer.clients.forEach((client) => {
-    if (client.readyState === 1) { // WebSocket.OPEN
-      client.send(message);
-      clientCount++;
-    }
-  });
-
-  // Log only key properties to avoid large logs
-  const logData = {
-    type: 'task_updated',
-    dataKeys: Object.keys(taskData),
-    timestamp: new Date().toISOString(),
-    clientCount
-  };
-  
-  logger.info('Broadcast "task_updated" sent to ' + clientCount + ' clients', logData);
+  WebSocketService.broadcastTaskUpdate(taskData);
 }
 
-/**
- * Broadcast company tabs update to all connected clients
- * 
- * @param companyId Company ID to update
- */
 export function broadcastCompanyTabs(companyId: number): void {
-  if (!wsServer) {
-    logger.warn('WebSocket server not initialized, cannot broadcast company tabs update');
-    return;
-  }
-
-  const message = JSON.stringify({
-    type: 'company_tabs_updated',
-    payload: {
-      companyId,
-      timestamp: new Date().toISOString()
-    }
-  });
-
-  let clientCount = 0;
-  
-  wsServer.clients.forEach((client) => {
-    if (client.readyState === 1) { // WebSocket.OPEN
-      client.send(message);
-      clientCount++;
-    }
-  });
-
-  logger.info(`Broadcast "company_tabs_updated" sent to ${clientCount} clients for company ${companyId}`);
+  WebSocketService.broadcastCompanyTabs(companyId);
 }
