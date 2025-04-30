@@ -103,6 +103,7 @@ interface UniversalFormProps {
   onSubmit?: (data: FormData) => void;
   onCancel?: () => void;
   onProgress?: (progress: number) => void;
+  companyName?: string; // Optional company name to display in the form title
 }
 
 /**
@@ -114,7 +115,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   initialData = {},
   onSubmit,
   onCancel,
-  onProgress
+  onProgress,
+  companyName
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
@@ -791,17 +793,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [formService, fields, updateField, refreshStatus, saveProgress, setForceRerender, form, setActiveSection, activeSection, sections, taskId, taskType]);
   
-  // Get form title based on template or task type
+  // Get form title based on template or task type, including company name if provided
   const formTitle = useMemo(() => {
-    if (template?.name) {
-      return template.name;
-    }
-    
-    // Fallback to capitalizing the task type
-    return taskType.split('_')
+    // Format the task type nicely for display
+    const formattedTaskType = taskType.split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  }, [template, taskType]);
+    
+    // Get the base title from template if available
+    const baseTitle = template?.name || formattedTaskType;
+    
+    // Add company name if provided
+    if (companyName) {
+      return `${baseTitle}: ${companyName}`;
+    }
+    
+    // Add company name from context if available and not explicitly provided
+    if (company?.name) {
+      return `${baseTitle}: ${company.name}`;
+    }
+    
+    // Fallback to just the form type if no company name is available
+    return baseTitle;
+  }, [template, taskType, companyName, company?.name]);
   
   // Get the form description
   const formDescription = useMemo(() => {
