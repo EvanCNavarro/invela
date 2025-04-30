@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -50,6 +51,14 @@ import { useUser } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 
 import SectionContent from './SectionContent';
+
+// Task interface for the task query
+interface Task {
+  id: number;
+  status: string;
+  progress: number;
+  submissionDate?: string;
+}
 
 // Import utility functions
 import { handleDemoAutoFill } from './handleDemoAutoFill';
@@ -116,6 +125,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [forceRerender, setForceRerender] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Query for task data
+  const { data: task } = useQuery<Task>({
+    queryKey: [`/api/tasks/${taskId}`],
+    enabled: !!taskId, // Only run when taskId is provided
+  });
+  
+  // Reset submission state when task status changes to submitted
+  useEffect(() => {
+    if (task?.status === 'submitted' && isSubmitting) {
+      logger.info('Task status is now submitted, resetting submission state');
+      setIsSubmitting(false);
+    }
+  }, [task?.status, isSubmitting]);
   
   // Use our new form data manager hook to handle form data
   const {
