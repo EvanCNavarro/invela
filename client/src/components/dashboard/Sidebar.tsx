@@ -130,18 +130,35 @@ export function Sidebar({
         });
         subscriptions.push(unsubTaskUpdate);
         
-        // Subscribe to company tabs updates
-        const unsubCompanyTabs = await wsService.subscribe('company_tabs_update', (data: any) => {
+        // Subscribe to company tabs updates - both event names for compatibility
+        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: any) => {
           console.log('[Sidebar] Received company_tabs_update event:', data);
           
           // If the received tabs data is for our company, update the available tabs
           if (data.companyId === company?.id && Array.isArray(data.availableTabs)) {
             console.log('[Sidebar] Received availableTabs update:', data.availableTabs);
             // Trigger a refetch to update the tabs data
-            queryClient.invalidateQueries({ queryKey: ['availableTabs'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+            // Force immediate refetch to update the UI
+            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
           }
         });
-        subscriptions.push(unsubCompanyTabs);
+        subscriptions.push(unsubCompanyTabsUpdate);
+        
+        // Also subscribe to the alternative event name
+        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: any) => {
+          console.log('[Sidebar] Received company_tabs_updated event:', data);
+          
+          // If the received tabs data is for our company, update the available tabs
+          if (data.companyId === company?.id && Array.isArray(data.availableTabs)) {
+            console.log('[Sidebar] Received availableTabs update:', data.availableTabs);
+            // Trigger a refetch to update the tabs data
+            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+            // Force immediate refetch to update the UI
+            queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
+          }
+        });
+        subscriptions.push(unsubCompanyTabsUpdated);
       } catch (error) {
         console.error('Error setting up WebSocket subscriptions:', error);
       }
