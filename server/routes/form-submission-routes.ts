@@ -275,14 +275,11 @@ export function createFormSubmissionRouter(): Router {
                   .where(eq(companies.id, companyId));
                   
                 if (companyRecord && companyRecord.available_tabs) {
-                  // Parse the tabs from the database
-                  let currentTabsFromDb: string[] = [];
-                  try {
-                    currentTabsFromDb = JSON.parse(companyRecord.available_tabs);
-                  } catch (parseError) {
-                    logger.error(`Error parsing available_tabs from database: ${parseError}`);
-                    currentTabsFromDb = [];
-                  }
+                  // Handle the available_tabs field, which is a text array in PostgreSQL
+                  // It's already an array of strings, so we can use it directly
+                  let currentTabsFromDb: string[] = Array.isArray(companyRecord.available_tabs) 
+                    ? companyRecord.available_tabs 
+                    : [];
                   
                   logger.info(`Broadcasting tabs from database: ${currentTabsFromDb.join(', ')}`);
                   
