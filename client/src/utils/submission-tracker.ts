@@ -7,6 +7,13 @@
 
 import getLogger from './logger';
 
+// Add global gtag type for TypeScript
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 // Create a dedicated logger instance for submission tracking
 const logger = getLogger('SubmissionTracker', {
   levels: { debug: true, info: true, warn: true, error: true }
@@ -17,6 +24,13 @@ class SubmissionTracker {
   private taskType: string = '';
   private events: Array<{ event: string; timestamp: string; data?: any }> = [];
   private isTracking: boolean = false;
+  
+  /**
+   * Check if the tracker is currently active
+   */
+  get isActive(): boolean {
+    return this.isTracking;
+  }
   private startTime: number = 0;
 
   /**
