@@ -26,6 +26,8 @@ import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
+import KY3PTaskPage from "@/pages/ky3p-task-page";
+import OpenBankingTaskPage from "@/pages/open-banking-task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
 import FormDebugPage from "@/pages/form-debug-page";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
@@ -333,6 +335,29 @@ function Router() {
         <Route path="/ky3p-test">
           <KY3PTestPage />
         </Route>
+        
+        {/* Specialized task routes for form types */}
+        <ProtectedRoute 
+          path="/ky3p-task/:taskId"
+          component={({ params }: { params: { taskId: string } }) => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <KY3PTaskPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )}
+        />
+        
+        <ProtectedRoute 
+          path="/open-banking-task/:taskId"
+          component={({ params }: { params: { taskId: string } }) => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <OpenBankingTaskPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )}
+        />
         
         {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
         <Route path="/debug/status-fixer">
