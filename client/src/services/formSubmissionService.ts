@@ -77,15 +77,17 @@ export const formSubmissionService = {
     
     try {
       // Make API request using the unified submission endpoint
-      const response = await apiRequest({
-        url: `/api/form-submission`,
-        method: 'POST',
-        data: {
-          formType,
-          formData,
-          fileName
+      const response = await apiRequest(
+        `/api/form-submission`,
+        {
+          method: 'POST',
+          data: {
+            formType,
+            formData,
+            fileName
+          }
         }
-      });
+      );
       
       // Validate response
       if (!response || !response.success) {
