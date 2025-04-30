@@ -1,27 +1,27 @@
 /**
  * Submission Error Modal
  * 
- * This component displays an error message when form submission fails,
- * including details about the error and guidance on how to proceed.
+ * This component displays a modal when a form submission fails.
+ * It shows the error message and provides options to retry or cancel.
  */
 
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription
+  DialogFooter
 } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
 
 export interface SubmissionErrorModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  details: string[] | string;
-  actionText?: string;
+  details: string;
+  onRetry?: () => void;
 }
 
 export function SubmissionErrorModal({
@@ -29,35 +29,31 @@ export function SubmissionErrorModal({
   onClose,
   title,
   details,
-  actionText = 'Close'
+  onRetry
 }: SubmissionErrorModalProps) {
-  // Format details to always be an array
-  const detailsArray = Array.isArray(details) ? details : [details];
-
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-amber-600" />
-            <DialogTitle>{title}</DialogTitle>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+            <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-        </DialogHeader>
-        
-        <div className="py-4">
-          {detailsArray.map((detail, index) => (
-            <DialogDescription key={index} className="my-2 text-red-600">
-              {detail}
-            </DialogDescription>
-          ))}
-          
-          <DialogDescription className="mt-4">
-            Please try again or contact support if the issue persists.
+          <DialogTitle className="text-xl">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-md text-left">
+              <p className="text-sm text-gray-700">{details}</p>
+            </div>
           </DialogDescription>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{actionText}</Button>
+        </DialogHeader>
+        <DialogFooter className="flex justify-center gap-2 sm:justify-center">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          {onRetry && (
+            <Button variant="default" onClick={onRetry}>
+              Retry Submission
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
