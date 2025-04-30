@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import useFormSubmission from '@/hooks/use-form-submission';
+import useEnhancedFormSubmission from '@/hooks/use-enhanced-form-submission';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -47,12 +47,13 @@ export default function OpenBankingTaskPage() {
     navigate('/task-center');
   };
   
-  // Form submission hook with enhanced error handling
+  // Form submission hook with enhanced two-step process
   const { toast } = useToast();
   const {
     submitForm,
     retrySubmission,
     isSubmitting,
+    isPreparing,
     isSuccess,
     isError,
     error: submissionError,
@@ -60,20 +61,21 @@ export default function OpenBankingTaskPage() {
     showConnectionIssueModal,
     closeSuccessModal,
     closeConnectionIssueModal,
-  } = useFormSubmission({
-    endpoint: `/api/tasks/${taskId}/submit`,
+  } = useEnhancedFormSubmission({
+    prepareEndpoint: `/api/enhanced-open-banking/prepare/${taskId}`,
+    submitEndpoint: `/api/enhanced-open-banking/submit/${taskId}`,
     invalidateQueries: ['/api/tasks', `/api/tasks/${taskId}`],
     onSuccess: (data) => {
-      logDebug('Form submitted successfully', data);
+      logDebug('Form submitted successfully with enhanced process', data);
     },
     onError: (error) => {
-      logDebug('Form submission error', error.message);
+      logDebug('Enhanced form submission error', error.message);
     }
   });
 
-  // Handle form submission
+  // Handle enhanced form submission with two-step process
   const handleFormSubmit = async (formData: any) => {
-    logDebug('Submitting open banking form', { taskId });
+    logDebug('Starting enhanced Open Banking form submission process', { taskId });
     
     // Prepare file name with standardized format
     const now = new Date();
@@ -82,14 +84,30 @@ export default function OpenBankingTaskPage() {
     const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
     const fileName = `OpenBanking_Survey_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}.json`;
     
-    // Submit the form data
-    await submitForm({
-      task_id: taskId,
-      form_type: 'open_banking',
-      data: formData,
-      file_name: fileName,
-      company_name: companyName
-    });
+    try {
+      // Use the enhanced two-step submission process
+      const result = await submitForm({
+        taskId: taskId,
+        formData: formData,  // The actual form data that will be stored in the responses table
+        fileName: fileName,
+        formType: 'open_banking',
+        companyName: companyName
+      });
+      
+      if (result && result.success) {
+        logDebug('Enhanced form submission completed successfully', { taskId, status: result.status });
+      } else {
+        logDebug('Enhanced form submission failed', { 
+          taskId, 
+          error: result?.error || 'Unknown error' 
+        });
+      }
+    } catch (error) {
+      logDebug('Exception during enhanced form submission', { 
+        taskId, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
   };
   
   // Show loading state while task data is being fetched
@@ -150,8 +168,15 @@ export default function OpenBankingTaskPage() {
             taskType="open_banking"
             initialData={task.savedFormData}
             onSubmit={handleFormSubmit}
-            // Pass isSubmitting through form props
-            formProps={{ disabled: isSubmitting }}
+            // Disable the form during both prepare and submit phases
+            formProps={{ 
+              disabled: isPreparing || isSubmitting,
+              submissionState: {
+                isSubmitting: isPreparing || isSubmitting,
+                submitText: isPreparing ? "Preparing..." : (isSubmitting ? "Submitting..." : "Submit"),
+                showSpinner: isPreparing || isSubmitting
+              } 
+            }}
           />
         </div>
       </div>
@@ -174,7 +199,32 @@ export default function OpenBankingTaskPage() {
       <ConnectionIssueModal
         open={showConnectionIssueModal}
         onClose={closeConnectionIssueModal}
-        onRetry={() => retrySubmission(null)}
+        onRetry={() => {
+          // Make sure we have the latest task data for retry
+          if (task && task.savedFormData) {
+            // Create the submission data package
+            const now = new Date();
+            const formattedDate = now.toISOString().slice(0, 10);
+            const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, '');
+            const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+            const fileName = `OpenBanking_Survey_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}.json`;
+            
+            // Retry with proper data structure
+            retrySubmission({
+              taskId: taskId,
+              formData: task.savedFormData,
+              fileName: fileName,
+              formType: 'open_banking',
+              companyName: companyName
+            });
+          } else {
+            toast({
+              title: "Retry Failed",
+              description: "Could not retrieve form data for retry. Please try refreshing the page.",
+              variant: "destructive"
+            });
+          }
+        }}
         errorMessage={
           submissionError?.message || 
           "We're having trouble connecting to the database. This might be due to a temporary connection issue."
