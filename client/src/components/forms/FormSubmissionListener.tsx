@@ -12,6 +12,18 @@ import getLogger from '@/utils/logger';
 
 const logger = getLogger('FormSubmissionListener');
 
+export interface SubmissionAction {
+  type: string;
+  description: string;
+  fileId?: number;
+  data?: {
+    details?: string;
+    buttonText?: string;
+    url?: string;
+    fileId?: number;
+  };
+}
+
 export interface FormSubmissionEvent {
   taskId: number;
   formType: string;
@@ -24,6 +36,7 @@ export interface FormSubmissionEvent {
   submissionDate: string;
   message?: string;
   timestamp: string;
+  completedActions?: SubmissionAction[];
 }
 
 interface FormSubmissionListenerProps {
@@ -86,7 +99,9 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           error: payload.error,
           submissionDate: payload.submissionDate,
           message: payload.message,
-          timestamp: payload.timestamp
+          timestamp: payload.timestamp,
+          // Include completed actions array if it exists
+          ...(payload.completedActions && { completedActions: payload.completedActions })
         };
         
         // Handle the event based on status

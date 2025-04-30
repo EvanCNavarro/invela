@@ -125,86 +125,195 @@ export function UniversalSuccessModal({
   const getActionCards = () => {
     const cards = [];
     
-    // Start with basic task completion card
-    cards.push(
-      <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
-        <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-        <div>
-          <p className="font-medium text-gray-900">Task Completed</p>
-          <p className="text-gray-600">Your form has been successfully submitted and marked as complete.</p>
-        </div>
-      </div>
-    );
-    
-    // Add file generation card if a file was generated
-    const fileId = submissionResult.fileId || 
-                   (submissionResult.data && 'fileId' in submissionResult.data ? submissionResult.data.fileId : undefined);
-    const fileName = submissionResult.fileName || 
-                     (submissionResult.data && 'fileName' in submissionResult.data ? submissionResult.data.fileName : undefined);
-    
-    if (fileId) {
-      cards.push(
-        <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-white border-gray-200">
-          <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-gray-900">Report Generated</p>
-            <p className="text-gray-600">
-              {fileName 
-                ? `The file "${fileName}" has been created and saved to your file vault.` 
-                : `A report has been generated and saved to your file vault.`}
-            </p>
+    // Always check completedActions first
+    if (submissionResult.completedActions && submissionResult.completedActions.length > 0) {
+      // Look for specific action types in completedActions
+      const formSubmittedAction = submissionResult.completedActions.find(a => a.type === 'form_submitted');
+      const fileGeneratedAction = submissionResult.completedActions.find(a => a.type === 'file_generated');
+      const tabsUnlockedAction = submissionResult.completedActions.find(a => a.type === 'tabs_unlocked');
+      
+      // Default task completion card
+      if (formSubmittedAction) {
+        cards.push(
+          <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
+            <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">Task Completed</p>
+              <p className="text-gray-600">{formSubmittedAction.description || "Your form has been successfully submitted and marked as complete."}</p>
+            </div>
           </div>
-        </div>
-      );
-    }
-    
-    // Add tab unlocking card if tabs were unlocked
-    const unlockedTabs = submissionResult.unlockedTabs || 
-                         (submissionResult.data && 'unlockedTabs' in submissionResult.data ? submissionResult.data.unlockedTabs : undefined);
-    
-    if (unlockedTabs && unlockedTabs.length > 0) {
-      // Function to get tab display info
-      const getTabDisplayInfo = (tabName: string): { name: string; icon: typeof LayoutDashboard } => {
-        switch(tabName) {
-          case 'dashboard':
-            return { name: 'Dashboard', icon: LayoutDashboard };
-          case 'insights':
-            return { name: 'Insights', icon: PieChart };
-          case 'file-vault':
-            return { name: 'File Vault', icon: Folder };
-          case 'documents':
-            return { name: 'Documents', icon: FileArchive };
-          default:
-            // Default case for unknown tabs
-            return { name: tabName.replace(/-/g, ' '), icon: Shield };
+        );
+      } else {
+        // Fallback if no form_submitted action found
+        cards.push(
+          <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
+            <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">Task Completed</p>
+              <p className="text-gray-600">Your form has been successfully submitted and marked as complete.</p>
+            </div>
+          </div>
+        );
+      }
+      
+      // File generation card
+      if (fileGeneratedAction) {
+        cards.push(
+          <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-white border-gray-200">
+            <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">Report Generated</p>
+              <p className="text-gray-600">{fileGeneratedAction.description}</p>
+            </div>
+          </div>
+        );
+      }
+      
+      // Tabs unlocked card
+      if (tabsUnlockedAction) {
+        cards.push(
+          <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
+            <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">New Access Granted</p>
+              <p className="text-gray-600">{tabsUnlockedAction.description}</p>
+            </div>
+          </div>
+        );
+      }
+      
+      // Add any other action cards
+      submissionResult.completedActions.forEach((action, index) => {
+        // Skip actions that we've already handled
+        if (action.type === 'form_submitted' || action.type === 'file_generated' || action.type === 'tabs_unlocked') return;
+        
+        // Select icon based on action type
+        let ActionIcon = FileText;
+        let bgClass = "bg-white";
+        let borderClass = "border-gray-200";
+        let iconColor = "text-gray-600";
+        
+        // Customize appearance based on action type
+        switch(action.type) {
+          case "next_task":
+            ActionIcon = ArrowRight;
+            bgClass = "bg-indigo-50";
+            borderClass = "border-indigo-200";
+            iconColor = "text-indigo-600";
+            break;
+          case "risk_assessment":
+            ActionIcon = Shield;
+            bgClass = "bg-white";
+            borderClass = "border-gray-200";
+            iconColor = "text-gray-600";
+            break;
+          case "file_vault_unlocked":
+            ActionIcon = Archive;
+            bgClass = "bg-blue-50";
+            borderClass = "border-blue-200";
+            iconColor = "text-blue-600";
+            break;
         }
-      };
-      
-      // Format the list of unlocked tabs
-      const tabDescriptions = unlockedTabs.map(tab => {
-        const tabInfo = getTabDisplayInfo(tab);
-        return tabInfo.name;
-      }).join(', ');
-      
-      cards.push(
-        <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
-          <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-gray-900">New Access Granted</p>
-            <p className="text-gray-600">
-              You now have access to: <span className="font-medium text-blue-700">{tabDescriptions}</span>
-            </p>
+        
+        cards.push(
+          <div key={`action-${index}`} className={`flex items-start gap-3 border rounded-md p-3 ${bgClass} ${borderClass}`}>
+            <ActionIcon className={`h-5 w-5 ${iconColor} mt-0.5 flex-shrink-0`} />
+            <div>
+              <p className="font-medium text-gray-900">{action.description}</p>
+              {action.data?.details && (
+                <p className="text-gray-600">{action.data.details}</p>
+              )}
+            </div>
           </div>
-        </div>
-      );
+        );
+      });
+    
+    // Fallback to the old implementation if completedActions is not available
+    } else {
+      // Start with basic task completion card if not already added
+      if (!cards.find(card => card.key === "task-completed")) {
+        cards.push(
+          <div key="task-completed" className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200">
+            <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">Task Completed</p>
+              <p className="text-gray-600">Your form has been successfully submitted and marked as complete.</p>
+            </div>
+          </div>
+        );
+      }
+      
+      // Add file generation card if a file was generated
+      const fileId = submissionResult.fileId || 
+                   (submissionResult.data && 'fileId' in submissionResult.data ? submissionResult.data.fileId : undefined);
+      const fileName = submissionResult.fileName || 
+                     (submissionResult.data && 'fileName' in submissionResult.data ? submissionResult.data.fileName : undefined);
+      
+      if (fileId && !cards.find(card => card.key === "file-generated")) {
+        cards.push(
+          <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-white border-gray-200">
+            <FileText className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">Report Generated</p>
+              <p className="text-gray-600">
+                {fileName 
+                  ? `The file "${fileName}" has been created and saved to your file vault.` 
+                  : `A report has been generated and saved to your file vault.`}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      
+      // Add tab unlocking card if tabs were unlocked
+      const unlockedTabs = submissionResult.unlockedTabs || 
+                         (submissionResult.data && 'unlockedTabs' in submissionResult.data ? submissionResult.data.unlockedTabs : undefined);
+      
+      if (unlockedTabs && unlockedTabs.length > 0 && !cards.find(card => card.key === "tabs-unlocked")) {
+        // Function to get tab display info
+        const getTabDisplayInfo = (tabName: string): { name: string; icon: typeof LayoutDashboard } => {
+          switch(tabName) {
+            case 'dashboard':
+              return { name: 'Dashboard', icon: LayoutDashboard };
+            case 'insights':
+              return { name: 'Insights', icon: PieChart };
+            case 'file-vault':
+              return { name: 'File Vault', icon: Folder };
+            case 'documents':
+              return { name: 'Documents', icon: FileArchive };
+            default:
+              // Default case for unknown tabs
+              return { name: tabName.replace(/-/g, ' '), icon: Shield };
+          }
+        };
+        
+        // Format the list of unlocked tabs
+        const tabDescriptions = unlockedTabs.map(tab => {
+          const tabInfo = getTabDisplayInfo(tab);
+          return tabInfo.name;
+        }).join(', ');
+        
+        cards.push(
+          <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
+            <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-gray-900">New Access Granted</p>
+              <p className="text-gray-600">
+                You now have access to: <span className="font-medium text-blue-700">{tabDescriptions}</span>
+              </p>
+            </div>
+          </div>
+        );
+      }
     }
     
     // Add any additional cards from completedActions
     if (submissionResult.completedActions && submissionResult.completedActions.length > 0) {
       submissionResult.completedActions.forEach((action, index) => {
         // Skip actions that we've already covered with our custom cards
-        if (action.type === 'file_generation' && fileId) return;
-        if (action.type === 'tabs_unlocked' && unlockedTabs) return;
+        if (action.type === 'form_submitted') return;
+        if (action.type === 'file_generated') return;
+        if (action.type === 'tabs_unlocked') return;
         if (action.type === 'task_completion') return; // Already have a default task completion card
         
         // Select icon based on action type
