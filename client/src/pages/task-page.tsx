@@ -521,6 +521,98 @@ export default function TaskPage({ params }: TaskPageProps) {
   // The task query has been moved to the top of the component
   // No duplicate declarations here
   
+  // Handle form submission success via WebSocket
+  const handleFormSubmissionSuccess = useCallback((event: FormSubmissionEvent) => {
+    console.log(`[TaskPage] Form submission success event received:`, event);
+    
+    // Show success toast
+    toast({
+      title: "Form Submitted Successfully",
+      description: `Your ${taskContentType} form has been submitted successfully.`,
+      variant: "success",
+    });
+    
+    // Update submission state
+    setIsSubmitted(true);
+    
+    // If we have file information, store it
+    if (event.fileId) {
+      setFileId(event.fileId);
+    }
+    
+    // Prepare submission result for the success modal
+    const formTypeDisplay = taskContentType.replace('_', ' ').toUpperCase();
+    setSubmissionResult({
+      taskId: event.taskId,
+      fileId: event.fileId,
+      taskStatus: 'submitted',
+      completedActions: [
+        {
+          type: "task_completion",
+          description: `${formTypeDisplay} Form Completed`,
+          data: {
+            details: `Your ${formTypeDisplay} form has been successfully submitted and marked as complete.`
+          }
+        }
+      ]
+    });
+    
+    // If there's a file, add it to completed actions
+    if (event.fileName && event.fileId) {
+      setSubmissionResult(prev => ({
+        ...prev,
+        completedActions: [
+          ...(prev.completedActions || []),
+          {
+            type: "file_generation",
+            description: "CSV Export Generated",
+            fileId: event.fileId,
+            data: {
+              details: "A CSV file has been generated with your form submission data.",
+              buttonText: "Download CSV"
+            }
+          }
+        ]
+      }));
+    }
+    
+    // If tabs were unlocked, add to completed actions
+    if (event.unlockedTabs && event.unlockedTabs.length > 0) {
+      setSubmissionResult(prev => ({
+        ...prev,
+        completedActions: [
+          ...(prev.completedActions || []),
+          {
+            type: "access_granted",
+            description: "New Features Unlocked",
+            data: {
+              details: `You now have access to: ${event.unlockedTabs.join(', ')}`,
+              tabs: event.unlockedTabs
+            }
+          }
+        ]
+      }));
+    }
+    
+    // Show success modal and fire confetti
+    setShowSuccessModal(true);
+    fireEnhancedConfetti();
+    
+    // Refresh the data
+    refetch();
+  }, [toast, taskContentType, refetch]);
+  
+  // Handle form submission error
+  const handleFormSubmissionError = useCallback((event: FormSubmissionEvent) => {
+    console.error(`[TaskPage] Form submission error:`, event);
+    
+    toast({
+      title: "Form Submission Failed",
+      description: event.error || "There was an error submitting the form. Please try again.",
+      variant: "destructive",
+    });
+  }, [toast]);
+  
   // Define the task processing logic outside the render cycle
   const processTaskData = useCallback((taskData: Task) => {
     if (!taskData) return;
@@ -1612,20 +1704,40 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Fallback content if task type is unknown
   return (
-    <DashboardLayout>
-      <div className="container max-w-7xl py-6">
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Task Not Found</h2>
-          <p className="text-muted-foreground mb-6">
-            We couldn't find the task you're looking for. It may have been removed or you
-            don't have access to it.
-          </p>
-          <Button onClick={handleBackClick}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Task Center
-          </Button>
+    <>
+      {/* Form submission event listener */}
+      <FormSubmissionListener 
+        taskId={taskId || 0}
+        onSuccess={handleFormSubmissionSuccess}
+        onError={handleFormSubmissionError}
+      />
+      
+      {/* Success modal */}
+      <SubmissionSuccessModal
+        open={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={`${taskContentType.replace('_', ' ').toUpperCase()} Form Submitted`}
+        actions={submissionResult.completedActions || []}
+        returnPath="/task-center"
+        returnLabel="Back to Task Center"
+        onDownload={handleDownload}
+      />
+      
+      <DashboardLayout>
+        <div className="container max-w-7xl py-6">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <h2 className="text-2xl font-bold mb-4">Task Not Found</h2>
+            <p className="text-muted-foreground mb-6">
+              We couldn't find the task you're looking for. It may have been removed or you
+              don't have access to it.
+            </p>
+            <Button onClick={handleBackClick}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Task Center
+            </Button>
+          </div>
         </div>
-      </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </>
   );
 }
