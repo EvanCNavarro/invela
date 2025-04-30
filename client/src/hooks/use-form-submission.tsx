@@ -70,7 +70,7 @@ export default function useFormSubmission({
     }));
 
     // Show initial toast to indicate submission is being processed
-    const submittingToast = toast({
+    toast({
       title: "Submitting...",
       description: "Working on submitting your data...",
       duration: 3000,
@@ -95,7 +95,7 @@ export default function useFormSubmission({
 
       // Handle success
       if (responseData?.success) {
-        // Clear the submitting toast
+        // Show success toast
         toast({
           title: "Submission Successful",
           description: responseData.message || "Your form has been submitted successfully.",
@@ -123,6 +123,8 @@ export default function useFormSubmission({
           showSuccessModal: true,
           data: responseData,
         }));
+        
+        return responseData;
       } else {
         // API returned success: false
         throw new Error(responseData.error || "An error occurred while processing your submission.");
@@ -149,6 +151,13 @@ export default function useFormSubmission({
           retryCount: prev.retryCount + 1,
           error: error instanceof Error ? error : new Error(errorMessage),
         }));
+        
+        return {
+          success: false,
+          connectionIssue: true,
+          message: errorMessage,
+          retryCount: state.retryCount + 1
+        };
       } else {
         // Regular error or too many retries
         toast({
@@ -168,6 +177,12 @@ export default function useFormSubmission({
           isError: true,
           error: error instanceof Error ? error : new Error(errorMessage),
         }));
+        
+        return {
+          success: false,
+          connectionIssue: false,
+          message: errorMessage
+        };
       }
     }
   };

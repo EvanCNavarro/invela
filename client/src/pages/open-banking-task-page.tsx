@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useParams, useRoute } from 'wouter';
+import { useLocation, useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useFormSubmission } from '@/hooks/use-form-submission';
+import useFormSubmission from '@/hooks/use-form-submission';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { UniversalForm } from '@/components/forms/UniversalForm';
-import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import { ConnectionIssueModal } from '@/components/modals/ConnectionIssueModal';
-import getLogger from '@/utils/logger';
-import submissionTracker from '@/utils/submission-tracker';
+import SubmissionSuccessModal from '@/components/modals/SubmissionSuccessModal';
+import ConnectionIssueModal from '@/components/modals/ConnectionIssueModal';
 
-// Create a logger for this component
-const logger = getLogger('OpenBankingTaskPage', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
-});
+// Simple console logging helper
+const logDebug = (message: string, data?: any) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[OpenBankingTaskPage] ${message}`, data || '');
+  }
+};
 
 export default function OpenBankingTaskPage() {
   const params = useParams<{ taskId?: string }>();
   const taskId = parseInt(params.taskId || '', 10);
   const [, navigate] = useLocation();
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [companyName, setCompanyName] = useState('');
   
   // Fetch task data
@@ -40,12 +38,58 @@ export default function OpenBankingTaskPage() {
                    task.metadata?.company?.name || 
                    'Company';
       setCompanyName(name);
+      logDebug('Company name extracted', name);
     }
   }, [task]);
   
   // Handle navigation back to task center
   const handleBackClick = () => {
     navigate('/task-center');
+  };
+  
+  // Form submission hook with enhanced error handling
+  const { toast } = useToast();
+  const {
+    submitForm,
+    retrySubmission,
+    isSubmitting,
+    isSuccess,
+    isError,
+    error: submissionError,
+    showSuccessModal,
+    showConnectionIssueModal,
+    closeSuccessModal,
+    closeConnectionIssueModal,
+  } = useFormSubmission({
+    endpoint: `/api/tasks/${taskId}/submit`,
+    invalidateQueries: ['/api/tasks', `/api/tasks/${taskId}`],
+    onSuccess: (data) => {
+      logDebug('Form submitted successfully', data);
+    },
+    onError: (error) => {
+      logDebug('Form submission error', error.message);
+    }
+  });
+
+  // Handle form submission
+  const handleFormSubmit = async (formData: any) => {
+    logDebug('Submitting open banking form', { taskId });
+    
+    // Prepare file name with standardized format
+    const now = new Date();
+    const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
+    const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+    const fileName = `OpenBanking_Survey_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}.json`;
+    
+    // Submit the form data
+    await submitForm({
+      task_id: taskId,
+      form_type: 'open_banking',
+      data: formData,
+      file_name: fileName,
+      company_name: companyName
+    });
   };
   
   // Show loading state while task data is being fetched
@@ -91,81 +135,6 @@ export default function OpenBankingTaskPage() {
     );
   }
   
-  // UseFormSubmission hook for enhanced submission handling
-  const { toast } = useToast();
-  const { 
-    submitForm, 
-    retrySubmission, 
-    isSubmitting: submittingForm, 
-    error: submissionError,
-    retryCount,
-    hasLastSubmission
-  } = useFormSubmission();
-
-  // State to show connection issue modal
-  const [showConnectionIssueModal, setShowConnectionIssueModal] = useState(false);
-
-  // Handle form submission with improved error handling
-  const handleFormSubmit = async (formData: any) => {
-    // Start tracking this submission
-    submissionTracker.startTracking(taskId, 'open_banking');
-    submissionTracker.trackEvent('Begin Open Banking form submission', { companyName });
-    setSubmitting(true);
-    
-    // Prepare file name with standardized format
-    const now = new Date();
-    const formattedDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
-    const formattedTime = now.toISOString().slice(11, 19).replace(/:/g, ''); // HHMMSS
-    const cleanCompanyName = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
-    const fileName = `OpenBanking_Survey_${taskId}_${cleanCompanyName}_${formattedDate}_${formattedTime}.json`;
-    
-    submissionTracker.trackEvent('Preparing Open Banking submission', { fileName, taskId });
-    
-    // Use enhanced form submission
-    const result = await submitForm({
-      taskId,
-      formType: 'open_banking',
-      formData,
-      fileName,
-      onSuccess: (result) => {
-        // Show success modal on successful submission
-        setShowSuccessModal(true);
-        submissionTracker.trackEvent('Open Banking form submission successful', result);
-        submissionTracker.stopTracking(true);
-      }
-    });
-    
-    setSubmitting(false);
-    
-    // Handle connection issues
-    if (!result.success && result.connectionIssue) {
-      setShowConnectionIssueModal(true);
-      submissionTracker.trackEvent('Open Banking form submission had connection issue', { 
-        error: result.message,
-        retryCount 
-      });
-    } else if (!result.success) {
-      // Other errors are handled by the toast notifications from the hook
-      submissionTracker.trackEvent('Open Banking form submission failed', { 
-        error: result.message 
-      });
-      submissionTracker.stopTracking(false);
-    }
-  };
-  
-  // Handler for retry from connection issue modal
-  const handleRetrySubmission = async () => {
-    submissionTracker.trackEvent('Retrying Open Banking form submission', { retryCount });
-    const result = await retrySubmission();
-    
-    if (result?.success) {
-      setShowConnectionIssueModal(false);
-      setShowSuccessModal(true);
-      submissionTracker.trackEvent('Open Banking retry submission successful', result);
-      submissionTracker.stopTracking(true);
-    }
-  };
-  
   // Render the form
   return (
     <DashboardLayout>
@@ -181,6 +150,8 @@ export default function OpenBankingTaskPage() {
             taskType="open_banking"
             initialData={task.savedFormData}
             onSubmit={handleFormSubmit}
+            // Pass isSubmitting through form props
+            formProps={{ disabled: isSubmitting }}
           />
         </div>
       </div>
@@ -189,12 +160,25 @@ export default function OpenBankingTaskPage() {
       <SubmissionSuccessModal
         open={showSuccessModal}
         onClose={() => {
-          setShowSuccessModal(false);
+          closeSuccessModal();
           navigate('/task-center');
         }}
         title="Open Banking Survey Submitted"
-        description="Your Open Banking survey has been successfully submitted. The task has been marked as completed."
-        buttonText="Return to Task Center"
+        description="Your form has been successfully submitted."
+        returnPath="/task-center"
+        returnLabel="Return to Tasks"
+        taskType="open_banking"
+      />
+      
+      {/* Connection Issue Modal */}
+      <ConnectionIssueModal
+        open={showConnectionIssueModal}
+        onClose={closeConnectionIssueModal}
+        onRetry={() => retrySubmission(null)}
+        errorMessage={
+          submissionError?.message || 
+          "We're having trouble connecting to the database. This might be due to a temporary connection issue."
+        }
       />
     </DashboardLayout>
   );

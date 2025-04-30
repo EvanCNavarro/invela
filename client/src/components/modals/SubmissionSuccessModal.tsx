@@ -7,82 +7,74 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle } from "lucide-react";
-import { useLocation } from "wouter";
+import { CheckCircle2 } from "lucide-react";
+import { Link } from "wouter";
 
 interface SubmissionSuccessModalProps {
   open: boolean;
   onClose: () => void;
-  title?: string;
-  description?: string;
-  returnPath?: string;
-  returnLabel?: string;
+  title: string;
+  description: string;
+  returnPath: string;
+  returnLabel: string;
   taskType?: string;
 }
 
-/**
- * A modal component to display upon successful form submission
- * 
- * This component shows a success message and provides navigation options
- * after a form has been successfully submitted.
- */
 export default function SubmissionSuccessModal({
   open,
   onClose,
-  title = "Submission Successful",
-  description = "Your form has been successfully submitted.",
-  returnPath = "/tasks",
-  returnLabel = "Return to Tasks",
-  taskType = "",
+  title,
+  description,
+  returnPath,
+  returnLabel,
+  taskType
 }: SubmissionSuccessModalProps) {
-  const [_, navigate] = useLocation();
-
-  // Enhanced descriptions for specific form types
-  const enhancedDescription = getEnhancedDescription(description, taskType);
-
-  const handleReturn = () => {
-    navigate(returnPath);
-    onClose();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-col items-center">
-          <CheckCircle className="h-16 w-16 text-emerald-500 mb-4" />
-          <DialogTitle className="text-center text-xl">{title}</DialogTitle>
-          <DialogDescription className="text-center mt-2">
-            {enhancedDescription}
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader className="flex flex-col items-center text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 mb-4">
+            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          </div>
+          <DialogTitle className="text-xl font-semibold tracking-tight">{title}</DialogTitle>
+          <DialogDescription className="text-base pt-2">
+            {description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="flex justify-center mt-6">
-          <Button 
-            onClick={handleReturn} 
-            className="min-w-[200px]"
-          >
-            {returnLabel}
-          </Button>
+        
+        {taskType === 'open_banking' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 my-4">
+            <p className="text-sm text-blue-800">
+              Your responses have been securely submitted. A PDF document has been automatically generated from your submission and placed in your File Vault for record-keeping purposes.
+            </p>
+          </div>
+        )}
+        
+        {taskType === 'ky3p' && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-md p-4 my-4">
+            <p className="text-sm text-indigo-800">
+              Thanks for completing the KY3P security assessment. Your answers have been recorded and a comprehensive report has been generated in your File Vault.
+            </p>
+          </div>
+        )}
+        
+        {taskType === 'kyb' && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-md p-4 my-4">
+            <p className="text-sm text-emerald-800">
+              Your KYB information has been successfully recorded. You can now proceed with additional compliance tasks that have been unlocked in your task center.
+            </p>
+          </div>
+        )}
+        
+        <DialogFooter className="sm:justify-center">
+          <Link href={returnPath}>
+            <Button onClick={onClose}>{returnLabel}</Button>
+          </Link>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-/**
- * Generate an enhanced description based on form type
- */
-function getEnhancedDescription(baseDescription: string, taskType: string): string {
-  switch (taskType) {
-    case 'kyb':
-      return `${baseDescription} Your KYB information has been recorded and is being processed. The KY3P and Open Banking surveys are now available.`;
-    
-    case 'ky3p':
-      return `${baseDescription} Your KY3P assessment has been recorded. Thank you for providing this security information.`;
-    
-    case 'open_banking':
-      return `${baseDescription} Your Open Banking survey has been successfully processed. The Dashboard and Insights tabs are now available for you to explore.`;
-    
-    default:
-      return baseDescription;
-  }
-}
+// Named export for component
+export { SubmissionSuccessModal };
