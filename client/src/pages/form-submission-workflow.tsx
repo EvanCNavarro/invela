@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
-import { FormSubmissionListener } from '@/components/forms/FormSubmissionListener';
+import FormSubmissionListener from '@/components/forms/FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 import FormSubmissionService from '@/services/form-submission-service';
 
