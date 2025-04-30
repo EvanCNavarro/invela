@@ -8,10 +8,10 @@
 import { Router, Request, Response } from 'express';
 import websocketService from '../services/websocket';
 import { db } from '@db';
-import { tasks } from '@db/schema';
+import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
-import fileCreationService from '../services/fileCreation';
+import { fileCreationService } from '../services/fileCreation';
 
 // Destructure websocket service functions
 const { 
@@ -111,9 +111,6 @@ export function createFormSubmissionRouter(): Router {
           logger.info(`Processing submission for form type: ${formType}`);
           
           try {
-            // Import the fileCreationService
-            const { fileCreationService } = await import('../services/fileCreation');
-            
             // Update task status to submitted
             await db.update(tasks)
               .set({ 
@@ -124,13 +121,28 @@ export function createFormSubmissionRouter(): Router {
               .where(eq(tasks.id, taskId));
             
             // Get company info for the file
-            const [company] = await db.select({
-              name: tasks.company_name
-            })
-            .from(tasks)
-            .where(eq(tasks.id, taskId));
+            const task = await db.query.tasks.findFirst({
+              where: eq(tasks.id, taskId)
+            });
             
-            const companyName = company?.name || 'Company';
+            // Use either title from task or get company name from company record
+            let companyName = 'Company';
+            
+            if (task) {
+              // Use title as fallback for company name
+              companyName = task.title || 'Company';
+              
+              // Try to get from company if available
+              if (companyId > 0) {
+                // Fetch company details if we have a company ID
+                const company = await db.query.companies.findFirst({
+                  where: eq(companies.id, companyId)
+                });
+                if (company && company.name) {
+                  companyName = company.name;
+                }
+              }
+            }
             
             // Create an actual file from the form data
             const fileResult = await fileCreationService.createTaskFile(
@@ -138,9 +150,13 @@ export function createFormSubmissionRouter(): Router {
               companyId,
               formData, // Use the submitted form data
               {
-                taskType: formType,
+                // Use a safe type conversion to ensure compatibility with FileCreationService
+                taskType: (formType === 'kyb' ? 'company_kyb' : 
+                          formType === 'ky3p' ? 'sp_ky3p_assessment' : 
+                          formType === 'card' ? 'company_card' : 'company_kyb'),
                 taskId,
-                companyName
+                companyName,
+                additionalData: { originalType: formType }
               }
             );
             
@@ -176,15 +192,57 @@ export function createFormSubmissionRouter(): Router {
               logger.info('Unlocking tabs for Card submission:', unlockedTabs);
             }
             
-            // If there are tabs to unlock, broadcast a company tabs update
+            // If there are tabs to unlock, update the company record and broadcast the update
             if (unlockedTabs.length > 0) {
-              logger.info(`Broadcasting company tabs update for company ${companyId}:`, unlockedTabs);
+              logger.info(`Updating and broadcasting company tabs for company ${companyId}:`, unlockedTabs);
               
-              // Broadcast the company tabs update first
-              broadcastCompanyTabsUpdate(
-                companyId,
-                unlockedTabs
-              );
+              try {
+                // First, get the current company data
+                const company = await db.query.companies.findFirst({
+                  where: eq(companies.id, companyId)
+                });
+                
+                if (company) {
+                  // Get current available_tabs or initialize empty array
+                  let currentTabs: string[] = [];
+                  
+                  try {
+                    if (company.available_tabs) {
+                      // Parse JSON string into array
+                      currentTabs = JSON.parse(company.available_tabs);
+                    }
+                  } catch (parseError) {
+                    logger.warn(`Error parsing available_tabs for company ${companyId}:`, parseError);
+                    // Continue with empty array if parsing fails
+                    currentTabs = [];
+                  }
+                  
+                  // Add new tabs if they're not already included
+                  const updatedTabs = [...new Set([...currentTabs, ...unlockedTabs])];
+                  logger.info(`Updating company ${companyId} tabs from [${currentTabs.join(', ')}] to [${updatedTabs.join(', ')}]`);
+                  
+                  // Update the company record with the new tabs
+                  await db.update(companies)
+                    .set({ 
+                      available_tabs: JSON.stringify(updatedTabs),
+                      updated_at: new Date()
+                    })
+                    .where(eq(companies.id, companyId));
+                  
+                  logger.info(`Successfully updated available tabs for company ${companyId}`);
+                  
+                  // Broadcast the company tabs update
+                  broadcastCompanyTabsUpdate(
+                    companyId,
+                    updatedTabs
+                  );
+                } else {
+                  logger.warn(`Company ${companyId} not found, skipping tab update`);
+                }
+              } catch (dbError) {
+                logger.error(`Error updating company tabs for company ${companyId}:`, dbError);
+                // Continue with the form submission even if tab update fails
+              }
             }
             
             // Broadcast form submission success via WebSocket with file info and unlocked tabs
