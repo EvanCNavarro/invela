@@ -66,19 +66,36 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const handleCompanyTabsUpdate = (event: CustomEvent) => {
       const { companyId, availableTabs, cacheInvalidation } = event.detail || {};
       
-      console.log('[DashboardLayout] Received company-tabs-updated event:', {
+      console.log('[DashboardLayout] Received company tabs update event:', {
         companyId,
         availableTabs,
         cacheInvalidation,
-        currentCompanyId: currentCompany?.id
+        eventType: event.type,
+        currentCompanyId: currentCompany?.id,
+        currentAvailableTabs: currentCompany?.available_tabs
       });
       
       // Only process if it affects the current company
       if (companyId === currentCompany?.id) {
         console.log('[DashboardLayout] Processing update for current company');
         
-        // Simple approach - just refetch data from server once
-        console.log('[DashboardLayout] Received company update, refetching company data');
+        // Enhanced approach with better cache handling:
+        // 1. Remove the cached data first
+        queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+        
+        // 2. Immediately update the cache with the new tabs - this provides instant UI feedback
+        //    even before the API refetch completes
+        if (currentCompany && Array.isArray(availableTabs)) {
+          console.log('[DashboardLayout] Directly updating query cache with new tabs:', availableTabs);
+          
+          queryClient.setQueryData(['/api/companies/current'], {
+            ...currentCompany,
+            available_tabs: availableTabs
+          });
+        }
+        
+        // 3. Still refetch from the server to ensure full sync
+        console.log('[DashboardLayout] Also refetching company data from server for complete sync');
         queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
         refetchCompany();
       }

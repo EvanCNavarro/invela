@@ -201,11 +201,32 @@ export function broadcastCompanyTabsUpdate(
   companyId: number,
   availableTabs: string[]
 ): { clientCount: number } {
-  return broadcastMessage('company_tabs_update', {
+  // Enhanced logging for company tabs update
+  logger.info(`Broadcasting company tabs update for company ${companyId}:`, {
     companyId,
     availableTabs,
     timestamp: new Date().toISOString()
   });
+
+  // First, broadcast with the standard 'company_tabs_update' event type
+  const result = broadcastMessage('company_tabs_update', {
+    companyId,
+    availableTabs,
+    timestamp: new Date().toISOString(),
+    // Add cache_invalidation flag to trigger aggressive client-side cache refresh
+    cache_invalidation: true
+  });
+  
+  // For backward compatibility, also broadcast with the legacy 'company_tabs_updated' event type
+  // This ensures older clients listening for the old event name still receive updates
+  broadcastMessage('company_tabs_updated', {
+    companyId,
+    availableTabs,
+    timestamp: new Date().toISOString(),
+    cache_invalidation: true
+  });
+  
+  return result;
 }
 
 /**

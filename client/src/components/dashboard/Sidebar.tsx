@@ -63,10 +63,23 @@ export function Sidebar({
     enabled: !isPlayground,
   });
 
-  // Simple monitoring of availableTabs
+  // Enhanced monitoring of availableTabs
   useEffect(() => {
-    console.log('[Sidebar] Available tabs updated:', availableTabs);
-  }, [availableTabs]);
+    // Note: We're using this verbose logging to diagnose tab unlocking issues
+    console.log('[Sidebar] Available tabs updated:', {
+      tabs: availableTabs,
+      hasFileVault: availableTabs.includes('file-vault'),
+      hasDashboard: availableTabs.includes('dashboard'),
+      hasTaskCenter: availableTabs.includes('task-center'),
+      currentRoute: location,
+      company: company?.id
+    });
+    
+    // Verify that file-vault tab visibility matches our route if we're on that page
+    if (location.includes('file-vault') && !availableTabs.includes('file-vault')) {
+      console.warn('[Sidebar] ⚠️ Potential mismatch: On file-vault route but tab not in availableTabs');
+    }
+  }, [availableTabs, location, company?.id]);
   
   // Special case for file-vault route - ensure tab is unlocked
   useEffect(() => {
