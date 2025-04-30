@@ -15,43 +15,9 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // Simple, clean approach to unlock the file-vault tab
-  useEffect(() => {
-    if (!open) return;
-    
-    console.log('[KYBSuccessModal] Unlocking file-vault tab');
-    
-    try {
-      // Get current company data
-      const company = queryClient.getQueryData(['/api/companies/current']) as any;
-      
-      if (company) {
-        // Only update if file-vault isn't already included
-        if (!company.available_tabs?.includes('file-vault')) {
-          const updatedTabs = [...(Array.isArray(company.available_tabs) ? 
-                               company.available_tabs : ['task-center']), 'file-vault'];
-          
-          // Update cache immediately
-          queryClient.setQueryData(['/api/companies/current'], {
-            ...company,
-            available_tabs: updatedTabs
-          });
-          
-          console.log('[KYBSuccessModal] Cache updated with file-vault tab');
-        }
-        
-        // Sync with server (don't wait for response)
-        fetch(`/api/companies/${company.id}/unlock-file-vault`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        }).catch(error => {
-          console.error('[KYBSuccessModal] Server sync error:', error);
-        });
-      }
-    } catch (error) {
-      console.error('[KYBSuccessModal] Error unlocking file-vault tab:', error);
-    }
-  }, [open, queryClient]);
+  // No longer handling client-side unlocking here - we rely entirely on the server
+  // to unlock the file-vault tab and send WebSocket notifications
+  // This component is only responsible for displaying the success message
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,7 +46,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
               <div>
                 <p className="font-medium text-gray-900">File Vault Tab Unlocked</p>
                 <p className="text-gray-600">
-                  <span className="font-medium text-blue-600">A new tab is now available in your navigation menu!</span> The File Vault stores all your uploaded and generated documents in one secure location.
+                  <span className="font-medium text-blue-600">File Vault tab is now available in your navigation menu!</span> The File Vault stores all your uploaded and generated documents in one secure location.
                 </p>
               </div>
             </div>
