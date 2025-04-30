@@ -26,8 +26,8 @@ const logger = getLogger('SubmissionTracker', {
 type SubmissionEvent = {
   timestamp: string;
   event: string;
-  taskType?: string;
-  taskId?: number | string;
+  taskType?: string | null;
+  taskId?: number | string | null;
   details?: any;
   durationMs?: number;
 };
@@ -36,8 +36,8 @@ type SubmissionEvent = {
 let submissionEvents: SubmissionEvent[] = [];
 let startTime: number | null = null;
 let isTracking = false;
-let currentTaskId: number | string | undefined = undefined;
-let currentTaskType: string | undefined = undefined;
+let currentTaskId: number | string | null = null;
+let currentTaskType: string | null = null;
 
 export const submissionTracker = {
   /**
@@ -109,14 +109,15 @@ export const submissionTracker = {
    * 
    * @param success - Whether the submission was successful (optional)
    */
-  stopTracking: (success?: boolean) => {
+  stopTracking: (success?: boolean | null) => {
     if (!isTracking) {
       logger.warn('Attempted to stop tracking but tracking is not active');
       return;
     }
     
     // Log end event with success status if provided
-    const finalEvent = success !== undefined 
+    // Handle both undefined and null for success status
+    const finalEvent = success !== undefined && success !== null
       ? `End submission tracking (${success ? 'success' : 'failed'})`
       : 'End submission tracking';
       
@@ -142,8 +143,8 @@ export const submissionTracker = {
     // Reset state for future tracking
     isTracking = false;
     startTime = null;
-    currentTaskId = undefined;
-    currentTaskType = undefined;
+    currentTaskId = null;  // Use null instead of undefined for consistency
+    currentTaskType = null;  // Use null instead of undefined for consistency
     submissionEvents = [];
   },
   
