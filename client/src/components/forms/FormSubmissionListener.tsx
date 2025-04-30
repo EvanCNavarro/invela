@@ -1,126 +1,108 @@
 /**
- * Form Submission Listener
+ * Form Submission Listener Component
  * 
- * This component listens for form submission events from WebSocket
- * and displays appropriate feedback (success/error modals) to the user.
+ * This component listens for form submission events and triggers callbacks based on the event type.
+ * It's designed to be used within form components to handle real-time form submission status updates.
  */
 
-import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
-import { useFormSubmissionEvents } from '@/hooks/use-form-submission-events';
-import { formatSuccessActions } from '@/services/formSubmissionService';
-import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import { SubmissionErrorModal } from '@/components/modals/SubmissionErrorModal';
+import React, { useEffect } from 'react';
+import { useFormSubmissionEvents, FormSubmissionEvent } from '../../hooks/use-form-submission-events';
+import { useToast } from '@/hooks/use-toast';
 
-export interface FormSubmissionListenerProps {
+interface FormSubmissionListenerProps {
   taskId: number;
   formType: string;
-  onSuccess?: () => void;
-  navigateTo?: string;
-  successMessage?: string;
-  errorMessage?: string;
+  onSuccess?: (event: FormSubmissionEvent) => void;
+  onError?: (event: FormSubmissionEvent) => void;
+  onInProgress?: (event: FormSubmissionEvent) => void;
+  showToasts?: boolean;
+  children?: React.ReactNode;
 }
 
 /**
- * Form Submission Listener Component
- * 
- * This component monitors WebSocket events for form submissions
- * and triggers the appropriate UI feedback.
+ * Component to listen for form submission events
  */
-export function FormSubmissionListener({
+const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   taskId,
   formType,
   onSuccess,
-  navigateTo,
-  successMessage = 'Form submitted successfully',
-  errorMessage = 'There was an error submitting the form'
-}: FormSubmissionListenerProps) {
-  const [submissionSuccessOpen, setSubmissionSuccessOpen] = useState(false);
-  const [submissionErrorOpen, setSubmissionErrorOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState(successMessage);
-  const [modalDetails, setModalDetails] = useState<string[]>([]);
-  const [errorDetails, setErrorDetails] = useState('');
+  onError,
+  onInProgress,
+  showToasts = false,
+  children,
+}) => {
+  const { toast } = useToast();
   
-  const { submissionEvent, isForTask, resetEvent } = useFormSubmissionEvents(taskId);
-  const [, navigate] = useLocation();
+  // Set up success handler with optional toast
+  const handleSuccess = (event: FormSubmissionEvent) => {
+    console.log(`[FormSubmissionListener] Success event for task ${taskId}:`, event);
+    
+    if (showToasts) {
+      toast({
+        title: 'Form Submitted Successfully',
+        description: `The ${formType} form has been submitted successfully.`,
+        variant: 'success',
+      });
+    }
+    
+    if (onSuccess) {
+      onSuccess(event);
+    }
+  };
   
-  // Process submission events
+  // Set up error handler with optional toast
+  const handleError = (event: FormSubmissionEvent) => {
+    console.error(`[FormSubmissionListener] Error event for task ${taskId}:`, event);
+    
+    if (showToasts) {
+      toast({
+        title: 'Form Submission Error',
+        description: event.error || 'An error occurred while submitting the form.',
+        variant: 'destructive',
+      });
+    }
+    
+    if (onError) {
+      onError(event);
+    }
+  };
+  
+  // Set up in-progress handler with optional toast
+  const handleInProgress = (event: FormSubmissionEvent) => {
+    console.log(`[FormSubmissionListener] In progress event for task ${taskId}:`, event);
+    
+    if (showToasts) {
+      toast({
+        title: 'Form Submission In Progress',
+        description: `The ${formType} form is being processed.`,
+        variant: 'info',
+      });
+    }
+    
+    if (onInProgress) {
+      onInProgress(event);
+    }
+  };
+  
+  // Use the form submission events hook
+  const { lastEvent } = useFormSubmissionEvents({
+    taskId,
+    formType,
+    onSuccess: handleSuccess,
+    onError: handleError,
+    onInProgress: handleInProgress,
+  });
+  
+  // Debug output for component lifecycle
   useEffect(() => {
-    if (!submissionEvent) return;
+    console.log(`[FormSubmissionListener] Started listening for events: task=${taskId}, formType=${formType}`);
     
-    // Check if this event is for our task
-    if (submissionEvent.taskId === taskId) {
-      console.log(`[FormSubmissionListener] Processing event for task ${taskId}`, submissionEvent);
-      
-      if (submissionEvent.status === 'submitted') {
-        // Format success actions
-        const actions = formatSuccessActions({
-          success: true,
-          taskId: submissionEvent.taskId,
-          formType: submissionEvent.formType,
-          status: submissionEvent.status,
-          fileId: submissionEvent.fileId,
-          fileName: submissionEvent.fileName,
-          unlockedTabs: submissionEvent.unlockedTabs,
-          unlockedTasks: submissionEvent.unlockedTasks
-        });
-        
-        // Set modal content
-        setModalTitle(`${formType} form submitted successfully`);
-        setModalDetails(actions);
-        
-        // Show success modal
-        setSubmissionSuccessOpen(true);
-        
-        // Call success callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else if (submissionEvent.status === 'error') {
-        // Set error details and show error modal
-        setErrorDetails(submissionEvent.error || 'Unknown error occurred');
-        setSubmissionErrorOpen(true);
-      }
-      
-      // Reset the event to avoid showing the modal multiple times
-      resetEvent();
-    }
-  }, [submissionEvent, taskId, formType, onSuccess, resetEvent]);
+    return () => {
+      console.log(`[FormSubmissionListener] Stopped listening for events: task=${taskId}, formType=${formType}`);
+    };
+  }, [taskId, formType]);
   
-  // Handle success modal close
-  const handleSuccessClose = () => {
-    setSubmissionSuccessOpen(false);
-    
-    // Navigate if a destination is provided
-    if (navigateTo) {
-      navigate(navigateTo);
-    }
-  };
-  
-  // Handle error modal close
-  const handleErrorClose = () => {
-    setSubmissionErrorOpen(false);
-  };
-  
-  return (
-    <>
-      {/* Success Modal */}
-      <SubmissionSuccessModal
-        open={submissionSuccessOpen}
-        onClose={handleSuccessClose}
-        title={modalTitle}
-        details={modalDetails}
-      />
-      
-      {/* Error Modal */}
-      <SubmissionErrorModal
-        open={submissionErrorOpen}
-        onClose={handleErrorClose}
-        title={errorMessage}
-        details={errorDetails}
-      />
-    </>
-  );
-}
+  return <>{children}</>;
+};
 
 export default FormSubmissionListener;

@@ -14,6 +14,7 @@ import { registerServices } from "./services/registerServices";
 import { registerStandardizedServices, useStandardizedServices } from "./services/register-standardized-services";
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
 import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
+import WebSocketTestPage from "@/pages/websocket-test";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -376,6 +377,17 @@ function Router() {
             <OnboardingWrapper>
               <Suspense fallback={<div>Loading WebSocket debugger...</div>}>
                 <WebSocketDebuggerPage />
+              </Suspense>
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        </Route>
+        
+        {/* WebSocket Form Submission Test Page */}
+        <Route path="/websocket-test">
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <Suspense fallback={<div>Loading WebSocket test page...</div>}>
+                <WebSocketTestPage />
               </Suspense>
             </OnboardingWrapper>
           </ProtectedLayout>

@@ -1,84 +1,63 @@
 /**
- * Form Submission Events Hook
+ * Hook for WebSocket-based form submission events
  * 
- * This hook provides access to form submission events from WebSocket.
- * It allows components to react to real-time form submission updates.
+ * This hook listens for form submission events via WebSocket and provides
+ * a way to react to form submission status updates.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useWebSocket } from './use-websocket';
+import type { WebSocketMessage } from '../providers/websocket-provider';
 
 export interface FormSubmissionEvent {
   taskId: number;
   formType: string;
-  status: string;
+  status: 'success' | 'error';
   companyId: number;
+  submissionDate?: string;
   unlockedTabs?: string[];
   unlockedTasks?: number[];
-  submissionDate?: string;
   fileName?: string;
   fileId?: number;
-  timestamp?: string;
   error?: string;
 }
 
-/**
- * Hook to access form submission events from WebSocket
- * 
- * @param taskId Optional task ID to filter events for
- * @returns Form submission event data
- */
-export function useFormSubmissionEvents(taskId?: number) {
-  const { socket, lastMessage } = useWebSocket();
-  const [submissionEvent, setSubmissionEvent] = useState<FormSubmissionEvent | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-
-  // Handle connection status
+export function useFormSubmissionEvents(
+  taskId: number | undefined,
+  formType: string | undefined,
+  onSuccess?: (event: FormSubmissionEvent) => void,
+  onError?: (event: FormSubmissionEvent) => void
+) {
+  const [lastEvent, setLastEvent] = useState<FormSubmissionEvent | null>(null);
+  const { connectionState, lastMessage } = useWebSocket();
+  
+  // Monitor WebSocket messages for form submission events
   useEffect(() => {
-    setIsConnected(socket?.readyState === WebSocket.OPEN);
-  }, [socket]);
-
-  // Process incoming WebSocket messages
-  useEffect(() => {
-    if (!lastMessage) return;
-
-    try {
-      // Check if this is a form_submitted event
-      if (lastMessage.type === 'form_submitted' && lastMessage.payload) {
-        const eventData = lastMessage.payload as FormSubmissionEvent;
-        
-        // If taskId is provided, only process events for that task
-        if (taskId !== undefined && eventData.taskId !== taskId) {
-          return;
-        }
-        
-        // Update state with submission event data
-        setSubmissionEvent(eventData);
-        
-        // Log the event
-        console.info(
-          `[FormSubmission] Received submission event for task ${eventData.taskId} (${eventData.formType})`,
-          eventData
-        );
-      }
-    } catch (error) {
-      console.error('[FormSubmission] Error processing WebSocket message:', error);
+    // Return early if no message or if it's not a form submission update
+    if (!lastMessage || lastMessage.type !== 'form_submission_update') {
+      return;
     }
-  }, [lastMessage, taskId]);
-
+    
+    const data = lastMessage.payload;
+    
+    // Check if this event is for our task/form
+    if (taskId && data.taskId === taskId && formType && data.formType === formType) {
+      console.log('[FormSubmission] Received event for current form:', data);
+      setLastEvent(data);
+      
+      if (data.status === 'success' && onSuccess) {
+        onSuccess(data);
+      }
+      
+      if (data.status === 'error' && onError) {
+        onError(data);
+      }
+    }
+  }, [lastMessage, taskId, formType, onSuccess, onError]);
+  
   return {
-    submissionEvent,
-    isConnected,
-    
-    // Add a helper function to check if the event matches a specific task
-    isForTask: (id: number) => submissionEvent?.taskId === id,
-    
-    // Add a helper to check for specific unlocked tabs
-    hasUnlockedTab: (tabName: string) => 
-      submissionEvent?.unlockedTabs?.includes(tabName) || false,
-    
-    // Reset the event state
-    resetEvent: () => setSubmissionEvent(null)
+    connected: connectionState === 'connected',
+    lastEvent,
   };
 }
 
