@@ -257,6 +257,56 @@ export function broadcastFieldUpdate(taskId: number, fieldId: number, data: any)
   });
 }
 
+/**
+ * Broadcast form submission status
+ * This specialized function is used by the unified form submission endpoint
+ * to notify clients about form submission events.
+ * 
+ * @param taskId Task ID
+ * @param formType Form type (kyb, ky3p, card, open_banking)
+ * @param status Status of the submission (success, error, in_progress)
+ * @param companyId Company ID
+ * @param data Additional data to include in the payload
+ */
+export function broadcastFormSubmission(
+  taskId: number,
+  formType: string,
+  status: 'success' | 'error' | 'in_progress',
+  companyId: number,
+  data: {
+    submissionDate?: string;
+    unlockedTabs?: string[];
+    unlockedTasks?: number[];
+    fileName?: string;
+    fileId?: number;
+    error?: string;
+  } = {}
+) {
+  // Create standardized payload for form submission events
+  const payload = {
+    taskId,
+    formType,
+    status,
+    companyId,
+    submissionDate: data.submissionDate || new Date().toISOString(),
+    ...data
+  };
+  
+  // Broadcast using the form_submitted event type
+  broadcast('form_submitted', payload);
+  
+  console.log(`[WebSocket] Form submission broadcast: taskId=${taskId}, formType=${formType}, status=${status}`);
+  
+  // For successful submissions, also broadcast a task update to ensure UI reflects new status
+  if (status === 'success') {
+    broadcastTaskUpdate({
+      id: taskId,
+      status: 'submitted',
+      progress: 100
+    });
+  }
+}
+
 export default {
   setupWebSocket,
   getWebSocketServer,
@@ -266,5 +316,6 @@ export default {
   broadcastTaskUpdate,
   broadcastCompanyTabsUpdate,
   broadcastDocumentCountUpdate,
-  broadcastFieldUpdate
+  broadcastFieldUpdate,
+  broadcastFormSubmission
 };
