@@ -399,19 +399,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                   // Use the submitForm API function to submit the form
                   const result = await submitForm(task.id, 'kyb', data, companyId);
                   
-                  // Dispatch a custom event to notify the form submission listener
-                  const event = new CustomEvent('form-submission-success', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'kyb',
-                      result,
-                      fileId: result.fileId,
-                      actions: result.completedActions || []
-                    }
-                  });
-                  document.dispatchEvent(event);
+                  // We no longer immediately show the success modal here.
+                  // Instead, we now wait for the WebSocket event in FormSubmissionListener
+                  // which will call handleFormSubmissionSuccess when the server finishes processing
+                  // This ensures tabs are properly unlocked before showing the modal
                   
-                  console.log('[TaskPage] KYB form submission completed successfully', result);
+                  console.log('[TaskPage] KYB form submission API call completed successfully', result);
+                  console.log('[TaskPage] Waiting for WebSocket confirmation of tab unlocking before showing success modal');
                 } catch (error) {
                   console.error('[TaskPage] KYB form submission error:', error);
                   
