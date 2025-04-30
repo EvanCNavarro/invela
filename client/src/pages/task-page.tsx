@@ -174,15 +174,22 @@ export default function TaskPage({ params }: TaskPageProps) {
   const processTaskData = useCallback((taskData: any) => {
     let type: TaskContentType = 'unknown';
     
-    if (taskData.task_type === 'kyb_assessment') {
+    if (taskData.task_type === 'kyb_assessment' || taskData.task_type === 'kyb' || taskData.task_type === 'company_kyb') {
       type = 'kyb';
-    } else if (taskData.task_type === 'card_assessment') {
+    } else if (taskData.task_type === 'card_assessment' || taskData.task_type === 'card') {
       type = 'card';
-    } else if (taskData.task_type === 'ky3p_assessment' || taskData.task_type === 'security_assessment') {
+    } else if (taskData.task_type === 'ky3p_assessment' || taskData.task_type === 'security_assessment' || 
+               taskData.task_type === 'ky3p' || taskData.task_type === 'security') {
       type = 'ky3p';
-    } else if (taskData.task_type === 'open_banking_assessment') {
+    } else if (taskData.task_type === 'open_banking_assessment' || taskData.task_type === 'open_banking') {
       type = 'open_banking';
     }
+    
+    console.log(`[TaskPage] Processed task type: ${taskData.task_type} → ${type}`, {
+      originalType: taskData.task_type,
+      mappedType: type,
+      timestamp: new Date().toISOString()
+    });
     
     setTaskContentType(type);
     
@@ -401,7 +408,38 @@ export default function TaskPage({ params }: TaskPageProps) {
         />
         
         <DashboardLayout>
-          <div>KY3P Form Content</div>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+                {isSubmitted && fileId && (
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
+                )}
+              </div>
+              
+              <h1 className="text-2xl font-bold tracking-tight">
+                KY3P Security Assessment: {displayName}
+              </h1>
+            </div>
+            
+            <UniversalForm
+              taskId={task.id}
+              formType="ky3p"
+              companyId={task.company_id}
+              companyName={displayName}
+              isReadOnly={isSubmitted}
+              onProgressUpdate={updateTaskProgress}
+            />
+          </PageTemplate>
         </DashboardLayout>
       </>
     );
