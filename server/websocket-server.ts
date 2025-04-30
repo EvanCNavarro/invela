@@ -59,6 +59,45 @@ export class WebSocketService {
   }
 
   /**
+   * Broadcast form submission event to all connected clients
+   * 
+   * @param submissionData The form submission data
+   */
+  static broadcastFormSubmission(submissionData: any): void {
+    if (!wsServer) {
+      logger.warn('WebSocket server not initialized, cannot broadcast form submission');
+      return;
+    }
+
+    const message = JSON.stringify({
+      type: 'form_submitted',
+      payload: {
+        ...submissionData,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    let clientCount = 0;
+    
+    wsServer.clients.forEach((client) => {
+      if (client.readyState === 1) { // WebSocket.OPEN
+        client.send(message);
+        clientCount++;
+      }
+    });
+
+    // Log only key properties to avoid large logs
+    const logData = {
+      type: 'form_submitted',
+      dataKeys: Object.keys(submissionData),
+      timestamp: new Date().toISOString(),
+      clientCount
+    };
+    
+    logger.info('Broadcast "form_submitted" sent to ' + clientCount + ' clients', logData);
+  }
+
+  /**
    * Broadcast company tabs update to all connected clients
    * 
    * @param companyId Company ID to update
@@ -145,4 +184,13 @@ export function broadcastTaskUpdate(taskData: any): void {
 
 export function broadcastCompanyTabs(companyId: number): void {
   WebSocketService.broadcastCompanyTabs(companyId);
+}
+
+/**
+ * Broadcast a form submission event to all connected clients
+ * 
+ * @param submissionData The form submission data to broadcast
+ */
+export function broadcastFormSubmission(submissionData: any): void {
+  WebSocketService.broadcastFormSubmission(submissionData);
 }
