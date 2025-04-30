@@ -33,7 +33,7 @@ export async function submitForm(
   error?: string;
   timestamp?: string;
 }> {
-  const url = `/api/submissions/submit/${formType}/${taskId}`;
+  const url = `/api/forms/submit/${formType}/${taskId}`;
   
   const payload = {
     formData,
