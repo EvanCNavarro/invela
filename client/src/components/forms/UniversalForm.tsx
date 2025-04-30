@@ -115,6 +115,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   const [forceRerender, setForceRerender] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Use our new form data manager hook to handle form data
   const {
@@ -1115,11 +1116,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             
                             <Button 
                               type="button" 
-                              disabled={!agreementChecked}
-                              className={`flex items-center gap-1 ${agreementChecked ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                              disabled={!agreementChecked || isSubmitting}
+                              className={`flex items-center gap-1 ${
+                                !agreementChecked || isSubmitting 
+                                  ? 'bg-gray-400 cursor-not-allowed' 
+                                  : 'bg-blue-600 hover:bg-blue-700'
+                              }`}
                               onClick={() => {
                                 // Add structured logging for tracking form submission
                                 logger.info(`Universal Form Submit button clicked for task type: ${taskType}, task ID: ${taskId}`);
+                                
+                                // Set submission state to show loading
+                                setIsSubmitting(true);
                                 
                                 // Set the submission flag explicitly to ensure proper status tracking
                                 form.setValue('explicitSubmission', true);
@@ -1138,7 +1146,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                     const formData = form.getValues();
                                     
                                     // Add explicit submission flag to ensure server knows this is a final submission
-                                    onSubmit({...formData, explicitSubmission: true});
+                                    onSubmit({...formData, explicitSubmission: true})
+                                      .catch(error => {
+                                        logger.error(`Error in ${taskType} form submission:`, error);
+                                        toast({
+                                          title: 'Submission Error',
+                                          description: 'An error occurred during submission. Please try again later.',
+                                          variant: 'destructive',
+                                        });
+                                        // Reset submission state on error
+                                        setIsSubmitting(false);
+                                      });
                                   } else {
                                     logger.error(`No onSubmit handler provided for ${taskType} form submission`);
                                     toast({
@@ -1146,6 +1164,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                       description: 'No submission handler available. Please try again later.',
                                       variant: 'destructive',
                                     });
+                                    // Reset submission state on error
+                                    setIsSubmitting(false);
                                   }
                                 } catch (error) {
                                   logger.error(`Error in ${taskType} form submission:`, error);
@@ -1154,11 +1174,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                     description: 'An error occurred during submission. Please try again later.',
                                     variant: 'destructive',
                                   });
+                                  // Reset submission state on error
+                                  setIsSubmitting(false);
                                 }
                               }}
                             >
-                              Submit
-                              <Check className="h-4 w-4 ml-1" />
+                              {isSubmitting ? (
+                                <>
+                                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Submitting...
+                                </>
+                              ) : (
+                                <>
+                                  Submit
+                                  <Check className="h-4 w-4 ml-1" />
+                                </>
+                              )}
                             </Button>
                           </div>
                         </div>
