@@ -208,11 +208,32 @@ export function createFormSubmissionRouter(): Router {
                   
                   try {
                     if (company.available_tabs) {
-                      // Parse JSON string into array
-                      currentTabs = JSON.parse(company.available_tabs);
+                      // Handle available_tabs, which can be a PostgreSQL text array or JSON string
+                      if (Array.isArray(company.available_tabs)) {
+                        // It's already an array, use it directly
+                        currentTabs = company.available_tabs;
+                        logger.info(`Using existing array tabs for company ${companyId}:`, {tabs: currentTabs});
+                      } else if (typeof company.available_tabs === 'string') {
+                        try {
+                          // Try to parse as JSON string
+                          currentTabs = JSON.parse(company.available_tabs);
+                          logger.info(`Parsed JSON string tabs for company ${companyId}:`, {tabs: currentTabs});
+                        } catch (innerParseError) {
+                          logger.warn(`Error parsing JSON available_tabs for company ${companyId}, trying PostgreSQL array format`);
+                          
+                          // If JSON parsing fails, it might be a PostgreSQL array string format like "{tab1,tab2}"
+                          // Remove the curly braces and split by comma
+                          const pgArrayStr = company.available_tabs.trim();
+                          if (pgArrayStr.startsWith('{') && pgArrayStr.endsWith('}')) {
+                            const innerStr = pgArrayStr.substring(1, pgArrayStr.length - 1);
+                            currentTabs = innerStr.split(',').map(s => s.trim());
+                            logger.info(`Parsed PostgreSQL array tabs for company ${companyId}:`, {tabs: currentTabs});
+                          }
+                        }
+                      }
                     }
                   } catch (parseError) {
-                    logger.warn(`Error parsing available_tabs for company ${companyId}:`, parseError);
+                    logger.warn(`Error handling available_tabs for company ${companyId}:`, {error: parseError instanceof Error ? parseError.message : 'Unknown error'});
                     // Continue with empty array if parsing fails
                     currentTabs = [];
                   }
@@ -222,9 +243,10 @@ export function createFormSubmissionRouter(): Router {
                   logger.info(`Updating company ${companyId} tabs from [${currentTabs.join(', ')}] to [${updatedTabs.join(', ')}]`);
                   
                   // Update the company record with the new tabs
+                  // Store as a native PostgreSQL array instead of JSON string
                   await db.update(companies)
                     .set({ 
-                      available_tabs: JSON.stringify(updatedTabs),
+                      available_tabs: updatedTabs, // Store directly as array
                       updated_at: new Date()
                     })
                     .where(eq(companies.id, companyId));
