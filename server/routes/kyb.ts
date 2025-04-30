@@ -1914,6 +1914,86 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
+    // STEP 0: IMMEDIATELY get the task and company info and unlock the file vault
+    // This ensures the tab is visible at the earliest possible moment
+    try {
+      const taskId = parseInt(req.params.taskId);
+      
+      if (isNaN(taskId)) {
+        throw new Error('Invalid task ID');
+      }
+      
+      // Get the task to retrieve the company ID
+      const [task] = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+      
+      const companyId = task.company_id;
+      
+      if (!companyId) {
+        throw new Error(`No company ID found for task ${taskId}`);
+      }
+      
+      console.log(`[KYB API] 🔑 FAST PATH: Immediately unlocking File Vault for company ${companyId}`);
+      
+      // 1. DIRECT DATABASE UPDATE FIRST for maximum speed
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+      
+      if (company) {
+        // Get current tabs
+        const currentTabs = Array.isArray(company.available_tabs) ? company.available_tabs : ['task-center'];
+        
+        // Only add file-vault if not already present
+        if (!currentTabs.includes('file-vault')) {
+          const updatedTabs = [...currentTabs, 'file-vault'];
+          
+          // Direct database update
+          await db.update(companies)
+            .set({
+              available_tabs: updatedTabs,
+              updated_at: new Date()
+            })
+            .where(eq(companies.id, companyId));
+          
+          console.log(`[KYB API] ✅ FAST PATH: File vault tab unlocked via direct database update`);
+          
+          // INSTANT BROADCAST: Immediately broadcast the tab update
+          try {
+            const { broadcastMessage, broadcastCompanyTabsUpdate } = require('../services/websocket');
+            
+            // First use direct tab update
+            broadcastCompanyTabsUpdate(companyId, updatedTabs);
+            
+            // Then use the more comprehensive message with cache invalidation
+            broadcastMessage('company_tabs_updated', {
+              companyId,
+              availableTabs: updatedTabs,
+              cache_invalidation: true,
+              timestamp: new Date().toISOString(),
+              source: 'kyb_submit_fast_path'
+            });
+            
+            console.log(`[KYB API] 📣 FAST PATH: Sent immediate WebSocket updates`);
+          } catch (wsError) {
+            console.error(`[KYB API] Failed to send WebSocket messages in fast path:`, wsError);
+          }
+        } else {
+          console.log(`[KYB API] FAST PATH: File vault tab already unlocked for company ${companyId}`);
+        }
+      } else {
+        console.error(`[KYB API] FAST PATH: Company ${companyId} not found`);
+      }
+    } catch (fastPathError) {
+      console.error(`[KYB API] Error in fast path file vault unlocking:`, fastPathError);
+      // Continue with normal processing - this is just an optimization
+    }
+    
     // Check if user is authenticated
     if (!req.isAuthenticated() || !req.user) {
       console.error('[KYB API Debug] Unauthorized access attempt', {
@@ -2106,134 +2186,8 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       kybTaskId: taskId
     });
     
-    // CRITICAL FIX: Explicitly force unlocking the file vault for this company
-    // NOTE: This is an enhanced implementation to ensure file vault tab is 100% reliably unlocked
-    // using multiple fallback mechanisms and direct database updates if needed
-    try {
-      // No need to require CompanyTabsService again, it's already imported at the top
-      console.log(`[KYB API] ⚡ CRITICAL: Unlocking file vault for company ${task.company_id} after KYB submission`);
-      
-      // 1. DIRECT DATABASE UPDATE: First directly update the company record to ensure tab is in available_tabs
-      console.log(`[KYB API] Performing direct database update for company ${task.company_id}`);
-      
-      try {
-        // First get current company record to see what tabs it already has
-        const [currentCompany] = await db.select()
-          .from(companies)
-          .where(eq(companies.id, task.company_id));
-          
-        if (currentCompany) {
-          console.log(`[KYB API] Retrieved company ${task.company_id} - Current tabs:`, currentCompany.available_tabs);
-          
-          // Only proceed if file-vault is not already in the tabs
-          const currentTabs = Array.isArray(currentCompany.available_tabs) ? currentCompany.available_tabs : ['task-center'];
-          
-          if (!currentTabs.includes('file-vault')) {
-            // Create updated tabs array with file-vault added
-            const updatedTabs = [...currentTabs, 'file-vault'];
-            
-            console.log(`[KYB API] Updating company ${task.company_id} tabs from [${currentTabs.join(', ')}] to [${updatedTabs.join(', ')}]`);
-            
-            // Perform direct update
-            const [updatedCompany] = await db.update(companies)
-              .set({ 
-                available_tabs: updatedTabs,
-                updated_at: new Date()
-              })
-              .where(eq(companies.id, task.company_id))
-              .returning();
-              
-            if (updatedCompany) {
-              console.log(`[KYB API] ✅ Direct database update successful - New tabs:`, updatedCompany.available_tabs);
-            } else {
-              console.error(`[KYB API] ❌ Direct database update failed - No record returned`);
-            }
-          } else {
-            console.log(`[KYB API] File vault tab already in available_tabs for company ${task.company_id} - No update needed`);
-          }
-        } else {
-          console.error(`[KYB API] ❌ Company ${task.company_id} not found in database`);
-        }
-      } catch (directUpdateError) {
-        console.error(`[KYB API] Error during direct database update:`, directUpdateError);
-      }
-      
-      // 2. STANDARD SERVICE CALL: Use the CompanyTabsService as normal (which has its own error handling)
-      console.log(`[KYB API] Calling CompanyTabsService.unlockFileVault for company ${task.company_id}`);
-      const fileVaultResult = await CompanyTabsService.unlockFileVault(task.company_id);
-      
-      if (fileVaultResult) {
-        console.log(`[KYB API] ✅ CompanyTabsService successfully unlocked file vault for company ${task.company_id}`, {
-          tabs: fileVaultResult.available_tabs,
-          companyName: fileVaultResult.name,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.error(`[KYB API] ❌ CompanyTabsService failed to unlock file vault for company ${task.company_id}`);
-      }
-      
-      // 3. WEBSOCKET BROADCASTING: Send multiple broadcasts to ensure clients receive the update
-      console.log(`[KYB API] Broadcasting WebSocket events for company ${task.company_id}`);
-      
-      try {
-        // Get the final state of the company to ensure we're broadcasting the correct tabs
-        const [finalCompany] = await db.select()
-          .from(companies)
-          .where(eq(companies.id, task.company_id));
-          
-        if (finalCompany) {
-          const finalTabs = finalCompany.available_tabs || ['task-center'];
-          console.log(`[KYB API] Final company tabs for broadcasting:`, finalTabs);
-          
-          // Import all broadcast functions for redundancy
-          const { broadcastMessage, broadcastCompanyTabsUpdate } = require('../services/websocket');
-          
-          // Send company_tabs_update - original format
-          broadcastCompanyTabsUpdate(task.company_id, finalTabs);
-          
-          // Send company_tabs_updated - newer format with cache invalidation
-          broadcastMessage('company_tabs_updated', {
-            companyId: task.company_id,
-            availableTabs: finalTabs, 
-            cache_invalidation: true, // Critical flag to force client cache refresh
-            timestamp: new Date().toISOString(),
-            source: 'kyb_submit_endpoint_direct'
-          });
-          
-          // Schedule delayed broadcasts for reliability
-          [1000, 2000, 5000].forEach(delay => {
-            setTimeout(() => {
-              try {
-                broadcastMessage('company_tabs_updated', {
-                  companyId: task.company_id,
-                  availableTabs: finalTabs,
-                  cache_invalidation: true,
-                  timestamp: new Date().toISOString(),
-                  source: `kyb_submit_endpoint_delayed_${delay}ms`
-                });
-                console.log(`[KYB API] Sent delayed (${delay}ms) WebSocket broadcast for company ${task.company_id}`);
-              } catch (delayedError) {
-                console.error(`[KYB API] Error in delayed broadcast:`, delayedError);
-              }
-            }, delay);
-          });
-          
-          console.log(`[KYB API] 📣 Successfully broadcasted all WebSocket messages for company ${task.company_id}`);
-        } else {
-          console.error(`[KYB API] ❌ Failed to retrieve final company state for broadcasting`);
-        }
-      } catch (broadcastError) {
-        console.error(`[KYB API] Failed to send WebSocket broadcasts:`, broadcastError);
-      }
-    } catch (fileVaultError) {
-      // Log error but don't fail the entire submission
-      console.error(`[KYB API] Error unlocking file vault:`, fileVaultError);
-      logger.error('Failed to unlock file vault', {
-        error: fileVaultError,
-        companyId: task.company_id,
-        taskId
-      });
-    }
+        // The file vault unlocking code has been moved to the top of the function
+    // for immediate unlocking as soon as the submission request is received
 
     // Broadcast submission status via WebSocket with enhanced logging
     console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (KYB submit endpoint)`);
