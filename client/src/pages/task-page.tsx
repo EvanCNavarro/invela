@@ -78,7 +78,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   }, [navigate]);
   
   // Update the task progress in state
-  const updateTaskProgress = useCallback((progress: number, taskData: any) => {
+  const updateTaskProgress = useCallback((progress: number) => {
     setTask((prevTask: any) => {
       if (!prevTask) return null;
       return {
@@ -86,6 +86,8 @@ export default function TaskPage({ params }: TaskPageProps) {
         progress
       };
     });
+    
+    console.log(`[TaskPage] Form progress updated: ${progress}%`);
   }, []);
   
   // Handle file download
@@ -348,7 +350,36 @@ export default function TaskPage({ params }: TaskPageProps) {
         />
         
         <DashboardLayout>
-          <div>KYB Form Content</div>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+                {isSubmitted && fileId && (
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
+                )}
+              </div>
+              
+              <h1 className="text-2xl font-bold tracking-tight">
+                KYB Form: {displayName}
+              </h1>
+            </div>
+            
+            <UniversalForm
+              taskId={task.id}
+              taskType="kyb"
+              initialData={{}}
+              onProgress={updateTaskProgress}
+            />
+          </PageTemplate>
         </DashboardLayout>
       </>
     );
@@ -378,7 +409,36 @@ export default function TaskPage({ params }: TaskPageProps) {
         />
         
         <DashboardLayout>
-          <div>Card Form Content</div>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+                {isSubmitted && fileId && (
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
+                )}
+              </div>
+              
+              <h1 className="text-2xl font-bold tracking-tight">
+                Card Industry Questionnaire: {displayName}
+              </h1>
+            </div>
+            
+            <UniversalForm
+              taskId={task.id}
+              taskType="card"
+              initialData={{}}
+              onProgress={updateTaskProgress}
+            />
+          </PageTemplate>
         </DashboardLayout>
       </>
     );
@@ -433,11 +493,9 @@ export default function TaskPage({ params }: TaskPageProps) {
             
             <UniversalForm
               taskId={task.id}
-              formType="ky3p"
-              companyId={task.company_id}
-              companyName={displayName}
-              isReadOnly={isSubmitted}
-              onProgressUpdate={updateTaskProgress}
+              taskType="ky3p"
+              initialData={{}}
+              onProgress={updateTaskProgress}
             />
           </PageTemplate>
         </DashboardLayout>
@@ -469,7 +527,36 @@ export default function TaskPage({ params }: TaskPageProps) {
         />
         
         <DashboardLayout>
-          <div>Open Banking Form Content</div>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+                {isSubmitted && fileId && (
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
+                )}
+              </div>
+              
+              <h1 className="text-2xl font-bold tracking-tight">
+                Open Banking Survey: {displayName}
+              </h1>
+            </div>
+            
+            <UniversalForm
+              taskId={task.id}
+              taskType="open_banking"
+              initialData={{}}
+              onProgress={updateTaskProgress}
+            />
+          </PageTemplate>
         </DashboardLayout>
       </>
     );
