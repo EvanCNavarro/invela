@@ -16,6 +16,7 @@ import TaskStatusDebugger from "@/pages/debug/status-fixer";
 import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
 import WebSocketTestPage from "@/pages/websocket-test";
 import FormSubmissionTestPage from "@/pages/form-submission-test";
+import FormSubmissionWorkflowPage from "@/pages/form-submission-workflow";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -341,6 +342,15 @@ function Router() {
         {/* Form Submission Test Page - For Testing WebSocket Form Submission Events */}
         <Route path="/form-submission-test">
           <FormSubmissionTestPage />
+        </Route>
+        
+        {/* Form Submission Workflow Page - For Full Submission Workflow Demo */}
+        <Route path="/form-submission-workflow">
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <FormSubmissionWorkflowPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
         </Route>
         
         {/* Specialized task routes for form types */}

@@ -12,9 +12,7 @@ import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
 
-const logger = getLogger('FormSubmissionRoutes', { 
-  levels: { debug: true, info: true, warn: true, error: true } 
-});
+const logger = getLogger('FormSubmissionRoutes');
 
 /**
  * Create and return the router for form submission endpoints
@@ -138,7 +136,8 @@ export function createFormSubmissionRouter(): Router {
       }
       
     } catch (error) {
-      logger.error(`Error processing form submission for task ${taskId}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`Error processing form submission for task ${taskId}: ${errorMessage}`);
       
       // Broadcast error status via WebSocket
       broadcastFormSubmission(
@@ -172,13 +171,32 @@ async function forward(req: Request, res: Response, path: string): Promise<void>
     
     // Call the appropriate endpoint directly
     // In a real implementation, this would be handled by an HTTP client or middleware
-    // For now, we'll just use req.app to call the appropriate route handler
     req.url = path;
     req.originalUrl = path;
-    req.app.handle(req, res);
+    
+    // Use Express's next function to handle routing
+    // This is not ideal but works for our purpose
+    const nextHandler = (err?: any) => {
+      if (err) {
+        logger.error(`Error forwarding to ${path}:`, err);
+        res.status(500).json({
+          success: false,
+          message: 'Error processing form submission',
+          error: err instanceof Error ? err.message : 'Unknown error'
+        });
+      }
+    };
+    
+    // Find and call the relevant handler
+    const expressApp = req.app as any;
+    if (expressApp._router && typeof expressApp._router.handle === 'function') {
+      expressApp._router.handle(req, res, nextHandler);
+    } else {
+      throw new Error('Cannot access Express router handle method');
+    }
     
   } catch (error) {
-    logger.error(`Error forwarding request to ${path}:`, error);
+    logger.error(`Error setting up request forwarding to ${path}`);
     throw error;
   }
 }
