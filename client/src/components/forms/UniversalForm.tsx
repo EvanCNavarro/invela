@@ -1155,6 +1155,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 // Set the submission flag explicitly to ensure proper status tracking
                                 form.setValue('explicitSubmission', true);
                                 
+                                // Save submission timestamp
+                                form.setValue('submissionTimestamp', new Date().toISOString());
+                                
                                 // Show immediate feedback to the user
                                 toast({
                                   title: 'Processing Submission',
@@ -1162,37 +1165,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   variant: 'default',
                                 });
                                 
-                                // Call the parent handler with proper error handling
                                 try {
-                                  if (onSubmit) {
-                                    logger.info(`Calling parent component onSubmit handler for ${taskType} form`);
-                                    const formData = form.getValues();
-                                    
-                                    // Add explicit submission flag to ensure server knows this is a final submission
-                                    try {
-                                      onSubmit({...formData, explicitSubmission: true});
-                                    } catch (error) {
-                                      logger.error(`Error in ${taskType} form submission:`, error);
-                                      toast({
-                                        title: 'Submission Error',
-                                        description: 'An error occurred during submission. Please try again later.',
-                                        variant: 'destructive',
-                                      });
-                                      // Reset submission state on error
-                                      setIsSubmitting(false);
-                                    }
+                                  // Correctly trigger the form's submit event to use form.handleSubmit(handleSubmit)
+                                  logger.info(`Triggering form submit for ${taskType} form with task ID: ${taskId}`);
+                                  
+                                  // Find the form element and submit it to trigger the form.handleSubmit flow
+                                  const formElement = document.querySelector('form');
+                                  if (formElement) {
+                                    formElement.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                                   } else {
-                                    logger.error(`No onSubmit handler provided for ${taskType} form submission`);
-                                    toast({
-                                      title: 'Submission Error',
-                                      description: 'No submission handler available. Please try again later.',
-                                      variant: 'destructive',
-                                    });
-                                    // Reset submission state on error
-                                    setIsSubmitting(false);
+                                    throw new Error('Form element not found in DOM');
                                   }
                                 } catch (error) {
-                                  logger.error(`Error in ${taskType} form submission:`, error);
+                                  logger.error(`Error triggering form submission for ${taskType}:`, error);
                                   toast({
                                     title: 'Submission Error',
                                     description: 'An error occurred during submission. Please try again later.',
