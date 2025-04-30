@@ -179,6 +179,11 @@ export function createFormSubmissionRouter(): Router {
               // KYB forms unlock ONLY file-vault tab - explicitly NOT dashboard
               unlockedTabs = ['file-vault'];
               logger.info('Unlocking tabs for KYB submission:', unlockedTabs);
+              // CRITICAL FIX: Ensure unlockedTabs only contains 'file-vault' for KYB
+              if (unlockedTabs.includes('dashboard')) {
+                logger.warn('Removing dashboard from unlockedTabs for KYB form - it should not be unlocked');
+                unlockedTabs = unlockedTabs.filter(tab => tab !== 'dashboard');
+              }
             } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
               // KY3P forms don't unlock any tabs
               unlockedTabs = [];
@@ -376,7 +381,11 @@ export function createFormSubmissionRouter(): Router {
               formType,
               status: 'submitted',
               fileId: fileResult.fileId,
-              fileName: fileResult.fileName
+              fileName: fileResult.fileName,
+              // CRITICAL FIX: Include unlockedTabs in the API response
+              unlockedTabs,
+              // CRITICAL FIX: Include submissionDate in the API response
+              submissionDate: new Date().toISOString()
             });
           } catch (fileError) {
             logger.error(`Error creating file for ${formType} submission:`, fileError);
