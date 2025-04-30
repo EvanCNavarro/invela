@@ -76,14 +76,45 @@ export class ComponentFactory {
     
     console.log(`[ComponentFactory] Looking up form service for task type: ${taskType}`, {
       found: !!service,
-      serviceType: service ? service.constructor.name : 'null',
+      serviceType: service ? (typeof service === 'function' ? 'factory function' : service.constructor.name) : 'null',
       timestamp: new Date().toISOString()
     });
+    
+    // If the registered service is a factory function, invoke it with default values
+    if (service && typeof service === 'function') {
+      console.log(`[ComponentFactory] Service for ${taskType} is a factory function, creating instance`);
+      try {
+        // Call the factory with default values
+        const serviceInstance = service(0, 0);
+        return serviceInstance;
+      } catch (error) {
+        console.error(`[ComponentFactory] Error creating service instance from factory`, error);
+        return null;
+      }
+    }
     
     // If service not found, log all available services for debugging
     if (!service) {
       const availableServices = Object.keys(this.formServices);
       console.warn(`[ComponentFactory] No service found for task type: ${taskType}. Available services: [${availableServices.join(', ')}]`);
+      
+      // Try fallbacks based on common naming patterns
+      if (taskType === 'ky3p') {
+        const fallbacks = ['security', 'security_assessment', 'sp_ky3p_assessment'];
+        for (const fallback of fallbacks) {
+          const fallbackService = this.formServices[fallback];
+          if (fallbackService) {
+            console.log(`[ComponentFactory] Found fallback service for '${taskType}' using '${fallback}'`);
+            return typeof fallbackService === 'function' ? fallbackService(0, 0) : fallbackService;
+          }
+        }
+      } else if (taskType === 'open_banking') {
+        const fallbackService = this.formServices['open_banking_survey'];
+        if (fallbackService) {
+          console.log(`[ComponentFactory] Found fallback service for '${taskType}' using 'open_banking_survey'`);
+          return typeof fallbackService === 'function' ? fallbackService(0, 0) : fallbackService;
+        }
+      }
     }
     
     return service;
