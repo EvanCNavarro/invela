@@ -61,7 +61,7 @@ export async function getFormSubmissionStatus(
   message: string;
   submissionDate?: string;
 }> {
-  const url = `/api/submissions/status/${formType}/${taskId}`;
+  const url = `/api/forms/status/${formType}/${taskId}`;
   
   // apiRequest already handles error checking and JSON parsing
   return await apiRequest(url);
