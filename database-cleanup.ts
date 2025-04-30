@@ -155,7 +155,8 @@ async function cleanupDatabase() {
     
     if (archiveTableExists.rows[0]?.exists) {
       console.log('Dropping kyb_fields_archive table...');
-      await db.execute(sql`DROP TABLE kyb_fields_archive`);
+      // Use direct SQL for DDL statement with CASCADE
+      await db.execute(sql`DROP TABLE IF EXISTS kyb_fields_archive CASCADE`);
     } else {
       console.log('kyb_fields_archive table does not exist.');
     }
@@ -176,7 +177,17 @@ async function cleanupDatabase() {
       
       if (tableExists.rows[0]?.exists) {
         console.log(`Dropping ${table} table...`);
-        await db.execute(sql`DROP TABLE ${table}`);
+        // Use a direct string for table name with IF EXISTS and CASCADE to prevent errors with dependencies
+        // This is safe since we're using a fixed list of table names from our own code
+        if (table === 'card_fields') {
+          await db.execute(sql`DROP TABLE IF EXISTS card_fields CASCADE`);
+        } else if (table === 'card_responses') {
+          await db.execute(sql`DROP TABLE IF EXISTS card_responses CASCADE`);
+        } else if (table === 'security_fields') {
+          await db.execute(sql`DROP TABLE IF EXISTS security_fields CASCADE`);
+        } else if (table === 'security_responses') {
+          await db.execute(sql`DROP TABLE IF EXISTS security_responses CASCADE`);
+        }
       } else {
         console.log(`${table} table does not exist.`);
       }
