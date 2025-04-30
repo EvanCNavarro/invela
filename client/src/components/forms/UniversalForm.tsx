@@ -131,6 +131,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // State for WebSocket-based form submission
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
+  
   // Query for task data
   const { data: task } = useQuery<Task>({
     queryKey: [`/api/tasks/${taskId}`],
@@ -852,15 +856,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
-  // State for WebSocket-based form submission listener
-  const [showWebSocketSuccessModal, setShowWebSocketSuccessModal] = useState(false);
-  const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
+  // Using the already defined showSuccessModal from above
   
   // Handle form submission events from WebSocket
   const handleSubmissionSuccess = (event: FormSubmissionEvent) => {
     logger.info(`Received WebSocket form submission success event for task ${taskId}`, event);
     setSubmissionResult(event);
-    setShowWebSocketSuccessModal(true);
+    setShowSuccessModal(true);
     
     // Update UI to reflect the submitted state
     setIsSubmitting(false);
@@ -919,8 +921,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       {/* Submission Success Modal - shown via WebSocket events */}
       {submissionResult && (
         <SubmissionSuccessModal
-          open={showWebSocketSuccessModal}
-          onClose={() => setShowWebSocketSuccessModal(false)}
+          open={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
           title="Form Submitted Successfully"
           message={`Your ${taskType} form has been successfully submitted.`}
           actions={submissionResult.actions || []}
