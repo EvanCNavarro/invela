@@ -5,5 +5,5 @@ export {
   broadcastDocumentCountUpdate, 
   broadcastFieldUpdate,
   getWebSocketServer,
-  setupWebSocket
+  initWebSocketServer as setupWebSocket
 } from './services/websocket';

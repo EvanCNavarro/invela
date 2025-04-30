@@ -1,7 +1,7 @@
 import { db } from "@db";
 import { companies, tasks, relationships } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
-import { broadcastTaskUpdate } from "./websocket";
+import { broadcastMessage } from "./websocket";
 import { eq } from "drizzle-orm";
 
 /**
@@ -279,21 +279,21 @@ async function createCompanyInternal(
     }
 
     // Broadcast task updates
-    broadcastTaskUpdate({
+    broadcastMessage('task_update', {
       id: kybTask.id,
       status: kybTask.status,
       progress: kybTask.progress,
       metadata: kybTask.metadata
     });
     
-    broadcastTaskUpdate({
+    broadcastMessage('task_update', {
       id: securityTask.id,
       status: securityTask.status,
       progress: securityTask.progress,
       metadata: securityTask.metadata
     });
 
-    broadcastTaskUpdate({
+    broadcastMessage('task_update', {
       id: cardTask.id,
       status: cardTask.status,
       progress: cardTask.progress,
