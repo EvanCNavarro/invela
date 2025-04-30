@@ -7,6 +7,7 @@ type WebSocketMessageType =
   | 'ping' 
   | 'pong'
   | 'task_test_notification'
+  | 'form_submitted'
   | string;
 
 interface WebSocketPayload {
@@ -25,18 +26,33 @@ interface TaskUpdatePayload {
   metadata?: Record<string, any>;
 }
 
+interface FormSubmissionPayload {
+  taskId: number;
+  formType: string;
+  status: string;
+  companyId: number;
+  details?: string;
+  fileId?: number;
+  fileName?: string;
+  unlockedTabs?: string[];
+  unlockedTasks?: number[];
+  timestamp: string;
+}
+
 interface WebSocketContextType {
   connected: boolean;
   lastMessage: WebSocketMessage | null;
   sendMessage: (type: string, payload?: any) => void;
   lastTaskUpdate: TaskUpdatePayload | null;
+  lastFormSubmission: FormSubmissionPayload | null;
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({
   connected: false,
   lastMessage: null,
   sendMessage: () => {},
-  lastTaskUpdate: null
+  lastTaskUpdate: null,
+  lastFormSubmission: null
 });
 
 export const useWebSocket = () => useContext(WebSocketContext);
@@ -49,6 +65,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [connected, setConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [lastTaskUpdate, setLastTaskUpdate] = useState<TaskUpdatePayload | null>(null);
+  const [lastFormSubmission, setLastFormSubmission] = useState<FormSubmissionPayload | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   
   useEffect(() => {
@@ -95,6 +112,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
                 // Show task update notification
                 console.log(`[WebSocket] Task update notification: Task #${message.payload.id} - Progress: ${message.payload.progress}%, Status: ${message.payload.status}`);
               }
+            } else if (message.type === 'form_submitted' && message.payload) {
+              // Handle form submission events
+              console.log(`[WebSocket] Form submission event received:`, message.payload);
+              setLastFormSubmission(message.payload as FormSubmissionPayload);
+              
+              // Show form submission notification
+              console.log(`[WebSocket] Form submission notification: Task #${message.payload.taskId} - Form type: ${message.payload.formType}, Status: ${message.payload.status}`);
             } else if (message.type === 'task_test_notification') {
               // Log test notifications
               console.log(`[WebSocket] Test notification received: ${message.payload?.message || 'Received test notification'}`);
@@ -167,7 +191,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   };
 
   return (
-    <WebSocketContext.Provider value={{ connected, lastMessage, sendMessage, lastTaskUpdate }}>
+    <WebSocketContext.Provider value={{ connected, lastMessage, sendMessage, lastTaskUpdate, lastFormSubmission }}>
       {children}
     </WebSocketContext.Provider>
   );
