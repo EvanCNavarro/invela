@@ -1,133 +1,127 @@
 /**
  * Form Submission Service
  * 
- * This service centralizes form submission logic across different form types
- * and handles the submission process, response formatting, and feedback.
+ * This service handles the submission of form data to the server
+ * and manages WebSocket-based feedback for form submissions.
  */
 
 import { apiRequest } from '@/lib/queryClient';
 
-export interface FormSubmissionOptions {
+interface FormSubmissionRequest {
   taskId: number;
   formType: string;
   formData: Record<string, any>;
   fileName?: string;
-  onSuccess?: (result: FormSubmissionResponse) => void;
-  onError?: (error: Error) => void;
 }
 
-export interface FormSubmissionResponse {
+interface FormSubmissionResponse {
   success: boolean;
-  taskId: number;
-  formType: string;
-  status: string;
+  error?: string;
+  taskId?: number;
+  formType?: string;
+  status?: string;
   details?: string;
   fileId?: number;
   fileName?: string;
   unlockedTabs?: string[];
   unlockedTasks?: number[];
-  error?: string;
 }
 
 /**
- * Format success actions to display in the success modal
- * 
- * @param result The form submission response
- * @returns Array of formatted action strings
+ * Format success actions for display in UI
  */
-export function formatSuccessActions(result: FormSubmissionResponse): string[] {
+export function formatSuccessActions(response: FormSubmissionResponse): string[] {
   const actions: string[] = [];
   
-  // Add basic success message
-  actions.push(`Form has been successfully submitted.`);
-  
-  // Add file generation message if applicable
-  if (result.fileId && result.fileName) {
-    actions.push(`Generated file "${result.fileName}" (ID: ${result.fileId}).`);
+  // Add details if available
+  if (response.details) {
+    actions.push(response.details);
   }
   
-  // Add unlocked tasks message if applicable
-  if (result.unlockedTasks && result.unlockedTasks.length > 0) {
-    actions.push(`Unlocked ${result.unlockedTasks.length} dependent task(s).`);
+  // Add file information
+  if (response.fileName) {
+    actions.push(`Generated file: ${response.fileName}`);
   }
   
-  // Add unlocked tabs message if applicable
-  if (result.unlockedTabs && result.unlockedTabs.length > 0) {
-    const readableTabs = result.unlockedTabs.map(tab => 
-      tab.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-    );
-    actions.push(`Unlocked new company features: ${readableTabs.join(', ')}.`);
+  // Add unlocked tabs information
+  if (response.unlockedTabs && response.unlockedTabs.length > 0) {
+    actions.push(`Unlocked tabs: ${response.unlockedTabs.join(', ')}`);
+  }
+  
+  // Add unlocked tasks information
+  if (response.unlockedTasks && response.unlockedTasks.length > 0) {
+    actions.push(`Unlocked tasks: ${response.unlockedTasks.length} task(s)`);
+  }
+  
+  // If no specific actions, add a generic success message
+  if (actions.length === 0) {
+    actions.push('Form submitted successfully.');
   }
   
   return actions;
 }
 
 /**
- * Centralized form submission service
+ * Form Submission Service
+ * 
+ * Handles the submission of forms to the server and provides feedback
+ * on the submission status.
  */
 export const formSubmissionService = {
   /**
-   * Submit a form of any type using the unified endpoint
+   * Submit a form to the server
    * 
-   * @param options Form submission options
-   * @returns Promise with submission result
+   * @param request Form submission request with taskId, formType, and formData
+   * @returns Promise resolving to submission result
    */
-  submitForm: async (options: FormSubmissionOptions): Promise<FormSubmissionResponse> => {
-    const { taskId, formType, formData, fileName, onSuccess, onError } = options;
-    
+  async submitForm(request: FormSubmissionRequest): Promise<FormSubmissionResponse> {
     try {
-      // Make API request using the unified submission endpoint
-      const response = await apiRequest(
-        `/api/form-submission`,
-        {
-          method: 'POST',
-          data: {
-            formType,
-            formData,
-            fileName
-          }
-        }
-      );
-      
-      // Validate response
-      if (!response || !response.success) {
-        throw new Error(response?.error || 'Form submission failed');
-      }
-      
-      // Format the response
-      const result: FormSubmissionResponse = {
-        success: true,
-        taskId,
-        formType,
-        status: response.status || 'submitted',
-        details: response.details,
-        fileId: response.fileId,
-        fileName: response.fileName,
-        unlockedTabs: response.unlockedTabs,
-        unlockedTasks: response.unlockedTasks
+      // Ensure taskId is included in the form data
+      const formData = {
+        ...request.formData,
+        taskId: request.taskId
       };
       
-      // Call success callback if provided
-      if (onSuccess) {
-        onSuccess(result);
-      }
+      // Prepare the request body according to API contract
+      const requestBody = {
+        formType: request.formType,
+        formData,
+        fileName: request.fileName
+      };
       
-      return result;
+      // Submit the form to the unified endpoint
+      const response = await apiRequest('/api/form-submission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      
+      // Check for success/failure
+      if (response.success) {
+        console.log(`[FormSubmissionService] Form submission successful:`, response);
+        return {
+          success: true,
+          taskId: response.taskId,
+          formType: response.formType,
+          status: response.status,
+          details: response.details,
+          fileId: response.fileId,
+          fileName: response.fileName,
+          unlockedTabs: response.unlockedTabs,
+          unlockedTasks: response.unlockedTasks
+        };
+      } else {
+        console.error(`[FormSubmissionService] Form submission failed:`, response.error);
+        return {
+          success: false,
+          error: response.error || 'Unknown error occurred'
+        };
+      }
     } catch (error) {
-      console.error('[FormSubmissionService] Error submitting form:', error);
-      
-      // Call error callback if provided
-      if (onError) {
-        onError(error as Error);
-      }
-      
-      // Return error response
+      console.error(`[FormSubmissionService] Error submitting form:`, error);
       return {
         success: false,
-        taskId,
-        formType,
-        status: 'error',
-        error: (error as Error).message
+        error: (error as Error).message || 'Network error occurred'
       };
     }
   }

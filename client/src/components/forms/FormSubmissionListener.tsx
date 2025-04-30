@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { useFormSubmissionEvents } from '@/hooks/use-form-submission-events';
 import { formatSuccessActions } from '@/services/formSubmissionService';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
@@ -42,7 +42,7 @@ export function FormSubmissionListener({
   const [errorDetails, setErrorDetails] = useState('');
   
   const { submissionEvent, isForTask, resetEvent } = useFormSubmissionEvents(taskId);
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   
   // Process submission events
   useEffect(() => {
