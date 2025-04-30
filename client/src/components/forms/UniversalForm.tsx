@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,6 +134,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // State for WebSocket-based form submission
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
+  const modalShownRef = useRef(false); // Ref to track if modal has been shown
   
   // Query for task data
   const { data: task } = useQuery<Task>({
@@ -861,18 +862,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Handle form submission events from WebSocket
   const handleSubmissionSuccess = (event: FormSubmissionEvent) => {
     logger.info(`Received WebSocket form submission success event for task ${taskId}`, event);
-    setSubmissionResult(event);
-    setShowSuccessModal(true);
     
-    // Update UI to reflect the submitted state
-    setIsSubmitting(false);
-    
-    // Show a toast notification
-    toast({
-      title: "Form Submitted Successfully",
-      description: `Your ${taskType} form has been successfully submitted.`,
-      variant: "success",
-    });
+    // Only show modal and toast if not already shown
+    if (!modalShownRef.current) {
+      setSubmissionResult(event);
+      setShowSuccessModal(true);
+      modalShownRef.current = true;
+      
+      // Update UI to reflect the submitted state
+      setIsSubmitting(false);
+      
+      // Show a toast notification
+      toast({
+        title: "Form Submitted Successfully",
+        description: `Your ${taskType} form has been successfully submitted.`,
+        variant: "success",
+      });
+    }
   };
   
   const handleSubmissionError = (event: FormSubmissionEvent) => {
@@ -922,7 +928,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       {submissionResult && (
         <SubmissionSuccessModal
           open={showSuccessModal}
-          onClose={() => setShowSuccessModal(false)}
+          onClose={() => {
+            setShowSuccessModal(false);
+            modalShownRef.current = false; // Reset the modal shown ref
+          }}
           title="Form Submitted Successfully"
           message={`Your ${taskType} form has been successfully submitted.`}
           actions={submissionResult.actions || []}
