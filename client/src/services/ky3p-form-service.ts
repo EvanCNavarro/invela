@@ -672,18 +672,29 @@ export class KY3PFormService extends EnhancedKybFormService {
         throw new Error(`Failed to load responses: ${response.status}`);
       }
       
-      const responses = await response.json();
+      const responseData = await response.json();
+      // Check if the response is the new format with responses array inside
+      const responses = responseData.responses || responseData;
+      
       logger.info('[KY3P Form Service] Received response data from server', { 
-        count: responses.length,
-        sampleFields: responses.slice(0, 3).map(r => ({
-          field_id: r.field_id,
-          field_key: r.field?.field_key,
-          response_value: r.response_value
-        }))
+        count: responses ? responses.length : 0,
+        format: responseData.responses ? 'new' : 'old',
+        sampleFields: responses && responses.length > 0 ? 
+          responses.slice(0, 3).map(r => ({
+            field_id: r.field_id,
+            field_key: r.field?.field_key,
+            response_value: r.response_value
+          })) : []
       });
       
       // Convert responses to a key-value map
       const responseMap: Record<string, any> = {};
+      
+      // Check if we even have responses to process
+      if (!responses || !Array.isArray(responses) || responses.length === 0) {
+        logger.info('[KY3P Form Service] No responses data found, empty form will be displayed');
+        return responseMap;
+      }
       
       // Process all responses
       for (const resp of responses) {
