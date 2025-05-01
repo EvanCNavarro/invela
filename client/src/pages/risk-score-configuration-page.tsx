@@ -254,8 +254,33 @@ export default function RiskScoreConfigurationPage() {
   
   // Mutation to save the risk score configuration
   const saveMutation = useMutation({
-    mutationFn: (configuration: RiskScoreConfiguration) => {
-      return apiRequest('POST', '/api/risk-score/configuration', configuration);
+    mutationFn: async (configuration: RiskScoreConfiguration) => {
+      // Log the save attempt
+      riskScoreLogger.logSaveAttempt({
+        dimensions: configuration.dimensions,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      try {
+        // First check authentication status
+        const authStatus = await checkAuthentication();
+        riskScoreLogger.log('save', 'Authentication status for configuration save:', authStatus);
+        
+        const response = await apiRequest('POST', '/api/risk-score/configuration', configuration);
+        
+        riskScoreLogger.logSaveSuccess({
+          dimensions: configuration.dimensions,
+          lastUpdated: new Date().toISOString()
+        }, response);
+        
+        return response;
+      } catch (error) {
+        riskScoreLogger.logSaveError({
+          dimensions: configuration.dimensions,
+          lastUpdated: new Date().toISOString()
+        }, error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -264,6 +289,7 @@ export default function RiskScoreConfigurationPage() {
         variant: 'success',
       });
       // Invalidate the query to refetch the configuration
+      riskScoreLogger.log('persist', 'Invalidating configuration query to refetch');
       queryClient.invalidateQueries({ queryKey: ['/api/risk-score/configuration'] });
     },
     onError: (error) => {
@@ -273,6 +299,9 @@ export default function RiskScoreConfigurationPage() {
         description: 'Please try again later.',
         variant: 'destructive',
       });
+      
+      // Try direct update as fallback
+      riskScoreLogger.log('persist', 'Will attempt direct update as fallback in future versions');
     }
   });
   
