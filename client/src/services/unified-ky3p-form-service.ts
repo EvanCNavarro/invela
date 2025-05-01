@@ -7,10 +7,11 @@
  */
 
 import { FormField, FormSection, FormServiceInterface, FormSubmitOptions } from './formService';
+import { apiRequest } from '@/lib/queryClient';
+import getLogger from '@/utils/logger';
 
 // Use Record<string, any> for our form data to avoid conflicts with DOM FormData
 type FormDataRecord = Record<string, any>;
-import getLogger from '@/utils/logger';
 
 const logger = getLogger('UnifiedKY3PFormService');
 
