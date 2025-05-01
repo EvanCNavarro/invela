@@ -38,6 +38,7 @@ import kybClearRouter from './routes/kyb-clear';
 import openBankingClearRouter from './routes/open-banking-clear';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
+import debugRoutesTs from './routes/debug-routes';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
@@ -326,6 +327,8 @@ export function registerRoutes(app: Express): Express {
   // Register enhanced debugging routes
   app.use('/api/debug', enhancedDebugRoutes);
   app.use('/api/debug', debugRouter);
+  // Register debug-routes.ts
+  app.use('/api/debug', debugRoutesTs);
   
   app.use(cardRouter);
   app.use(securityRouter);
