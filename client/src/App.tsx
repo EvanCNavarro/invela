@@ -457,19 +457,17 @@ export default function App() {
     
     // Properly initialize services with explicit context to avoid deprecated warnings
     try {
-      // Register services in the correct order to ensure our enhanced services
-      // are used as the default
+      // CRITICAL BUGFIX: Only use one service registration approach to prevent 
+      // duplicate services and excessive API calls
+      console.log('[App] Using only standardized form services');
       
-      // 1. Register standard services first
-      console.log('[App] Registering standard form services');
-      registerServices();
-      
-      // 2. Register our standardized services 
+      // We're explicitly choosing the standardized services and skipping the older registerServices()
+      // function completely to prevent duplicate service registration
       console.log('[App] Registering standardized form services');
       registerStandardizedServices();
       
-      // 3. Explicitly set our enhanced services as the default
-      console.log('[App] Using standardized form services by default');
+      // Ensure our standardized services are selected as the default
+      console.log('[App] Setting standardized form services as default');
       useStandardizedServices();
       
       // Initialize app-wide services with explicit context values
