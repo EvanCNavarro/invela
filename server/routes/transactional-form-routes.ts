@@ -10,8 +10,8 @@ import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { Logger } from '../utils/logger';
-import { processFormSubmission } from '../services/transactional-form-handler';
-import { broadcastTaskUpdate, broadcastFormSubmission } from '../services/websocket';
+import processFormSubmission from '../services/transactional-form-handler';
+import * as WebSocketService from '../services/websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
 const logger = new Logger('TransactionalFormRoutes');
@@ -75,13 +75,13 @@ export function createTransactionalFormRouter(): Router {
     });
     
     // Broadcast in-progress status via WebSocket
-    broadcastFormSubmission(
+    WebSocketService.broadcast('form_submission', {
       taskId,
       formType,
-      'in_progress',
+      status: 'in_progress',
       companyId,
-      { submissionTime: new Date().toISOString() }
-    );
+      payload: { submissionTime: new Date().toISOString() }
+    });
     
     try {
       // Process the submission transactionally
@@ -96,16 +96,16 @@ export function createTransactionalFormRouter(): Router {
       // Handle the result
       if (!result.success) {
         // Broadcast error status via WebSocket
-        broadcastFormSubmission(
+        WebSocketService.broadcast('form_submission', {
           taskId,
           formType,
-          'error',
+          status: 'error',
           companyId,
-          { 
+          payload: { 
             error: result.error || 'Form submission failed',
             timestamp: new Date().toISOString()
           }
-        );
+        });
         
         // Return error response
         return res.status(500).json({
@@ -116,12 +116,12 @@ export function createTransactionalFormRouter(): Router {
       }
       
       // Broadcast success status via WebSocket with file and tab info
-      broadcastFormSubmission(
+      WebSocketService.broadcast('form_submission', {
         taskId,
         formType,
-        'success',
+        status: 'success',
         companyId,
-        {
+        payload: {
           fileId: result.fileId,
           fileName: result.fileName,
           unlockedTabs: result.unlockedTabs,
@@ -142,7 +142,7 @@ export function createTransactionalFormRouter(): Router {
             }] : [])
           ]
         }
-      );
+      });
       
       // Return success response
       return res.json({
@@ -162,16 +162,16 @@ export function createTransactionalFormRouter(): Router {
       });
       
       // Broadcast error status via WebSocket
-      broadcastFormSubmission(
+      WebSocketService.broadcast('form_submission', {
         taskId,
         formType,
-        'error',
+        status: 'error',
         companyId,
-        { 
+        payload: { 
           error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         }
-      );
+      });
       
       // Return error response
       return res.status(500).json({
@@ -223,14 +223,16 @@ export function createTransactionalFormRouter(): Router {
       }
       
       // Broadcast task update with file information
-      broadcastTaskUpdate({
-        id: taskId,
-        status: 'submitted',
-        metadata: {
-          fileId: result.fileId,
-          fileName: result.fileName,
-          fileFixed: true,
-          fileFixedAt: new Date().toISOString()
+      WebSocketService.broadcast('task_update', {
+        task: {
+          id: taskId,
+          status: 'submitted',
+          metadata: {
+            fileId: result.fileId,
+            fileName: result.fileName,
+            fileFixed: true,
+            fileFixedAt: new Date().toISOString()
+          }
         }
       });
       

@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { broadcastFormSubmission } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 
 /**
  * Create and return the router for test form submission endpoints
@@ -52,14 +52,14 @@ export function createTestFormSubmissionRouter(): Router {
       };
     }
     
-    // Broadcast the event
-    broadcastFormSubmission(
+    // Broadcast the event using the standardized WebSocketService
+    WebSocketService.broadcast('form_submission', {
       taskId,
       formType,
       status,
       companyId,
       payload
-    );
+    });
     
     // Return success response
     res.json({
@@ -91,29 +91,29 @@ export function createTestFormSubmissionRouter(): Router {
     console.log(`[TestFormSubmission] Simulating complete form submission for task ${taskId} (${formType})`);
     
     // First send in-progress notification
-    broadcastFormSubmission(
+    WebSocketService.broadcast('form_submission', {
       taskId,
       formType,
-      'in_progress',
-      companyId || 0,
-      { submissionDate: new Date().toISOString() }
-    );
+      status: 'in_progress',
+      companyId: companyId || 0,
+      payload: { submissionDate: new Date().toISOString() }
+    });
     
     // Simulate processing delay
     setTimeout(() => {
       // Then send success notification
-      broadcastFormSubmission(
+      WebSocketService.broadcast('form_submission', {
         taskId,
         formType,
-        'success',
-        companyId || 0,
-        {
+        status: 'success',
+        companyId: companyId || 0,
+        payload: {
           submissionDate: new Date().toISOString(),
           unlockedTabs: ['file_vault', 'risk_assessment', 'dashboard'],
           fileName: `${formType.toUpperCase()}_Submission_${taskId}_${Date.now()}.csv`,
           fileId: Math.floor(Math.random() * 10000) + 1
         }
-      );
+      });
       
       console.log(`[TestFormSubmission] Completed simulated submission for task ${taskId}`);
     }, 2000);

@@ -25,8 +25,8 @@ import {
   companies 
 } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
-import { broadcastFileVaultUpdate } from '../services/websocket';
-import { fileCreationService } from '../services/fileCreation';
+import * as WebSocketService from '../services/websocket';
+import fileCreationService from '../services/fileCreation';
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('FixMissingFile');
@@ -209,10 +209,17 @@ async function generateMissingFileForTask(taskId: number) {
       })
       .where(eq(tasks.id, taskId));
     
-    // 6. Broadcast file vault update
-    broadcastFileVaultUpdate(companyId, fileResult.fileId, 'added');
+    // 6. Broadcast file vault update using standardized WebSocketService
+    WebSocketService.broadcast('file_vault_update', {
+      companyId,
+      fileId: fileResult.fileId,
+      action: 'added'
+    });
     setTimeout(() => {
-      broadcastFileVaultUpdate(companyId, undefined, 'refresh');
+      WebSocketService.broadcast('file_vault_update', {
+        companyId,
+        action: 'refresh'
+      });
     }, 500);
     
     logger.info(`Successfully fixed missing file for task ${taskId}`, {
