@@ -3,7 +3,8 @@ import { join } from 'path';
 import { db } from '@db';
 import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
 import { eq, and, or, ilike, sql } from 'drizzle-orm';
-import { FileCreationService } from '../services/file-creation';
+// Import using actual module name conventions
+import * as FileCreationService from '../services/fileCreation';
 import { Logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
@@ -2681,6 +2682,167 @@ router.post('/api/kyb/test-notification', async (req, res) => {
     return res.status(500).json({
       error: 'Failed to send test notification',
       message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Add a new enhanced submission endpoint that uses our unified file tracking
+router.post('/api/kyb/enhanced-submit/:taskId', requireAuth, async (req, res) => {
+  try {
+    const { formData, fileName } = req.body;
+    const taskId = parseInt(req.params.taskId);
+    const userId = req.user?.id;
+    
+    logger.info('Processing enhanced KYB form submission', {
+      taskId,
+      userId,
+      hasFileName: !!fileName
+    });
+    
+    // Validate user authentication
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+    
+    // Get task details
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: 'Task not found'
+      });
+    }
+    
+    // Check required fields
+    if (!task.company_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing company information'
+      });
+    }
+    
+    // Get all KYB fields
+    const fields = await db.select()
+      .from(kybFields)
+      .orderBy(kybFields.order);
+
+    // Convert form data to CSV
+    const csvData = convertResponsesToCSV(fields, formData);
+    
+    // Create file using FileCreationService
+    const generatedFileName = fileName || `KYBForm_${taskId}_${task.metadata?.company_name || 'Company'}_v${task.metadata?.formVersion || '1.0'}.csv`;
+    
+    const fileCreationResult = await FileCreationService.createFile({
+      name: generatedFileName,
+      content: csvData,
+      type: 'text/csv',
+      userId: userId,
+      companyId: task.company_id,
+      metadata: {
+        taskId,
+        taskType: 'kyb',
+        formVersion: '1.0',
+        submissionDate: new Date().toISOString(),
+        fields: fields.map(f => f.field_key)
+      },
+      status: 'uploaded'
+    });
+    
+    if (!fileCreationResult.success) {
+      logger.error('Enhanced file creation failed', {
+        error: fileCreationResult.error,
+        taskId,
+        fileName: generatedFileName
+      });
+      
+      return res.status(500).json({
+        success: false,
+        error: 'File creation failed: ' + (fileCreationResult.error || 'Unknown error')
+      });
+    }
+    
+    // Use the enhanced KYB form handler to update task and link file
+    const { updateTaskWithFileInfo } = await import('../services/enhance-kyb-form-handler');
+    const updateResult = await updateTaskWithFileInfo(
+      taskId,
+      fileCreationResult.fileId,
+      generatedFileName,
+      task.company_id
+    );
+    
+    logger.info('Enhanced KYB form submission processed', {
+      taskId,
+      fileId: fileCreationResult.fileId,
+      success: updateResult
+    });
+    
+    // Save responses to database
+    for (const field of fields) {
+      const value = formData[field.field_key];
+      const status = value ? 'COMPLETE' : 'EMPTY';
+      
+      try {
+        // First try to insert
+        await db.insert(kybResponses)
+          .values({
+            task_id: taskId,
+            field_id: field.id,
+            response_value: value || null,
+            status,
+            version: 1,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+      } catch (err) {
+        const error = err as Error;
+        if (error.message.includes('duplicate key value violates unique constraint')) {
+          // If duplicate, update instead
+          await db.update(kybResponses)
+            .set({
+              response_value: value || null,
+              status,
+              version: sql`${kybResponses.version} + 1`,
+              updated_at: new Date()
+            })
+            .where(
+              and(
+                eq(kybResponses.task_id, taskId),
+                eq(kybResponses.field_id, field.id)
+              )
+            );
+        } else {
+          throw error;
+        }
+      }
+    }
+    
+    // Try to unlock security tasks after KYB submission
+    // Use checkAndUnlockSecurityTasks from the current file
+    const unlockResult = await checkAndUnlockSecurityTasks(task.company_id, userId);
+    
+    return res.json({
+      success: true,
+      fileId: fileCreationResult.fileId,
+      taskStatus: 'submitted',
+      message: 'KYB form submitted successfully with enhanced tracking',
+      securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0
+    });
+  } catch (error) {
+    logger.error('Error in enhanced KYB form submission', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return res.status(500).json({
+      success: false, 
+      error: 'Enhanced KYB form submission failed: ' + 
+        (error instanceof Error ? error.message : 'Unknown error')
     });
   }
 });
