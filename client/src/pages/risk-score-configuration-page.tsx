@@ -211,8 +211,9 @@ export default function RiskScoreConfigurationPage() {
   });
   
   // Query to fetch the risk priorities (for dimension ranking)
-  const { data: prioritiesData, isLoading: isLoadingPriorities } = useQuery({
+  const { data: prioritiesData, isLoading: isLoadingPriorities, refetch: refetchPriorities } = useQuery({
     queryKey: ['/api/risk-score/priorities'],
+    staleTime: 0, // Always consider data stale to force refetch
     onSuccess: (data) => {
       console.log('[Client] Risk priorities data received:', data);
       if (data && data.dimensions) {
@@ -266,9 +267,18 @@ export default function RiskScoreConfigurationPage() {
         description: 'Your risk dimension priorities have been saved successfully.',
         variant: 'success',
       });
-      // Invalidate the priorities query to refetch the data
-      console.log('[Client] Invalidating priorities query');
-      queryClient.invalidateQueries({ queryKey: ['/api/risk-score/priorities'] });
+      // Force a refetch of the priorities data to verify changes were applied
+      console.log('[Client] Force refetching priorities query');
+      refetchPriorities().then(result => {
+        console.log('[Client] Refetch result:', result);
+        if (result.data && JSON.stringify(result.data.dimensions) !== JSON.stringify(dimensions)) {
+          console.log('[Client] Warning: Refetched data does not match local state');
+          // Update local state to match server state
+          setDimensions(result.data.dimensions);
+        }
+      }).catch(err => {
+        console.error('[Client] Error refetching priorities:', err);
+      });
     },
     onError: (error) => {
       console.error('[Client] Error saving risk priorities:', error);
