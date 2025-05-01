@@ -45,7 +45,7 @@ const formSchema = z.object({
   breachDate: z.date({ required_error: 'Breach date is required' }),
   consentId: z.string().optional(),
   consentScope: z.string().optional(),
-  affectedRecords: z.string().transform(val => (val ? parseInt(val, 10) : 0)).optional(),
+  affectedRecords: z.coerce.number().optional(),
   incidentDescription: z.string().optional(),
 });
 
@@ -73,7 +73,7 @@ export default function NewClaimModal({ open, onClose, onClaimCreated }: NewClai
       breachDate: new Date(),
       consentId: '',
       consentScope: '',
-      affectedRecords: '',
+      affectedRecords: 0,
       incidentDescription: '',
     },
   });
