@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { broadcastMessage, getWebSocketServer } from '../websocket';
+import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 
@@ -19,7 +19,7 @@ const router = Router();
  * This is used by the KY3P demo autofill functionality to update all clients
  * when a task's fields have been populated with demo data
  */
-router.post('/api/broadcast/task-update', requireAuth, (req, res) => {
+router.post('/api/broadcast/task-update', requireAuth, async (req, res) => {
   try {
     const { taskId, type, timestamp } = req.body;
     
@@ -36,28 +36,20 @@ router.post('/api/broadcast/task-update', requireAuth, (req, res) => {
       timestamp: messageTimestamp
     });
     
-    // Broadcast the message to all clients
-    const messageSent = broadcastMessage(messageType, {
+    // Broadcast the message to all clients using the WebSocketService
+    await WebSocketService.broadcast(messageType, {
       taskId,
       timestamp: messageTimestamp,
       source: 'api'
     });
     
-    if (messageSent) {
-      logger.info(`Successfully broadcasted update for task ${taskId}`);
-      return res.json({
-        success: true,
-        message: 'Task update broadcasted successfully',
-        taskId,
-        timestamp: messageTimestamp
-      });
-    } else {
-      logger.warn(`Failed to broadcast task update - no WebSocket server available`);
-      return res.status(503).json({
-        success: false,
-        message: 'WebSocket server not available'
-      });
-    }
+    logger.info(`Successfully broadcasted update for task ${taskId}`);
+    return res.json({
+      success: true,
+      message: 'Task update broadcasted successfully',
+      taskId,
+      timestamp: messageTimestamp
+    });
   } catch (error) {
     logger.error('Error broadcasting task update:', error);
     res.status(500).json({
@@ -73,7 +65,7 @@ router.post('/api/broadcast/task-update', requireAuth, (req, res) => {
  */
 router.get('/api/broadcast/status', (req, res) => {
   try {
-    const wss = getWebSocketServer();
+    const wss = WebSocketService.getWebSocketServer();
     
     if (wss) {
       const clientCount = wss.clients ? wss.clients.size : 0;
@@ -102,7 +94,7 @@ router.get('/api/broadcast/status', (req, res) => {
  * This is used by the individual field update functionality to notify 
  * all clients when a specific field has been updated
  */
-router.post('/api/broadcast/field-update', requireAuth, (req, res) => {
+router.post('/api/broadcast/field-update', requireAuth, async (req, res) => {
   try {
     const { taskId, fieldId, fieldKey, value, timestamp } = req.body;
     
@@ -120,8 +112,8 @@ router.post('/api/broadcast/field-update', requireAuth, (req, res) => {
       timestamp: messageTimestamp
     });
     
-    // Broadcast the message to all clients
-    const messageSent = broadcastMessage('field_updated', {
+    // Broadcast the message to all clients using the WebSocketService
+    await WebSocketService.broadcast('field_updated', {
       taskId,
       fieldId,
       fieldKey,
@@ -130,22 +122,14 @@ router.post('/api/broadcast/field-update', requireAuth, (req, res) => {
       source: 'api'
     });
     
-    if (messageSent) {
-      logger.info(`Successfully broadcasted field update for task ${taskId}, field ${fieldId}`);
-      return res.json({
-        success: true,
-        message: 'Field update broadcasted successfully',
-        taskId,
-        fieldId,
-        timestamp: messageTimestamp
-      });
-    } else {
-      logger.warn(`Failed to broadcast field update - no WebSocket server available`);
-      return res.status(503).json({
-        success: false,
-        message: 'WebSocket server not available'
-      });
-    }
+    logger.info(`Successfully broadcasted field update for task ${taskId}, field ${fieldId}`);
+    return res.json({
+      success: true,
+      message: 'Field update broadcasted successfully',
+      taskId,
+      fieldId,
+      timestamp: messageTimestamp
+    });
   } catch (error) {
     logger.error('Error broadcasting field update:', error);
     res.status(500).json({

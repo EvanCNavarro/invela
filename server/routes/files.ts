@@ -7,7 +7,7 @@ import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastDocumentCountUpdate, broadcastFileVaultUpdate } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { aggregateAnswers } from '../services/answerAggregation';
 import { FileCreationService } from '../services/file-creation';
 import { FileDetectionService } from '../services/file-detection';
@@ -185,11 +185,11 @@ async function processDocument(
 
     if (updatedFile?.company_id) {
       // Broadcast file vault update for processed file
-      broadcastFileVaultUpdate(
-        updatedFile.company_id, 
+      WebSocketService.broadcast('file_vault_update', {
+        companyId: updatedFile.company_id, 
         fileId, 
-        'updated'
-      );
+        action: 'updated'
+      });
 
       console.log('[Document Processing] Broadcasted WebSocket update for processed file:', {
         fileId,
@@ -384,7 +384,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     });
 
     // Broadcast document count update
-    broadcastDocumentCountUpdate({
+    WebSocketService.broadcast('document_count_update', {
       type: 'COUNT_UPDATE',
       category: documentCategory,
       count: 1,
@@ -392,11 +392,11 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     });
     
     // Broadcast file vault update to notify clients of new file
-    broadcastFileVaultUpdate(
-      req.user.company_id,
-      fileRecord.id,
-      'added'
-    );
+    WebSocketService.broadcast('file_vault_update', {
+      companyId: req.user.company_id,
+      fileId: fileRecord.id,
+      action: 'added'
+    });
     
     console.log('[Files] Broadcasted WebSocket notification for file vault update:', {
       companyId: req.user.company_id,
@@ -528,11 +528,11 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
       // Broadcast file error status via WebSocket
       if (fileRecord.company_id) {
-        broadcastFileVaultUpdate(
-          fileRecord.company_id, 
+        WebSocketService.broadcast('file_vault_update', {
+          companyId: fileRecord.company_id, 
           fileId, 
-          'updated'
-        );
+          action: 'updated'
+        });
 
         console.log('[Document Processing] Broadcasted WebSocket update for error file:', {
           fileId,
@@ -632,11 +632,11 @@ router.post("/api/documents/:id/process", async (req, res) => {
             
             if (errorFile?.company_id) {
               // Broadcast file vault update for error file
-              broadcastFileVaultUpdate(
-                errorFile.company_id, 
+              WebSocketService.broadcast('file_vault_update', {
+                companyId: errorFile.company_id, 
                 fileId, 
-                'updated'
-              );
+                action: 'updated'
+              });
               
               console.log('[Document Processing] Broadcasted WebSocket update for error file:', {
                 fileId,
@@ -675,11 +675,11 @@ router.post("/api/documents/:id/process", async (req, res) => {
         
       // Broadcast error status via WebSocket
       if (fileRecord.company_id) {
-        broadcastFileVaultUpdate(
-          fileRecord.company_id, 
+        WebSocketService.broadcast('file_vault_update', {
+          companyId: fileRecord.company_id, 
           fileId, 
-          'updated'
-        );
+          action: 'updated'
+        });
         
         console.log('[Document Processing] Broadcasted WebSocket update for chunking error:', {
           fileId,
