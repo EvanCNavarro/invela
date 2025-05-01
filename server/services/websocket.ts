@@ -114,8 +114,35 @@ export async function broadcast(type: string, payload: any): Promise<void> {
  * 
  * @param task The task to broadcast
  */
-export async function broadcastTaskUpdate(task: any): Promise<void> {
-  await broadcast('task_update', task);
+export async function broadcastTaskUpdate(taskId: number, status: string, metadata?: any): Promise<void> {
+  await broadcast('task_update', {
+    id: taskId,
+    status,
+    metadata
+  });
+}
+
+/**
+ * Broadcast a company update to all connected clients
+ * 
+ * @param companyId The company ID
+ * @param data The data to broadcast
+ */
+export async function broadcastCompanyUpdate(companyId: number, data: any): Promise<void> {
+  await broadcast('company_update', {
+    id: companyId,
+    ...data
+  });
+}
+
+/**
+ * Broadcast a message with any payload
+ * 
+ * @param type The message type
+ * @param payload The message payload
+ */
+export async function broadcastMessage(type: string, payload: any): Promise<void> {
+  await broadcast(type, payload);
 }
 
 /**
@@ -147,5 +174,7 @@ export default {
   broadcast,
   broadcastTaskUpdate,
   broadcastCompanyTabsUpdate,
+  broadcastCompanyUpdate,
+  broadcastMessage,
   broadcastEvent
 };

@@ -11,6 +11,16 @@ import { Logger } from '../utils/logger';
 const logger = new Logger('EnhancedFormSubmission');
 
 /**
+ * Base result type for form submissions
+ */
+export interface FormSubmissionResult {
+  success: boolean;
+  fileId?: number | string;
+  message?: string;
+  error?: string;
+}
+
+/**
  * Submit a KYB form using the enhanced form submission endpoint
  * 
  * @param taskId The ID of the task to submit
@@ -23,12 +33,7 @@ export async function submitKybForm(
   formData: Record<string, any>,
   onSuccess?: (data: any) => void,
   onError?: (error: Error) => void
-): Promise<{
-  success: boolean;
-  fileId?: number | string;
-  message?: string;
-  error?: string;
-}> {
+): Promise<FormSubmissionResult> {
   try {
     logger.info(`Submitting KYB form with enhanced tracking:`, {
       taskId,
@@ -97,6 +102,87 @@ export async function submitKybForm(
 }
 
 /**
+ * Submit a KY3P form using the enhanced form submission endpoint
+ * 
+ * @param taskId The ID of the task to submit
+ * @param formData The form data to submit
+ * @param onSuccess Optional success callback
+ * @param onError Optional error callback
+ */
+export async function submitKy3pForm(
+  taskId: number,
+  formData: Record<string, any>,
+  onSuccess?: (data: any) => void,
+  onError?: (error: Error) => void
+): Promise<FormSubmissionResult> {
+  try {
+    logger.info(`Submitting KY3P form with enhanced tracking:`, {
+      taskId,
+      formDataKeys: Object.keys(formData).length
+    });
+    
+    const response = await fetch(`/api/ky3p/enhanced-submit/${taskId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ formData })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage = errorData.error || 'Form submission failed';
+      logger.error(`Enhanced KY3P form submission failed:`, {
+        taskId,
+        status: response.status,
+        errorMessage
+      });
+      
+      if (onError) {
+        onError(new Error(errorMessage));
+      }
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+    
+    const data = await response.json();
+    logger.info(`Enhanced KY3P form submission succeeded:`, {
+      taskId,
+      fileId: data.fileId,
+      taskStatus: data.taskStatus
+    });
+    
+    if (onSuccess) {
+      onSuccess(data);
+    }
+    
+    return {
+      success: true,
+      fileId: data.fileId,
+      message: data.message || 'Form submitted successfully'
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error(`Exception in enhanced KY3P form submission:`, {
+      taskId,
+      error: errorMessage
+    });
+    
+    if (onError) {
+      onError(error instanceof Error ? error : new Error(errorMessage));
+    }
+    
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
+}
+
+/**
  * Enhanced form submission hook that can be used across all form types
  * 
  * @param taskId The ID of the task
@@ -140,10 +226,10 @@ export function useEnhancedFormSubmission(taskId?: number, taskType?: string) {
           break;
         
         // Add cases for other form types as they are enhanced
-        // case 'ky3p':
-        // case 'sp_ky3p_assessment':
-        //   result = await submitKy3pForm(taskId, formData);
-        //   break;
+        case 'ky3p':
+        case 'sp_ky3p_assessment':
+          result = await submitKy3pForm(taskId, formData);
+          break;
         
         default:
           // Fall back to the standard submission if not enhanced yet

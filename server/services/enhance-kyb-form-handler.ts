@@ -86,16 +86,10 @@ export async function updateTaskWithFileInfo(
       .where(eq(files.id, Number(fileId)));
       
     // Broadcast task update via WebSocket
-    const payload = {
-      id: taskId,
-      status: 'submitted',
-      metadata: {
-        fileId,
-        fileName
-      }
-    };
-    
-    WebSocketService.broadcastMessage('task_update', payload);
+    WebSocketService.broadcastTaskUpdate(taskId, 'submitted', {
+      fileId,
+      fileName
+    });
     
     // Log success
     logger.info('Task updated successfully with file info', {

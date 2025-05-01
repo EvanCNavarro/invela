@@ -26,7 +26,7 @@ import {
 } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import * as WebSocketService from '../services/websocket';
-import fileCreationService from '../services/fileCreation';
+import * as fileCreationService from '../services/fileCreation';
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('FixMissingFile');
