@@ -8,9 +8,9 @@
 import { Server } from 'http';
 import { WebSocketServer } from 'ws';
 import * as WebSocketService from './websocket';
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = getLogger('WebSocketSetup');
+// Logger is already initialized in the imported module
 
 /**
  * Set up WebSocket server with proper filtering for Vite HMR

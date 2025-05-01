@@ -18,11 +18,11 @@ import {
 import { eq, and, asc } from 'drizzle-orm';
 import { isNotNull, ne } from 'drizzle-orm/expressions';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { broadcastTaskUpdate } from '../services/websocket';
 
 const router = Router();
-const logger = new Logger('OpenBankingDemoAutofill');
+// Logger is already initialized in the imported module
 
 /**
  * API endpoint to auto-fill all Open Banking form fields with demo data

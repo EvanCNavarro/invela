@@ -5,14 +5,15 @@ import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@d
 import { eq, and, or, ilike, sql } from 'drizzle-orm';
 // Import using actual module name conventions
 import * as FileCreationService from '../services/fileCreation';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { CompanyTabsService } from '../services/companyTabsService';
 // Import CompanyTabsService directly, we don't need the patch function anymore
 // since we're using the service directly
 
-const logger = new Logger('KYBRoutes');
+// Add namespace context to logs
+const logContext = { service: 'KYBRoutes' };
 
 // Add CSV parsing and conversion helper functions at the top of the file
 async function loadFormDataFromCsv(fileId: number) {

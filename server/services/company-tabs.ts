@@ -14,9 +14,9 @@ import { companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { broadcastCompanyTabsUpdate as wsBroadcastCompanyTabsUpdate } from './websocket';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('CompanyTabs');
+// Logger is already initialized in the imported module
 
 /**
  * Broadcast company tabs update via WebSocket

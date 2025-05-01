@@ -4,9 +4,10 @@ import { Router } from 'express';
 import { db } from '@db';
 import { tasks, kybFields, kybResponses } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('KYBUpdateRoutes');
+// Add namespace context to logs
+const logContext = { service: 'KYBUpdateRoutes' };
 
 export const getKybProgress = async (router: Router) => {
   // Get saved progress for KYB form

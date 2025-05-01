@@ -9,10 +9,11 @@
 import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket';
 
-const logger = new Logger('UnifiedFileTracking');
+// Add namespace context to logs
+const logContext = { service: 'UnifiedFileTracking' };
 
 /**
  * Link a file to a task with standardized metadata field names

@@ -5,9 +5,9 @@
  */
 
 import * as WebSocketService from '../services/websocket';
-import { Logger } from './logger';
+import { logger } from './logger';
 
-const logger = new Logger('TaskBroadcast');
+// Logger is already initialized in the imported module
 
 /**
  * Broadcast task update via WebSocket

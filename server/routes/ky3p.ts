@@ -10,11 +10,11 @@ import { db } from '@db';
 import { tasks, ky3pFields, ky3pResponses, files, companies } from '@db/schema';
 import { eq, and, or, ilike, sql } from 'drizzle-orm';
 import * as FileCreationService from '../services/fileCreation';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 
-const logger = new Logger('KY3PRoutes');
+// Logger is already initialized in the imported module
 
 // Helper function to convert responses to CSV
 function convertResponsesToCSV(fields: any[], formData: any) {

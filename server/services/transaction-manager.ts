@@ -9,7 +9,7 @@
  */
 
 import { Pool } from 'pg';
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 // Import the database connection
 let db: { query: (sql: string, params?: any[]) => Promise<any>, connect: () => Promise<any> };
 
@@ -27,7 +27,8 @@ try {
   };
 }
 
-const logger = getLogger('TransactionManager');
+// Add namespace context to logs
+const logContext = { service: 'TransactionManager' };
 
 /**
  * Options for transaction execution

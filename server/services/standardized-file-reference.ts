@@ -5,9 +5,9 @@
  * across different form types, ensuring consistency and proper file tracking.
  */
 
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = getLogger('StandardizedFileReference');
+// Logger is already initialized in the imported module
 
 /**
  * Standardize file references in form data
