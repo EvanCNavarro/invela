@@ -1110,37 +1110,29 @@ export class KY3PFormService extends EnhancedKybFormService {
               
               // Convert responses to the format expected by the form
               const formattedData: Record<string, any> = {};
-            } catch (parseError) {
-              logger.error('[KY3P Form Service] Error fetching from responses endpoint:', parseError);
-              logger.warn('[KY3P Form Service] Trying alternate endpoint: /api/ky3p/progress/' + taskId);
-              // We can't use continue here because we're not in a loop
-              // This was causing a TypeScript error
-              // Instead, we'll try the next approach in sequence
-              const alternateEndpointTried = true;
               
-              // Skip to the next approaches by returning empty data
-              // The code flow will continue with the next endpoint
-              return progressData;
-            }
-            
-            for (const response of rawResponses) {
-              if (response.field?.field_key) {
-                formattedData[response.field.field_key] = response.response_value;
-                logger.debug(`[KY3P Form Service] Found response for field: ${response.field.field_key}`);
+              // Process responses within the try-catch block to prevent ReferenceError on rawResponses
+              for (const response of rawResponses) {
+                if (response.field?.field_key) {
+                  formattedData[response.field.field_key] = response.response_value;
+                  logger.debug(`[KY3P Form Service] Found response for field: ${response.field.field_key}`);
+                }
               }
+              
+              const progress = 100; // Task is submitted
+              const status = 'submitted';
+              
+              // Return the formatted data
+              logger.info(`[KY3P Form Service] Successfully formatted ${Object.keys(formattedData).length} responses`);
+              
+              return {
+                formData: formattedData,
+                progress,
+                status
+              };
+            } catch (innerError) {
+              logger.error(`[KY3P Form Service] Error parsing response JSON:`, innerError);
             }
-            
-            const progress = 100; // Task is submitted
-            const status = 'submitted';
-            
-            // Return the formatted data
-            logger.info(`[KY3P Form Service] Successfully formatted ${Object.keys(formattedData).length} responses`);
-            
-            return {
-              formData: formattedData,
-              progress,
-              status
-            };
           } else {
             logger.warn(`[KY3P Form Service] Raw responses endpoint failed with status: ${responsesResponse.status}`);
           }
@@ -1299,8 +1291,12 @@ export class KY3PFormService extends EnhancedKybFormService {
               return formData;
             }
           } else {
-            const errorText = await directResponse.text();
-            logger.error(`[KY3P Form Service] [DIRECT] Failed to fetch responses: ${directResponse.status}`, errorText);
+            try {
+              const errorText = await directResponse.text();
+              logger.error(`[KY3P Form Service] [DIRECT] Failed to fetch responses: ${directResponse.status}`, errorText);
+            } catch (textError) {
+              logger.error(`[KY3P Form Service] [DIRECT] Failed to fetch responses and couldn't get error text: ${directResponse.status}`);
+            }
           }
         } catch (directError) {
           logger.error(`[KY3P Form Service] [DIRECT] Error in direct fetch:`, directError);
