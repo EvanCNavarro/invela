@@ -6,24 +6,14 @@
  */
 
 import { Router, Request, Response } from 'express';
-import * as WebSocketService from '../services/websocket';
+import WebSocketService from '../services/websocket';
 import { db } from '@db';
 import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
-import { fileCreationService } from '../services/fileCreation';
-import { CompanyTabsService } from '../services/companyTabsService';
+import { FileCreationService } from '../services/file-creation';
 import { UnifiedTabService } from '../services/unified-tab-service';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
-
-
-// Destructure websocket service functions
-const { 
-  broadcastFormSubmission, 
-  broadcastCompanyTabsUpdate, 
-  broadcastTaskUpdate,
-  broadcastMessage
-} = websocketService;
 
 const logger = getLogger('FormSubmissionRoutes');
 
