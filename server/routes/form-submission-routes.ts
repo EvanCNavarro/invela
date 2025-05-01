@@ -8,11 +8,11 @@
 import { Router, Request, Response } from 'express';
 import WebSocketService from '../services/websocket';
 import { db } from '@db';
-import { tasks, companies } from '@db/schema';
+import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
-import { FileCreationService } from '../services/file-creation';
-import { UnifiedTabService } from '../services/unified-tab-service';
+import FileCreationService from '../services/file-creation';
+import UnifiedTabService from '../services/unified-tab-service';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
 const logger = getLogger('FormSubmissionRoutes');
@@ -228,13 +228,13 @@ export function createFormSubmissionRouter(): Router {
     
     try {
       // Broadcast "in progress" status via WebSocket
-      broadcastFormSubmission(
-        taskId, 
-        formType, 
-        'in_progress', 
-        companyId, 
-        { submissionDate: new Date().toISOString() }
-      );
+      WebSocketService.broadcast('form_submission', {
+        taskId,
+        formType,
+        status: 'in_progress',
+        companyId,
+        submissionDate: new Date().toISOString()
+      });
       
       // Check if the task exists and belongs to the user's company
       const task = await db.query.tasks.findFirst({
@@ -245,16 +245,14 @@ export function createFormSubmissionRouter(): Router {
         logger.warn(`Task ${taskId} not found in database`);
         
         // Broadcast error status via WebSocket
-        broadcastFormSubmission(
-          taskId, 
-          formType, 
-          'error', 
-          companyId, 
-          { 
-            error: 'Task not found',
-            submissionDate: new Date().toISOString()
-          }
-        );
+        WebSocketService.broadcast('form_submission', {
+          taskId,
+          formType,
+          status: 'error',
+          companyId,
+          error: 'Task not found',
+          submissionDate: new Date().toISOString()
+        });
         
         return res.status(404).json({
           success: false,
@@ -323,7 +321,7 @@ export function createFormSubmissionRouter(): Router {
             }
             
             // Create an actual file from the form data
-            const fileResult = await fileCreationService.createTaskFile(
+            const fileResult = await FileCreationService.createTaskFile(
               req.user?.id || 0,
               companyId,
               formData, // Use the submitted form data
@@ -406,37 +404,35 @@ export function createFormSubmissionRouter(): Router {
             }
             
             // Broadcast form submission success via WebSocket with file info and unlocked tabs
-            broadcastFormSubmission(
-              taskId, 
-              formType, 
-              'success', 
-              companyId, 
-              { 
-                submissionDate: new Date().toISOString(),
-                unlockedTabs,
-                fileName: fileResult.fileName,
-                fileId: fileResult.fileId,
-                // Add completed actions array to match what UniversalSuccessModal expects
-                completedActions: [
-                  {
-                    type: 'form_submitted',
-                    description: `${formType.toUpperCase()} form submitted successfully`
-                  },
-                  {
-                    type: 'file_generated',
-                    description: `Generated ${fileResult.fileName}`,
-                    fileId: fileResult.fileId
-                  },
-                  ...(unlockedTabs && unlockedTabs.length > 0 ? [{
-                    type: 'tabs_unlocked',
-                    description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
-                  }] : [])
-                ]
-              }
-            );
+            WebSocketService.broadcast('form_submission', { 
+              taskId,
+              formType,
+              status: 'success',
+              companyId,
+              submissionDate: new Date().toISOString(),
+              unlockedTabs,
+              fileName: fileResult.fileName,
+              fileId: fileResult.fileId,
+              // Add completed actions array to match what UniversalSuccessModal expects
+              completedActions: [
+                {
+                  type: 'form_submitted',
+                  description: `${formType.toUpperCase()} form submitted successfully`
+                },
+                {
+                  type: 'file_generated',
+                  description: `Generated ${fileResult.fileName}`,
+                  fileId: fileResult.fileId
+                },
+                ...(unlockedTabs && unlockedTabs.length > 0 ? [{
+                  type: 'tabs_unlocked',
+                  description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
+                }] : [])
+              ]
+            });
             
             // Also broadcast with the form_submitted event type for compatibility
-            broadcastMessage('form_submitted', {
+            WebSocketService.broadcast('form_submitted', {
               taskId,
               formType,
               status: 'success',
@@ -486,16 +482,14 @@ export function createFormSubmissionRouter(): Router {
       logger.error(`Error processing form submission for task ${taskId}: ${errorMessage}`);
       
       // Broadcast error status via WebSocket
-      broadcastFormSubmission(
-        taskId, 
-        formType, 
-        'error', 
-        companyId, 
-        { 
-          error: error instanceof Error ? error.message : 'Unknown submission error',
-          submissionDate: new Date().toISOString()
-        }
-      );
+      WebSocketService.broadcast('form_submission', {
+        taskId,
+        formType,
+        status: 'error',
+        companyId,
+        error: error instanceof Error ? error.message : 'Unknown submission error',
+        submissionDate: new Date().toISOString()
+      });
       
       return res.status(500).json({
         success: false,
