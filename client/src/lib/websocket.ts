@@ -57,14 +57,15 @@ class WebSocketService {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     
-    // Create WebSocket URL ensuring it's properly formed
-    // This prevents the error 'wss://localhost:undefined/' in development
+    // Create WebSocket URL ensuring it's properly formed with the correct path
+    // This prevents conflicts with Vite's HMR WebSocket
     if (!host) {
       logger.warn('Invalid host in window.location, falling back to current URL');
       // Fallback to a known good URL
       return `${protocol}//${window.location.hostname || 'localhost'}${window.location.port ? `:${window.location.port}` : ''}/ws`;
     }
     
+    // Use /ws path to avoid conflicts with Vite's HMR WebSocket
     return `${protocol}//${host}/ws`;
   }
 

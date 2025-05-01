@@ -32,17 +32,47 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
   
   logger.info('Initializing WebSocket server');
   
-  // Create WebSocket server on a distinct path
+  // Create WebSocket server on a distinct path to avoid conflicts with Vite HMR
   wss = new WebSocketServer({ 
     server, 
-    path: '/ws' 
+    path: '/ws',
+    // Verify the connection is not Vite HMR
+    verifyClient: (info) => {
+      const isViteHmr = info.req.headers['sec-websocket-protocol'] === 'vite-hmr';
+      if (isViteHmr) {
+        logger.info('Rejecting Vite HMR WebSocket connection');
+        return false;
+      }
+      return true;
+    }
   });
   
   // Store connected clients
-  wss.on('connection', (ws: WebSocket) => {
-    logger.info('New WebSocket connection established');
+  wss.on('connection', (ws: WebSocket, req) => {
+    logger.info('New WebSocket connection established', {
+      path: req.url,
+      headers: {
+        host: req.headers.host,
+        origin: req.headers.origin
+      }
+    });
     
     clients.push(ws);
+    
+    // Send initial connection established message
+    try {
+      ws.send(JSON.stringify({
+        type: 'connection_established',
+        payload: {
+          timestamp: new Date().toISOString(),
+          connectionId: Math.random().toString(36).substring(2, 15)
+        }
+      }));
+    } catch (error) {
+      logger.error('Error sending initial connection message', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
     
     ws.on('close', () => {
       logger.info('WebSocket connection closed');
@@ -53,6 +83,18 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
       logger.error('WebSocket connection error', {
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+    });
+    
+    // Handle ping-pong for connection health checks
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+        }
+      } catch (error) {
+        // Ignore parse errors for non-JSON messages
+      }
     });
   });
   
