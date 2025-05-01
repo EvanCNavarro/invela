@@ -233,6 +233,13 @@ router.post('/priorities', requireAuth, async (req: Request, res: Response) => {
         risk_priorities: true
       }
     });
+    
+    // Import the broadcastRiskPrioritiesUpdate function
+    const { broadcastRiskPrioritiesUpdate } = await import('../routes/websocket');
+    
+    // Broadcast the update to all connected clients
+    console.log('[RiskPriorities] Broadcasting update to connected clients');
+    broadcastRiskPrioritiesUpdate(updatedCompany?.risk_priorities || priorities);
 
     return res.status(200).json(updatedCompany?.risk_priorities || priorities);
   } catch (error) {
