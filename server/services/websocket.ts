@@ -244,6 +244,49 @@ export async function broadcastEvent(eventType: string, data: any): Promise<void
   await broadcast(eventType, data);
 }
 
+/**
+ * Broadcast a form submission event to all connected clients
+ * 
+ * @param formSubmissionData Form submission data containing taskId, formType, status, etc.
+ */
+export async function broadcastFormSubmission(formSubmissionData: {
+  taskId: number;
+  formType: string;
+  status: 'success' | 'error' | 'in_progress';
+  companyId?: number;
+  fileId?: number | string;
+  fileName?: string;
+  unlockedTabs?: string[];
+  error?: string;
+  message?: string;
+  completedActions?: any[];
+}): Promise<void> {
+  try {
+    logger.debug('Broadcasting form submission event', {
+      taskId: formSubmissionData.taskId,
+      formType: formSubmissionData.formType,
+      status: formSubmissionData.status
+    });
+
+    // Add timestamps for tracking
+    const payload = {
+      ...formSubmissionData,
+      submissionDate: new Date().toISOString(),
+      timestamp: new Date().toISOString()
+    };
+    
+    // Broadcast on both channels for maximum compatibility
+    await broadcast('form_submission', payload);
+    await broadcast('form_submitted', payload);
+  } catch (error) {
+    logger.error('Error broadcasting form submission:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: formSubmissionData.taskId,
+      formType: formSubmissionData.formType
+    });
+  }
+}
+
 export default {
   initializeWebSocketServer,
   getWebSocketServer,
@@ -252,5 +295,6 @@ export default {
   broadcastCompanyTabsUpdate,
   broadcastCompanyUpdate,
   broadcastMessage,
-  broadcastEvent
+  broadcastEvent,
+  broadcastFormSubmission
 };
