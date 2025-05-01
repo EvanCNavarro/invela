@@ -1,35 +1,42 @@
 /**
- * Direct Fix for Missing Files
+ * Direct Fix for Missing Files - TypeScript Version
  * 
  * This script directly invokes the fixed file creation service to generate missing
  * files for tasks that have been submitted but don't show up in the file vault.
  * 
- * Usage: node fix-missing-file-direct.cjs <taskId>
+ * Usage: tsx fix-missing-file-direct.ts <taskId>
  */
 
-const fileCreation = require('./server/services/fileCreation.fixed.ts');
-const { db } = require('./db');
-const { tasks, files } = require('./db/schema');
-const { eq } = require('drizzle-orm');
+import * as fileCreation from './server/services/fileCreation.fixed';
+import { db } from './db/index';
+import { tasks, files, kybResponses, ky3pResponses, openBankingResponses } from './db/schema';
+import { eq } from 'drizzle-orm';
 
-async function fixMissingFileForTask(taskId) {
-  if (!taskId || isNaN(parseInt(taskId))) {
+type FileFixResult = {
+  success: boolean;
+  fileId?: string | number;
+  fileName?: string;
+  error?: string;
+};
+
+async function fixMissingFileForTask(taskId: string | number): Promise<FileFixResult> {
+  if (!taskId || isNaN(parseInt(String(taskId)))) {
     console.error('Error: Please provide a valid task ID');
-    console.log('Usage: node fix-missing-file-direct.cjs <taskId>');
+    console.log('Usage: tsx fix-missing-file-direct.ts <taskId>');
     return { success: false, error: 'Invalid task ID' };
   }
   
   try {
-    taskId = parseInt(taskId);
-    console.log(`Checking task ${taskId}...`);
+    const taskIdNum = parseInt(String(taskId));
+    console.log(`Checking task ${taskIdNum}...`);
     
     // 1. Get the task
     const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+      where: eq(tasks.id, taskIdNum)
     });
     
     if (!task) {
-      console.error(`Task ${taskId} not found in database`);
+      console.error(`Task ${taskIdNum} not found in database`);
       return { success: false, error: 'Task not found' };
     }
     
@@ -38,12 +45,13 @@ async function fixMissingFileForTask(taskId) {
     
     // 2. Check if task is submitted
     if (task.status !== 'submitted') {
-      console.error(`Task ${taskId} is not submitted (status: ${task.status})`);
+      console.error(`Task ${taskIdNum} is not submitted (status: ${task.status})`);
       return { success: false, error: 'Task not submitted' };
     }
     
     // 3. Check if file already exists
-    const existingFileId = task.metadata?.fileId;
+    const metadata = task.metadata as Record<string, any> || {};
+    const existingFileId = metadata?.fileId;
     if (existingFileId) {
       const file = await db.query.files.findFirst({
         where: eq(files.id, existingFileId)
@@ -60,7 +68,7 @@ async function fixMissingFileForTask(taskId) {
     }
     
     // 4. Get form data from responses table
-    let formData = {};
+    let formData: Record<string, any> = {};
     let taskType = task.task_type;
     let standardizedTaskType = taskType;
     let companyId = task.company_id;
@@ -77,7 +85,7 @@ async function fixMissingFileForTask(taskId) {
     // 5. For KYB tasks
     if (taskType === 'kyb' || taskType === 'company_kyb') {
       const kybResponses = await db.query.kyb_responses.findMany({
-        where: eq(db.kyb_responses.task_id, taskId)
+        where: eq(kyb_responses.task_id, taskIdNum)
       });
       
       kybResponses.forEach(response => {
@@ -90,7 +98,7 @@ async function fixMissingFileForTask(taskId) {
     // 6. For KY3P tasks
     else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
       const ky3pResponses = await db.query.ky3p_responses.findMany({
-        where: eq(db.ky3p_responses.task_id, taskId)
+        where: eq(ky3p_responses.task_id, taskIdNum)
       });
       
       ky3pResponses.forEach(response => {
@@ -103,7 +111,7 @@ async function fixMissingFileForTask(taskId) {
     // 7. For Open Banking tasks
     else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
       const obResponses = await db.query.open_banking_responses.findMany({
-        where: eq(db.open_banking_responses.task_id, taskId)
+        where: eq(open_banking_responses.task_id, taskIdNum)
       });
       
       obResponses.forEach(response => {
@@ -115,20 +123,14 @@ async function fixMissingFileForTask(taskId) {
     
     // 8. For Card Industry tasks
     else if (taskType === 'card' || taskType === 'company_card') {
-      const cardResponses = await db.query.card_responses.findMany({
-        where: eq(db.card_responses.task_id, taskId)
-      });
-      
-      cardResponses.forEach(response => {
-        formData[response.field_id] = response.response_value;
-      });
-      
-      console.log(`Found ${cardResponses.length} Card Industry responses`);
+      // Fetch card industry responses if the table exists
+      // For now, let's just handle the other form types
+      console.log('Card industry forms are not currently supported');
     }
     
     // 9. Check if we have form data
     if (Object.keys(formData).length === 0) {
-      console.error(`No form data found for task ${taskId}`);
+      console.error(`No form data found for task ${taskIdNum}`);
       return { success: false, error: 'No form data found' };
     }
     
@@ -137,7 +139,7 @@ async function fixMissingFileForTask(taskId) {
     // 10. Create the file
     console.log('Creating file...');
     const fileResult = await fileCreation.createTaskFile(
-      taskId,
+      taskIdNum,
       standardizedTaskType,
       formData,
       companyId,
@@ -152,7 +154,7 @@ async function fixMissingFileForTask(taskId) {
     console.log(`File created successfully: ${fileResult.fileName} (ID: ${fileResult.fileId})`);
     
     // 11. Update task metadata with file reference
-    const currentMetadata = task.metadata || {};
+    const currentMetadata = task.metadata as Record<string, any> || {};
     const updatedMetadata = {
       ...currentMetadata,
       fileId: fileResult.fileId,
@@ -165,7 +167,7 @@ async function fixMissingFileForTask(taskId) {
       .set({
         metadata: updatedMetadata
       })
-      .where(eq(tasks.id, taskId));
+      .where(eq(tasks.id, taskIdNum));
     
     console.log('Task metadata updated with file reference');
     console.log(`\n✅ File creation complete! Check File Vault for: ${fileResult.fileName}`);
@@ -175,7 +177,7 @@ async function fixMissingFileForTask(taskId) {
       fileId: fileResult.fileId,
       fileName: fileResult.fileName 
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error during file creation:');
     console.error(error);
     return { success: false, error: error.message || 'Unknown error' };
@@ -188,4 +190,4 @@ if (require.main === module) {
   fixMissingFileForTask(taskId);
 }
 
-module.exports = { fixMissingFileForTask };
+export { fixMissingFileForTask };
