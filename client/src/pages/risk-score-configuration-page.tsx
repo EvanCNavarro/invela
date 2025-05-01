@@ -15,8 +15,9 @@ import { ComparativeVisualization } from '@/components/risk-score/ComparativeVis
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { checkAuthentication, directUpdateRiskPriorities } from "@/lib/direct-risk-update";
+import { checkAuthentication, directUpdateRiskPriorities, testWebSocketBroadcast } from "@/lib/direct-risk-update";
 import riskScoreLogger from "@/lib/risk-score-logger";
+import wsManager from "@/lib/websocket-connector";
 // Import from 'react-dnd' and 'react-dnd-html5-backend' more carefully
 import { DndProvider } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
@@ -442,6 +443,60 @@ export default function RiskScoreConfigurationPage() {
     riskScoreLogger.log('init', 'Testing debug overlay');
   }, []);
   
+  // Set up WebSocket event handlers for real-time updates
+  useEffect(() => {
+    // Handler for risk score updates
+    const handleRiskScoreUpdate = (data: any) => {
+      riskScoreLogger.log('websocket', 'Received risk score update:', data);
+      if (data && data.newScore !== undefined) {
+        setScore(data.newScore);
+        setRiskLevel(determineRiskLevel(data.newScore));
+        toast({
+          title: 'Risk Score Updated',
+          description: `New risk score: ${data.newScore}`,
+          variant: 'default',
+        });
+      }
+    };
+    
+    // Handler for risk priorities updates
+    const handleRiskPrioritiesUpdate = (data: any) => {
+      riskScoreLogger.log('websocket', 'Received risk priorities update:', data);
+      if (data && data.priorities && data.priorities.dimensions) {
+        // Update dimensions from WebSocket
+        setDimensions(data.priorities.dimensions);
+        
+        // Update originalDimensionsRef for comparison
+        originalDimensionsRef.current = JSON.parse(JSON.stringify(data.priorities.dimensions));
+        
+        toast({
+          title: 'Risk Priorities Updated',
+          description: 'Risk dimension priorities have been updated from another session',
+          variant: 'default',
+        });
+        
+        // Update our query client cache to match the new data
+        queryClient.setQueryData(['/api/risk-score/priorities'], {
+          dimensions: data.priorities.dimensions,
+          lastUpdated: data.updatedAt || new Date().toISOString()
+        });
+      }
+    };
+    
+    // Register WebSocket event handlers
+    const riskScoreUnsubscribe = wsManager.on('risk_score_update', handleRiskScoreUpdate);
+    const riskPrioritiesUnsubscribe = wsManager.on('risk_priorities_update', handleRiskPrioritiesUpdate);
+    const riskPriorityUnsubscribe = wsManager.on('risk_priority_update', handleRiskPrioritiesUpdate);
+    
+    // Cleanup function to remove WebSocket event handlers
+    return () => {
+      riskScoreUnsubscribe();
+      riskPrioritiesUnsubscribe();
+      riskPriorityUnsubscribe();
+      riskScoreLogger.log('websocket', 'Removed WebSocket event handlers');
+    };
+  }, [toast, queryClient]); // Dependencies for the effect
+  
   // Calculate score and risk level when dimensions change
   useEffect(() => {
     const newScore = calculateRiskScore(dimensions);
@@ -668,8 +723,42 @@ export default function RiskScoreConfigurationPage() {
                   <Separator className="my-6" />
 
                   <div className="flex justify-between">
-                    <Button variant="outline" onClick={handleReset}>Reset to Defaults</Button>
-                    <Button onClick={handleSave}>Save Configuration</Button>
+                    <div className="space-x-2">
+                      <Button variant="outline" onClick={handleReset}>Reset to Defaults</Button>
+                      <Button 
+                        variant="outline"
+                        onClick={async () => {
+                          // Test sending a WebSocket broadcast
+                          const result = await testWebSocketBroadcast('risk_priority_update', {
+                            priorities: {
+                              dimensions,
+                              lastUpdated: new Date().toISOString()
+                            },
+                            updatedAt: new Date().toISOString(),
+                            message: 'Test update from the UI'
+                          });
+                          
+                          if (result.success) {
+                            toast({
+                              title: 'WebSocket Test Sent',
+                              description: `Broadcast sent to ${result.clientCount} clients`,
+                              variant: 'default',
+                            });
+                          } else {
+                            toast({
+                              title: 'WebSocket Test Failed',
+                              description: result.error || 'Unknown error',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                      >
+                        Test WebSocket
+                      </Button>
+                    </div>
+                    <Button onClick={handleSave} disabled={savePrioritiesMutation.isPending || saveMutation.isPending}>
+                      {savePrioritiesMutation.isPending || saveMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
