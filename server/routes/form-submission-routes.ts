@@ -6,14 +6,13 @@
  */
 
 import { Router, Request, Response } from 'express';
-import WebSocketService from '../services/websocket';
 import { db } from '@db';
 import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
 import fileCreation from '../services/fileCreation';
 import UnifiedTabService from '../services/unified-tab-service';
-import * as WebSocketService from '../services/websocket';
+import { broadcast } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
 const logger = getLogger('FormSubmissionRoutes');
@@ -117,7 +116,7 @@ export function createFormSubmissionRouter(): Router {
         if (file) {
           fileInfo = {
             id: file.id,
-            name: file.filename,
+            name: file.name,
             status: file.status,
             created_at: file.created_at
           };
@@ -229,7 +228,7 @@ export function createFormSubmissionRouter(): Router {
     
     try {
       // Broadcast "in progress" status via WebSocket
-      WebSocketService.broadcast('form_submission', {
+      broadcast('form_submission', {
         taskId,
         formType,
         status: 'in_progress',
@@ -246,7 +245,7 @@ export function createFormSubmissionRouter(): Router {
         logger.warn(`Task ${taskId} not found in database`);
         
         // Broadcast error status via WebSocket
-        WebSocketService.broadcast('form_submission', {
+        broadcast('form_submission', {
           taskId,
           formType,
           status: 'error',
@@ -409,7 +408,7 @@ export function createFormSubmissionRouter(): Router {
             }
             
             // Broadcast form submission success via WebSocket with file info and unlocked tabs
-            WebSocketService.broadcast('form_submission', { 
+            broadcast('form_submission', { 
               taskId,
               formType,
               status: 'success',
@@ -437,7 +436,7 @@ export function createFormSubmissionRouter(): Router {
             });
             
             // Also broadcast with the form_submitted event type for compatibility
-            WebSocketService.broadcast('form_submitted', {
+            broadcast('form_submitted', {
               taskId,
               formType,
               status: 'success',
@@ -487,7 +486,7 @@ export function createFormSubmissionRouter(): Router {
       logger.error(`Error processing form submission for task ${taskId}: ${errorMessage}`);
       
       // Broadcast error status via WebSocket
-      WebSocketService.broadcast('form_submission', {
+      broadcast('form_submission', {
         taskId,
         formType,
         status: 'error',
