@@ -1,4 +1,4 @@
-export type RiskBucket = 'low' | 'medium' | 'high' | 'critical';
+export type RiskBucket = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
 export interface NetworkNode {
   id: number;
@@ -35,6 +35,7 @@ export interface NetworkFilters {
 }
 
 export const riskBucketColors: Record<RiskBucket, string> = {
+  none: '#FFFFFF', // White for 'no risk' score of 0
   low: '#DFE3EA',
   medium: '#B3B8C6',
   high: '#7B74A8', // Reverted to match legacy key colors in legend
