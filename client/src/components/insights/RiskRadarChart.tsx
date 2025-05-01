@@ -243,7 +243,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     yaxis: {
       show: true,
-      max: 500, // Match the reference which shows scale to 500
+      max: 100, // Updated to new 0-100 scale
       tickAmount: 5,
       labels: {
         style: {
@@ -252,9 +252,9 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           colors: ['#64748b']
         },
         formatter: (val: number) => {
-          // Only show multiples of 100 to match reference
+          // Show multiples of 20 for the 0-100 scale
           const rounded = Math.round(val);
-          return rounded % 100 === 0 ? rounded.toString() : '';
+          return rounded % 20 === 0 ? rounded.toString() : '';
         }
       }
     },

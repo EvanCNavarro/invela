@@ -1580,11 +1580,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         count: networkRelationships.length
       });
 
-      // 3. Determine risk bucket for each company on 0-1500 scale
+      // 3. Determine risk bucket for each company on 0-100 scale
       const getRiskBucket = (score: number): RiskBucket => {
-        if (score <= 500) return 'low';
-        if (score <= 900) return 'medium';  // Changed from 700 to 900
-        if (score <= 1200) return 'high';   // Changed from 1000 to 1200
+        if (score === 0) return 'none';
+        if (score <= 33) return 'low';
+        if (score <= 66) return 'medium';
+        if (score <= 99) return 'high';
         return 'critical';
       };
 
