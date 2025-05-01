@@ -50,7 +50,7 @@ import tasksRouter from './routes/tasks';
 import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
-import { router as wsTestRouter } from './routes/websocket-test';
+// Test WebSocket router removed
 import riskScoreConfigurationRouter from './routes/risk-score-configuration';
 // Test routes have been removed
 import submissionsRouter from './routes/submissions';
@@ -408,8 +408,8 @@ export function registerRoutes(app: Express): Express {
   // Register WebSocket test routes
   app.use('/api/websocket', websocketRouter);
   
-  // Register test endpoints for WebSocket functionality
-  app.use('/api/ws-test', wsTestRouter);
+  // Test endpoints for WebSocket functionality have been removed
+  // They have been replaced with standardized WebSocket implementation
   
   // Test WebSocket routes have been removed
   // They have been replaced with standardized WebSocket implementation
