@@ -58,12 +58,11 @@ import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
 import broadcastRouter from './routes/broadcast';
-import testKy3pUpdateRouter from './routes/test-ky3p-update';
+// Test routes have been removed
 import { createUnifiedFormSubmissionRouter } from './routes/index';
 import { createTransactionalFormRouter } from './routes/transactional-form-routes';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
-import { createTestRouter } from './routes/test-routes';
 
 // Create PDFExtract instance
 const pdfExtract = new PDFExtract();
@@ -433,13 +432,8 @@ export function registerRoutes(app: Express): Express {
     console.error('[Routes] Error setting up form submission test routes:', error);
   }
   
-  // Register general test routes
-  try {
-    const testRouter = createTestRouter();
-    app.use('/api/test', testRouter);
-  } catch (error) {
-    console.error('[Routes] Error setting up test routes:', error);
-  }
+  // Test routes have been removed
+  // Replaced with standardized API endpoints
   
   // Register submission status API - reliable form submission status checking
   app.use('/api/submissions', submissionsRouter);
@@ -447,8 +441,7 @@ export function registerRoutes(app: Express): Express {
   // Register broadcast router for demo auto-fill WebSocket functionality
   app.use(broadcastRouter);
   
-  // Register test KY3P update router
-  app.use('/api/test/ky3p-batch-update', testKy3pUpdateRouter);
+  // Test routes have been removed
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {

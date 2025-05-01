@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import websocketService from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { db } from '@db';
 import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';

@@ -5,7 +5,7 @@
  */
 
 import { Server } from 'http';
-import { initWebSocketServer } from './websocket';
+import * as WebSocketService from './websocket';
 
 /**
  * Set up WebSocket server

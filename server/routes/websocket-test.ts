@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
-import { broadcastSubmissionStatus, broadcastTaskUpdate, getWebSocketServer } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { TaskStatus } from '@db/schema';
 
 /**
@@ -28,7 +28,7 @@ router.get('/test-submission-status/:taskId', async (req, res) => {
     let clientCount = 0;
     let openClientCount = 0;
     
-    const ws = getWebSocketServer();
+    const ws = WebSocketService.getWebSocketServer();
     if (ws) {
       ws.clients.forEach(client => {
         clientCount++;
@@ -42,11 +42,11 @@ router.get('/test-submission-status/:taskId', async (req, res) => {
     
     // Test the submission status broadcast with enhanced logging
     console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (TEST)`);
-    broadcastSubmissionStatus(taskId, 'submitted');
+    WebSocketService.broadcast('submission_status', { taskId, status: 'submitted' });
     
     // Send the regular task update
     console.log(`[WebSocket] Broadcasting task update for task ${taskId}`);
-    broadcastTaskUpdate({
+    WebSocketService.broadcastTaskUpdate({
       id: taskId,
       status: TaskStatus.SUBMITTED,
       progress: 100,
@@ -93,7 +93,7 @@ router.get('/test-form-error/:taskId', async (req, res) => {
     let clientCount = 0;
     let openClientCount = 0;
     
-    const ws = getWebSocketServer();
+    const ws = WebSocketService.getWebSocketServer();
     if (ws) {
       ws.clients.forEach(client => {
         clientCount++;
@@ -106,10 +106,10 @@ router.get('/test-form-error/:taskId', async (req, res) => {
     console.log(`[WebSocket] Client count: ${clientCount} total, ${openClientCount} open`);
     
     // Send a simulated error status
-    broadcastSubmissionStatus(taskId, 'error');
+    WebSocketService.broadcast('submission_status', { taskId, status: 'error' });
     
     // Also send via task update
-    broadcastTaskUpdate({
+    WebSocketService.broadcastTaskUpdate({
       id: taskId,
       status: 'failed' as TaskStatus, // Using 'failed' instead of ERROR
       progress: 0,
