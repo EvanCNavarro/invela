@@ -242,29 +242,33 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
       // Send the update using the standardized batch update endpoint
       logger.info(`[Unified KY3P] Sending standardized batch update for ${Object.keys(cleanData).length} fields`);
       
-      // Based on looking at ky3p-fixed-routes.ts line 95, the server expects
-      // responses to be an object with field keys as properties,
-      // NOT an array of objects with fieldKey and value
-      const payload = {
-        responses: cleanData // Pass the object directly as required by the server
-      };
+      // We have two different batch update endpoints, with different formats:
+      // 1. ky3p-fixed-routes.ts expects { responses: { fieldKey: value, ... } }
+      // 2. ky3p-batch-update.ts expects the data directly { fieldKey: value, ... }
+      // 
+      // Let's try using the ky3p-batch-update.ts route instead, which takes the data directly
+      const dataPayload = cleanData; // Plain object with fieldKey -> value mapping
       
-      // DEBUG: Log the exact payload being sent
-      console.log('[DEBUG] KY3P Batch Update Payload:', JSON.stringify(payload, null, 2));
+      // Debug logging to verify our payload structure
+      console.log('[DEBUG] KY3P Batch Update Payload:', {
+        payloadType: typeof dataPayload,
+        isArray: Array.isArray(dataPayload),
+        keyCount: Object.keys(dataPayload).length,
+        sampleKeys: Object.keys(dataPayload).slice(0, 5)
+      });
       
-      // Explicitly verify we're sending a proper format: { responses: { fieldKey1: value1, fieldKey2: value2 } }
-      // And not { responses: [ { fieldKey: "fieldKey1", value: value1 }, ... ] }
-      console.log('[DEBUG] Is responses an object?', typeof payload.responses === 'object' && !Array.isArray(payload.responses));
+      // Log full payload for debugging
+      console.log('[DEBUG] KY3P Payload Full:', JSON.stringify(dataPayload, null, 2));
       
-      // Server expects request with a responses object containing field key/value pairs
-      // Per line 95 in ky3p-fixed-routes.ts: "for (const [fieldKey, value] of Object.entries(responses)) {"
+      // Server expects fields directly in the request body for ky3p-batch-update.ts
+      // Line 77 in ky3p-batch-update.ts: "for (const [fieldKey, value] of Object.entries(formData)) {"
       const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Important: include auth cookies
-        body: JSON.stringify(payload),
+        body: JSON.stringify(dataPayload), // Use the direct data payload without wrapping in a 'responses' object
       });
       
       if (!response.ok) {
