@@ -6,9 +6,13 @@
  * error and ensures consistent form handling across all form types.
  * 
  * It provides string-based field key support and enhanced logging.
+ * 
+ * IMPORTANT: This uses the fixed KY3P form service to avoid ReferenceError issues
+ * in the loadProgress method.
  */
 
 import { KY3PFormService } from './ky3p-form-service';
+import { createFixedKY3PFormService } from './fixed-ky3p-form-service';
 import { FormServiceInterface, FormField, FormSection, FormSubmitOptions } from './formService';
 import getLogger from '@/utils/logger';
 
@@ -44,10 +48,10 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       timestamp: new Date().toISOString()
     });
     
-    // Create the original service that we'll wrap
-    this.originalService = new KY3PFormService(companyId, taskId);
+    // Create the fixed KY3P service that resolves the ReferenceError issues
+    this.originalService = createFixedKY3PFormService(companyId, taskId);
     
-    logger.info('Original KY3P service created successfully');
+    logger.info('Fixed KY3P service created successfully');
   }
   
   // FormServiceInterface implementation
