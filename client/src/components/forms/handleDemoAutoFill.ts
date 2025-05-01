@@ -78,6 +78,9 @@ export async function handleDemoAutoFill({
     variant: 'default'
   });
   
+  // Reset any potential stuck state by triggering a force rerender
+  setForceRerender(prev => !prev);
+  
   try {
     // For KY3P forms, use our standardized bulk update approach
     if (taskType === 'ky3p' || taskType === 'security_assessment') {

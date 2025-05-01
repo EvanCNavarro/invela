@@ -446,6 +446,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
+  // Reset loading state if it gets stuck
+  useEffect(() => {
+    // This effect will help reset loading state if it's stuck in loading state after demo autofill
+    if (loading && sections.length > 0 && fields.length > 0 && dataHasLoaded) {
+      logger.info('Detected stuck loading state, forcing reset');
+      setLoading(false);
+    }
+  }, [loading, sections.length, fields.length, dataHasLoaded, forceRerender]);
+  
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
     logger.debug(`Field change: ${name} = ${value}`);
