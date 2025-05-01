@@ -9,7 +9,7 @@ import getLogger from '../utils/logger';
 import { withTransaction } from './transaction-manager';
 import * as UnifiedTabService from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
-import * as fileCreationService from './fileCreation';
+import * as fileCreationService from './fileCreation.fixed';
 import * as WebSocketService from './websocket';
 
 const logger = getLogger('TransactionalFormHandler');
@@ -88,14 +88,11 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         
         try {
           const fileResult = await fileCreationService.createTaskFile(
-            userId,
-            companyId, 
+            taskId,
+            schemaTaskType,
             standardizedFormData,
-            {
-              taskId,
-              taskType: schemaTaskType,
-              originalType: formType
-            }
+            companyId,
+            userId
           );
           
           if (fileResult.success && fileResult.fileId) {

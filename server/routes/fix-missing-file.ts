@@ -26,7 +26,7 @@ import {
 } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import * as WebSocketService from '../services/websocket';
-import * as fileCreationService from '../services/fileCreation';
+import * as fileCreationService from '../services/fileCreation.fixed';
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('FixMissingFile');
@@ -167,19 +167,11 @@ async function generateMissingFileForTask(taskId: number) {
     // Create a file for this form data
     const userId = task.assigned_to || task.created_by || 0; // Use assigned user or fallback to creator
     const fileResult = await fileCreationService.createTaskFile(
-      userId, 
-      companyId,
+      taskId,
+      standardizedTaskType,
       formData,
-      {
-        taskType: standardizedTaskType,
-        taskId: taskId,
-        companyName: company.name,
-        originalType: taskType,
-        additionalData: {
-          submissionTime: new Date().toISOString(),
-          formType: taskType
-        }
-      }
+      companyId,
+      userId
     );
     
     if (!fileResult.success) {
