@@ -114,10 +114,12 @@ function generateRiskClusters(totalScore: number) {
   let sumOfValues = 0;
   categories.forEach((category, index) => {
     // Calculate the value for this category
+    // Note: totalScore is now on 0-100 scale instead of 0-1500
     let value = Math.round(totalScore * proportions[index]);
     
-    // Ensure the value is at least 10 for visibility on the chart
-    value = Math.max(value, 10);
+    // Ensure the value is at least 1 for visibility on the chart
+    // Lower minimum value from 10 to 1 to account for new 0-100 scale
+    value = Math.max(value, 1);
     
     // Add to the result
     result[category] = value;
@@ -130,7 +132,7 @@ function generateRiskClusters(totalScore: number) {
   if (sumOfValues !== totalScore) {
     const adjustment = totalScore - sumOfValues;
     const lastCategory = categories[categories.length - 1];
-    result[lastCategory] = Math.max(10, result[lastCategory] + adjustment);
+    result[lastCategory] = Math.max(1, result[lastCategory] + adjustment);
   }
   
   return result;

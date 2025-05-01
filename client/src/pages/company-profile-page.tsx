@@ -516,9 +516,9 @@ export default function CompanyProfilePage() {
                 Critical Risk Areas
               </h4>
               <ul className="pl-5 text-sm space-y-1">
-                {Object.entries(riskClusters).filter(([_, value]) => value > 700).length > 0 ? (
+                {Object.entries(riskClusters).filter(([_, value]) => value > 66).length > 0 ? (
                   Object.entries(riskClusters)
-                    .filter(([_, value]) => value > 700)
+                    .filter(([_, value]) => value > 66)
                     .map(([key, value]) => (
                       <li key={key} className="list-disc">
                         <span className="capitalize">{key}</span>: {value} points
@@ -536,7 +536,7 @@ export default function CompanyProfilePage() {
                 Moderate Risk Areas
               </h4>
               <ul className="pl-5 text-sm space-y-1">
-                {Object.entries(riskClusters).filter(([_, value]) => value >= 500 && value <= 700).map(([key, value]) => (
+                {Object.entries(riskClusters).filter(([_, value]) => value >= 34 && value <= 66).map(([key, value]) => (
                   <li key={key} className="list-disc">
                     <span className="capitalize">{key}</span>: {value} points
                   </li>
@@ -550,7 +550,7 @@ export default function CompanyProfilePage() {
                 Low Risk Areas
               </h4>
               <ul className="pl-5 text-sm space-y-1">
-                {Object.entries(riskClusters).filter(([_, value]) => value < 500).map(([key, value]) => (
+                {Object.entries(riskClusters).filter(([_, value]) => value < 34).map(([key, value]) => (
                   <li key={key} className="list-disc">
                     <span className="capitalize">{key}</span>: {value} points
                   </li>
