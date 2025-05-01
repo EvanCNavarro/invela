@@ -231,7 +231,7 @@ export default function RiskScoreConfigurationPage() {
       toast({
         title: 'Configuration saved',
         description: 'Your risk score configuration has been saved successfully.',
-        variant: 'default',
+        variant: 'success',
       });
       // Invalidate the query to refetch the configuration
       queryClient.invalidateQueries({ queryKey: ['/api/risk-score/configuration'] });
@@ -255,7 +255,7 @@ export default function RiskScoreConfigurationPage() {
       toast({
         title: 'Priorities saved',
         description: 'Your risk dimension priorities have been saved successfully.',
-        variant: 'default',
+        variant: 'success',
       });
       // Invalidate the priorities query to refetch the data
       queryClient.invalidateQueries({ queryKey: ['/api/risk-score/priorities'] });
@@ -330,13 +330,13 @@ export default function RiskScoreConfigurationPage() {
       toast({
         title: 'Reset to defaults',
         description: 'Dimension rankings have been reset to default values. Click save to persist changes.',
-        variant: 'default',
+        variant: 'info',
       });
     } else {
       toast({
         title: 'Reset to defaults',
         description: 'Configuration has been reset to default values. Click save to persist changes.',
-        variant: 'default',
+        variant: 'info',
       });
     }
   };
@@ -423,18 +423,20 @@ export default function RiskScoreConfigurationPage() {
                           </div>
                         </div>
                         
-                        {/* Dimension rows */}
-                        <div className="space-y-2 mt-8">
-                          {dimensions.map((dimension, index) => (
-                            <DimensionRow 
-                              key={dimension.id}
-                              dimension={dimension}
-                              index={index}
-                              onReorder={handleReorder}
-                              onValueChange={handleValueChange}
-                            />
-                          ))}
-                        </div>
+                        {/* Dimension rows with drag and drop */}
+                        <DndProvider backend={HTML5Backend}>
+                          <div className="space-y-2 mt-8">
+                            {dimensions.map((dimension, index) => (
+                              <DimensionRow 
+                                key={dimension.id}
+                                dimension={dimension}
+                                index={index}
+                                onReorder={handleReorder}
+                                onValueChange={handleValueChange}
+                              />
+                            ))}
+                          </div>
+                        </DndProvider>
                       </div>
                     </TabsContent>
 
