@@ -191,73 +191,7 @@ async function saveDemoResponses(taskId: number, demoData: Record<string, any>):
   }
 }
 
-/**
- * Endpoint for getting demo data for a KY3P task
- * Supports both the standard and standardized approaches
- */
-router.get('/api/ky3p-task/:taskId/demo-data', async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.taskId, 10);
-    
-    if (isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
-    }
-    
-    logger.info(`[KY3P Demo Auto-Fill] Demo data requested for task ${taskId}`);
-    
-    // Generate the demo data
-    const demoData = await generateKy3pDemoData(taskId);
-    
-    // Return the demo data in the format expected by the client
-    return res.status(200).json({
-      formData: demoData,
-      progress: 95, // Demo data is nearly complete (but not 100% to allow for user edits)
-      status: 'in_progress',
-    });
-  } catch (error: any) {
-    logger.error('[KY3P Demo Auto-Fill] Error handling demo data request:', error);
-    return res.status(500).json({
-      error: 'Server error',
-      message: 'An error occurred while generating demo data',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    });
-  }
-});
-
-/**
- * Handle POST request for demo auto-fill (compatibility with legacy approach)
- */
-router.post('/api/ky3p-task/:taskId/demo-autofill', async (req, res) => {
-  try {
-    const taskId = parseInt(req.params.taskId, 10);
-    
-    if (isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
-    }
-    
-    logger.info(`[KY3P Demo Auto-Fill] Demo auto-fill requested for task ${taskId}`);
-    
-    // Generate the demo data
-    const demoData = await generateKy3pDemoData(taskId);
-    
-    // Save the demo responses to the database
-    await saveDemoResponses(taskId, demoData);
-    
-    // Return the demo data in the format expected by the client
-    return res.status(200).json({
-      formData: demoData,
-      progress: 95,
-      status: 'in_progress',
-    });
-  } catch (error: any) {
-    logger.error('[KY3P Demo Auto-Fill] Error handling demo auto-fill request:', error);
-    return res.status(500).json({
-      error: 'Server error',
-      message: 'An error occurred while generating demo data',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    });
-  }
-});
+// Deprecated routes have been removed to standardize on '/api/ky3p/demo-autofill/:taskId' endpoints
 
 /**
  * GET endpoint for standardized demo auto-fill

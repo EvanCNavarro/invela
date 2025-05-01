@@ -1061,11 +1061,10 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
       // If the original service doesn't have getDemoData method, use our own implementation
       logger.info('[EnhancedKY3P] Original service does not have getDemoData method, using fallback');
       
-      // Try multiple endpoints in sequence to get demo data
+      // Use standardized endpoints only
       const endpoints = [
-        `/api/ky3p-task/${effectiveTaskId}/demo-data`, // Preferred endpoint
-        `/api/ky3p/demo-autofill/${effectiveTaskId}`, // Alternative endpoint
-        `/api/universal/demo-autofill?taskId=${effectiveTaskId}&formType=ky3p` // Universal endpoint
+        `/api/ky3p/demo-autofill/${effectiveTaskId}`, // Primary standardized endpoint
+        `/api/universal/demo-autofill?taskId=${effectiveTaskId}&formType=ky3p` // Universal fallback endpoint
       ];
       
       for (const endpoint of endpoints) {
