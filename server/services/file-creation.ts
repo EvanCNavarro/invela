@@ -181,7 +181,7 @@ export class FileCreationService {
       // Broadcast file vault update to notify all clients about the new file
       try {
         // Use the standardized WebSocket service to broadcast file update
-        WebSocketService.broadcastEvent('file_vault_updated', {
+        WebSocketService.broadcastEvent('file_vault_update', {
           companyId,
           fileId: fileRecord.id,
           action: 'added',
