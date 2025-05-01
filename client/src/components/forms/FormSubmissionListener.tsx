@@ -115,7 +115,8 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           return;
         }
         
-        const payload = data.payload;
+        // Handle both payload and data fields for backward compatibility
+        const payload = data.payload !== undefined ? data.payload : data.data;
         
         // Only process events for this task and form type
         if (payload.taskId !== taskId || payload.formType !== formType) {
