@@ -52,8 +52,7 @@ import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
 import riskScoreConfigurationRouter from './routes/risk-score-configuration';
-import { createTestFormSubmissionRouter } from './routes/test-form-submission';
-import { createTestWebSocketRoutes } from './routes/test-websocket';
+// Test routes have been removed
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
@@ -412,25 +411,11 @@ export function registerRoutes(app: Express): Express {
   // Register test endpoints for WebSocket functionality
   app.use('/api/ws-test', wsTestRouter);
   
-  // Register our test WebSocket routes for form submission testing
-  try {
-    console.log('[Routes] Setting up test WebSocket routes');
-    const testWebSocketRoutes = createTestWebSocketRoutes();
-    app.use('/api/test/websocket', testWebSocketRoutes);
-    console.log('[Routes] Successfully registered test WebSocket routes');
-  } catch (error) {
-    console.error('[Routes] Error setting up test WebSocket routes:', error);
-  }
+  // Test WebSocket routes have been removed
+  // They have been replaced with standardized WebSocket implementation
   
-  // Register our test form submission routes
-  try {
-    console.log('[Routes] Setting up form submission test routes');
-    const testFormSubmissionRouter = createTestFormSubmissionRouter();
-    app.use('/api/test', testFormSubmissionRouter);
-    console.log('[Routes] Successfully registered form submission test routes');
-  } catch (error) {
-    console.error('[Routes] Error setting up form submission test routes:', error);
-  }
+  // Test form submission routes have been removed
+  // They have been replaced with standardized form submission implementation
   
   // Test routes have been removed
   // Replaced with standardized API endpoints

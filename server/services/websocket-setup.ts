@@ -14,7 +14,7 @@ import * as WebSocketService from './websocket';
 export function setupWebSocket(server: Server): void {
   try {
     // Initialize WebSocket server on the /ws path
-    initWebSocketServer(server, '/ws');
+    WebSocketService.initializeWebSocketServer(server);
   } catch (error) {
     console.error('[WebSocket] Error setting up WebSocket server:', error);
   }
