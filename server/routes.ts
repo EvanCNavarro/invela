@@ -24,6 +24,8 @@ import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
 // Import KY3P fields route for getting field definitions
 import ky3pFieldsRouter from './routes/ky3p-fields';
+// Import the KY3P progress router for form data loading
+import ky3pProgressRouter from './routes/ky3p-progress';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 // Import standardized KY3P batch update routes
@@ -338,6 +340,8 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pRouter);
   // Register KY3P fields router for field definitions
   app.use(ky3pFieldsRouter);
+  // Register KY3P progress router for saved form data
+  app.use(ky3pProgressRouter);
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
   // Use our enhanced KY3P demo auto-fill routes

@@ -294,42 +294,97 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   
   /**
    * Sync form data with the server
-   * Delegates to the original service or provides a compatible response
-   * that matches the expected SyncFormDataResponse interface
+   * Improved implementation that actually retrieves the latest data from the server
+   * using our new KY3P progress endpoint.
    */
   async syncFormData(taskId?: number): Promise<any> {
-    logger.info(`[EnhancedKY3P] Syncing form data for task ${taskId || 'unknown'}`);
+    logger.info(`[EnhancedKY3P] Syncing form data for task ${taskId || this.taskId || 'unknown'}`);
     
     try {
-      // Call the original service if it has this method
+      // Use the effective task ID
+      const effectiveTaskId = taskId || (this.originalService as any).taskId;
+      if (!effectiveTaskId) {
+        logger.warn('[EnhancedKY3P] No task ID available for sync');
+        throw new Error('No task ID available for sync');
+      }
+      
+      // First try to use the original service if it has this method
       if (typeof this.originalService.syncFormData === 'function') {
-        const result = await this.originalService.syncFormData(taskId);
-        // If result already has success property, return it
-        if (result && typeof result.success !== 'undefined') {
-          return result;
+        try {
+          logger.info(`[EnhancedKY3P] Using original service syncFormData method for task ${effectiveTaskId}`);
+          const result = await this.originalService.syncFormData(effectiveTaskId);
+          // If result already has success property, return it
+          if (result && typeof result.success !== 'undefined') {
+            logger.info('[EnhancedKY3P] Original syncFormData succeeded');
+            return result;
+          }
+        } catch (innerError) {
+          logger.warn(`[EnhancedKY3P] Original syncFormData failed: ${innerError instanceof Error ? innerError.message : String(innerError)}`);
+          // Continue with our implementation
         }
-        // Otherwise, wrap it in a compatible response
+      }
+      
+      // Our enhanced implementation calls the new ky3p/progress endpoint
+      logger.info(`[EnhancedKY3P] Fetching latest form data from /api/ky3p/progress/${effectiveTaskId}`);
+      
+      try {
+        const response = await fetch(`/api/ky3p/progress/${effectiveTaskId}`);
+        
+        if (!response.ok) {
+          logger.warn(`[EnhancedKY3P] Progress API returned error ${response.status}: ${response.statusText}`);
+          throw new Error(`Progress API returned error ${response.status}`);
+        }
+        
+        // Parse the response
+        const progressData = await response.json();
+        
+        if (!progressData.success) {
+          logger.warn('[EnhancedKY3P] Progress API reported failure');
+          throw new Error('Progress API reported failure');
+        }
+        
+        // Update our local form data
+        if (progressData.formData) {
+          logger.info(`[EnhancedKY3P] Progress API returned ${Object.keys(progressData.formData).length} form data entries`);
+          // Update our cache
+          this.cachedFormData = progressData.formData;
+          this.lastFormDataRetrievalTime = Date.now();
+          
+          // Update the original service too
+          if (typeof this.originalService.loadFormData === 'function') {
+            this.originalService.loadFormData(progressData.formData);
+          } else {
+            (this.originalService as any).formData = progressData.formData;
+          }
+        } else {
+          logger.warn('[EnhancedKY3P] Progress API returned no form data');
+        }
+        
+        // Return a valid response object
+        return {
+          success: true,
+          formData: progressData.formData || this.getFormData() || {},
+          progress: progressData.progress || 0,
+          status: progressData.status || 'synced',
+          taskId: effectiveTaskId,
+          syncDirection: 'server_to_client',
+          responseCount: progressData.responseCount,
+          fieldCount: progressData.fieldCount
+        };
+      } catch (apiError) {
+        logger.error(`[EnhancedKY3P] API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+        
+        // Return a fallback response using locally cached data
         return {
           success: true,
           formData: this.getFormData() || {},
           progress: 0,
-          status: 'synced',
-          taskId: taskId || this.taskId || 0,
-          syncDirection: 'none'
+          status: 'sync_failed',
+          taskId: effectiveTaskId,
+          syncDirection: 'none',
+          error: apiError instanceof Error ? apiError.message : String(apiError)
         };
       }
-      
-      logger.warn('[EnhancedKY3P] Original service does not have syncFormData method');
-      
-      // Return a valid response object to prevent undefined.success errors
-      return {
-        success: true,
-        formData: this.getFormData() || {},
-        progress: 0,
-        status: 'not_synced',
-        taskId: taskId || this.taskId || 0,
-        syncDirection: 'none'
-      };
     } catch (error) {
       logger.error(`[EnhancedKY3P] Error syncing form data: ${error instanceof Error ? error.message : String(error)}`);
       // Return an error response that still has the expected structure
@@ -339,7 +394,8 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
         progress: 0,
         status: 'error',
         taskId: taskId || this.taskId || 0,
-        syncDirection: 'none'
+        syncDirection: 'none',
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }
@@ -410,16 +466,70 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
         
         logger.info(`[EnhancedKY3P] Attempting fallback response loading for task ${effectiveTaskId}`);
         
-        const response = await fetch(`/api/ky3p/responses/${effectiveTaskId}`);
+        // Try different endpoints in sequence until one works
+        // First try our new KY3P progress endpoint
+        let response = await fetch(`/api/ky3p/progress/${effectiveTaskId}`);
+        
         if (!response.ok) {
-          logger.error(`[EnhancedKY3P] Fallback response loading failed: ${response.status}`);
-          return false;
+          logger.warn(`[EnhancedKY3P] Progress endpoint failed with status ${response.status}, trying alternatives...`);
+          
+          // Try the responses endpoint
+          response = await fetch(`/api/tasks/${effectiveTaskId}/ky3p-responses`);
+          
+          if (!response.ok) {
+            logger.warn(`[EnhancedKY3P] Tasks endpoint failed with status ${response.status}, trying last fallback...`);
+            
+            // Try direct KY3P responses endpoint as last resort
+            response = await fetch(`/api/ky3p/responses/${effectiveTaskId}`);
+            
+            if (!response.ok) {
+              logger.error(`[EnhancedKY3P] All fallback methods failed, last endpoint returned ${response.status}`);
+              return false;
+            }
+          }
         }
         
+        logger.info(`[EnhancedKY3P] Successfully got response from API endpoint`);
+        
+        
         const responseData = await response.json();
+        
+        // First check if we have a formData object directly (from progress endpoint)
+        if (responseData.formData && typeof responseData.formData === 'object') {
+          logger.info(`[EnhancedKY3P] Found formData object with ${Object.keys(responseData.formData).length} entries`);
+          
+          // Load the form data directly
+          try {
+            if (typeof this.originalService.loadFormData === 'function') {
+              this.originalService.loadFormData(responseData.formData);
+            } else {
+              (this.originalService as any).formData = responseData.formData;
+            }
+            
+            // Update our cache
+            this.cachedFormData = responseData.formData;
+            this.lastFormDataRetrievalTime = Date.now();
+            
+            logger.info('[EnhancedKY3P] Successfully loaded formData from API response');
+            return true;
+          } catch (formDataError) {
+            logger.error('[EnhancedKY3P] Error loading formData:', formDataError);
+            // Continue with responses processing as fallback
+          }
+        }
+        
+        // Fall back to processing individual responses 
         if (!responseData.responses || !Array.isArray(responseData.responses)) {
-          logger.warn('[EnhancedKY3P] Fallback response loading returned invalid data format');
-          return false;
+          logger.warn('[EnhancedKY3P] Response has no valid responses array format');
+          
+          // Final attempt: check if the responseData itself is an array
+          if (Array.isArray(responseData)) {
+            logger.info('[EnhancedKY3P] Found array response format, treating as responses array');
+            responseData.responses = responseData;
+          } else {
+            logger.warn('[EnhancedKY3P] No valid response format found');
+            return false;
+          }
         }
         
         // Process the responses
