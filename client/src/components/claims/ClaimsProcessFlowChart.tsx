@@ -261,7 +261,16 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
       [null, null, null]   // Bottom row
     ];
     
-    // Place key nodes in logical positions
+    // Identify direct connections between key nodes
+    const nodeConnections: Record<string, string[]> = {};
+    nodes.forEach(node => { nodeConnections[node.id] = []; });
+    
+    connections.forEach(conn => {
+      if (!nodeConnections[conn.source]) nodeConnections[conn.source] = [];
+      nodeConnections[conn.source].push(conn.target);
+    });
+    
+    // Place key nodes in logical positions with more precise placement
     if (nodeTypes.breach) {
       // Data Breach goes in middle-left (1,0)
       gridLayout[1][0] = nodeTypes.breach;
@@ -342,24 +351,41 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
       }
     });
     
-    // Convert grid to position coordinates
+    // Convert grid to position coordinates with more space between nodes
     const nodesWithPositions: (ProcessNode & { x: number; y: number })[] = [];
     
-    // Define grid cell dimensions (adjusted for better spacing)
-    const cellWidth = 180;
-    const cellHeight = 170;
-    const centerX = 70;  // Starting X offset
-    const centerY = 70;  // Starting Y offset
+    // Define grid cell dimensions with improved spacing
+    const cellWidth = 220;   // Increased from 180 for more horizontal separation
+    const cellHeight = 180;  // Increased from 170 for more vertical separation
+    const centerX = 100;     // Increased from 70 for better edge spacing
+    const centerY = 80;      // Adjusted for better vertical alignment
     
     // Process the grid layout into position coordinates
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 3; col++) {
         const node = gridLayout[row][col];
         if (node) {
+          // Adjusted positioning for middle column to create better flow paths
+          let xOffset = 0;
+          let yOffset = 0;
+          
+          // Special case adjustments to avoid line overlaps
+          if (col === 1) {
+            // For nodes in the middle column
+            if (row === 0) yOffset = -20; // Move top-middle up slightly
+            if (row === 2) yOffset = 20;  // Move bottom-middle down slightly
+          }
+          
+          // For nodes in the top and bottom rows of the right column, adjust horizontally
+          if (col === 2) {
+            if (row === 0) xOffset = 15;  // Move top-right outward slightly
+            if (row === 2) xOffset = 15;  // Move bottom-right outward slightly
+          }
+          
           nodesWithPositions.push({
             ...node,
-            x: centerX + (col * cellWidth),
-            y: centerY + (row * cellHeight)
+            x: centerX + (col * cellWidth) + xOffset,
+            y: centerY + (row * cellHeight) + yOffset
           });
         }
       }
@@ -404,39 +430,188 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
       
       if (!sourceNode || !targetNode) return;
       
-      // Calculate connection points based on node types
+      // Calculate connection points based on node types and positions
       let sourceX, sourceY, targetX, targetY;
+      let sourceEdge: 'right' | 'left' | 'top' | 'bottom' = 'right';
+      let targetEdge: 'right' | 'left' | 'top' | 'bottom' = 'left';
       
-      // For source node
+      // Determine best connection edges based on relative positions
+      const dx = targetNode.x - sourceNode.x;
+      const dy = targetNode.y - sourceNode.y;
+      const sourceCenterX = sourceNode.x + (sourceNode.type === 'decision' ? 0 : nodeWidth / 2);
+      const sourceCenterY = sourceNode.y + (sourceNode.type === 'decision' ? 0 : nodeHeight / 2);
+      const targetCenterX = targetNode.x + (targetNode.type === 'decision' ? 0 : nodeWidth / 2);
+      const targetCenterY = targetNode.y + (targetNode.type === 'decision' ? 0 : nodeHeight / 2);
+      
+      // Special handling for decision nodes - they have specific connection points
       if (sourceNode.type === 'decision') {
-        // For decision node (diamond), connect from right point
-        sourceX = sourceNode.x + decisionNodeSize / 2;
-        sourceY = sourceNode.y;
+        // Choose the appropriate edge based on target position relative to decision node
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // Horizontal connection is dominant
+          sourceEdge = dx > 0 ? 'right' : 'left';
+        } else {
+          // Vertical connection is dominant
+          sourceEdge = dy > 0 ? 'bottom' : 'top';
+        }
       } else {
-        // For rectangular nodes, connect from right edge
-        sourceX = sourceNode.x + nodeWidth;
-        sourceY = sourceNode.y + nodeHeight / 2;
+        // For rectangular nodes, choose based on relative position for cleaner layout
+        if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+          // Horizontal connection is much more dominant
+          sourceEdge = dx > 0 ? 'right' : 'left';
+        } else if (Math.abs(dy) > Math.abs(dx) * 1.5) {
+          // Vertical connection is much more dominant
+          sourceEdge = dy > 0 ? 'bottom' : 'top';
+        } else {
+          // Default to right edge connection for rectangle nodes if not clearly vertical/horizontal
+          sourceEdge = 'right';
+        }
       }
       
-      // For target node
+      // Similar logic for target node
       if (targetNode.type === 'decision') {
-        // For decision node (diamond), connect to left point
-        targetX = targetNode.x - decisionNodeSize / 2;
-        targetY = targetNode.y;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          targetEdge = dx > 0 ? 'left' : 'right';
+        } else {
+          targetEdge = dy > 0 ? 'top' : 'bottom';
+        }
       } else {
-        // For rectangular nodes, connect to left edge
-        targetX = targetNode.x;
-        targetY = targetNode.y + nodeHeight / 2;
+        if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+          targetEdge = dx > 0 ? 'left' : 'right';
+        } else if (Math.abs(dy) > Math.abs(dx) * 1.5) {
+          targetEdge = dy > 0 ? 'top' : 'bottom';
+        } else {
+          targetEdge = 'left';
+        }
       }
       
-      // Create path with curve
+      // Set source connection point based on determined edge
+      if (sourceNode.type === 'decision') {
+        const halfSize = decisionNodeSize / 2;
+        switch (sourceEdge) {
+          case 'right':
+            sourceX = sourceNode.x + halfSize;
+            sourceY = sourceNode.y;
+            break;
+          case 'left':
+            sourceX = sourceNode.x - halfSize;
+            sourceY = sourceNode.y;
+            break;
+          case 'top':
+            sourceX = sourceNode.x;
+            sourceY = sourceNode.y - halfSize;
+            break;
+          case 'bottom':
+            sourceX = sourceNode.x;
+            sourceY = sourceNode.y + halfSize;
+            break;
+        }
+      } else {
+        switch (sourceEdge) {
+          case 'right':
+            sourceX = sourceNode.x + nodeWidth;
+            sourceY = sourceNode.y + nodeHeight / 2;
+            break;
+          case 'left':
+            sourceX = sourceNode.x;
+            sourceY = sourceNode.y + nodeHeight / 2;
+            break;
+          case 'top':
+            sourceX = sourceNode.x + nodeWidth / 2;
+            sourceY = sourceNode.y;
+            break;
+          case 'bottom':
+            sourceX = sourceNode.x + nodeWidth / 2;
+            sourceY = sourceNode.y + nodeHeight;
+            break;
+        }
+      }
+      
+      // Set target connection point based on determined edge
+      if (targetNode.type === 'decision') {
+        const halfSize = decisionNodeSize / 2;
+        switch (targetEdge) {
+          case 'left':
+            targetX = targetNode.x - halfSize;
+            targetY = targetNode.y;
+            break;
+          case 'right':
+            targetX = targetNode.x + halfSize;
+            targetY = targetNode.y;
+            break;
+          case 'top':
+            targetX = targetNode.x;
+            targetY = targetNode.y - halfSize;
+            break;
+          case 'bottom':
+            targetX = targetNode.x;
+            targetY = targetNode.y + halfSize;
+            break;
+        }
+      } else {
+        switch (targetEdge) {
+          case 'left':
+            targetX = targetNode.x;
+            targetY = targetNode.y + nodeHeight / 2;
+            break;
+          case 'right':
+            targetX = targetNode.x + nodeWidth;
+            targetY = targetNode.y + nodeHeight / 2;
+            break;
+          case 'top':
+            targetX = targetNode.x + nodeWidth / 2;
+            targetY = targetNode.y;
+            break;
+          case 'bottom':
+            targetX = targetNode.x + nodeWidth / 2;
+            targetY = targetNode.y + nodeHeight;
+            break;
+        }
+      }
+      
+      // Determine if we need a custom curve for better path routing
+      let pathData;
+      const isHorizontalSource = sourceEdge === 'left' || sourceEdge === 'right';
+      const isHorizontalTarget = targetEdge === 'left' || targetEdge === 'right';
+      const isVerticalSource = sourceEdge === 'top' || sourceEdge === 'bottom';
+      const isVerticalTarget = targetEdge === 'top' || targetEdge === 'bottom';
+      
+      // Create an appropriate path based on connection geometry
+      if ((isHorizontalSource && isHorizontalTarget) || 
+          (isVerticalSource && isVerticalTarget)) {
+        // Similar edge types - use simple curve
+        const midX = (sourceX + targetX) / 2;
+        const midY = (sourceY + targetY) / 2;
+        
+        pathData = `M${sourceX},${sourceY} 
+                   C${midX},${sourceY} ${midX},${targetY} ${targetX},${targetY}`;
+      } else {
+        // Mixed edge types (e.g., horizontal to vertical) - use more complex curve
+        // Create intermediate points for smoother routing
+        let control1X, control1Y, control2X, control2Y;
+        
+        if (isHorizontalSource) {
+          // Source is horizontal (left/right), target is vertical (top/bottom)
+          const offset = 40;
+          control1X = sourceX + (sourceEdge === 'right' ? offset : -offset);
+          control1Y = sourceY;
+          control2X = targetX;
+          control2Y = targetY + (targetEdge === 'bottom' ? -offset : offset);
+        } else {
+          // Source is vertical (top/bottom), target is horizontal (left/right)
+          const offset = 40;
+          control1X = sourceX;
+          control1Y = sourceY + (sourceEdge === 'bottom' ? offset : -offset);
+          control2X = targetX + (targetEdge === 'right' ? -offset : offset);
+          control2Y = targetY;
+        }
+        
+        pathData = `M${sourceX},${sourceY} 
+                   C${control1X},${control1Y} ${control2X},${control2Y} ${targetX},${targetY}`;
+      }
+      
+      // Draw the path with the calculated data
       const path = g.append('path')
-        .attr('d', () => {
-          // Simple curve using bezier
-          const midX = (sourceX + targetX) / 2;
-          return `M${sourceX},${sourceY} 
-                 C${midX},${sourceY} ${midX},${targetY} ${targetX},${targetY}`;
-        })
+        .attr('d', pathData)
         .attr('fill', 'none')
         .attr('stroke', '#64748b')
         .attr('stroke-width', 1.5)
@@ -444,13 +619,17 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
       
       // Add connection label if present
       if (connection.label) {
+        // Put label at midpoint of path
         const midX = (sourceX + targetX) / 2;
         const midY = (sourceY + targetY) / 2;
         
+        // Add a white background for better readability
+        const labelWidth = connection.label.length * 7 + 10; // Approximate width based on text length
+        
         g.append('rect')
-          .attr('x', midX - 15)
+          .attr('x', midX - labelWidth/2)
           .attr('y', midY - 10)
-          .attr('width', 30)
+          .attr('width', labelWidth)
           .attr('height', 20)
           .attr('fill', 'white')
           .attr('stroke', '#e2e8f0')
