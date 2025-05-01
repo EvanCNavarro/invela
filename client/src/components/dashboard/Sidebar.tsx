@@ -397,10 +397,10 @@ export function Sidebar({
     {
       icon: FileText,
       label: "Claims",
-      href: "https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/claims",
+      href: "/claims",
       locked: !availableTabs.includes('claims'),
       hideForFinTech: true,
-      externalLink: true
+      externalLink: false
     },
     {
       icon: BarChart2,
