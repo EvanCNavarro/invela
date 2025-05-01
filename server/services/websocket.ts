@@ -317,6 +317,18 @@ export function broadcastTaskUpdate(
   }
 }
 
+/**
+ * Broadcast a risk score priority update to all connected WebSocket clients
+ */
+export function broadcastRiskPriorityUpdate(
+  priorities: any
+): { clientCount: number } {
+  return broadcastMessage('risk_priority_update', {
+    priorities,
+    timestamp: new Date().toISOString()
+  });
+}
+
 export default {
   initWebSocketServer,
   getWebSocketServer,
@@ -329,5 +341,6 @@ export default {
   broadcastFileVaultUpdate,
   broadcastCompanyTabsUpdate,
   broadcastFieldUpdate,
+  broadcastRiskPriorityUpdate,
   closeWebSocketServer
 };
