@@ -53,8 +53,11 @@ class RiskScoreLogger {
    * Log a message with a specific tag if that tag is enabled
    */
   log(tag: string, message: string, ...data: any[]): void {
+    // Always log to console for debugging purposes
+    console.log(`[RiskScore:${tag}] ${message}`, ...data);
+    
+    // Only record in log history if this tag is enabled or in debug mode
     if (this.enabledTags.has(tag) || this.debugMode) {
-      console.log(`[RiskScore:${tag}] ${message}`, ...data);
       // Add debug message to DOM for visibility if browser console is not visible
       this.debugLog(`[${tag}] ${message}`);
     }
@@ -64,8 +67,11 @@ class RiskScoreLogger {
    * Log error with a specific tag
    */
   error(tag: string, message: string, ...data: any[]): void {
+    // Always log errors to console for debugging purposes
+    console.error(`[RiskScore:${tag}] ${message}`, ...data);
+    
+    // Only record in log history if this tag is enabled or in debug mode
     if (this.enabledTags.has(tag) || this.debugMode) {
-      console.error(`[RiskScore:${tag}] ${message}`, ...data);
       // Add debug message to DOM for visibility if browser console is not visible
       this.debugLog(`[ERROR:${tag}] ${message}`, true);
     }
@@ -75,10 +81,10 @@ class RiskScoreLogger {
    * Create a debug message in the DOM for visibility
    */
   private debugLog(message: string, isError: boolean = false): void {
-    if (!this.debugMode) return;
+    // Always console log regardless of debug mode to ensure logger is functioning
+    console.log(`RISK-SCORE-DEBUG: ${message}`);
     
-    // Just log to console to verify logger is active
-    console.log(`DEBUG: ${message}`);
+    if (!this.debugMode) return;
     
     // Only continue with DOM manipulation in browser environment
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
