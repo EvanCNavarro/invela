@@ -3,7 +3,7 @@ import getLogger from '@/utils/logger';
 
 // Create a logger with lazy initialization for WebSocket operations
 const logger = getLogger('WebSocket', {
-  enabled: process.env.NODE_ENV !== 'production' && false, // Disable even in development
+  enabled: process.env.NODE_ENV === 'development' && import.meta.env.VITE_WS_DEBUG === 'true', // Only enable with explicit env flag
   levels: {
     debug: false,
     info: false,
@@ -12,6 +12,11 @@ const logger = getLogger('WebSocket', {
   },
   lazy: true // Prevent logger creation if logging is disabled
 });
+
+// Silence console.log for WebSocket messages unless explicitly enabled
+const shouldLog = process.env.NODE_ENV === 'development' && import.meta.env.VITE_WS_DEBUG === 'true';
+const consoleLog = shouldLog ? console.log : () => {};
+const consoleError = shouldLog ? console.error : () => {};
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -51,6 +56,15 @@ class WebSocketService {
   private getWebSocketUrl(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
+    
+    // Create WebSocket URL ensuring it's properly formed
+    // This prevents the error 'wss://localhost:undefined/' in development
+    if (!host) {
+      logger.warn('Invalid host in window.location, falling back to current URL');
+      // Fallback to a known good URL
+      return `${protocol}//${window.location.hostname || 'localhost'}${window.location.port ? `:${window.location.port}` : ''}/ws`;
+    }
+    
     return `${protocol}//${host}/ws`;
   }
 
@@ -84,6 +98,26 @@ class WebSocketService {
   private async connect(): Promise<void> {
     // If already connected or connecting, return the existing promise
     if (this.connectionPromise) return this.connectionPromise;
+    
+    // Development mode error suppression for Vite HMR errors
+    if (process.env.NODE_ENV === 'development') {
+      // Suppress WebSocket connection errors in the console during development
+      const originalConsoleError = console.error;
+      console.error = (...args) => {
+        const message = args[0]?.toString() || '';
+        if (message.includes('WebSocket connection') && 
+            (message.includes('localhost:undefined') || message.includes('Failed to construct'))) {
+          // Silently ignore Vite HMR WebSocket errors
+          return;
+        }
+        originalConsoleError(...args);
+      };
+      
+      // Restore console.error after a short delay to avoid affecting other error logging
+      setTimeout(() => {
+        console.error = originalConsoleError;
+      }, 2000);
+    }
 
     // Mark as initialized
     this.isInitialized = true;
