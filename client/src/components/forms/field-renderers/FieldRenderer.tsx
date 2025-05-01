@@ -69,12 +69,15 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     
   // Use a safe display mode for diagnostic/testing that avoids hooks and form registration
   if (isDiagnosticMode) {
+    // Get the field key safely (for diagnostic mode too)
+    const safeFieldKey = field.key || (field as any).fieldKey || `field_${(field as any).id || ''}`;
+    
     // In diagnostic mode, safely access field value using type assertion
     const fieldValue = (field as any).value;
     
     return (
       <div className="field-display-only mb-4 border-b pb-3">
-        <div className="mb-1 font-semibold text-gray-700">{field.label || field.key}</div>
+        <div className="mb-1 font-semibold text-gray-700">{field.label || safeFieldKey}</div>
         {field.question && <div className="text-base mb-2">{field.question}</div>}
         {(field.helpText || field.tooltip) && <div className="text-sm text-gray-500 mb-1">{field.helpText || field.tooltip}</div>}
         <div className="border p-2 rounded bg-gray-50 mt-1">
@@ -85,7 +88,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
           )}
         </div>
         <div className="text-xs text-gray-400 mt-1">
-          Field type: {field.type || 'text'}, Key: {field.key}, Section: {field.section || 'none'}
+          Field type: {field.type || 'text'}, Key: {safeFieldKey}, Section: {field.section || 'none'}
         </div>
       </div>
     );
@@ -104,8 +107,11 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       return acc;
     }, {} as Record<string, any>);
   
+  // Get field key from field using same helper function for consistency
+  const fieldKeyForConfig = field.key || (field as any).fieldKey || `field_${(field as any).id || ''}`;
+  
   const fieldConfig = configurations
-    .filter(config => config?.scope === 'field' && config?.scope_target === field.key)
+    .filter(config => config?.scope === 'field' && config?.scope_target === fieldKeyForConfig)
     .reduce((acc, curr) => {
       if (curr?.config_key) {
         acc[curr.config_key] = curr.config_value;
@@ -203,15 +209,33 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   }, []);
   
   // Standard rendering with form control
+  // Safely get field key - handle both formats (key or fieldKey property)  
+  const getFieldKey = (field: FormFieldType): string => {
+    // Use field.key if available, otherwise fall back to fieldKey, or construct a default key
+    return field.key || (field as any).fieldKey || `field_${(field as any).id || ''}`;
+  };
+
+  // Get the field key to use throughout the renderer
+  const fieldKey = getFieldKey(field);
+  
+  // Added debugging logs
+  console.log(`[FieldRenderer] Rendering field:`, { 
+    fieldKey,
+    originalKey: field.key,
+    alternativeKey: (field as any).fieldKey,
+    id: (field as any).id,
+    label: field.label
+  });
+  
   return (
     <FormField
       control={form.control}
-      name={field.key}
+      name={fieldKey}
       render={({ field: fieldProps }) => {
         // Get form state for validation styling
         const { formState } = form;
-        const hasError = !!formState.errors[field.key];
-        const fieldValue = form.getValues(field.key);
+        const hasError = !!formState.errors[fieldKey];
+        const fieldValue = form.getValues(fieldKey);
         const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
         
         // Combine our focused state with active field
