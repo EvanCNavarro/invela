@@ -12,6 +12,9 @@ import { eq } from 'drizzle-orm';
 
 const router = Router();
 
+// Export the router
+export { router };
+
 // Endpoint to directly update risk priorities (bypassing traditional API auth)
 // This is a temporary solution to the authentication issue
 router.post('/direct-update-risk-priorities', async (req: Request, res: Response) => {
