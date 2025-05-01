@@ -13,6 +13,7 @@ import { componentFactory } from './componentFactory';
 import { formServiceFactory } from './form-service-factory';
 import { createUnifiedKY3PFormService } from './unified-ky3p-form-service';
 import { FormServiceInterface, FormField, FormSection, FormSubmitOptions } from './formService';
+import { ky3pFormServiceFactory } from './ky3p-form-service';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('RegisterStandardizedServices');
