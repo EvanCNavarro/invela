@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
@@ -15,6 +15,8 @@ import { ComparativeVisualization } from '@/components/risk-score/ComparativeVis
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const dimensionIcons: Record<string, React.ReactNode> = {
   physical_security: <Shield className="h-5 w-5" />,
@@ -34,10 +36,88 @@ interface DimensionRowProps {
   onValueChange: (id: string, value: number) => void;
 }
 
+// Define the item type for drag-and-drop
+const ItemTypes = {
+  DIMENSION_ROW: 'dimensionRow'
+};
+
 // Component to render a single draggable dimension row
 function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionRowProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  
+  // Setup drag functionality
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.DIMENSION_ROW,
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+  
+  // Setup drop functionality
+  const [, drop] = useDrop({
+    accept: ItemTypes.DIMENSION_ROW,
+    hover(item: { index: number }, monitor) {
+      if (!ref.current) {
+        return;
+      }
+
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      // Don't replace items with themselves
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      // Determine rectangle on screen
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
+
+      // Get vertical middle
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset();
+
+      // Get pixels to the top
+      const hoverClientY = clientOffset ? clientOffset.y - hoverBoundingRect.top : 0;
+
+      // Only perform the move when the mouse has crossed half of the item's height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return;
+      }
+
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return;
+      }
+
+      // Time to actually perform the action
+      onReorder(dragIndex, hoverIndex);
+
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex;
+    },
+  });
+  
+  // Connect the drag and drop refs
+  drag(drop(ref));
+  
+  const opacity = isDragging ? 0.4 : 1;
+  
   return (
-    <div className="flex items-center gap-2 p-4 bg-white border border-border rounded-md shadow-sm mb-2 relative">
+    <div 
+      ref={ref}
+      className="flex items-center gap-2 p-4 bg-white border border-border rounded-md shadow-sm mb-2 relative transition-opacity"
+      style={{ opacity }}
+    >
       <div className="flex-shrink-0 cursor-move text-muted-foreground">
         <GripVertical className="h-5 w-5" />
       </div>
