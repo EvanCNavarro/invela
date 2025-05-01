@@ -1102,7 +1102,7 @@ router.post('/api/kyb/progress', async (req, res) => {
       
     // Broadcast task update via WebSocket for real-time progress updates
     console.log(`[WebSocket] Broadcasting task update for task ${taskId}: progress=${progress}, status=${newStatus}`);
-    broadcastTaskUpdate({
+    WebSocketService.broadcastTaskUpdate({
       id: taskId,
       status: newStatus as TaskStatus,
       progress: progress,
@@ -1193,14 +1193,14 @@ router.post('/api/kyb/progress', async (req, res) => {
               try {
                 // Use the imported WebSocket functions directly instead of trying to re-require them
                 // First broadcast using the standard tab update function
-                broadcastMessage('company_tabs_update', {
+                WebSocketService.broadcast('company_tabs_update', {
                   companyId, 
                   availableTabs: updatedTabs,
                   timestamp: new Date().toISOString(),
                 });
                 
                 // Then use the more comprehensive message with cache_invalidation flag
-                broadcastMessage('company_tabs_updated', {
+                WebSocketService.broadcast('company_tabs_updated', {
                   companyId, 
                   availableTabs: updatedTabs,
                   cache_invalidation: true,
@@ -1209,7 +1209,7 @@ router.post('/api/kyb/progress', async (req, res) => {
                 });
                 
                 // Also broadcast a special immediate event to force UI refresh
-                broadcastMessage('sidebar_refresh_tabs', {
+                WebSocketService.broadcast('sidebar_refresh_tabs', {
                   companyId,
                   availableTabs: updatedTabs,
                   forceRefresh: true,
@@ -1221,7 +1221,7 @@ router.post('/api/kyb/progress', async (req, res) => {
                 // Schedule a delayed broadcast for reliability
                 setTimeout(() => {
                   try {
-                    broadcastMessage('company_tabs_updated', {
+                    WebSocketService.broadcast('company_tabs_updated', {
                       companyId, 
                       availableTabs: updatedTabs,
                       cache_invalidation: true,
@@ -1530,10 +1530,10 @@ router.post('/api/kyb/save', async (req, res) => {
     if (task.status === TaskStatus.SUBMITTED || isSubmission) {
       // Broadcast submission status via WebSocket
       console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted`);
-      broadcastSubmissionStatus(taskId, 'submitted');
+      WebSocketService.broadcast('submission_status', { taskId, status: 'submitted' });
 
       // Also broadcast the task update for dashboard real-time updates
-      broadcastTaskUpdate({
+      WebSocketService.broadcastTaskUpdate({
         id: taskId,
         status: TaskStatus.SUBMITTED,
         progress: 100,
