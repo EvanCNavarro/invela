@@ -12,11 +12,9 @@ import { sql } from 'drizzle-orm/sql';
 import { synchronizeTasks, unlockFileVaultAccess } from './synchronous-task-dependencies';
 import { broadcastTaskUpdate } from './websocket';
 import { broadcastCompanyTabsUpdate, unlockDashboardAndInsightsTabs } from './company-tabs';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
 import * as fileCreationService from './fileCreation.fixed';
-
-const logger = new Logger('FormSubmissionHandler');
 
 interface SubmitFormOptions {
   taskId: number;

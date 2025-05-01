@@ -13,9 +13,10 @@ import { db } from '../../db';
 import { tasks, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, openBankingFields, openBankingResponses } from '../../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { broadcastTaskUpdate } from './websocket';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('UniversalDemoAutoFillService');
+// Add namespace context to logs
+const logContext = { service: 'UniversalDemoAutoFillService' };
 
 /**
  * Supported form types for auto-fill functionality

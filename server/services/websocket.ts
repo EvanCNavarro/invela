@@ -5,10 +5,8 @@
  * It handles formatting and sending messages to connected clients.
  */
 
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
-
-const logger = getLogger('WebSocketService');
 
 // Store for active WebSocket connections
 let wss: WebSocketServer | null = null;
