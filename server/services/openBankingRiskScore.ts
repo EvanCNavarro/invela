@@ -26,11 +26,11 @@ export async function generateOpenBankingRiskScore(companyId: number, taskId: nu
   });
 
   try {
-    // Generate a random risk score between 250 and 1500
+    // Generate a random risk score between 1 and 100
     // This is a placeholder implementation that can be replaced with a more
     // sophisticated calculation method in the future
-    const minScore = 250;
-    const maxScore = 1500;
+    const minScore = 1;
+    const maxScore = 100;
     const riskScore = Math.floor(Math.random() * (maxScore - minScore + 1)) + minScore;
 
     console.log('[OpenBanking Risk Score] Generated risk score:', {

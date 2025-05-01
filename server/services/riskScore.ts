@@ -76,9 +76,16 @@ export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreR
     });
   }
 
-  // Calculate final risk score as percentage of max possible
-  // No need to scale to 100 as we're already working with the actual scores
-  const riskScore = maxPossibleScore > 0 ? Math.round(totalScore) : 0;
+  // Calculate final risk score as percentage of max possible and scale to 0-100 range
+  let riskScore = 0;
+  if (maxPossibleScore > 0) {
+    // Calculate percentage (0-100)
+    const percentage = (totalScore / maxPossibleScore) * 100;
+    // Round to whole number
+    riskScore = Math.round(percentage);
+    // Ensure we stay within 0-100 range
+    riskScore = Math.min(Math.max(0, riskScore), 100);
+  }
 
   console.log('[Risk Score] Calculation complete:', {
     taskId,
