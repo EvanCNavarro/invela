@@ -8,10 +8,12 @@ const logger = getLogger('FileCreationService');
 
 // Validation schema for file metadata
 const fileMetadataSchema = z.object({
-  taskType: z.enum(['company_kyb', 'company_card', 'sp_ky3p_assessment']),
+  taskType: z.enum(['company_kyb', 'company_card', 'sp_ky3p_assessment', 'open_banking', 'open_banking_survey']),
   taskId: z.number(),
   companyName: z.string(),
-  additionalData: z.record(z.unknown()).optional()
+  additionalData: z.record(z.unknown()).optional(),
+  // Add originalType to support data forwarded from other endpoints
+  originalType: z.string().optional()
 });
 
 export type FileMetadata = z.infer<typeof fileMetadataSchema>;
@@ -57,8 +59,12 @@ export class FileCreationService {
     
     // For Open Banking assessments
     if (metadata.taskType === 'open_banking' || 
-        metadata.originalType === 'open_banking' ||
-        metadata.taskType === 'open_banking_survey' ||
+        metadata.taskType === 'open_banking_survey') {
+      return `open_banking_survey_${sanitizedCompanyName}_${timestamp}.json`;
+    }
+    
+    // Check originalType if provided (for form types passed from other handlers)
+    if (metadata.originalType === 'open_banking' ||
         metadata.originalType === 'open_banking_survey') {
       return `open_banking_survey_${sanitizedCompanyName}_${timestamp}.json`;
     }
@@ -67,10 +73,18 @@ export class FileCreationService {
     return `${taskType}_assessment_${sanitizedCompanyName}_${timestamp}.json`;
   }
   
-  // Convert form data to CSV format for KY3P assessments
+  /**
+   * Convert form data to CSV format for KY3P assessments
+   * 
+   * This method transforms form data and field definitions into a properly formatted CSV file
+   * with consistent field ordering, numbering, and proper CSV escaping.
+   * 
+   * @param data - The form data to convert to CSV format
+   * @param fields - Optional array of field definitions with metadata
+   * @returns Formatted CSV string with headers and data rows
+   */
   private generateCSV(data: Record<string, any>, fields: any[] = []): string {
-    console.log('[FileCreation] Generating CSV for KY3P assessment');
-    console.log('[FileCreation] CRITICAL FIX: Processing form data to include all values in CSV');
+    logger.info('Generating CSV for KY3P assessment');
     
     // Create CSV header in KYB format
     let csv = 'Question Number,Group,Question,Answer,Type\n';
@@ -78,13 +92,7 @@ export class FileCreationService {
     // Create a field key map for easier lookup
     const fieldMap = new Map();
     if (Array.isArray(fields)) {
-      console.log(`[FileCreation] Processing ${fields.length} fields for CSV generation`);
-      
-      // Log a sample field to debug schema
-      if (fields.length > 0) {
-        console.log('[FileCreation] Sample field structure:', 
-          JSON.stringify(fields[0], null, 2).substring(0, 500)); // Limit output size
-      }
+      logger.info(`Processing ${fields.length} fields for CSV generation`);
       
       // Sort fields by order to ensure consistent question numbering
       const sortedFields = [...fields].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -97,18 +105,20 @@ export class FileCreationService {
           // Add index to field for question numbering
           fieldMap.set(key, { ...field, index: idx + 1 });
         } else {
-          console.warn('[FileCreation] Field missing both field_key and key properties:', field);
+          logger.warn(`Field missing both field_key and key properties:`, { field });
         }
       });
     }
     
-    console.log(`[FileCreation] Field map created with ${fieldMap.size} entries`);
-    console.log(`[FileCreation] Data object contains ${Object.keys(data).length} keys`);
+    logger.info('Field map created for CSV generation', {
+      fieldMapSize: fieldMap.size,
+      dataKeysCount: Object.keys(data).length
+    });
     
     // Get sorted list of fields for consistent order
     let sortedFieldKeys: string[] = [];
     
-    // CRITICAL FIX: Ensure we process ALL fields in correct order, not just those in the data object
+    // Ensure we process ALL fields in correct order, not just those in the data object
     if (Array.isArray(fields) && fields.length > 0) {
       // Create a sorted list of all field keys from field definitions
       sortedFieldKeys = fields
@@ -116,11 +126,11 @@ export class FileCreationService {
         .map(field => field.field_key || field.key)
         .filter(key => !!key); // Filter out any undefined keys
         
-      console.log(`[FileCreation] Using ${sortedFieldKeys.length} sorted field keys for CSV generation`);
+      logger.info(`Using ${sortedFieldKeys.length} sorted field keys for CSV generation`);
     } else {
       // Fallback to using keys from data object if field definitions aren't available
       sortedFieldKeys = Object.keys(data);
-      console.log(`[FileCreation] No field definitions available, using data keys: ${sortedFieldKeys.length} keys`);
+      logger.info(`No field definitions available, using ${sortedFieldKeys.length} data keys`);
     }
     
     // Track which keys we've already processed
@@ -135,10 +145,7 @@ export class FileCreationService {
       processedKeys.add(key);
       
       // Get the value from data object if it exists (otherwise empty string)
-      const value = data[key] || '';
-      
-      // Log the data being processed
-      console.log(`[FileCreation] Processing field ${key} with value type: ${typeof value}`);
+      const value = data[key] ?? '';
       
       // Find field metadata if available
       const field = fieldMap.get(key);
@@ -155,7 +162,7 @@ export class FileCreationService {
       // Escape quotes in CSV fields
       const escapedQuestionNumber = String(questionNumber).replace(/"/g, '""');
       const escapedQuestion = question.replace(/"/g, '""');
-      const escapedValue = String(value || '').replace(/"/g, '""');
+      const escapedValue = String(value ?? '').replace(/"/g, '""');
       const escapedGroup = group.replace(/"/g, '""');
       const escapedType = fieldType.toUpperCase().replace(/"/g, '""');
       
@@ -163,22 +170,25 @@ export class FileCreationService {
       csv += `"${escapedQuestionNumber}","${escapedGroup}","${escapedQuestion}","${escapedValue}","${escapedType}"\n`;
     }
     
-    // The redundant loop that adds missing fields is no longer needed!
-    // Our new approach already processes ALL fields in the correct order,
-    // including those not present in the data object.
-    console.log(`[FileCreation] No need to add remaining fields - already processed all ${sortedFieldKeys.length} fields`);
-    
-    
     // Log the final CSV size
-    console.log(`[FileCreation] Final CSV contains ${csv.split('\n').length - 1} rows`);
+    logger.info(`Final CSV contains ${csv.split('\n').length - 1} rows`);
     
     return csv;
   }
 
   /**
    * Creates a file for a task - KYB, KY3P or other form task
+   * 
    * This method handles special case for KY3P CSV files to ensure
    * they are properly stored in the database and can be downloaded later.
+   * 
+   * The method has been enhanced with better error handling and logging.
+   * 
+   * @param userId - The ID of the user creating the file
+   * @param companyId - The ID of the company the file belongs to
+   * @param content - The form data content to store in the file
+   * @param metadata - Metadata about the file (taskType, taskId, etc.)
+   * @returns A promise resolving to the file creation result
    */
   async createTaskFile(
     userId: number,
@@ -187,17 +197,18 @@ export class FileCreationService {
     metadata: FileMetadata
   ): Promise<FileCreationResult> {
     try {
-      console.log('[FileCreation] Starting file creation:', {
+      logger.info('Starting file creation', {
         userId,
         companyId,
-        metadata,
+        taskType: metadata.taskType,
+        taskId: metadata.taskId,
         timestamp: new Date().toISOString()
       });
 
       // Validate metadata
       const validatedMetadata = fileMetadataSchema.safeParse(metadata);
       if (!validatedMetadata.success) {
-        console.error('[FileCreation] Metadata validation failed:', {
+        logger.error('Metadata validation failed', {
           errors: validatedMetadata.error.errors,
           timestamp: new Date().toISOString()
         });
@@ -217,12 +228,17 @@ export class FileCreationService {
       // Generate content based on file type
       if (metadata.taskType === 'sp_ky3p_assessment') {
         // For KY3P assessments, generate CSV content
-        fileContent = this.generateCSV(content, metadata.additionalData?.fields);
+        // Extract fields from additionalData safely
+        const fields = metadata.additionalData?.fields;
+        // Convert fields to array if necessary
+        const fieldsArray = Array.isArray(fields) ? fields : [];
+        
+        fileContent = this.generateCSV(content, fieldsArray);
         contentType = 'text/csv';
         
-        console.log('[FileCreation] Generated CSV content for KY3P assessment', {
+        logger.info('Generated CSV content for KY3P assessment', {
           contentLength: fileContent.length,
-          fieldsCount: metadata.additionalData?.fields?.length || 0
+          fieldsCount: fieldsArray.length
         });
       } else {
         // For other types, use JSON
@@ -232,7 +248,7 @@ export class FileCreationService {
       
       const timestamp = new Date();
 
-      console.log('[FileCreation] Creating file record:', {
+      logger.info('Creating file record', {
         fileName,
         contentType,
         contentLength: fileContent.length,
@@ -245,43 +261,86 @@ export class FileCreationService {
         fileContent = `database:${fileContent}`;
       }
       
-      // Create file record in database
-      const [fileRecord] = await db.insert(files)
-        .values({
-          name: fileName,
-          size: Buffer.from(fileContent).length,
-          type: contentType,
-          path: fileContent, // Store content directly in path field as per existing pattern
-          status: 'uploaded',
-          user_id: userId,
-          company_id: companyId,
-          created_at: timestamp,
-          updated_at: timestamp,
-          upload_time: timestamp,
-          version: 1.0,
-          download_count: 0,
-          metadata: {
-            taskId: metadata.taskId,
-            taskType: metadata.taskType,
-            companyName: metadata.companyName
+      // Open Banking file handling - standardize JSON format
+      if (metadata.taskType === 'open_banking' || metadata.taskType === 'open_banking_survey' ||
+          metadata.originalType === 'open_banking' || metadata.originalType === 'open_banking_survey') {
+        logger.info('Processing Open Banking file content');
+        // Ensure we have a proper JSON structure with all required fields
+        if (typeof content === 'object' && content !== null) {
+          // Add standard metadata fields if needed
+          if (!content.metadata) {
+            // Create a metadata object with the task details
+            const contentMetadata = {
+              taskId: metadata.taskId,
+              companyName: metadata.companyName,
+              taskType: metadata.taskType || metadata.originalType,
+              timestamp: timestamp.toISOString()
+            };
+            
+            // Add metadata to content object
+            content = { ...content, metadata: contentMetadata };
+            
+            // Re-stringify with the added metadata
+            fileContent = JSON.stringify(content, null, 2);
+            
+            logger.info('Added metadata to Open Banking file content');
           }
-        })
-        .returning();
+        }
+      }
+      
+      try {
+        // Create file record in database
+        const [fileRecord] = await db.insert(files)
+          .values({
+            name: fileName,
+            size: Buffer.from(fileContent).length,
+            type: contentType,
+            path: fileContent, // Store content directly in path field as per existing pattern
+            status: 'uploaded',
+            user_id: userId,
+            company_id: companyId,
+            created_at: timestamp,
+            updated_at: timestamp,
+            upload_time: timestamp,
+            version: 1.0,
+            download_count: 0,
+            metadata: {
+              taskId: metadata.taskId,
+              taskType: metadata.taskType,
+              companyName: metadata.companyName
+            }
+          })
+          .returning();
 
-      console.log('[FileCreation] File created successfully:', {
-        fileId: fileRecord.id,
-        fileName: fileRecord.name,
-        timestamp: timestamp.toISOString()
-      });
+        logger.info('File created successfully', {
+          fileId: fileRecord.id,
+          fileName: fileRecord.name,
+          timestamp: timestamp.toISOString()
+        });
 
-      return {
-        success: true,
-        fileId: fileRecord.id,
-        fileName: fileRecord.name
-      };
-
+        return {
+          success: true,
+          fileId: fileRecord.id,
+          fileName: fileRecord.name
+        };
+      } catch (dbError) {
+        // Specific error handler for database errors
+        logger.error('Database error creating file', {
+          error: dbError,
+          message: dbError instanceof Error ? dbError.message : 'Unknown database error',
+          timestamp: new Date().toISOString()
+        });
+        
+        return {
+          success: false,
+          error: {
+            message: 'Failed to create file in database',
+            details: dbError instanceof Error ? dbError.message : 'Unknown database error'
+          }
+        };
+      }
     } catch (error) {
-      console.error('[FileCreation] Error creating file:', {
+      logger.error('Error creating file', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
