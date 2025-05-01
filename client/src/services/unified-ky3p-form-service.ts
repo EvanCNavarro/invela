@@ -239,19 +239,18 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
         return true; // No updates needed, return success
       }
       
-      // Send the update using the batch update endpoint
-      logger.info(`[Unified KY3P] Sending batch update for ${Object.keys(cleanData).length} fields`);
+      // Send the update using the standardized batch update endpoint
+      logger.info(`[Unified KY3P] Sending standardized batch update for ${Object.keys(cleanData).length} fields`);
       
+      // First attempt: Use the standardized request format with 'responses' object
+      // This is the format that the server is expecting based on the error message
       const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          taskIdRaw: String(taskId),
-          fieldIdRaw: 'bulk',
-          responseValue: JSON.stringify(cleanData),
-          responseValueType: 'object'
+          responses: cleanData // The server expects this format
         }),
       });
       
@@ -912,7 +911,9 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
         // Map both formats to ensure compatibility
         label: field.display_name, // Add standard 'label' property
         displayName: field.display_name,
-        fieldType: field.field_type,
+        // Default to multi-line for all assessment questions for consistency
+        fieldType: 'multi-line', // Override with textarea for all KY3P fields
+        type: 'multi-line', // Include type property for field renderer compatibility
         question: field.question, // Include original question
         required: field.required === true || field.required === 1,
         group: field.group,
