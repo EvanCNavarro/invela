@@ -50,7 +50,7 @@ const getDeniedConsents = (node: NetworkNode): number => {
 
 /**
  * Format large numbers to K/M format with up to 2 decimal places
- * e.g., 1500 -> 1.5K, 1500000 -> 1.5M
+ * e.g., 1000 -> 1K, 1500000 -> 1.5M
  */
 const formatConsentsNumber = (value: number): string => {
   if (value === 0) return '0';
@@ -110,7 +110,7 @@ export function ConnectionDetails({ node, centerNode, onClose, position }: Conne
                 className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: riskBucketColors[node.riskBucket] }}
               />
-              <p className="font-medium">{node.riskScore}/1500</p>
+              <p className="font-medium">{node.riskScore}/100</p>
             </div>
           </div>
           <div>
