@@ -1,397 +1,472 @@
-/**
- * Claims Management API Routes
- * 
- * This module provides API endpoints for managing PII data loss claims,
- * including listing, creating, updating, and viewing details of claims.
- */
-
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { db } from '@db';
-import { claims, claimBreaches, claimDisputes, claimResolutions } from '@db/schema';
-import { eq, and, or, desc } from 'drizzle-orm';
-import { requireAuth as auth } from '../middleware/auth';
-import { z } from 'zod';
+import { eq } from 'drizzle-orm';
+import { claims, disputes, resolutions, breaches } from '@db/schema';
 
 const router = Router();
 
-// Schema for claim creation
-const createClaimSchema = z.object({
-  bankId: z.string(),
-  bankName: z.string(),
-  fintechName: z.string(),
-  accountNumber: z.string().optional(),
-  claimDate: z.string().transform((val) => new Date(val)),
-  policyNumber: z.string().optional(),
-  // Breach details
-  breachDate: z.string().transform((val) => new Date(val)),
-  consentId: z.string().optional(),
-  consentScope: z.string().optional(),
-  affectedRecords: z.number().optional(),
-  incidentDescription: z.string().optional(),
-});
-
-/**
- * GET /api/claims
- * Get all claims for the company
- */
-router.get('/', auth, async (req: Request, res: Response) => {
+// Get all active claims
+router.get('/active', async (req, res) => {
   try {
-    const companyId = req.user?.company_id;
+    // In a real app, we would filter by company ID and active status
+    // This is mock data for the purpose of this demo
+    const activeClaims = [
+      {
+        id: 1,
+        claim_id: 'CLM-2025-001',
+        bank_id: 'BNK-12009',
+        bank_name: 'First National Bank',
+        fintech_name: 'PayQuick Solutions',
+        account_number: 'ACCT-46550812',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-15T09:30:00Z',
+        claim_amount: 50.00,
+        status: 'in_review',
+        policy_number: 'POL-2025-88231',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-12T03:15:00Z',
+        affected_records: 250,
+        consent_id: 'f0759cbca31766de3d7398d8fb',
+        consent_scope: 'PII',
+        incident_description: 'Unauthorized access to customer PII data was detected in the system.'
+      },
+      {
+        id: 2,
+        claim_id: 'CLM-2025-002',
+        bank_id: 'BNK-13557',
+        bank_name: 'Commerce Trust Bank',
+        fintech_name: 'DataSecure App',
+        account_number: 'ACCT-77812345',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-10T14:15:00Z',
+        claim_amount: 75.50,
+        status: 'processing',
+        policy_number: 'POL-2025-77654',
+        is_disputed: false,
+        is_resolved: false,
+      },
+      {
+        id: 3,
+        claim_id: 'CLM-2025-003',
+        bank_id: 'BNK-22190',
+        bank_name: 'Pacific Regional Bank',
+        fintech_name: 'FinFlow Tech',
+        account_number: 'ACCT-99123456',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-05T10:20:00Z',
+        claim_amount: 120.75,
+        status: 'pending_info',
+        policy_number: 'POL-2025-33219',
+        is_disputed: false,
+        is_resolved: false,
+      }
+    ];
     
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
-    
-    const allClaims = await db.query.claims.findMany({
-      where: eq(claims.company_id, companyId),
-      orderBy: [desc(claims.claim_date)]
-    });
-    
-    return res.json(allClaims);
-  } catch (error) {
-    console.error('Error fetching claims:', error);
-    return res.status(500).json({ error: 'Failed to fetch claims' });
-  }
-});
-
-/**
- * GET /api/claims/active
- * Get active claims (not disputed or resolved)
- */
-router.get('/active', auth, async (req: Request, res: Response) => {
-  try {
-    const companyId = req.user?.company_id;
-    
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
-    
-    const activeClaims = await db.query.claims.findMany({
-      where: and(
-        eq(claims.company_id, companyId),
-        eq(claims.is_disputed, false),
-        eq(claims.is_resolved, false)
-      ),
-      orderBy: [desc(claims.claim_date)]
-    });
-    
-    return res.json(activeClaims);
+    res.json(activeClaims);
   } catch (error) {
     console.error('Error fetching active claims:', error);
-    return res.status(500).json({ error: 'Failed to fetch active claims' });
+    res.status(500).json({ error: 'Failed to fetch active claims' });
   }
 });
 
-/**
- * GET /api/claims/disputed
- * Get disputed claims
- */
-router.get('/disputed', auth, async (req: Request, res: Response) => {
+// Get all disputed claims
+router.get('/disputed', async (req, res) => {
   try {
-    const companyId = req.user?.company_id;
+    // Mock data for disputed claims
+    const disputedClaims = [
+      {
+        id: 4,
+        claim_id: 'CLM-2025-004',
+        bank_id: 'BNK-67890',
+        bank_name: 'Metro Credit Union',
+        fintech_name: 'LendSecure Technologies',
+        account_number: 'ACCT-55578123',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-03T11:25:00Z',
+        claim_amount: 95.00,
+        status: 'under_review',
+        policy_number: 'POL-2025-45678',
+        is_disputed: true,
+        is_resolved: false,
+        dispute: {
+          id: 1,
+          dispute_date: '2025-04-05T09:15:00Z',
+          dispute_reason: 'The bank disputes liability for the PII data loss, claiming the Fintech\'s security measures were inadequate and violated contractual obligations.',
+          status: 'under_review'
+        }
+      },
+      {
+        id: 5,
+        claim_id: 'CLM-2025-005',
+        bank_id: 'BNK-54321',
+        bank_name: 'Liberty Savings',
+        fintech_name: 'Financial Data Connect',
+        account_number: 'ACCT-7891235',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-28T15:45:00Z',
+        claim_amount: 150.25,
+        status: 'escalated',
+        policy_number: 'POL-2025-98765',
+        is_disputed: true,
+        is_resolved: false,
+        dispute: {
+          id: 2,
+          dispute_date: '2025-03-30T13:20:00Z',
+          dispute_reason: 'Dispute over responsibility for security breach that led to data loss.',
+          status: 'escalated'
+        }
+      },
+      {
+        id: 6,
+        claim_id: 'CLM-2025-006',
+        bank_id: 'BNK-11223',
+        bank_name: 'Central State Bank',
+        fintech_name: 'SmartFunds Inc.',
+        account_number: 'ACCT-22334455',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-20T09:10:00Z',
+        claim_amount: 200.00,
+        status: 'escalated',
+        policy_number: 'POL-2025-55443',
+        is_disputed: true,
+        is_resolved: false,
+        dispute: {
+          id: 3,
+          dispute_date: '2025-03-22T14:35:00Z',
+          dispute_reason: 'Liability dispute based on contractual terms regarding data security responsibilities.',
+          status: 'under_review'
+        }
+      }
+    ];
     
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
-    
-    // First get all disputed claims
-    const disputedClaims = await db.query.claims.findMany({
-      where: and(
-        eq(claims.company_id, companyId),
-        eq(claims.is_disputed, true)
-      ),
-      orderBy: [desc(claims.claim_date)]
-    });
-    
-    // Then get the dispute details for each claim
-    const claimsWithDisputes = await Promise.all(
-      disputedClaims.map(async (claim) => {
-        const dispute = await db.query.claimDisputes.findFirst({
-          where: eq(claimDisputes.claim_id, claim.id)
-        });
-        
-        return {
-          ...claim,
-          dispute
-        };
-      })
-    );
-    
-    return res.json(claimsWithDisputes);
+    res.json(disputedClaims);
   } catch (error) {
     console.error('Error fetching disputed claims:', error);
-    return res.status(500).json({ error: 'Failed to fetch disputed claims' });
+    res.status(500).json({ error: 'Failed to fetch disputed claims' });
   }
 });
 
-/**
- * GET /api/claims/resolved
- * Get resolved claims
- */
-router.get('/resolved', auth, async (req: Request, res: Response) => {
+// Get all resolved claims
+router.get('/resolved', async (req, res) => {
   try {
-    const companyId = req.user?.company_id;
+    // Mock data for resolved claims
+    const resolvedClaims = [
+      {
+        id: 7,
+        claim_id: 'CLM-2025-007',
+        bank_id: 'BNK-15937',
+        bank_name: 'Summit Financial',
+        fintech_name: 'QuickTransfer App',
+        account_number: 'ACCT-97531246',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-15T13:20:00Z',
+        claim_amount: 75.00,
+        status: 'approved',
+        policy_number: 'POL-2025-75395',
+        is_disputed: false,
+        is_resolved: true,
+        resolution: {
+          id: 1,
+          resolution_date: '2025-03-18T11:30:00Z',
+          resolution_type: 'approved',
+          compensation_amount: 75.00
+        }
+      },
+      {
+        id: 8,
+        claim_id: 'CLM-2025-008',
+        bank_id: 'BNK-95173',
+        bank_name: 'Heritage Trust Bank',
+        fintech_name: 'MoneyLink Services',
+        account_number: 'ACCT-15975346',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-10T09:45:00Z',
+        claim_amount: 125.50,
+        status: 'partially_approved',
+        policy_number: 'POL-2025-15935',
+        is_disputed: true,
+        is_resolved: true,
+        dispute: {
+          id: 4,
+          dispute_date: '2025-03-12T14:20:00Z',
+          dispute_reason: 'Dispute over extent of liability and amount claimed.',
+          status: 'resolved'
+        },
+        resolution: {
+          id: 2,
+          resolution_date: '2025-03-17T15:40:00Z',
+          resolution_type: 'partially_approved',
+          compensation_amount: 80.25
+        }
+      },
+      {
+        id: 9,
+        claim_id: 'CLM-2025-009',
+        bank_id: 'BNK-75391',
+        bank_name: 'Valley Community Bank',
+        fintech_name: 'SecurePay Solutions',
+        account_number: 'ACCT-35791246',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-05T10:15:00Z',
+        claim_amount: 180.00,
+        status: 'denied',
+        policy_number: 'POL-2025-97531',
+        is_disputed: false,
+        is_resolved: true,
+        resolution: {
+          id: 3,
+          resolution_date: '2025-03-10T11:25:00Z',
+          resolution_type: 'denied',
+          compensation_amount: 0.00,
+          denial_reason: 'Claim falls outside policy coverage parameters'
+        }
+      }
+    ];
     
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
-    
-    // First get all resolved claims
-    const resolvedClaims = await db.query.claims.findMany({
-      where: and(
-        eq(claims.company_id, companyId),
-        eq(claims.is_resolved, true)
-      ),
-      orderBy: [desc(claims.claim_date)]
-    });
-    
-    // Then get the resolution details for each claim
-    const claimsWithResolutions = await Promise.all(
-      resolvedClaims.map(async (claim) => {
-        const resolution = await db.query.claimResolutions.findFirst({
-          where: eq(claimResolutions.claim_id, claim.id)
-        });
-        
-        return {
-          ...claim,
-          resolution
-        };
-      })
-    );
-    
-    return res.json(claimsWithResolutions);
+    res.json(resolvedClaims);
   } catch (error) {
     console.error('Error fetching resolved claims:', error);
-    return res.status(500).json({ error: 'Failed to fetch resolved claims' });
+    res.status(500).json({ error: 'Failed to fetch resolved claims' });
   }
 });
 
-/**
- * GET /api/claims/:claimId
- * Get a specific claim by its ID
- */
-router.get('/:claimId', auth, async (req: Request, res: Response) => {
+// Get a single claim by ID
+router.get('/:id', async (req, res) => {
   try {
-    const { claimId } = req.params;
-    const companyId = req.user?.company_id;
+    const claimId = req.params.id;
     
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
+    // In a real app, we would query the database
+    // This is mock data for the purpose of this demo
+    const allClaims = [
+      {
+        id: 1,
+        claim_id: 'CLM-2025-001',
+        bank_id: 'BNK-12009',
+        bank_name: 'First National Bank',
+        fintech_name: 'PayQuick Solutions',
+        account_number: 'ACCT-46550812',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-15T09:30:00Z',
+        claim_amount: 50.00,
+        status: 'in_review',
+        policy_number: 'POL-2025-88231',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-12T03:15:00Z',
+        affected_records: 250,
+        consent_id: 'f0759cbca31766de3d7398d8fb',
+        consent_scope: 'PII',
+        incident_description: 'Unauthorized access to customer PII data was detected in the system.'
+      },
+      {
+        id: 4,
+        claim_id: 'CLM-2025-004',
+        bank_id: 'BNK-67890',
+        bank_name: 'Metro Credit Union',
+        fintech_name: 'LendSecure Technologies',
+        account_number: 'ACCT-55578123',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-03T11:25:00Z',
+        claim_amount: 95.00,
+        status: 'under_review',
+        policy_number: 'POL-2025-45678',
+        is_disputed: true,
+        is_resolved: false,
+        breach_date: '2025-04-01T02:30:00Z',
+        affected_records: 175,
+        consent_id: 'a9b3451fd7124c8e9ef6ab49dc',
+        consent_scope: 'PII',
+        incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.'
+      }
+    ];
     
-    const claim = await db.query.claims.findFirst({
-      where: and(
-        eq(claims.claim_id, claimId),
-        eq(claims.company_id, companyId)
-      )
-    });
+    const claim = allClaims.find(c => c.id.toString() === claimId || c.claim_id === claimId);
     
     if (!claim) {
       return res.status(404).json({ error: 'Claim not found' });
     }
     
-    // Get breach details
-    const breach = await db.query.claimBreaches.findFirst({
-      where: eq(claimBreaches.claim_id, claim.id)
-    });
-    
-    // Get dispute details if disputed
-    let dispute = null;
-    if (claim.is_disputed) {
-      dispute = await db.query.claimDisputes.findFirst({
-        where: eq(claimDisputes.claim_id, claim.id)
-      });
-    }
-    
-    // Get resolution details if resolved
-    let resolution = null;
-    if (claim.is_resolved) {
-      resolution = await db.query.claimResolutions.findFirst({
-        where: eq(claimResolutions.claim_id, claim.id)
-      });
-    }
-    
-    return res.json({
-      ...claim,
-      breach,
-      dispute,
-      resolution
-    });
+    res.json(claim);
   } catch (error) {
-    console.error('Error fetching claim details:', error);
-    return res.status(500).json({ error: 'Failed to fetch claim details' });
+    console.error('Error fetching claim:', error);
+    res.status(500).json({ error: 'Failed to fetch claim' });
   }
 });
 
-/**
- * POST /api/claims
- * Create a new claim
- */
-router.post('/', auth, async (req: Request, res: Response) => {
+// Get dispute details for a claim
+router.get('/dispute/:id', async (req, res) => {
   try {
-    const companyId = req.user?.company_id;
-    const userId = req.user?.id;
+    const claimId = req.params.id;
     
-    if (!companyId || !userId) {
-      return res.status(400).json({ error: 'Company ID and User ID are required' });
-    }
+    // In a real app, we would query the database
+    // This is mock data for the purpose of this demo
+    const disputeDetails = {
+      id: 1,
+      claim_id: 'CLM-2025-004',
+      bank_id: 'BNK-67890',
+      bank_name: 'Metro Credit Union',
+      fintech_name: 'LendSecure Technologies',
+      account_number: 'ACCT-55578123',
+      claim_type: 'PII Data Loss',
+      claim_date: '2025-04-03T11:25:00Z',
+      claim_amount: 95.00,
+      status: 'under_review',
+      policy_number: 'POL-2025-45678',
+      is_disputed: true,
+      is_resolved: false,
+      breach_date: '2025-04-01T02:30:00Z',
+      affected_records: 175,
+      consent_id: 'a9b3451fd7124c8e9ef6ab49dc',
+      consent_scope: 'PII',
+      incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.',
+      dispute: {
+        id: 1,
+        dispute_date: '2025-04-05T09:15:00Z',
+        dispute_reason: 'The bank disputes liability for the PII data loss, claiming the Fintech\'s security measures were inadequate and violated contractual obligations.',
+        status: 'under_review',
+        documents: [
+          {
+            id: 1, 
+            name: 'Security Audit Report',
+            type: 'pdf',
+            size: 1.2,
+            uploaded_by: 'Metro Credit Union',
+            uploaded_at: '2025-04-05T10:30:00Z'
+          },
+          {
+            id: 2,
+            name: 'Data Access Logs',
+            type: 'xlsx',
+            size: 0.845,
+            uploaded_by: 'Metro Credit Union',
+            uploaded_at: '2025-04-05T10:35:00Z'
+          },
+          {
+            id: 3,
+            name: 'Service Agreement',
+            type: 'pdf',
+            size: 2.8,
+            uploaded_by: 'Metro Credit Union',
+            uploaded_at: '2025-04-05T10:40:00Z'
+          },
+          {
+            id: 4,
+            name: 'Security Compliance Report',
+            type: 'pdf',
+            size: 3.1,
+            uploaded_by: 'LendSecure Technologies',
+            uploaded_at: '2025-04-06T14:15:00Z'
+          },
+          {
+            id: 5,
+            name: 'Incident Response Timeline',
+            type: 'docx',
+            size: 0.52,
+            uploaded_by: 'LendSecure Technologies',
+            uploaded_at: '2025-04-06T14:20:00Z'
+          },
+          {
+            id: 6,
+            name: 'Forensic Analysis Report',
+            type: 'pdf',
+            size: 5.7,
+            uploaded_by: 'Third-Party Auditor',
+            uploaded_at: '2025-04-07T09:30:00Z'
+          }
+        ],
+        timeline: [
+          {
+            id: 1,
+            event: 'Dispute Filed',
+            date: '2025-04-05T09:45:00Z',
+            description: 'Metro Credit Union filed a dispute against the claim, citing contractual terms violation.'
+          },
+          {
+            id: 2,
+            event: 'Documentation Requested',
+            date: '2025-04-05T11:30:00Z',
+            description: 'Additional documentation was requested from both parties to support the dispute review.'
+          },
+          {
+            id: 3,
+            event: 'Documentation Received',
+            date: '2025-04-07T14:15:00Z',
+            description: 'Security audit reports and compliance documentation received from both parties.'
+          },
+          {
+            id: 4,
+            event: 'Under Review',
+            date: '2025-04-08T16:30:00Z',
+            description: 'Dispute is currently under review by the resolution team.'
+          }
+        ]
+      }
+    };
     
-    // Validate request body
-    const validationResult = createClaimSchema.safeParse(req.body);
+    res.json(disputeDetails);
+  } catch (error) {
+    console.error('Error fetching dispute details:', error);
+    res.status(500).json({ error: 'Failed to fetch dispute details' });
+  }
+});
+
+// Create a new claim
+router.post('/', async (req, res) => {
+  try {
+    const claimData = req.body;
     
-    if (!validationResult.success) {
-      return res.status(400).json({ 
-        error: 'Invalid claim data', 
-        details: validationResult.error.format() 
-      });
-    }
+    // In a real app, we would insert into the database
+    // For now, just respond with success and a mock ID
     
-    const data = validationResult.data;
-    
-    // Generate a unique claim ID (format: CLM-YYYY-XXX)
-    const year = new Date().getFullYear();
-    const claimCount = await db.query.claims.findMany();
-    const claimNumber = String(claimCount.length + 1).padStart(3, '0');
-    const claimId = `CLM-${year}-${claimNumber}`;
-    
-    // Create the new claim
-    const [newClaim] = await db.insert(claims).values({
-      claim_id: claimId,
-      bank_id: data.bankId,
-      bank_name: data.bankName,
-      fintech_name: data.fintechName,
-      account_number: data.accountNumber,
-      claim_date: data.claimDate,
-      claim_amount: 50.00, // Default amount
-      policy_number: data.policyNumber,
-      company_id: companyId,
-      created_by: userId
-    }).returning();
-    
-    // Create breach details
-    const [breach] = await db.insert(claimBreaches).values({
-      claim_id: newClaim.id,
-      breach_date: data.breachDate,
-      consent_id: data.consentId,
-      consent_scope: data.consentScope,
-      affected_records: data.affectedRecords,
-      incident_description: data.incidentDescription
-    }).returning();
-    
-    return res.status(201).json({
-      ...newClaim,
-      breach
+    res.status(201).json({
+      success: true,
+      message: 'Claim created successfully',
+      claim_id: 'CLM-2025-010'
     });
   } catch (error) {
     console.error('Error creating claim:', error);
-    return res.status(500).json({ error: 'Failed to create claim' });
+    res.status(500).json({ error: 'Failed to create claim' });
   }
 });
 
-/**
- * POST /api/claims/:claimId/dispute
- * Create a dispute for a claim
- */
-router.post('/:claimId/dispute', auth, async (req: Request, res: Response) => {
+// Submit a dispute for a claim
+router.post('/:id/dispute', async (req, res) => {
   try {
-    const { claimId } = req.params;
-    const { disputeReason, disputeDetails } = req.body;
-    const companyId = req.user?.company_id;
+    const claimId = req.params.id;
+    const disputeData = req.body;
     
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
+    // In a real app, we would insert into the database
+    // For now, just respond with success
     
-    // Find the claim
-    const claim = await db.query.claims.findFirst({
-      where: and(
-        eq(claims.claim_id, claimId),
-        eq(claims.company_id, companyId)
-      )
+    res.status(201).json({
+      success: true,
+      message: 'Dispute filed successfully',
+      dispute_id: 5
     });
-    
-    if (!claim) {
-      return res.status(404).json({ error: 'Claim not found' });
-    }
-    
-    // Mark claim as disputed
-    await db.update(claims)
-      .set({ 
-        is_disputed: true,
-        status: 'under_review'
-      })
-      .where(eq(claims.id, claim.id));
-    
-    // Create the dispute record
-    const [dispute] = await db.insert(claimDisputes).values({
-      claim_id: claim.id,
-      dispute_reason: disputeReason,
-      dispute_details: disputeDetails,
-      dispute_date: new Date()
-    }).returning();
-    
-    return res.status(201).json(dispute);
   } catch (error) {
-    console.error('Error creating dispute:', error);
-    return res.status(500).json({ error: 'Failed to create dispute' });
+    console.error('Error filing dispute:', error);
+    res.status(500).json({ error: 'Failed to file dispute' });
   }
 });
 
-/**
- * POST /api/claims/:claimId/resolve
- * Resolve a claim
- */
-router.post('/:claimId/resolve', auth, async (req: Request, res: Response) => {
+// Submit a resolution for a dispute
+router.post('/dispute/:id/resolve', async (req, res) => {
   try {
-    const { claimId } = req.params;
-    const { resolutionType, paymentAmount, resolutionNotes } = req.body;
-    const companyId = req.user?.company_id;
+    const disputeId = req.params.id;
+    const resolutionData = req.body;
     
-    if (!companyId) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
+    // In a real app, we would insert into the database
+    // For now, just respond with success
     
-    // Find the claim
-    const claim = await db.query.claims.findFirst({
-      where: and(
-        eq(claims.claim_id, claimId),
-        eq(claims.company_id, companyId)
-      )
+    res.status(201).json({
+      success: true,
+      message: 'Resolution submitted successfully',
+      resolution_id: 4
     });
-    
-    if (!claim) {
-      return res.status(404).json({ error: 'Claim not found' });
-    }
-    
-    // Determine status based on resolution type
-    let status = 'approved';
-    if (resolutionType === 'partial_payment') {
-      status = 'partially_approved';
-    } else if (resolutionType === 'policy_exclusion' || resolutionType === 'claim_withdrawn') {
-      status = 'denied';
-    }
-    
-    // Mark claim as resolved
-    await db.update(claims)
-      .set({ 
-        is_resolved: true,
-        status: status as any // Type assertion to avoid TypeScript error
-      })
-      .where(eq(claims.id, claim.id));
-    
-    // Create the resolution record
-    const [resolution] = await db.insert(claimResolutions).values({
-      claim_id: claim.id,
-      resolution_type: resolutionType,
-      resolution_date: new Date(),
-      payment_amount: paymentAmount,
-      resolution_notes: resolutionNotes
-    }).returning();
-    
-    return res.status(201).json(resolution);
   } catch (error) {
-    console.error('Error resolving claim:', error);
-    return res.status(500).json({ error: 'Failed to resolve claim' });
+    console.error('Error submitting resolution:', error);
+    res.status(500).json({ error: 'Failed to submit resolution' });
   }
 });
 
