@@ -42,10 +42,11 @@ export function KY3PDemoAutoFill({
       }
       
       const result = await response.json();
+      console.log('Demo auto-fill result:', result);
       
       toast({
         title: 'Demo Auto-Fill Completed',
-        description: `Successfully populated ${result.fieldsPopulated} fields with demo data`,
+        description: `Successfully populated ${result.fieldCount || 0} fields with demo data`,
         variant: 'default'
       });
       
