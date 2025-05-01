@@ -387,20 +387,24 @@ export function RiskFlowVisualization() {
           <span className="mx-2">|</span>
         </div>
         <div className="flex items-center">
+          <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#FFFFFF', border: '1px solid black' }}></span>
+          <span>No Risk (0)</span>
+        </div>
+        <div className="flex items-center">
           <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#82C091' }}></span>
-          <span>Low Risk</span>
+          <span>Low Risk (1-33)</span>
         </div>
         <div className="flex items-center">
           <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#F9CB9C' }}></span>
-          <span>Medium Risk</span>
+          <span>Medium Risk (34-66)</span>
         </div>
         <div className="flex items-center">
           <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#F28C77' }}></span>
-          <span>High Risk</span>
+          <span>High Risk (67-99)</span>
         </div>
         <div className="flex items-center">
           <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#DB4325' }}></span>
-          <span>Critical Risk</span>
+          <span>Critical Risk (100)</span>
         </div>
       </div>
     </div>
