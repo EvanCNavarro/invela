@@ -135,6 +135,17 @@ export const companies = pgTable("companies", {
     score: number;
     riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
   }>(),
+  risk_priorities: jsonb("risk_priorities").$type<{
+    dimensions: {
+      id: string;
+      name: string;
+      description: string;
+      weight: number;
+      value: number;
+      color?: string;
+    }[];
+    lastUpdated: string;
+  }>(),
   accreditation_status: text("accreditation_status"),
   onboarding_company_completed: boolean("onboarding_company_completed").notNull().default(true),
   registry_date: timestamp("registry_date").notNull().defaultNow(),
