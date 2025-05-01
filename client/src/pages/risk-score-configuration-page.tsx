@@ -145,10 +145,7 @@ export default function RiskScoreConfigurationPage() {
   // Mutation to save the risk score configuration
   const saveMutation = useMutation({
     mutationFn: (configuration: RiskScoreConfiguration) => {
-      return apiRequest('/api/risk-score/configuration', {
-        method: 'POST',
-        body: JSON.stringify(configuration),
-      });
+      return apiRequest('POST', '/api/risk-score/configuration', configuration);
     },
     onSuccess: () => {
       toast({
@@ -172,10 +169,7 @@ export default function RiskScoreConfigurationPage() {
   // Mutation to save risk priorities
   const savePrioritiesMutation = useMutation({
     mutationFn: (priorities: RiskPriorities) => {
-      return apiRequest('/api/risk-score/priorities', {
-        method: 'POST',
-        body: JSON.stringify(priorities),
-      });
+      return apiRequest('POST', '/api/risk-score/priorities', priorities);
     },
     onSuccess: () => {
       toast({
