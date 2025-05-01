@@ -14,6 +14,7 @@ import getLogger from '../utils/logger';
 import { fileCreationService } from '../services/fileCreation';
 import { CompanyTabsService } from '../services/companyTabsService';
 import { UnifiedTabService } from '../services/unified-tab-service';
+import { generateMissingFileForTask } from './fix-missing-file';
 
 
 // Destructure websocket service functions
@@ -70,6 +71,60 @@ async function forwardRequest(req: Request, res: Response, path: string): Promis
  */
 export function createFormSubmissionRouter(): Router {
   const router = Router();
+  
+  /**
+   * POST /api/forms/fix-missing-file/:taskId
+   * 
+   * Emergency endpoint to fix missing files for KYB forms
+   * This handles the issue where a file was not properly created during form submission
+   */
+  router.post('/fix-missing-file/:taskId', async (req: Request, res: Response) => {
+    const taskId = parseInt(req.params.taskId);
+    
+    if (isNaN(taskId) || taskId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
+    }
+    
+    logger.info(`Fixing missing file for task ${taskId}`, {
+      taskId,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+    
+    try {
+      // Call the fix function
+      const result = await generateMissingFileForTask(taskId);
+      
+      if (!result.success) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to fix missing file',
+          error: result.error
+        });
+      }
+      
+      return res.json({
+        success: true,
+        message: `Successfully fixed missing file for task ${taskId}`,
+        fileId: result.fileId,
+        fileName: result.fileName
+      });
+    } catch (error) {
+      logger.error(`Error fixing missing file for task ${taskId}`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Error fixing missing file',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   /**
    * POST /api/forms/submit/:taskType/:taskId
