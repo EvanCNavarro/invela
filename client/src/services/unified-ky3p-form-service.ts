@@ -242,17 +242,29 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
       // Send the update using the standardized batch update endpoint
       logger.info(`[Unified KY3P] Sending standardized batch update for ${Object.keys(cleanData).length} fields`);
       
-      // Server expects request with a responses object directly containing field key/value pairs
-      // This is based on server-side validation: "responses is required and must be an object"
+      // Based on looking at ky3p-fixed-routes.ts line 95, the server expects
+      // responses to be an object with field keys as properties,
+      // NOT an array of objects with fieldKey and value
+      const payload = {
+        responses: cleanData // Pass the object directly as required by the server
+      };
+      
+      // DEBUG: Log the exact payload being sent
+      console.log('[DEBUG] KY3P Batch Update Payload:', JSON.stringify(payload, null, 2));
+      
+      // Explicitly verify we're sending a proper format: { responses: { fieldKey1: value1, fieldKey2: value2 } }
+      // And not { responses: [ { fieldKey: "fieldKey1", value: value1 }, ... ] }
+      console.log('[DEBUG] Is responses an object?', typeof payload.responses === 'object' && !Array.isArray(payload.responses));
+      
+      // Server expects request with a responses object containing field key/value pairs
+      // Per line 95 in ky3p-fixed-routes.ts: "for (const [fieldKey, value] of Object.entries(responses)) {"
       const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Important: include auth cookies
-        body: JSON.stringify({
-          responses: cleanData // Match the format required by ky3p-fixed-routes.ts
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
