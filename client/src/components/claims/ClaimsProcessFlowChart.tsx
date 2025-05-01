@@ -237,7 +237,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     };
   }
   
-  // Helper: Calculate positions for each node in a compact, grid-based layout
+  // Helper: Calculate positions for each node in a more linear flow
   function calculateNodePositions(dagData: ReturnType<typeof processFlowToDag>) {
     const { nodes, levels } = dagData;
     const { connections } = flowData!;
@@ -245,7 +245,20 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     // Create a map for quick node lookup
     const nodeMap = new Map(nodes.map(node => [node.id, node]));
     
-    // Define key node types for better layout organization
+    // Group nodes by their level
+    const nodesByLevel: Record<number, ProcessNode[]> = {};
+    nodes.forEach(node => {
+      const level = levels[node.id] || 0;
+      if (!nodesByLevel[level]) {
+        nodesByLevel[level] = [];
+      }
+      nodesByLevel[level].push(node);
+    });
+    
+    // Sort levels for linear layout
+    const sortedLevels = Object.keys(nodesByLevel).map(Number).sort((a, b) => a - b);
+    
+    // Determine key nodes for better positioning
     const nodeTypes = {
       breach: nodes.find(node => node.type === 'breach' || (node.name && node.name.toLowerCase().includes('breach'))),
       bank: nodes.find(node => node.type === 'bank' || (node.name && node.name.toLowerCase().includes('bank'))),
@@ -253,164 +266,144 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
       decision: nodes.find(node => node.type === 'decision')
     };
     
-    // Define a grid layout with rows and columns
-    // Using a 3x3 grid for balanced placement
-    const gridLayout: Array<Array<ProcessNode | null>> = [
-      [null, null, null],  // Top row
-      [null, null, null],  // Middle row
-      [null, null, null]   // Bottom row
-    ];
+    // Define spacing parameters for the linear layout
+    const spacing = {
+      horizontal: 250,  // Space between levels
+      vertical: 120,    // Space between nodes within a level
+      startX: 100,      // Starting X position
+      startY: 100,      // Starting Y position
+      middleOffset: 180 // Vertical offset to place nodes between two others
+    };
     
-    // Identify direct connections between key nodes
-    const nodeConnections: Record<string, string[]> = {};
-    nodes.forEach(node => { nodeConnections[node.id] = []; });
-    
-    connections.forEach(conn => {
-      if (!nodeConnections[conn.source]) nodeConnections[conn.source] = [];
-      nodeConnections[conn.source].push(conn.target);
-    });
-    
-    // Place key nodes in logical positions with more precise placement
-    if (nodeTypes.breach) {
-      // Data Breach goes in middle-left (1,0)
-      gridLayout[1][0] = nodeTypes.breach;
-    }
-    
-    if (nodeTypes.bank) {
-      // Bank Assessment goes in top-center (0,1)
-      gridLayout[0][1] = nodeTypes.bank;
-    }
-    
-    if (nodeTypes.fintech) {
-      // FinTech Notification goes in bottom-center (2,1)
-      gridLayout[2][1] = nodeTypes.fintech;
-    }
-    
+    // Special case: if there's a decision node, position it in the middle of the flow
+    let decisionNodeLevel: number | null = null;
     if (nodeTypes.decision) {
-      // Decision Node goes in middle-center (1,1)
-      gridLayout[1][1] = nodeTypes.decision;
-      
-      // Find nodes connected from decision node
-      const yesNodes = connections
-        .filter(conn => 
-          conn.source === nodeTypes.decision!.id && 
-          conn.label && 
-          (conn.label.toLowerCase().includes('yes') || conn.label.toLowerCase().includes('true'))
-        )
-        .map(conn => nodeMap.get(conn.target))
-        .filter(node => node) as ProcessNode[];
-      
-      const noNodes = connections
-        .filter(conn => 
-          conn.source === nodeTypes.decision!.id && 
-          conn.label && 
-          (conn.label.toLowerCase().includes('no') || conn.label.toLowerCase().includes('false'))
-        )
-        .map(conn => nodeMap.get(conn.target))
-        .filter(node => node) as ProcessNode[];
-      
-      // Place yes path node in top-right (0,2)
-      if (yesNodes.length > 0) {
-        gridLayout[0][2] = yesNodes[0];
-      }
-      
-      // Place no path node in bottom-right (2,2)
-      if (noNodes.length > 0) {
-        gridLayout[2][2] = noNodes[0];
-      }
+      decisionNodeLevel = levels[nodeTypes.decision.id];
     }
     
-    // Place any remaining nodes that haven't been assigned yet
-    const remainingNodes = nodes.filter(node => {
-      // Check all grid positions to see if this node is already placed
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-          if (gridLayout[row][col] && gridLayout[row][col]!.id === node.id) {
-            return false; // Node is already in the grid
-          }
-        }
-      }
-      return true; // Node is not yet in the grid
-    });
-    
-    // Find any empty cells in the grid
-    const emptyCells: Array<[number, number]> = [];
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        if (!gridLayout[row][col]) {
-          emptyCells.push([row, col]);
-        }
-      }
-    }
-    
-    // Fill empty cells with remaining nodes
-    remainingNodes.forEach((node, index) => {
-      if (index < emptyCells.length) {
-        const [row, col] = emptyCells[index];
-        gridLayout[row][col] = node;
-      }
-    });
-    
-    // Convert grid to position coordinates with more space between nodes
+    // Track positions to place nodes in a more linear fashion
     const nodesWithPositions: (ProcessNode & { x: number; y: number })[] = [];
-    
-    // Define grid cell dimensions with improved spacing
-    const cellWidth = 220;   // Increased from 180 for more horizontal separation
-    const cellHeight = 180;  // Increased from 170 for more vertical separation
-    const centerX = 100;     // Increased from 70 for better edge spacing
-    const centerY = 80;      // Adjusted for better vertical alignment
-    
-    // Process the grid layout into position coordinates
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        const node = gridLayout[row][col];
-        if (node) {
-          // Adjusted positioning for middle column to create better flow paths
-          let xOffset = 0;
-          let yOffset = 0;
+
+    // Place nodes level by level in a more linear flow
+    sortedLevels.forEach((level, levelIndex) => {
+      const nodesInLevel = nodesByLevel[level];
+      
+      // Special handling for levels with decision nodes
+      if (level === decisionNodeLevel && nodeTypes.decision) {
+        // Place decision node in the middle
+        const x = spacing.startX + level * spacing.horizontal;
+        const y = spacing.startY + spacing.vertical;
+        
+        // Add decision node to positions
+        nodesWithPositions.push({
+          ...nodeTypes.decision,
+          x,
+          y
+        });
+        
+        // Handle other nodes in this level (if any)
+        nodesInLevel
+          .filter(node => node.id !== nodeTypes.decision!.id)
+          .forEach((node, nodeIndex) => {
+            // Place other nodes at this level above or below the decision node
+            // with proper spacing
+            const yOffset = nodeIndex % 2 === 0 ? -spacing.vertical : spacing.vertical * 2;
+            
+            nodesWithPositions.push({
+              ...node,
+              x,
+              y: y + yOffset
+            });
+          });
+      } else {
+        // Normal level - arrange nodes vertically
+        const x = spacing.startX + level * spacing.horizontal;
+        
+        // Sort nodes by type to prioritize key nodes
+        const sortedNodes = [...nodesInLevel].sort((a, b) => {
+          // Prioritize key node types for better positioning
+          if (a.id === (nodeTypes.breach?.id ?? '')) return -1;
+          if (b.id === (nodeTypes.breach?.id ?? '')) return 1;
+          if (a.id === (nodeTypes.bank?.id ?? '')) return -1;
+          if (b.id === (nodeTypes.bank?.id ?? '')) return 1;
+          if (a.id === (nodeTypes.fintech?.id ?? '')) return -1;
+          if (b.id === (nodeTypes.fintech?.id ?? '')) return 1;
+          return 0;
+        });
+        
+        // If there's a decision node in the next level, create a fork-like layout
+        const nextLevel = sortedLevels[levelIndex + 1];
+        const hasDecisionNodeNextLevel = nextLevel === decisionNodeLevel;
+        
+        if (hasDecisionNodeNextLevel) {
+          // Position nodes in a way that flows into the decision node
+          sortedNodes.forEach((node, nodeIndex) => {
+            let y;
+            
+            // Create a fork pattern feeding into the decision node
+            if (nodeIndex === 0) {
+              // First node at typical middle position (feeds into decision)
+              y = spacing.startY + spacing.vertical;
+            } else if (nodeTypes.bank && node.id === nodeTypes.bank.id) {
+              // Bank node above
+              y = spacing.startY;
+            } else if (nodeTypes.fintech && node.id === nodeTypes.fintech.id) {
+              // FinTech node below
+              y = spacing.startY + spacing.vertical * 2;
+            } else {
+              // Fallback positioning
+              y = spacing.startY + (nodeIndex * spacing.vertical);
+            }
+            
+            nodesWithPositions.push({ ...node, x, y });
+          });
+        } else if (level > decisionNodeLevel && decisionNodeLevel !== null) {
+          // Fork pattern coming from decision node
+          // Find nodes connected from decision node
+          const yesNodes = connections
+            .filter(conn => 
+              conn.source === nodeTypes.decision!.id && 
+              conn.label && 
+              (conn.label.toLowerCase().includes('yes') || conn.label.toLowerCase().includes('true'))
+            )
+            .map(conn => nodeMap.get(conn.target))
+            .filter(node => node) as ProcessNode[];
           
-          // Special case adjustments to avoid line overlaps
-          if (col === 1) {
-            // For nodes in the middle column
-            if (row === 0) yOffset = -20; // Move top-middle up slightly
-            if (row === 2) yOffset = 20;  // Move bottom-middle down slightly
-          }
+          const noNodes = connections
+            .filter(conn => 
+              conn.source === nodeTypes.decision!.id && 
+              conn.label && 
+              (conn.label.toLowerCase().includes('no') || conn.label.toLowerCase().includes('false'))
+            )
+            .map(conn => nodeMap.get(conn.target))
+            .filter(node => node) as ProcessNode[];
           
-          // For nodes in the top and bottom rows of the right column, adjust horizontally
-          if (col === 2) {
-            if (row === 0) xOffset = 15;  // Move top-right outward slightly
-            if (row === 2) xOffset = 15;  // Move bottom-right outward slightly
-          }
-          
-          nodesWithPositions.push({
-            ...node,
-            x: centerX + (col * cellWidth) + xOffset,
-            y: centerY + (row * cellHeight) + yOffset
+          // Position yes path above, no path below
+          sortedNodes.forEach((node, nodeIndex) => {
+            let y;
+            
+            if (yesNodes.some(n => n.id === node.id)) {
+              // Yes branch nodes go above
+              y = spacing.startY;
+            } else if (noNodes.some(n => n.id === node.id)) {
+              // No branch nodes go below
+              y = spacing.startY + spacing.vertical * 2;
+            } else {
+              // Other nodes are distributed evenly
+              y = spacing.startY + (nodeIndex * spacing.vertical);
+            }
+            
+            nodesWithPositions.push({ ...node, x, y });
+          });
+        } else {
+          // Standard linear layout
+          sortedNodes.forEach((node, nodeIndex) => {
+            const y = spacing.startY + (nodeIndex * spacing.vertical);
+            nodesWithPositions.push({ ...node, x, y });
           });
         }
       }
-    }
-    
-    // Handle any overflow nodes (more than 9) with a simple wrapping layout
-    if (remainingNodes.length > emptyCells.length) {
-      const overflowNodes = remainingNodes.slice(emptyCells.length);
-      let overflowRow = 0;
-      let overflowCol = 3;  // Start in a new column
-      
-      overflowNodes.forEach(node => {
-        nodesWithPositions.push({
-          ...node,
-          x: centerX + (overflowCol * cellWidth),
-          y: centerY + (overflowRow * cellHeight)
-        });
-        
-        overflowRow++;
-        if (overflowRow >= 3) {
-          overflowRow = 0;
-          overflowCol++;
-        }
-      });
-    }
+    });
     
     return nodesWithPositions;
   }
