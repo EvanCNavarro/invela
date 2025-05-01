@@ -13,6 +13,8 @@ import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
 import { fileCreationService } from '../services/fileCreation';
 import { CompanyTabsService } from '../services/companyTabsService';
+import { UnifiedTabService } from '../services/unified-tab-service';
+
 
 // Destructure websocket service functions
 const { 
@@ -199,36 +201,29 @@ export function createFormSubmissionRouter(): Router {
               logger.info('Unlocking tabs for Card submission:', unlockedTabs);
             }
             
-            // For KYB forms, explicitly use the unlockFileVault method to ensure proper tab unlocking
-            if (formType === 'kyb' || formType === 'company_kyb') {
-              logger.info(`🔐 KYB form submitted - explicitly unlocking File Vault tab for company ${companyId}`);
+            // Use the new unified tab service to handle all tab unlocking in a consistent way
+            if (unlockedTabs.length > 0) {
+              logger.info(`🔐 Form submitted - unlocking tabs for company ${companyId}:`, { tabs: unlockedTabs });
               
               try {
-                // Use the dedicated CompanyTabsService to unlock the file vault, which includes:
-                // - Database update with the file-vault tab
-                // - Cache invalidation
-                // - WebSocket broadcasting
-                // - Redundant broadcast mechanisms
-                // - Error handling
-                const result = await CompanyTabsService.unlockFileVault(companyId);
+                // Use our unified tab service to handle tab unlocking in a standardized way
+                const success = await UnifiedTabService.unlockTabs(companyId, unlockedTabs);
                 
-                if (result) {
-                  logger.info(`✅ Successfully unlocked File Vault tab for company ${companyId}`);
+                if (success) {
+                  logger.info(`✅ Successfully unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
                 } else {
-                  logger.warn(`⚠️ Failed to unlock File Vault tab for company ${companyId} - CompanyTabsService.unlockFileVault returned null`);
+                  logger.warn(`⚠️ Failed to unlock tabs for company ${companyId} - UnifiedTabService.unlockTabs returned false`);
                 }
-              } catch (fileVaultUnlockError) {
-                logger.error(`🔴 Error unlocking File Vault tab for company ${companyId}:`, fileVaultUnlockError);
+              } catch (tabUnlockError) {
+                logger.error(`🔴 Error unlocking tabs for company ${companyId}:`, tabUnlockError as any);
                 // Continue with the form submission even if tab unlock fails
               }
+            } else {
+              logger.info(`No tabs to unlock for form type ${formType}`);
             }
-            // For other form types, use the general tabs update logic
-            else if (unlockedTabs.length > 0) {
-              logger.info(`Updating and broadcasting company tabs for company ${companyId}:`, unlockedTabs);
-              
-              try {
-                // Use the CompanyTabsService to add the tabs to the company
-                const result = await CompanyTabsService.addTabsToCompany(companyId, unlockedTabs);
+            
+            // Keep this code block commented for reference of the old implementation
+            /*
                 
                 if (result) {
                   logger.info(`✅ Successfully updated tabs for company ${companyId} using CompanyTabsService:`, result.available_tabs);
@@ -370,44 +365,9 @@ export function createFormSubmissionRouter(): Router {
             // This ensures the tab update event is sent regardless of whether clients are listening
             // for form submission events
             if (unlockedTabs.length > 0) {
-              try {
-                logger.info(`Broadcasting company_tabs_update for company ${companyId} with new tabs: ${unlockedTabs.join(', ')}`);
-                
-                // Import the correct function to broadcast company tabs update
-                const { broadcastCompanyTabsUpdate } = require('../services/websocket');
-                
-                // Get the current tabs from the database again to ensure accuracy
-                const [companyRecord] = await db.select()
-                  .from(companies)
-                  .where(eq(companies.id, companyId));
-                  
-                if (companyRecord && companyRecord.available_tabs) {
-                  // Handle the available_tabs field, which is a text array in PostgreSQL
-                  // It's already an array of strings, so we can use it directly
-                  let currentTabsFromDb: string[] = Array.isArray(companyRecord.available_tabs) 
-                    ? companyRecord.available_tabs 
-                    : [];
-                  
-                  logger.info(`Broadcasting tabs from database: ${currentTabsFromDb.join(', ')}` as any);
-                  
-                  // Broadcast with the tabs directly from the database
-                  broadcastCompanyTabsUpdate(
-                    companyId,
-                    currentTabsFromDb
-                  );
-                } else {
-                  // Fallback to just using unlockedTabs
-                  broadcastCompanyTabsUpdate(
-                    companyId, 
-                    unlockedTabs
-                  );
-                }
-                
-                logger.info(`Successfully broadcasted company tabs update for company ${companyId}`);
-              } catch (wsError) {
-                logger.error(`Error broadcasting company tabs update: ${wsError instanceof Error ? wsError.message : 'Unknown error'}`);
-                // Don't throw here - we don't want a WebSocket error to prevent form submission
-              }
+              logger.info(`Broadcasting tabs update completed via UnifiedTabService`);
+              // The UnifiedTabService.unlockTabs method already handles tab broadcasting
+              // No need for additional broadcasting here
             }
             
             return res.json({
