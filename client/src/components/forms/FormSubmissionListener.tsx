@@ -5,7 +5,7 @@
  * the appropriate callbacks when events are received.
  */
 
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useRef } from 'react';
 import { WebSocketContext } from '@/providers/websocket-provider';
 import { toast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
@@ -58,15 +58,54 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   showToasts = true
 }) => {
   const { socket, isConnected } = useContext(WebSocketContext);
+  
+  // Use refs to track listener state and prevent unnecessary reattachment
+  const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
+  const listenerInfoRef = useRef<{taskId: number; formType: string} | null>(null);
+  const hasSetupListenerRef = useRef<boolean>(false);
+  
+  // Use refs for callback functions to prevent unnecessary reattachment
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  const onInProgressRef = useRef(onInProgress);
+  const showToastsRef = useRef(showToasts);
+  
+  // Update refs when props change
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+    onInProgressRef.current = onInProgress;
+    showToastsRef.current = showToasts;
+  }, [onSuccess, onError, onInProgress, showToasts]);
 
   useEffect(() => {
+    // Only proceed if we actually have a socket and it's connected
     if (!socket || !isConnected) {
       logger.warn('WebSocket not connected, form submission updates will not be received');
       return;
     }
+    
+    // Check if we need to setup a new listener
+    const needsNewListener = 
+      !hasSetupListenerRef.current || 
+      !listenerInfoRef.current ||
+      listenerInfoRef.current.taskId !== taskId ||
+      listenerInfoRef.current.formType !== formType;
+      
+    // If we don't need a new listener, just return
+    if (!needsNewListener && hasSetupListenerRef.current && handleMessageRef.current) {
+      return;
+    }
+    
+    // Clean up any existing listener if we're setting up a new one
+    if (hasSetupListenerRef.current && handleMessageRef.current) {
+      socket.removeEventListener('message', handleMessageRef.current);
+      logger.info(`Cleaned up form submission listener for task ${listenerInfoRef.current?.taskId}`);
+    }
 
     logger.info(`Setting up form submission listener for task ${taskId} (${formType})`);
 
+    // Create new message handler
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
@@ -110,7 +149,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           // We've disabled toasts here to prevent duplication with parent components
           // Parent components can handle their own toast/modal UI
           // Only show toast if explicitly enabled (disabled by default for most cases)
-          if (showToasts) {
+          if (showToastsRef.current) {
             toast({
               title: 'Form submitted successfully',
               description: payload.message || 'Your form has been successfully submitted.',
@@ -119,12 +158,12 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             });
           }
           
-          if (onSuccess) {
-            onSuccess(submissionEvent);
+          if (onSuccessRef.current) {
+            onSuccessRef.current(submissionEvent);
           }
         } else if (payload.status === 'error') {
           // Always show error toasts since errors need to be visible
-          if (showToasts) {
+          if (showToastsRef.current) {
             toast({
               title: 'Form submission failed',
               description: payload.error || 'An error occurred while submitting your form.',
@@ -133,12 +172,12 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             });
           }
           
-          if (onError) {
-            onError(submissionEvent);
+          if (onErrorRef.current) {
+            onErrorRef.current(submissionEvent);
           }
         } else if (payload.status === 'in_progress') {
           // In-progress toasts are less important for duplicate UI
-          if (showToasts) {
+          if (showToastsRef.current) {
             toast({
               title: 'Form submission in progress',
               description: 'Your form is being processed...',
@@ -147,8 +186,8 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             });
           }
           
-          if (onInProgress) {
-            onInProgress(submissionEvent);
+          if (onInProgressRef.current) {
+            onInProgressRef.current(submissionEvent);
           }
         }
       } catch (error) {
@@ -156,13 +195,24 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
       }
     };
 
+    // Store refs for cleanup
+    handleMessageRef.current = handleMessage;
+    listenerInfoRef.current = { taskId, formType };
+    hasSetupListenerRef.current = true;
+    
+    // Add the event listener
     socket.addEventListener('message', handleMessage);
 
+    // Cleanup function - only execute on unmount or when task/form changes
     return () => {
-      socket.removeEventListener('message', handleMessage);
-      logger.info(`Cleaned up form submission listener for task ${taskId}`);
+      if (socket && handleMessageRef.current) {
+        socket.removeEventListener('message', handleMessageRef.current);
+        logger.info(`Cleaned up form submission listener for task ${taskId}`);
+        hasSetupListenerRef.current = false;
+        handleMessageRef.current = null;
+      }
     };
-  }, [socket, isConnected, taskId, formType, onSuccess, onError, onInProgress, showToasts]);
+  }, [socket, isConnected, taskId, formType]); // Remove callback dependencies
 
   return null; // This component doesn't render anything
 };
