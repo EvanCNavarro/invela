@@ -80,5 +80,6 @@ export function useStandardizedServices(): void {
   }
 }
 
-// Automatically register services when this module is imported
-registerStandardizedServices();
+// Do not automatically register services on import
+// This was causing duplicate service registration
+// registerStandardizedServices();
