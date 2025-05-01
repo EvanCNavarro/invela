@@ -203,6 +203,19 @@ export class FileCreationService {
     content: any,
     metadata: FileMetadata
   ): Promise<FileCreationResult> {
+    // CRITICAL DEBUG: Log input parameters in detail
+    console.log(`[FileCreationService] CRITICAL DEBUG - Starting file creation process`, {
+      userId,
+      companyId,
+      taskId: metadata.taskId,
+      taskType: metadata.taskType,
+      originalType: metadata.originalType,
+      contentDataType: typeof content,
+      contentIsEmpty: !content || Object.keys(content).length === 0,
+      contentFirstKey: content ? Object.keys(content)[0] : null,
+      metadataKeys: Object.keys(metadata),
+      timestamp: new Date().toISOString()
+    });
     try {
       logger.info('Starting file creation', {
         userId,
