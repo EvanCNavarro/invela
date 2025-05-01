@@ -212,19 +212,11 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         });
         
         const fileResult = await fileCreationService.createTaskFile(
-          userId,
-          companyId,
+          taskId,
+          schemaTaskType, // Use mapped type to match zod validation schema
           formData,
-          {
-            taskType: schemaTaskType, // Use mapped type to match zod validation schema
-            taskId,
-            companyName,
-            originalType: formType, // Add original form type for better tracking
-            additionalData: {
-              fileName,
-              submissionTime: new Date().toISOString()
-            }
-          }
+          companyId,
+          userId
         );
         
         if (fileResult.success) {
