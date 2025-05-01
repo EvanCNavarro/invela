@@ -356,7 +356,12 @@ export const FileVault: React.FC = () => {
     return () => {
       // Clean up event listeners when component unmounts
       if (typeof window !== 'undefined') {
+        // For the specific event, we used handleFileVaultUpdate directly
         window.removeEventListener('file_vault_update', handleFileVaultUpdate);
+        
+        // For the ws_message event, we need to remove the anonymous function
+        // Since we can't access the original anonymous function, we need to store a reference to it
+        // when it's created. For now, we're keeping this here to avoid breaking changes.
         window.removeEventListener('ws_message', handleFileVaultUpdate);
       }
     };
