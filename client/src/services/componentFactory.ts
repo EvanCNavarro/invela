@@ -138,10 +138,18 @@ export class ComponentFactory {
       // Get instance from Enhanced KYB factory
       logger.info(`Getting isolated KYB service instance for company ${companyId}, task ${taskId}`);
       return enhancedKybServiceFactory.getInstance(companyId, taskId);
-    } else if (taskType === 'sp_ky3p_assessment' || taskType === 'ky3p') {
-      // Get instance from KY3P factory
-      logger.info(`Getting isolated KY3P service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
-      return ky3pFormServiceFactory.getServiceInstance(companyId, taskId);
+    } else if (taskType === 'sp_ky3p_assessment' || taskType === 'ky3p' || taskType === 'security' || taskType === 'security_assessment') {
+      // Get instance from Unified KY3P factory instead of the old one
+      logger.info(`Getting isolated UNIFIED KY3P service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);
+      
+      try {
+        // Use the unified KY3P service factory first
+        return unifiedKy3pServiceFactory.getServiceInstance(companyId, taskId);
+      } catch (error) {
+        logger.error(`Error creating unified KY3P service, falling back to legacy service:`, error);
+        // Only use legacy service as fallback
+        return ky3pFormServiceFactory.getServiceInstance(companyId, taskId);
+      }
     } else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
       // Get instance from OpenBanking factory
       logger.info(`Getting isolated Open Banking service instance for company ${companyId}, task ${taskId} (type: ${taskType})`);

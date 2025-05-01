@@ -950,19 +950,28 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     const sections = Array.from(uniqueSections);
     
     // Map sections to FormSection objects
-    this._sections = sections.map((section, index) => ({
-      id: index + 1,
-      name: section,
-      title: section, // Required by FormSection interface
-      label: section,
-      order: index, // Required by FormSection interface
-      collapsed: false, // Required by FormSection interface
-      fields: this._fields.filter(field => 
-        (field.section === section) || (field.group === section)
-      ).sort((a, b) => (a.order || 0) - (b.order || 0))
-    }));
+    this._sections = sections.map((section, index) => {
+      // CRITICAL FIX: Use the section name as the ID, not the index
+      // This ensures fields with section="Development" will match section.id="Development"
+      return {
+        id: section, // Use the section name as ID to ensure matching
+        name: section,
+        title: section, // Required by FormSection interface
+        label: section,
+        order: index, // Required by FormSection interface
+        collapsed: false, // Required by FormSection interface
+        fields: this._fields.filter(field => 
+          (field.section === section) || (field.group === section)
+        ).sort((a, b) => (a.order || 0) - (b.order || 0))
+      };
+    });
     
+    // Log additional debug info
     logger.info(`[Unified KY3P] Generated ${this._sections.length} sections`);
+    if (this._sections.length > 0) {
+      logger.info(`[Unified KY3P] First section ID: ${this._sections[0].id}, Name: ${this._sections[0].name}`);
+      logger.info(`[Unified KY3P] Sample field section values: ${this._fields.slice(0, 3).map(f => f.section).join(', ')}`);
+    }
   }
 }
 
@@ -970,3 +979,24 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
 export function createUnifiedKY3PFormService(companyId?: number, taskId?: number): UnifiedKY3PFormService {
   return new UnifiedKY3PFormService(companyId, taskId);
 }
+
+/**
+ * Factory interface for the unified KY3P form service
+ * Provides a consistent method for getting service instances
+ */
+export const unifiedKy3pServiceFactory = {
+  /**
+   * Get a service instance with the specified company and task IDs
+   * 
+   * @param companyId Optional company ID to associate with this service
+   * @param taskId Optional task ID to associate with this service
+   * @returns A new UnifiedKY3PFormService instance
+   */
+  getServiceInstance(companyId?: number | string, taskId?: number | string): UnifiedKY3PFormService {
+    // Convert string IDs to numbers if needed
+    const companyIdNum = typeof companyId === 'string' ? parseInt(companyId, 10) : companyId;
+    const taskIdNum = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+    
+    return createUnifiedKY3PFormService(companyIdNum, taskIdNum);
+  }
+};
