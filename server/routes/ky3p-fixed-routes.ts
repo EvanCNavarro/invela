@@ -160,6 +160,11 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
 
 /**
  * Special demo-autofill endpoint for KY3P forms
+ * 
+ * NOTE: This implementation is deprecated in favor of the universal-demo-autofill service.
+ * This route still exists for backward compatibility but delegates to the universal service.
+ * 
+ * @deprecated Use the universal demo auto-fill service instead
  */
 router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
   try {
@@ -171,100 +176,31 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
       });
     }
     
-    console.log(`[KY3P API] Demo auto-fill requested for task ${taskId}`);
+    // Import the universal service here to avoid circular dependencies
+    const { universalDemoAutoFillService } = require('../services/universalDemoAutoFillService');
     
-    // Use a direct demo data approach with field keys that match our database schema
-    const demoData = {
-      // External Systems & Security
-      'externalSystems': 'Our organization maintains a comprehensive inventory of external information systems through automated discovery tools and regular manual audits. The inventory is updated monthly and validated quarterly.',
-      'breachNotification': 'Our breach notification process follows a structured protocol. Upon detection, incidents are escalated to the security team within 1 hour, assessed within 4 hours, and data controllers are notified within 24 hours of confirmation.',
-      'standardChangeControl': 'We follow ITIL-based change management procedures with formal documentation, impact assessment, and approval workflows. All changes are tested in staging environments before deployment.',
-      'dataLossGovernance': 'Our DLP strategy includes content inspection, context analysis, and location-based controls. We regularly review and update data loss prevention policies based on quarterly risk assessments.',
-      'centralizedAuthentication': 'We implement centralized authentication through a federated identity management system with role-based access controls and just-in-time provisioning.',
-      'antiFraudGovernance': 'Our fraud detection system employs machine learning algorithms to monitor transaction patterns, behavioral biometrics, and unusual access patterns in real-time.',
-      'defaultPasswords': 'We enforce a strict policy against default passwords. All default credentials are changed before systems enter production, verified by automated scanning and security audits.',
-      'assetRetrieval': 'We maintain a structured asset retrieval process for departing employees including access revocation, equipment return verification, and data sanitization procedures.',
-      
-      // Privacy and Security
-      'privacyIncidentProcedure': 'Our privacy incident response plan includes a dedicated privacy team, containment procedures, forensic investigation protocols, and communication templates for different stakeholder groups.',
-      'dataClassificationGovernance': 'Our data classification framework has four tiers: Public, Internal, Confidential, and Restricted. Each tier has defined handling requirements, access controls, and retention policies.',
-      'threatManagementGovernance': 'Our threat management program includes continuous monitoring, threat intelligence integration, and coordinated vulnerability management through our security operations center.',
-      'webApplicationSecurity': 'We implement OWASP security practices including regular SAST/DAST testing, secure code reviews, and runtime application self-protection (RASP) for critical applications.',
-      'remoteMfa': 'All remote access requires multi-factor authentication using a combination of hardware tokens for privileged users and mobile authenticator apps for standard users.',
-      'fraudActivityReporting': 'Suspected fraud activity is reported through a dedicated hotline and online portal, with anonymous reporting options and mandatory review within 24 hours.',
-      'incidentDocumentation': 'Security incidents are documented in our centralized incident management system with standardized templates for incident classification, response actions, and post-incident analysis.',
-      
-      // Compliance and Development
-      'privacyLawCompliance': 'We maintain compliance with relevant privacy laws through a dedicated privacy office, periodic assessments, data mapping exercises, and regulatory monitoring.',
-      'developmentLifecycle': 'Our secure development lifecycle incorporates security requirements definition, threat modeling, secure coding standards, and security testing at all stages of development.',
-      'acceptableUse': 'Our acceptable use policy covers all IT resources, is reviewed annually, requires explicit user acknowledgment, and is reinforced through regular security awareness training.',
-      'securityExceptions': 'Security exceptions require formal risk assessment, compensating controls, executive approval, and are documented with specific expiration dates and periodic reviews.',
-      'securityPatching': 'Our patch management process includes daily vulnerability monitoring, risk-based prioritization, testing protocols, and defined SLAs for deployment (Critical: 24h, High: 7d, Medium: 30d).',
-      
-      // Additional Areas
-      'incidentResponse': 'Our incident response team conducts quarterly tabletop exercises and annual full-scale simulations to ensure readiness for various security scenarios.',
-      'disasterRecovery': 'Our disaster recovery plan is tested bi-annually, maintains RTO of 4 hours and RPO of 15 minutes for critical systems, with geographically distributed recovery sites.',
-      'backupManagement': 'Critical data is backed up daily with incremental backups throughout the day, 30-day retention for standard data, and 7-year retention for regulated data.',
-      'encryptionControls': 'We implement AES-256 encryption for data at rest and TLS 1.3 for data in transit, with hardware security modules (HSMs) for key management.',
-      'vendorAssessment': 'Third-party vendors undergo security assessment before engagement and annually thereafter, with risk-tiered evaluation depth and continuous monitoring.'
-    };
+    // Log with deprecated notice
+    console.log(`[KY3P API DEPRECATED] Demo auto-fill requested for task ${taskId}, delegating to universal service`);
     
-    // Get all fields for mapping
-    const fields = await db.select().from(ky3pFields);
-    const fieldKeyToIdMap = new Map(fields.map(field => [field.field_key, field.id]));
-    
-    // Process all demo data as a batch
-    const responseEntries: Array<{
-      task_id: number;
-      field_id: number;
-      response_value: string;
-      status: string;
-    }> = [];
-    
-    // Convert demo data with string keys to array format with explicit fieldId
-    for (const [fieldKey, value] of Object.entries(demoData)) {
-      const fieldId = fieldKeyToIdMap.get(fieldKey);
+    // Use the universal service to ensure consistent behavior across all form types
+    try {
+      const result = await universalDemoAutoFillService.applyDemoData(
+        taskId,
+        'ky3p',
+        req.user?.id
+      );
       
-      if (fieldId !== undefined && value !== undefined && value !== null && value !== '') {
-        // Ensure field ID is a number
-        const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
-        
-        if (!isNaN(numericFieldId)) {
-          responseEntries.push({
-            task_id: taskId,
-            field_id: numericFieldId,
-            response_value: String(value),
-            status: 'complete'
-          });
-        }
-      }
+      // Return the result with both fieldCount (new) and fieldsPopulated (old) for compatibility
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+        fieldCount: result.fieldCount,
+        fieldsPopulated: result.fieldCount, // For backward compatibility
+        formType: 'ky3p'
+      });
+    } catch (serviceError) {
+      throw serviceError; // Re-throw to be caught by the outer catch block
     }
-    
-    console.log(`[KY3P API] Converting ${responseEntries.length} demo fields with data`);
-    
-    // Insert all responses in a single transaction
-    await db.transaction(async (tx) => {
-      // First delete all existing responses for this task
-      await tx.delete(ky3pResponses)
-        .where(eq(ky3pResponses.task_id, taskId));
-      
-      // Then insert new responses if we have any
-      if (responseEntries.length > 0) {
-        await tx.insert(ky3pResponses).values(responseEntries);
-      } else {
-        console.warn(`[KY3P API] No matching fields found for task ${taskId}`);
-      }
-    });
-    
-    // Update task progress
-    const progressPercent = await updateTaskProgress(taskId);
-    
-    return res.status(200).json({
-      success: true,
-      message: `Successfully populated ${responseEntries.length} fields with demo data`,
-      fieldsPopulated: responseEntries.length,
-      progressPercent
-    });
   } catch (error) {
     console.error('[KY3P API] Error auto-filling demo data', error);
     return res.status(500).json({
