@@ -6,6 +6,9 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { db } from '@db';
+import { tasks, files } from '@db/schema';
+import { eq } from 'drizzle-orm';
 import { Logger } from '../utils/logger';
 import { processFormSubmission } from '../services/transactional-form-handler';
 import { broadcastTaskUpdate, broadcastFormSubmission } from '../services/websocket';

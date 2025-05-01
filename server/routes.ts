@@ -59,6 +59,7 @@ import fileVaultRouter from './routes/file-vault';
 import broadcastRouter from './routes/broadcast';
 import testKy3pUpdateRouter from './routes/test-ky3p-update';
 import { createUnifiedFormSubmissionRouter } from './routes/index';
+import { createTransactionalFormRouter } from './routes/transactional-form-routes';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 import { createTestRouter } from './routes/test-routes';
@@ -388,6 +389,16 @@ export function registerRoutes(app: Express): Express {
     console.log('[Routes] Successfully registered unified form submission router');
   } catch (error) {
     console.error('[Routes] Error setting up unified form submission router:', error);
+  }
+  
+  // Register our new transactional form submission router that ensures atomic operations
+  try {
+    console.log('[Routes] Setting up transactional form submission router');
+    const transactionalFormRouter = createTransactionalFormRouter();
+    app.use('/api/forms-tx', transactionalFormRouter);
+    console.log('[Routes] Successfully registered transactional form submission router');
+  } catch (error) {
+    console.error('[Routes] Error setting up transactional form submission router:', error);
   }
   
   app.use('/api/task-templates', taskTemplatesRouter);
