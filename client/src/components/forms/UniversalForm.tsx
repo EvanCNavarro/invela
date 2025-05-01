@@ -285,23 +285,35 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           logger.warn('Error accessing user context:', error);
         }
         
-        // Try to get a company-specific form service instance
-        let service = formServiceFactory.getServiceInstance(taskType, companyId, taskId);
-        
-        if (!service) {
-          // Try with mapped DB task type
-          logger.debug(`No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
-          service = formServiceFactory.getServiceInstance(dbTaskType, companyId, taskId);
-        }
-        
-        // Fall back to component factory if needed (but log a warning)
-        if (!service) {
-          logger.warn(`Could not create isolated form service, falling back to legacy factory`);
-          service = componentFactory.getFormService(taskType);
+        // Try to get a company-specific form service instance - WITH PROMISE HANDLING
+        try {
+          // Get service asynchronously
+          let service = await formServiceFactory.getServiceInstance(taskType, companyId, taskId);
           
           if (!service) {
-            service = componentFactory.getFormService(dbTaskType);
+            // Try with mapped DB task type
+            logger.debug(`No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
+            service = await formServiceFactory.getServiceInstance(dbTaskType, companyId, taskId);
           }
+          
+          // Fall back to component factory if needed (but log a warning)
+          if (!service) {
+            logger.warn(`Could not create isolated form service, falling back to legacy factory`);
+            service = componentFactory.getFormService(taskType);
+            
+            if (!service) {
+              service = componentFactory.getFormService(dbTaskType);
+            }
+          }
+          
+          // If service is a Promise, await it (defensive coding)
+          if (service instanceof Promise) {
+            logger.debug('Service is a Promise, awaiting resolution...');
+            service = await service;
+          }
+        } catch (serviceError) {
+          logger.error('Error loading form service:', serviceError);
+          throw serviceError; // Re-throw to be caught by the outer try/catch
         }
         
         if (!service) {

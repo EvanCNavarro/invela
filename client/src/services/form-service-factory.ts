@@ -22,12 +22,12 @@ const logger = getLogger('FormServiceFactory');
  * @param useEnhanced Whether to use enhanced service implementations when available
  * @returns A form service instance
  */
-export function createFormService(
+export async function createFormService(
   formType: string,
   companyId?: number | string,
   taskId?: number | string,
   useEnhanced: boolean = true
-): FormServiceInterface | null {
+): Promise<FormServiceInterface | null> {
   // Get IDs from user context if not explicitly provided
   // This ensures data isolation between companies/tasks
   const contextData = userContext.getContext();
@@ -112,12 +112,12 @@ export const formServiceFactory = {
    * @param useEnhanced Whether to use enhanced implementations when available
    * @returns A form service instance or null if the type is not supported
    */
-  getServiceInstance(
+  async getServiceInstance(
     formType: string,
     companyId?: number | string,
     taskId?: number | string,
     useEnhanced: boolean = true
-  ): FormServiceInterface | null {
+  ): Promise<FormServiceInterface | null> {
     return createFormService(formType, companyId, taskId, useEnhanced);
   }
 };
