@@ -7,8 +7,8 @@
  */
 
 import { db } from '@db';
-import { tasks } from '@db/schema';
-import { eq } from 'drizzle-orm';
+import { tasks, files } from '@db/schema';
+import { eq, and } from 'drizzle-orm';
 import { Logger } from '../utils/logger';
 import * as WebSocketService from './websocket';
 
@@ -24,100 +24,89 @@ const logger = new Logger('EnhancedKybFormHandler');
  * @returns Success status
  */
 export async function updateTaskWithFileInfo(
-  taskId: number, 
-  fileId: number,
+  taskId: number,
+  fileId: number | string,
   fileName: string,
   companyId: number
 ): Promise<boolean> {
   try {
-    // Get the current task to access its metadata
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+    // Log the request details
+    logger.info('Updating task with file info using enhanced handler', {
+      taskId,
+      fileId,
+      fileName,
+      companyId
     });
     
+    // Get the current task
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
     if (!task) {
-      logger.error(`Task ${taskId} not found for file update`);
+      logger.error('Task not found', { taskId });
       return false;
     }
     
-    // Try to use the unified tracking service
-    try {
-      // Import dynamically to avoid circular dependencies
-      const { linkFileToTask } = require('./unified-file-tracking');
-      const linked = await linkFileToTask(
-        taskId,
-        fileId,
-        fileName,
-        companyId,
-        'kyb' // form type
-      );
+    // Update task status to submitted
+    await db.update(tasks)
+      .set({
+        status: 'submitted',
+        progress: 100,
+        completion_date: new Date(),
+        updated_at: new Date(),
+        metadata: {
+          ...task.metadata,
+          last_updated: new Date().toISOString(),
+          submission_timestamp: new Date().toISOString(),
+          status_flow: [...(task.metadata?.status_flow || []), 'submitted'],
+          /* Important: Track file information in the task metadata */
+          fileId: fileId,
+          fileName: fileName,
+          kybFormFile: fileId, // This is the standard field name used in multiple places
+          formFile: fileId, // Another variant used in some places
+          progressHistory: [
+            ...(task.metadata?.progressHistory || []),
+            { value: 100, timestamp: new Date().toISOString() }
+          ]
+        }
+      })
+      .where(eq(tasks.id, taskId));
       
-      logger.info(`KYB form file linked using unified tracking:`, {
-        taskId,
-        fileId,
-        linked
-      });
-      
-      // Still update task status for consistency
-      await db.update(tasks)
-        .set({
-          status: 'submitted',
-          progress: 100,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, taskId));
-        
-      return true;
-    } catch (linkError) {
-      // If unified service fails, fall back to direct update
-      logger.warn(`Failed to use unified file tracking service, using direct update:`, {
-        error: linkError instanceof Error ? linkError.message : 'Unknown error'
-      });
-      
-      // Fall back to direct metadata update
-      const currentDate = new Date();
-      await db.update(tasks)
-        .set({
-          status: 'submitted',
-          progress: 100,
-          updated_at: currentDate,
-          metadata: {
-            ...task.metadata,
-            kybFormFile: fileId,
-            // Add standard fileId field for compatibility with fix-missing-file
-            fileId: fileId,
-            submissionDate: currentDate.toISOString(),
-            formVersion: '1.0',
-            fileName: fileName,
-            fileCreatedAt: currentDate.toISOString(),
-            statusFlow: [...(task.metadata?.statusFlow || []), 'submitted']
-              .filter((v, i, a) => a.indexOf(v) === i)
-          }
-        })
-        .where(eq(tasks.id, taskId));
-      
-      // Broadcast file vault update to refresh UI
-      WebSocketService.broadcast('file_vault_update', {
-        companyId,
-        fileId,
-        fileName,
-        action: 'added',
-        source: 'enhanced_kyb_form_handler'
-      });
-      
-      // Also broadcast a refresh event after a short delay
-      setTimeout(() => {
-        WebSocketService.broadcast('file_vault_update', {
+    // Add the task ID to the file metadata too for bidirectional linking
+    await db.update(files)
+      .set({
+        metadata: {
+          taskId,
+          taskType: 'kyb',
           companyId,
-          action: 'refresh',
-          source: 'enhanced_kyb_form_handler'
-        });
-      }, 500);
+          submissionDate: new Date().toISOString()
+        }
+      })
+      .where(eq(files.id, Number(fileId)));
       
-      return true;
-    }
+    // Broadcast task update via WebSocket
+    const payload = {
+      id: taskId,
+      status: 'submitted',
+      metadata: {
+        fileId,
+        fileName
+      }
+    };
+    
+    WebSocketService.broadcastMessage('task_update', payload);
+    
+    // Log success
+    logger.info('Task updated successfully with file info', {
+      taskId,
+      fileId,
+      newStatus: 'submitted'
+    });
+    
+    return true;
   } catch (error) {
-    logger.error(`Error updating task ${taskId} with file info`, {
+    logger.error('Error updating task with file info', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       taskId,
