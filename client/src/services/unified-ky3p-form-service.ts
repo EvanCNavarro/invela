@@ -906,9 +906,14 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
       // Process fields to ensure they have all required properties
       this._fields = fields.map((field: any) => ({
         id: field.id,
+        // Map both formats to ensure compatibility
+        key: field.field_key, // Add standard 'key' property
         fieldKey: field.field_key,
+        // Map both formats to ensure compatibility
+        label: field.display_name, // Add standard 'label' property
         displayName: field.display_name,
         fieldType: field.field_type,
+        question: field.question, // Include original question
         required: field.required === true || field.required === 1,
         group: field.group,
         order: field.order,
@@ -916,7 +921,9 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
         description: field.description || field.question,
         options: field.options,
         section: field.section || field.group,
-        step: field.step_index
+        step: field.step_index,
+        // Add validation object for the validate method
+        validation: field.required ? { required: true } : {}
       }));
       
       logger.info(`[Unified KY3P] Loaded ${this._fields.length} fields`);
