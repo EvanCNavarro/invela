@@ -368,6 +368,9 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
   
+  // Register Risk Score Configuration routes
+  app.use('/api/risk-score', riskScoreConfigurationRouter);
+  
   // Register our unified form submission router - centralized endpoint for all form types
   // Since we're now using the global WebSocket functions directly, we don't need to pass the WSS instance
   try {
@@ -381,9 +384,6 @@ export function registerRoutes(app: Express): Express {
   
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);
-  
-  // Register Risk Score Configuration routes
-  app.use('/api/risk-score', riskScoreConfigurationRouter);
   
   // Register WebSocket test routes
   app.use('/api/websocket', websocketRouter);
