@@ -9,10 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import ClaimsTable from '@/components/claims/ClaimsTable';
 import NewClaimModal from '@/components/claims/NewClaimModal';
 import PageHeader from '@/components/layout/PageHeader';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { PageTemplate } from '@/components/ui/page-template';
 
 export default function ClaimsPage() {
   const [isNewClaimModalOpen, setIsNewClaimModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { toast } = useToast();
 
   const activeClaims = useQuery<any[]>({
@@ -47,95 +50,99 @@ export default function ClaimsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader
+    <DashboardLayout>
+      <PageTemplate
+        drawerOpen={drawerOpen}
+        onDrawerOpenChange={setDrawerOpen}
         title="Claims Management"
         description="Track and manage your PII data loss claims"
-        actions={
+        headerActions={
           <Button onClick={handleCreateClaim}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Claim
           </Button>
         }
-      />
-
-      <Tabs
-        defaultValue="active"
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value)}
-        className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="active" className="flex items-center">
-            <Clock className="mr-2 h-4 w-4" />
-            Active Claims
-          </TabsTrigger>
-          <TabsTrigger value="disputed" className="flex items-center">
-            <AlertTriangle className="mr-2 h-4 w-4" />
-            Disputed Claims
-          </TabsTrigger>
-          <TabsTrigger value="resolved" className="flex items-center">
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Resolved Claims
-          </TabsTrigger>
-          <TabsTrigger value="process" className="flex items-center">
-            Process Flow
-          </TabsTrigger>
-        </TabsList>
+        <div className="space-y-6">
+          <Tabs
+            defaultValue="active"
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value)}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="active" className="flex items-center">
+                <Clock className="mr-2 h-4 w-4" />
+                Active Claims
+              </TabsTrigger>
+              <TabsTrigger value="disputed" className="flex items-center">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Disputed Claims
+              </TabsTrigger>
+              <TabsTrigger value="resolved" className="flex items-center">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Resolved Claims
+              </TabsTrigger>
+              <TabsTrigger value="process" className="flex items-center">
+                Process Flow
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="active" className="space-y-4 mt-4">
-          {activeClaims.isLoading ? (
-            <LoadingSkeleton />
-          ) : activeClaims.isError ? (
-            <ErrorCard message="Failed to load active claims" />
-          ) : (
-            <ClaimsTable 
-              claims={activeClaims.data || []} 
-              type="active" 
-              onRefresh={() => activeClaims.refetch()}
-            />
-          )}
-        </TabsContent>
+            <TabsContent value="active" className="space-y-4 mt-4">
+              {activeClaims.isLoading ? (
+                <LoadingSkeleton />
+              ) : activeClaims.isError ? (
+                <ErrorCard message="Failed to load active claims" />
+              ) : (
+                <ClaimsTable 
+                  claims={activeClaims.data || []} 
+                  type="active" 
+                  onRefresh={() => activeClaims.refetch()}
+                />
+              )}
+            </TabsContent>
 
-        <TabsContent value="disputed" className="space-y-4 mt-4">
-          {disputedClaims.isLoading ? (
-            <LoadingSkeleton />
-          ) : disputedClaims.isError ? (
-            <ErrorCard message="Failed to load disputed claims" />
-          ) : (
-            <ClaimsTable 
-              claims={disputedClaims.data || []} 
-              type="disputed" 
-              onRefresh={() => disputedClaims.refetch()}
-            />
-          )}
-        </TabsContent>
+            <TabsContent value="disputed" className="space-y-4 mt-4">
+              {disputedClaims.isLoading ? (
+                <LoadingSkeleton />
+              ) : disputedClaims.isError ? (
+                <ErrorCard message="Failed to load disputed claims" />
+              ) : (
+                <ClaimsTable 
+                  claims={disputedClaims.data || []} 
+                  type="disputed" 
+                  onRefresh={() => disputedClaims.refetch()}
+                />
+              )}
+            </TabsContent>
 
-        <TabsContent value="resolved" className="space-y-4 mt-4">
-          {resolvedClaims.isLoading ? (
-            <LoadingSkeleton />
-          ) : resolvedClaims.isError ? (
-            <ErrorCard message="Failed to load resolved claims" />
-          ) : (
-            <ClaimsTable 
-              claims={resolvedClaims.data || []} 
-              type="resolved" 
-              onRefresh={() => resolvedClaims.refetch()}
-            />
-          )}
-        </TabsContent>
+            <TabsContent value="resolved" className="space-y-4 mt-4">
+              {resolvedClaims.isLoading ? (
+                <LoadingSkeleton />
+              ) : resolvedClaims.isError ? (
+                <ErrorCard message="Failed to load resolved claims" />
+              ) : (
+                <ClaimsTable 
+                  claims={resolvedClaims.data || []} 
+                  type="resolved" 
+                  onRefresh={() => resolvedClaims.refetch()}
+                />
+              )}
+            </TabsContent>
 
-        <TabsContent value="process" className="space-y-4 mt-4">
-          <ProcessFlowContent />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="process" className="space-y-4 mt-4">
+              <ProcessFlowContent />
+            </TabsContent>
+          </Tabs>
 
-      <NewClaimModal 
-        open={isNewClaimModalOpen} 
-        onClose={() => setIsNewClaimModalOpen(false)} 
-        onClaimCreated={handleClaimCreated}
-      />
-    </div>
+          <NewClaimModal 
+            open={isNewClaimModalOpen} 
+            onClose={() => setIsNewClaimModalOpen(false)} 
+            onClaimCreated={handleClaimCreated}
+          />
+        </div>
+      </PageTemplate>
+    </DashboardLayout>
   );
 }
 
