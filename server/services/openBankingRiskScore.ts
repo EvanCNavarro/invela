@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 
 /**
  * Generate a risk score for a company based on Open Banking Survey submission
- * For now, this generates a random value between 250-1500
+ * For now, this generates a random value between 1-100 on the percentage-based scale
  * 
  * @param companyId The ID of the company to generate a risk score for
  * @param taskId The ID of the task being submitted
