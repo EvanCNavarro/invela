@@ -1,6 +1,10 @@
 import { files } from '@db/schema';
 import { db } from '@db';
 import { z } from 'zod';
+import getLogger from '../utils/logger';
+
+// Set up logger
+const logger = getLogger('FileCreationService');
 
 // Validation schema for file metadata
 const fileMetadataSchema = z.object({
@@ -23,14 +27,40 @@ interface FileCreationResult {
 }
 
 export class FileCreationService {
+  /**
+   * Generate a standardized filename for form file exports
+   * 
+   * This method creates consistent, sanitized filenames for different form types
+   * with proper naming conventions and timestamp formatting.
+   * 
+   * @param metadata FileMetadata object with taskType, companyName, etc.
+   * @returns Sanitized filename with timestamp
+   */
   private generateFileName(metadata: FileMetadata): string {
+    // Create a consistent timestamp format
     const timestamp = new Date().toISOString().replace(/[:.]/g, '');
-    const taskType = metadata.taskType.replace('company_', '');
-    const sanitizedCompanyName = metadata.companyName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    
+    // Sanitize the company name for safe filenames
+    const sanitizedCompanyName = (metadata.companyName || 'company')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_') // Collapse multiple underscores
+      .substring(0, 30); // Limit length
+    
+    // Remove the "company_" prefix from the task type if present
+    const taskType = (metadata.taskType || '').replace('company_', '');
     
     // For KY3P assessments, create CSV files
     if (metadata.taskType === 'sp_ky3p_assessment') {
       return `spglobal_ky3p_security_assessment_${sanitizedCompanyName}_${timestamp}.csv`;
+    }
+    
+    // For Open Banking assessments
+    if (metadata.taskType === 'open_banking' || 
+        metadata.originalType === 'open_banking' ||
+        metadata.taskType === 'open_banking_survey' ||
+        metadata.originalType === 'open_banking_survey') {
+      return `open_banking_survey_${sanitizedCompanyName}_${timestamp}.json`;
     }
     
     // Default to JSON for other assessment types
