@@ -526,21 +526,11 @@ export class StandardizedKY3PFormService implements FormServiceInterface {
           let data;
           
           switch (endpoint) {
-            case 'batch':
-              // Try batch update-based demo auto-fill
-              response = await apiRequest('GET', `/api/ky3p-task/${targetTaskId}/demo-data`);
-              data = await response.json();
-              break;
-              
-            case 'auto_fill':
-              // Try legacy auto-fill endpoint
-              response = await apiRequest('POST', `/api/ky3p-task/${targetTaskId}/auto-fill`);
-              data = await response.json();
-              break;
+            // Legacy endpoints have been removed
               
             case 'demo_autofill':
-              // Try universal demo auto-fill endpoint
-              response = await apiRequest('POST', `/api/ky3p-task/${targetTaskId}/demo-autofill`);
+              // Use standardized demo auto-fill endpoint
+              response = await apiRequest('POST', `/api/ky3p/demo-autofill/${targetTaskId}`);
               data = await response.json();
               break;
               
