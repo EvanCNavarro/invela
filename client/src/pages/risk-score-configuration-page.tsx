@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration } from '@/lib/risk-score-configuration-types';
 import { defaultRiskDimensions, defaultRiskThresholds, sampleCompanyComparisons, calculateRiskScore, determineRiskLevel } from '@/lib/risk-score-configuration-data';
+import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
 
 const dimensionIcons: Record<string, React.ReactNode> = {
   physical_security: <Shield className="h-5 w-5" />,
@@ -246,10 +247,8 @@ export default function RiskScoreConfigurationPage() {
                         </div>
                       </div>
                       
-                      {/* Placeholder for comparative visualization UI */}
-                      <div className="flex justify-between items-center border border-border rounded-md p-4 bg-muted/20">
-                        <div className="text-sm font-medium">Comparative visualization interface will be implemented in the next iteration</div>
-                      </div>
+                      {/* Comparative visualization component */}
+                      <ComparativeVisualization dimensions={dimensions} />
                     </TabsContent>
                   </Tabs>
 
