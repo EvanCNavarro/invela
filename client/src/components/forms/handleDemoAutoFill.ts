@@ -84,69 +84,20 @@ export async function handleDemoAutoFill({
   try {
     // For KY3P forms, use the dedicated KY3PDemoAutoFill component instead
     // This handler should not be used for KY3P forms to avoid duplicate service calls
-    if (taskType === 'ky3p' || taskType === 'security_assessment') {
+    if (taskType === 'ky3p' || taskType === 'security_assessment' || taskType === 'security' || taskType === 'sp_ky3p_assessment') {
       logger.warn(`KY3P forms should use the dedicated KY3PDemoAutoFill component, not this generic handler.`);
       logger.warn(`Using the generic handler can cause duplicate service calls.`);
       
-      // Show a more informative error
+      // Show an explicit error and force redirect to the proper component
       toast({
-        title: 'Demo Auto-Fill Notice',
-        description: 'KY3P forms use a dedicated auto-fill component. Please use the standard "Fill with Demo Data" button.',
-        variant: 'default'
+        title: 'Demo Auto-Fill Prevented',
+        description: 'KY3P forms require the dedicated KY3PDemoAutoFill component. This operation has been blocked to prevent duplicate service calls.',
+        variant: 'destructive'
       });
       
-      // Let's continue anyway for backward compatibility
-      try {
-        // Check if the form service supports demo data
-        if (!hasGetDemoData(formService)) {
-          logger.error('FormService does not implement getDemoData method');
-          toast({
-            title: 'Demo Auto-Fill Error',
-            description: 'This form service does not support demo data',
-            variant: 'destructive'
-          });
-          return;
-        }
-        
-        // Now TypeScript knows formService has getDemoData
-        const demoData = await formService.getDemoData(taskId);
-        
-        if (!demoData || Object.keys(demoData).length === 0) {
-          logger.error('No KY3P demo data returned from service');
-          toast({
-            title: 'Demo Auto-Fill Error',
-            description: 'No demo data available for this form',
-            variant: 'destructive'
-          });
-          return;
-        }
-        
-        // Reset the form with the demo data directly without extra service calls
-        const fieldCount = Object.keys(demoData).length;
-        resetForm(demoData);
-        
-        // Force a single UI update without triggering redundant service calls
-        setForceRerender(prev => !prev);
-        
-        // Just refresh the status without saving again
-        await refreshStatus();
-        
-        toast({
-          title: 'Demo Auto-Fill Complete',
-          description: `Successfully filled ${fieldCount} fields with demo data`,
-          variant: 'success'
-        });
-        
-        return;
-      } catch (error) {
-        logger.error('Error handling KY3P demo data:', error);
-        toast({
-          title: 'Demo Auto-Fill Error',
-          description: error instanceof Error ? error.message : 'Failed to apply demo data',
-          variant: 'destructive'
-        });
-        return;
-      }
+      // Exit early to prevent any duplicate service calls
+      logger.info('Blocking generic demo auto-fill handler for KY3P form to prevent duplicate calls');
+      return;
     }
     
     // Generic approach for all form types as fallback

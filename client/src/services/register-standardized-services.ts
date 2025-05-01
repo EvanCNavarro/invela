@@ -175,15 +175,31 @@ export function useStandardizedServices(): void {
       }
     };
     
-    // Create an adapter that conforms to FormServiceInterface
-    const serviceAdapter = createServiceFactoryAdapter(unifiedKy3pServiceFactory);
+    // We need to register a sync factory function because the component factory doesn't support async
+    const syncFactoryAdapter = (companyId?: number | string, taskId?: number | string): FormServiceInterface => {
+      // Convert params to numbers
+      const companyIdNum = typeof companyId === 'string' ? parseInt(companyId, 10) : companyId;
+      const taskIdNum = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+      
+      // Create a new instance that will use our unified service
+      logger.info(`[RegisterServices] Creating direct unified KY3P service instance for ${companyIdNum}, ${taskIdNum}`);
+      
+      // Instead of relying on dynamic imports and promises, create a direct instance
+      try {
+        return createUnifiedKY3PFormService(companyIdNum, taskIdNum);
+      } catch (error) {
+        logger.error(`Error creating direct unified KY3P service: ${error}`);
+        throw error;
+      }
+    };
     
     // Register for all KY3P-related task types
     const ky3pTaskTypes = ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'];
     
     ky3pTaskTypes.forEach(taskType => {
       logger.info(`[RegisterServices] Re-registering unified KY3P service as default for task type: ${taskType}`);
-      componentFactory.registerFormService(taskType, serviceAdapter);
+      // Use our sync factory adapter directly instead of createServiceFactoryAdapter
+      componentFactory.registerFormService(taskType, syncFactoryAdapter);
     });
     
     logger.info('[RegisterServices] Unified form services are now the default');
