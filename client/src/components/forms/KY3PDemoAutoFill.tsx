@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface KY3PDemoAutoFillProps {
   taskId: number;
@@ -19,6 +20,9 @@ interface KY3PDemoAutoFillProps {
  * form fields with realistic demo data. It works in conjunction with the server-side
  * universal demo auto-fill service which uses the same standardized approach across
  * all form types (KYB, KY3P, and Open Banking).
+ * 
+ * IMPORTANT: This component will fetch the updated data immediately after applying
+ * demo data to ensure the form displays the changes properly.
  */
 export function KY3PDemoAutoFill({ 
   taskId, 
@@ -27,6 +31,7 @@ export function KY3PDemoAutoFill({
 }: KY3PDemoAutoFillProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleDemoAutoFill = async () => {
     setIsLoading(true);
@@ -54,6 +59,34 @@ export function KY3PDemoAutoFill({
       
       // Accept both fieldCount (new) or fieldsPopulated (legacy) properties for compatibility
       const count = result.fieldCount || result.fieldsPopulated || 0;
+      
+      // IMPORTANT: Invalidate all relevant KY3P queries to force fresh data fetching
+      // This is critical for ensuring the form displays the updated field values
+      await queryClient.invalidateQueries({
+        queryKey: [`/api/tasks/${taskId}/ky3p-responses`]
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [`/api/ky3p/progress/${taskId}`]
+      });
+      
+      // Additional invalidation for task progress
+      await queryClient.invalidateQueries({
+        queryKey: [`/api/tasks/${taskId}`]
+      });
+      
+      // Fetch the full form data directly to ensure we have the latest values
+      // This helps handle edge cases where cache invalidation might not trigger immediately
+      try {
+        const formDataResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses`, {
+          credentials: 'include'
+        });
+        
+        if (formDataResponse.ok) {
+          console.log('Successfully fetched fresh form data after demo auto-fill');
+        }
+      } catch (refreshError) {
+        console.warn('Non-critical error refreshing form data:', refreshError);
+      }
       
       toast({
         title: 'Demo Auto-Fill Completed',
