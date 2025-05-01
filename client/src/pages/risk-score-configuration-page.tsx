@@ -15,7 +15,7 @@ import { ComparativeVisualization } from '@/components/risk-score/ComparativeVis
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { checkAuthentication, directUpdateRiskPriorities, testWebSocketBroadcast } from "@/lib/direct-risk-update";
+import { checkAuthentication, directUpdateRiskPriorities } from "@/lib/direct-risk-update";
 import riskScoreLogger from "@/lib/risk-score-logger";
 import wsManager from "@/lib/websocket-connector";
 // Import from 'react-dnd' and 'react-dnd-html5-backend' more carefully
