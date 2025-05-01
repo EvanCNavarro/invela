@@ -14,6 +14,11 @@ interface KY3PDemoAutoFillProps {
  * 
  * This component provides a button that can be used to trigger the demo auto-fill
  * functionality for KY3P forms using the standardized approach.
+ * 
+ * This component communicates with the universal demo auto-fill service to populate
+ * form fields with realistic demo data. It works in conjunction with the server-side
+ * universal demo auto-fill service which uses the same standardized approach across
+ * all form types (KYB, KY3P, and Open Banking).
  */
 export function KY3PDemoAutoFill({ 
   taskId, 
@@ -25,8 +30,10 @@ export function KY3PDemoAutoFill({
 
   const handleDemoAutoFill = async () => {
     setIsLoading(true);
+    console.log(`Starting demo auto-fill for KY3P task ${taskId}`);
     
     try {
+      // Use the standard KY3P endpoint which internally redirects to the universal service
       const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
         method: 'POST',
         headers: {
@@ -38,15 +45,19 @@ export function KY3PDemoAutoFill({
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`Demo auto-fill failed with status ${response.status}:`, errorText);
         throw new Error(`Demo auto-fill failed: ${response.status} - ${errorText}`);
       }
       
       const result = await response.json();
-      console.log('Demo auto-fill result:', result);
+      console.log('Demo auto-fill successful result:', result);
+      
+      // Accept both fieldCount (new) or fieldsPopulated (legacy) properties for compatibility
+      const count = result.fieldCount || result.fieldsPopulated || 0;
       
       toast({
         title: 'Demo Auto-Fill Completed',
-        description: `Successfully populated ${result.fieldCount || 0} fields with demo data`,
+        description: `Successfully populated ${count} fields with demo data`,
         variant: 'default'
       });
       
@@ -54,7 +65,7 @@ export function KY3PDemoAutoFill({
       if (onSuccess) onSuccess();
       
     } catch (error) {
-      console.error('Error during demo auto-fill:', error);
+      console.error('Error during KY3P demo auto-fill:', error);
       
       toast({
         title: 'Demo Auto-Fill Failed',
