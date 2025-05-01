@@ -2,7 +2,10 @@
  * Enhanced Demo Auto-Fill Handler
  * 
  * This module provides a standardized approach to demo auto-fill functionality
- * that works across different form types (KYB, KY3P, and Open Banking).
+ * that works across different form types (primarily KYB and Open Banking).
+ * 
+ * NOTE: For KY3P forms, use the dedicated KY3PDemoAutoFill component instead of this handler.
+ * This handler will block KY3P forms to prevent duplicate service calls.
  */
 
 import type { FormServiceInterface } from '@/services/formService';
