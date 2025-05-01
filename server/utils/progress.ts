@@ -1,5 +1,5 @@
 import { TaskStatus } from '../types';
-import { broadcastMessage } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 
 import { hasAllRequiredFields } from './kyb-progress';
 
@@ -143,7 +143,7 @@ export function broadcastProgressUpdate(
   });
   
   // Broadcast the update to all connected clients with the appropriate status
-  broadcastMessage('task_update', {
+  WebSocketService.broadcast('task_update', {
     id: taskId,
     status: finalStatus || status || TaskStatus.IN_PROGRESS,
     progress: validatedProgress,
