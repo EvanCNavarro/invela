@@ -26,10 +26,16 @@ async function generateMissingFileForTask(taskId: number) {
       return { success: false, error: 'Task not found' };
     }
     
-    // Get company info
+    // Get company info - ensure we're using numeric ID
+    const companyId = task.company_id || 0;
+    if (companyId <= 0) {
+      logger.error(`Task ${taskId} has invalid company_id: ${companyId}`);
+      return { success: false, error: 'Invalid company ID' };
+    }
+
     const [company] = await db.select()
       .from(companies)
-      .where(eq(companies.id, task.company_id));
+      .where(eq(companies.id, companyId));
     
     if (!company) {
       logger.error(`Company ${task.company_id} not found for task ${taskId}`);
@@ -63,9 +69,10 @@ async function generateMissingFileForTask(taskId: number) {
     });
     
     // 4. Create a file for this form data
+    const userId = task.assigned_to || task.created_by || 0; // Use assigned user or fallback to creator
     const fileResult = await fileCreationService.createTaskFile(
-      task.assigned_to || task.created_by, // Use assigned user or fallback to creator
-      task.company_id,
+      userId, 
+      companyId,
       formData,
       {
         taskType: 'kyb',
@@ -106,9 +113,9 @@ async function generateMissingFileForTask(taskId: number) {
       .where(eq(tasks.id, taskId));
     
     // 6. Broadcast file vault update
-    broadcastFileVaultUpdate(task.company_id, fileResult.fileId, 'added');
+    broadcastFileVaultUpdate(companyId, fileResult.fileId, 'added');
     setTimeout(() => {
-      broadcastFileVaultUpdate(task.company_id, undefined, 'refresh');
+      broadcastFileVaultUpdate(companyId, undefined, 'refresh');
     }, 500);
     
     logger.info(`Successfully fixed missing file for task ${taskId}`, {
@@ -116,11 +123,12 @@ async function generateMissingFileForTask(taskId: number) {
       fileName: fileResult.fileName
     });
     
+    // Ensure we're returning a consistent type
     return {
       success: true,
       fileId: fileResult.fileId,
       fileName: fileResult.fileName
-    };
+    } as const;
   } catch (error) {
     logger.error(`Error fixing missing file for task ${taskId}`, {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -129,10 +137,20 @@ async function generateMissingFileForTask(taskId: number) {
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      fileId: undefined,
+      fileName: undefined
     };
   }
 }
+
+// Define the return type for better type safety
+export type FileFixResult = {
+  success: boolean;
+  fileId?: number;
+  fileName?: string;
+  error?: string;
+};
 
 // Export the function for direct use in the router
 export { generateMissingFileForTask };
