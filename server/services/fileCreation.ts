@@ -9,9 +9,7 @@
 
 import { db } from '@db';
 import { files } from '@db/schema';
-import { Logger } from '../utils/logger';
-
-const logger = new Logger('FileCreationService');
+import { logger } from '../utils/logger';
 
 /**
  * Options for file creation

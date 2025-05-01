@@ -23,7 +23,7 @@ export function mapClientFormTypeToSchemaType(clientFormType: string): string {
   const typeMap: Record<string, string> = {
     'kyb': 'company_kyb',
     'ky3p': 'sp_ky3p_assessment',
-    'open_banking': 'open_banking',  // Same in both client and schema
+    'open_banking': 'open_banking_survey',  // Fixed incorrect mapping
     'card': 'company_card',
   };
   
@@ -48,7 +48,7 @@ export function mapSchemaTypeToClientFormType(schemaTaskType: string): string {
   const typeMap: Record<string, string> = {
     'company_kyb': 'kyb',
     'sp_ky3p_assessment': 'ky3p',
-    'open_banking': 'open_banking',  // Same in both client and schema
+    'open_banking_survey': 'open_banking',  // Fixed incorrect mapping
     'company_card': 'card',
   };
   

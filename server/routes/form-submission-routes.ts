@@ -9,13 +9,14 @@ import { Router, Request, Response } from 'express';
 import { db } from '@db';
 import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 import * as fileCreation from '../services/fileCreation.fixed';
 import UnifiedTabService from '../services/unified-tab-service';
 import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
-const logger = getLogger('FormSubmissionRoutes');
+// Add namespace context to logs
+const logContext = { service: 'FormSubmissionRoutes' };
 
 /**
  * Helper function to forward a request to another endpoint

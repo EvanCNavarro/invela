@@ -84,41 +84,41 @@ async function fixMissingFileForTask(taskId: string | number): Promise<FileFixRe
     
     // 5. For KYB tasks
     if (taskType === 'kyb' || taskType === 'company_kyb') {
-      const kybResponses = await db.query.kyb_responses.findMany({
-        where: eq(kyb_responses.task_id, taskIdNum)
+      const kybResponsesResult = await db.query.kybResponses.findMany({
+        where: eq(kybResponses.task_id, taskIdNum)
       });
       
-      kybResponses.forEach(response => {
+      kybResponsesResult.forEach(response => {
         formData[response.field_key] = response.response_value;
       });
       
-      console.log(`Found ${kybResponses.length} KYB responses`);
+      console.log(`Found ${kybResponsesResult.length} KYB responses`);
     }
     
     // 6. For KY3P tasks
     else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
-      const ky3pResponses = await db.query.ky3p_responses.findMany({
-        where: eq(ky3p_responses.task_id, taskIdNum)
+      const ky3pResponsesResult = await db.query.ky3pResponses.findMany({
+        where: eq(ky3pResponses.task_id, taskIdNum)
       });
       
-      ky3pResponses.forEach(response => {
+      ky3pResponsesResult.forEach(response => {
         formData[response.field_id] = response.response_value;
       });
       
-      console.log(`Found ${ky3pResponses.length} KY3P responses`);
+      console.log(`Found ${ky3pResponsesResult.length} KY3P responses`);
     }
     
     // 7. For Open Banking tasks
     else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-      const obResponses = await db.query.open_banking_responses.findMany({
-        where: eq(open_banking_responses.task_id, taskIdNum)
+      const obResponsesResult = await db.query.openBankingResponses.findMany({
+        where: eq(openBankingResponses.task_id, taskIdNum)
       });
       
-      obResponses.forEach(response => {
+      obResponsesResult.forEach(response => {
         formData[response.field_id] = response.response_value;
       });
       
-      console.log(`Found ${obResponses.length} Open Banking responses`);
+      console.log(`Found ${obResponsesResult.length} Open Banking responses`);
     }
     
     // 8. For Card Industry tasks
@@ -185,7 +185,8 @@ async function fixMissingFileForTask(taskId: string | number): Promise<FileFixRe
 }
 
 // Run the script if invoked directly
-if (require.main === module) {
+// Import.meta.url and Node.js condition checking
+if (import.meta.url === `file://${process.argv[1]}`) {
   const taskId = process.argv[2];
   fixMissingFileForTask(taskId);
 }
