@@ -1044,9 +1044,31 @@ async function processKy3pSubmission(req: any, res: any, task: any) {
         'submitted'
       );
       
-      // Also broadcast a full task update to ensure UI catches up
-      const { broadcastTaskUpdate } = await import('../services/websocket.js');
+      // Broadcast a full task update to ensure UI catches up
+      const { broadcastTaskUpdate, broadcastFileVaultUpdate } = await import('../services/websocket.js');
       await broadcastTaskUpdate(taskId);
+      
+      // CRITICAL FIX: Also broadcast a file vault update if file was created
+      // This ensures the file appears in the UI immediately
+      if (fileResult.success && fileResult.fileId) {
+        console.log(`[KY3P API] CRITICAL FIX: Broadcasting file vault update for new file`, {
+          fileId: fileResult.fileId,
+          companyId: task.company_id,
+          timestamp: new Date().toISOString()
+        });
+        
+        try {
+          // Broadcast the file addition
+          await broadcastFileVaultUpdate(task.company_id, fileResult.fileId, 'added');
+          
+          // Also broadcast a generic refresh message to ensure all clients update
+          setTimeout(async () => {
+            await broadcastFileVaultUpdate(task.company_id, undefined, 'refresh');
+          }, 500);
+        } catch (wsError) {
+          logger.error('[KY3P API] Error broadcasting file vault update:', wsError);
+        }
+      }
       
       console.log(`[KY3P API] Broadcast update sent for task ${taskId}`);
     } catch (broadcastError) {
