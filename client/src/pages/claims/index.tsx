@@ -182,59 +182,204 @@ function ProcessFlowContent() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>PII Data Loss Claims Process</CardTitle>
+        <CardTitle>Claims Process Flow</CardTitle>
+        <p className="text-sm text-muted-foreground">Visualize the PII data loss claims dispute resolution process</p>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-slate-50">
-              <div className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mb-3">1</div>
-              <h3 className="font-semibold text-lg mb-2">Claim Submission</h3>
-              <p className="text-sm text-slate-600">
-                A data loss incident is identified and reported through the claims submission process.
-              </p>
+        <div className="p-6 bg-slate-50 border rounded-lg relative overflow-auto">
+          <div className="text-center mb-6">
+            <h3 className="text-lg font-semibold mb-1">PII Data Loss Claims Process Flow</h3>
+          </div>
+
+          {/* Main flow chart container with connecting lines */}
+          <div className="relative pb-10 max-w-4xl mx-auto">
+            {/* Row 1 - First three boxes with arrows */}
+            <div className="flex justify-between items-center relative mb-24">
+              {/* First box - PII Data Breach Reported */}
+              <div className="relative w-40 z-10">
+                <div className="p-3 bg-red-100 border border-red-200 rounded-lg text-center h-32 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">PII Data Breach Reported</h4>
+                  <p className="text-xs text-slate-600">Initial incident detection and reporting</p>
+                </div>
+                {/* Downward arrow for first box */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-16 text-slate-400">
+                  <svg className="w-8 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Connecting line between first and second box */}
+              <div className="flex-grow border-t-2 border-slate-300 border-dashed mx-4 relative top-16"></div>
+
+              {/* Second box - Bank Files Claim */}
+              <div className="relative w-40 z-10">
+                <div className="p-3 bg-blue-100 border border-blue-200 rounded-lg text-center h-32 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">Bank Files Claim</h4>
+                  <p className="text-xs text-slate-600">EOCD Detailed</p>
+                </div>
+                {/* Downward arrow for second box */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-16 text-slate-400">
+                  <svg className="w-8 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Connecting line between second and third box */}
+              <div className="flex-grow border-t-2 border-slate-300 border-dashed mx-4 relative top-16"></div>
+
+              {/* Third box - FinTech Response */}
+              <div className="relative w-40 z-10">
+                <div className="p-3 bg-purple-100 border border-purple-200 rounded-lg text-center h-32 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">FinTech Response</h4>
+                  <p className="text-xs text-slate-600">Initial assessment and response</p>
+                </div>
+                {/* Downward arrow for third box */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-16 text-slate-400">
+                  <svg className="w-8 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            
-            <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-slate-50">
-              <div className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mb-3">2</div>
-              <h3 className="font-semibold text-lg mb-2">Initial Review</h3>
-              <p className="text-sm text-slate-600">
-                Claims are reviewed for completeness and basic eligibility criteria.
-              </p>
+
+            {/* Diamond decision node - Disputed? */}
+            <div className="flex justify-center items-center mb-24 relative">
+              <div className="transform rotate-45 bg-green-100 border border-green-200 w-32 h-32 flex items-center justify-center z-10">
+                <div className="transform -rotate-45 text-center">
+                  <h4 className="font-medium text-sm mb-2">Disputed?</h4>
+                </div>
+              </div>
+
+              {/* Yes/No labels and arrows from diamond */}
+              <div className="absolute top-full mt-2 left-1/3 text-sm font-medium text-slate-600">Yes</div>
+              <div className="absolute top-full mt-2 right-1/3 text-sm font-medium text-slate-600">No</div>
+
+              {/* Left-downward arrow (Yes path) */}
+              <div className="absolute top-full left-1/3 mt-6 text-slate-400 transform -translate-x-full">
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </div>
+
+              {/* Right-downward arrow (No path) */}
+              <div className="absolute top-full right-1/3 mt-6 text-slate-400 transform translate-x-full">
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </div>
             </div>
-            
-            <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-slate-50">
-              <div className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mb-3">3</div>
-              <h3 className="font-semibold text-lg mb-2">Investigation</h3>
-              <p className="text-sm text-slate-600">
-                Detailed analysis of the data breach, including scope and impact assessment.
-              </p>
+
+            {/* Row 3 - Dispute Resolution Process and Process Payment */}
+            <div className="flex justify-between items-center relative mb-24">
+              {/* Dispute Resolution Process box */}
+              <div className="ml-16 w-48 z-10">
+                <div className="p-3 bg-yellow-100 border border-yellow-200 rounded-lg text-center h-32 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">Dispute Resolution Process</h4>
+                  <p className="text-xs text-slate-600">Formal dispute resolution between parties</p>
+                </div>
+                {/* Arrow pointing to next decision */}
+                <div className="absolute right-0 top-1/2 transform translate-x-4 -translate-y-1/2 text-slate-400">
+                  <svg className="w-16 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Process Payment box */}
+              <div className="mr-16 w-48 z-10">
+                <div className="p-3 bg-green-100 border border-green-200 rounded-lg text-center h-32 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">Process Payment</h4>
+                  <p className="text-xs text-slate-600">Financial settlement and compensation</p>
+                </div>
+                {/* Downward arrow for payment box */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-16 text-slate-400">
+                  <svg className="w-8 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Diamond decision node - Who is liable? */}
+            <div className="flex justify-center items-center ml-12 mb-24 relative">
+              <div className="transform rotate-45 bg-yellow-100 border border-yellow-200 w-32 h-32 flex items-center justify-center z-10">
+                <div className="transform -rotate-45 text-center">
+                  <h4 className="font-medium text-sm mb-2">Who is liable?</h4>
+                </div>
+              </div>
+
+              {/* Arrows from liability diamond */}
+              <div className="absolute -bottom-16 left-0 text-slate-400">
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </div>
+              <div className="absolute -bottom-16 text-slate-400">
+                <svg className="w-8 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </div>
+              <div className="absolute -bottom-16 right-0 text-slate-400">
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Row 4 - Outcome boxes */}
+            <div className="flex justify-between items-center relative">
+              {/* Bank Liable box */}
+              <div className="w-40 z-10">
+                <div className="p-3 bg-blue-100 border border-blue-200 rounded-lg text-center h-28 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">Bank Liable</h4>
+                </div>
+              </div>
+
+              {/* Shared Liability box */}
+              <div className="w-40 z-10">
+                <div className="p-3 bg-amber-100 border border-amber-200 rounded-lg text-center h-28 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">Shared Liability</h4>
+                </div>
+              </div>
+
+              {/* FinTech Liable box */}
+              <div className="w-40 z-10">
+                <div className="p-3 bg-purple-100 border border-purple-200 rounded-lg text-center h-28 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">FinTech Liable</h4>
+                </div>
+              </div>
+
+              {/* Close claim box */}
+              <div className="w-40 z-10">
+                <div className="p-3 bg-green-100 border border-green-200 rounded-lg text-center h-28 flex flex-col justify-center">
+                  <h4 className="font-medium text-sm mb-1">Close Claim</h4>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-slate-50">
-              <div className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mb-3">4</div>
-              <h3 className="font-semibold text-lg mb-2">Dispute Resolution</h3>
-              <p className="text-sm text-slate-600">
-                Parties may dispute claim facts or liability, initiating the resolution process.
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-slate-50">
-              <div className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mb-3">5</div>
-              <h3 className="font-semibold text-lg mb-2">Decision</h3>
-              <p className="text-sm text-slate-600">
-                Final determination of the claim outcome, including liability and compensation.
-              </p>
-            </div>
-            
-            <div className="flex flex-col items-center text-center p-4 border rounded-lg bg-slate-50">
-              <div className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mb-3">6</div>
-              <h3 className="font-semibold text-lg mb-2">Resolution & Payment</h3>
-              <p className="text-sm text-slate-600">
-                Approved claims are processed for payment and case closure.
-              </p>
+
+          {/* Legend for flow chart */}
+          <div className="mt-8 border-t pt-4">
+            <h4 className="text-sm font-semibold mb-2">Legend</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-red-100 border border-red-200 mr-2"></div>
+                <span className="text-xs">Data Breach</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-blue-100 border border-blue-200 mr-2"></div>
+                <span className="text-xs">Bank Actions</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-purple-100 border border-purple-200 mr-2"></div>
+                <span className="text-xs">FinTech Actions</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-green-100 border border-green-200 mr-2"></div>
+                <span className="text-xs">Resolution</span>
+              </div>
             </div>
           </div>
         </div>
