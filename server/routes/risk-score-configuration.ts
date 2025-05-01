@@ -166,7 +166,11 @@ router.post('/configuration', requireAuth, async (req: Request, res: Response) =
 // GET endpoint to retrieve the risk priorities
 router.get('/priorities', requireAuth, async (req: Request, res: Response) => {
   try {
+    // Enhanced error logging
+    console.log('[RiskPriorities] GET request received, checking authorization');
+    
     if (!req.user) {
+      console.log('[RiskPriorities] Unauthorized request - no user in session');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -179,11 +183,29 @@ router.get('/priorities', requireAuth, async (req: Request, res: Response) => {
       }
     });
 
+    console.log('[RiskPriorities] Retrieved company from DB:', company ? 'found' : 'not found');
+    
+    if (company) {
+      console.log('[RiskPriorities] risk_priorities in DB:', company.risk_priorities ? 
+        `present (${typeof company.risk_priorities})` : 'not present');
+      
+      if (company.risk_priorities) {
+        // Log what we have in the DB
+        const retrievedPriorities = company.risk_priorities as any;
+        console.log('[RiskPriorities] Retrieved dimensions from DB type:', 
+          Array.isArray(retrievedPriorities.dimensions) ? 'Array' : typeof retrievedPriorities.dimensions);
+        console.log('[RiskPriorities] First dimension in DB:', 
+          retrievedPriorities.dimensions?.[0] ? JSON.stringify(retrievedPriorities.dimensions[0]) : 'none');
+      }
+    }
+    
     if (!company || !company.risk_priorities) {
+      console.log('[RiskPriorities] No priorities found in DB, returning null');
       // Return null if no priorities exist
       return res.status(200).json(null);
     }
 
+    console.log('[RiskPriorities] Returning priorities from DB');
     return res.status(200).json(company.risk_priorities);
   } catch (error) {
     console.error('Error retrieving risk priorities:', error);

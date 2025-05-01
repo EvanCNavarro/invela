@@ -10,7 +10,7 @@ import { RiskDimension, RiskPriorities } from './risk-score-configuration-types'
 class RiskScoreLogger {
   private readonly enabledTags: Set<string>;
   private showDiff: boolean = true;
-  private debugMode: boolean = true; // Enable debug mode by default
+  private debugMode: boolean = false; // Disable debug mode
   
   constructor() {
     // Initialize with all tags enabled by default
@@ -47,6 +47,14 @@ class RiskScoreLogger {
    */
   setDebugMode(enabled: boolean): void {
     this.debugMode = enabled;
+    
+    // Remove the debug overlay if it exists and debug mode is disabled
+    if (!enabled && typeof document !== 'undefined') {
+      const container = document.getElementById('risk-score-debug-logs');
+      if (container) {
+        container.remove();
+      }
+    }
   }
   
   /**
