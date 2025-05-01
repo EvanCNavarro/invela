@@ -450,12 +450,12 @@ export default function CompanyProfilePage() {
 
   // Default risk clusters if none are provided in the company data
   const defaultRiskClusters = {
-    financial: 550,
-    operational: 480,
-    compliance: 620,
-    strategic: 500,
-    reputational: 450,
-    cybersecurity: 580
+    financial: 37,  // Converted from 550/1500 * 100
+    operational: 32, // Converted from 480/1500 * 100
+    compliance: 41,  // Converted from 620/1500 * 100
+    strategic: 33,   // Converted from 500/1500 * 100
+    reputational: 30, // Converted from 450/1500 * 100
+    cybersecurity: 39 // Converted from 580/1500 * 100
   };
 
   // Use company's risk clusters or fallback to defaults
