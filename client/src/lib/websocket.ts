@@ -54,18 +54,19 @@ class WebSocketService {
   }
 
   private getWebSocketUrl(): string {
+    // Following the development guidelines for WebSocket implementation
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     
-    // Create WebSocket URL ensuring it's properly formed with the correct path
-    // This prevents conflicts with Vite's HMR WebSocket
+    // Create WebSocket URL with the correct path to avoid conflicts with Vite's HMR
     if (!host) {
-      logger.warn('Invalid host in window.location, falling back to current URL');
-      // Fallback to a known good URL
-      return `${protocol}//${window.location.hostname || 'localhost'}${window.location.port ? `:${window.location.port}` : ''}/ws`;
+      logger.warn('[WebSocket] Invalid host in window.location, using fallback URL');
+      return `${protocol}//localhost:5000/ws`;
     }
     
+    // Ensure URL has correct format based on development guidelines
     // Use /ws path to avoid conflicts with Vite's HMR WebSocket
+    logger.info(`[WebSocket] Creating connection URL: ${protocol}//${host}/ws`);
     return `${protocol}//${host}/ws`;
   }
 
@@ -107,8 +108,9 @@ class WebSocketService {
       console.error = (...args) => {
         const message = args[0]?.toString() || '';
         if (message.includes('WebSocket connection') && 
-            (message.includes('localhost:undefined') || message.includes('Failed to construct'))) {
+            (message.includes('localhost:undefined') || message.includes('Failed to construct') || message.includes('invalid'))) {
           // Silently ignore Vite HMR WebSocket errors
+          logger.debug('[WebSocket] Suppressed console error for WebSocket:', message);
           return;
         }
         originalConsoleError(...args);
