@@ -99,9 +99,9 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
   // Define constants at component scope for access by nested functions
   const width = 1000;
   const height = 600;
-  const nodeWidth = 150;
+  const nodeWidth = 140; // Slightly reduced width of rectangle nodes
   const nodeHeight = 60;
-  const decisionNodeSize = 80; // for diamond shape
+  const decisionNodeSize = 70; // for diamond shape (slightly reduced)
 
   // Create the visualization when data is available
   useEffect(() => {
@@ -153,11 +153,27 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     // Draw nodes
     drawNodes(g, nodesWithPositions);
     
-    // Initial transform to center the diagram
+    // Calculate a more optimal initial view based on the actual nodes
+    const nodePositionXExtent = d3.extent(nodesWithPositions, d => d.x);
+    const nodePositionYExtent = d3.extent(nodesWithPositions, d => d.y);
+    
+    // Add some padding around the nodes
+    const xPadding = 100;
+    const yPadding = 60;
+    
+    // Center and scale to fit
+    const xRange = (nodePositionXExtent[1] || 0) - (nodePositionXExtent[0] || 0) + nodeWidth + xPadding*2;
+    const yRange = (nodePositionYExtent[1] || 0) - (nodePositionYExtent[0] || 0) + nodeHeight + yPadding*2;
+    
+    const scale = Math.min(width / xRange, height / yRange, 0.8);
+    
+    const translateX = (width - xRange * scale) / 2 - (nodePositionXExtent[0] || 0) * scale + xPadding * scale;
+    const translateY = (height - yRange * scale) / 2 - (nodePositionYExtent[0] || 0) * scale + yPadding * scale;
+    
     const initialTransform = d3.zoomIdentity
-      .translate(width / 4, 30)
-      .scale(0.9);
-      
+      .translate(translateX, translateY)
+      .scale(scale);
+    
     svg.call(zoom.transform as any, initialTransform);
     
   }, [flowData]);
@@ -240,9 +256,9 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     const maxNodesPerLevel = Math.max(...Object.values(nodesByLevel).map(nodes => nodes.length));
     
     // Calculate horizontal and vertical spacing
-    const levelWidth = 220; // Space between levels
+    const levelWidth = 200; // Space between levels (reduced from 220)
     const nodeHeight = 60; // Height of a node (same as in the main function)
-    const nodeSpacing = 100; // Minimum space between nodes at the same level
+    const nodeSpacing = 80;  // Minimum space between nodes at the same level (reduced from 100)
     
     // Calculate total height needed for the diagram
     const totalHeight = maxNodesPerLevel * (nodeHeight + nodeSpacing);
