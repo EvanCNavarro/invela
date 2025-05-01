@@ -898,9 +898,9 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
       
       const scoreValue = parseInt(chosen_score);
-      if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 1500) {
+      if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 100) {
         return res.status(400).json({
-          message: "Invalid score value (must be between 0 and 1500)",
+          message: "Invalid score value (must be between 0 and 100)",
           code: "INVALID_VALUE"
         });
       }
