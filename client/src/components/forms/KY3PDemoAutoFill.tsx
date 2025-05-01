@@ -35,10 +35,19 @@ export function KY3PDemoAutoFill({
 
   const handleDemoAutoFill = async () => {
     setIsLoading(true);
-    console.log(`Starting demo auto-fill for KY3P task ${taskId}`);
+    const logger = console;
+    logger.info(`Starting demo auto-fill for KY3P task ${taskId}`);
     
     try {
-      // Use the standard KY3P endpoint which internally redirects to the universal service
+      // Show a loading toast to indicate we're starting the process
+      toast({
+        title: 'Demo Auto-Fill',
+        description: 'Loading demo data...',
+        variant: 'default'
+      });
+      
+      // 1. Get demo data from the KY3P endpoint - this is the preferred approach for KY3P
+      logger.info('Fetching demo data from the dedicated KY3P endpoint');
       const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
         method: 'POST',
         headers: {
@@ -50,55 +59,55 @@ export function KY3PDemoAutoFill({
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Demo auto-fill failed with status ${response.status}:`, errorText);
+        logger.error(`Demo auto-fill failed with status ${response.status}:`, errorText);
         throw new Error(`Demo auto-fill failed: ${response.status} - ${errorText}`);
       }
       
+      // Parse the response JSON
       const result = await response.json();
-      console.log('Demo auto-fill successful result:', result);
+      logger.info('Demo auto-fill successful result:', result);
       
       // Accept both fieldCount (new) or fieldsPopulated (legacy) properties for compatibility
       const count = result.fieldCount || result.fieldsPopulated || 0;
       
-      // IMPORTANT: Invalidate all relevant KY3P queries to force fresh data fetching
-      // This is critical for ensuring the form displays the updated field values
+      // 2. Invalidate all queries to ensure the UI is updated correctly
+      logger.info('Invalidating queries to refresh UI data...');
       await queryClient.invalidateQueries({
         queryKey: [`/api/tasks/${taskId}/ky3p-responses`]
       });
       await queryClient.invalidateQueries({
         queryKey: [`/api/ky3p/progress/${taskId}`]
       });
-      
-      // Additional invalidation for task progress
       await queryClient.invalidateQueries({
         queryKey: [`/api/tasks/${taskId}`]
       });
       
-      // Fetch the full form data directly to ensure we have the latest values
-      // This helps handle edge cases where cache invalidation might not trigger immediately
+      // 3. Force a refresh of form data
+      logger.info('Forcing refresh of form data...');
       try {
         const formDataResponse = await fetch(`/api/tasks/${taskId}/ky3p-responses`, {
           credentials: 'include'
         });
         
         if (formDataResponse.ok) {
-          console.log('Successfully fetched fresh form data after demo auto-fill');
+          logger.info('Successfully fetched fresh form data after demo auto-fill');
         }
       } catch (refreshError) {
-        console.warn('Non-critical error refreshing form data:', refreshError);
+        logger.warn('Non-critical error refreshing form data:', refreshError);
       }
       
+      // 4. Show success message
       toast({
-        title: 'Demo Auto-Fill Completed',
+        title: 'Demo Auto-Fill Complete',
         description: `Successfully populated ${count} fields with demo data`,
         variant: 'default'
       });
       
-      // Call the onSuccess callback if provided
+      // 5. Call the onSuccess callback if provided
       if (onSuccess) onSuccess();
       
     } catch (error) {
-      console.error('Error during KY3P demo auto-fill:', error);
+      logger.error('Error during KY3P demo auto-fill:', error);
       
       toast({
         title: 'Demo Auto-Fill Failed',
