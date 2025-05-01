@@ -434,6 +434,137 @@ export const securityFieldsRelations = relations(securityFields, ({ many }) => (
   responses: many(securityResponses)
 }));
 
+// Claims Management Enums
+export const ClaimStatus = {
+  IN_REVIEW: 'in_review',
+  PROCESSING: 'processing',
+  PENDING_INFO: 'pending_info',
+  UNDER_REVIEW: 'under_review',
+  ESCALATED: 'escalated',
+  APPROVED: 'approved',
+  PARTIALLY_APPROVED: 'partially_approved',
+  DENIED: 'denied'
+} as const;
+
+export type ClaimStatus = typeof ClaimStatus[keyof typeof ClaimStatus];
+
+export const DisputeReasonType = {
+  LIABILITY_DISPUTE: 'liability_dispute',
+  DATA_OWNERSHIP_DISPUTE: 'data_ownership_dispute',
+  BREACH_NOTIFICATION_TIMING: 'breach_notification_timing',
+  POLICY_EXCLUSION: 'policy_exclusion',
+  CONTRACT_VIOLATION: 'contract_violation'
+} as const;
+
+export type DisputeReasonType = typeof DisputeReasonType[keyof typeof DisputeReasonType];
+
+export const ResolutionType = {
+  FULL_PAYMENT: 'full_payment',
+  PARTIAL_PAYMENT: 'partial_payment',
+  POLICY_EXCLUSION: 'policy_exclusion',
+  CLAIM_WITHDRAWN: 'claim_withdrawn'
+} as const;
+
+export type ResolutionType = typeof ResolutionType[keyof typeof ResolutionType];
+
+// Claims Management Tables
+export const claims = pgTable("claims", {
+  id: serial("id").primaryKey(),
+  claim_id: text("claim_id").notNull().unique(), // Format: CLM-YYYY-XXX
+  bank_id: text("bank_id").notNull(),
+  bank_name: text("bank_name").notNull(),
+  fintech_name: text("fintech_name").notNull(),
+  account_number: text("account_number"),
+  claim_type: text("claim_type").notNull().default('PII Data Loss'),
+  claim_date: timestamp("claim_date").notNull(),
+  claim_amount: real("claim_amount").notNull().default(50.00),
+  status: text("status").$type<ClaimStatus>().notNull().default(ClaimStatus.IN_REVIEW),
+  policy_number: text("policy_number"),
+  is_disputed: boolean("is_disputed").notNull().default(false),
+  is_resolved: boolean("is_resolved").notNull().default(false),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  created_by: integer("created_by").references(() => users.id),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const claimBreaches = pgTable("claim_breaches", {
+  id: serial("id").primaryKey(),
+  claim_id: integer("claim_id").references(() => claims.id).notNull(),
+  breach_date: timestamp("breach_date").notNull(),
+  breach_discovered_date: timestamp("breach_discovered_date"),
+  breach_reported_date: timestamp("breach_reported_date"),
+  consent_id: text("consent_id"),
+  consent_scope: text("consent_scope"),
+  affected_records: integer("affected_records"),
+  remediation_status: text("remediation_status"),
+  incident_description: text("incident_description"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const claimDisputes = pgTable("claim_disputes", {
+  id: serial("id").primaryKey(),
+  claim_id: integer("claim_id").references(() => claims.id).notNull(),
+  dispute_reason: text("dispute_reason").$type<DisputeReasonType>(),
+  dispute_details: text("dispute_details"),
+  dispute_date: timestamp("dispute_date").notNull(),
+  resolution_decision: text("resolution_decision"),
+  bank_liable: boolean("bank_liable"),
+  fintech_liable: boolean("fintech_liable"),
+  shared_liability: boolean("shared_liability"),
+  resolution_notes: text("resolution_notes"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const claimResolutions = pgTable("claim_resolutions", {
+  id: serial("id").primaryKey(),
+  claim_id: integer("claim_id").references(() => claims.id).notNull(),
+  resolution_type: text("resolution_type").$type<ResolutionType>(),
+  resolution_date: timestamp("resolution_date").notNull(),
+  payment_amount: real("payment_amount"),
+  resolution_notes: text("resolution_notes"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+// Claims Management Relations
+export const claimsRelations = relations(claims, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [claims.company_id],
+    references: [companies.id],
+  }),
+  creator: one(users, {
+    fields: [claims.created_by],
+    references: [users.id],
+  }),
+  breach: many(claimBreaches),
+  disputes: many(claimDisputes),
+  resolutions: many(claimResolutions)
+}));
+
+export const claimBreachesRelations = relations(claimBreaches, ({ one }) => ({
+  claim: one(claims, {
+    fields: [claimBreaches.claim_id],
+    references: [claims.id],
+  })
+}));
+
+export const claimDisputesRelations = relations(claimDisputes, ({ one }) => ({
+  claim: one(claims, {
+    fields: [claimDisputes.claim_id],
+    references: [claims.id],
+  })
+}));
+
+export const claimResolutionsRelations = relations(claimResolutions, ({ one }) => ({
+  claim: one(claims, {
+    fields: [claimResolutions.claim_id],
+    references: [claims.id],
+  })
+}));
+
 export const securityResponsesRelations = relations(securityResponses, ({ one }) => ({
   field: one(securityFields, {
     fields: [securityResponses.field_id],
