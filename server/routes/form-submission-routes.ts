@@ -27,6 +27,45 @@ const {
 const logger = getLogger('FormSubmissionRoutes');
 
 /**
+ * Helper function to forward a request to another endpoint
+ */
+async function forwardRequest(req: Request, res: Response, path: string): Promise<void> {
+  try {
+    logger.info(`Forwarding request to: ${path}`);
+    
+    // Call the appropriate endpoint directly
+    // In a real implementation, this would be handled by an HTTP client or middleware
+    req.url = path;
+    req.originalUrl = path;
+    
+    // Use Express's next function to handle routing
+    // This is not ideal but works for our purpose
+    const nextHandler = (err?: any) => {
+      if (err) {
+        logger.error(`Error forwarding to ${path}:`, err);
+        res.status(500).json({
+          success: false,
+          message: 'Error processing form submission',
+          error: err instanceof Error ? err.message : 'Unknown error'
+        });
+      }
+    };
+    
+    // Find and call the relevant handler
+    const expressApp = req.app as any;
+    if (expressApp._router && typeof expressApp._router.handle === 'function') {
+      expressApp._router.handle(req, res, nextHandler);
+    } else {
+      throw new Error('Cannot access Express router handle method');
+    }
+    
+  } catch (error) {
+    logger.error(`Error setting up request forwarding to ${path}`);
+    throw error;
+  }
+}
+
+/**
  * Create and return the router for form submission endpoints
  */
 export function createFormSubmissionRouter(): Router {
@@ -87,29 +126,27 @@ export function createFormSubmissionRouter(): Router {
       }
       
       // Determine the appropriate submission handler based on form type
-      let result;
-      
       switch (formType) {
         case 'kyb':
         case 'company_kyb':
           // Redirect to KYB submission handler
-          return forward(req, res, '/api/kyb/submit/' + taskId);
+          return forwardRequest(req, res, '/api/kyb/submit/' + taskId);
           
         case 'ky3p':
         case 'security_assessment':
         case 'security':
         case 'sp_ky3p_assessment':
           // Redirect to KY3P submission handler
-          return forward(req, res, '/api/ky3p/submit/' + taskId);
+          return forwardRequest(req, res, '/api/ky3p/submit/' + taskId);
           
         case 'open_banking':
         case 'open_banking_survey':
           // Redirect to Open Banking submission handler
-          return forward(req, res, '/api/open-banking/submit/' + taskId);
+          return forwardRequest(req, res, '/api/open-banking/submit/' + taskId);
           
         case 'card':
           // Redirect to Card Industry Questionnaire submission handler
-          return forward(req, res, '/api/card/submit/' + taskId);
+          return forwardRequest(req, res, '/api/card/submit/' + taskId);
           
         default:
           logger.info(`Processing submission for form type: ${formType}`);
@@ -222,86 +259,13 @@ export function createFormSubmissionRouter(): Router {
               logger.info(`No tabs to unlock for form type ${formType}`);
             }
             
-            // Keep this code block commented for reference of the old implementation
-            /*
-                
-                if (result) {
-                  logger.info(`✅ Successfully updated tabs for company ${companyId} using CompanyTabsService:`, result.available_tabs);
-                } else {
-                  logger.warn(`⚠️ Failed to update tabs for company ${companyId} - CompanyTabsService.addTabsToCompany returned null`);
-                  
-                  // Fallback to the old implementation if the service fails
-                  logger.info(`Falling back to direct database update for company ${companyId}`);
-                  
-                  // First, get the current company data
-                  const company = await db.query.companies.findFirst({
-                    where: eq(companies.id, companyId)
-                  });
-                  
-                  if (company) {
-                    // Get current available_tabs or initialize empty array
-                    let currentTabs: string[] = [];
-                    
-                    try {
-                      if (company.available_tabs) {
-                        // Handle available_tabs, which can be a PostgreSQL text array or JSON string
-                        if (Array.isArray(company.available_tabs)) {
-                          // It's already an array, use it directly
-                          currentTabs = company.available_tabs;
-                          logger.info(`Using existing array tabs for company ${companyId}:`, {tabs: currentTabs} as any);
-                        } else if (typeof company.available_tabs === 'string') {
-                          try {
-                            // Try to parse as JSON string
-                            currentTabs = JSON.parse(company.available_tabs);
-                            logger.info(`Parsed JSON string tabs for company ${companyId}:`, {tabs: currentTabs} as any);
-                          } catch (innerParseError) {
-                            logger.warn(`Error parsing JSON available_tabs for company ${companyId}, trying PostgreSQL array format`);
-                            
-                            // If JSON parsing fails, it might be a PostgreSQL array string format like "{tab1,tab2}"
-                            // Remove the curly braces and split by comma
-                            const pgArrayStr = company.available_tabs.trim();
-                            if (pgArrayStr.startsWith('{') && pgArrayStr.endsWith('}')) {
-                              const innerStr = pgArrayStr.substring(1, pgArrayStr.length - 1);
-                              currentTabs = innerStr.split(',').map(s => s.trim());
-                              logger.info(`Parsed PostgreSQL array tabs for company ${companyId}:`, {tabs: currentTabs} as any);
-                            }
-                          }
-                        }
-                      }
-                    } catch (parseError) {
-                      logger.warn(`Error handling available_tabs for company ${companyId}:`, {error: parseError instanceof Error ? parseError.message : 'Unknown error'});
-                      // Continue with empty array if parsing fails
-                      currentTabs = [];
-                    }
-                    
-                    // Add new tabs if they're not already included
-                    const updatedTabs = [...new Set([...currentTabs, ...unlockedTabs])];
-                    logger.info(`Updating company ${companyId} tabs from [${currentTabs.join(', ')}] to [${updatedTabs.join(', ')}]`);
-                    
-                    // Update the company record with the new tabs
-                    // Store as a native PostgreSQL array instead of JSON string
-                    await db.update(companies)
-                      .set({ 
-                        available_tabs: updatedTabs, // Store directly as array
-                        updated_at: new Date()
-                      })
-                      .where(eq(companies.id, companyId));
-                    
-                    logger.info(`Successfully updated available tabs for company ${companyId}`);
-                    
-                    // Broadcast the company tabs update
-                    broadcastCompanyTabsUpdate(
-                      companyId,
-                      updatedTabs
-                    );
-                  } else {
-                    logger.warn(`Company ${companyId} not found, skipping tab update`);
-                  }
-                }
-              } catch (dbError) {
-                logger.error(`Error updating company tabs for company ${companyId}:`, dbError as any);
-                // Continue with the form submission even if tab update fails
-              }
+            // CRITICAL FIX: Explicitly broadcast the company tabs update as a separate event
+            // This ensures the tab update event is sent regardless of whether clients are listening
+            // for form submission events
+            if (unlockedTabs.length > 0) {
+              logger.info(`Broadcasting tabs update completed via UnifiedTabService`);
+              // The UnifiedTabService.unlockTabs method already handles tab broadcasting
+              // No need for additional broadcasting here
             }
             
             // Broadcast form submission success via WebSocket with file info and unlocked tabs
@@ -361,15 +325,6 @@ export function createFormSubmissionRouter(): Router {
               ]
             });
             
-            // CRITICAL FIX: Explicitly broadcast the company tabs update as a separate event
-            // This ensures the tab update event is sent regardless of whether clients are listening
-            // for form submission events
-            if (unlockedTabs.length > 0) {
-              logger.info(`Broadcasting tabs update completed via UnifiedTabService`);
-              // The UnifiedTabService.unlockTabs method already handles tab broadcasting
-              // No need for additional broadcasting here
-            }
-            
             return res.json({
               success: true,
               message: `Form submitted successfully (${formType})`,
@@ -414,43 +369,4 @@ export function createFormSubmissionRouter(): Router {
   });
   
   return router;
-}
-
-/**
- * Helper function to forward a request to another endpoint
- */
-async function forward(req: Request, res: Response, path: string): Promise<void> {
-  try {
-    logger.info(`Forwarding request to: ${path}`);
-    
-    // Call the appropriate endpoint directly
-    // In a real implementation, this would be handled by an HTTP client or middleware
-    req.url = path;
-    req.originalUrl = path;
-    
-    // Use Express's next function to handle routing
-    // This is not ideal but works for our purpose
-    const nextHandler = (err?: any) => {
-      if (err) {
-        logger.error(`Error forwarding to ${path}:`, err);
-        res.status(500).json({
-          success: false,
-          message: 'Error processing form submission',
-          error: err instanceof Error ? err.message : 'Unknown error'
-        });
-      }
-    };
-    
-    // Find and call the relevant handler
-    const expressApp = req.app as any;
-    if (expressApp._router && typeof expressApp._router.handle === 'function') {
-      expressApp._router.handle(req, res, nextHandler);
-    } else {
-      throw new Error('Cannot access Express router handle method');
-    }
-    
-  } catch (error) {
-    logger.error(`Error setting up request forwarding to ${path}`);
-    throw error;
-  }
 }
