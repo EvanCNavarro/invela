@@ -440,7 +440,7 @@ export default function RiskScoreConfigurationPage() {
     
     // Direct logger call
     riskScoreLogger.log('init', 'Risk score configuration page initialized');
-    riskScoreLogger.log('init', 'Testing debug overlay');
+    // Debug overlay disabled
   }, []);
   
   // Set up WebSocket event handlers for real-time updates
