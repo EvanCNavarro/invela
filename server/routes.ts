@@ -2240,12 +2240,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
               accreditation_status: 'PENDING',
               onboarding_company_completed: false,
               available_tabs: ['task-center'],
+              is_demo: req.body.is_demo === true, // Set demo status from request
               metadata: {
                 invited_by: req.user!.id,
                 invited_at: new Date().toISOString(),
                 invited_from: userCompany.name,
                 created_via: 'fintech_invite',
-                created_by_id: req.user!.id
+                created_by_id: req.user!.id,
+                is_demo_fintech: req.body.is_demo === true, // Also track in metadata
               }
             })
             .returning();
