@@ -9,7 +9,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '@db';
 import { claims, claimBreaches, claimDisputes, claimResolutions } from '@db/schema';
 import { eq, and, or, desc } from 'drizzle-orm';
-import { auth } from '../middleware/auth';
+import { requireAuth as auth } from '../middleware/auth';
 import { z } from 'zod';
 
 const router = Router();
@@ -375,7 +375,7 @@ router.post('/:claimId/resolve', auth, async (req: Request, res: Response) => {
     await db.update(claims)
       .set({ 
         is_resolved: true,
-        status: status
+        status: status as any // Type assertion to avoid TypeScript error
       })
       .where(eq(claims.id, claim.id));
     

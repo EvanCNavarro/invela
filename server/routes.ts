@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
+import claimsRouter from './routes/claims';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';
@@ -374,6 +375,9 @@ export function registerRoutes(app: Express): Express {
   // Register Risk Score Configuration routes with optional authentication
   // This allows unauthenticated access for demo purposes
   app.use('/api/risk-score', optionalAuth, riskScoreConfigurationRouter);
+  
+  // Register Claims Management routes
+  app.use('/api/claims', claimsRouter);
   
   // Register our unified form submission router - centralized endpoint for all form types
   // Since we're now using the global WebSocket functions directly, we don't need to pass the WSS instance
