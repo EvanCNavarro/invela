@@ -30,3 +30,8 @@ export interface RiskScoreConfiguration {
   score: number;
   riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
 }
+
+export interface RiskPriorities {
+  dimensions: RiskDimension[];
+  lastUpdated: string;
+}
