@@ -2300,22 +2300,61 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
     // After KYB is completed, unlock any security assessment tasks
     const unlockResult = await unlockSecurityTasks(task.company_id, taskId, req.user?.id);
     
-    logger.info('Security task unlock operation completed', {
+    logger.info('[KYB Submission] 🔓 Security task unlock operation completed', {
       result: unlockResult,
       success: unlockResult.success,
       count: unlockResult.count,
       companyId: task.company_id,
-      kybTaskId: taskId
+      kybTaskId: taskId,
+      timestamp: new Date().toISOString(),
+      userId: req.user?.id
     });
     
         // The file vault unlocking code has been moved to the top of the function
     // for immediate unlocking as soon as the submission request is received
 
     // Broadcast submission status via WebSocket with enhanced logging
-    console.log(`[WebSocket] Broadcasting submission status for task ${taskId}: submitted (KYB submit endpoint)`);
+    logger.info(`[KYB Submission] 📰 Broadcasting submission status for task ${taskId}: submitted`, {
+      taskId,
+      status: 'submitted',
+      companyId: task.company_id,
+      timestamp: new Date().toISOString(),
+      userId: req.user?.id,
+      source: 'kyb-submit-endpoint'
+    });
     
-    // First broadcast attempt
-    broadcastSubmissionStatus(taskId, 'submitted');
+    // Use the standardized websocket broadcast from websocket.ts
+    // instead of the deprecated broadcastSubmissionStatus function
+    try {
+      // First broadcast attempt using the standard websocket service
+      const { broadcast } = require('../services/websocket');
+      broadcast('form_submission', {
+        taskId,
+        formType: 'kyb',
+        status: 'submitted',
+        companyId: task.company_id,
+        timestamp: new Date().toISOString(),
+        submissionDate: new Date().toISOString()
+      });
+      
+      logger.debug('[KYB Submission] Successfully broadcast through the websocket service');
+    } catch (wsError) {
+      logger.error('[KYB Submission] Error broadcasting through websocket service:', {
+        error: wsError instanceof Error ? wsError.message : 'Unknown error',
+        taskId,
+        companyId: task.company_id
+      });
+      
+      // Original broadcast as fallback
+      try {
+        broadcastSubmissionStatus(taskId, 'submitted');
+      } catch (bssError) {
+        logger.error('[KYB Submission] Error using broadcastSubmissionStatus:', {
+          error: bssError instanceof Error ? bssError.message : 'Unknown error',
+          taskId
+        });
+      }
+    }
     
     // Schedule additional broadcasts with increasing delays
     // This ensures clients have multiple opportunities to receive the confirmation
@@ -2323,30 +2362,104 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
     const delayTimes = [1000, 2000, 5000]; // 1s, 2s, 5s delays
     for (const delay of delayTimes) {
       setTimeout(() => {
-        console.log(`[WebSocket] Sending delayed submission status broadcast (${delay}ms) for task ${taskId}`);
-        broadcastSubmissionStatus(taskId, 'submitted');
+        logger.debug(`[KYB Submission] 🕒 Sending delayed submission status broadcast (${delay}ms) for task ${taskId}`);
+        
+        try {
+          // Use the standardized websocket service for delayed broadcasts
+          const { broadcast } = require('../services/websocket');
+          broadcast('form_submission', {
+            taskId,
+            formType: 'kyb',
+            status: 'submitted',
+            companyId: task.company_id,
+            timestamp: new Date().toISOString(),
+            submissionDate: new Date().toISOString(),
+            delay: delay,  // Include delay information for debugging
+            source: 'delayed-broadcast'
+          });
+        } catch (wsError) {
+          // Fallback to legacy broadcast method
+          try {
+            broadcastSubmissionStatus(taskId, 'submitted');
+          } catch (bssError) {
+            logger.error(`[KYB Submission] Failed delayed broadcast at ${delay}ms:`, {
+              error: bssError instanceof Error ? bssError.message : 'Unknown error',
+              taskId,
+              delay
+            });
+          }
+        }
       }, delay);
     }
 
     // Also broadcast the task update for dashboard real-time updates
-    broadcastTaskUpdate({
-      id: taskId,
-      status: TaskStatus.SUBMITTED,
-      progress: 100,
-      metadata: {
-        lastUpdated: new Date().toISOString(),
-        submissionDate: new Date().toISOString(),
-        broadcastSource: 'kyb-submit-endpoint'
-      }
-    });
-    
-    // Also send a generic message as a fallback on a separate channel
-    broadcastMessage('form_submission_complete', {
+    logger.info(`[KYB Submission] 💬 Broadcasting task update for dashboard real-time updates`, {
       taskId,
       status: 'submitted',
-      timestamp: Date.now(),
-      source: 'kyb-submit-endpoint'
+      progress: 100,
+      timestamp: new Date().toISOString()
     });
+
+    try {
+      // Use the standardized WebSocket service from broadcast method instead
+      const { broadcast } = require('../services/websocket');
+      broadcast('task_update', {
+        id: taskId,
+        status: 'submitted',
+        progress: 100,
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          submissionDate: new Date().toISOString(),
+          broadcastSource: 'kyb-submit-endpoint'
+        }
+      });
+      
+      logger.debug('[KYB Submission] Successfully broadcast task update through websocket service');
+      
+      // Also send a generic message as a fallback on a separate channel
+      broadcast('form_submission_complete', {
+        taskId,
+        formType: 'kyb',
+        status: 'submitted',
+        timestamp: new Date().toISOString(),
+        source: 'kyb-submit-endpoint'
+      });
+    } catch (btuError) {
+      logger.error('[KYB Submission] Error broadcasting task update:', {
+        error: btuError instanceof Error ? btuError.message : 'Unknown error',
+        taskId,
+        formType: 'kyb'
+      });
+      
+      // Fallback to legacy broadcast methods if available
+      try {
+        if (typeof broadcastTaskUpdate === 'function') {
+          broadcastTaskUpdate({
+            id: taskId,
+            status: TaskStatus.SUBMITTED,
+            progress: 100,
+            metadata: {
+              lastUpdated: new Date().toISOString(),
+              submissionDate: new Date().toISOString(),
+              broadcastSource: 'kyb-submit-endpoint-fallback'
+            }
+          });
+        }
+        
+        if (typeof broadcastMessage === 'function') {
+          broadcastMessage('form_submission_complete', {
+            taskId,
+            status: 'submitted',
+            timestamp: Date.now(),
+            source: 'kyb-submit-endpoint-fallback'
+          });
+        }
+      } catch (fallbackError) {
+        logger.error('[KYB Submission] Failed to use fallback broadcast methods:', {
+          error: fallbackError instanceof Error ? fallbackError.message : 'Unknown error'
+        });
+      }
+    }
 
     res.json({
       success: true,

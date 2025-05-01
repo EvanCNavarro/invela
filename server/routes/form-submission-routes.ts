@@ -219,11 +219,26 @@ export function createFormSubmissionRouter(): Router {
     const companyId = req.body.companyId || (req.user?.company_id || 0);
     const formData = req.body;
     
-    logger.info(`Unified form submission received for task ${taskId}, type ${formType}`, {
+    // Enhanced logging with full context and extra debugging information
+    logger.info(`[FormSubmission] 🚀 STARTING FORM SUBMISSION for task ${taskId}, type ${formType}`, {
       taskId,
       formType,
       companyId,
-      timestamp: new Date().toISOString()
+      userId: req.user?.id,
+      timestamp: new Date().toISOString(),
+      formDataSize: JSON.stringify(formData).length,
+      formDataKeys: Object.keys(formData).length,
+      formDataFieldCount: formData.responses ? Object.keys(formData.responses).length : 0
+    });
+    
+    // Log environment and context for debugging
+    logger.debug(`[FormSubmission] Submission context details:`, {
+      headers: req.headers['content-type'],
+      userAgent: req.headers['user-agent'],
+      requestSize: req.headers['content-length'],
+      method: req.method,
+      ip: req.ip,
+      path: req.path
     });
     
     try {
