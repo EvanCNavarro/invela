@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from '../utils/logger';
-import { broadcastFileVaultUpdate } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 
 const logger = new Logger('FileCreationService');
 
@@ -180,8 +180,15 @@ export class FileCreationService {
 
       // Broadcast file vault update to notify all clients about the new file
       try {
-        const result = broadcastFileVaultUpdate(companyId, fileRecord.id, 'added');
-        logger.info(`Broadcasted file vault update to ${result.clientCount} clients`, {
+        // Use the standardized WebSocket service to broadcast file update
+        WebSocketService.broadcastEvent('file_vault_updated', {
+          companyId,
+          fileId: fileRecord.id,
+          action: 'added',
+          timestamp: new Date().toISOString()
+        });
+        
+        logger.info(`Broadcasted file vault update successfully`, {
           fileId: fileRecord.id,
           companyId,
           action: 'added'

@@ -11,7 +11,7 @@ import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './ty
 import { emailService } from './services/email';
 import { requireAuth, optionalAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import { broadcastMessage, getWebSocketServer } from './services/websocket';
+import * as WebSocketService from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -193,7 +193,7 @@ export function registerRoutes(app: Express): Express {
         console.log(`[EMERGENCY] File vault already enabled for company ${companyId}`);
         
         // Force broadcast WebSocket event to refresh client caches
-        broadcastMessage('company_tabs_updated', {
+        WebSocketService.broadcastEvent('company_tabs_updated', {
           companyId,
           availableTabs: currentTabs,
           timestamp: new Date().toISOString(),
@@ -239,7 +239,7 @@ export function registerRoutes(app: Express): Express {
       console.log(`[EMERGENCY] Invalidated cache for company ${companyId}`);
       
       // Broadcast WebSocket event to update clients
-      broadcastMessage('company_tabs_updated', {
+      WebSocketService.broadcastEvent('company_tabs_updated', {
         companyId,
         availableTabs: updatedCompany.available_tabs,
         timestamp: new Date().toISOString(),
@@ -306,7 +306,7 @@ export function registerRoutes(app: Express): Express {
         console.log(`[File Vault] Added file-vault tab for company ${companyId}`);
         
         // Broadcast the update via WebSocket
-        broadcastMessage('company_tabs_updated', {
+        WebSocketService.broadcastEvent('company_tabs_updated', {
           companyId,
           availableTabs: newTabs,
           cache_invalidation: true,
@@ -359,7 +359,7 @@ export function registerRoutes(app: Express): Express {
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
-  registerOpenBankingRoutes(app, getWebSocketServer());
+  registerOpenBankingRoutes(app, WebSocketService.getWebSocketServer());
   
   // Register Open Banking Progress routes for standardized form handling
   const openBankingProgressRouter = Router();

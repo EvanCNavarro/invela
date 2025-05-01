@@ -14,7 +14,7 @@ import { broadcastTaskUpdate } from './websocket';
 import { broadcastCompanyTabsUpdate, unlockDashboardAndInsightsTabs } from './company-tabs';
 import { Logger } from '../utils/logger';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
-import { fileCreationService } from './fileCreation';
+import * as fileCreationService from './fileCreation';
 
 const logger = new Logger('FormSubmissionHandler');
 

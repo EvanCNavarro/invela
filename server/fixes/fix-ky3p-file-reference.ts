@@ -12,7 +12,7 @@
 import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { broadcastFileVaultUpdate } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 
 /**
  * Log with timestamp for better tracking
@@ -124,11 +124,18 @@ export async function fixKy3pFileReferences() {
             // Convert to number to satisfy TypeScript
             const companyId = Number(task.company_id);
             
-            await broadcastFileVaultUpdate(companyId, legacyFileId, 'added');
+            await WebSocketService.broadcast('file_vault_update', {
+              companyId,
+              fileId: legacyFileId,
+              action: 'added'
+            });
             
             // Also broadcast a generic refresh message to ensure all clients update
             setTimeout(async () => {
-              await broadcastFileVaultUpdate(companyId, undefined, 'refresh');
+              await WebSocketService.broadcast('file_vault_update', {
+                companyId,
+                action: 'refresh'
+              });
             }, 500);
           } else {
             logWithTimestamp(`Warning: Cannot broadcast for task ${task.id} - company_id is null`);

@@ -5,7 +5,7 @@ import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@d
 import { eq, and, or, ilike, sql } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
-import { broadcastTaskUpdate, broadcastMessage, broadcastSubmissionStatus } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { CompanyTabsService } from '../services/companyTabsService';
 // Import CompanyTabsService directly, we don't need the patch function anymore
