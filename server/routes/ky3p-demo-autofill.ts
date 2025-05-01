@@ -270,7 +270,7 @@ router.get('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid task ID' });
     }
     
-    logger.info(`[KY3P Demo Auto-Fill] Standardized demo auto-fill requested for task ${taskId}`);
+    logger.info(`[KY3P Demo Auto-Fill] Standardized demo auto-fill GET requested for task ${taskId}`);
     
     // Generate the demo data
     const demoData = await generateKy3pDemoData(taskId);
@@ -285,8 +285,47 @@ router.get('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
       status: 'in_progress',
     });
   } catch (error: any) {
-    logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill request:', error);
+    logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill GET request:', error);
     return res.status(500).json({
+      error: 'Server error',
+      message: 'An error occurred while generating demo data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
+/**
+ * POST endpoint for standardized demo auto-fill
+ * This is the critical endpoint used by the KY3PDemoAutoFill component
+ */
+router.post('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    
+    logger.info(`[KY3P Demo Auto-Fill] Standardized demo auto-fill POST requested for task ${taskId}`);
+    
+    // Generate the demo data
+    const demoData = await generateKy3pDemoData(taskId);
+    
+    // Save the demo responses to the database
+    await saveDemoResponses(taskId, demoData);
+    
+    // Return the demo data in the standardized format with additional fields for compatibility
+    return res.status(200).json({
+      success: true,
+      fieldCount: Object.keys(demoData).length,
+      formData: demoData,
+      progress: 95,
+      status: 'in_progress',
+    });
+  } catch (error: any) {
+    logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill POST request:', error);
+    return res.status(500).json({
+      success: false,
       error: 'Server error',
       message: 'An error occurred while generating demo data',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
