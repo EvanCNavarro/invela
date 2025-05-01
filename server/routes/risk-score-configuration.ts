@@ -9,7 +9,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '../../db';
 import { companies } from '../../db/schema';
 import { eq } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -94,13 +94,11 @@ router.get('/test', async (req: Request, res: Response) => {
 });
 
 // GET endpoint to retrieve the risk score configuration
-router.get('/configuration', requireAuth, async (req: Request, res: Response) => {
+router.get('/configuration', optionalAuth, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const companyId = req.user.company_id;
+    // Allow anonymous access with fallback to company ID 1
+    const companyId = req.user?.company_id || 1;
+    console.log(`[RiskConfiguration] Using company ID: ${companyId} (${req.user ? 'authenticated' : 'unauthenticated'})`);
     
     const company = await db.query.companies.findFirst({
       where: eq(companies.id, companyId),
@@ -122,13 +120,11 @@ router.get('/configuration', requireAuth, async (req: Request, res: Response) =>
 });
 
 // POST endpoint to save the risk score configuration
-router.post('/configuration', requireAuth, async (req: Request, res: Response) => {
+router.post('/configuration', optionalAuth, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const companyId = req.user.company_id;
+    // Allow anonymous access with fallback to company ID 1
+    const companyId = req.user?.company_id || 1;
+    console.log(`[RiskConfiguration] Using company ID: ${companyId} (${req.user ? 'authenticated' : 'unauthenticated'})`);
     const configuration: RiskScoreConfiguration = req.body;
 
     // Validate the configuration
@@ -164,7 +160,7 @@ router.post('/configuration', requireAuth, async (req: Request, res: Response) =
 });
 
 // GET endpoint to retrieve the risk priorities
-router.get('/priorities', async (req: Request, res: Response) => {
+router.get('/priorities', optionalAuth, async (req: Request, res: Response) => {
   try {
     // Enhanced error logging
     console.log('[RiskPriorities] GET request received');
@@ -212,7 +208,7 @@ router.get('/priorities', async (req: Request, res: Response) => {
 });
 
 // POST endpoint to save the risk priorities
-router.post('/priorities', async (req: Request, res: Response) => {
+router.post('/priorities', optionalAuth, async (req: Request, res: Response) => {
   try {
     console.log('[RiskPriorities] Received POST request to save priorities');
     

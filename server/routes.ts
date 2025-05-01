@@ -8,7 +8,7 @@ import timestampRouter from './routes/kyb-timestamp-routes';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';
-import { requireAuth } from './middleware/auth';
+import { requireAuth, optionalAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
 import { broadcastMessage, getWebSocketServer } from './services/websocket';
 import crypto from 'crypto';
@@ -371,8 +371,9 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
   
-  // Register Risk Score Configuration routes
-  app.use('/api/risk-score', riskScoreConfigurationRouter);
+  // Register Risk Score Configuration routes with optional authentication
+  // This allows unauthenticated access for demo purposes
+  app.use('/api/risk-score', optionalAuth, riskScoreConfigurationRouter);
   
   // Register our unified form submission router - centralized endpoint for all form types
   // Since we're now using the global WebSocket functions directly, we don't need to pass the WSS instance
