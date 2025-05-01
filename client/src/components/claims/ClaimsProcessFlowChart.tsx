@@ -383,8 +383,8 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
         <ResponsiveContainer width="100%" height="100%">
           <Sankey
             data={flowData}
-            node={<CustomNode />}
-            link={<CustomLink />}
+            node={CustomNode}
+            link={CustomLink}
             nodePadding={30}
             nodeWidth={35}
             margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
@@ -392,7 +392,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
             width={900}
             height={500}
           >
-            <RechartsTooltip content={<CustomTooltip />} />
+            <RechartsTooltip content={CustomTooltip} />
           </Sankey>
         </ResponsiveContainer>
       </div>
