@@ -108,3 +108,57 @@ export async function directUpdateRiskPriorities(priorities: RiskPriorities): Pr
     };
   }
 }
+
+/**
+ * Send a test WebSocket broadcast message
+ * 
+ * This function is used to test WebSocket connectivity by sending a message
+ * through the debug broadcast endpoint.
+ */
+export async function testWebSocketBroadcast(messageType: string, data: any): Promise<{
+  success: boolean;
+  clientCount?: number;
+  error?: string;
+  timestamp: string;
+}> {
+  try {
+    const response = await fetch('/api/websocket/broadcast', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: messageType,
+        data
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[WebSocketTest] Broadcast test failed:', response.status, errorText);
+      
+      return {
+        success: false,
+        error: `Request failed: ${response.status} ${response.statusText}`,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    const result = await response.json();
+    console.log('[WebSocketTest] Broadcast test succeeded:', result);
+    
+    return {
+      success: true,
+      clientCount: result.clientCount,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('[WebSocketTest] Error during WebSocket test:', error);
+    
+    return {
+      success: false,
+      error: String(error),
+      timestamp: new Date().toISOString()
+    };
+  }
+}
