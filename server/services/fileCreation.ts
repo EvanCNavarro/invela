@@ -69,6 +69,12 @@ export class FileCreationService {
       return `open_banking_survey_${sanitizedCompanyName}_${timestamp}.json`;
     }
     
+    // For KYB assessments - explicitly check for KYB
+    if (metadata.taskType === 'kyb') {
+      // Use csv extension to match UI expectations
+      return `kyb_assessment_${sanitizedCompanyName}_${timestamp}.csv`;
+    }
+    
     // Default to JSON for other assessment types
     return `${taskType}_assessment_${sanitizedCompanyName}_${timestamp}.json`;
   }
