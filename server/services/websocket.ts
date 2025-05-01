@@ -105,6 +105,9 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
 /**
  * Broadcast a message to all connected clients
  * 
+ * This enhanced version supports multiple message formats for compatibility
+ * with different client implementations and improves error handling.
+ * 
  * @param type The type of message to broadcast
  * @param payload The payload to send with the message
  */
@@ -115,11 +118,30 @@ export async function broadcast(type: string, payload: any): Promise<void> {
       return;
     }
     
-    // Create the message in the expected format
+    // Set standard timestamp for all messages
+    const timestamp = new Date().toISOString();
+    
+    // Add taskId property at the top level if it exists in the payload
+    // This ensures compatibility with both formats used by different clients
+    const taskId = payload?.taskId || payload?.id || null;
+    
+    // Create the message in the expected format with both data and payload fields
+    // This supports multiple client implementations that expect different formats
     const message = {
       type,
-      payload,
-      timestamp: new Date().toISOString()
+      // Include both payload and data fields for cross-compatibility
+      payload: {
+        ...payload,
+        timestamp: timestamp
+      },
+      data: {
+        ...payload,
+        timestamp: timestamp
+      },
+      // Include taskId at the top level if available for compatibility
+      ...(taskId && { taskId }),
+      // Include timestamp at the top level
+      timestamp
     };
     
     // Count active clients
@@ -247,6 +269,10 @@ export async function broadcastEvent(eventType: string, data: any): Promise<void
 /**
  * Broadcast a form submission event to all connected clients
  * 
+ * This enhanced version includes additional logging, formats the data
+ * for maximum compatibility with different client implementations,
+ * and broadcasts on multiple channels for reliability.
+ * 
  * @param formSubmissionData Form submission data containing taskId, formType, status, etc.
  */
 export async function broadcastFormSubmission(formSubmissionData: {
@@ -262,25 +288,77 @@ export async function broadcastFormSubmission(formSubmissionData: {
   completedActions?: any[];
 }): Promise<void> {
   try {
-    logger.debug('Broadcasting form submission event', {
+    // Add detailed logging to help troubleshoot form submission issues
+    logger.info('Broadcasting form submission event', {
       taskId: formSubmissionData.taskId,
       formType: formSubmissionData.formType,
-      status: formSubmissionData.status
+      status: formSubmissionData.status,
+      hasFileId: formSubmissionData.fileId !== undefined,
+      fileId: formSubmissionData.fileId,
+      hasFileName: formSubmissionData.fileName !== undefined,
+      fileName: formSubmissionData.fileName,
+      hasUnlockedTabs: Array.isArray(formSubmissionData.unlockedTabs) && formSubmissionData.unlockedTabs.length > 0,
+      tabCount: Array.isArray(formSubmissionData.unlockedTabs) ? formSubmissionData.unlockedTabs.length : 0,
+      hasCompletedActions: Array.isArray(formSubmissionData.completedActions) && formSubmissionData.completedActions.length > 0,
     });
 
-    // Add timestamps for tracking
+    // Add timestamps for tracking - use the exact same timestamp for all fields
+    // to ensure consistency when comparing message timing on the client
+    const timestamp = new Date().toISOString();
+    const submissionDate = timestamp;
+    
+    // Create an enhanced payload with all necessary fields
     const payload = {
       ...formSubmissionData,
-      submissionDate: new Date().toISOString(),
-      timestamp: new Date().toISOString()
+      submissionDate,
+      timestamp,
+      // Convert any numeric IDs to strings for JSON compatibility
+      taskId: String(formSubmissionData.taskId),
+      // Ensure fileId is always a string when present
+      fileId: formSubmissionData.fileId ? String(formSubmissionData.fileId) : undefined,
+      // Set default values for optional fields to avoid undefined issues
+      companyId: formSubmissionData.companyId || null,
+      fileName: formSubmissionData.fileName || null,
+      unlockedTabs: formSubmissionData.unlockedTabs || [],
+      error: formSubmissionData.error || null,
+      message: formSubmissionData.message || null,
+      completedActions: formSubmissionData.completedActions || [],
+      // Add source information for debugging
+      source: 'server-broadcast',
+      serverVersion: '1.0.0-enhanced',
     };
     
-    // Broadcast on both channels for maximum compatibility
+    // Also add a numeric taskId for clients expecting that format
+    const numericPayload = {
+      ...payload,
+      taskId: formSubmissionData.taskId,
+    };
+    
+    // Broadcast on multiple channels for maximum compatibility
+    // Different client implementations might be listening to different event types
     await broadcast('form_submission', payload);
     await broadcast('form_submitted', payload);
+    
+    // Also broadcast with numeric IDs for clients expecting that format
+    await broadcast('form_submission', numericPayload);
+    await broadcast('form_submitted', numericPayload);
+    
+    // Broadcast success via specialized 'submission_status' channel for FormSubmissionListener
+    await broadcast('submission_status', {
+      ...payload,
+      type: 'form_submission',
+      formId: formSubmissionData.taskId
+    });
+    
+    logger.info('Successfully broadcasted form submission events', {
+      taskId: formSubmissionData.taskId,
+      status: formSubmissionData.status,
+      timestamp
+    });
   } catch (error) {
     logger.error('Error broadcasting form submission:', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
       taskId: formSubmissionData.taskId,
       formType: formSubmissionData.formType
     });
