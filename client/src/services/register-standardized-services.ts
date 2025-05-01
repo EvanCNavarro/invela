@@ -12,6 +12,7 @@
 import { componentFactory } from './componentFactory';
 import { formServiceFactory } from './form-service-factory';
 import { createUnifiedKY3PFormService } from './unified-ky3p-form-service';
+import { FormServiceInterface } from './formService';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('RegisterStandardizedServices');
@@ -22,6 +23,89 @@ const logger = getLogger('RegisterStandardizedServices');
  * This function registers all the standardized form services with the
  * component factory to make them available throughout the application.
  */
+// Create a service factory adapter that conforms to FormServiceInterface
+// but delegates to our actual factory function
+function createServiceFactoryAdapter(
+  factoryFn: (companyId?: number | string, taskId?: number | string) => FormServiceInterface
+): FormServiceInterface {
+  // Create a minimal implementation of FormServiceInterface that delegates to the factory
+  const adapter: FormServiceInterface = {
+    // Initialize should create a real service and delegate
+    async initialize(templateId: number): Promise<void> {
+      const service = factoryFn();
+      return service.initialize(templateId);
+    },
+    
+    // Delegate getFields to a real service instance
+    getFields(): FormField[] {
+      const service = factoryFn();
+      return service.getFields();
+    },
+    
+    // Delegate getSections to a real service instance
+    getSections(): FormSection[] {
+      const service = factoryFn();
+      return service.getSections();
+    },
+    
+    // Delegate loadFormData to a real service instance
+    loadFormData(data: Record<string, any>): void {
+      const service = factoryFn();
+      service.loadFormData(data);
+    },
+    
+    // Delegate updateFormData to a real service instance
+    updateFormData(fieldKey: string, value: any, taskId?: number): void {
+      const service = factoryFn();
+      service.updateFormData(fieldKey, value, taskId);
+    },
+    
+    // Delegate getFormData to a real service instance
+    getFormData(): Record<string, any> {
+      const service = factoryFn();
+      return service.getFormData();
+    },
+    
+    // Delegate calculateProgress to a real service instance
+    calculateProgress(): number {
+      const service = factoryFn();
+      return service.calculateProgress();
+    },
+    
+    // Delegate saveProgress to a real service instance
+    async saveProgress(taskId?: number): Promise<void> {
+      const service = factoryFn();
+      return service.saveProgress(taskId);
+    },
+    
+    // Delegate loadProgress to a real service instance
+    async loadProgress(taskId: number): Promise<Record<string, any>> {
+      const service = factoryFn();
+      return service.loadProgress(taskId);
+    },
+    
+    // Delegate save to a real service instance
+    async save(options: FormSubmitOptions): Promise<boolean> {
+      const service = factoryFn();
+      return service.save(options);
+    },
+    
+    // Delegate submit to a real service instance
+    async submit(options: FormSubmitOptions): Promise<any> {
+      const service = factoryFn();
+      return service.submit(options);
+    },
+    
+    // Delegate validate to a real service instance
+    validate(data: Record<string, any>): boolean | Record<string, string> {
+      const service = factoryFn();
+      return service.validate(data);
+    }
+  };
+  
+  return adapter;
+}
+
 export function registerStandardizedServices(): void {
   try {
     logger.info('[RegisterServices] Registering standardized form services');
@@ -30,21 +114,25 @@ export function registerStandardizedServices(): void {
     logger.info('[RegisterServices] Registering unified KY3P form service');
     
     // Define a factory function that creates our new unified KY3P form services
-    const unifiedKy3pServiceFactory = (companyId: number | string | undefined, taskId: number | string | undefined) => {
+    const unifiedKy3pServiceFactory = (companyId?: number | string, taskId?: number | string): FormServiceInterface => {
       // Convert potential string params to numbers
       const numericCompanyId = companyId ? Number(companyId) : undefined;
       const numericTaskId = taskId ? Number(taskId) : undefined;
       
       logger.info(`[RegisterServices] Creating unified KY3P service for company ${numericCompanyId}, task ${numericTaskId}`);
+      // Create and return the service instance directly
       return createUnifiedKY3PFormService(numericCompanyId, numericTaskId);
     };
+    
+    // Create an adapter that conforms to FormServiceInterface
+    const serviceAdapter = createServiceFactoryAdapter(unifiedKy3pServiceFactory);
     
     // Register for all KY3P-related task types
     const ky3pTaskTypes = ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'];
     
     ky3pTaskTypes.forEach(taskType => {
       logger.info(`[RegisterServices] Registering unified KY3P service for task type: ${taskType}`);
-      componentFactory.registerFormService(taskType, unifiedKy3pServiceFactory);
+      componentFactory.registerFormService(taskType, serviceAdapter);
     });
     
     logger.info('[RegisterServices] Successfully registered unified KY3P form service for all task types');
@@ -74,6 +162,7 @@ export function useStandardizedServices(): void {
       const numericTaskId = taskId ? Number(taskId) : undefined;
       
       logger.info(`[RegisterServices] Creating unified KY3P service (default) for company ${numericCompanyId}, task ${numericTaskId}`);
+      // Create and return the service instance directly, not the factory function
       return createUnifiedKY3PFormService(numericCompanyId, numericTaskId);
     };
     
