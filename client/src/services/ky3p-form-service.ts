@@ -197,6 +197,79 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
+   * Sync form data with the server
+   * This method ensures the form data stays in sync with the server
+   * by retrieving the latest data from our KY3P progress endpoint
+   */
+  public async syncFormData(taskId?: number): Promise<any> {
+    const effectiveTaskId = taskId || this.taskId;
+    
+    if (!effectiveTaskId) {
+      logger.warn('[KY3P Form Service] No task ID provided for syncing form data, returning failure');
+      return {
+        success: false,
+        error: 'No task ID provided',
+        formData: {}
+      };
+    }
+    
+    try {
+      logger.info(`[KY3P Form Service] Syncing form data for task ${effectiveTaskId}`);
+      
+      // Use our new dedicated progress endpoint for KY3P forms
+      const progressUrl = `/api/ky3p/progress/${effectiveTaskId}`;
+      logger.info(`[KY3P Form Service] Fetching from progress endpoint: ${progressUrl}`);
+      
+      const response = await fetch(progressUrl, {
+        credentials: 'include' // Include session cookies
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[KY3P Form Service] Failed to sync form data: ${response.status}`, errorText);
+        return {
+          success: false,
+          error: `Server returned ${response.status}: ${errorText}`,
+          formData: {}
+        };
+      }
+      
+      // Parse the response data
+      const progressData = await response.json();
+      logger.info(`[KY3P Form Service] Progress data retrieved successfully:`, {
+        success: progressData.success,
+        formDataKeys: progressData.formData ? Object.keys(progressData.formData).length : 0,
+        progress: progressData.progress
+      });
+      
+      // Update the form data in the service
+      if (progressData.formData && typeof progressData.formData === 'object') {
+        this.formData = progressData.formData;
+        logger.info(`[KY3P Form Service] Updated form data with ${Object.keys(progressData.formData).length} fields`);
+      } else {
+        logger.warn('[KY3P Form Service] No form data in progress response');
+      }
+      
+      // Return a standardized response
+      return {
+        success: true,
+        formData: progressData.formData || {},
+        progress: progressData.progress || 0,
+        status: progressData.status || 'synced',
+        taskId: effectiveTaskId,
+        syncDirection: 'server_to_client'
+      };
+    } catch (error) {
+      logger.error('[KY3P Form Service] Error syncing form data:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        formData: {}
+      };
+    }
+  }
+  
+  /**
    * Load form fields from the server
    * Override to use the KY3P-specific endpoint
    */
