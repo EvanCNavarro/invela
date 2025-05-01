@@ -28,7 +28,8 @@ export function RiskMeter({
   canAdjust = false,
   readonly = false
 }: RiskMeterProps) {
-  const systemScore = Math.min(Math.max(0, score), 1500);
+  // Ensure the score is within the 0-100 range
+  const systemScore = Math.min(Math.max(0, score), 100);
   const [currentScore, setCurrentScore] = useState<number>(chosenScore ?? systemScore);
   const [isDragging, setIsDragging] = useState(false);
   const [previousValue, setPreviousValue] = useState<number>(currentScore);
@@ -68,9 +69,9 @@ export function RiskMeter({
 
   const getRiskLevel = (score: number) => {
     if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
-    if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
-    if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
-    if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
+    if (score <= 33) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
+    if (score <= 66) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
+    if (score <= 99) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
     return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
   };
 
@@ -78,7 +79,7 @@ export function RiskMeter({
   
   // Calculate slider limits
   const minValue = 0;
-  const maxValue = Math.min(systemScore + 250, 1500); // Max is either 250 above anchor or 1500
+  const maxValue = Math.min(systemScore + 10, 100); // Max is either 10 above anchor or 100
   
   // Handle slider change
   const handleSliderChange = (value: number[]) => {
