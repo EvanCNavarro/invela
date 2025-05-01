@@ -315,8 +315,34 @@ export class FileCreationService {
         logger.info('File created successfully', {
           fileId: fileRecord.id,
           fileName: fileRecord.name,
+          companyId: companyId,
           timestamp: timestamp.toISOString()
         });
+        
+        // Broadcast file vault update to notify clients of the new file
+        try {
+          logger.info('Broadcasting file vault update', {
+            companyId: companyId,
+            fileId: fileRecord.id,
+            action: 'added'
+          });
+          
+          // Broadcast the update
+          broadcastFileVaultUpdate(companyId, fileRecord.id, 'added');
+          
+          // Also broadcast a generic refresh message to ensure all clients update
+          setTimeout(() => {
+            broadcastFileVaultUpdate(companyId, undefined, 'refresh');
+          }, 500);
+        } catch (broadcastError) {
+          // Don't fail the file creation if broadcasting fails
+          logger.error('Error broadcasting file vault update', {
+            error: broadcastError,
+            message: broadcastError instanceof Error ? broadcastError.message : 'Unknown broadcast error',
+            companyId,
+            fileId: fileRecord.id
+          });
+        }
 
         return {
           success: true,
