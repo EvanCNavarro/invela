@@ -844,8 +844,15 @@ router.get('/api/files', async (req, res) => {
       userId: req.user?.id,
       pagination: { page, pageSize, offset },
       totalFilesCount: totalFiles,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      userCompanyId: req.user?.company_id,
+      userName: req.user?.name,
+      userEmail: req.user?.email
     });
+    
+    // Detailed database SQL logging for file query
+    console.log(`[Files] SQL: SELECT * FROM files WHERE company_id = ${parsedCompanyId} ORDER BY created_at DESC LIMIT ${pageSize} OFFSET ${offset}`);
+    console.log(`[Files] Count SQL: SELECT COUNT(*) FROM files WHERE company_id = ${parsedCompanyId}`);
     
     // Query files for the company with pagination
     const fileRecords = await db.query.files.findMany({

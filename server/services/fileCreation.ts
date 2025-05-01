@@ -2,13 +2,14 @@ import { files } from '@db/schema';
 import { db } from '@db';
 import { z } from 'zod';
 import getLogger from '../utils/logger';
+import { broadcastFileVaultUpdate } from '../services/websocket';
 
 // Set up logger
 const logger = getLogger('FileCreationService');
 
 // Validation schema for file metadata
 const fileMetadataSchema = z.object({
-  taskType: z.enum(['company_kyb', 'company_card', 'sp_ky3p_assessment', 'open_banking', 'open_banking_survey']),
+  taskType: z.enum(['company_kyb', 'kyb', 'company_card', 'sp_ky3p_assessment', 'open_banking', 'open_banking_survey']),
   taskId: z.number(),
   companyName: z.string(),
   additionalData: z.record(z.unknown()).optional(),
@@ -69,8 +70,8 @@ export class FileCreationService {
       return `open_banking_survey_${sanitizedCompanyName}_${timestamp}.json`;
     }
     
-    // For KYB assessments - explicitly check for KYB
-    if (metadata.taskType === 'kyb') {
+    // For KYB assessments - explicitly check for KYB (with or without company_ prefix)
+    if (metadata.taskType === 'kyb' || metadata.taskType === 'company_kyb') {
       // Use csv extension to match UI expectations
       return `kyb_assessment_${sanitizedCompanyName}_${timestamp}.csv`;
     }
@@ -246,6 +247,15 @@ export class FileCreationService {
           contentLength: fileContent.length,
           fieldsCount: fieldsArray.length
         });
+      } else if (metadata.taskType === 'kyb' || metadata.taskType === 'company_kyb') {
+        // For KYB assessments, also generate CSV content
+        // Convert data object to CSV directly
+        fileContent = this.generateCSV(content);
+        contentType = 'text/csv';
+        
+        logger.info('Generated CSV content for KYB assessment', {
+          contentLength: fileContent.length
+        });
       } else {
         // For other types, use JSON
         fileContent = JSON.stringify(content, null, 2);
@@ -261,9 +271,11 @@ export class FileCreationService {
         timestamp: timestamp.toISOString()
       });
 
-      // For KY3P assessments, prepend a database marker to the content
+      // For KY3P and KYB assessments, prepend a database marker to the content
       // This helps the file download handler identify it as inline content
-      if (metadata.taskType === 'sp_ky3p_assessment') {
+      if (metadata.taskType === 'sp_ky3p_assessment' || 
+          metadata.taskType === 'kyb' || 
+          metadata.taskType === 'company_kyb') {
         fileContent = `database:${fileContent}`;
       }
       
