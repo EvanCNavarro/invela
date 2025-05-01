@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
 import * as fileCreation from '../services/fileCreation';
 import UnifiedTabService from '../services/unified-tab-service';
-import { broadcast } from '../services/websocket';
+import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
 const logger = getLogger('FormSubmissionRoutes');
@@ -243,12 +243,11 @@ export function createFormSubmissionRouter(): Router {
     
     try {
       // Broadcast "in progress" status via WebSocket
-      broadcast('form_submission', {
+      await broadcastFormSubmission({
         taskId,
         formType,
         status: 'in_progress',
-        companyId,
-        submissionDate: new Date().toISOString()
+        companyId
       });
       
       // Check if the task exists and belongs to the user's company
@@ -260,13 +259,12 @@ export function createFormSubmissionRouter(): Router {
         logger.warn(`Task ${taskId} not found in database`);
         
         // Broadcast error status via WebSocket
-        broadcast('form_submission', {
+        await broadcastFormSubmission({
           taskId,
           formType,
           status: 'error',
           companyId,
-          error: 'Task not found',
-          submissionDate: new Date().toISOString()
+          error: 'Task not found'
         });
         
         return res.status(404).json({
@@ -422,59 +420,33 @@ export function createFormSubmissionRouter(): Router {
               // No need for additional broadcasting here
             }
             
-            // Broadcast form submission success via WebSocket with file info and unlocked tabs
-            broadcast('form_submission', { 
-              taskId,
-              formType,
-              status: 'success',
-              companyId,
-              submissionDate: new Date().toISOString(),
-              unlockedTabs,
-              fileName: fileResult.fileName,
-              fileId: fileResult.fileId,
-              // Add completed actions array to match what UniversalSuccessModal expects
-              completedActions: [
-                {
-                  type: 'form_submitted',
-                  description: `${formType.toUpperCase()} form submitted successfully`
-                },
-                {
-                  type: 'file_generated',
-                  description: `Generated ${fileResult.fileName}`,
-                  fileId: fileResult.fileId
-                },
-                ...(unlockedTabs && unlockedTabs.length > 0 ? [{
-                  type: 'tabs_unlocked',
-                  description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
-                }] : [])
-              ]
-            });
+            // Define completed actions for better organization
+            const completedActions = [
+              {
+                type: 'form_submitted',
+                description: `${formType.toUpperCase()} form submitted successfully`
+              },
+              {
+                type: 'file_generated',
+                description: `Generated ${fileResult.fileName}`,
+                fileId: fileResult.fileId
+              },
+              ...(unlockedTabs && unlockedTabs.length > 0 ? [{
+                type: 'tabs_unlocked',
+                description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
+              }] : [])
+            ];
             
-            // Also broadcast with the form_submitted event type for compatibility
-            broadcast('form_submitted', {
+            // Broadcast form submission success via WebSocket with file info and unlocked tabs
+            await broadcastFormSubmission({
               taskId,
               formType,
               status: 'success',
               companyId,
-              submissionDate: new Date().toISOString(),
               unlockedTabs,
               fileName: fileResult.fileName,
               fileId: fileResult.fileId,
-              completedActions: [
-                {
-                  type: 'form_submitted',
-                  description: `${formType.toUpperCase()} form submitted successfully`
-                },
-                {
-                  type: 'file_generated',
-                  description: `Generated ${fileResult.fileName}`,
-                  fileId: fileResult.fileId
-                },
-                ...(unlockedTabs && unlockedTabs.length > 0 ? [{
-                  type: 'tabs_unlocked',
-                  description: `Unlocked tabs: ${unlockedTabs.join(', ')}`
-                }] : [])
-              ]
+              completedActions
             });
             
             return res.json({
@@ -501,13 +473,12 @@ export function createFormSubmissionRouter(): Router {
       logger.error(`Error processing form submission for task ${taskId}: ${errorMessage}`);
       
       // Broadcast error status via WebSocket
-      broadcast('form_submission', {
+      await broadcastFormSubmission({
         taskId,
         formType,
         status: 'error',
         companyId,
-        error: error instanceof Error ? error.message : 'Unknown submission error',
-        submissionDate: new Date().toISOString()
+        error: error instanceof Error ? error.message : 'Unknown submission error'
       });
       
       return res.status(500).json({
