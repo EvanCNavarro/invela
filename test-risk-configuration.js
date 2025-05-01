@@ -5,8 +5,8 @@
  * to diagnose the persistence issue.
  */
 
-import { db } from './db/index.js';
-import { companies } from './db/schema.js';
+import { db } from './db/index.ts';
+import { companies } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
 
 // Get current company data
