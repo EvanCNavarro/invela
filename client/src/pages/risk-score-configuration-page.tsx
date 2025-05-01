@@ -12,6 +12,9 @@ import { Slider } from "@/components/ui/slider";
 import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration } from '@/lib/risk-score-configuration-types';
 import { defaultRiskDimensions, defaultRiskThresholds, sampleCompanyComparisons, calculateRiskScore, determineRiskLevel } from '@/lib/risk-score-configuration-data';
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const dimensionIcons: Record<string, React.ReactNode> = {
   physical_security: <Shield className="h-5 w-5" />,
@@ -100,6 +103,56 @@ export default function RiskScoreConfigurationPage() {
   const [thresholds, setThresholds] = useState<RiskThresholds>(defaultRiskThresholds);
   const [score, setScore] = useState<number>(50);
   const [riskLevel, setRiskLevel] = useState<'none' | 'low' | 'medium' | 'high' | 'critical'>('medium');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Query to fetch the risk score configuration
+  const { data: configData, isLoading } = useQuery({
+    queryKey: ['/api/risk-score/configuration'],
+    onSuccess: (data) => {
+      if (data) {
+        setDimensions(data.dimensions || defaultRiskDimensions);
+        setThresholds(data.thresholds || defaultRiskThresholds);
+        setScore(data.score || 50);
+        setRiskLevel(data.riskLevel || 'medium');
+      }
+    },
+    onError: (error) => {
+      console.error('Error fetching risk score configuration:', error);
+      toast({
+        title: 'Failed to load configuration',
+        description: 'Using default configuration instead.',
+        variant: 'destructive',
+      });
+    }
+  });
+  
+  // Mutation to save the risk score configuration
+  const saveMutation = useMutation({
+    mutationFn: (configuration: RiskScoreConfiguration) => {
+      return apiRequest('/api/risk-score/configuration', {
+        method: 'POST',
+        body: JSON.stringify(configuration),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Configuration saved',
+        description: 'Your risk score configuration has been saved successfully.',
+        variant: 'default',
+      });
+      // Invalidate the query to refetch the configuration
+      queryClient.invalidateQueries({ queryKey: ['/api/risk-score/configuration'] });
+    },
+    onError: (error) => {
+      console.error('Error saving risk score configuration:', error);
+      toast({
+        title: 'Failed to save configuration',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  });
   
   // Calculate score and risk level when dimensions change
   useEffect(() => {
@@ -153,14 +206,23 @@ export default function RiskScoreConfigurationPage() {
   const handleReset = () => {
     setDimensions(defaultRiskDimensions);
     setThresholds(defaultRiskThresholds);
+    toast({
+      title: 'Reset to defaults',
+      description: 'Configuration has been reset to default values.',
+      variant: 'default',
+    });
   };
   
   // Handle save configuration
   const handleSave = () => {
-    // In a real implementation, this would save to the database
-    // For now, just show a console message
-    console.log('Saving configuration:', { dimensions, thresholds, score, riskLevel });
-    alert('Configuration saved successfully!');
+    const configuration: RiskScoreConfiguration = {
+      dimensions,
+      thresholds,
+      score,
+      riskLevel
+    };
+    
+    saveMutation.mutate(configuration);
   };
 
   return (

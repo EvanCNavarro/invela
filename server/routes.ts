@@ -48,6 +48,7 @@ import taskTemplatesRouter from './routes/task-templates';
 import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 import { router as wsTestRouter } from './routes/websocket-test';
+import riskScoreConfigurationRouter from './routes/risk-score-configuration';
 import { createTestFormSubmissionRouter } from './routes/test-form-submission';
 import { createTestWebSocketRoutes } from './routes/test-websocket';
 import submissionsRouter from './routes/submissions';
@@ -380,6 +381,9 @@ export function registerRoutes(app: Express): Express {
   
   app.use('/api/task-templates', taskTemplatesRouter);
   app.use(aiSuggestionsRouter);
+  
+  // Register Risk Score Configuration routes
+  app.use('/api/risk-score', riskScoreConfigurationRouter);
   
   // Register WebSocket test routes
   app.use('/api/websocket', websocketRouter);
