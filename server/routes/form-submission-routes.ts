@@ -79,6 +79,14 @@ export function createFormSubmissionRouter(): Router {
    * This handles the issue where a file was not properly created during form submission
    */
   router.post('/fix-missing-file/:taskId', async (req: Request, res: Response) => {
+    // Check authentication - require valid user
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
     const taskId = parseInt(req.params.taskId);
     
     if (isNaN(taskId) || taskId <= 0) {
