@@ -47,15 +47,57 @@ export async function createTaskFile(
     additionalData?: Record<string, any>;
   }
 ): Promise<{ success: boolean; fileId?: number; fileName?: string; error?: string }> {
-  // Forward to our implementation of createFileFromFormData for backward compatibility
-  const { taskId, taskType: formType } = options;
-  const result = await createFileFromFormData(taskId, formType, formData, companyId);
-  
-  // Add fileName to the result for the caller
-  return {
-    ...result,
-    fileName: `${formType}_Form_Task_${taskId}_${new Date().toISOString().replace(/[:.]/g, '-')}.pdf`
-  };
+  try {
+    // Forward to our implementation of createFileFromFormData for backward compatibility
+    const { taskId, taskType: formType } = options;
+    const result = await createFileFromFormData(taskId, formType, formData, companyId);
+    
+    // Generate standard file name
+    const fileName = `${formType}_Form_Task_${taskId}_${new Date().toISOString().replace(/[:.]/g, '-')}.pdf`;
+    
+    // If file creation was successful, link it to the task with the unified tracking service
+    if (result.success && result.fileId) {
+      try {
+        // Dynamically import the unified file tracking service
+        // This avoids circular dependency issues
+        const { linkFileToTask } = require('./unified-file-tracking');
+        
+        await linkFileToTask(
+          taskId,
+          result.fileId,
+          fileName,
+          companyId,
+          formType
+        );
+        
+        logger.info(`File ${result.fileId} linked to task ${taskId} successfully`);
+      } catch (linkError) {
+        // Log the error but don't fail the overall operation
+        logger.error(`Error linking file to task via unified tracking service:`, {
+          error: linkError instanceof Error ? linkError.message : 'Unknown error',
+          stack: linkError instanceof Error ? linkError.stack : undefined,
+          fileId: result.fileId,
+          taskId
+        });
+      }
+    }
+    
+    // Add fileName to the result for the caller
+    return {
+      ...result,
+      fileName: fileName
+    };
+  } catch (error) {
+    logger.error(`Error in createTaskFile:`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      options
+    });
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 }
 
 export async function createFileFromFormData(

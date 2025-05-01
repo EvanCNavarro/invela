@@ -189,38 +189,61 @@ async function generateMissingFileForTask(taskId: number) {
       return fileResult;
     }
     
-    // 5. Update task metadata with file information
-    const currentMetadata = task.metadata || {};
-    const updatedMetadata = {
-      ...currentMetadata,
-      fileId: fileResult.fileId,
-      fileGenerated: true,
-      fileGeneratedAt: new Date().toISOString(),
-      fileName: fileResult.fileName,
-      submission: {
-        timestamp: new Date().toISOString(),
-        status: 'complete'
-      }
-    };
-    
-    await db.update(tasks)
-      .set({
-        metadata: updatedMetadata
-      })
-      .where(eq(tasks.id, taskId));
-    
-    // 6. Broadcast file vault update using standardized WebSocketService
-    WebSocketService.broadcast('file_vault_update', {
-      companyId,
-      fileId: fileResult.fileId,
-      action: 'added'
-    });
-    setTimeout(() => {
+    // 5. Link the file to the task using our unified file tracking service
+    try {
+      const { linkFileToTask } = require('../services/unified-file-tracking');
+      await linkFileToTask(
+        taskId,
+        fileResult.fileId, 
+        fileResult.fileName,
+        companyId,
+        standardizedTaskType
+      );
+      
+      logger.info(`File linked to task using unified file tracking service:`, {
+        taskId,
+        fileId: fileResult.fileId,
+        fileName: fileResult.fileName
+      });
+    } catch (linkError) {
+      // If unified service fails, fall back to the old method
+      logger.warn(`Could not use unified file tracking service, using fallback:`, {
+        error: linkError instanceof Error ? linkError.message : 'Unknown error'
+      });
+      
+      // Fallback: Update task metadata directly
+      const currentMetadata = task.metadata || {};
+      const updatedMetadata = {
+        ...currentMetadata,
+        fileId: fileResult.fileId,
+        fileGenerated: true,
+        fileGeneratedAt: new Date().toISOString(),
+        fileName: fileResult.fileName,
+        submission: {
+          timestamp: new Date().toISOString(),
+          status: 'complete'
+        }
+      };
+      
+      await db.update(tasks)
+        .set({
+          metadata: updatedMetadata
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // 6. Broadcast file vault update using standardized WebSocketService
       WebSocketService.broadcast('file_vault_update', {
         companyId,
-        action: 'refresh'
+        fileId: fileResult.fileId,
+        action: 'added'
       });
-    }, 500);
+      setTimeout(() => {
+        WebSocketService.broadcast('file_vault_update', {
+          companyId,
+          action: 'refresh'
+        });
+      }, 500);
+    }
     
     logger.info(`Successfully fixed missing file for task ${taskId}`, {
       fileId: fileResult.fileId,
