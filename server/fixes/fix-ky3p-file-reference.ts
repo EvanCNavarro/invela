@@ -119,13 +119,20 @@ export async function fixKy3pFileReferences() {
             fileId: legacyFileId
           });
           
-          // Broadcast the file addition
-          await broadcastFileVaultUpdate(task.company_id, legacyFileId, 'added');
-          
-          // Also broadcast a generic refresh message to ensure all clients update
-          setTimeout(async () => {
-            await broadcastFileVaultUpdate(task.company_id, undefined, 'refresh');
-          }, 500);
+          // Broadcast the file addition - ensure company_id is not null
+          if (task.company_id !== null && task.company_id !== undefined) {
+            // Convert to number to satisfy TypeScript
+            const companyId = Number(task.company_id);
+            
+            await broadcastFileVaultUpdate(companyId, legacyFileId, 'added');
+            
+            // Also broadcast a generic refresh message to ensure all clients update
+            setTimeout(async () => {
+              await broadcastFileVaultUpdate(companyId, undefined, 'refresh');
+            }, 500);
+          } else {
+            logWithTimestamp(`Warning: Cannot broadcast for task ${task.id} - company_id is null`);
+          }
         } catch (wsError) {
           logWithTimestamp(`Error broadcasting file vault update for task ${task.id}:`, wsError);
           // Continue even if broadcast fails
@@ -164,15 +171,8 @@ export async function fixKy3pFileReferences() {
   }
 }
 
-// If this file is executed directly
-if (require.main === module) {
-  fixKy3pFileReferences()
-    .then(result => {
-      console.log('Fix completed:', result);
-      process.exit(0);
-    })
-    .catch(error => {
-      console.error('Fix failed:', error);
-      process.exit(1);
-    });
-}
+// This script can be run directly or imported as a module
+// For ESM compatibility, we don't use require.main check
+// If you want to run this directly, call the exported function:
+// import { fixKy3pFileReferences } from './fix-ky3p-file-reference.ts';
+// fixKy3pFileReferences().then(console.log).catch(console.error);

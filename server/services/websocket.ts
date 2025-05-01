@@ -137,6 +137,22 @@ export function broadcast(type: string, payload: any): { clientCount: number } {
 }
 
 /**
+ * Broadcast a File Vault update to notify clients about file changes
+ */
+export function broadcastFileVaultUpdate(
+  companyId: number,
+  fileId?: number | string,
+  action: 'added' | 'deleted' | 'updated' | 'refresh' = 'refresh'
+): { clientCount: number } {
+  return broadcastMessage('file_vault_update', {
+    companyId,
+    fileId,
+    action,
+    source: 'file_vault_update'
+  });
+}
+
+/**
  * Broadcast a form submission status update
  */
 export function broadcastFormSubmission(
@@ -192,22 +208,7 @@ export function broadcastDocumentCountUpdate(
   });
 }
 
-/**
- * Broadcast a file vault update to all connected WebSocket clients
- * This notifies clients when files are added or updated in the vault
- */
-export function broadcastFileVaultUpdate(
-  companyId: number,
-  fileId?: number,
-  action: 'added' | 'updated' | 'deleted' | 'refresh' = 'refresh'
-): { clientCount: number } {
-  return broadcastMessage('file_vault_update', {
-    companyId,
-    fileId,
-    action,
-    timestamp: new Date().toISOString()
-  });
-}
+// Legacy function has been removed to avoid duplication
 
 /**
  * Broadcast a company tabs update to all connected WebSocket clients

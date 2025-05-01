@@ -37,6 +37,7 @@ import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
 import kybClearRouter from './routes/kyb-clear';
 import openBankingClearRouter from './routes/open-banking-clear';
+import fixKy3pFilesRouter from './routes/fix-ky3p-files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
@@ -351,6 +352,8 @@ export function registerRoutes(app: Express): Express {
   app.use(kybClearRouter);
   app.use(openBankingClearRouter);
   app.use(openBankingDemoAutofillRouter);
+  // Register the KY3P files fix router
+  app.use(fixKy3pFilesRouter);
   // Register the universal demo auto-fill router
   app.use(universalDemoAutofillRouter);
   app.use(filesRouter);
