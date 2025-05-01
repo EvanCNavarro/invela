@@ -220,6 +220,8 @@ export default function RiskScoreConfigurationPage() {
   const { data: prioritiesData, isLoading: isLoadingPriorities, refetch: refetchPriorities } = useQuery({
     queryKey: ['/api/risk-score/priorities'],
     staleTime: 0, // Always consider data stale to force refetch
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Always refetch when component mounts
     onSuccess: (data) => {
       // Force a console.log to check if logger is working
       console.log('DEBUG-DIRECT: Successfully fetched priorities data', data);

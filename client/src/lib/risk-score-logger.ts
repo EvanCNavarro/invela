@@ -18,8 +18,19 @@ class RiskScoreLogger {
       'load', 'save', 'fetch', 'change', 'persist', 'validate', 'compare'
     ]);
     
-    // Log initialization to ensure logger is working
-    this.debugLog('Logger initialized with tags: ' + Array.from(this.enabledTags).join(', '));
+    // Disable debug mode by default
+    this.debugMode = false;
+    
+    // Remove any existing debug overlay
+    if (typeof document !== 'undefined') {
+      const container = document.getElementById('risk-score-debug-logs');
+      if (container) {
+        container.remove();
+      }
+    }
+    
+    // Log initialization to console only
+    console.log('[RiskScore] Logger initialized with debug mode disabled');
   }
   
   /**
