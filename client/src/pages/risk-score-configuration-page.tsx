@@ -628,14 +628,20 @@ export default function RiskScoreConfigurationPage() {
   const handleSave = () => {
     // Determine which type of data to save based on the active tab
     if (activeTab === 'dimension-ranking') {
-      // Save to risk priorities endpoint
+      // Ensure dimensions are properly serialized
+      const cleanDimensions = JSON.parse(JSON.stringify(dimensions));
+      
+      // Create a clean priorities object
       const priorities: RiskPriorities = {
-        dimensions,
+        dimensions: cleanDimensions,
         lastUpdated: new Date().toISOString()
       };
       
       // Log what we're about to save
       riskScoreLogger.log('save', 'Saving dimension priorities');
+      console.log('[DEBUG] Saving priorities:', priorities);
+      console.log('[DEBUG] Dimensions type:', Array.isArray(priorities.dimensions) ? 'Array' : typeof priorities.dimensions);
+      console.log('[DEBUG] First dimension sample:', priorities.dimensions?.[0] ? JSON.stringify(priorities.dimensions[0]) : 'none');
       
       // If we have original dimensions (loaded from server), compare with what we're saving
       if (originalDimensionsRef.current) {
@@ -646,12 +652,46 @@ export default function RiskScoreConfigurationPage() {
         );
       }
       
-      // Perform the save operation
-      savePrioritiesMutation.mutate(priorities);
+      // Add a callback to verify the changes were saved correctly
+      const onSuccess = (data: any) => {
+        console.log('[DEBUG] Save succeeded, received:', data);
+        riskScoreLogger.log('persist', 'Force refetching priorities query to verify changes');
+        
+        // Force a refetch to make sure we have the latest data
+        refetchPriorities().then(result => {
+          const retrievedData = result.data;
+          console.log('[DEBUG] Refetched data:', retrievedData);
+          
+          // Compare saved and refetched dimensions
+          if (retrievedData && retrievedData.dimensions) {
+            // Deep comparison of dimensions
+            const retrievedJson = JSON.stringify(retrievedData.dimensions);
+            const savedJson = JSON.stringify(priorities.dimensions);
+            
+            if (retrievedJson !== savedJson) {
+              console.log('[DEBUG] Retrieved != Saved:');
+              console.log('Retrieved:', retrievedJson);
+              console.log('Saved:', savedJson);
+              riskScoreLogger.log('persist', 'Warning: Refetched data does not match local state, updating local state');
+              
+              // Update local state to match what's on the server
+              setDimensions(retrievedData.dimensions);
+              originalDimensionsRef.current = [...retrievedData.dimensions];
+            } else {
+              riskScoreLogger.log('persist', 'No differences found between saved and server dimensions');
+            }
+          }
+        });
+      };
+      
+      // Perform the save operation with success callback
+      savePrioritiesMutation.mutate(priorities, {
+        onSuccess
+      });
     } else {
       // Save to general configuration endpoint
       const configuration: RiskScoreConfiguration = {
-        dimensions,
+        dimensions: JSON.parse(JSON.stringify(dimensions)), // Ensure clean serialization
         thresholds,
         score,
         riskLevel

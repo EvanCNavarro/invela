@@ -218,10 +218,31 @@ router.post('/priorities', requireAuth, async (req: Request, res: Response) => {
       priorities.lastUpdated = new Date().toISOString();
     }
 
+    // Log the priorities shape before saving
+    console.log('[RiskPriorities] Before save - Priorities dimensions type:', 
+      Array.isArray(priorities.dimensions) ? 'Array' : typeof priorities.dimensions);
+    console.log('[RiskPriorities] Before save - First dimension sample:', 
+      priorities.dimensions?.[0] ? JSON.stringify(priorities.dimensions[0]) : 'none');
+    
+    // Ensure dimensions is always an array (defensive)
+    if (!Array.isArray(priorities.dimensions)) {
+      console.log('[RiskPriorities] WARNING: dimensions is not an array, trying to fix...');
+      try {
+        if (typeof priorities.dimensions === 'string') {
+          priorities.dimensions = JSON.parse(priorities.dimensions);
+        }
+      } catch (e) {
+        console.error('[RiskPriorities] Failed to parse dimensions:', e);
+      }
+    }
+
+    // Force stringification and reparsing to avoid any hidden issues with the object
+    const sanitizedPriorities = JSON.parse(JSON.stringify(priorities));
+    
     // Update the company record with the new priorities
     await db.update(companies)
       .set({
-        risk_priorities: priorities as any,
+        risk_priorities: sanitizedPriorities as any,
         updated_at: new Date()
       })
       .where(eq(companies.id, companyId));
@@ -233,6 +254,18 @@ router.post('/priorities', requireAuth, async (req: Request, res: Response) => {
         risk_priorities: true
       }
     });
+    
+    // Log what we got back from the database
+    console.log('[RiskPriorities] Retrieved from database:', 
+      updatedCompany ? JSON.stringify(updatedCompany) : 'null');
+    
+    if (updatedCompany?.risk_priorities) {
+      const retrievedPriorities = updatedCompany.risk_priorities as any;
+      console.log('[RiskPriorities] Retrieved dimensions type:', 
+        Array.isArray(retrievedPriorities.dimensions) ? 'Array' : typeof retrievedPriorities.dimensions);
+      console.log('[RiskPriorities] First retrieved dimension:', 
+        retrievedPriorities.dimensions?.[0] ? JSON.stringify(retrievedPriorities.dimensions[0]) : 'none');
+    }
     
     // Import the broadcastRiskPrioritiesUpdate function
     const { broadcastRiskPrioritiesUpdate } = await import('../routes/websocket');
