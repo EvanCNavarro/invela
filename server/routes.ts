@@ -3180,11 +3180,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         };
       });
 
-      // Map risk scores to risk buckets (0-1500 scale)
+      // Map risk scores to risk buckets (0-100 scale)
       const getRiskBucket = (score: number) => {
-        if (score <= 500) return 'low';
-        if (score <= 900) return 'medium';  // Changed from 700 to 900
-        if (score <= 1200) return 'high';   // Changed from 1000 to 1200
+        if (score === 0) return 'none';
+        if (score <= 33) return 'low';
+        if (score <= 66) return 'medium';
+        if (score <= 99) return 'high';
         return 'critical';
       };
 
