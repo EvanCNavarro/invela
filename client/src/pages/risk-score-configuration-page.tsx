@@ -214,13 +214,17 @@ export default function RiskScoreConfigurationPage() {
   const { data: prioritiesData, isLoading: isLoadingPriorities } = useQuery({
     queryKey: ['/api/risk-score/priorities'],
     onSuccess: (data) => {
+      console.log('[Client] Risk priorities data received:', data);
       if (data && data.dimensions) {
+        console.log('[Client] Setting dimensions from priorities data');
         // If we have priorities data, use it instead of the general configuration
         setDimensions(data.dimensions);
+      } else {
+        console.log('[Client] No dimensions in priorities data');
       }
     },
     onError: (error) => {
-      console.error('Error fetching risk priorities:', error);
+      console.error('[Client] Error fetching risk priorities:', error);
       // Don't show error toast as we'll fall back to config data or defaults
     }
   });
@@ -252,19 +256,22 @@ export default function RiskScoreConfigurationPage() {
   // Mutation to save risk priorities
   const savePrioritiesMutation = useMutation({
     mutationFn: (priorities: RiskPriorities) => {
+      console.log('[Client] Saving risk priorities:', priorities);
       return apiRequest('POST', '/api/risk-score/priorities', priorities);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[Client] Risk priorities saved successfully. Response:', data);
       toast({
         title: 'Priorities saved',
         description: 'Your risk dimension priorities have been saved successfully.',
         variant: 'success',
       });
       // Invalidate the priorities query to refetch the data
+      console.log('[Client] Invalidating priorities query');
       queryClient.invalidateQueries({ queryKey: ['/api/risk-score/priorities'] });
     },
     onError: (error) => {
-      console.error('Error saving risk priorities:', error);
+      console.error('[Client] Error saving risk priorities:', error);
       toast({
         title: 'Failed to save priorities',
         description: 'Please try again later.',
