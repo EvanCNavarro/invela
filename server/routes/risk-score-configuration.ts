@@ -194,15 +194,22 @@ router.get('/priorities', requireAuth, async (req: Request, res: Response) => {
 // POST endpoint to save the risk priorities
 router.post('/priorities', requireAuth, async (req: Request, res: Response) => {
   try {
+    console.log('[RiskPriorities] Received POST request to save priorities');
+    
     if (!req.user) {
+      console.log('[RiskPriorities] Unauthorized request - no user');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const companyId = req.user.company_id;
+    console.log(`[RiskPriorities] Processing request for company ID: ${companyId}`);
+    
     const priorities: RiskPriorities = req.body;
+    console.log('[RiskPriorities] Request body:', JSON.stringify(priorities));
 
     // Validate the priorities
     if (!priorities.dimensions || !Array.isArray(priorities.dimensions)) {
+      console.log('[RiskPriorities] Invalid dimensions data');
       return res.status(400).json({ error: 'Invalid dimensions data' });
     }
 
