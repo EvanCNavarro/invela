@@ -238,14 +238,19 @@ class WebSocketService {
         };
 
         this.socket.onerror = (error) => {
-          // Use console.error for immediate visibility in browser console
-          console.error(`[WebSocket] Connection error:`, error);
-          
-          logger.error('Error:', {
-            error,
-            connectionId: this.connectionId,
-            timestamp: new Date().toISOString()
-          });
+          // In development mode, show full details; in production, reduce log noise
+          if (process.env.NODE_ENV === 'development' && import.meta.env.VITE_WS_DEBUG === 'true') {
+            console.error(`[WebSocket] Connection error:`, error);
+            
+            logger.error('WebSocket error:', {
+              error,
+              connectionId: this.connectionId,
+              timestamp: new Date().toISOString()
+            });
+          } else {
+            // Just log a simpler message without the full error object
+            logger.warn('[WebSocket] Connection error occurred - will automatically reconnect');
+          }
           
           // Update connection status to error
           this.updateConnectionStatus('error');
@@ -628,6 +633,7 @@ class WebSocketService {
    * 3. Adds robust logging for troubleshooting
    * 4. Returns successfully even if connection fails to avoid breaking form submission
    * 5. Includes multiple retry attempts for critical submission events
+   * 6. Supports both 'payload' and 'data' message formats for cross-compatibility
    * 
    * @param type Event type (e.g., 'submission_status')
    * @param data Event payload

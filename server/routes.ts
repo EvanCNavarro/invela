@@ -1745,7 +1745,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           progress: updatedTask.progress
         });
 
-        broadcastMessage('task_update', updatedTask);
+        // Use the WebSocketService to broadcast the task update message
+        const webSocketService = require('./services/websocket');
+        webSocketService.broadcast('task_update', {
+          taskId: updatedTask.id,
+          status: updatedTask.status,
+          progress: updatedTask.progress,
+          metadata: updatedTask.metadata
+        });
       }
 
       // Update invitation status
