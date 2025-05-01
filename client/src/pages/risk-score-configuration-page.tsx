@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration } from '@/lib/risk-score-configuration-types';
+import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration, RiskPriorities } from '@/lib/risk-score-configuration-types';
 import { defaultRiskDimensions, defaultRiskThresholds, sampleCompanyComparisons, calculateRiskScore, determineRiskLevel } from '@/lib/risk-score-configuration-data';
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
 import { useToast } from "@/hooks/use-toast";
@@ -107,7 +107,7 @@ export default function RiskScoreConfigurationPage() {
   const queryClient = useQueryClient();
   
   // Query to fetch the risk score configuration
-  const { data: configData, isLoading } = useQuery({
+  const { data: configData, isLoading: isLoadingConfig } = useQuery({
     queryKey: ['/api/risk-score/configuration'],
     onSuccess: (data) => {
       if (data) {
@@ -124,6 +124,21 @@ export default function RiskScoreConfigurationPage() {
         description: 'Using default configuration instead.',
         variant: 'destructive',
       });
+    }
+  });
+  
+  // Query to fetch the risk priorities (for dimension ranking)
+  const { data: prioritiesData, isLoading: isLoadingPriorities } = useQuery({
+    queryKey: ['/api/risk-score/priorities'],
+    onSuccess: (data) => {
+      if (data && data.dimensions) {
+        // If we have priorities data, use it instead of the general configuration
+        setDimensions(data.dimensions);
+      }
+    },
+    onError: (error) => {
+      console.error('Error fetching risk priorities:', error);
+      // Don't show error toast as we'll fall back to config data or defaults
     }
   });
   
@@ -148,6 +163,33 @@ export default function RiskScoreConfigurationPage() {
       console.error('Error saving risk score configuration:', error);
       toast({
         title: 'Failed to save configuration',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  });
+  
+  // Mutation to save risk priorities
+  const savePrioritiesMutation = useMutation({
+    mutationFn: (priorities: RiskPriorities) => {
+      return apiRequest('/api/risk-score/priorities', {
+        method: 'POST',
+        body: JSON.stringify(priorities),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Priorities saved',
+        description: 'Your risk dimension priorities have been saved successfully.',
+        variant: 'default',
+      });
+      // Invalidate the priorities query to refetch the data
+      queryClient.invalidateQueries({ queryKey: ['/api/risk-score/priorities'] });
+    },
+    onError: (error) => {
+      console.error('Error saving risk priorities:', error);
+      toast({
+        title: 'Failed to save priorities',
         description: 'Please try again later.',
         variant: 'destructive',
       });
@@ -206,23 +248,47 @@ export default function RiskScoreConfigurationPage() {
   const handleReset = () => {
     setDimensions(defaultRiskDimensions);
     setThresholds(defaultRiskThresholds);
-    toast({
-      title: 'Reset to defaults',
-      description: 'Configuration has been reset to default values.',
-      variant: 'default',
-    });
+    
+    // If on the priorities tab, also reset priorities data
+    if (activeTab === 'dimension-ranking') {
+      // We could also save the reset priorities to the server here
+      // but for simplicity we'll just wait until the user explicitly saves
+      toast({
+        title: 'Reset to defaults',
+        description: 'Dimension rankings have been reset to default values. Click save to persist changes.',
+        variant: 'default',
+      });
+    } else {
+      toast({
+        title: 'Reset to defaults',
+        description: 'Configuration has been reset to default values. Click save to persist changes.',
+        variant: 'default',
+      });
+    }
   };
   
   // Handle save configuration
   const handleSave = () => {
-    const configuration: RiskScoreConfiguration = {
-      dimensions,
-      thresholds,
-      score,
-      riskLevel
-    };
-    
-    saveMutation.mutate(configuration);
+    // Determine which type of data to save based on the active tab
+    if (activeTab === 'dimension-ranking') {
+      // Save to risk priorities endpoint
+      const priorities: RiskPriorities = {
+        dimensions,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      savePrioritiesMutation.mutate(priorities);
+    } else {
+      // Save to general configuration endpoint
+      const configuration: RiskScoreConfiguration = {
+        dimensions,
+        thresholds,
+        score,
+        riskLevel
+      };
+      
+      saveMutation.mutate(configuration);
+    }
   };
 
   return (
@@ -252,7 +318,7 @@ export default function RiskScoreConfigurationPage() {
                     className="w-full"
                   >
                     <TabsList className="mb-6">
-                      <TabsTrigger value="dimension-ranking">Dimension Ranking</TabsTrigger>
+                      <TabsTrigger value="dimension-ranking">Dimension Ranking & Priorities</TabsTrigger>
                       <TabsTrigger value="comparative-visualization">Comparative Visualization</TabsTrigger>
                     </TabsList>
                     
@@ -261,8 +327,8 @@ export default function RiskScoreConfigurationPage() {
                         <div className="flex items-start gap-2">
                           <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                           <div className="text-sm text-muted-foreground">
-                            <p className="font-medium">How Dimension Ranking Works</p>
-                            <p>Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the final risk score calculation. Adjust thresholds using the sliders.</p>
+                            <p className="font-medium">How Dimension Ranking & Priorities Work</p>
+                            <p>Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the final risk score calculation. Adjust risk levels for each dimension using the sliders. Click Save to persist your priorities.</p>
                           </div>
                         </div>
                       </div>
