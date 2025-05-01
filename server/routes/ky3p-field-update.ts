@@ -9,15 +9,15 @@ import express, { Router } from 'express';
 import { db } from '@db';
 import { ky3pFields, ky3pResponses } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
-import * as logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const log = logger.createLogger('KY3P-Field-Update');
+// Logger is already initialized in the imported module
 
 /**
  * Register the KY3P field update routes
  */
 export function registerKY3PFieldUpdateRoutes() {
-  log.info('Registering KY3P field update routes');
+  logger.info('Registering KY3P field update routes');
   
   const router = Router();
 
@@ -38,7 +38,7 @@ export function registerKY3PFieldUpdateRoutes() {
         });
       }
 
-      log.info(`Processing field update for task ${taskId}, field ${fieldKey}`);
+      logger.info(`Processing field update for task ${taskId}, field ${fieldKey}`);
 
       // Find the field ID using the string field key
       const fieldResults = await db.select()
@@ -107,7 +107,7 @@ export function registerKY3PFieldUpdateRoutes() {
         message: `Successfully updated field: ${fieldKey}` 
       });
     } catch (error) {
-      log.error('Error processing field update:', error);
+      logger.error('Error processing field update:', error);
       return res.status(500).json({ 
         success: false, 
         message: error instanceof Error ? error.message : 'Unknown error' 
