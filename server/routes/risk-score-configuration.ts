@@ -37,6 +37,56 @@ interface RiskScoreConfiguration {
   riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
 }
 
+// Non-authenticated test endpoint - for testing only
+router.get('/test', async (req: Request, res: Response) => {
+  try {
+    // Return a test configuration
+    const testConfig = {
+      dimensions: [
+        {
+          id: 'financial',
+          name: 'Financial',
+          description: 'Financial stability and performance',
+          weight: 0.25,
+          value: 75
+        },
+        {
+          id: 'operational',
+          name: 'Operational',
+          description: 'Operational efficiency and reliability',
+          weight: 0.25,
+          value: 60
+        },
+        {
+          id: 'cybersecurity',
+          name: 'Cybersecurity',
+          description: 'Security posture and data protection',
+          weight: 0.3,
+          value: 85
+        },
+        {
+          id: 'compliance',
+          name: 'Compliance',
+          description: 'Regulatory compliance and governance',
+          weight: 0.2,
+          value: 90
+        }
+      ],
+      thresholds: {
+        high: 67,
+        medium: 34
+      },
+      score: 77,
+      riskLevel: 'high'
+    };
+    
+    return res.status(200).json(testConfig);
+  } catch (error) {
+    console.error('Error in test endpoint:', error);
+    return res.status(500).json({ error: 'Test endpoint error' });
+  }
+});
+
 // GET endpoint to retrieve the risk score configuration
 router.get('/configuration', requireAuth, async (req: Request, res: Response) => {
   try {
