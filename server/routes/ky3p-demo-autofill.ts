@@ -212,9 +212,15 @@ router.get('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
     // Save the demo responses to the database
     await saveDemoResponses(taskId, demoData);
     
-    // Return the demo data directly, not wrapped in formData property
-    // This matches what the KY3P form service expects
-    return res.status(200).json(demoData);
+    // Return the demo data in a standardized format
+    // Include both formData and direct properties for maximum compatibility
+    return res.status(200).json({
+      success: true,
+      fieldCount: Object.keys(demoData).length,
+      formData: demoData,
+      // Include the raw data too for services that expect it directly
+      ...demoData
+    });
   } catch (error: any) {
     logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill GET request:', error);
     return res.status(500).json({
@@ -245,9 +251,15 @@ router.post('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
     // Save the demo responses to the database
     await saveDemoResponses(taskId, demoData);
     
-    // Return the demo data directly, not wrapped in formData property
-    // This matches what the KY3P form service expects
-    return res.status(200).json(demoData);
+    // Return the demo data in a standardized format
+    // Include both formData and direct properties for maximum compatibility
+    return res.status(200).json({
+      success: true,
+      fieldCount: Object.keys(demoData).length,
+      formData: demoData,
+      // Include the raw data too for services that expect it directly
+      ...demoData
+    });
   } catch (error: any) {
     logger.error('[KY3P Demo Auto-Fill] Error handling standardized demo auto-fill POST request:', error);
     return res.status(500).json({
