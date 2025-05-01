@@ -23,7 +23,7 @@ import {
   TaskStatus,
   tasks
 } from '@db/schema';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
 import * as WebSocketService from '../services/websocket';
 import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
@@ -33,8 +33,7 @@ import { openai } from '../utils/openaiUtils';
 import { unlockDashboardAndInsightsTabs, broadcastCompanyTabsUpdate } from '../services/company-tabs';
 import { unlockFileVaultAccess } from '../services/synchronous-task-dependencies';
 
-// Create a logger instance
-const logger = new Logger('OpenBankingRoutes');
+// Logger is already imported from utils/logger
 
 // Function to analyze content with OpenAI
 async function analyzeContent(response: string, context: any) {

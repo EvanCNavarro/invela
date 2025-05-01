@@ -7,12 +7,13 @@ import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
 import { updateCompanyAfterCardCompletion } from '../services/company';
 import { FileCreationService } from '../services/file-creation';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import path from 'path';
 import fs from 'fs';
 
 const router = Router();
-const logger = new Logger('CardRoutes');
+// Add namespace context to logs
+const logContext = { service: 'CardRoutes' };
 
 // Helper function to convert responses to CSV for card form
 function convertResponsesToCSV(fields: any[], formData: any) {
@@ -51,7 +52,7 @@ function convertResponsesToCSV(fields: any[], formData: any) {
     
     return csvContent;
   } catch (error) {
-    logger.error('Error converting to CSV:', error);
+    logger.error('Error converting to CSV:', { error: error instanceof Error ? error.message : 'Unknown error', ...logContext });
     return `Error generating CSV: ${error instanceof Error ? error.message : 'Unknown error'}`;
   }
 }
@@ -62,7 +63,8 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
     logger.info('Fetching CARD task', {
       companyName: req.params.companyName,
       userId: req.user?.id,
-      companyId: req.user?.company_id
+      companyId: req.user?.company_id,
+      ...logContext
     });
 
     // Try multiple title formats for backward compatibility
@@ -97,7 +99,8 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
       if (task) {
         logger.info('Found CARD task using company ID fallback', {
           taskId: task.id,
-          companyId: req.user.company_id
+          companyId: req.user.company_id,
+          ...logContext
         });
       }
     }

@@ -3,10 +3,11 @@ import { db } from '@db';
 import { tasks, securityFields, securityResponses, TaskStatus, companies, files } from '@db/schema';
 import { eq, and, sql, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const router = Router();
-const logger = new Logger('SecurityRoutes');
+// Add namespace context to logs
+const logContext = { service: 'SecurityRoutes' };
 
 // Get security task by company name
 router.get('/api/tasks/security/:companyName', requireAuth, async (req, res) => {
@@ -67,7 +68,10 @@ router.get('/api/tasks/security/:companyName', requireAuth, async (req, res) => 
 
     res.json(task);
   } catch (error) {
-    console.error('[Security Routes] Error fetching security task:', error);
+    logger.error('Error fetching security task', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ...logContext
+    });
     res.status(500).json({ message: "Failed to fetch security task" });
   }
 });
@@ -75,12 +79,13 @@ router.get('/api/tasks/security/:companyName', requireAuth, async (req, res) => 
 // Get security fields
 router.get('/api/security/fields', requireAuth, async (req, res) => {
   try {
-    logger.info('Fetching security fields');
+    logger.info('Fetching security fields', { ...logContext });
     const fields = await db.select().from(securityFields);
     res.json(fields);
   } catch (error) {
     logger.error('Error fetching security fields', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ...logContext
     });
     res.status(500).json({
       message: "Failed to fetch security fields",
@@ -93,7 +98,7 @@ router.get('/api/security/fields', requireAuth, async (req, res) => {
 router.get('/api/security/responses/:companyId', requireAuth, async (req, res) => {
   try {
     const { companyId } = req.params;
-    logger.info('Fetching security responses', { companyId });
+    logger.info('Fetching security responses', { companyId, ...logContext });
     
     const responses = await db.select()
       .from(securityResponses)
@@ -102,7 +107,8 @@ router.get('/api/security/responses/:companyId', requireAuth, async (req, res) =
     res.json(responses);
   } catch (error) {
     logger.error('Error fetching security responses', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ...logContext
     });
     res.status(500).json({
       message: "Failed to fetch security responses",
@@ -120,7 +126,8 @@ router.post('/api/security/response/:companyId/:fieldId', requireAuth, async (re
     logger.info('Saving security response', {
       companyId,
       fieldId,
-      hasResponse: !!response
+      hasResponse: !!response,
+      ...logContext
     });
 
     // First check if response exists
@@ -208,14 +215,16 @@ router.post('/api/security/response/:companyId/:fieldId', requireAuth, async (re
       logger.info('Updated task progress', {
         taskId: securityTask.id,
         progress,
-        status: newStatus
+        status: newStatus,
+        ...logContext
       });
     }
 
     res.json(updatedResponse);
   } catch (error) {
     logger.error('Error saving security response', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ...logContext
     });
     res.status(500).json({
       message: "Failed to save security response",
@@ -261,7 +270,7 @@ function convertSecurityResponsesToCSV(fields: any[], responses: any[]) {
 router.post('/api/security/save', requireAuth, async (req, res) => {
   try {
     // Enhanced logging
-    console.log('[Security API] Save endpoint triggered:', {
+    logger.info('Security save endpoint triggered', {
       endpoint: '/api/security/save',
       method: 'POST',
       headers: {
@@ -269,7 +278,8 @@ router.post('/api/security/save', requireAuth, async (req, res) => {
         accept: req.headers.accept,
         cookiePresent: !!req.headers.cookie
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      ...logContext
     });
     
     // Extract request body fields
@@ -282,7 +292,7 @@ router.post('/api/security/save', requireAuth, async (req, res) => {
       });
     }
     
-    logger.info('Saving security assessment', { taskId, fileName });
+    logger.info('Saving security assessment', { taskId, fileName, ...logContext });
     
     // Rest of the submission logic is identical to the older endpoint
     // Continue with your existing implementation here...

@@ -27,9 +27,10 @@ import {
 import { eq, and } from 'drizzle-orm';
 import * as WebSocketService from '../services/websocket';
 import * as fileCreationService from '../services/fileCreation.fixed';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('FixMissingFile');
+// Add namespace context to logs
+const logContext = { service: 'FixMissingFile' };
 
 async function generateMissingFileForTask(taskId: number) {
   try {

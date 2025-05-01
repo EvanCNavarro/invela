@@ -22,12 +22,11 @@ import {
   TaskStatus 
 } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { broadcastProgressUpdate } from '../utils/progress';
 import { saveTaskTimestamps } from './open-banking-timestamp-handler';
 
-// Create a logger instance
-const logger = new Logger('OpenBankingProgressRoutes');
+// Logger is already initialized in the imported module
 
 /**
  * Register progress-related routes for Open Banking
