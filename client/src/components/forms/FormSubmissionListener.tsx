@@ -81,7 +81,10 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   useEffect(() => {
     // Only proceed if we actually have a socket and it's connected
     if (!socket || !isConnected) {
-      logger.warn('WebSocket not connected, form submission updates will not be received');
+      // Don't show warnings during initial page load - only when we've been connected before
+      if (hasSetupListenerRef.current) {
+        logger.warn('WebSocket not connected, form submission updates will not be received');
+      }
       return;
     }
     

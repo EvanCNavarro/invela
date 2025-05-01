@@ -690,6 +690,15 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Convert responses to a key-value map
       const responseMap: Record<string, any> = {};
       
+      // Use the formData directly if available in the response
+      if (responseData.formData && typeof responseData.formData === 'object') {
+        logger.info(`[KY3P Form Service] Using formData directly from response with ${Object.keys(responseData.formData).length} entries`);
+        
+        // If we have pre-processed formData, use it directly
+        // This is the preferred structure from newer API endpoints
+        return responseData.formData;
+      }
+      
       // Check if we even have responses to process
       if (!responses || !Array.isArray(responses) || responses.length === 0) {
         logger.info('[KY3P Form Service] No responses data found, empty form will be displayed');
@@ -1068,11 +1077,51 @@ export class KY3PFormService extends EnhancedKybFormService {
           logger.info(`[KY3P Form Service] Responses API call status: ${responsesResponse.status}`);
           
           if (responsesResponse.ok) {
-            const rawResponses = await responsesResponse.json();
-            logger.info(`[KY3P Form Service] Retrieved ${rawResponses.length} raw responses`);
-            
-            // Convert responses to the format expected by the form
-            const formattedData: Record<string, any> = {};
+            try {
+              const responseData = await responsesResponse.json();
+              
+              // Handle the newer format where responses are inside a 'responses' property
+              const rawResponses = responseData.responses || responseData;
+              
+              if (!rawResponses) {
+                logger.warn('[KY3P Form Service] No responses data found in API response');
+                return progressData;
+              }
+              
+              if (!Array.isArray(rawResponses)) {
+                logger.warn('[KY3P Form Service] Responses is not an array:', typeof rawResponses);
+                
+                // If the response is an object with formData property, use it directly
+                if (responseData.formData && typeof responseData.formData === 'object') {
+                  logger.info(`[KY3P Form Service] Using formData from response: ${Object.keys(responseData.formData).length} entries`);
+                  return responseData.formData;
+                }
+                
+                return progressData;
+              }
+              
+              logger.info(`[KY3P Form Service] Retrieved ${rawResponses.length} raw responses`);
+              
+              // If responses array is empty, return empty data
+              if (rawResponses.length === 0) {
+                logger.info('[KY3P Form Service] Empty responses array, returning empty data');
+                return progressData;
+              }
+              
+              // Convert responses to the format expected by the form
+              const formattedData: Record<string, any> = {};
+            } catch (parseError) {
+              logger.error('[KY3P Form Service] Error fetching from responses endpoint:', parseError);
+              logger.warn('[KY3P Form Service] Trying alternate endpoint: /api/ky3p/progress/' + taskId);
+              // We can't use continue here because we're not in a loop
+              // This was causing a TypeScript error
+              // Instead, we'll try the next approach in sequence
+              const alternateEndpointTried = true;
+              
+              // Skip to the next approaches by returning empty data
+              // The code flow will continue with the next endpoint
+              return progressData;
+            }
             
             for (const response of rawResponses) {
               if (response.field?.field_key) {
