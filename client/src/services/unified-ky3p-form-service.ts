@@ -375,6 +375,155 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
   }
   
   /**
+   * Calculate form completion progress
+   * 
+   * @returns Percentage of form completion (0-100)
+   */
+  calculateProgress(): number {
+    const fields = this._fields.filter(field => {
+      // Only include fields that require input
+      if ((field as any).validation?.required === false) {
+        return false;
+      }
+      return true;
+    });
+    
+    if (fields.length === 0) {
+      return 100; // No required fields means 100% completion
+    }
+    
+    // Count filled fields
+    const filledFields = fields.filter(field => {
+      const value = this.getFieldValue(field.key);
+      return value !== undefined && value !== null && value !== '';
+    });
+    
+    // Calculate percentage
+    const progress = Math.round((filledFields.length / fields.length) * 100);
+    
+    // Cache the progress value for quick access
+    this._formData._progress = progress;
+    
+    return progress;
+  }
+  
+  /**
+   * Save form progress for a task
+   * 
+   * @param taskId Optional ID of the task
+   * @returns Promise that resolves when progress is saved
+   */
+  async saveProgress(taskId?: number): Promise<void> {
+    // Ensure all pending updates are processed first
+    await this.flushPendingUpdates(taskId);
+    
+    // Calculate current progress
+    const progress = this.calculateProgress();
+    
+    // Effective task ID to use
+    const effectiveTaskId = taskId || this._taskId;
+    if (!effectiveTaskId) {
+      logger.warn('[Unified KY3P] No task ID available for saving progress');
+      throw new Error('No task ID available for saving progress');
+    }
+    
+    try {
+      logger.info(`[Unified KY3P] Saving progress for task ${effectiveTaskId}: ${progress}%`);
+      
+      // Use the progress endpoint to save progress
+      const response = await fetch(`/api/ky3p/save-progress/${effectiveTaskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          progress,
+          formData: this._formData
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[Unified KY3P] Error saving progress: ${response.status} - ${errorText}`);
+        throw new Error(`Error saving progress: ${response.status}`);
+      }
+      
+      logger.info(`[Unified KY3P] Successfully saved progress for task ${effectiveTaskId}`);
+    } catch (error) {
+      logger.error(`[Unified KY3P] Failed to save progress:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Validate form data
+   * 
+   * @param data Form data to validate
+   * @returns Validation result (true if valid, error object if invalid)
+   */
+  validate(data: Record<string, any>): boolean | Record<string, string> {
+    const errors: Record<string, string> = {};
+    
+    // Get fields that require validation
+    const fieldsToValidate = this._fields.filter(field => {
+      // Check if field has validation rules
+      return (field as any).validation && Object.keys((field as any).validation).length > 0;
+    });
+    
+    // Log validation start
+    logger.info(`[Unified KY3P] Validating ${fieldsToValidate.length} fields`);
+    
+    // Validate each field
+    fieldsToValidate.forEach(field => {
+      const value = data[field.key];
+      const validation = (field as any).validation;
+      
+      // Skip validation if field is not required and value is empty
+      if (!validation.required && (value === undefined || value === null || value === '')) {
+        return;
+      }
+      
+      // Check required
+      if (validation.required && (value === undefined || value === null || value === '')) {
+        errors[field.key] = validation.message || `${field.label} is required`;
+        return;
+      }
+      
+      // Check min length
+      if (validation.minLength && typeof value === 'string' && value.length < validation.minLength) {
+        errors[field.key] = validation.message || `${field.label} must be at least ${validation.minLength} characters`;
+        return;
+      }
+      
+      // Check max length
+      if (validation.maxLength && typeof value === 'string' && value.length > validation.maxLength) {
+        errors[field.key] = validation.message || `${field.label} must be at most ${validation.maxLength} characters`;
+        return;
+      }
+      
+      // Check pattern
+      if (validation.pattern && typeof value === 'string') {
+        const regex = new RegExp(validation.pattern);
+        if (!regex.test(value)) {
+          errors[field.key] = validation.message || `${field.label} has an invalid format`;
+          return;
+        }
+      }
+    });
+    
+    // Log validation results
+    const errorCount = Object.keys(errors).length;
+    if (errorCount > 0) {
+      logger.warn(`[Unified KY3P] Validation failed with ${errorCount} errors`);
+      logger.debug(`[Unified KY3P] Validation errors:`, errors);
+      return errors;
+    }
+    
+    logger.info(`[Unified KY3P] Validation successful`);
+    return true;
+  }
+  
+  /**
    * Load form progress from the server
    * 
    * @param taskId The task ID to load progress for
