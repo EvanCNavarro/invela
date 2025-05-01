@@ -220,6 +220,11 @@ export default function RiskScoreConfigurationPage() {
     queryKey: ['/api/risk-score/priorities'],
     staleTime: 0, // Always consider data stale to force refetch
     onSuccess: (data) => {
+      // Force a console.log to check if logger is working
+      console.log('DEBUG-DIRECT: Successfully fetched priorities data', data);
+      
+      // Try direct log call
+      riskScoreLogger.log('test', 'Testing if logger is working');
       riskScoreLogger.logFetchSuccess(data);
       
       if (data && data.dimensions) {
@@ -426,6 +431,16 @@ export default function RiskScoreConfigurationPage() {
       });
     }
   });
+  
+  // Add an initialization effect to ensure logger is working
+  useEffect(() => {
+    console.log('Direct console log - RiskScoreConfigurationPage mounted');
+    console.log('Logger instance:', riskScoreLogger);
+    
+    // Direct logger call
+    riskScoreLogger.log('init', 'Risk score configuration page initialized');
+    riskScoreLogger.log('init', 'Testing debug overlay');
+  }, []);
   
   // Calculate score and risk level when dimensions change
   useEffect(() => {
