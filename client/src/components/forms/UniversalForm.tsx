@@ -68,6 +68,7 @@ interface Task {
 
 // Import utility functions
 import { handleDemoAutoFill } from './handleDemoAutoFill';
+import KY3PDemoAutoFill from './KY3PDemoAutoFill';
 import { handleClearFieldsUtil } from './handleClearFields';
 
 // Create a type alias for form sections
