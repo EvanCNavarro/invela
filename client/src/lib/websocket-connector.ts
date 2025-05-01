@@ -58,10 +58,7 @@ class WebSocketManager {
     this.reconnectAttempts = 0;
     
     // Send authentication message
-    this.sendMessage({
-      type: 'authenticate',
-      payload: { timestamp: new Date().toISOString() }
-    });
+    this.send('authenticate', { timestamp: new Date().toISOString() });
     
     // Start sending ping messages to keep the connection alive
     this.startPingInterval();

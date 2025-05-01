@@ -47,6 +47,15 @@ export function setupWebSocketServer(httpServer: HttpServer): WebSocketServer {
             timestamp: new Date().toISOString()
           }));
         }
+        
+        // Handle authentication messages
+        if (data.type === 'authenticate') {
+          logger.info('[WebSocket] Client authenticated');
+          ws.send(JSON.stringify({
+            type: 'authenticated',
+            payload: { success: true, timestamp: new Date().toISOString() }
+          }));
+        }
       } catch (error) {
         logger.error('[WebSocket] Error parsing message:', error);
       }
@@ -96,9 +105,23 @@ export function broadcastRiskScoreUpdate(companyId: number, newScore: number) {
  * Send risk dimension priorities update to all clients
  */
 export function broadcastRiskPrioritiesUpdate(priorities: any) {
-  broadcastMessage('risk_priorities_update', {
-    priorities,
-    updatedAt: new Date().toISOString()
+  // Send a standardized message format
+  const message = JSON.stringify({
+    type: 'risk_priorities_update',
+    payload: {
+      priorities,
+      updatedAt: new Date().toISOString()
+    },
+    timestamp: new Date().toISOString()
+  });
+  
+  logger.info(`[WebSocket] Broadcasting risk priorities update to ${clients.size} clients`);
+  
+  // Use the standardized message format expected by clients
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
   });
 }
 
