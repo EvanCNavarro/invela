@@ -70,7 +70,29 @@ export function KY3PDemoAutoFill({
       // Accept both fieldCount (new) or fieldsPopulated (legacy) properties for compatibility
       const count = result.fieldCount || result.fieldsPopulated || 0;
       
-      // 2. Invalidate all queries to ensure the UI is updated correctly
+      // 2. Update the task progress explicitly to ensure task center shows the correct state
+      logger.info('Updating task progress in the database...');
+      try {
+        const progressResponse = await fetch(`/api/ky3p/update-progress/${taskId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            progress: 100, // Mark as 100% complete
+            status: 'completed' // Set status to completed
+          })
+        });
+        
+        if (progressResponse.ok) {
+          logger.info('Successfully updated task progress to completed');
+        }
+      } catch (progressError) {
+        logger.warn('Error updating task progress:', progressError);
+      }
+      
+      // 3. Invalidate all queries to ensure the UI is updated correctly
       logger.info('Invalidating queries to refresh UI data...');
       await queryClient.invalidateQueries({
         queryKey: [`/api/tasks/${taskId}/ky3p-responses`]
@@ -80,6 +102,9 @@ export function KY3PDemoAutoFill({
       });
       await queryClient.invalidateQueries({
         queryKey: [`/api/tasks/${taskId}`]
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [`/api/task-center`] // Also refresh the task center
       });
       
       // 3. Force a refresh of form data

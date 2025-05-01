@@ -156,14 +156,23 @@ export function useStandardizedServices(): void {
     logger.info('[RegisterServices] Setting unified form services as default');
     
     // Define a factory function for our unified KY3P service
-    const unifiedKy3pServiceFactory = (companyId?: number | string, taskId?: number | string): FormServiceInterface => {
+    const unifiedKy3pServiceFactory = async (companyId?: number | string, taskId?: number | string): Promise<FormServiceInterface> => {
       // Convert potential string params to numbers
       const numericCompanyId = companyId ? Number(companyId) : undefined;
       const numericTaskId = taskId ? Number(taskId) : undefined;
       
       logger.info(`[RegisterServices] Creating unified KY3P service (default) for company ${numericCompanyId}, task ${numericTaskId}`);
       // Create and return the service instance directly
-      return createUnifiedKY3PFormService(numericCompanyId, numericTaskId);
+      try {
+        // Dynamic import to ensure we use the latest version of the unified service
+        const module = await import('./unified-ky3p-form-service');
+        logger.info(`Successfully imported unified KY3P service module`);
+        return module.createUnifiedKY3PFormService(numericCompanyId, numericTaskId);
+      } catch (error) {
+        logger.error(`Failed to import unified KY3P service: ${error instanceof Error ? error.message : String(error)}`);
+        // If we can't import the unified service, create a new instance directly
+        return createUnifiedKY3PFormService(numericCompanyId, numericTaskId);
+      }
     };
     
     // Create an adapter that conforms to FormServiceInterface

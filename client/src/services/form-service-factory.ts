@@ -55,10 +55,27 @@ export async function createFormService(
     
     // Use enhanced service implementations when available and requested
     if (useEnhanced) {
-      // KY3P has an enhanced implementation
-      if (formType === 'ky3p') {
-        logger.info(`Using enhanced KY3P form service for company ${companyIdNum}, task ${taskIdNum}`);
-        return enhancedKY3PFormServiceFactory.getServiceInstance(companyIdNum, taskIdNum);
+      // KY3P now has a unified implementation that replaces all previous implementations
+      if (formType === 'ky3p' || formType === 'security' || formType === 'security_assessment' || formType === 'sp_ky3p_assessment') {
+        logger.info(`Using unified KY3P form service for company ${companyIdNum}, task ${taskIdNum}`);
+        
+        // Import and use our unified KY3P service
+        try {
+          // Dynamic import of unified service
+          return import('./unified-ky3p-form-service')
+            .then(module => {
+              logger.info(`Successfully imported unified KY3P service module`);
+              return module.createUnifiedKY3PFormService(companyIdNum, taskIdNum);
+            })
+            .catch(error => {
+              logger.error(`Error importing unified KY3P service: ${error instanceof Error ? error.message : String(error)}`);
+              // Only as absolute fallback, use the old enhanced service
+              return enhancedKY3PFormServiceFactory.getServiceInstance(companyIdNum, taskIdNum);
+            });
+        } catch (error) {
+          logger.error(`Exception in KY3P service import: ${error instanceof Error ? error.message : String(error)}`);
+          // Continue to standard implementation instead of failing completely
+        }
       }
       
       // Enhanced KYB implementation
