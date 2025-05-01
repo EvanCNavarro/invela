@@ -286,9 +286,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         }
         
         // Try to get a company-specific form service instance - WITH PROMISE HANDLING
+        // Declare service variable outside the try block to maintain proper scope
+        let service = null;
+        
         try {
           // Get service asynchronously
-          let service = await formServiceFactory.getServiceInstance(taskType, companyId, taskId);
+          service = await formServiceFactory.getServiceInstance(taskType, companyId, taskId);
           
           if (!service) {
             // Try with mapped DB task type
@@ -311,17 +314,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             logger.debug('Service is a Promise, awaiting resolution...');
             service = await service;
           }
+          
+          // Log whether we got a service
+          if (service) {
+            // Safe access to constructor name with fallbacks
+            const serviceName = service.constructor ? service.constructor.name : typeof service;
+            logger.info(`Found form service: ${serviceName}`);
+            
+            // Set the service in state
+            setFormService(service);
+          } else {
+            logger.error(`No form service found for ${taskType} or ${dbTaskType}`);
+            throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
+          }
         } catch (serviceError) {
           logger.error('Error loading form service:', serviceError);
           throw serviceError; // Re-throw to be caught by the outer try/catch
         }
-        
-        if (!service) {
-          throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
-        }
-        
-        logger.info(`Found form service: ${service.constructor.name}`);
-        setFormService(service);
         
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load form template';
