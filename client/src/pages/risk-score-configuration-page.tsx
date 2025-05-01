@@ -462,8 +462,17 @@ export default function RiskScoreConfigurationPage() {
     // Handler for risk priorities updates
     const handleRiskPrioritiesUpdate = (data: any) => {
       riskScoreLogger.log('websocket', 'Received risk priorities update:', data);
+      
+      // Add extra logging to debug the payload structure
+      console.log('[DEBUG] Risk priorities WebSocket data:', data);
+      console.log('[DEBUG] data.priorities exists:', data && data.priorities ? 'yes' : 'no');
+      if (data && data.priorities) {
+        console.log('[DEBUG] data.priorities.dimensions exists:', data.priorities.dimensions ? 'yes' : 'no');
+      }
+      
+      // Support both formats: direct dimensions array or nested in priorities
       if (data && data.priorities && data.priorities.dimensions) {
-        // Update dimensions from WebSocket
+        // Format: { priorities: { dimensions: [...] } }
         setDimensions(data.priorities.dimensions);
         
         // Update originalDimensionsRef for comparison
@@ -480,6 +489,30 @@ export default function RiskScoreConfigurationPage() {
           dimensions: data.priorities.dimensions,
           lastUpdated: data.updatedAt || new Date().toISOString()
         });
+        
+        // Force a refetch to ensure we have the latest data
+        refetchPriorities();
+      } else if (data && data.dimensions) {
+        // Alternative format: { dimensions: [...] }
+        setDimensions(data.dimensions);
+        
+        // Update originalDimensionsRef for comparison
+        originalDimensionsRef.current = JSON.parse(JSON.stringify(data.dimensions));
+        
+        toast({
+          title: 'Risk Priorities Updated',
+          description: 'Risk dimension priorities have been updated from another session',
+          variant: 'default',
+        });
+        
+        // Update our query client cache to match the new data
+        queryClient.setQueryData(['/api/risk-score/priorities'], {
+          dimensions: data.dimensions,
+          lastUpdated: data.updatedAt || new Date().toISOString()
+        });
+        
+        // Force a refetch to ensure we have the latest data
+        refetchPriorities();
       }
     };
     
