@@ -155,7 +155,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       const currentTab = getCurrentTab();
       
       // Check if the current tab is accessible
-      const isCurrentTabAccessible = currentTab === 'task-center' || availableTabs.includes(currentTab);
+      const isCurrentTabAccessible = currentTab === 'task-center' || 
+        availableTabs.includes(currentTab) || 
+        (currentTab === 'risk-score-configuration' && availableTabs.includes('risk-score'));
       
       // If the current tab is not accessible, redirect to the Task Center
       if (!isCurrentTabAccessible) {
