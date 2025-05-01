@@ -800,36 +800,6 @@ export default function RiskScoreConfigurationPage() {
                   <div className="flex justify-between">
                     <div className="space-x-2">
                       <Button variant="outline" onClick={handleReset}>Reset to Defaults</Button>
-                      <Button 
-                        variant="outline"
-                        onClick={async () => {
-                          // Test sending a WebSocket broadcast
-                          const result = await testWebSocketBroadcast('risk_priority_update', {
-                            priorities: {
-                              dimensions,
-                              lastUpdated: new Date().toISOString()
-                            },
-                            updatedAt: new Date().toISOString(),
-                            message: 'Test update from the UI'
-                          });
-                          
-                          if (result.success) {
-                            toast({
-                              title: 'WebSocket Test Sent',
-                              description: `Broadcast sent to ${result.clientCount} clients`,
-                              variant: 'default',
-                            });
-                          } else {
-                            toast({
-                              title: 'WebSocket Test Failed',
-                              description: result.error || 'Unknown error',
-                              variant: 'destructive',
-                            });
-                          }
-                        }}
-                      >
-                        Test WebSocket
-                      </Button>
                     </div>
                     <Button onClick={handleSave} disabled={savePrioritiesMutation.isPending || saveMutation.isPending}>
                       {savePrioritiesMutation.isPending || saveMutation.isPending ? 'Saving...' : 'Save Configuration'}
