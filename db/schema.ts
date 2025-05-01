@@ -119,6 +119,22 @@ export const companies = pgTable("companies", {
     "Security Risk": number,
     "Financial Risk": number
   }>(),
+  risk_configuration: jsonb("risk_configuration").$type<{
+    dimensions: {
+      id: string;
+      name: string;
+      description: string;
+      weight: number;
+      value: number;
+      color?: string;
+    }[];
+    thresholds: {
+      high: number;
+      medium: number;
+    };
+    score: number;
+    riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
+  }>(),
   accreditation_status: text("accreditation_status"),
   onboarding_company_completed: boolean("onboarding_company_completed").notNull().default(true),
   registry_date: timestamp("registry_date").notNull().defaultNow(),
