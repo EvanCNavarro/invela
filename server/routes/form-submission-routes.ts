@@ -11,8 +11,9 @@ import { db } from '@db';
 import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
-import FileCreationService from '../services/file-creation';
+import fileCreation from '../services/fileCreation';
 import UnifiedTabService from '../services/unified-tab-service';
+import * as WebSocketService from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
 const logger = getLogger('FormSubmissionRoutes');
@@ -321,12 +322,12 @@ export function createFormSubmissionRouter(): Router {
             }
             
             // Create an actual file from the form data
-            const fileResult = await FileCreationService.createTaskFile(
+            const fileResult = await fileCreation.createTaskFile(
               req.user?.id || 0,
               companyId,
               formData, // Use the submitted form data
               {
-                // Use a safe type conversion to ensure compatibility with FileCreationService
+                // Use a safe type conversion to ensure compatibility with fileCreation service
                 taskType: (formType === 'kyb' ? 'company_kyb' : 
                           formType === 'ky3p' ? 'sp_ky3p_assessment' : 
                           formType === 'card' ? 'company_card' : 'company_kyb'),
@@ -337,8 +338,12 @@ export function createFormSubmissionRouter(): Router {
             );
             
             if (!fileResult.success) {
-              logger.error(`Failed to create file for ${formType} submission:`, fileResult.error);
-              throw new Error(`File creation failed: ${fileResult.error?.message || 'Unknown error'}`);
+              logger.error(`Failed to create file for ${formType} submission:`, {
+                error: fileResult.error,
+                taskId,
+                formType
+              });
+              throw new Error(`File creation failed: ${fileResult.error || 'Unknown error'}`);
             }
             
             logger.info(`File created successfully:`, {
