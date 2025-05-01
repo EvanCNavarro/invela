@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { checkAuthentication, directUpdateRiskPriorities } from "@/lib/auth-check";
+import riskScoreLogger from "@/lib/risk-score-logger";
 // Import from 'react-dnd' and 'react-dnd-html5-backend' more carefully
 import { DndProvider } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
@@ -211,22 +212,42 @@ export default function RiskScoreConfigurationPage() {
     }
   });
   
+  // Reference to track original dimensions loaded from the server
+  const originalDimensionsRef = useRef<RiskDimension[] | null>(null);
+  
   // Query to fetch the risk priorities (for dimension ranking)
   const { data: prioritiesData, isLoading: isLoadingPriorities, refetch: refetchPriorities } = useQuery({
     queryKey: ['/api/risk-score/priorities'],
     staleTime: 0, // Always consider data stale to force refetch
     onSuccess: (data) => {
-      console.log('[Client] Risk priorities data received:', data);
+      riskScoreLogger.logFetchSuccess(data);
+      
       if (data && data.dimensions) {
-        console.log('[Client] Setting dimensions from priorities data');
         // If we have priorities data, use it instead of the general configuration
-        setDimensions(data.dimensions);
+        const newDimensions = data.dimensions;
+        
+        // Store original dimensions for comparison
+        if (!originalDimensionsRef.current) {
+          originalDimensionsRef.current = JSON.parse(JSON.stringify(newDimensions));
+          riskScoreLogger.logInitialLoad(data);
+        }
+        
+        // If dimensions have changed on the server side, log and update
+        if (dimensions && dimensions.length > 0 && originalDimensionsRef.current) {
+          riskScoreLogger.compareDimensions(
+            'fetch', 
+            'current', dimensions, 
+            'server', newDimensions
+          );
+        }
+        
+        setDimensions(newDimensions);
       } else {
-        console.log('[Client] No dimensions in priorities data');
+        riskScoreLogger.error('fetch', 'No dimensions in priorities data');
       }
     },
     onError: (error) => {
-      console.error('[Client] Error fetching risk priorities:', error);
+      riskScoreLogger.logFetchError(error);
       // Don't show error toast as we'll fall back to config data or defaults
     }
   });
@@ -258,62 +279,117 @@ export default function RiskScoreConfigurationPage() {
   // Mutation to save risk priorities
   const savePrioritiesMutation = useMutation({
     mutationFn: async (priorities: RiskPriorities) => {
-      console.log('[Client] Saving risk priorities:', priorities);
+      // Log the save attempt with our specialized logger
+      riskScoreLogger.logSaveAttempt(priorities);
+      
+      // If we have original dimensions, log what's changed
+      if (originalDimensionsRef.current) {
+        riskScoreLogger.logDimensionsChanged(
+          originalDimensionsRef.current,
+          priorities.dimensions,
+          'save-attempt'
+        );
+      }
+      
       try {
         // First check authentication status
         const authStatus = await checkAuthentication();
-        console.log('[Client] Authentication status:', authStatus);
+        riskScoreLogger.log('save', 'Authentication status:', authStatus);
         
         if (!authStatus.riskEndpointAuthenticated) {
-          console.log('[Client] Using direct update method as a fallback due to authentication issues');
+          riskScoreLogger.log('save', 'Using direct update method as a fallback due to authentication issues');
           // If we're not authenticated for the risk endpoint, use the direct method
           const directResult = await directUpdateRiskPriorities(priorities.dimensions);
           
           if (!directResult.success) {
-            throw new Error('Direct update failed: ' + directResult.error);
+            const errorMsg = 'Direct update failed: ' + directResult.error;
+            riskScoreLogger.error('save', errorMsg);
+            throw new Error(errorMsg);
           }
           
+          riskScoreLogger.logDirectUpdate(priorities);
           return directResult.data;
         }
         
         // Try the normal API endpoint
+        riskScoreLogger.log('save', 'Using standard API endpoint');
         return await apiRequest('POST', '/api/risk-score/priorities', priorities);
       } catch (error) {
-        console.error('[Client] Error in mutationFn:', error);
+        riskScoreLogger.error('save', 'Error in initial save attempt:', error);
         
         // Last resort fallback - try direct update if we get here
-        console.log('[Client] Trying direct update as final fallback');
-        const directResult = await directUpdateRiskPriorities(priorities.dimensions);
-        
-        if (!directResult.success) {
-          throw error; // Rethrow the original error if direct update also fails
+        riskScoreLogger.log('save', 'Trying direct update as final fallback');
+        try {
+          const directResult = await directUpdateRiskPriorities(priorities.dimensions);
+          
+          if (!directResult.success) {
+            riskScoreLogger.error('save', 'Final fallback direct update also failed:', directResult.error);
+            throw error; // Rethrow the original error if direct update also fails
+          }
+          
+          riskScoreLogger.logDirectUpdate(priorities);
+          return directResult.data;
+        } catch (directError) {
+          riskScoreLogger.error('save', 'All save attempts failed:', {
+            originalError: error,
+            directError
+          });
+          throw error; // Rethrow the original error
         }
-        
-        return directResult.data;
       }
     },
     onSuccess: (data) => {
-      console.log('[Client] Risk priorities saved successfully. Response:', data);
+      riskScoreLogger.logSaveSuccess({
+        dimensions,
+        lastUpdated: new Date().toISOString()
+      }, data);
+      
       toast({
         title: 'Priorities saved',
         description: 'Your risk dimension priorities have been saved successfully.',
         variant: 'success',
       });
+      
       // Force a refetch of the priorities data to verify changes were applied
-      console.log('[Client] Force refetching priorities query');
+      riskScoreLogger.log('persist', 'Force refetching priorities query to verify changes');
+      
+      // Store what we just saved for comparison
+      const savedDimensions = JSON.parse(JSON.stringify(dimensions));
+      
       refetchPriorities().then(result => {
-        console.log('[Client] Refetch result:', result);
-        if (result.data && JSON.stringify(result.data.dimensions) !== JSON.stringify(dimensions)) {
-          console.log('[Client] Warning: Refetched data does not match local state');
-          // Update local state to match server state
-          setDimensions(result.data.dimensions);
+        if (result.data && result.data.dimensions) {
+          // Compare what we just saved with what came back from the server
+          riskScoreLogger.compareDimensions(
+            'persist',
+            'saved',
+            savedDimensions,
+            'server',
+            result.data.dimensions
+          );
+          
+          // If they don't match, update the local dimensions to match server
+          if (JSON.stringify(result.data.dimensions) !== JSON.stringify(dimensions)) {
+            riskScoreLogger.log('persist', 'Warning: Refetched data does not match local state, updating local state');
+            setDimensions(result.data.dimensions);
+            
+            // Update our original dimensions reference to this freshly fetched data
+            originalDimensionsRef.current = JSON.parse(JSON.stringify(result.data.dimensions));
+          } else {
+            riskScoreLogger.log('persist', 'Verification successful - server data matches what we saved');
+          }
+        } else {
+          riskScoreLogger.error('persist', 'Refetch returned no dimensions data');
         }
       }).catch(err => {
-        console.error('[Client] Error refetching priorities:', err);
+        riskScoreLogger.error('persist', 'Error refetching priorities after save:', err);
       });
     },
     onError: (error) => {
-      console.error('[Client] Error saving risk priorities:', error);
+      riskScoreLogger.logSaveError({
+        dimensions,
+        lastUpdated: new Date().toISOString()
+      }, error);
+      
       toast({
         title: 'Failed to save priorities',
         description: 'Please try again later. If this persists, please contact support.',
@@ -331,6 +407,9 @@ export default function RiskScoreConfigurationPage() {
   
   // Handle dimension reordering (for drag and drop functionality)
   const handleReorder = (dragIndex: number, hoverIndex: number) => {
+    // Log the current dimensions before changes
+    const originalDims = [...dimensions];
+    
     // For the MVP, we'll just implement a simple array reordering
     const newDimensions = [...dimensions];
     const draggedItem = newDimensions[dragIndex];
@@ -358,22 +437,42 @@ export default function RiskScoreConfigurationPage() {
       weight: Math.round((dim.weight / weightSum) * 100 * 10) / 10
     }));
     
+    // Log the changes
+    riskScoreLogger.logDimensionsChanged(originalDims, normalizedDimensions, 'reorder');
+    
     setDimensions(normalizedDimensions);
   };
   
   // Handle dimension slider value changes
   const handleValueChange = (id: string, value: number) => {
-    setDimensions(prevDimensions => 
-      prevDimensions.map(dim => 
+    setDimensions(prevDimensions => {
+      // Create a copy for logging the change
+      const oldDimensions = [...prevDimensions];
+      
+      // Update the dimensions
+      const newDimensions = prevDimensions.map(dim => 
         dim.id === id ? { ...dim, value } : dim
-      )
-    );
+      );
+      
+      // Log the changes
+      riskScoreLogger.logDimensionsChanged(oldDimensions, newDimensions, 'value-change');
+      
+      return newDimensions;
+    });
   };
   
   // Handle reset to defaults
   const handleReset = () => {
+    // Log the current dimensions before reset
+    const currentDimensions = [...dimensions];
+    
+    // Reset to defaults
     setDimensions(defaultRiskDimensions);
     setThresholds(defaultRiskThresholds);
+    
+    // Log the reset
+    riskScoreLogger.log('change', 'Resetting to default values');
+    riskScoreLogger.logDimensionsChanged(currentDimensions, defaultRiskDimensions, 'reset-to-defaults');
     
     // If on the priorities tab, also reset priorities data
     if (activeTab === 'dimension-ranking') {
@@ -403,6 +502,19 @@ export default function RiskScoreConfigurationPage() {
         lastUpdated: new Date().toISOString()
       };
       
+      // Log what we're about to save
+      riskScoreLogger.log('save', 'Saving dimension priorities');
+      
+      // If we have original dimensions (loaded from server), compare with what we're saving
+      if (originalDimensionsRef.current) {
+        riskScoreLogger.compareDimensions(
+          'save', 
+          'original', originalDimensionsRef.current, 
+          'current', dimensions
+        );
+      }
+      
+      // Perform the save operation
       savePrioritiesMutation.mutate(priorities);
     } else {
       // Save to general configuration endpoint
@@ -413,6 +525,7 @@ export default function RiskScoreConfigurationPage() {
         riskLevel
       };
       
+      riskScoreLogger.log('save', 'Saving general configuration');
       saveMutation.mutate(configuration);
     }
   };
