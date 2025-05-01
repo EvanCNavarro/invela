@@ -206,10 +206,13 @@ export function useStandardizedServices(): void {
       componentFactory.registerFormService(taskType, ky3pService);
     });
     
-    // Replace the existing service factory in the KY3P service factory
-    // This ensures all isolated form service instances are created using our unified service
-    // No need to use registerIsolatedFormServiceFactory since it doesn't exist
-    ky3pFormServiceFactory.serviceFactory = syncFactoryAdapter;
+    // Replace the ky3pFormServiceFactory's getServiceInstance method with our adapter
+    // This ensures all service requests route through our unified implementation
+    const originalGetServiceInstance = ky3pFormServiceFactory.getServiceInstance;
+    ky3pFormServiceFactory.getServiceInstance = function(companyId, taskId) {
+      logger.info(`[KY3PFormServiceFactory] Using unified service for company ${companyId}, task ${taskId}`);
+      return syncFactoryAdapter(companyId, taskId);
+    };
     
     logger.info('[RegisterServices] Unified form services are now the default');
   } catch (error) {
