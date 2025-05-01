@@ -353,16 +353,35 @@ export const FileVault: React.FC = () => {
       });
     }
     
+    // Keep references to the actual event listeners so we can remove them properly
+    const fileVaultEventHandler = (event: any) => {
+      if (event.detail) {
+        handleFileVaultUpdate(event.detail);
+      }
+    };
+    
+    const wsMessageEventHandler = (event: any) => {
+      // Check if this is a file vault update event
+      if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
+        handleFileVaultUpdate(event.detail.payload);
+      }
+    };
+    
+    // We need to access the global WebSocket service
+    if (typeof window !== 'undefined') {
+      // Add event listener for the file_vault_update message type
+      window.addEventListener('file_vault_update', fileVaultEventHandler);
+      
+      // Also listen for generic ws_message events that might contain file_vault_update
+      window.addEventListener('ws_message', wsMessageEventHandler);
+    }
+    
     return () => {
       // Clean up event listeners when component unmounts
       if (typeof window !== 'undefined') {
-        // For the specific event, we used handleFileVaultUpdate directly
-        window.removeEventListener('file_vault_update', handleFileVaultUpdate);
-        
-        // For the ws_message event, we need to remove the anonymous function
-        // Since we can't access the original anonymous function, we need to store a reference to it
-        // when it's created. For now, we're keeping this here to avoid breaking changes.
-        window.removeEventListener('ws_message', handleFileVaultUpdate);
+        // Remove event listeners by referencing the same function instances
+        window.removeEventListener('file_vault_update', fileVaultEventHandler);
+        window.removeEventListener('ws_message', wsMessageEventHandler);
       }
     };
   }, [queryClient, user?.company_id, currentPage, itemsPerPage]);
