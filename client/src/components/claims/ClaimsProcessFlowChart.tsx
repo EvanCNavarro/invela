@@ -238,60 +238,104 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     };
   }
   
-  // Helper: Calculate positions for each node based on levels
+  // Helper: Calculate positions for each node based on a more balanced, less horizontal layout
   function calculateNodePositions(dagData: ReturnType<typeof processFlowToDag>) {
     const { nodes, levels } = dagData;
+    const { connections } = flowData!;
     
-    // Group nodes by their level
-    const nodesByLevel: Record<number, ProcessNode[]> = {};
-    nodes.forEach(node => {
-      const level = levels[node.id] || 0;
-      if (!nodesByLevel[level]) {
-        nodesByLevel[level] = [];
-      }
-      nodesByLevel[level].push(node);
-    });
+    // Create a map for quick node lookup
+    const nodeMap = new Map(nodes.map(node => [node.id, node]));
     
-    // Determine the maximum number of nodes at any level
-    const maxNodesPerLevel = Math.max(...Object.values(nodesByLevel).map(nodes => nodes.length));
+    // Find the 'data breach' node which is typically the starting point
+    const startNode = nodes.find(node => node.type === 'breach' || node.name.includes('Breach'));
     
-    // Calculate horizontal and vertical spacing
-    const levelWidth = 200; // Space between levels (reduced from 220)
-    const nodeHeight = 60; // Height of a node (same as in the main function)
-    const nodeSpacing = 80;  // Minimum space between nodes at the same level (reduced from 100)
+    // Create a more logical 2D grid layout
+    const grid: Record<string, { node: ProcessNode, x: number, y: number }> = {};
     
-    // Calculate total height needed for the diagram
-    const totalHeight = maxNodesPerLevel * (nodeHeight + nodeSpacing);
-    
-    // Position nodes
-    const nodesWithPositions: (ProcessNode & { x: number; y: number })[] = [];
-    
-    Object.entries(nodesByLevel).forEach(([levelStr, levelNodes]) => {
-      const level = parseInt(levelStr);
-      const levelNodeCount = levelNodes.length;
+    // Set initial positions based on specific node types and their relationships
+    if (startNode) {
+      // Place data breach at the center-left
+      grid[startNode.id] = { node: startNode, x: 0, y: 250 };
       
-      // Distribute nodes evenly within their level
-      levelNodes.forEach((node, i) => {
-        const x = level * levelWidth;
-        let y = 0;
+      // Find nodes connected directly to data breach
+      const directConnections = connections.filter(conn => conn.source === startNode.id);
+      
+      // Place bank assessment node on upper branch
+      const bankNode = directConnections
+        .map(conn => nodeMap.get(conn.target))
+        .find(node => node && (node.type === 'bank' || (node.name && node.name.includes('Bank'))));
         
-        if (levelNodeCount === 1) {
-          // If there's only one node at this level, center it
-          y = totalHeight / 2;
-        } else {
-          // Otherwise, distribute nodes evenly
-          const levelHeight = (levelNodeCount - 1) * (nodeHeight + nodeSpacing);
-          const startY = (totalHeight - levelHeight) / 2;
-          y = startY + i * (nodeHeight + nodeSpacing);
-        }
+      if (bankNode) {
+        grid[bankNode.id] = { node: bankNode, x: 230, y: 150 };
+      }
+      
+      // Place FinTech notification on lower branch
+      const fintechNode = directConnections
+        .map(conn => nodeMap.get(conn.target))
+        .find(node => node && (node.type === 'fintech' || (node.name && node.name.includes('FinTech'))));
         
-        nodesWithPositions.push({
-          ...node,
-          x,
-          y
+      if (fintechNode) {
+        grid[fintechNode.id] = { node: fintechNode, x: 230, y: 350 };
+      }
+      
+      // Find decision node (typically connected to Bank Assessment)
+      const decisionNode = nodes.find(node => node.type === 'decision');
+      if (decisionNode && bankNode) {
+        grid[decisionNode.id] = { node: decisionNode, x: 460, y: 250 };
+        
+        // Find nodes connected from decision node (yes/no paths)
+        const decisionOutputs = connections.filter(conn => conn.source === decisionNode.id);
+        
+        // Find any remaining nodes and place them on the right side
+        nodes.forEach(node => {
+          if (!grid[node.id]) {
+            // Check if it's connected to decision node
+            const connectionToDecision = connections.find(conn => 
+              conn.source === decisionNode.id && conn.target === node.id);
+              
+            if (connectionToDecision) {
+              // If yes path, place above
+              if (connectionToDecision.label && 
+                  (connectionToDecision.label.toLowerCase().includes('yes') || 
+                   connectionToDecision.label.toLowerCase().includes('true'))) {
+                grid[node.id] = { node, x: 690, y: 150 };
+              } else {
+                // If no path, place below
+                grid[node.id] = { node, x: 690, y: 350 };
+              }
+            }
+          }
         });
-      });
+      }
+    }
+    
+    // Position any remaining nodes that haven't been placed
+    let nextRow = 0;
+    const baseSpacing = 175;
+    
+    nodes.forEach(node => {
+      if (!grid[node.id]) {
+        // Find the level for this node
+        const level = levels[node.id] || 0;
+        
+        // Calculate position based on level and available space
+        grid[node.id] = {
+          node,
+          x: 230 * level,
+          y: 150 + (nextRow * baseSpacing)
+        };
+        
+        nextRow = (nextRow + 1) % 3; // Wrap after 3 rows
+      }
     });
+    
+    // Convert grid to positions array
+    const nodesWithPositions: (ProcessNode & { x: number; y: number })[] = 
+      Object.values(grid).map(({ node, x, y }) => ({
+        ...node,
+        x,
+        y
+      }));
     
     return nodesWithPositions;
   }
