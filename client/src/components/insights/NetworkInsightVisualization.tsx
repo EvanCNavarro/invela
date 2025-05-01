@@ -350,22 +350,26 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
           <div className="border-t mt-3">
             {/* Risk level indicators */}
             <div className="flex justify-center items-center pt-2 pb-1">
-              <div className="flex items-center gap-x-6">
+              <div className="flex items-center gap-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full bg-[#FFFFFF] border border-black"></span>
+                  <span className="text-xs">None (0)</span>
+                </div>
                 <div className="flex items-center space-x-2">
                   <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
-                  <span className="text-xs">Low</span>
+                  <span className="text-xs">Low (1-33)</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="w-3 h-3 rounded-full bg-[#B3B8C6] border border-black"></span>
-                  <span className="text-xs">Medium</span>
+                  <span className="text-xs">Medium (34-66)</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="w-3 h-3 rounded-full bg-[#7B74A8] border border-black"></span>
-                  <span className="text-xs">High</span>
+                  <span className="text-xs">High (67-99)</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
-                  <span className="text-xs">Critical</span>
+                  <span className="text-xs">Critical (100)</span>
                 </div>
                 <div className="flex items-center pl-4 border-l border-gray-200">
                   <span className="flex items-center space-x-1.5">
