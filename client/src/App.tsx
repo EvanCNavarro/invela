@@ -66,6 +66,7 @@ import TermsOfUsePage from "@/pages/landing/legal/terms-of-use";
 import CompliancePage from "@/pages/landing/legal/compliance";
 import LegalPage from "@/pages/landing/legal";
 import SiteMapPage from "@/pages/landing/site-map";
+import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -258,6 +259,17 @@ function Router() {
             <ProtectedLayout>
               <OnboardingWrapper>
                 <GroupsBuilderPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/risk-score-configuration" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <RiskScoreConfigurationPage />
               </OnboardingWrapper>
             </ProtectedLayout>
           )} 

@@ -405,10 +405,9 @@ export function Sidebar({
     {
       icon: BarChart2,
       label: "S&P Risk Score",
-      href: "https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/risk-score",
-      locked: !availableTabs.includes('risk-score'),
-      hideForFinTech: true,
-      externalLink: true
+      href: "/risk-score-configuration",
+      locked: !availableTabs.includes('risk-score-configuration') && !availableTabs.includes('risk-score'),
+      hideForFinTech: true
     },
     {
       icon: Hammer,
