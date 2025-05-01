@@ -196,11 +196,20 @@ export function useStandardizedServices(): void {
     // Register for all KY3P-related task types
     const ky3pTaskTypes = ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'];
     
+    // Create a direct instance of the FormServiceInterface for the component factory
+    // The component factory expects a FormServiceInterface instance, not a factory function
+    const ky3pService = createUnifiedKY3PFormService(0, 0); // Zero values as placeholders, will be overridden by runtime context
+    
     ky3pTaskTypes.forEach(taskType => {
       logger.info(`[RegisterServices] Re-registering unified KY3P service as default for task type: ${taskType}`);
-      // Use our sync factory adapter directly instead of createServiceFactoryAdapter
-      componentFactory.registerFormService(taskType, syncFactoryAdapter);
+      // Pass the service instance directly
+      componentFactory.registerFormService(taskType, ky3pService);
     });
+    
+    // Replace the existing service factory in the KY3P service factory
+    // This ensures all isolated form service instances are created using our unified service
+    // No need to use registerIsolatedFormServiceFactory since it doesn't exist
+    ky3pFormServiceFactory.serviceFactory = syncFactoryAdapter;
     
     logger.info('[RegisterServices] Unified form services are now the default');
   } catch (error) {
