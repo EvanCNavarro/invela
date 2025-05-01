@@ -7,14 +7,12 @@
  */
 
 import { FormField, FormSection, FormServiceInterface, FormSubmitOptions } from './formService';
+
+// Use Record<string, any> for our form data to avoid conflicts with DOM FormData
+type FormDataRecord = Record<string, any>;
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('UnifiedKY3PFormService');
-
-/**
- * Type alias for form data
- */
-type FormData = Record<string, any>;
 
 /**
  * Unified KY3P Form Service
@@ -31,7 +29,7 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
   private _formType = 'ky3p';
   
   // Form data storage
-  private _formData: FormData = {};
+  private _formData: FormDataRecord = {};
   private _fields: FormField[] = [];
   private _sections: FormSection[] = [];
   
@@ -131,7 +129,7 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
    * 
    * @param data Form data to load
    */
-  loadFormData(data: FormData): void {
+  loadFormData(data: FormDataRecord): void {
     // Safely merge in the new data
     this._formData = { ...this._formData, ...data };
     
@@ -380,7 +378,7 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
    * 
    * @param taskId The task ID to load progress for
    */
-  async loadProgress(taskId: number): Promise<FormData> {
+  async loadProgress(taskId: number): Promise<FormDataRecord> {
     logger.info(`[Unified KY3P] Loading progress for task ${taskId}`);
     
     try {
@@ -805,7 +803,10 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     this._sections = sections.map((section, index) => ({
       id: index + 1,
       name: section,
+      title: section, // Required by FormSection interface
       label: section,
+      order: index, // Required by FormSection interface
+      collapsed: false, // Required by FormSection interface
       fields: this._fields.filter(field => 
         (field.section === section) || (field.group === section)
       ).sort((a, b) => (a.order || 0) - (b.order || 0))

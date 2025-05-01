@@ -10,6 +10,7 @@
  */
 
 import { componentFactory } from './componentFactory';
+import { formServiceFactory } from './form-service-factory';
 import { createUnifiedKY3PFormService } from './unified-ky3p-form-service';
 import getLogger from '@/utils/logger';
 
@@ -64,25 +65,29 @@ export function registerStandardizedServices(): void {
  */
 export function useStandardizedServices(): void {
   try {
-    logger.info('Setting standardized form services as default');
+    logger.info('[RegisterServices] Setting unified form services as default');
     
-    // Define a factory function that creates enhanced KY3P form services
-    const ky3pServiceFactory = (companyId: number | string | undefined, taskId: number | string | undefined) => {
-      logger.info(`Creating enhanced KY3P form service (default) for company ${companyId}, task ${taskId}`);
-      return formServiceFactory.getServiceInstance('ky3p', companyId, taskId, true);
+    // Define a factory function for our unified KY3P service
+    const unifiedKy3pServiceFactory = (companyId: number | string | undefined, taskId: number | string | undefined) => {
+      // Convert potential string params to numbers
+      const numericCompanyId = companyId ? Number(companyId) : undefined;
+      const numericTaskId = taskId ? Number(taskId) : undefined;
+      
+      logger.info(`[RegisterServices] Creating unified KY3P service (default) for company ${numericCompanyId}, task ${numericTaskId}`);
+      return createUnifiedKY3PFormService(numericCompanyId, numericTaskId);
     };
     
     // Register for all KY3P-related task types
     const ky3pTaskTypes = ['ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment'];
     
     ky3pTaskTypes.forEach(taskType => {
-      logger.info(`Re-registering enhanced KY3P form service as default for task type: ${taskType}`);
-      componentFactory.registerFormService(taskType, ky3pServiceFactory);
+      logger.info(`[RegisterServices] Re-registering unified KY3P service as default for task type: ${taskType}`);
+      componentFactory.registerFormService(taskType, unifiedKy3pServiceFactory);
     });
     
-    logger.info('Standardized form services are now the default');
+    logger.info('[RegisterServices] Unified form services are now the default');
   } catch (error) {
-    logger.error('Error setting standardized form services as default:', error);
+    logger.error('[RegisterServices] Error setting unified form services as default:', error);
   }
 }
 
