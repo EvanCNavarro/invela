@@ -242,15 +242,16 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
       // Send the update using the standardized batch update endpoint
       logger.info(`[Unified KY3P] Sending standardized batch update for ${Object.keys(cleanData).length} fields`);
       
-      // First attempt: Use the standardized request format with 'responses' object
-      // This is the format that the server is expecting based on the error message
+      // Server expects request with a responses object directly containing field key/value pairs
+      // This is based on server-side validation: "responses is required and must be an object"
       const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important: include auth cookies
         body: JSON.stringify({
-          responses: cleanData // The server expects this format
+          responses: cleanData // Match the format required by ky3p-fixed-routes.ts
         }),
       });
       
