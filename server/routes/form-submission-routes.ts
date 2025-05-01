@@ -14,7 +14,7 @@ import getLogger from '../utils/logger';
 import { fileCreationService } from '../services/fileCreation';
 import { CompanyTabsService } from '../services/companyTabsService';
 import { UnifiedTabService } from '../services/unified-tab-service';
-import { generateMissingFileForTask } from './fix-missing-file';
+import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
 
 // Destructure websocket service functions
@@ -73,9 +73,93 @@ export function createFormSubmissionRouter(): Router {
   const router = Router();
   
   /**
+   * GET /api/forms/check-missing-file/:taskId
+   * 
+   * Check if a task is missing its file in the File Vault
+   * This assists in diagnosing issues with form submissions
+   */
+  router.get('/check-missing-file/:taskId', async (req: Request, res: Response) => {
+    // Check authentication - require valid user
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const taskId = parseInt(req.params.taskId);
+    
+    if (isNaN(taskId) || taskId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
+    }
+    
+    try {
+      // Get the task
+      const task = await db.query.tasks.findFirst({
+        where: eq(tasks.id, taskId)
+      });
+      
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Task not found'
+        });
+      }
+      
+      // Check if task has a fileId in its metadata
+      const hasFileId = task.metadata?.fileId !== undefined;
+      
+      // If fileId exists, verify the file exists in the files table
+      let fileExists = false;
+      let fileInfo = null;
+      
+      if (hasFileId) {
+        const fileId = task.metadata?.fileId;
+        const file = await db.query.files.findFirst({
+          where: eq(files.id, fileId)
+        });
+        
+        fileExists = !!file;
+        if (file) {
+          fileInfo = {
+            id: file.id,
+            name: file.filename,
+            status: file.status,
+            created_at: file.created_at
+          };
+        }
+      }
+      
+      return res.json({
+        success: true,
+        taskId: task.id,
+        taskType: task.task_type,
+        hasFileId,
+        fileExists,
+        needsFix: (!hasFileId || !fileExists) && task.status === 'submitted',
+        fileInfo
+      });
+    } catch (error) {
+      logger.error(`Error checking file status for task ${taskId}`, {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Error checking file status',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  /**
    * POST /api/forms/fix-missing-file/:taskId
    * 
-   * Emergency endpoint to fix missing files for KYB forms
+   * Universal file regeneration endpoint that works for all form types
    * This handles the issue where a file was not properly created during form submission
    */
   router.post('/fix-missing-file/:taskId', async (req: Request, res: Response) => {
