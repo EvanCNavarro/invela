@@ -37,6 +37,12 @@ interface RiskScoreConfiguration {
   riskLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
 }
 
+// Define interface for risk priorities
+interface RiskPriorities {
+  dimensions: RiskDimension[];
+  lastUpdated: string;
+}
+
 // Non-authenticated test endpoint - for testing only
 router.get('/test', async (req: Request, res: Response) => {
   try {
@@ -154,6 +160,77 @@ router.post('/configuration', requireAuth, async (req: Request, res: Response) =
   } catch (error) {
     console.error('Error saving risk score configuration:', error);
     return res.status(500).json({ error: 'Failed to save risk score configuration' });
+  }
+});
+
+// GET endpoint to retrieve the risk priorities
+router.get('/priorities', requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const companyId = req.user.company_id;
+    
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, companyId),
+      columns: {
+        risk_priorities: true
+      }
+    });
+
+    if (!company || !company.risk_priorities) {
+      // Return null if no priorities exist
+      return res.status(200).json(null);
+    }
+
+    return res.status(200).json(company.risk_priorities);
+  } catch (error) {
+    console.error('Error retrieving risk priorities:', error);
+    return res.status(500).json({ error: 'Failed to retrieve risk priorities' });
+  }
+});
+
+// POST endpoint to save the risk priorities
+router.post('/priorities', requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const companyId = req.user.company_id;
+    const priorities: RiskPriorities = req.body;
+
+    // Validate the priorities
+    if (!priorities.dimensions || !Array.isArray(priorities.dimensions)) {
+      return res.status(400).json({ error: 'Invalid dimensions data' });
+    }
+
+    // Add timestamp if not provided
+    if (!priorities.lastUpdated) {
+      priorities.lastUpdated = new Date().toISOString();
+    }
+
+    // Update the company record with the new priorities
+    await db.update(companies)
+      .set({
+        risk_priorities: priorities as any,
+        updated_at: new Date()
+      })
+      .where(eq(companies.id, companyId));
+
+    // Get the updated company record
+    const updatedCompany = await db.query.companies.findFirst({
+      where: eq(companies.id, companyId),
+      columns: {
+        risk_priorities: true
+      }
+    });
+
+    return res.status(200).json(updatedCompany?.risk_priorities || priorities);
+  } catch (error) {
+    console.error('Error saving risk priorities:', error);
+    return res.status(500).json({ error: 'Failed to save risk priorities' });
   }
 });
 
