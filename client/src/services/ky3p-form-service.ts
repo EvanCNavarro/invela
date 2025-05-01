@@ -1910,6 +1910,16 @@ export class KY3PFormService extends EnhancedKybFormService {
       // Process the raw demo data from the server
       const rawDemoData = await response.json();
       
+      // Check if we got a wrapped response (in formData, status, progress)
+      // or if we got the direct fields
+      let dataToProcess = rawDemoData;
+      
+      // If we have formData property, extract it (legacy format)
+      if (rawDemoData.formData && typeof rawDemoData.formData === 'object') {
+        dataToProcess = rawDemoData.formData;
+        logger.info('[KY3P Form Service] Extracted formData from response');
+      }
+      
       // Filter out fields that don't exist in our fields array
       const filteredDemoData: Record<string, any> = {};
       let skippedFields = 0;
@@ -1918,7 +1928,7 @@ export class KY3PFormService extends EnhancedKybFormService {
       const fields = await this.getFields();
       const fieldKeys = fields.map(field => field.key);
       
-      for (const [key, value] of Object.entries(rawDemoData)) {
+      for (const [key, value] of Object.entries(dataToProcess)) {
         if (fieldKeys.includes(key)) {
           filteredDemoData[key] = value;
         } else {
