@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
@@ -15,7 +15,10 @@ import { ComparativeVisualization } from '@/components/risk-score/ComparativeVis
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+// Import from 'react-dnd' and 'react-dnd-html5-backend' more carefully
+import { DndProvider } from 'react-dnd';
+import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const dimensionIcons: Record<string, React.ReactNode> = {
@@ -48,8 +51,8 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   // Setup drag functionality
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.DIMENSION_ROW,
-    item: { index },
-    collect: (monitor) => ({
+    item: () => ({ index }),
+    collect: (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
     }),
   });
@@ -57,7 +60,7 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   // Setup drop functionality
   const [, drop] = useDrop({
     accept: ItemTypes.DIMENSION_ROW,
-    hover(item: { index: number }, monitor) {
+    hover(item: { index: number }, monitor: DropTargetMonitor) {
       if (!ref.current) {
         return;
       }
