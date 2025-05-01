@@ -1,121 +1,130 @@
 /**
- * Standardized File Reference Service
+ * StandardizedFileReference Module
  * 
- * This service provides a standard way to handle file references across all form types,
- * ensuring consistent property naming and metadata structure.
+ * This module provides functions for standardizing file references across different form types.
+ * It addresses the issue where KY3P forms use inconsistent property naming for file metadata
+ * ('ky3pFormFile' and 'securityFormFile') rather than the standard 'fileId'.
  * 
- * File references are always stored with the same property name (fileId) in task metadata,
- * regardless of the form type. This consistency makes it easier for the File Vault UI
- * to locate and display files properly.
+ * @module standardized-file-reference
  */
 
-import createLogger from '../utils/logger';
-import { TaskMetadata } from '../types/tasks';
+import getLogger from '../utils/logger';
 
-// Create a logger for this service
-const logger = createLogger('StandardizedFileRef');
+// Import types as needed from our application
+import { Task } from '../types/tasks';
 
-// Define the possible form types
-export type FormType = 'kyb' | 'ky3p' | 'open_banking' | 'company_kyb' | 'company_card' | 'open_banking_survey';
+const logger = getLogger('FileReference');
 
-// Metadata field mapping for different form types
-const LEGACY_FILE_ID_FIELDS = {
-  kyb: 'kybFormFile',
-  ky3p: 'ky3pFormFile',
-  open_banking: 'openBankingFormFile',
-  company_kyb: 'kybFormFile',
-  company_card: 'cardFormFile',
-  open_banking_survey: 'openBankingSurveyFile'
+/**
+ * Form field property names for file references in different form types
+ */
+const FILE_REFERENCE_FIELDS = {
+  // Standard file reference field used by most form types
+  STANDARD: 'fileId',
+  
+  // KY3P specific file reference fields
+  KY3P_FORM_FILE: 'ky3pFormFile',
+  SECURITY_FORM_FILE: 'securityFormFile',
+  
+  // Add other form-specific file reference fields here as needed
 };
 
-// Standard file ID field that should be used across all form types
-export const STANDARD_FILE_ID_FIELD = 'fileId';
-
 /**
- * Standardize file references in task metadata
+ * Extracts the file ID from form data based on the form type
  * 
- * This function ensures that file references are stored with a consistent property name
- * regardless of form type. It handles both adding new file references and updating existing ones.
+ * Different form types may store file references under different property names.
+ * This function standardizes access to those references.
  * 
- * @param metadata The task metadata object
- * @param formType The type of form being processed
- * @param fileId The ID of the file to reference
- * @returns Updated metadata with standardized file reference
+ * @param formData The form data object containing responses
+ * @param formType The type of form (e.g., 'kyb', 'ky3p', 'open_banking')
+ * @returns The file ID if found, or null if no file reference exists
  */
-export function standardizeFileReference(
-  metadata: TaskMetadata | null | undefined,
-  formType: FormType,
-  fileId: number | string
-): TaskMetadata {
-  // Create metadata object if it doesn't exist
-  const updatedMetadata: TaskMetadata = metadata || {};
+export function extractFileId(formData: Record<string, any>, formType: string): number | string | null {
+  // Initialize with standard file ID field
+  let fileId = formData[FILE_REFERENCE_FIELDS.STANDARD];
   
-  // Get the legacy field name for this form type
-  const legacyField = LEGACY_FILE_ID_FIELDS[formType];
-  
-  // Log the conversion for auditing and debugging
-  logger.info(`[StandardizeFileRef] Standardizing file reference for ${formType} form`, {
-    formType,
-    fileId,
-    legacyField,
-    standardField: STANDARD_FILE_ID_FIELD,
-    hadLegacyReference: legacyField && legacyField in updatedMetadata
-  });
-  
-  // Always set the standard field
-  updatedMetadata[STANDARD_FILE_ID_FIELD] = fileId;
-  
-  // For backward compatibility, also set the legacy field
-  if (legacyField) {
-    updatedMetadata[legacyField] = fileId;
+  // For KY3P forms, check the special fields
+  if (formType === 'sp_ky3p_assessment' || formType === 'ky3p') {
+    fileId = fileId || formData[FILE_REFERENCE_FIELDS.KY3P_FORM_FILE] || formData[FILE_REFERENCE_FIELDS.SECURITY_FORM_FILE];
+    
+    logger.info(`Extracted KY3P file ID from special fields: ${fileId}`, {
+      formType,
+      standardField: formData[FILE_REFERENCE_FIELDS.STANDARD],
+      ky3pFormFile: formData[FILE_REFERENCE_FIELDS.KY3P_FORM_FILE],
+      securityFormFile: formData[FILE_REFERENCE_FIELDS.SECURITY_FORM_FILE]
+    });
   }
   
-  return updatedMetadata;
+  return fileId || null;
 }
 
 /**
- * Get file ID from task metadata
+ * Standardizes file reference in form data by copying from form-specific fields to standard field
  * 
- * This function retrieves a file ID from task metadata, checking both the standard
- * and legacy field names for the specified form type.
+ * This function ensures that all file references are available under the standard 'fileId' property,
+ * while preserving the original form-specific references.
  * 
- * @param metadata The task metadata object
- * @param formType The type of form to get the file ID for
- * @returns The file ID if found, or null if not found
+ * @param formData The form data to standardize
+ * @param formType The type of form
+ * @returns The standardized form data with consistent file references
  */
-export function getFileIdFromMetadata(
-  metadata: TaskMetadata | null | undefined,
-  formType: FormType
-): number | string | null {
-  if (!metadata) {
-    return null;
+export function standardizeFileReference(formData: Record<string, any>, formType: string): Record<string, any> {
+  // Make a copy of the form data to avoid modifying the original
+  const standardizedData = { ...formData };
+  
+  // For KY3P forms, ensure the standard file ID field is populated
+  if (formType === 'sp_ky3p_assessment' || formType === 'ky3p') {
+    // Find file ID in form-specific fields
+    const ky3pFileId = formData[FILE_REFERENCE_FIELDS.KY3P_FORM_FILE] || formData[FILE_REFERENCE_FIELDS.SECURITY_FORM_FILE];
+    
+    // If a form-specific file ID exists but the standard field doesn't, copy the value
+    if (ky3pFileId && !standardizedData[FILE_REFERENCE_FIELDS.STANDARD]) {
+      standardizedData[FILE_REFERENCE_FIELDS.STANDARD] = ky3pFileId;
+      
+      logger.info(`Standardized KY3P file reference: ${ky3pFileId}`, {
+        formType,
+        source: formData[FILE_REFERENCE_FIELDS.KY3P_FORM_FILE] ? 'ky3pFormFile' : 'securityFormFile',
+        fileId: ky3pFileId
+      });
+    }
   }
   
-  // First check the standard field
-  if (STANDARD_FILE_ID_FIELD in metadata && metadata[STANDARD_FILE_ID_FIELD]) {
-    return metadata[STANDARD_FILE_ID_FIELD];
-  }
-  
-  // Then check the legacy field
-  const legacyField = LEGACY_FILE_ID_FIELDS[formType];
-  if (legacyField && legacyField in metadata && metadata[legacyField]) {
-    return metadata[legacyField];
-  }
-  
-  // No file ID found
-  return null;
+  return standardizedData;
 }
 
 /**
- * Check if task metadata contains a file reference
+ * Updates a task with standardized file references
  * 
- * @param metadata The task metadata to check
- * @param formType The type of form to check
- * @returns True if a file reference is found, false otherwise
+ * This function ensures that file references in the task metadata are consistent,
+ * which helps prevent issues with files not appearing in the File Vault UI.
+ * 
+ * @param task The task object to update
+ * @returns The task with standardized file references
  */
-export function hasFileReference(
-  metadata: TaskMetadata | null | undefined,
-  formType: FormType
-): boolean {
-  return getFileIdFromMetadata(metadata, formType) !== null;
+export function standardizeTaskFileReferences(task: Task): Task {
+  // Skip processing if the task has no metadata
+  if (!task.metadata) {
+    return task;
+  }
+  
+  // Make a copy of the task to avoid modifying the original
+  const updatedTask = { ...task };
+  
+  // Standardize file references in the task metadata
+  if (updatedTask.metadata) {
+    const standardizedMetadata = standardizeFileReference(
+      updatedTask.metadata as Record<string, any>,
+      updatedTask.type
+    );
+    
+    updatedTask.metadata = standardizedMetadata;
+  }
+  
+  return updatedTask;
 }
+
+export default {
+  extractFileId,
+  standardizeFileReference,
+  standardizeTaskFileReferences
+};

@@ -138,22 +138,72 @@ export function broadcast(type: string, payload: any): { clientCount: number } {
 
 /**
  * Broadcast a File Vault update to notify clients about file changes
+ *
+ * This function sends a WebSocket notification to all connected clients
+ * to inform them about a change in the file vault for a specific company.
+ * The notification includes the company ID, the file ID (if specified),
+ * the action that was performed, and additional metadata.
+ *
+ * @param companyId - The ID of the company whose file vault was updated
+ * @param fileId - The ID of the file that was added, updated, or deleted (optional)
+ * @param action - The action that was performed on the file (added, deleted, updated, or refresh)
+ * @param metadata - Additional metadata about the file or action (optional)
+ * @returns An object containing the number of clients that received the notification
  */
 export function broadcastFileVaultUpdate(
   companyId: number,
   fileId?: number | string,
-  action: 'added' | 'deleted' | 'updated' | 'refresh' = 'refresh'
+  action: 'added' | 'deleted' | 'updated' | 'refresh' = 'refresh',
+  metadata: Record<string, any> = {}
 ): { clientCount: number } {
-  return broadcastMessage('file_vault_update', {
+  logger.info(`Broadcasting file vault update for company ${companyId}`, {
     companyId,
     fileId,
     action,
-    source: 'file_vault_update'
+    metadata
   });
+  
+  // First broadcast with standard 'file_vault_update' event type
+  const result = broadcastMessage('file_vault_update', {
+    companyId,
+    fileId,
+    action,
+    metadata,
+    source: 'file_vault_update',
+    // Add cache_invalidation flag to trigger aggressive client-side cache refresh
+    cache_invalidation: true,
+    // Add timestamp for debugging and audit purposes
+    timestamp: new Date().toISOString()
+  });
+  
+  // For backwards compatibility, also broadcast with the 'files_updated' event type
+  // This ensures older clients listening for the old event name still receive updates
+  if (action !== 'refresh') {
+    broadcastMessage('files_updated', {
+      companyId,
+      fileId,
+      action,
+      metadata,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  return result;
 }
 
 /**
  * Broadcast a form submission status update
+ *
+ * This function sends a WebSocket notification to all connected clients
+ * to inform them about a form submission status change. It can be used
+ * to notify clients about form submission success, error, or in-progress status.
+ *
+ * @param taskId - The ID of the task associated with the form submission
+ * @param formType - The type of form (e.g., 'kyb', 'ky3p', 'open_banking')
+ * @param status - The status of the form submission ('success', 'error', 'in_progress')
+ * @param companyId - The ID of the company associated with the form submission
+ * @param payload - Additional data to include in the notification
+ * @returns An object containing the number of clients that received the notification
  */
 export function broadcastFormSubmission(
   taskId: number, 
@@ -162,14 +212,51 @@ export function broadcastFormSubmission(
   companyId: number = 0,
   payload: Record<string, any> = {}
 ): { clientCount: number } {
-  return broadcastMessage('form_submission', {
+  logger.info(`Broadcasting form submission update for task ${taskId}`, {
+    taskId,
+    formType,
+    status,
+    companyId,
+    hasFileId: payload.fileId !== undefined
+  });
+  
+  // First broadcast with standard 'form_submission' event type
+  const result = broadcastMessage('form_submission', {
     taskId,
     formType,
     status,
     companyId,
     ...payload,
+    // Add cache_invalidation flag to trigger aggressive client-side cache refresh
+    cache_invalidation: true,
     timestamp: new Date().toISOString()
   });
+  
+  // For backwards compatibility, also broadcast with the legacy event types
+  if (status === 'success') {
+    // Broadcast a task update to ensure task list UI refreshes
+    broadcastTaskUpdate({
+      id: taskId,
+      status: 'submitted',
+      progress: 100,
+      metadata: {
+        fileId: payload.fileId,
+        fileName: payload.fileName,
+        lastUpdated: new Date().toISOString()
+      }
+    });
+    
+    // If a file was created, broadcast a file_vault_update as well
+    if (payload.fileId && companyId > 0) {
+      broadcastFileVaultUpdate(companyId, payload.fileId, 'added', {
+        taskId,
+        formType,
+        source: 'form_submission'
+      });
+    }
+  }
+  
+  return result;
 }
 
 /**
