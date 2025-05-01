@@ -25,19 +25,31 @@ export interface SubmissionAction {
   };
 }
 
+/**
+ * Enhanced FormSubmissionEvent interface with better compatibility for different formats
+ * 
+ * This interface is used to represent form submission events received via WebSocket.
+ * It supports various data formats and ensures we handle all use cases.
+ */
 export interface FormSubmissionEvent {
-  taskId: number;
-  formType: string;
-  status: 'success' | 'error' | 'in_progress';
-  companyId?: number;
-  fileName?: string;
-  fileId?: number;
-  unlockedTabs?: string[];
-  error?: string;
-  submissionDate: string;
-  message?: string;
-  timestamp: string;
-  completedActions?: SubmissionAction[];
+  taskId: number;                             // Numeric task ID for the form being submitted
+  formType: string;                           // Type of form (e.g., 'kyb', 'ky3p', 'open_banking')
+  status: 'success' | 'error' | 'in_progress'; // Current status of the form submission
+  companyId?: number | null;                  // Optional company ID associated with the form
+  fileName?: string | null;                   // Optional file name if a file was generated
+  fileId?: number | string | null;            // Optional file ID if a file was generated (could be string or number)
+  unlockedTabs?: string[] | null;             // Optional list of tabs that were unlocked
+  error?: string | null;                      // Optional error message if status is 'error'
+  submissionDate: string;                     // ISO timestamp when the form was submitted
+  message?: string | null;                    // Optional success/error message
+  timestamp: string;                          // ISO timestamp when the message was sent
+  completedActions?: SubmissionAction[] | null; // Optional list of actions that were completed during form submission
+  
+  // Additional fields for debugging and enhanced compatibility
+  source?: string;                            // Source of the message (e.g., 'server-broadcast')
+  serverVersion?: string;                     // Version of the server that sent the message
+  reason?: string;                            // Optional reason for the status (mostly for errors)
+  warnings?: string[];                        // Optional warnings that occurred during submission
 }
 
 interface FormSubmissionListenerProps {
@@ -118,19 +130,41 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           return;
         }
         
-        // Handle both payload and data fields for backward compatibility
-        // Allow for WebSocket implementations using either format
-        const payload = data.payload !== undefined ? data.payload : 
-                        data.data !== undefined ? data.data : 
-                        {};
+        // Enhanced payload extraction with improved compatibility
+        // Handles multiple WebSocket message formats to ensure maximum compatibility
+        // These variations can happen due to different WebSocket implementations or API changes
+        let payload = {};
         
-        // Log the raw event structure to help debug compatibility issues
+        // Try to extract payload from various possible formats
+        if (data.payload !== undefined) {
+          payload = data.payload;
+        } else if (data.data !== undefined) {
+          payload = data.data;
+        } else if (data.formId !== undefined || data.taskId !== undefined) {
+          // Direct payload in root
+          payload = data;
+        }
+        
+        // Handle numeric or string taskId formats (server can send either)
+        const extractedTaskId = payload.taskId || payload.formId || payload.id || null;
+        if (extractedTaskId !== null) {
+          // Ensure taskId is a number for comparison
+          payload.taskId = Number(extractedTaskId);
+        }
+        
+        // Log the detailed event structure to help debug compatibility issues
         if (process.env.NODE_ENV === 'development') {
-          logger.debug('Raw WebSocket message structure:', {
+          logger.debug('FormSubmissionListener: Raw WebSocket message structure:', {
+            messageType: data.type,
             hasPayload: data.payload !== undefined,
             hasData: data.data !== undefined,
-            type: data.type,
-            keys: Object.keys(data)
+            extractedTaskId,
+            expectedTaskId: taskId,
+            formType: payload.formType,
+            expectedFormType: formType,
+            status: payload.status,
+            rootKeys: Object.keys(data),
+            payloadKeys: Object.keys(payload)
           });
         }
         
