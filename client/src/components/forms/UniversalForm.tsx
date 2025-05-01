@@ -1034,27 +1034,42 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         {/* Demo buttons - Only show for demo companies */}
         {company?.isDemo && (
           <div className="flex gap-3 mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
-              onClick={handleDemoAutoFillClick}
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="18" 
-                height="18" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
+            {/* Conditionally render the KY3PDemoAutoFill component for KY3P forms */}
+            {taskType === 'ky3p' || taskType === 'security_assessment' || taskType === 'security' ? (
+              <KY3PDemoAutoFill
+                taskId={taskId || 0}
+                onSuccess={() => {
+                  // Refresh form state after successful demo auto-fill
+                  refreshStatus();
+                  setForceRerender(prev => !prev);
+                }}
+                onError={(error) => {
+                  console.error('KY3P demo auto-fill error:', error);
+                }}
+              />
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
+                onClick={handleDemoAutoFillClick}
               >
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-              </svg>
-              Demo Auto-Fill
-            </Button>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="18" 
+                  height="18" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                Demo Auto-Fill
+              </Button>
+            )}
             
             {/* Clear Fields button is now visible */}
             <Button
