@@ -154,14 +154,48 @@ export async function broadcast(type: string, payload: any): Promise<void> {
 /**
  * Broadcast a task update to all connected clients
  * 
- * @param task The task to broadcast
+ * @param taskIdOrTask Either a task ID number or an object containing task properties
+ * @param status Optional status string (only used if taskIdOrTask is a number)
+ * @param metadata Optional metadata object (only used if taskIdOrTask is a number)
  */
-export async function broadcastTaskUpdate(taskId: number, status: string, metadata?: any): Promise<void> {
-  await broadcast('task_update', {
-    id: taskId,
-    status,
-    metadata
-  });
+export async function broadcastTaskUpdate(
+  taskIdOrTask: number | { id: number; status?: string; progress?: number; metadata?: any },
+  status?: string,
+  metadata?: any
+): Promise<void> {
+  try {
+    if (typeof taskIdOrTask === 'number') {
+      // Handle the signature: broadcastTaskUpdate(taskId, status, metadata)
+      logger.debug('Broadcasting task update with numeric ID', {
+        taskId: taskIdOrTask,
+        status: status || 'unknown'
+      });
+      
+      await broadcast('task_update', {
+        id: taskIdOrTask,
+        status,
+        metadata
+      });
+    } else {
+      // Handle the signature: broadcastTaskUpdate({ id, status, metadata })
+      logger.debug('Broadcasting task update with object format', {
+        taskId: taskIdOrTask.id,
+        status: taskIdOrTask.status || 'unknown'
+      });
+      
+      await broadcast('task_update', {
+        id: taskIdOrTask.id,
+        status: taskIdOrTask.status,
+        progress: taskIdOrTask.progress,
+        metadata: taskIdOrTask.metadata
+      });
+    }
+  } catch (error) {
+    logger.error('Error broadcasting task update:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: typeof taskIdOrTask === 'number' ? taskIdOrTask : taskIdOrTask.id
+    });
+  }
 }
 
 /**
