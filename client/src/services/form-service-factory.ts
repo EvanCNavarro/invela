@@ -64,12 +64,21 @@ export function createFormService(
       // Enhanced KYB implementation
       if (formType === 'kyb') {
         try {
-          // Import directly here to avoid circular dependencies
-          const { enhancedKybServiceFactory } = require('./enhanced-kyb-service');
-          logger.info(`Using enhanced KYB form service for company ${companyIdNum}, task ${taskIdNum}`);
-          return enhancedKybServiceFactory.getInstance(companyIdNum, taskIdNum);
+          // Use dynamic ES module import instead of require
+          logger.info(`Attempting to dynamically import enhanced KYB service for company ${companyIdNum}, task ${taskIdNum}`);
+          // Return a promise that will be awaited by the caller
+          return import('./enhanced-kyb-service')
+            .then(module => {
+              logger.info(`Successfully imported enhanced KYB service module`);
+              return module.enhancedKybServiceFactory.getInstance(companyIdNum, taskIdNum);
+            })
+            .catch(error => {
+              logger.error(`Error importing enhanced KYB service: ${error instanceof Error ? error.message : String(error)}`);
+              // Fall back to standard implementation
+              return componentFactory.getFormService(formType, companyIdNum as number, taskIdNum as number);
+            });
         } catch (error) {
-          logger.error(`Error importing enhanced KYB service: ${error instanceof Error ? error.message : String(error)}`);
+          logger.error(`Exception in dynamic import block: ${error instanceof Error ? error.message : String(error)}`);
           // Continue to standard implementation instead of failing completely
         }
       }
