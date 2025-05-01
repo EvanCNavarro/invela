@@ -119,7 +119,20 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         }
         
         // Handle both payload and data fields for backward compatibility
-        const payload = data.payload !== undefined ? data.payload : data.data;
+        // Allow for WebSocket implementations using either format
+        const payload = data.payload !== undefined ? data.payload : 
+                        data.data !== undefined ? data.data : 
+                        {};
+        
+        // Log the raw event structure to help debug compatibility issues
+        if (process.env.NODE_ENV === 'development') {
+          logger.debug('Raw WebSocket message structure:', {
+            hasPayload: data.payload !== undefined,
+            hasData: data.data !== undefined,
+            type: data.type,
+            keys: Object.keys(data)
+          });
+        }
         
         // Only process events for this task and form type
         if (payload.taskId !== taskId || payload.formType !== formType) {
