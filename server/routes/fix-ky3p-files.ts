@@ -25,7 +25,6 @@ router.post('/api/fix-ky3p-files', requireAuth, async (req, res) => {
     console.log('[FixKY3PFiles] Fix completed:', result);
     
     return res.json({
-      success: true,
       message: 'KY3P file reference fix completed successfully',
       ...result
     });
