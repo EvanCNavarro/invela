@@ -40,24 +40,46 @@ export async function apiRequest<T>(
     bodyData = urlOrData;
   }
 
-  // Log API request for debugging
-  console.log(`[API Request] ${method} ${url} with${bodyData ? '' : 'out'} body data`, 
-    bodyData ? { bodyPreview: typeof bodyData === 'object' ? '(Object)' : String(bodyData).substring(0, 50) } : '');
+  // Enhanced logging for risk score priorities API calls
+  const isRiskPriorities = url.includes('/api/risk-score/priorities');
+  
+  if (isRiskPriorities) {
+    console.log(`[RiskPriorities API] ${method} ${url} Request:`, bodyData);
+  } else {
+    // Regular logging for other API calls
+    console.log(`[API Request] ${method} ${url} with${bodyData ? '' : 'out'} body data`, 
+      bodyData ? { bodyPreview: typeof bodyData === 'object' ? '(Object)' : String(bodyData).substring(0, 50) } : '');
+  }
 
   try {
+    // Generate a unique request ID
+    const requestId = `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    
+    // Ensure all requests are authenticated with proper headers
     const res = await fetch(url, {
       method,
       headers: {
         ...(bodyData ? { "Content-Type": "application/json" } : {}),
-        // Add a request ID to help with debugging
-        "X-Request-ID": `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+        "X-Request-ID": requestId, // Add request ID for tracing
+        "X-Client-Timestamp": new Date().toISOString() // Add client timestamp
       },
       body: bodyData ? JSON.stringify(bodyData) : undefined,
-      credentials: "include", // Always include credentials
+      credentials: "include", // Always include credentials for authentication
     });
 
-    // Log response status
-    console.log(`[API Response] ${method} ${url} - Status: ${res.status}`);
+    // Enhanced logging for risk score priorities API calls
+    if (isRiskPriorities) {
+      console.log(`[RiskPriorities API] ${method} ${url} - Status: ${res.status}`);
+      
+      // Special handling for 401 errors
+      if (res.status === 401) {
+        console.error(`[RiskPriorities API] Authentication failure. This explains why changes don't persist.`);
+        // Still throw the error to be handled by the mutation's onError callback
+      }
+    } else {
+      // Regular response logging for other API calls
+      console.log(`[API Response] ${method} ${url} - Status: ${res.status}`);
+    }
     
     await throwIfResNotOk(res);
     
@@ -78,13 +100,27 @@ export async function apiRequest<T>(
     
     // Try to parse JSON
     try {
-      return JSON.parse(text) as T;
+      const result = JSON.parse(text) as T;
+      
+      // Special logging for risk priorities success
+      if (isRiskPriorities) {
+        console.log(`[RiskPriorities API] ${method} ${url} Success! Response:`, result);
+      }
+      
+      return result;
     } catch (jsonError) {
       console.error(`[API Error] ${method} ${url} - Invalid JSON:`, text.substring(0, 100));
       throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
     }
   } catch (error) {
     console.error(`[API Error] ${method} ${url} - Failed:`, error);
+    
+    // For risk priorities, add a more helpful error message
+    if (isRiskPriorities) {
+      console.error(`[RiskPriorities API] This error explains why risk priorities don't persist. ` + 
+        `The API request is failing due to authentication issues, but the UI shows a success message.`);
+    }
+    
     throw error;
   }
 }
