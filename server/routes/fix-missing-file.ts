@@ -1,12 +1,29 @@
 /**
- * Fix Missing KYB File Script
+ * Universal Form File Generator
  * 
- * This emergency script directly generates the missing file for task 709 (KYB form)
- * by fetching the form responses from the database and creating a proper file record.
+ * This service provides a comprehensive solution for generating missing form files
+ * for any task type. It addresses the root cause of the issue where files are not
+ * properly created or linked during form submission.
+ * 
+ * Supported task types:
+ * - KYB forms (company_kyb)
+ * - KY3P forms (sp_ky3p_assessment)
+ * - Open Banking forms (open_banking_survey)
+ * - Card Industry forms (company_card)
  */
 
 import { db } from '@db';
-import { files, kybResponses, kybFields, tasks, companies } from '@db/schema';
+import { 
+  files, 
+  kybResponses, 
+  kybFields,
+  ky3pResponses,
+  ky3pFields, 
+  openBankingResponses,
+  openBankingFields,
+  tasks, 
+  companies 
+} from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import { broadcastFileVaultUpdate } from '../services/websocket';
 import { fileCreationService } from '../services/fileCreation';
@@ -42,45 +59,125 @@ async function generateMissingFileForTask(taskId: number) {
       return { success: false, error: 'Company not found' };
     }
     
-    // 2. Get all the KYB fields
-    const allFields = await db.select()
-      .from(kybFields)
-      .orderBy(kybFields.order);
+    // Determine task type
+    const taskType = task.task_type;
+    logger.info(`Fixing missing file for task ${taskId} of type ${taskType}`);
     
-    // 3. Get all responses for this task
-    const responses = await db.select()
-      .from(kybResponses)
-      .where(eq(kybResponses.task_id, taskId));
+    // Initialize variables
+    let formData: Record<string, any> = {};
+    let standardizedTaskType = '';
+    let responseCount = 0;
     
-    // Map field definitions to response data
-    const fieldMap = new Map(allFields.map(field => [field.id, field]));
-    
-    // Build form data object from responses
-    const formData: Record<string, any> = {};
-    for (const response of responses) {
-      const field = fieldMap.get(response.field_id);
-      if (field && field.field_key) {
-        formData[field.field_key] = response.response_value;
+    // Process based on task type
+    if (taskType === 'company_kyb' || taskType === 'kyb') {
+      // KYB form processing
+      standardizedTaskType = 'company_kyb';
+      
+      // Get all the KYB fields
+      const allFields = await db.select()
+        .from(kybFields)
+        .orderBy(kybFields.order);
+      
+      // Get all responses for this task
+      const responses = await db.select()
+        .from(kybResponses)
+        .where(eq(kybResponses.task_id, taskId));
+      
+      responseCount = responses.length;
+      
+      // Map field definitions to response data
+      const fieldMap = new Map(allFields.map(field => [field.id, field]));
+      
+      // Build form data object from responses
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field && field.field_key) {
+          formData[field.field_key] = response.response_value;
+        }
       }
+    } else if (taskType === 'sp_ky3p_assessment' || taskType === 'ky3p' || taskType === 'security_assessment' || taskType === 'security') {
+      // KY3P form processing
+      standardizedTaskType = 'sp_ky3p_assessment';
+      
+      // Get all the KY3P fields
+      const allFields = await db.select()
+        .from(ky3pFields)
+        .orderBy(ky3pFields.id);
+      
+      // Get all responses for this task
+      const responses = await db.select()
+        .from(ky3pResponses)
+        .where(eq(ky3pResponses.task_id, taskId));
+      
+      responseCount = responses.length;
+      
+      // Map field definitions to response data
+      const fieldMap = new Map(allFields.map(field => [field.id, field]));
+      
+      // Build form data object from responses
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field && field.field_key) {
+          formData[field.field_key] = response.response_value;
+        }
+      }
+    } else if (taskType === 'open_banking_survey' || taskType === 'open_banking') {
+      // Open Banking form processing
+      standardizedTaskType = 'open_banking_survey';
+      
+      // Get all the Open Banking fields
+      const allFields = await db.select()
+        .from(openBankingFields)
+        .orderBy(openBankingFields.id);
+      
+      // Get all responses for this task
+      const responses = await db.select()
+        .from(openBankingResponses)
+        .where(eq(openBankingResponses.task_id, taskId));
+      
+      responseCount = responses.length;
+      
+      // Map field definitions to response data
+      const fieldMap = new Map(allFields.map(field => [field.id, field]));
+      
+      // Build form data object from responses
+      for (const response of responses) {
+        const field = fieldMap.get(response.field_id);
+        if (field && field.field_key) {
+          formData[field.field_key] = response.response_value;
+        }
+      }
+    } else if (taskType === 'company_card' || taskType === 'card') {
+      // Card Industry Questionnaire form processing
+      standardizedTaskType = 'company_card';
+      
+      // For card forms, we may need more custom handling
+      // Just use the task metadata as the form data
+      formData = task.metadata || {};
+      responseCount = Object.keys(formData).length;
+    } else {
+      logger.error(`Unsupported task type: ${taskType} for task ${taskId}`);
+      return { success: false, error: `Unsupported task type: ${taskType}` };
     }
     
-    logger.info(`Generated form data from ${responses.length} responses for task ${taskId}`, {
+    logger.info(`Generated form data from ${responseCount} responses for task ${taskId} (${taskType})`, {
       fieldCount: Object.keys(formData).length
     });
     
-    // 4. Create a file for this form data
+    // Create a file for this form data
     const userId = task.assigned_to || task.created_by || 0; // Use assigned user or fallback to creator
     const fileResult = await fileCreationService.createTaskFile(
       userId, 
       companyId,
       formData,
       {
-        taskType: 'kyb',
+        taskType: standardizedTaskType,
         taskId: taskId,
         companyName: company.name,
-        originalType: 'kyb',
+        originalType: taskType,
         additionalData: {
-          submissionTime: new Date().toISOString()
+          submissionTime: new Date().toISOString(),
+          formType: taskType
         }
       }
     );
