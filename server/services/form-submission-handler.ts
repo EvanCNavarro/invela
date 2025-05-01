@@ -189,7 +189,26 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
           taskId,
           formType,
           schemaTaskType,
-          companyName 
+          companyName,
+          dataKeysCount: Object.keys(formData).length,
+          dataFirstKeys: Object.keys(formData).slice(0, 3),
+          formDataEmpty: Object.keys(formData).length === 0
+        });
+        
+        // Verify form data is not empty before proceeding
+        if (Object.keys(formData).length === 0) {
+          logger.error('Form data is empty - cannot create file', { taskId, formType });
+          throw new Error('Form data is empty, cannot create file');
+        }
+        
+        // Enhanced logging for form submission file creation
+        console.log(`[FormSubmissionHandler] Creating file for ${formType} form`, {
+          taskId, 
+          schemaTaskType,
+          userId,
+          companyId,
+          companyName,
+          timestamp: new Date().toISOString()
         });
         
         const fileResult = await fileCreationService.createTaskFile(
@@ -200,6 +219,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
             taskType: schemaTaskType, // Use mapped type to match zod validation schema
             taskId,
             companyName,
+            originalType: formType, // Add original form type for better tracking
             additionalData: {
               fileName,
               submissionTime: new Date().toISOString()
