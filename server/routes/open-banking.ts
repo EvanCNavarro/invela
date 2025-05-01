@@ -1563,7 +1563,7 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
         unlockedTaskCount
       });
       
-      // 1. Generate risk score for the company (random 250-1500)
+      // 1. Generate risk score for the company (random 1-100 on percentage-based scale)
       let riskScore = null;
       try {
         riskScore = await generateOpenBankingRiskScore(companyId, taskId);
