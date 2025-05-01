@@ -4,6 +4,7 @@ import { getFieldComponentType } from '@/utils/formUtils';
 import { TaskTemplateWithConfigs } from './taskTemplateService';
 import { enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { ky3pFormServiceFactory } from './ky3p-form-service';
+import { unifiedKy3pServiceFactory } from './unified-ky3p-form-service';
 import { openBankingFormServiceFactory } from './open-banking-form-service';
 import getLogger from '@/utils/logger';
 
