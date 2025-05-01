@@ -1,9 +1,9 @@
 import { db } from "@db";
 import { companies } from "@db/schema";
 import { eq } from "drizzle-orm";
-import { Logger } from './logger';
+import { logger } from './logger';
 
-const logger = new Logger('DemoHelpers');
+// Logger is already initialized in the imported module
 
 /**
  * Checks if a company name contains any of the demo indicators

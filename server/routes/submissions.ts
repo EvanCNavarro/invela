@@ -4,10 +4,10 @@ import { tasks, TaskStatus } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import * as WebSocketService from '../services/websocket';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const router = Router();
-const logger = new Logger('SubmissionRoutes');
+// Logger is already initialized in the imported module
 
 // Create a dedicated endpoint for checking form submission status
 // This is more reliable than WebSockets for critical confirmation flow

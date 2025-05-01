@@ -3,10 +3,11 @@ import { db } from '@db';
 import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
 
-const logger = new Logger('FileCreationService');
+// Add namespace context to logs
+const logContext = { service: 'FileCreationService' };
 
 export type FileStatus = 'uploaded' | 'uploading' | 'error' | 'processing';
 

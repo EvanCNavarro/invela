@@ -13,9 +13,9 @@ import { broadcastCompanyTabsUpdate } from '../services/company-tabs';
 import { unlockFileVaultAccess } from '../services/synchronous-task-dependencies';
 import { broadcastMessage } from '../services/websocket';
 import { broadcastTaskUpdate } from '../utils/task-broadcast';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('FormStandardization');
+// Logger is already initialized in the imported module
 
 /**
  * Utility for safe type conversion of form values

@@ -6,9 +6,9 @@
 
 import { Server as HttpServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = getLogger('WebSocket');
+// Logger is already initialized in the imported module
 
 // Keep track of connected clients
 const clients = new Set<WebSocket>();

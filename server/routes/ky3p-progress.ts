@@ -10,9 +10,9 @@ import { db } from '@db';
 import { tasks, ky3pResponses, ky3pFields } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('KY3PProgressRoutes');
+// Logger is already initialized in the imported module
 const router = Router();
 
 /**

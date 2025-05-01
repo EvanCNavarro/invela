@@ -7,14 +7,14 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { universalDemoAutoFillService, getFormTypeFromTaskType } from '../services/universalDemoAutoFillService';
 import { db } from '../../db';
 import { tasks } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 
 const router = Router();
-const logger = new Logger('UniversalDemoAutoFillRouter');
+// Logger is already initialized in the imported module
 
 /**
  * Unified endpoint for demo auto-fill across all form types

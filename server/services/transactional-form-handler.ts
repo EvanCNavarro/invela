@@ -5,14 +5,15 @@
  * that ensures consistency and prevents race conditions.
  */
 
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 import { withTransaction } from './transaction-manager';
 import * as UnifiedTabService from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
 import * as fileCreationService from './fileCreation.fixed';
 import * as WebSocketService from './websocket';
 
-const logger = getLogger('TransactionalFormHandler');
+// Add namespace context to logs
+const logContext = { service: 'TransactionalFormHandler' };
 
 // Import the database connection
 let db: { query: (sql: string, params?: any[]) => Promise<any> };

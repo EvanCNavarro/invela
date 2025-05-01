@@ -10,9 +10,9 @@ import { tasks } from '@db/schema';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { broadcastTaskUpdate } from '../services/websocket';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('TaskDependencies');
+// Logger is already initialized in the imported module
 
 interface DependencyRule {
   prerequisiteType: string;

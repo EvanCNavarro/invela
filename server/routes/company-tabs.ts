@@ -8,10 +8,10 @@
 import { Router } from 'express';
 import { CompanyTabsService } from '../services/companyTabsService';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const router = Router();
-const logger = new Logger('CompanyTabsRoutes');
+// Logger is already initialized in the imported module
 
 /**
  * Update available tabs for a company

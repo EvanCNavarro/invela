@@ -9,12 +9,13 @@ import { Router, Request, Response } from 'express';
 import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import processFormSubmission from '../services/transactional-form-handler';
 import * as WebSocketService from '../services/websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
-const logger = new Logger('TransactionalFormRoutes');
+// Add namespace context to logs
+const logContext = { service: 'TransactionalFormRoutes' };
 
 /**
  * Create and export the router for transactional form submission endpoints

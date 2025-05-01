@@ -7,7 +7,7 @@ import * as WebSocketService from "../services/websocket"; // Use standardized W
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
 import { determineStatusFromProgress, broadcastProgressUpdate } from '../utils/progress';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import { standardFormSubmission, TaskStatus } from '../utils/form-standardization';
 import { FileCreationService } from '../services/file-creation';
 import { CompanyTabsService } from '../services/company-tabs';
@@ -16,7 +16,7 @@ import { processDependencies, unlockOpenBankingTasks } from './task-dependencies
 import { submitFormWithImmediateUnlock } from '../services/form-submission-handler';
 import { unlockDependentTasksImmediately } from '../services/synchronous-task-dependencies';
 
-const logger = new Logger('TasksRoutes');
+// Logger is already initialized in the imported module
 
 const router = Router();
 

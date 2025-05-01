@@ -8,9 +8,9 @@
 import { Router } from 'express';
 import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('BroadcastRoutes');
+// Logger is already initialized in the imported module
 
 const router = Router();
 

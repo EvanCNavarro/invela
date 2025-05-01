@@ -9,9 +9,9 @@ import { Router } from 'express';
 import { db } from '@db';
 import { ky3pFields } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = new Logger('KY3PFieldsRoutes');
+// Logger is already initialized in the imported module
 const router = Router();
 
 /**
