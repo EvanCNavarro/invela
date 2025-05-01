@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { PlusCircle, AlertTriangle, CheckCircle, Clock, GitBranch } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import ClaimsTable from '@/components/claims/ClaimsTable';
@@ -84,6 +84,7 @@ export default function ClaimsPage() {
                 Resolved Claims
               </TabsTrigger>
               <TabsTrigger value="process" className="flex items-center">
+                <GitBranch className="mr-2 h-4 w-4" />
                 Process Flow
               </TabsTrigger>
             </TabsList>
