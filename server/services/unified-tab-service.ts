@@ -8,7 +8,7 @@
  * @module unified-tab-service
  */
 
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 // Import the database connection
 let db: { query: (sql: string, params?: any[]) => Promise<any> };
 
@@ -23,8 +23,6 @@ try {
 }
 import { withTransaction } from './transaction-manager';
 import * as WebSocketService from './websocket';
-
-const logger = getLogger('UnifiedTabService');
 
 /**
  * Available tab types in the application

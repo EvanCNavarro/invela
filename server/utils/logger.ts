@@ -1,62 +1,57 @@
-interface LogContext {
-  [key: string]: any;
-}
+/**
+ * Logger utility for consistent logging across the application
+ */
 
-export class Logger {
-  private namespace: string;
+/**
+ * LogLevel type representing different logging levels
+ */
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-  constructor(namespace: string) {
-    this.namespace = namespace;
+/**
+ * Logger class for structured logging
+ */
+class Logger {
+  /**
+   * Log at debug level
+   */
+  debug(message: string, meta?: Record<string, any>): void {
+    this.log('debug', message, meta);
   }
-
-  private formatMessage(level: string, message: string, context?: LogContext): string {
+  
+  /**
+   * Log at info level
+   */
+  info(message: string, meta?: Record<string, any>): void {
+    this.log('info', message, meta);
+  }
+  
+  /**
+   * Log at warn level
+   */
+  warn(message: string, meta?: Record<string, any>): void {
+    this.log('warn', message, meta);
+  }
+  
+  /**
+   * Log at error level
+   */
+  error(message: string, meta?: Record<string, any>): void {
+    this.log('error', message, meta);
+  }
+  
+  /**
+   * Internal log method
+   */
+  private log(level: LogLevel, message: string, meta?: Record<string, any>): void {
     const timestamp = new Date().toISOString();
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    return `[${timestamp}] [${level}] [${this.namespace}] ${message}${contextStr}`;
-  }
-
-  debug(message: string, context?: LogContext) {
-    console.debug(this.formatMessage('DEBUG', message, context));
-  }
-
-  info(message: string, context?: LogContext) {
-    console.info(this.formatMessage('INFO', message, context));
-  }
-
-  warn(message: string, context?: LogContext) {
-    console.warn(this.formatMessage('WARN', message, context));
-  }
-
-  error(message: string, context?: LogContext) {
-    console.error(this.formatMessage('ERROR', message, context));
+    const formattedMeta = meta ? JSON.stringify(meta) : '';
+    
+    // Format: [2025-05-01T19:00:00.000Z] [ERROR] Message {"key":"value"}
+    console[level](`[${timestamp}] [${level.toUpperCase()}] ${message}`, formattedMeta);
   }
 }
 
-// Create a logger instance for a specific namespace
-export function createLogger(namespace: string): Logger {
-  return new Logger(namespace);
-}
-
-// Export simple functions for backward compatibility
-export function debug(message: string, context?: LogContext) {
-  const defaultLogger = new Logger('Default');
-  defaultLogger.debug(message, context);
-}
-
-export function info(message: string, context?: LogContext) {
-  const defaultLogger = new Logger('Default');
-  defaultLogger.info(message, context);
-}
-
-export function warn(message: string, context?: LogContext) {
-  const defaultLogger = new Logger('Default');
-  defaultLogger.warn(message, context);
-}
-
-export function error(message: string, context?: LogContext) {
-  const defaultLogger = new Logger('Default');
-  defaultLogger.error(message, context);
-}
-
-// Export createLogger as default for modules that import using default syntax
-export default createLogger;
+/**
+ * Export a single logger instance for use throughout the application
+ */
+export const logger = new Logger();

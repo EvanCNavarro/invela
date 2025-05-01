@@ -9,9 +9,7 @@
 
 import { db } from '@db';
 import { files } from '@db/schema';
-import { Logger } from '../utils/logger';
-
-const logger = new Logger('FileCreationService');
+import { logger } from '../utils/logger';
 
 /**
  * Options for file creation
@@ -95,7 +93,6 @@ export async function createFile(options: FileCreationOptions): Promise<FileCrea
     
     return {
       success: false,
-      fileName: options.name,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
@@ -142,7 +139,7 @@ export async function createTaskFile(
     );
     
     // Create the file
-    const result = await createFile({
+    return await createFile({
       name: fileName,
       content,
       type: fileType,
@@ -155,11 +152,6 @@ export async function createTaskFile(
       },
       status: 'uploaded'
     });
-    
-    return {
-      ...result,
-      fileName
-    };
   } catch (error) {
     logger.error('Error creating task file', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -171,7 +163,6 @@ export async function createTaskFile(
     
     return {
       success: false,
-      fileName: generateStandardFileName(formType.toLowerCase(), taskId, companyId),
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }

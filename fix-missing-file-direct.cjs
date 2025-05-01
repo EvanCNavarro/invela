@@ -1,5 +1,5 @@
 /**
- * Direct Fix for Missing Files
+ * Direct Fix for Missing Files - CommonJS Version
  * 
  * This script directly invokes the fixed file creation service to generate missing
  * files for tasks that have been submitted but don't show up in the file vault.
@@ -7,9 +7,10 @@
  * Usage: node fix-missing-file-direct.cjs <taskId>
  */
 
-const fileCreation = require('./server/services/fileCreation.fixed.ts');
+const path = require('path');
+const fileCreation = require('./server/services/fileCreation.fixed');
 const { db } = require('./db');
-const { tasks, files } = require('./db/schema');
+const { tasks, files, kybResponses, ky3pResponses, openBankingResponses } = require('./db/schema');
 const { eq } = require('drizzle-orm');
 
 async function fixMissingFileForTask(taskId) {
@@ -76,54 +77,47 @@ async function fixMissingFileForTask(taskId) {
     
     // 5. For KYB tasks
     if (taskType === 'kyb' || taskType === 'company_kyb') {
-      const kybResponses = await db.query.kyb_responses.findMany({
-        where: eq(db.kyb_responses.task_id, taskId)
+      const kybResponsesResult = await db.query.kybResponses.findMany({
+        where: eq(kybResponses.task_id, taskId)
       });
       
-      kybResponses.forEach(response => {
+      kybResponsesResult.forEach(response => {
         formData[response.field_key] = response.response_value;
       });
       
-      console.log(`Found ${kybResponses.length} KYB responses`);
+      console.log(`Found ${kybResponsesResult.length} KYB responses`);
     }
     
     // 6. For KY3P tasks
     else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
-      const ky3pResponses = await db.query.ky3p_responses.findMany({
-        where: eq(db.ky3p_responses.task_id, taskId)
+      const ky3pResponsesResult = await db.query.ky3pResponses.findMany({
+        where: eq(ky3pResponses.task_id, taskId)
       });
       
-      ky3pResponses.forEach(response => {
+      ky3pResponsesResult.forEach(response => {
         formData[response.field_id] = response.response_value;
       });
       
-      console.log(`Found ${ky3pResponses.length} KY3P responses`);
+      console.log(`Found ${ky3pResponsesResult.length} KY3P responses`);
     }
     
     // 7. For Open Banking tasks
     else if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-      const obResponses = await db.query.open_banking_responses.findMany({
-        where: eq(db.open_banking_responses.task_id, taskId)
+      const obResponsesResult = await db.query.openBankingResponses.findMany({
+        where: eq(openBankingResponses.task_id, taskId)
       });
       
-      obResponses.forEach(response => {
+      obResponsesResult.forEach(response => {
         formData[response.field_id] = response.response_value;
       });
       
-      console.log(`Found ${obResponses.length} Open Banking responses`);
+      console.log(`Found ${obResponsesResult.length} Open Banking responses`);
     }
     
     // 8. For Card Industry tasks
     else if (taskType === 'card' || taskType === 'company_card') {
-      const cardResponses = await db.query.card_responses.findMany({
-        where: eq(db.card_responses.task_id, taskId)
-      });
-      
-      cardResponses.forEach(response => {
-        formData[response.field_id] = response.response_value;
-      });
-      
-      console.log(`Found ${cardResponses.length} Card Industry responses`);
+      // Card industry forms are not currently supported in this version
+      console.log('Card industry forms are not currently supported');
     }
     
     // 9. Check if we have form data
