@@ -68,16 +68,19 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     );
   });
 
-  const handleViewClaim = (claimId: string) => {
-    navigate(`/claims/${claimId}`);
+  const handleViewClaim = (claim: Claim) => {
+    // Use the numeric ID for navigation as it's expected by the route parameter
+    navigate(`/claims/${claim.id}`);
   };
 
-  const handleDisputeClaim = (claimId: string) => {
-    navigate(`/claims/${claimId}/dispute`);
+  const handleDisputeClaim = (claim: Claim) => {
+    // Use the numeric ID for navigation as it's expected by the route parameter
+    navigate(`/claims/${claim.id}/dispute`);
   };
 
-  const handleResolveClaim = (claimId: string) => {
-    navigate(`/claims/${claimId}/resolve`);
+  const handleResolveClaim = (claim: Claim) => {
+    // Use the numeric ID for navigation as it's expected by the route parameter
+    navigate(`/claims/${claim.id}/resolve`);
   };
 
   // Format currency with 2 decimal places and dollar sign
@@ -191,18 +194,18 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewClaim(claim.claim_id)}>
+                        <DropdownMenuItem onClick={() => handleViewClaim(claim)}>
                           View details
                         </DropdownMenuItem>
                         
                         {type === 'active' && (
-                          <DropdownMenuItem onClick={() => handleDisputeClaim(claim.claim_id)}>
+                          <DropdownMenuItem onClick={() => handleDisputeClaim(claim)}>
                             Dispute claim
                           </DropdownMenuItem>
                         )}
                         
                         {(type === 'active' || type === 'disputed') && (
-                          <DropdownMenuItem onClick={() => handleResolveClaim(claim.claim_id)}>
+                          <DropdownMenuItem onClick={() => handleResolveClaim(claim)}>
                             Resolve claim
                           </DropdownMenuItem>
                         )}
