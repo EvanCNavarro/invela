@@ -122,8 +122,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     svg.call(zoom as any);
     
     // Create a group for the entire diagram
-    const g = svg.append('g')
-      .attr('transform', 'translate(50, 50)');
+    const g = svg.append('g');
     
     // Create a group for markers (arrowheads)
     const defs = svg.append('defs');
@@ -238,7 +237,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     };
   }
   
-  // Helper: Calculate positions for each node based on a more balanced, less horizontal layout
+  // Helper: Calculate positions for each node in a compact, grid-based layout
   function calculateNodePositions(dagData: ReturnType<typeof processFlowToDag>) {
     const { nodes, levels } = dagData;
     const { connections } = flowData!;
@@ -246,96 +245,146 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     // Create a map for quick node lookup
     const nodeMap = new Map(nodes.map(node => [node.id, node]));
     
-    // Find the 'data breach' node which is typically the starting point
-    const startNode = nodes.find(node => node.type === 'breach' || node.name.includes('Breach'));
+    // Define key node types for better layout organization
+    const nodeTypes = {
+      breach: nodes.find(node => node.type === 'breach' || (node.name && node.name.toLowerCase().includes('breach'))),
+      bank: nodes.find(node => node.type === 'bank' || (node.name && node.name.toLowerCase().includes('bank'))),
+      fintech: nodes.find(node => node.type === 'fintech' || (node.name && node.name.toLowerCase().includes('fintech'))),
+      decision: nodes.find(node => node.type === 'decision')
+    };
     
-    // Create a more logical 2D grid layout
-    const grid: Record<string, { node: ProcessNode, x: number, y: number }> = {};
+    // Define a grid layout with rows and columns
+    // Using a 3x3 grid for balanced placement
+    const gridLayout: Array<Array<ProcessNode | null>> = [
+      [null, null, null],  // Top row
+      [null, null, null],  // Middle row
+      [null, null, null]   // Bottom row
+    ];
     
-    // Set initial positions based on specific node types and their relationships
-    if (startNode) {
-      // Place data breach at the center-left
-      grid[startNode.id] = { node: startNode, x: 0, y: 250 };
+    // Place key nodes in logical positions
+    if (nodeTypes.breach) {
+      // Data Breach goes in middle-left (1,0)
+      gridLayout[1][0] = nodeTypes.breach;
+    }
+    
+    if (nodeTypes.bank) {
+      // Bank Assessment goes in top-center (0,1)
+      gridLayout[0][1] = nodeTypes.bank;
+    }
+    
+    if (nodeTypes.fintech) {
+      // FinTech Notification goes in bottom-center (2,1)
+      gridLayout[2][1] = nodeTypes.fintech;
+    }
+    
+    if (nodeTypes.decision) {
+      // Decision Node goes in middle-center (1,1)
+      gridLayout[1][1] = nodeTypes.decision;
       
-      // Find nodes connected directly to data breach
-      const directConnections = connections.filter(conn => conn.source === startNode.id);
-      
-      // Place bank assessment node on upper branch
-      const bankNode = directConnections
+      // Find nodes connected from decision node
+      const yesNodes = connections
+        .filter(conn => 
+          conn.source === nodeTypes.decision!.id && 
+          conn.label && 
+          (conn.label.toLowerCase().includes('yes') || conn.label.toLowerCase().includes('true'))
+        )
         .map(conn => nodeMap.get(conn.target))
-        .find(node => node && (node.type === 'bank' || (node.name && node.name.includes('Bank'))));
-        
-      if (bankNode) {
-        grid[bankNode.id] = { node: bankNode, x: 230, y: 150 };
+        .filter(node => node) as ProcessNode[];
+      
+      const noNodes = connections
+        .filter(conn => 
+          conn.source === nodeTypes.decision!.id && 
+          conn.label && 
+          (conn.label.toLowerCase().includes('no') || conn.label.toLowerCase().includes('false'))
+        )
+        .map(conn => nodeMap.get(conn.target))
+        .filter(node => node) as ProcessNode[];
+      
+      // Place yes path node in top-right (0,2)
+      if (yesNodes.length > 0) {
+        gridLayout[0][2] = yesNodes[0];
       }
       
-      // Place FinTech notification on lower branch
-      const fintechNode = directConnections
-        .map(conn => nodeMap.get(conn.target))
-        .find(node => node && (node.type === 'fintech' || (node.name && node.name.includes('FinTech'))));
-        
-      if (fintechNode) {
-        grid[fintechNode.id] = { node: fintechNode, x: 230, y: 350 };
-      }
-      
-      // Find decision node (typically connected to Bank Assessment)
-      const decisionNode = nodes.find(node => node.type === 'decision');
-      if (decisionNode && bankNode) {
-        grid[decisionNode.id] = { node: decisionNode, x: 460, y: 250 };
-        
-        // Find nodes connected from decision node (yes/no paths)
-        const decisionOutputs = connections.filter(conn => conn.source === decisionNode.id);
-        
-        // Find any remaining nodes and place them on the right side
-        nodes.forEach(node => {
-          if (!grid[node.id]) {
-            // Check if it's connected to decision node
-            const connectionToDecision = connections.find(conn => 
-              conn.source === decisionNode.id && conn.target === node.id);
-              
-            if (connectionToDecision) {
-              // If yes path, place above
-              if (connectionToDecision.label && 
-                  (connectionToDecision.label.toLowerCase().includes('yes') || 
-                   connectionToDecision.label.toLowerCase().includes('true'))) {
-                grid[node.id] = { node, x: 690, y: 150 };
-              } else {
-                // If no path, place below
-                grid[node.id] = { node, x: 690, y: 350 };
-              }
-            }
-          }
-        });
+      // Place no path node in bottom-right (2,2)
+      if (noNodes.length > 0) {
+        gridLayout[2][2] = noNodes[0];
       }
     }
     
-    // Position any remaining nodes that haven't been placed
-    let nextRow = 0;
-    const baseSpacing = 175;
+    // Place any remaining nodes that haven't been assigned yet
+    const remainingNodes = nodes.filter(node => {
+      // Check all grid positions to see if this node is already placed
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          if (gridLayout[row][col] && gridLayout[row][col]!.id === node.id) {
+            return false; // Node is already in the grid
+          }
+        }
+      }
+      return true; // Node is not yet in the grid
+    });
     
-    nodes.forEach(node => {
-      if (!grid[node.id]) {
-        // Find the level for this node
-        const level = levels[node.id] || 0;
-        
-        // Calculate position based on level and available space
-        grid[node.id] = {
-          node,
-          x: 230 * level,
-          y: 150 + (nextRow * baseSpacing)
-        };
-        
-        nextRow = (nextRow + 1) % 3; // Wrap after 3 rows
+    // Find any empty cells in the grid
+    const emptyCells: Array<[number, number]> = [];
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        if (!gridLayout[row][col]) {
+          emptyCells.push([row, col]);
+        }
+      }
+    }
+    
+    // Fill empty cells with remaining nodes
+    remainingNodes.forEach((node, index) => {
+      if (index < emptyCells.length) {
+        const [row, col] = emptyCells[index];
+        gridLayout[row][col] = node;
       }
     });
     
-    // Convert grid to positions array
-    const nodesWithPositions: (ProcessNode & { x: number; y: number })[] = 
-      Object.values(grid).map(({ node, x, y }) => ({
-        ...node,
-        x,
-        y
-      }));
+    // Convert grid to position coordinates
+    const nodesWithPositions: (ProcessNode & { x: number; y: number })[] = [];
+    
+    // Define grid cell dimensions (adjusted for better spacing)
+    const cellWidth = 180;
+    const cellHeight = 170;
+    const centerX = 70;  // Starting X offset
+    const centerY = 70;  // Starting Y offset
+    
+    // Process the grid layout into position coordinates
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        const node = gridLayout[row][col];
+        if (node) {
+          nodesWithPositions.push({
+            ...node,
+            x: centerX + (col * cellWidth),
+            y: centerY + (row * cellHeight)
+          });
+        }
+      }
+    }
+    
+    // Handle any overflow nodes (more than 9) with a simple wrapping layout
+    if (remainingNodes.length > emptyCells.length) {
+      const overflowNodes = remainingNodes.slice(emptyCells.length);
+      let overflowRow = 0;
+      let overflowCol = 3;  // Start in a new column
+      
+      overflowNodes.forEach(node => {
+        nodesWithPositions.push({
+          ...node,
+          x: centerX + (overflowCol * cellWidth),
+          y: centerY + (overflowRow * cellHeight)
+        });
+        
+        overflowRow++;
+        if (overflowRow >= 3) {
+          overflowRow = 0;
+          overflowCol++;
+        }
+      });
+    }
     
     return nodesWithPositions;
   }
