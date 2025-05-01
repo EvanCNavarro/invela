@@ -9,8 +9,11 @@
  * to locate and display files properly.
  */
 
-import logger from '../utils/logger';
+import createLogger from '../utils/logger';
 import { TaskMetadata } from '../types/tasks';
+
+// Create a logger for this service
+const logger = createLogger('StandardizedFileRef');
 
 // Define the possible form types
 export type FormType = 'kyb' | 'ky3p' | 'open_banking' | 'company_kyb' | 'company_card' | 'open_banking_survey';
