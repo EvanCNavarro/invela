@@ -96,6 +96,13 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     return () => clearTimeout(timer);
   }, []);
 
+  // Define constants at component scope for access by nested functions
+  const width = 1000;
+  const height = 600;
+  const nodeWidth = 150;
+  const nodeHeight = 60;
+  const decisionNodeSize = 80; // for diamond shape
+
   // Create the visualization when data is available
   useEffect(() => {
     if (!flowData || !svgRef.current) return;
@@ -104,12 +111,6 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     
     // Clear any existing content
     svg.selectAll('*').remove();
-    
-    const width = 1000;
-    const height = 600;
-    const nodeWidth = 150;
-    const nodeHeight = 60;
-    const decisionNodeSize = 80; // for diamond shape
     
     // Add a zoom behavior
     const zoom = d3.zoom()
@@ -240,6 +241,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     
     // Calculate horizontal and vertical spacing
     const levelWidth = 220; // Space between levels
+    const nodeHeight = 60; // Height of a node (same as in the main function)
     const nodeSpacing = 100; // Minimum space between nodes at the same level
     
     // Calculate total height needed for the diagram
