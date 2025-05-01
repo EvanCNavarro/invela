@@ -15,7 +15,7 @@ import { ComparativeVisualization } from '@/components/risk-score/ComparativeVis
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { checkAuthentication, directUpdateRiskPriorities } from "@/lib/auth-check";
+import { checkAuthentication, directUpdateRiskPriorities } from "@/lib/direct-risk-update";
 import riskScoreLogger from "@/lib/risk-score-logger";
 // Import from 'react-dnd' and 'react-dnd-html5-backend' more carefully
 import { DndProvider } from 'react-dnd';
@@ -333,7 +333,7 @@ export default function RiskScoreConfigurationPage() {
         if (!authStatus.riskEndpointAuthenticated) {
           riskScoreLogger.log('save', 'Using direct update method as a fallback due to authentication issues');
           // If we're not authenticated for the risk endpoint, use the direct method
-          const directResult = await directUpdateRiskPriorities(priorities.dimensions);
+          const directResult = await directUpdateRiskPriorities(priorities);
           
           if (!directResult.success) {
             const errorMsg = 'Direct update failed: ' + directResult.error;
@@ -354,7 +354,7 @@ export default function RiskScoreConfigurationPage() {
         // Last resort fallback - try direct update if we get here
         riskScoreLogger.log('save', 'Trying direct update as final fallback');
         try {
-          const directResult = await directUpdateRiskPriorities(priorities.dimensions);
+          const directResult = await directUpdateRiskPriorities(priorities);
           
           if (!directResult.success) {
             riskScoreLogger.error('save', 'Final fallback direct update also failed:', directResult.error);

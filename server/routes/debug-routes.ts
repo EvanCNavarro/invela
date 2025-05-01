@@ -107,4 +107,4 @@ router.get('/auth-check', (req: Request, res: Response) => {
   });
 });
 
-export default router;
+// Only using named export

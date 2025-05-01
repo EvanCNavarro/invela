@@ -1,81 +1,134 @@
-import { Router } from 'express';
-import { db } from '@db';
-import { tasks } from '@db/schema';
-import { eq } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth';
-import { broadcastMessage, broadcastTaskUpdate } from '../services/websocket';
+/**
+ * WebSocket Server Configuration for Risk Score Notifications
+ * 
+ * This module sets up a WebSocket server to broadcast risk score updates to clients.
+ */
 
-const router = Router();
+import { Server as HttpServer } from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
+import getLogger from '../utils/logger';
 
-// Test endpoint for sending WebSocket notifications
-router.post('/test-notification', requireAuth, async (req, res) => {
-  try {
-    const { taskId, status, progress } = req.body;
+const logger = getLogger('WebSocket');
+
+// Keep track of connected clients
+const clients = new Set<WebSocket>();
+
+// Initialize WebSocket server
+export function setupWebSocketServer(httpServer: HttpServer): WebSocketServer {
+  logger.info('[WebSocket] Server initialized on path: /ws');
+  
+  // Create WebSocket server with a specific path to avoid conflict with Vite's HMR
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Handle new WebSocket connections
+  wss.on('connection', (ws) => {
+    logger.info('[WebSocket] New WebSocket client connected');
     
-    if (!taskId) {
-      return res.status(400).json({ message: 'Task ID is required' });
-    }
-
-    // Get the task if it exists
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, parseInt(taskId))
-    });
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
-
-    const testPayload = {
-      taskId: parseInt(taskId),
-      status: status || task.status,
-      progress: progress !== undefined ? progress : task.progress,
-      metadata: {
-        lastUpdated: new Date().toISOString(),
-        testNotification: true,
-        message: 'This is a test notification from the WebSocket debugger'
-      }
-    };
-
-    // Broadcast the task update
-    broadcastMessage('task_test_notification', testPayload);
-
-    // Also broadcast as a regular task update for complete testing
-    broadcastTaskUpdate({
-      id: parseInt(taskId),
-      status: status || task.status,
-      progress: progress !== undefined ? progress : task.progress,
-      metadata: {
-        lastUpdated: new Date().toISOString(),
-        testNotification: true
+    // Add new client to the pool
+    clients.add(ws);
+    
+    // Send a welcome message to the client
+    ws.send(JSON.stringify({
+      type: 'connection_established',
+      message: 'Connected to Invela Risk Score WebSocket server',
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Handle messages from clients
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        logger.info('[WebSocket] Received message from client:', data);
+        
+        // Handle ping messages to keep connection alive
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({
+            type: 'pong',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        logger.error('[WebSocket] Error parsing message:', error);
       }
     });
+    
+    // Handle client disconnect
+    ws.on('close', (code, reason) => {
+      logger.info(`[WebSocket] WebSocket client disconnected with code ${code} and reason: ${reason}`);
+      clients.delete(ws);
+    });
+  });
+  
+  return wss;
+}
 
-    res.json({ 
-      success: true, 
-      message: 'Test notification sent',
-      payload: testPayload
-    });
-  } catch (error) {
-    console.error('Error sending test notification:', error);
-    res.status(500).json({ 
-      message: 'Error sending test notification',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
+/**
+ * Broadcast a message to all connected WebSocket clients
+ */
+export function broadcastMessage(type: string, data: any) {
+  const message = JSON.stringify({
+    type,
+    data, // This will be the payload
+    timestamp: new Date().toISOString()
+  });
+  
+  logger.info(`[WebSocket] Broadcasting message of type ${type} to ${clients.size} clients`);
+  
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+/**
+ * Send a risk score update to all clients
+ */
+export function broadcastRiskScoreUpdate(companyId: number, newScore: number) {
+  broadcastMessage('risk_score_update', {
+    companyId,
+    newScore,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+/**
+ * Send risk dimension priorities update to all clients
+ */
+export function broadcastRiskPrioritiesUpdate(priorities: any) {
+  broadcastMessage('risk_priorities_update', {
+    priorities,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+// Create and export a router for WebSocket-related endpoints
+import { Router } from 'express';
+const websocketRouter = Router();
+
+// GET endpoint to check WebSocket server status
+websocketRouter.get('/api/websocket/status', (req, res) => {
+  res.json({
+    status: 'active',
+    clientCount: clients.size,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Ping endpoint to test WebSocket connection
-router.post('/ping', requireAuth, (req, res) => {
+// POST endpoint to broadcast a test message
+websocketRouter.post('/api/websocket/broadcast', (req, res) => {
+  const { type, data } = req.body;
+  
+  if (!type) {
+    return res.status(400).json({ error: 'Message type is required' });
+  }
+  
   try {
-    broadcastMessage('ping', { timestamp: new Date().toISOString() });
-    res.json({ success: true, message: 'Ping sent to all connected clients' });
+    broadcastMessage(type, data || {});
+    res.json({ success: true, clientCount: clients.size });
   } catch (error) {
-    console.error('Error sending ping:', error);
-    res.status(500).json({ 
-      message: 'Error sending ping',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    res.status(500).json({ error: String(error) });
   }
 });
 
-export default router;
+export default websocketRouter;
