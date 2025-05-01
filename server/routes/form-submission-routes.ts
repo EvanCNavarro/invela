@@ -10,7 +10,7 @@ import { db } from '@db';
 import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import getLogger from '../utils/logger';
-import * as fileCreation from '../services/fileCreation';
+import * as fileCreation from '../services/fileCreation.fixed';
 import UnifiedTabService from '../services/unified-tab-service';
 import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
@@ -334,19 +334,18 @@ export function createFormSubmissionRouter(): Router {
             }
             
             // Create an actual file from the form data
+            const standardizedTaskType = (formType === 'kyb' ? 'company_kyb' : 
+                                         formType === 'ky3p' ? 'sp_ky3p_assessment' : 
+                                         formType === 'card' ? 'company_card' :
+                                         formType === 'open_banking' ? 'open_banking_survey' : 
+                                         'company_kyb');
+            
             const fileResult = await fileCreation.createTaskFile(
-              req.user?.id || 0,
-              companyId,
+              taskId,
+              standardizedTaskType,
               formData, // Use the submitted form data
-              {
-                // Use a safe type conversion to ensure compatibility with fileCreation service
-                taskType: (formType === 'kyb' ? 'company_kyb' : 
-                          formType === 'ky3p' ? 'sp_ky3p_assessment' : 
-                          formType === 'card' ? 'company_card' : 'company_kyb'),
-                taskId,
-                companyName,
-                additionalData: { originalType: formType }
-              }
+              companyId,
+              req.user?.id || 0
             );
             
             if (!fileResult.success) {
