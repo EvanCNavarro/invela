@@ -82,15 +82,21 @@ export async function handleDemoAutoFill({
   setForceRerender(prev => !prev);
   
   try {
-    // For KY3P forms, use our standardized bulk update approach
+    // For KY3P forms, use the dedicated KY3PDemoAutoFill component instead
+    // This handler should not be used for KY3P forms to avoid duplicate service calls
     if (taskType === 'ky3p' || taskType === 'security_assessment') {
+      logger.warn(`KY3P forms should use the dedicated KY3PDemoAutoFill component, not this generic handler.`);
+      logger.warn(`Using the generic handler can cause duplicate service calls.`);
+      
+      // Show a more informative error
+      toast({
+        title: 'Demo Auto-Fill Notice',
+        description: 'KY3P forms use a dedicated auto-fill component. Please use the standard "Fill with Demo Data" button.',
+        variant: 'default'
+      });
+      
+      // Let's continue anyway for backward compatibility
       try {
-        // Import the standardized bulk update utility
-        const { standardizedBulkUpdate } = await import('./standardized-ky3p-update');
-        
-        // Fetch the demo data 
-        logger.info(`Fetching KY3P demo data from service for task ${taskId}`);
-        
         // Check if the form service supports demo data
         if (!hasGetDemoData(formService)) {
           logger.error('FormService does not implement getDemoData method');
@@ -115,85 +121,31 @@ export async function handleDemoAutoFill({
           return;
         }
         
-        // Use the standardized bulk update to send all the data at once
+        // Reset the form with the demo data directly without extra service calls
         const fieldCount = Object.keys(demoData).length;
-        logger.info(`Using standardized bulk update for KY3P demo data with ${fieldCount} fields`);
+        resetForm(demoData);
         
-        // Show progress toast
+        // Force a single UI update without triggering redundant service calls
+        setForceRerender(prev => !prev);
+        
+        // Just refresh the status without saving again
+        await refreshStatus();
+        
         toast({
-          title: 'Demo Auto-Fill',
-          description: `Populating ${fieldCount} fields...`,
-          variant: 'default'
+          title: 'Demo Auto-Fill Complete',
+          description: `Successfully filled ${fieldCount} fields with demo data`,
+          variant: 'success'
         });
         
-        try {
-          // CRITICAL IMPROVEMENT: Use a direct fetch with the exact format 
-          // observed in server logs to ensure compatibility
-          const directResponse = await fetch(`/api/ky3p/batch-update/${taskId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              taskIdRaw: String(taskId),
-              fieldIdRaw: 'bulk',
-              responseValue: JSON.stringify(demoData),
-              responseValueType: 'object'
-            }),
-          });
-          
-          if (directResponse.ok) {
-            logger.info('Direct KY3P batch update successful');
-            
-            // Force re-render and update UI without waiting for further operations
-            resetForm(demoData);
-            setForceRerender(prev => !prev);
-            await refreshStatus();
-            
-            toast({
-              title: 'Demo Auto-Fill Complete',
-              description: `Successfully filled ${fieldCount} fields with demo data`,
-              variant: 'success'
-            });
-            
-            return;
-          }
-          
-          logger.warn(`Direct approach failed with status ${directResponse.status}, trying standardized approach`);
-        } catch (directError) {
-          logger.warn('Error with direct approach:', directError);
-        }
-        
-        // Fall back to our standard approach if direct method fails
-        const success = await standardizedBulkUpdate(taskId, demoData);
-        
-        if (success) {
-          logger.info('KY3P demo data successfully applied using standardized approach');
-          
-          // Reset the form with the demo data
-          resetForm(demoData);
-          
-          // Force a re-render to show the updated form
-          setForceRerender(prev => !prev);
-          
-          // Refresh the status to update progress
-          await refreshStatus();
-          
-          // Show success toast
-          toast({
-            title: 'Demo Auto-Fill Complete',
-            description: `Successfully filled ${fieldCount} fields with demo data`,
-            variant: 'success'
-          });
-          
-          return;
-        } else {
-          logger.error('Failed to apply KY3P demo data using standardized bulk update');
-          // Continue to generic approach as fallback
-        }
+        return;
       } catch (error) {
-        logger.error('Error using standardized KY3P update:', error);
-        // Continue to generic approach as fallback
+        logger.error('Error handling KY3P demo data:', error);
+        toast({
+          title: 'Demo Auto-Fill Error',
+          description: error instanceof Error ? error.message : 'Failed to apply demo data',
+          variant: 'destructive'
+        });
+        return;
       }
     }
     
