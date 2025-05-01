@@ -247,8 +247,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <WebSocketEventBridge eventTypes={[
         'file_vault_update',
         'form_submission',
-        'company_tabs_update',
-        'company_tabs_updated'
+        'company_tabs_update'
+        // Removed 'company_tabs_updated' as it's not used by any broadcast
       ]} />
     </div>
   );
