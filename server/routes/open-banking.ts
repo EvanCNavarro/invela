@@ -25,7 +25,7 @@ import {
 } from '@db/schema';
 import { Logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
-import { broadcastMessage } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
 import path from 'path';
 import fs from 'fs';
@@ -168,13 +168,10 @@ async function unlockDependentTasks(taskId: number) {
       logger.info('[OpenBankingRoutes] Unlocked dependent task', { taskId: depTask.id });
       
       // Broadcast task update via WebSocket
-      broadcastMessage({
-        type: 'task_updated',
-        payload: {
-          taskId: depTask.id,
-          companyId: companyId,
-          status: TaskStatus.NOT_STARTED
-        }
+      WebSocketService.broadcast('task_update', {
+        taskId: depTask.id,
+        companyId: companyId,
+        status: TaskStatus.NOT_STARTED
       });
     }
     
@@ -548,11 +545,11 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
       };
       
       // Broadcast exactly one WebSocket message with all flags to prevent any further updates
-      // Use direct WebSocket broadcast instead of going through progress utils to bypass all checks
-      broadcastMessage('task_updated', updatePayload);
+      // Use standardized WebSocketService to ensure consistent message format
+      WebSocketService.broadcast('task_update', updatePayload);
       
-      // Log that we're using a direct message instead of the usual channel
-      logger.info('[OpenBankingRoutes] Used direct WebSocket broadcast to bypass reconciliation checks');
+      // Log that we're using standardized WebSocket broadcast
+      logger.info('[OpenBankingRoutes] Used standardized WebSocket broadcast for task update');
       
       logger.info('[OpenBankingRoutes] Fast clear completed successfully', { 
         taskId, 
@@ -1095,8 +1092,8 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
             timestamp: new Date().toISOString()
           };
           
-          // Send only one WebSocket update
-          broadcastMessage('task_updated', updatePayload);
+          // Send only one WebSocket update using standardized WebSocketService
+          WebSocketService.broadcast('task_update', updatePayload);
           
           // Disable the task reconciliation process for this task for a few seconds
           // to prevent cascading updates

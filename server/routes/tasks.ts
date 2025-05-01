@@ -3,7 +3,7 @@ import { db } from "@db";
 import { tasks, TaskStatus as DbTaskStatus, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, openBankingFields, openBankingResponses } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastTaskUpdate, broadcastMessage } from "../services/websocket"; // Use the correct import path
+import * as WebSocketService from "../services/websocket"; // Use standardized WebSocketService
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
 import { determineStatusFromProgress, broadcastProgressUpdate } from '../utils/progress';
@@ -377,8 +377,8 @@ router.delete("/api/tasks/:id", requireAuth, async (req, res) => {
 
     // Get updated counts and broadcast task deletion
     const taskCount = await getTaskCount();
-    // For deleted tasks, use the broadcast message function directly
-    broadcastMessage('task_deleted', {
+    // Use standardized WebSocketService for broadcasting task deletion
+    WebSocketService.broadcast('task_delete', {
       taskId: deletedTask.id,
       count: taskCount,
       timestamp: new Date().toISOString()

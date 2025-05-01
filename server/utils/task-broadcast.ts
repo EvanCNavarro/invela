@@ -4,7 +4,7 @@
  * Provides standardized WebSocket broadcasting of task status updates
  */
 
-import { broadcastMessage } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { Logger } from './logger';
 
 const logger = new Logger('TaskBroadcast');
@@ -26,7 +26,7 @@ export function broadcastTaskUpdate(task: {
     });
     
     // Broadcast the task update via WebSocket
-    broadcastMessage('task_updated', {
+    WebSocketService.broadcast('task_update', {
       ...task,
       taskId: task.id, // Include both id and taskId for backward compatibility
       timestamp: new Date().toISOString()

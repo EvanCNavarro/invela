@@ -3,7 +3,7 @@ import { db } from '@db';
 import { tasks, TaskStatus } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
-import { broadcastSubmissionStatus } from '../services/websocket';
+import * as WebSocketService from '../services/websocket';
 import { Logger } from '../utils/logger';
 
 const router = Router();
@@ -66,7 +66,10 @@ router.get('/check/:taskId', requireAuth, async (req, res) => {
     if (isSubmitted) {
       try {
         logger.info(`Broadcasting submission status via WebSocket for task ${taskId}`);
-        broadcastSubmissionStatus(taskId, 'submitted');
+        WebSocketService.broadcast('submission_status', {
+          taskId,
+          status: 'submitted'
+        });
       } catch (error) {
         logger.error('Error broadcasting status via WebSocket:', error);
       }
