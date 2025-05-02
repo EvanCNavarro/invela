@@ -86,7 +86,7 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
     
     // Determine field status based on value
     const hasValue = value !== null && value !== undefined && value !== '';
-    // Status must use uppercase values from KYBFieldStatus enum
+    // Status must match enum keys (not values) as defined in KYBFieldStatus
     const status = hasValue ? 'COMPLETE' : 'INCOMPLETE';
     
     logger.info('[Open Banking API] Field update details', {
@@ -118,16 +118,14 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
           );
       } else {
         // Insert a new response with proper status type
-        const newResponse = {
-          task_id: parseInt(taskId),
-          field_id: fieldDefinition.id,
-          response_value: value,
-          status
-        };
-        
         await tx
           .insert(openBankingResponses)
-          .values([newResponse]);
+          .values({
+            task_id: parseInt(taskId),
+            field_id: fieldDefinition.id,
+            response_value: value,
+            status: status as 'COMPLETE' | 'INCOMPLETE' | 'EMPTY' | 'INVALID'
+          });
       }
       
       // Calculate the new progress using our unified approach
