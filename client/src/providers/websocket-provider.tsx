@@ -51,8 +51,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       }
       
       // Create WebSocket URL based on current protocol and host
+      // Make sure we use the same host as the current page to handle Replit environment
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const host = window.location.host || '0.0.0.0:5000';
+      const wsUrl = `${protocol}//${host}/ws`;
       
       logger.info('Connecting to WebSocket:', wsUrl);
       
