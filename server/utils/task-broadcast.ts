@@ -35,3 +35,36 @@ export function broadcastTaskUpdate(task: {
     logger.error(`Error broadcasting task update:`, error);
   }
 }
+
+/**
+ * Broadcast progress update via WebSocket
+ * @param taskId The task ID
+ * @param progress The updated progress percentage (0-100)
+ * @param status The updated task status
+ * @param metadata Optional metadata for the task
+ */
+export function broadcastProgressUpdate(
+  taskId: number,
+  progress: number,
+  status: string,
+  metadata: Record<string, any> = {}
+) {
+  try {
+    logger.info(`Broadcasting progress update for task ${taskId}:`, {
+      status,
+      progress
+    });
+    
+    // Broadcast the progress update via WebSocket
+    WebSocketService.broadcast('task_update', {
+      id: taskId,
+      taskId, // Include both id and taskId for backward compatibility
+      status,
+      progress,
+      metadata,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error(`Error broadcasting progress update:`, error);
+  }
+}

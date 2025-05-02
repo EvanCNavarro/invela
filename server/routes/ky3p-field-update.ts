@@ -7,9 +7,11 @@
 
 import express, { Router } from 'express';
 import { db } from '@db';
-import { ky3pFields, ky3pResponses } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
+import { determineStatusFromProgress } from '../utils/progress';
+import { broadcastProgressUpdate } from '../utils/task-broadcast';
 
 // Logger is already initialized in the imported module
 
@@ -82,7 +84,8 @@ export function registerKY3PFieldUpdateRoutes() {
         await db.update(ky3pResponses)
           .set({ 
             response_value: value, 
-            updated_at: now
+            updated_at: now,
+            status: 'COMPLETE' // Always set status to COMPLETE when updating a field
           })
           .where(
             and(
@@ -97,14 +100,83 @@ export function registerKY3PFieldUpdateRoutes() {
             task_id: taskId,
             field_id: fieldId,
             response_value: value,
+            status: 'COMPLETE', // Always set status to COMPLETE when inserting a field
             created_at: now,
             updated_at: now
           });
       }
 
+      // Update task progress and status
+      // Count total fields
+      const [fieldCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pFields);
+      
+      // Count completed responses for this task (status = COMPLETE)
+      const [completedCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.status, 'COMPLETE')
+          )
+        );
+      
+      // Calculate progress percentage based on COMPLETE fields
+      const totalFields = fieldCount?.count || 1;
+      const completedFields = completedCount?.count || 0;
+      const progressPercentage = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      
+      logger.info(`Progress calculation for task ${taskId}: ${completedFields}/${totalFields} = ${progressPercentage}%`);
+      
+      // Get current task information to update status correctly
+      const [task] = await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+      
+      // Determine the appropriate status based on progress
+      // Always preserve SUBMITTED status if the task was previously submitted
+      const newStatus = determineStatusFromProgress(
+        progressPercentage, 
+        task.status, 
+        false // isSubmitted set to false since this is just a field update, not a submission
+      );
+      
+      logger.info(`Updating task ${taskId} status from '${task.status}' to '${newStatus}', progress from ${task.progress}% to ${progressPercentage}%`);
+      
+      // Update task in database
+      const [updatedTask] = await db.update(tasks)
+        .set({
+          progress: progressPercentage,
+          status: newStatus,
+          updated_at: new Date(),
+          metadata: {
+            ...task.metadata,
+            lastProgressReconciliation: new Date().toISOString()
+          }
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+      
+      // Broadcast the update to all connected clients
+      broadcastProgressUpdate(
+        taskId,
+        progressPercentage,
+        newStatus,
+        updatedTask.metadata || {}
+      );
+
       return res.status(200).json({ 
         success: true, 
-        message: `Successfully updated field: ${fieldKey}` 
+        message: `Successfully updated field: ${fieldKey}`,
+        progress: progressPercentage,
+        status: newStatus
       });
     } catch (error) {
       logger.error('Error processing field update:', error);
