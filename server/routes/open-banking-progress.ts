@@ -204,10 +204,19 @@ export function registerOpenBankingProgressRoutes(router: Router): void {
       // Broadcast progress update via WebSocket
       broadcastProgressUpdate(taskId, 0, TaskStatus.NOT_STARTED);
       
+      // Get the updated task to return consistent response data
+      const [updatedTask] = await db
+        .select({ progress: tasks.progress, status: tasks.status })
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      // Return a standardized response with progress and status
       res.json({
         success: true,
         message: 'All field responses cleared',
-        taskId
+        taskId,
+        progress: updatedTask.progress,
+        status: updatedTask.status
       });
     } catch (error) {
       logger.error('[Open Banking API] Error clearing field responses', error);
