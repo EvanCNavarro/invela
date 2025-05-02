@@ -7,7 +7,7 @@
  */
 
 // Use node-fetch for Node.js environment
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 // Base URL for API requests
 const BASE_URL = 'http://localhost:5000';
@@ -64,7 +64,7 @@ async function run() {
     });
   } else if (testTask.task_type === 'ky3p') {
     // KY3P task
-    fieldUpdateUrl = `/api/ky3p/fields/${testTask.id}`;
+    fieldUpdateUrl = `${BASE_URL}/api/ky3p/fields/${testTask.id}`;
     fieldUpdateResponse = await fetch(fieldUpdateUrl, {
       method: 'POST',
       headers: {
@@ -94,7 +94,7 @@ async function run() {
   
   // Check the task's progress to see if it was updated
   console.log(`[Test] Checking updated progress for task ${testTask.id}...`);
-  const updatedTaskResponse = await fetch(`/api/tasks/${testTask.id}`);
+  const updatedTaskResponse = await fetch(`${BASE_URL}/api/tasks/${testTask.id}`);
   const updatedTask = await updatedTaskResponse.json();
   
   console.log(`[Test] Task ${testTask.id} progress: ${updatedTask.progress}% (was 0%)`);
