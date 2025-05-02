@@ -438,45 +438,35 @@ export class KybFormService implements FormServiceInterface {
    * This method now immediately saves data to the server, especially when clearing fields
    */
   // CRITICAL BUGFIX: Completely revised update method to ensure data persistence
-  updateFormData(fieldKey: string, value: any, taskId?: number): void {
-    const updateTimestamp = Date.now(); // Add timestamp for tracking
+  /**
+   * Update form data in memory and save to server using the individual field update API
+   * @param fieldKey Key for the field to update
+   * @param value New value for the field
+   * @param taskId Optional task ID to trigger saving to server
+   * @returns A promise that resolves when the update is complete
+   */
+  async updateFormData(fieldKey: string, value: any, taskId?: number): Promise<void> {
+    const updateTimestamp = Date.now();
     
-    // Log the update attempt for debugging with more details
-    console.log(`[FORM DEBUG] ----- updateFormData BEGIN ${updateTimestamp} -----`);
-    console.log(`[FORM DEBUG] ${updateTimestamp}: updateFormData called for field "${fieldKey}" with taskId: ${taskId || 'none'}`);
+    this.logger.info(`Updating KYB form field: ${fieldKey}`);
     
     // Store the old value for reference
     const oldValue = this.formData[fieldKey];
     
     // Normalize value - handle null, undefined, and empty values properly
-    // This is critical for proper form field updates
-    // Empty string is a valid value that should be stored and saved to database
     const normalizedValue = (value === null || value === undefined) ? '' : value;
     
-    // Track if the field previously had a value but is now being cleared
-    const isClearing = (oldValue !== undefined && oldValue !== null && oldValue !== '') && 
-                       (normalizedValue === '' || normalizedValue === null);
-    
-    // More accurate change detection - convert to strings to ensure proper comparison
-    // But preserve type for actual storage
+    // Enhanced change detection
     const oldValueStr = oldValue !== undefined ? String(oldValue) : '';
     const newValueStr = normalizedValue !== undefined ? String(normalizedValue) : '';
-    
-    // Use string comparison to detect changes, but always update when clearing a field
-    const hasChanged = oldValueStr !== newValueStr || isClearing;
-    console.log(`[FORM DEBUG] ${updateTimestamp}: Value change detection: ${hasChanged ? 'CHANGED' : 'UNCHANGED'}`);
-    console.log(`[FORM DEBUG] ${updateTimestamp}: - Old value: "${oldValueStr}" (${typeof oldValue})`);
-    console.log(`[FORM DEBUG] ${updateTimestamp}: - New value: "${newValueStr}" (${typeof normalizedValue})`);
+    const hasChanged = oldValueStr !== newValueStr;
     
     if (!hasChanged) {
-      console.log(`[FORM DEBUG] ${updateTimestamp}: Skipping update - value unchanged for field ${fieldKey}`);
-      console.log(`[FORM DEBUG] ----- updateFormData END ${updateTimestamp} (no change) -----`);
+      this.logger.info(`Skipping update - value unchanged for field ${fieldKey}`);
       return; // Value hasn't changed, no need to update
     }
     
-    // *** CRITICAL FIX: Always update all data stores immediately ***
-    
-    // Always update the value in the internal formData object
+    // Always update local memory store immediately
     this.formData[fieldKey] = normalizedValue;
     
     // Update the field value in fields array
@@ -492,64 +482,72 @@ export class KybFormService implements FormServiceInterface {
       )
     }));
     
-    console.log(`[FORM DEBUG] ${updateTimestamp}: Updated all memory stores for field "${fieldKey}"`);
+    // If no taskId is provided, we can't save to the server
+    if (!taskId) {
+      this.logger.warn(`No taskId provided - changes to ${fieldKey} will only be saved in memory`);
+      return;
+    }
     
-    // *** CRITICAL FIX: ALWAYS trigger an immediate persistence operation ***
-    if (taskId) {
-      console.log(`[FORM DEBUG] ${updateTimestamp}: ⚠️ EMERGENCY SAVE triggered for field "${fieldKey}" with taskId ${taskId}`);
+    // Cancel any pending timers to avoid race conditions
+    if (this.saveProgressTimer) {
+      clearTimeout(this.saveProgressTimer);
+      this.saveProgressTimer = null;
+    }
+    
+    try {
+      // Import the KYB field update utility
+      const { updateKYBField } = await import('../components/forms/kyb-field-update');
       
-      // Cancel any pending timers to avoid race conditions
-      if (this.saveProgressTimer) {
-        clearTimeout(this.saveProgressTimer);
-        this.saveProgressTimer = null;
-      }
+      this.logger.info(`Saving KYB field ${fieldKey} using individual field update endpoint`);
       
-      // *** CRITICAL FIX: Skip saveProgress and call API directly to save immediately ***
-      try {
+      // Call the specialized KYB field update endpoint
+      const result = await updateKYBField(taskId, fieldKey, normalizedValue);
+      
+      if (result.success) {
+        // Update lastSavedData reference after successful save
+        this.lastSavedData = JSON.stringify(this.formData);
+        
+        // Update progress and status if returned from the server
+        if (result.progress !== undefined) {
+          this.logger.info(`Field update succeeded. Server returned progress: ${result.progress}%, status: ${result.status}`);
+        } else {
+          this.logger.info(`Field update succeeded, but no progress information returned`);
+        }
+      } else {
+        this.logger.error(`Field update failed for ${fieldKey}`);
+        
+        // Fall back to the batch API as a backup mechanism
+        this.logger.warn(`Attempting fallback to batch API for field ${fieldKey}`);
+        
         // Calculate progress and status
         const progress = this.calculateProgress();
         const status = this.calculateTaskStatus();
         
-        console.log(`[FORM DEBUG] ${updateTimestamp}: DIRECT SAVE starting with progress=${progress}%, status=${status}`);
+        // Use the batch API method as a fallback
+        const batchResult = await this.saveKybProgress(taskId, progress, { [fieldKey]: normalizedValue }, status);
         
-        // Use the direct API method, bypassing the debounce mechanism entirely
-        this.saveKybProgress(taskId, progress, this.formData, status)
-          .then(result => {
-            if (result && result.success) {
-              // Update lastSavedData reference after successful save
-              this.lastSavedData = JSON.stringify(this.formData);
-              console.log(`[FORM DEBUG] ${updateTimestamp}: ✅ DIRECT SAVE successful for "${fieldKey}"`);
-              
-              // Double-check the value was saved correctly
-              if (result.savedData && result.savedData.formData) {
-                const savedValue = result.savedData.formData[fieldKey];
-                if (String(savedValue) !== newValueStr) {
-                  console.error(`[FORM DEBUG] ${updateTimestamp}: ⚠️ VALUE MISMATCH in server response!`);
-                  console.error(`[FORM DEBUG] ${updateTimestamp}: Expected "${newValueStr}", got "${savedValue}"`);
-                  
-                  // CRITICAL FIX: Force local value to match current client value
-                  // This ensures client changes take precedence over inconsistent server values
-                  if (result.savedData.formData) {
-                    console.log(`[FORM DEBUG] ${updateTimestamp}: Correcting server response data to match client value`);
-                    result.savedData.formData[fieldKey] = normalizedValue;
-                  }
-                }
-              }
-            } else {
-              console.error(`[FORM DEBUG] ${updateTimestamp}: ❌ DIRECT SAVE failed:`, result?.error || 'Unknown error');
-            }
-          })
-          .catch(err => {
-            console.error(`[FORM DEBUG] ${updateTimestamp}: ❌ DIRECT SAVE exception:`, err);
-          });
-      } catch (error) {
-        console.error(`[FORM DEBUG] ${updateTimestamp}: ❌ FATAL ERROR during direct save:`, error);
+        if (batchResult && batchResult.success) {
+          this.logger.info(`Fallback to batch API succeeded for field ${fieldKey}`);
+          this.lastSavedData = JSON.stringify(this.formData);
+        } else {
+          this.logger.error(`Fallback to batch API failed for field ${fieldKey}`);
+        }
       }
-    } else {
-      console.error(`[FORM DEBUG] ${updateTimestamp}: ⚠️ CRITICAL: No taskId provided - cannot persist changes!`);
+    } catch (error) {
+      this.logger.error(`Error during field update for ${fieldKey}:`, error);
+      
+      // Try fallback save mechanism
+      try {
+        this.logger.warn(`Attempting emergency fallback save for field ${fieldKey}`);
+        const progress = this.calculateProgress();
+        const status = this.calculateTaskStatus();
+        
+        await this.saveKybProgress(taskId, progress, this.formData, status);
+        this.logger.info(`Emergency fallback save completed for field ${fieldKey}`);
+      } catch (fallbackError) {
+        this.logger.error(`Emergency fallback save failed:`, fallbackError);
+      }
     }
-    
-    console.log(`[FORM DEBUG] ----- updateFormData END ${updateTimestamp} -----`);
   }
 
   /**
