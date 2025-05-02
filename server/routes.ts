@@ -6,6 +6,7 @@ import fs from 'fs';
 import { db } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
+import openBankingFieldUpdateRouter from './routes/open-banking-field-update';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';
@@ -374,6 +375,9 @@ export function registerRoutes(app: Express): Express {
   
   // Register Open Banking Timestamps routes for field-level timestamp conflict resolution
   registerOpenBankingTimestampRoutes(app);
+  
+  // Register Open Banking Field Update routes with universal progress calculation
+  app.use(openBankingFieldUpdateRouter);
   
   // Register Enhanced Open Banking routes with improved error handling and retry logic
   app.use('/api/enhanced-open-banking', enhancedOpenBankingRouter);
