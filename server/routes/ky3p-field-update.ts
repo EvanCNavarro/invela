@@ -115,6 +115,13 @@ export function registerKY3PFieldUpdateRoutes() {
       
       if (existingResponses.length > 0) {
         // Update existing response
+        console.log(`[KY3P FIELD UPDATE] Updating existing response for task ${taskId}, field ${fieldId}:`, {
+          oldValue: existingResponses[0].response_value,
+          newValue: value,
+          oldStatus: existingResponses[0].status,
+          newStatus: 'COMPLETE'
+        });
+        
         await db.update(ky3pResponses)
           .set({ 
             response_value: value, 
@@ -143,9 +150,16 @@ export function registerKY3PFieldUpdateRoutes() {
       // Use the central task progress update function to ensure consistency
       // This is a key part of our unified solution - all field updates use the same progress calculation
       try {
-        // UNIFIED SOLUTION: Use the centralized progress update function
+        // Check if debug flag was passed in the request
+        const enableDebug = req.body.debug === true;
+        console.log(`[KY3P API] Running updateTaskProgress with debug=${enableDebug}`);
+        
+        // UNIFIED SOLUTION: Use the centralized progress update function with force update
         // This ensures consistent progress calculation across all form types
-        await updateTaskProgress(taskId, 'ky3p', { debug: true });
+        await updateTaskProgress(taskId, 'ky3p', { 
+          debug: true, // Always use debug mode for tracing 
+          forceUpdate: true // Force update to ensure progress is saved
+        });
         
         // Get the updated task to return the current progress and status
         const [updatedTask] = await db.select()
