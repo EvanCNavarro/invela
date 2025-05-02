@@ -86,7 +86,8 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
     
     // Determine field status based on value
     const hasValue = value !== null && value !== undefined && value !== '';
-    const status = hasValue ? "COMPLETE" : "INCOMPLETE";
+    // Status values must be uppercase for the openBankingResponses table
+    const status = hasValue ? 'COMPLETE' : 'INCOMPLETE';
     
     logger.info('[Open Banking API] Field update details', {
       taskId,
@@ -116,7 +117,7 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
             )
           );
       } else {
-        // Insert a new response
+        // Insert a new response with proper status type
         const newResponse = {
           task_id: parseInt(taskId),
           field_id: fieldDefinition.id,
