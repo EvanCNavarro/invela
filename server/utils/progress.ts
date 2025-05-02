@@ -356,161 +356,215 @@ export async function updateTaskProgress(
   // Add transaction ID for tracing in logs outside try block
   // so it's available in the catch block as well
   const transactionId = `txid-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  
   // Declare variables for closure in catch block
   let storedProgress = 0;
   let newProgress = 0;
   
-  try {
-    // Using transaction for atomic operations
-    // Add explicit logging for transaction start/commit
-    console.log(`${logPrefix} Starting transaction for task ${taskId} (${taskType})`);
-    console.log(`${logPrefix} Transaction ${transactionId} started for task ${taskId}`);
-    
-    return await db.transaction(async (tx) => {
-      // Step 1: Get the current task with transaction
-      const [task] = await tx
-        .select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
-        
-      if (!task) {
-        throw new Error(`Task ${taskId} not found`);
-      }
+  // Add retry logic for small progress changes to ensure they're not lost
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
+  
+  // Function to add a small delay between retries
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  // Nested async function for retry capabilities
+  async function executeProgressUpdate() {
+    try {
+      // Using transaction for atomic operations
+      // Add explicit logging for transaction start/commit
+      console.log(`${logPrefix} Starting transaction for task ${taskId} (${taskType}) - Attempt ${retryCount + 1}/${MAX_RETRIES + 1}`);
+      console.log(`${logPrefix} Transaction ${transactionId} started for task ${taskId}`);
       
-      // Step 2: Calculate the accurate progress using our universal function
-      const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug, tx });
-      
-      // Step 3: Check if update is needed with proper type conversion
-      // Update outer scope variables for access in catch block
-      storedProgress = Number(task.progress);
-      newProgress = Number(calculatedProgress);
-      
-      // Add extensive debugging
-      console.log(`${logPrefix} PROGRESS DEBUG - Task ${taskId} (${taskType}):\n` +
-        `  - Stored progress: ${task.progress} (${typeof task.progress})\n` +
-        `  - New progress: ${calculatedProgress} (${typeof calculatedProgress})\n` +
-        `  - As numbers: ${storedProgress} vs ${newProgress}\n` +
-        `  - Force update: ${forceUpdate}\n` +
-        `  - Would ${storedProgress === newProgress ? 'NOT' : ''} update progress`);
-      
-      // CRITICAL FIX: Always force an update in the following cases:
-      // 1. If the calculated progress is greater than 0 and stored is 0 (zero-to-non-zero)
-      // 2. If forceUpdate flag is set to true (explicit force update request)
-      // 3. If there's a small but meaningful progress change (under 5%)
-      const isZeroToNonZero = (storedProgress === 0 && newProgress > 0);
-      const isSmallProgressChange = (Math.abs(newProgress - storedProgress) > 0 && Math.abs(newProgress - storedProgress) < 5);
-      
-      if (isZeroToNonZero) {
-        console.log(`${logPrefix} Forcing update due to zero-to-non-zero progress change: 0% -> ${newProgress}%`);
-      }
-      
-      if (isSmallProgressChange) {
-        console.log(`${logPrefix} Forcing update due to small but meaningful progress change: ${storedProgress}% -> ${newProgress}%`);
-      }
-      
-      // Only skip the update if ALL of these conditions are true:
-      // 1. No force update requested
-      // 2. Not a zero-to-non-zero change
-      // 3. Not a small progress change
-      // 4. The progress values are exactly equal
-      // 5. Both values are valid numbers
-      if (!forceUpdate && 
-          !isZeroToNonZero &&
-          !isSmallProgressChange &&
-          storedProgress === newProgress && 
-          !isNaN(storedProgress) && 
-          !isNaN(newProgress)) {
-        if (debug) {
-          console.log(`${logPrefix} No progress change needed for task ${taskId} (${taskType}): ${calculatedProgress}%`);
+      const result = await db.transaction(async (tx) => {
+        // Step 1: Get the current task with transaction
+        const [task] = await tx
+          .select()
+          .from(tasks)
+          .where(eq(tasks.id, taskId));
+          
+        if (!task) {
+          throw new Error(`Task ${taskId} not found`);
         }
-        return;
-      }
-      
-      // Log progress change for debugging purposes
-      if (debug) {
-        console.log(`${logPrefix} Progress change detected for task ${taskId} (${taskType}):`, {
-          stored: storedProgress,
-          calculated: newProgress,
-          storedType: typeof task.progress,
-          calculatedType: typeof calculatedProgress
-        });
-      }
-      
-      // Step 4: Determine the appropriate status based on progress
-      const newStatus = determineStatusFromProgress(
-        calculatedProgress,
-        task.status as TaskStatus,
-        [], // No formResponses needed since we're using the calculated progress
-        { ...task.metadata, ...metadata }
-      );
-      
-      if (debug) {
-        console.log(`${logPrefix} Updating task ${taskId} (${taskType}):`, {
-          progressFrom: task.progress,
-          progressTo: calculatedProgress,
-          statusFrom: task.status,
-          statusTo: newStatus
-        });
-      }
-      
-      // Step 5: Update the task with new progress and status using the transaction
-      const [updatedTask] = await tx
-        .update(tasks)
-        .set({
-          progress: Number(calculatedProgress), // Ensure numeric value in database
-          status: newStatus,
-          updated_at: new Date(),
-          metadata: {
-            ...task.metadata,
-            ...metadata,
-            lastProgressUpdate: new Date().toISOString(),
-            progressHistory: [
-              ...(task.metadata?.progressHistory || []),
-              { value: calculatedProgress, timestamp: new Date().toISOString() }
-            ].slice(-10) // Keep last 10 progress updates
-          }
-        })
-        .where(eq(tasks.id, taskId))
-        .returning();
         
-      // After successful transaction completion, broadcast the update if not skipped
-      if (!skipBroadcast) {
+        // Step 2: Calculate the accurate progress using our universal function
+        const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug, tx });
+        
+        // Step 3: Check if update is needed with proper type conversion
+        // Update outer scope variables for access in catch block
+        storedProgress = Number(task.progress);
+        newProgress = Number(calculatedProgress);
+        
+        // Add extensive debugging
+        console.log(`${logPrefix} PROGRESS DEBUG - Task ${taskId} (${taskType}):\n` +
+          `  - Stored progress: ${task.progress} (${typeof task.progress})\n` +
+          `  - New progress: ${calculatedProgress} (${typeof calculatedProgress})\n` +
+          `  - As numbers: ${storedProgress} vs ${newProgress}\n` +
+          `  - Force update: ${forceUpdate}\n` +
+          `  - Would ${storedProgress === newProgress ? 'NOT' : ''} update progress`);
+        
+        // CRITICAL FIX: Always force an update in the following cases:
+        // 1. If the calculated progress is greater than 0 and stored is 0 (zero-to-non-zero)
+        // 2. If forceUpdate flag is set to true (explicit force update request)
+        // 3. If there's a small but meaningful progress change (under 5%)
+        const isZeroToNonZero = (storedProgress === 0 && newProgress > 0);
+        const isSmallProgressChange = (Math.abs(newProgress - storedProgress) > 0 && Math.abs(newProgress - storedProgress) < 5);
+        
+        if (isZeroToNonZero) {
+          console.log(`${logPrefix} Forcing update due to zero-to-non-zero progress change: 0% -> ${newProgress}%`);
+        }
+        
+        if (isSmallProgressChange) {
+          console.log(`${logPrefix} Forcing update due to small but meaningful progress change: ${storedProgress}% -> ${newProgress}%`);
+        }
+        
+        // Only skip the update if ALL of these conditions are true:
+        // 1. No force update requested
+        // 2. Not a zero-to-non-zero change
+        // 3. Not a small progress change
+        // 4. The progress values are exactly equal
+        // 5. Both values are valid numbers
+        if (!forceUpdate && 
+            !isZeroToNonZero &&
+            !isSmallProgressChange &&
+            storedProgress === newProgress && 
+            !isNaN(storedProgress) && 
+            !isNaN(newProgress)) {
+          if (debug) {
+            console.log(`${logPrefix} No progress change needed for task ${taskId} (${taskType}): ${calculatedProgress}%`);
+          }
+          return null; // Indicate no update needed
+        }
+        
+        // Log progress change for debugging purposes
+        if (debug) {
+          console.log(`${logPrefix} Progress change detected for task ${taskId} (${taskType}):`, {
+            stored: storedProgress,
+            calculated: newProgress,
+            storedType: typeof task.progress,
+            calculatedType: typeof calculatedProgress
+          });
+        }
+        
+        // Step 4: Determine the appropriate status based on progress
+        const newStatus = determineStatusFromProgress(
+          calculatedProgress,
+          task.status as TaskStatus,
+          [], // No formResponses needed since we're using the calculated progress
+          { ...task.metadata, ...metadata }
+        );
+        
+        if (debug) {
+          console.log(`${logPrefix} Updating task ${taskId} (${taskType}):`, {
+            progressFrom: task.progress,
+            progressTo: calculatedProgress,
+            statusFrom: task.status,
+            statusTo: newStatus
+          });
+        }
+        
+        // Step 5: Update the task with new progress and status using the transaction
+        const [updatedTask] = await tx
+          .update(tasks)
+          .set({
+            progress: Number(calculatedProgress), // Ensure numeric value in database
+            status: newStatus,
+            updated_at: new Date(),
+            metadata: {
+              ...task.metadata,
+              ...metadata,
+              lastProgressUpdate: new Date().toISOString(),
+              progressHistory: [
+                ...(task.metadata?.progressHistory || []),
+                { value: calculatedProgress, timestamp: new Date().toISOString() }
+              ].slice(-10) // Keep last 10 progress updates
+            }
+          })
+          .where(eq(tasks.id, taskId))
+          .returning();
+          
+        // Log successful update transaction
+        console.log(`${logPrefix} Transaction ${transactionId}: Successfully updated task ${taskId} progress from ${storedProgress}% to ${newProgress}%`, {
+          taskId,
+          taskType,
+          oldProgress: storedProgress,
+          newProgress,
+          statusChange: `${task.status} -> ${newStatus}`,
+          updated: new Date().toISOString(),
+          forceUpdateRequested: forceUpdate,
+          isSmallChange: isSmallProgressChange,
+          isZeroToNonZero
+        });
+        
+        // Return updated task data if needed for further processing
+        return updatedTask;
+      });
+      
+      // Log successful transaction completion outside transaction
+      console.log(`${logPrefix} Transaction ${transactionId} completed successfully for task ${taskId} (${taskType})`);
+      
+      // After successful transaction completion, broadcast the update if needed
+      if (!skipBroadcast && result) {
         // Broadcasting is done outside of transaction as it doesn't require rollback
         setTimeout(() => {
           broadcastProgressUpdate(
             taskId,
-            calculatedProgress,
-            newStatus,
-            updatedTask.metadata || {}
+            newProgress,
+            result.status as TaskStatus,
+            result.metadata || {}
           );
         }, 0);
       }
       
-      // Log successful transaction for debugging purposes
-      console.log(`${logPrefix} Transaction ${transactionId}: Successfully updated task ${taskId} progress from ${storedProgress}% to ${newProgress}%`);
+      return result;
+    } catch (error) {
+      console.error(`${logPrefix} Error updating task progress:`, error);
       
-      // Return updated task data if needed for further processing
-      return updatedTask;
-    });
-    
-    // Log successful transaction completion outside transaction
-    console.log(`${logPrefix} Transaction ${transactionId} completed successfully for task ${taskId} (${taskType})`);
-  } catch (error) {
-    console.error(`${logPrefix} Error updating task progress:`, error);
-    
-    // Add detailed error information for troubleshooting
-    console.error(`${logPrefix} Failed transaction details for ${transactionId}:`, {
-      taskId,
-      taskType,
-      forceUpdate,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      errorStack: error instanceof Error ? error.stack : null,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Rethrow to allow caller to handle
-    throw error;
+      // Add detailed error information for troubleshooting
+      console.error(`${logPrefix} Failed transaction details for ${transactionId}:`, {
+        taskId,
+        taskType,
+        forceUpdate,
+        retryCount,
+        maxRetries: MAX_RETRIES,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : null,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Determine if we should retry based on the error and retry count
+      const isRetriableError = error instanceof Error && (
+        error.message.includes('timeout') ||
+        error.message.includes('deadlock') ||
+        error.message.includes('conflict') ||
+        error.message.includes('serialization')
+      );
+      
+      const isSmallProgressUpdate = newProgress > 0 && newProgress < 5;
+      const shouldRetry = (retryCount < MAX_RETRIES) && (isRetriableError || isSmallProgressUpdate);
+      
+      if (shouldRetry) {
+        retryCount++;
+        console.log(`${logPrefix} Retrying transaction (${retryCount}/${MAX_RETRIES}) for small progress update after error:`, {
+          taskId,
+          taskType,
+          progress: newProgress,
+          errorType: error instanceof Error ? error.message : 'Unknown error',
+          delayMs: 500 * retryCount
+        });
+        
+        // Add exponential backoff delay between retries
+        await sleep(500 * retryCount);
+        return executeProgressUpdate();
+      }
+      
+      // If we're not retrying or have exhausted retries, rethrow the error
+      throw error;
+    }
   }
+  
+  // Start the actual execution - this allows us to use retry logic
+  return executeProgressUpdate();
 }
 
 export function broadcastProgressUpdate(
