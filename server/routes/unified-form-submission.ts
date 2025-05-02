@@ -85,7 +85,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
       
       // Simulating file generation
       const fileName = `${formType}-submission-${taskId}.csv`;
-      const fileId = Math.floor(Math.random() * 10000) + 1; // Simulated file ID
+      const fileId = Math.round(Math.random() * 10000) + 1; // Simulated file ID
       
       // Broadcast submission status update via WebSocket using standardized WebSocketService
       WebSocketService.broadcast('form_submission', {
@@ -227,7 +227,7 @@ export function createUnifiedFormSubmissionRouter(): Router {
       
       // Simulate retry success
       const fileName = `${formType}-submission-${taskId}-retry.csv`;
-      const fileId = Math.floor(Math.random() * 10000) + 1000; // Simulated file ID
+      const fileId = Math.round(Math.random() * 10000) + 1000; // Simulated file ID
       
       // Broadcast submission success event using standardized WebSocketService
       WebSocketService.broadcast('form_submission', {
