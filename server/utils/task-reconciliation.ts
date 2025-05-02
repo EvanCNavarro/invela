@@ -15,6 +15,100 @@ import { calculateKybFormProgress } from './kyb-progress';
 import { determineStatusFromProgress, broadcastProgressUpdate } from './progress';
 import { fixTaskSubmittedStatus } from '../middleware/task-status';
 
+/**
+ * Calculate a task's progress directly from the database
+ * 
+ * This function calculates the accurate progress percentage for a task
+ * by counting the actual completed responses in the database
+ * 
+ * @param taskId Task ID to calculate progress for
+ * @param taskType Type of task ('kyb', 'ky3p', 'open_banking')
+ * @returns Promise<number> Progress percentage (0-100)
+ */
+export async function calculateTaskProgressFromDB(
+  taskId: number,
+  taskType: string
+): Promise<number> {
+  const logPrefix = '[Task Progress]';
+  let totalFields = 0;
+  let completedFields = 0;
+  
+  try {
+    if (taskType === 'open_banking') {
+      // Count total Open Banking fields
+      const totalFieldsResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(openBankingFields);
+      totalFields = totalFieldsResult[0].count;
+      
+      // Count completed Open Banking responses
+      const completedResultQuery = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(openBankingResponses)
+        .where(
+          and(
+            eq(openBankingResponses.task_id, taskId),
+            // Handle both upper and lowercase status values
+            sql`UPPER(${openBankingResponses.status}) = 'COMPLETE'`
+          )
+        );
+      completedFields = completedResultQuery[0].count;
+    } 
+    else if (taskType === 'ky3p') {
+      // Count total KY3P fields
+      const totalFieldsResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pFields);
+      totalFields = totalFieldsResult[0].count;
+      
+      // Count completed KY3P responses with non-empty values
+      const completedResultQuery = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            // Handle both uppercase and lowercase status values
+            sql`UPPER(${ky3pResponses.status}) = 'COMPLETE'`
+          )
+        );
+      completedFields = completedResultQuery[0].count;
+    }
+    else { 
+      // Default to KYB fields (company_kyb type)
+      // Count total KYB fields
+      const totalFieldsResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(kybFields);
+      totalFields = totalFieldsResult[0].count;
+      
+      // Count completed KYB responses with non-empty values
+      const completedResultQuery = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(kybResponses)
+        .where(
+          and(
+            eq(kybResponses.task_id, taskId),
+            // Handle both uppercase and lowercase status values for maximum compatibility
+            sql`UPPER(${kybResponses.status}) = 'COMPLETE'`
+          )
+        );
+      completedFields = completedResultQuery[0].count;
+    }
+    
+    // Calculate progress percentage (0-100)
+    const progressPercentage = totalFields > 0 
+      ? Math.min(100, Math.floor((completedFields / totalFields) * 100)) 
+      : 0;
+    
+    console.log(`${logPrefix} Calculated progress for task ${taskId} (${taskType}): ${completedFields}/${totalFields} = ${progressPercentage}%`);
+    return progressPercentage;
+  } catch (error) {
+    console.error(`${logPrefix} Error calculating task progress:`, error);
+    throw error; // Re-throw to allow caller to handle
+  }
+}
+
 // Add typings for the global skip reconciliation object
 declare global {
   var __skipTaskReconciliation: Record<number, number> | undefined;
