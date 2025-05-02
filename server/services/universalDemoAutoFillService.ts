@@ -14,6 +14,7 @@ import { tasks, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, o
 import { eq, and, sql } from 'drizzle-orm';
 import { broadcastTaskUpdate } from './websocket';
 import { logger } from '../utils/logger';
+import { determineStatusFromProgress } from '../utils/progress';
 
 // Add namespace context to logs
 const logContext = { service: 'UniversalDemoAutoFillService' };
@@ -432,19 +433,45 @@ export class UniversalDemoAutoFillService {
     // Update task progress in database
     const progress = Math.min(Math.round((insertedCount + updatedCount) / fields.length * 100), 100);
     
+    // Determine the appropriate status based on the new progress value
+    // This fixes the issue where demo auto-fill would update progress but not status
+    const newStatus = determineStatusFromProgress(
+      progress,
+      task.status as any, // Cast to match the expected type
+      [], // No form responses needed for simple progress update
+      task.metadata || {}
+    );
+    
+    logger.info('Demo auto-fill progress calculation result', {
+      taskId,
+      fieldCount: fields.length,
+      completedCount: insertedCount + updatedCount,
+      calculatedProgress: progress,
+      oldStatus: task.status,
+      newStatus
+    });
+    
+    // Update both progress and status in the database
     await db.update(tasks)
       .set({
         progress: progress,
+        status: newStatus,
+        // Update the status_changed_at timestamp if status is changing
+        ...(task.status !== newStatus ? { status_changed_at: timestamp } : {}),
         updated_at: timestamp
       })
       .where(eq(tasks.id, taskId));
       
     // Broadcast update via WebSocket for real-time UI updates
+    // Now sending the new status instead of the original one
     broadcastTaskUpdate({
       id: taskId,
       progress: progress,
-      status: task.status,
-      updated_at: timestamp.toISOString()
+      status: newStatus,
+      // Include metadata with the timestamp for consistent behavior
+      metadata: {
+        updated_at: timestamp.toISOString()
+      }
     });
     
     logger.info('Demo data application completed', {
