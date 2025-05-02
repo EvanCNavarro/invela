@@ -169,10 +169,29 @@ export async function unlockOpenBankingTasks(companyId: number) {
         status: specificTask[0].status
       });
       
-      // Unlock task 614 regardless of its current type or status
+      // Import determineStatusFromProgress function to ensure correct status
+      const { determineStatusFromProgress } = await import('../utils/progress');
+
+      // Determine correct status based on task's progress
+      const task = specificTask[0];
+      const taskProgress = task.progress || 0;
+      const newStatus = determineStatusFromProgress(
+        taskProgress,
+        task.status as any,
+        [], // no form responses
+        task.metadata || {}
+      );
+      
+      logger.info('[TaskDependencies] Determining correct status for task 614', {
+        progress: taskProgress,
+        currentStatus: task.status,
+        newStatus
+      });
+
+      // Unlock task 614 with proper status based on progress
       await db.update(tasks)
         .set({
-          status: 'not_started',
+          status: newStatus,
           metadata: sql`jsonb_set(
             jsonb_set(
               jsonb_set(
@@ -187,12 +206,16 @@ export async function unlockOpenBankingTasks(companyId: number) {
         })
         .where(eq(tasks.id, 614));
         
-      logger.info('[TaskDependencies] Unlocked specific task ID 614');
+      logger.info('[TaskDependencies] Unlocked specific task ID 614', {
+        progress: taskProgress,
+        status: newStatus
+      });
       
       // Broadcast the update via WebSocket
       broadcastTaskUpdate({
         id: 614,
-        status: 'not_started',
+        status: newStatus,
+        progress: taskProgress,
         metadata: {
           locked: false,
           prerequisite_completed: true,
@@ -229,11 +252,32 @@ export async function unlockOpenBankingTasks(companyId: number) {
       count: openBankingTasks.length
     });
     
+    // Import determineStatusFromProgress function if not already imported
+    if (typeof determineStatusFromProgress === 'undefined') {
+      var { determineStatusFromProgress } = await import('../utils/progress');
+    }
+
     // Unlock each Open Banking task
     for (const task of openBankingTasks) {
+      // Determine correct status based on task's progress
+      const taskProgress = task.progress || 0;
+      const newStatus = determineStatusFromProgress(
+        taskProgress,
+        task.status as any,
+        [], // no form responses
+        task.metadata || {}
+      );
+      
+      logger.info('[TaskDependencies] Determining correct status for Open Banking task', {
+        taskId: task.id,
+        progress: taskProgress,
+        currentStatus: task.status,
+        newStatus
+      });
+
       await db.update(tasks)
         .set({
-          status: 'not_started',
+          status: newStatus,
           metadata: sql`jsonb_set(
             jsonb_set(
               jsonb_set(
@@ -250,13 +294,16 @@ export async function unlockOpenBankingTasks(companyId: number) {
         
       logger.info('[TaskDependencies] Unlocked Open Banking task', { 
         companyId, 
-        taskId: task.id
+        taskId: task.id,
+        progress: taskProgress,
+        status: newStatus
       });
       
       // Broadcast the update via WebSocket
       broadcastTaskUpdate({
         id: task.id,
-        status: 'not_started',
+        status: newStatus,
+        progress: taskProgress,
         metadata: {
           locked: false,
           prerequisite_completed: true,
