@@ -86,8 +86,8 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
     
     // Determine field status based on value
     const hasValue = value !== null && value !== undefined && value !== '';
-    // Status must match enum keys (not values) as defined in KYBFieldStatus
-    const status = hasValue ? 'COMPLETE' : 'INCOMPLETE';
+    // Must use literal string type to satisfy the schema type requirements
+    const status: 'COMPLETE' | 'INCOMPLETE' | 'EMPTY' | 'INVALID' = hasValue ? 'COMPLETE' : 'INCOMPLETE';
     
     logger.info('[Open Banking API] Field update details', {
       taskId,
@@ -124,7 +124,7 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
             task_id: parseInt(taskId),
             field_id: fieldDefinition.id,
             response_value: value,
-            status: status as 'COMPLETE' | 'INCOMPLETE' | 'EMPTY' | 'INVALID'
+            status: status
           });
       }
       
