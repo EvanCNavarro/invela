@@ -31,6 +31,8 @@ class WebSocketService {
   private connectionId: string = '';
   private isInitialized: boolean = false;
   private connectionStatusListeners: Set<(status: 'connected' | 'disconnected' | 'connecting' | 'error') => void> = new Set();
+  private userId: number | null = null;
+  private companyId: number | null = null;
 
   constructor() {
     this.connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -341,6 +343,58 @@ class WebSocketService {
   private reconnect() {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.close();
+    }
+  }
+
+  /**
+   * Retrieves user and company IDs from available sources and updates internal state
+   * 
+   * @returns {Object} The user and company IDs
+   */
+  private getUserInfo(): { userId: number | null, companyId: number | null } {
+    // Try to get from localStorage first
+    try {
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const parsedData = JSON.parse(userData);
+        if (parsedData && parsedData.id) {
+          this.userId = parsedData.id;
+          this.companyId = parsedData.company_id || null;
+          return { userId: this.userId, companyId: this.companyId };
+        }
+      }
+    } catch (error) {
+      logger.warn('Error parsing user data from localStorage:', error);
+    }
+    
+    // Use current values as a fallback
+    return { userId: this.userId, companyId: this.companyId };
+  }
+
+  /**
+   * Sends authentication message to the WebSocket server with user and company IDs
+   */
+  private sendAuthenticationMessage(): void {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      logger.warn('Cannot send authentication message: WebSocket not connected');
+      return;
+    }
+    
+    // Get user info from available sources
+    const { userId, companyId } = this.getUserInfo();
+    
+    logger.info('Sending authentication message:', { userId, companyId });
+    
+    try {
+      this.socket.send(JSON.stringify({
+        type: 'authenticate',
+        userId,
+        companyId,
+        clientId: this.connectionId,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      logger.error('Error sending authentication message:', error);
     }
   }
 
