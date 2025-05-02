@@ -101,8 +101,16 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
     const clientIp = req.socket.remoteAddress || 'unknown';
     logInfo(`New client connected from ${clientIp}`);
     
-    // @ts-ignore - we're adding our own property
+    // Initialize connection tracking properties
+    // @ts-ignore - we're adding custom properties
     ws.isAlive = true;
+    // @ts-ignore - track additional connection info
+    ws.connectionInfo = {
+      clientIp,
+      connectedAt: new Date().toISOString(),
+      lastMessageAt: new Date().toISOString(),
+      messageCount: 0
+    };
     
     ws.on('message', (data) => {
       try {
@@ -111,6 +119,15 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
         // Mark connection as alive for any message (implicit pong)
         // @ts-ignore - we're using our own property
         ws.isAlive = true;
+        
+        // Update connection stats
+        // @ts-ignore - updating custom property
+        if (ws.connectionInfo) {
+          // @ts-ignore - updating custom property
+          ws.connectionInfo.lastMessageAt = new Date().toISOString();
+          // @ts-ignore - updating custom property
+          ws.connectionInfo.messageCount += 1;
+        }
         
         // For non-ping messages, log the type
         if (message.type !== 'ping') {
