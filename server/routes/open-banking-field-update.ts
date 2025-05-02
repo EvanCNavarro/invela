@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { db } from '@db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { tasks, openBankingFields, openBankingResponses, KYBFieldStatus } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
@@ -77,13 +77,13 @@ router.post('/api/open-banking/fields/:taskId', requireAuth, async (req, res) =>
       .where(
         and(
           eq(openBankingResponses.task_id, parseInt(taskId)),
-          eq(openBankingResponses.field_key, fieldKey)
+          eq(openBankingResponses.field_id, fieldDefinition.id)
         )
       );
     
     // Determine field status based on value
     const hasValue = value !== null && value !== undefined && value !== '';
-    const status = hasValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.INCOMPLETE;
+    const status = hasValue ? "COMPLETE" : "INCOMPLETE";
     
     logger.info('[Open Banking API] Field update details', {
       taskId,
@@ -109,7 +109,7 @@ router.post('/api/open-banking/fields/:taskId', requireAuth, async (req, res) =>
           .where(
             and(
               eq(openBankingResponses.task_id, parseInt(taskId)),
-              eq(openBankingResponses.field_key, fieldKey)
+              eq(openBankingResponses.field_id, fieldDefinition.id)
             )
           );
       } else {
