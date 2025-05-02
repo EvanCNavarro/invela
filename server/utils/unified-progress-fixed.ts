@@ -119,14 +119,14 @@ export async function calculateAndUpdateTaskProgress(
       .set({
         // Cast to ensure correct type handling
         progress: calculatedProgress,
-        status: normalizeTaskStatus(calculatedStatus),
+        status: String(normalizeTaskStatus(calculatedStatus)),
         updated_at: updateTime,
         metadata: {
           ...currentTask.metadata,
           lastProgressUpdate: updateTime.toISOString(),
           lastProgressReconciliation: updateTime.toISOString(),
-          // Include explicit progress value in metadata for debugging
-          progressValue: calculatedProgress,
+          // Remove progressValue to avoid duplication - KISS principle
+          // Only track audit information in metadata
           progressUpdateSource: source,
           progressUpdateTransaction: transactionId
         }
