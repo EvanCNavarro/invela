@@ -13,7 +13,8 @@ import {
   openBankingFields, 
   openBankingResponses,
   InsertOpenBankingResponse,
-  TaskStatus 
+  TaskStatus,
+  KYBFieldStatus
 } from '@db/schema';
 import { logger } from '../utils/logger';
 import { calculateTaskProgress, determineTaskStatus, broadcastProgressUpdate } from '../utils/universal-progress';
