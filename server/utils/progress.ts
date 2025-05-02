@@ -338,7 +338,7 @@ export async function calculateUniversalTaskProgress(
  * @param taskId Task ID to update
  * @param taskType Type of task (company_kyb, ky3p, open_banking)
  * @param options Configuration options
- * @returns Promise<void>
+ * @returns Promise<any> Returns the updated task object or void
  */
 export async function updateTaskProgress(
   taskId: number,
@@ -349,14 +349,23 @@ export async function updateTaskProgress(
     debug?: boolean;
     metadata?: Record<string, any>;
   } = {}
-): Promise<void> {
+): Promise<any> {
   const { forceUpdate = false, skipBroadcast = false, debug = false, metadata = {} } = options;
   const logPrefix = '[Task Progress Update]';
+  
+  // Add transaction ID for tracing in logs outside try block
+  // so it's available in the catch block as well
+  const transactionId = `txid-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  // Declare variables for closure in catch block
+  let storedProgress = 0;
+  let newProgress = 0;
   
   try {
     // Using transaction for atomic operations
     // Add explicit logging for transaction start/commit
     console.log(`${logPrefix} Starting transaction for task ${taskId} (${taskType})`);
+    console.log(`${logPrefix} Transaction ${transactionId} started for task ${taskId}`);
+    
     return await db.transaction(async (tx) => {
       // Step 1: Get the current task with transaction
       const [task] = await tx
@@ -372,8 +381,9 @@ export async function updateTaskProgress(
       const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug, tx });
       
       // Step 3: Check if update is needed with proper type conversion
-      const storedProgress = Number(task.progress);
-      const newProgress = Number(calculatedProgress);
+      // Update outer scope variables for access in catch block
+      storedProgress = Number(task.progress);
+      newProgress = Number(calculatedProgress);
       
       // Add extensive debugging
       console.log(`${logPrefix} PROGRESS DEBUG - Task ${taskId} (${taskType}):\n` +
@@ -477,19 +487,19 @@ export async function updateTaskProgress(
       }
       
       // Log successful transaction for debugging purposes
-      console.log(`${logPrefix} Successfully updated task ${taskId} progress from ${storedProgress}% to ${newProgress}%`);
+      console.log(`${logPrefix} Transaction ${transactionId}: Successfully updated task ${taskId} progress from ${storedProgress}% to ${newProgress}%`);
       
       // Return updated task data if needed for further processing
       return updatedTask;
     });
     
     // Log successful transaction completion outside transaction
-    console.log(`${logPrefix} Transaction completed successfully for task ${taskId} (${taskType})`);
+    console.log(`${logPrefix} Transaction ${transactionId} completed successfully for task ${taskId} (${taskType})`);
   } catch (error) {
     console.error(`${logPrefix} Error updating task progress:`, error);
     
     // Add detailed error information for troubleshooting
-    console.error(`${logPrefix} Failed transaction details:`, {
+    console.error(`${logPrefix} Failed transaction details for ${transactionId}:`, {
       taskId,
       taskType,
       forceUpdate,
