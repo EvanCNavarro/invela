@@ -11,6 +11,7 @@ import * as WebSocketService from './websocket';
 import { logger } from '../utils/logger';
 import { configureTaskWebSocketRoutes } from '../routes/task-websocket';
 import { setWebSocketServer } from '../utils/task-broadcast';
+import { registerWebSocketServer } from '../utils/task-update';
 
 // Logger is already initialized in the imported module
 
@@ -45,6 +46,9 @@ export function setupWebSocket(server: Server): void {
     
     // Set up WebSocket reference for task broadcasting service
     setWebSocketServer(wss);
+    
+    // Register our new task-update utility with the WebSocket server
+    registerWebSocketServer(wss);
     
     // Configure task-specific WebSocket routes for progress calculation and reconciliation
     configureTaskWebSocketRoutes(server, wss);

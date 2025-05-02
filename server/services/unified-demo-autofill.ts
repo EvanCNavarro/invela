@@ -22,7 +22,7 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { ResponseStatus } from '../utils/status-constants';
-import { updateTaskProgressAndStatus } from '../utils/task-update';
+import { updateTaskProgress } from '../utils/task-update';
 
 // Form types supported by this service
 export type FormType = 'kyb' | 'ky3p' | 'open_banking';
@@ -355,14 +355,9 @@ class UnifiedDemoAutoFillService {
       
       // Use the unified task update function to update progress and status
       // This ensures consistent progress calculation and WebSocket broadcasting
-      const updateResult = await updateTaskProgressAndStatus(taskId, formType, {
-        source: 'demo-autofill',
-        debug: true,
-        metadata: {
-          demoAutofillCompleted: true,
-          demoAutofillTimestamp: timestamp.toISOString(),
-          demoAutofillUserId: userId
-        }
+      const updateResult = await updateTaskProgress(taskId, {
+        recalculate: true,
+        debug: true
       });
       
       logger.info('Successfully applied demo data and updated task', {
