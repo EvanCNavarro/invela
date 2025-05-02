@@ -740,7 +740,7 @@ router.post('/api/kyb/bulk-update/:taskId', requireAuth, async (req, res) => {
     const completedCount = completedResponses?.count || 0;
     const totalFields = fieldsCount?.count || 1;
     const progressPercentage = Math.min(
-      Math.floor((completedCount / totalFields) * 100),
+      Math.round((completedCount / totalFields) * 100),
       99 // Cap at 99% - final submission sets to 100%
     );
     
