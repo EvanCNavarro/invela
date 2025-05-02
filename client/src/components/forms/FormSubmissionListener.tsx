@@ -100,12 +100,20 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
       return;
     }
     
+    // Handle scenario where socket reconnected but the component did not remount
+    // We check both for new task and for existing socket listener attachment
+    const needsReattachment = socket &&
+      (socket.readyState === WebSocket.OPEN) &&
+      handleMessageRef.current && 
+      !hasSetupListenerRef.current;
+    
     // Check if we need to setup a new listener
     const needsNewListener = 
       !hasSetupListenerRef.current || 
       !listenerInfoRef.current ||
       listenerInfoRef.current.taskId !== taskId ||
-      listenerInfoRef.current.formType !== formType;
+      listenerInfoRef.current.formType !== formType ||
+      needsReattachment;
       
     // If we don't need a new listener, just return
     if (!needsNewListener && hasSetupListenerRef.current && handleMessageRef.current) {
@@ -114,8 +122,12 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     
     // Clean up any existing listener if we're setting up a new one
     if (hasSetupListenerRef.current && handleMessageRef.current) {
-      socket.removeEventListener('message', handleMessageRef.current);
-      logger.info(`Cleaned up form submission listener for task ${listenerInfoRef.current?.taskId}`);
+      try {
+        socket.removeEventListener('message', handleMessageRef.current);
+        logger.info(`Cleaned up form submission listener for task ${listenerInfoRef.current?.taskId}`);
+      } catch (e) {
+        // Ignore errors removing listeners from potentially closed sockets
+      }
     }
 
     logger.info(`Setting up form submission listener for task ${taskId} (${formType})`);
@@ -257,10 +269,15 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     // Cleanup function - only execute on unmount or when task/form changes
     return () => {
       if (socket && handleMessageRef.current) {
-        socket.removeEventListener('message', handleMessageRef.current);
-        logger.info(`Cleaned up form submission listener for task ${taskId}`);
-        hasSetupListenerRef.current = false;
-        handleMessageRef.current = null;
+        try {
+          socket.removeEventListener('message', handleMessageRef.current);
+          logger.info(`Cleaned up form submission listener for task ${taskId}`);
+        } catch (e) {
+          // Ignore errors removing listeners from potentially closed sockets
+        } finally {
+          hasSetupListenerRef.current = false;
+          handleMessageRef.current = null;
+        }
       }
     };
   }, [socket, isConnected, taskId, formType]); // Remove callback dependencies
