@@ -9,7 +9,8 @@ import {
   ky3pResponses, 
   ky3pFields, 
   openBankingResponses, 
-  openBankingFields
+  openBankingFields,
+  KYBFieldStatus
 } from '@db/schema';
 
 import { hasAllRequiredFields } from './kyb-progress';
@@ -231,8 +232,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(openBankingResponses.task_id, taskId),
-            // Use UPPER() for case-insensitive comparison
-            sql`UPPER(${openBankingResponses.status}) = 'COMPLETE'`
+            // Match status directly
+            eq(openBankingResponses.status, KYBFieldStatus.COMPLETE)
           )
         );
       completedFields = completedResultQuery[0].count;
@@ -263,7 +264,9 @@ export async function calculateUniversalTaskProgress(
         completedFields,
         rawPercentage: totalFields > 0 ? (completedFields / totalFields) * 100 : 0,
         roundedPercentage: totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        KYBFieldStatusEnumValue: KYBFieldStatus.COMPLETE,
+        queryCondition: 'Using direct enum value match (KYBFieldStatus.COMPLETE) now instead of uppercase SQL comparison'
       });
       
       // DIAGNOSTIC: Log the completed responses
@@ -295,8 +298,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(kybResponses.task_id, taskId),
-            // Use UPPER() for case-insensitive comparison 
-            sql`UPPER(${kybResponses.status}) = 'COMPLETE'`
+            // Match status directly using enum value
+            eq(kybResponses.status, KYBFieldStatus.COMPLETE)
           )
         );
       completedFields = completedResultQuery[0].count;
