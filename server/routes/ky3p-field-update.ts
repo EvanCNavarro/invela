@@ -33,14 +33,21 @@ export function registerKY3PFieldUpdateRoutes() {
   router.post('/api/ky3p-fields/:taskId/update-field', async (req, res) => {
     try {
       const taskId = parseInt(req.params.taskId);
-      const { field_key, value } = req.body;
+      
+      // Support both newer 'field_key' and older 'fieldKey' formats for backward compatibility
+      const field_key = req.body.field_key || req.body.fieldKey;
+      const value = req.body.value;
 
       if (!field_key) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Missing required parameter: field_key' 
+          message: 'Missing required parameter: field_key or fieldKey' 
         });
       }
+      
+      logger.info(`[KY3P API] Processing field update for task ${taskId}, field ${field_key}`);
+      // Log the request body for debugging
+      logger.debug(`[KY3P API] Request body:`, req.body);
 
       logger.info(`[KY3P API] Processing single field update for task ${taskId}, field ${field_key}`);
 

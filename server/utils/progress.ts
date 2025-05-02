@@ -350,7 +350,16 @@ export async function updateTaskProgress(
       const storedProgress = Number(task.progress);
       const newProgress = Number(calculatedProgress);
       
-      if (!forceUpdate && storedProgress === newProgress && !isNaN(storedProgress) && !isNaN(newProgress)) {
+      if (debug) {
+        console.log(`${logPrefix} Comparing stored progress (${storedProgress}, type: ${typeof storedProgress}) with new progress (${newProgress}, type: ${typeof newProgress})`);
+      }
+      
+      // FIXED: The comparison logic now handles string vs number types correctly
+      // and recognizes progress changes from 0 to small values like 2%
+      if (!forceUpdate && 
+          Math.abs(storedProgress - newProgress) < 0.01 && 
+          !isNaN(storedProgress) && 
+          !isNaN(newProgress)) {
         if (debug) {
           console.log(`${logPrefix} No progress change needed for task ${taskId} (${taskType}): ${calculatedProgress}%`);
         }
