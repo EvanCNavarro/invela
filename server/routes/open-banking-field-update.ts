@@ -150,7 +150,9 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
         newProgress,
         previousStatus: task.status,
         newStatus,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        hasChanges: (task.progress !== newProgress || task.status !== newStatus),
+        wasUpdated: (task.progress !== newProgress || task.status !== newStatus) ? 'YES' : 'NO'
       });
       
       // Only update the task if progress or status changed
@@ -175,12 +177,21 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
     });
     
     // Broadcast field update outside the transaction
+    logger.info('[Open Banking API] Broadcasting progress update via WebSocket', {
+      taskId,
+      progress: result.progress,
+      status: result.status,
+      timestamp: new Date().toISOString()
+    });
+    
     broadcastProgressUpdate(
       parseInt(taskId),
       result.progress as number,
       result.status as TaskStatus,
       result.metadata || {}
     );
+    
+    logger.info('[Open Banking API] WebSocket broadcast completed');
     
     // Return success response
     return res.status(200).json({
