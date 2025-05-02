@@ -1,83 +1,111 @@
 /**
- * Task Progress Routes
+ * Task Progress API
  * 
- * Defines API endpoints for calculating and updating task progress
- * using the new unified progress calculation approach.
+ * Provides endpoints for calculating and updating task progress using the
+ * unified progress calculation system with transaction boundaries.
  */
 
 import express from 'express';
 import { calculateAndUpdateTaskProgress } from '../utils/unified-progress-fixed';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
 /**
- * Calculate task progress
- * 
- * GET /api/task-progress/:taskId
- * 
- * Calculates the current progress for a task without updating the database
+ * Force update progress for a specific task
+ * POST /api/tasks/:taskId/progress
  */
-router.get('/:taskId', async (req, res) => {
+router.post('/:taskId/progress', async (req, res) => {
+  const taskId = parseInt(req.params.taskId, 10);
+  const { force = false, debug = false, source = 'api' } = req.body;
+  
+  if (isNaN(taskId) || taskId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid task ID'
+    });
+  }
+  
   try {
-    const taskId = parseInt(req.params.taskId);
-    const taskType = req.query.taskType as string;
+    logger.info(`[Task Progress API] Updating progress for task ${taskId}`, {
+      taskId,
+      force,
+      debug,
+      source,
+      requestedBy: req.session?.user?.email || 'unknown',
+      timestamp: new Date().toISOString()
+    });
     
-    if (!taskId || isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
-    }
+    const result = await calculateAndUpdateTaskProgress(taskId, {
+      force,
+      debug,
+      source
+    });
     
-    if (!taskType) {
-      return res.status(400).json({ error: 'Task type is required' });
-    }
-    
-    const result = await calculateAndUpdateTaskProgress(taskId, taskType, {
-      updateDatabase: false,  // Don't update the database
-      broadcastUpdate: false, // Don't broadcast the update
-      source: 'api_get'
+    // Log the result
+    logger.info(`[Task Progress API] Progress update result for task ${taskId}`, {
+      taskId,
+      success: result.success,
+      progress: result.progress,
+      status: result.status,
+      message: result.message
     });
     
     return res.json(result);
   } catch (error) {
-    console.error('[TaskProgressRoutes] Error calculating task progress:', error);
-    return res.status(500).json({ 
-      error: 'Failed to calculate task progress',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    logger.error(`[Task Progress API] Error updating progress for task ${taskId}`, {
+      taskId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Error updating task progress',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
 /**
- * Update task progress
- * 
- * POST /api/task-progress/:taskId
- * 
- * Calculates the current progress for a task and updates the database
+ * Get current progress for a specific task
+ * GET /api/tasks/:taskId/progress
  */
-router.post('/:taskId', async (req, res) => {
+router.get('/:taskId/progress', async (req, res) => {
+  const taskId = parseInt(req.params.taskId, 10);
+  
+  if (isNaN(taskId) || taskId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid task ID'
+    });
+  }
+  
   try {
-    const taskId = parseInt(req.params.taskId);
-    const { taskType, source } = req.body;
-    
-    if (!taskId || isNaN(taskId)) {
-      return res.status(400).json({ error: 'Invalid task ID' });
-    }
-    
-    if (!taskType) {
-      return res.status(400).json({ error: 'Task type is required in request body' });
-    }
-    
-    const result = await calculateAndUpdateTaskProgress(taskId, taskType, {
-      updateDatabase: true,  // Update the database
-      broadcastUpdate: true, // Broadcast the update
-      source: source || 'api_post'
+    // Use calculateAndUpdateTaskProgress with force=false to just calculate without updating
+    const result = await calculateAndUpdateTaskProgress(taskId, {
+      force: false,
+      debug: true,
+      source: 'api-get'
     });
     
-    return res.json(result);
+    return res.json({
+      success: true,
+      taskId,
+      progress: result.progress,
+      status: result.status
+    });
   } catch (error) {
-    console.error('[TaskProgressRoutes] Error updating task progress:', error);
-    return res.status(500).json({ 
-      error: 'Failed to update task progress',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    logger.error(`[Task Progress API] Error getting progress for task ${taskId}`, {
+      taskId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Error getting task progress',
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
