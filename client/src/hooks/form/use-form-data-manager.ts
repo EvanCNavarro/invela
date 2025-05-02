@@ -296,7 +296,14 @@ export function useFormDataManager({
       // Always update in the form service, ensuring field clearing operations work
       // Pass taskId to enable immediate saving on critical operations
       logger.info(`[TIMESTAMP-SYNC] ${updateTimestamp}: Calling updateFormData with taskId: ${taskId}`);
-      formService.updateFormData(name, normalizedValue, taskId);
+      
+      // Handle both async and sync implementations of updateFormData
+      const updateResult = formService.updateFormData(name, normalizedValue, taskId);
+      if (updateResult instanceof Promise) {
+        updateResult.catch(err => {
+          logger.error(`[TIMESTAMP-SYNC] ${updateTimestamp}: Error in async updateFormData:`, err);
+        });
+      }
       
       // Update in React Hook Form
       form.setValue(name, normalizedValue, { 
