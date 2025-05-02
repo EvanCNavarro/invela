@@ -51,20 +51,45 @@ export function registerKY3PFieldUpdateRoutes() {
 
       logger.info(`[KY3P API] Processing single field update for task ${taskId}, field ${field_key}`);
 
+      // DIAGNOSTIC: Log request details
+      console.log(`[KY3P FIELD UPDATE] Field update request details:`, {
+        taskId,
+        field_key,
+        value: typeof value === 'string' ? value.substring(0, 20) + '...' : value,
+        requestMethod: req.method,
+        contentType: req.get('Content-Type'),
+        bodyKeys: Object.keys(req.body),
+        timestamp: new Date().toISOString()
+      });
+
       // Find the field ID using the string field key
       const fieldResults = await db.select()
         .from(ky3pFields)
         .where(eq(ky3pFields.field_key, field_key))
         .limit(1);
       
+      console.log(`[KY3P FIELD UPDATE] Field lookup results for '${field_key}':`, {
+        found: fieldResults.length > 0,
+        fieldId: fieldResults.length > 0 ? fieldResults[0].id : null
+      });
+      
       // If field not found by key, try using the field name or question for backward compatibility
       if (fieldResults.length === 0) {
+        console.log(`[KY3P FIELD UPDATE] Field not found by key, trying display_name fallback`);
+        
         const altFieldResults = await db.select()
           .from(ky3pFields)
           .where(eq(ky3pFields.display_name, field_key))
           .limit(1);
         
+        console.log(`[KY3P FIELD UPDATE] Display name lookup results:`, {
+          found: altFieldResults.length > 0,
+          fieldId: altFieldResults.length > 0 ? altFieldResults[0].id : null,
+          displayName: field_key
+        });
+        
         if (altFieldResults.length === 0) {
+          logger.error(`[KY3P API] Field not found with key or display_name: ${field_key}`);
           return res.status(404).json({
             success: false,
             message: `Field not found with key: ${field_key}`
