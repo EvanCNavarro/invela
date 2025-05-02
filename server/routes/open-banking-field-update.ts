@@ -7,16 +7,16 @@
 
 import { Router } from 'express';
 import { db } from '@db';
-import { eq, and, sql } from 'drizzle-orm';
-import { tasks, openBankingFields, openBankingResponses, KYBFieldStatus } from '@db/schema';
-import { requireAuth } from '../middleware/auth';
-import { logger } from '../utils/logger';
+import { eq, and } from 'drizzle-orm';
 import { 
-  calculateTaskProgress, 
-  updateTaskProgress, 
-  broadcastProgressUpdate,
-  determineTaskStatus
-} from '../utils/universal-progress';
+  tasks, 
+  openBankingFields, 
+  openBankingResponses,
+  InsertOpenBankingResponse,
+  TaskStatus 
+} from '@db/schema';
+import { logger } from '../utils/logger';
+import { calculateTaskProgress, determineTaskStatus, broadcastProgressUpdate } from '../utils/universal-progress';
 
 const router = Router();
 
@@ -26,46 +26,48 @@ const router = Router();
  * This endpoint allows updating a single field and recalculates progress
  * using our universal progress calculation function.
  */
-router.post('/api/open-banking/fields/:taskId', requireAuth, async (req, res) => {
+router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
+  const { taskId, fieldKey } = req.params;
+  const { value } = req.body;
+  
   try {
-    const { taskId } = req.params;
-    const { fieldKey, value } = req.body;
-    
-    if (!fieldKey) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Field key is required' 
-      });
-    }
-    
-    logger.info('[Open Banking API] Updating field', {
+    logger.info('[Open Banking API] Field update request received', {
       taskId,
       fieldKey,
+      hasValue: value !== undefined,
       timestamp: new Date().toISOString()
     });
     
-    // Get the task to verify it exists and is an Open Banking task
+    // Validate task exists
     const [task] = await db
       .select()
       .from(tasks)
       .where(eq(tasks.id, parseInt(taskId)));
       
     if (!task) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Task not found' 
+      return res.status(404).json({
+        success: false,
+        error: `Task ${taskId} not found`
       });
     }
     
-    // Get the field definition using the field key
+    // Validate this is an Open Banking task
+    if (task.task_type !== 'open_banking') {
+      return res.status(400).json({
+        success: false,
+        error: `Task ${taskId} is not an Open Banking task`
+      });
+    }
+    
+    // Get field definition
     const [fieldDefinition] = await db
       .select()
       .from(openBankingFields)
       .where(eq(openBankingFields.field_key, fieldKey));
       
     if (!fieldDefinition) {
-      return res.status(404).json({ 
-        success: false, 
+      return res.status(404).json({
+        success: false,
         error: `Field ${fieldKey} not found` 
       });
     }
@@ -114,15 +116,16 @@ router.post('/api/open-banking/fields/:taskId', requireAuth, async (req, res) =>
           );
       } else {
         // Insert a new response
+        const newResponse: Partial<InsertOpenBankingResponse> = {
+          task_id: parseInt(taskId),
+          field_id: fieldDefinition.id,
+          response_value: value,
+          status
+        };
+        
         await tx
           .insert(openBankingResponses)
-          .values({
-            task_id: parseInt(taskId),
-            field_id: fieldDefinition.id,
-            field_key: fieldKey,
-            response_value: value,
-            status
-          });
+          .values([newResponse]);
       }
       
       // Calculate the new progress using our unified approach
@@ -135,7 +138,7 @@ router.post('/api/open-banking/fields/:taskId', requireAuth, async (req, res) =>
       // Determine the appropriate status based on the new progress
       const newStatus = determineTaskStatus(
         newProgress,
-        task.status as any,
+        task.status as TaskStatus,
         task.metadata || {}
       );
       
@@ -173,7 +176,7 @@ router.post('/api/open-banking/fields/:taskId', requireAuth, async (req, res) =>
     broadcastProgressUpdate(
       parseInt(taskId),
       result.progress as number,
-      result.status as any,
+      result.status as TaskStatus,
       result.metadata || {}
     );
     
