@@ -38,6 +38,7 @@ import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
+import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
 import taskProgressRouter from './routes/task-progress';
@@ -365,6 +366,10 @@ export function registerRoutes(app: Express): Express {
   app.use(fixKy3pFilesRouter);
   // Register the universal demo auto-fill router
   app.use(universalDemoAutofillRouter);
+  
+  // Register unified demo auto-fill API for all form types (KYB, KY3P, Open Banking)
+  // This implementation resolves inconsistencies with case sensitivity and status handling
+  app.use(unifiedDemoAutofillRouter);
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
