@@ -9,7 +9,15 @@
 
 import express from 'express';
 import { db } from '@db';
-import { ky3pFields, ky3pResponses, tasks, KYBFieldStatus } from '@db/schema';
+import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
+
+// Define field status enum to match database schema
+const KYBFieldStatus = {
+  EMPTY: 'EMPTY',
+  INCOMPLETE: 'INCOMPLETE',
+  COMPLETE: 'COMPLETE',
+  INVALID: 'INVALID'
+} as const;
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { universalDemoAutoFillService } from '../services/universalDemoAutoFillService';

@@ -73,7 +73,38 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       newSocket.addEventListener('message', (event) => {
         try {
           const data = JSON.parse(event.data);
-          setLastMessage(data);
+          logger.info(`Received WebSocket message of type: ${data.type}`);
+          
+          // Special handling for pong messages
+          if (data.type === 'pong') {
+            logger.info('Received pong from server, connection is healthy');
+          }
+          
+          // Special handling for connection_established messages
+          if (data.type === 'connection_established') {
+            logger.info('WebSocket connection confirmed by server');
+          }
+          
+          // Special handling for form_submission messages
+          if (data.type === 'form_submission' || data.type === 'form_submitted' || data.type === 'submission_status') {
+            logger.info('Received form submission update:', {
+              type: data.type,
+              taskId: data.payload?.taskId || data.taskId,
+              status: data.payload?.status || 'unknown',
+              formType: data.payload?.formType,
+              fileId: data.payload?.fileId
+            });
+          }
+          
+          // Handle payload format variations
+          setLastMessage({
+            type: data.type,
+            // Handle both formats: { payload: {...} } and { data: {...} }
+            payload: data.payload || data.data || data,
+            // Extract top-level properties that might be needed separately
+            taskId: data.taskId || data.payload?.taskId || data.data?.taskId,
+            timestamp: data.timestamp || data.payload?.timestamp || new Date().toISOString()
+          });
         } catch (error) {
           logger.error('Error parsing WebSocket message:', error);
         }
@@ -118,22 +149,66 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
   };
   
+  // Start ping heartbeat mechanism to keep connection alive
+  const startHeartbeat = (ws: WebSocket) => {
+    const heartbeatInterval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        logger.info('Sending ping heartbeat to server');
+        ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
+      } else if (ws && ws.readyState !== WebSocket.CONNECTING) {
+        logger.warn('No pong received, reconnecting...');
+        if (ws.readyState !== WebSocket.CLOSED) {
+          try {
+            ws.close();
+          } catch (e) {
+            // Ignore errors when closing an already closed connection
+          }
+        }
+        scheduleReconnect();
+      }
+    }, 30000); // 30 second ping interval
+    
+    return heartbeatInterval;
+  };
+  
   // Connect on component mount
   useEffect(() => {
     logger.info('Smart WebSocket connection manager initialized');
     connectWebSocket();
     
+    // Set up a heartbeat interval when socket is initialized
+    let heartbeatInterval: NodeJS.Timeout | null = null;
+    
+    if (socket) {
+      heartbeatInterval = startHeartbeat(socket);
+    }
+    
     // Clean up on unmount
     return () => {
-      if (socket) {
-        socket.close();
+      // Clear heartbeat interval
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
       }
       
+      // Close any open socket
+      if (socket) {
+        try {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.close(1000, 'Component unmounting'); // Normal closure
+          }
+        } catch (e) {
+          logger.error('Error closing WebSocket on unmount:', e);
+        }
+      }
+      
+      // Clear any pending reconnection attempts
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      
+      logger.info('FormSubmissionListener cleaned up form submission listener for task 718');
     };
-  }, []);
+  }, [socket]); // Re-initialize heartbeat when socket changes
   
   const contextValue: WebSocketContextType = {
     socket,
