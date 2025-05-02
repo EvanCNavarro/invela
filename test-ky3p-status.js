@@ -5,7 +5,7 @@ async function testKy3pStatusUpdate() {
   try {
     // First, get the KY3P fields to find one to update
     console.log('Fetching KY3P fields...');
-    const fieldsResponse = await fetch('/api/ky3p-fields');
+    const fieldsResponse = await fetch('http://localhost:5000/api/ky3p-fields');
     if (!fieldsResponse.ok) {
       throw new Error(`Failed to fetch KY3P fields: ${fieldsResponse.status} ${fieldsResponse.statusText}`);
     }
@@ -19,7 +19,7 @@ async function testKy3pStatusUpdate() {
     
     // Next, get a list of tasks
     console.log('Fetching tasks...');
-    const tasksResponse = await fetch('/api/tasks');
+    const tasksResponse = await fetch('http://localhost:5000/api/tasks');
     if (!tasksResponse.ok) {
       throw new Error(`Failed to fetch tasks: ${tasksResponse.status} ${tasksResponse.statusText}`);
     }
@@ -50,7 +50,7 @@ async function testKy3pStatusUpdate() {
     
     // Send the batch update
     console.log(`Sending batch update to task ${ky3pTask.id}...`);
-    const batchResponse = await fetch(`/api/ky3p-fields/${ky3pTask.id}/batch-update`, {
+    const batchResponse = await fetch(`http://localhost:5000/api/ky3p-fields/${ky3pTask.id}/batch-update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ async function testKy3pStatusUpdate() {
     
     // Check the task progress
     console.log(`Checking task ${ky3pTask.id} progress...`);
-    const taskResponse = await fetch(`/api/tasks/${ky3pTask.id}`);
+    const taskResponse = await fetch(`http://localhost:5000/api/tasks/${ky3pTask.id}`);
     if (!taskResponse.ok) {
       throw new Error(`Failed to fetch task: ${taskResponse.status} ${taskResponse.statusText}`);
     }
