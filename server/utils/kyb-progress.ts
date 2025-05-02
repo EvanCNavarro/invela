@@ -18,7 +18,8 @@ export function calculateKybFormProgress(
     response => (response.status.toUpperCase() === KYBFieldStatus.COMPLETE.toUpperCase()) && response.hasValue === true
   ).length;
   
-  return Math.floor((completedFields / allFields.length) * 100);
+  // Use Math.round for consistent progress calculations across all form types
+  return Math.round((completedFields / allFields.length) * 100);
 }
 
 /**
