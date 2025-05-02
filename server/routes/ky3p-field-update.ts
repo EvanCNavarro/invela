@@ -39,9 +39,18 @@ export function registerKY3PFieldUpdateRoutes() {
       const value = req.body.value;
 
       if (!field_key) {
+        console.log('[KY3P API] ERROR: Missing required parameter: field_key or fieldKey');
         return res.status(400).json({ 
           success: false, 
           message: 'Missing required parameter: field_key or fieldKey' 
+        });
+      }
+      
+      if (value === undefined || value === null) {
+        console.log('[KY3P API] ERROR: Missing required parameter: value');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Missing required parameter: value' 
         });
       }
       
@@ -189,9 +198,18 @@ export function registerKY3PFieldUpdateRoutes() {
       }
     } catch (error) {
       logger.error('[KY3P API] Error processing field update:', error);
+      console.error('[KY3P API] CRITICAL ERROR in field update:', {
+        error: error instanceof Error ? error.message : 'Unknown error type',
+        stack: error instanceof Error ? error.stack : null,
+        taskId,
+        fieldKey: field_key || req.body.fieldKey,
+        timestamp: new Date().toISOString()
+      });
       return res.status(500).json({ 
         success: false, 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+        errorDetails: process.env.NODE_ENV !== 'production' ? (error instanceof Error ? error.stack : null) : undefined
       });
     }
   });
