@@ -33,35 +33,21 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<any | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
-  const socketInstanceRef = useRef<WebSocket | null>(null);
-  const isInitializedRef = useRef(false);
+  const connectAttempts = useRef(0);
+  const alreadyInitialized = useRef(false);
   
-  // Connect to WebSocket - only if we don't already have an active connection
-  const connectWebSocket = () => {
-    // Don't create multiple connections
-    if (socketInstanceRef.current && 
-        (socketInstanceRef.current.readyState === WebSocket.CONNECTING || 
-         socketInstanceRef.current.readyState === WebSocket.OPEN)) {
-      logger.info('WebSocket connection already exists, skipping reconnect');
-      return;
-    }
-    
+  // Connect to WebSocket
+  const connect = () => {
     try {
-      // Clean up any existing socket first
-      if (socketInstanceRef.current) {
+      // Clear any existing connection
+      if (socket) {
         try {
-          // Only try to close if it's not already closed
-          if (socketInstanceRef.current.readyState !== WebSocket.CLOSED && 
-              socketInstanceRef.current.readyState !== WebSocket.CLOSING) {
-            socketInstanceRef.current.close();
-          }
-        } catch (e) {
-          // Ignore errors when closing an already closed socket
+          socket.close(1000, 'Reconnecting');
+        } catch (err) {
+          // Ignore errors on close
         }
-        socketInstanceRef.current = null;
       }
       
       // Create WebSocket URL based on current protocol and host
@@ -70,195 +56,137 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       
       logger.info('Connecting to WebSocket:', wsUrl);
       
-      const newSocket = new WebSocket(wsUrl);
-      socketInstanceRef.current = newSocket;
+      const ws = new WebSocket(wsUrl);
       
-      // Set up event handlers
-      newSocket.addEventListener('open', () => {
-        logger.info('WebSocket connection established');
+      ws.onopen = () => {
         setIsConnected(true);
-        reconnectAttempts.current = 0;
-      });
-      
-      newSocket.addEventListener('close', (event) => {
-        logger.info('WebSocket connection closed:', event.code, event.reason);
-        setIsConnected(false);
+        connectAttempts.current = 0;
+        logger.info('WebSocket connection established');
         
-        // Attempt reconnection if not a normal closure
-        if (event.code !== 1000 && event.code !== 1001) {
-          scheduleReconnect();
+        // Start heartbeat
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
         }
-      });
+        
+        heartbeatIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
+          }
+        }, 30000);
+      };
       
-      newSocket.addEventListener('error', (error) => {
-        logger.error('WebSocket error:', error);
+      ws.onclose = (event) => {
         setIsConnected(false);
-      });
+        logger.info('WebSocket connection closed:', event.code, event.reason || 'No reason provided');
+        
+        // Stop heartbeat
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
+        }
+        
+        // Try reconnecting if it wasn't a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+          if (connectAttempts.current < 3) {
+            const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 10000);
+            connectAttempts.current++;
+            
+            // Clear any existing reconnect timeout
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
+            }
+            
+            reconnectTimeoutRef.current = setTimeout(connect, delay);
+          } else {
+            logger.warn('Maximum reconnection attempts reached');
+          }
+        }
+      };
       
-      newSocket.addEventListener('message', (event) => {
+      ws.onerror = (error) => {
+        logger.error('WebSocket error:', error);
+      };
+      
+      ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
-          logger.info(`Received WebSocket message of type: ${data.type}`);
           
-          // Special handling for pong messages
-          if (data.type === 'pong') {
-            logger.info('Received pong from server, connection is healthy');
+          // Don't log heartbeat messages to reduce console spam
+          if (data.type !== 'ping' && data.type !== 'pong') {
+            logger.info(`Received message of type: ${data.type}`);
           }
           
-          // Special handling for connection_established messages
-          if (data.type === 'connection_established') {
-            logger.info('WebSocket connection confirmed by server');
-          }
-          
-          // Special handling for form_submission messages
-          if (data.type === 'form_submission' || data.type === 'form_submitted' || data.type === 'submission_status') {
-            logger.info('Received form submission update:', {
+          // Handle special message types
+          if (data.type === 'form_submission' || data.type === 'form_submitted') {
+            // Log submission updates separately
+            logger.info('Form submission update:', {
               type: data.type,
               taskId: data.payload?.taskId || data.taskId,
-              status: data.payload?.status || 'unknown',
-              formType: data.payload?.formType,
-              fileId: data.payload?.fileId
+              status: data.payload?.status || 'unknown'
             });
           }
           
-          // Handle payload format variations
+          // Store normalized message
           setLastMessage({
             type: data.type,
-            // Handle both formats: { payload: {...} } and { data: {...} }
             payload: data.payload || data.data || data,
-            // Extract top-level properties that might be needed separately
-            taskId: data.taskId || data.payload?.taskId || data.data?.taskId,
-            timestamp: data.timestamp || data.payload?.timestamp || new Date().toISOString()
+            timestamp: new Date().toISOString()
           });
         } catch (error) {
           logger.error('Error parsing WebSocket message:', error);
         }
-      });
+      };
       
-      setSocket(newSocket);
-      
+      setSocket(ws);
     } catch (error) {
-      logger.error('Error creating WebSocket connection:', error);
-      scheduleReconnect();
+      logger.error('Error connecting to WebSocket:', error);
     }
   };
   
-  // Schedule a reconnection attempt
-  const scheduleReconnect = () => {
-    if (reconnectAttempts.current >= maxReconnectAttempts) {
-      logger.warn('Maximum reconnection attempts reached');
-      return;
-    }
-    
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-    
-    const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts.current), 30000);
-    reconnectAttempts.current += 1;
-    
-    logger.info(`Scheduling reconnection attempt in ${delay / 1000} seconds...`);
-    
-    reconnectTimeoutRef.current = setTimeout(() => {
-      logger.info(`Attempting to reconnect (attempt ${reconnectAttempts.current})...`);
-      connectWebSocket();
-    }, delay);
-  };
-  
-  // Send a message to the server
+  // Send a message
   const sendMessage = (message: any) => {
-    if (socket && isConnected) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(typeof message === 'string' ? message : JSON.stringify(message));
     } else {
       logger.warn('Cannot send message: WebSocket not connected');
     }
   };
   
-  // Start ping heartbeat mechanism to keep connection alive
-  const startHeartbeat = (ws: WebSocket) => {
-    const heartbeatInterval = setInterval(() => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        logger.info('Sending ping heartbeat to server');
-        ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
-      } else if (ws && ws.readyState !== WebSocket.CONNECTING) {
-        logger.warn('No pong received, reconnecting...');
-        if (ws.readyState !== WebSocket.CLOSED) {
-          try {
-            ws.close();
-          } catch (e) {
-            // Ignore errors when closing an already closed connection
-          }
-        }
-        scheduleReconnect();
-      }
-    }, 30000); // 30 second ping interval
-    
-    return heartbeatInterval;
-  };
-  
-  // Connect once on component mount
+  // Connect on mount
   useEffect(() => {
-    // Prevent multiple initializations
-    if (isInitializedRef.current) {
-      return;
-    }
+    if (alreadyInitialized.current) return;
     
-    isInitializedRef.current = true;
-    logger.info('Smart WebSocket connection manager initialized');
-    connectWebSocket();
+    alreadyInitialized.current = true;
+    logger.info('WebSocket connection manager initialized');
+    connect();
     
     // Clean up on unmount
     return () => {
-      // Close any active socket reference
-      if (socketInstanceRef.current) {
-        try {
-          if (socketInstanceRef.current.readyState === WebSocket.OPEN || 
-              socketInstanceRef.current.readyState === WebSocket.CONNECTING) {
-            socketInstanceRef.current.close(1000, 'Component unmounting'); // Normal closure
-          }
-        } catch (e) {
-          logger.error('Error closing WebSocket on unmount:', e);
-        }
-        socketInstanceRef.current = null;
+      // Stop heartbeat
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
       }
       
-      // Close the state-managed socket too
-      if (socket) {
-        try {
-          if (socket.readyState === WebSocket.OPEN || 
-              socket.readyState === WebSocket.CONNECTING) {
-            socket.close(1000, 'Component unmounting'); // Normal closure
-          }
-        } catch (e) {
-          logger.error('Error closing state socket on unmount:', e);
-        }
-      }
-      
-      // Clear any pending reconnection attempts
+      // Cancel any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
       
-      logger.info('WebSocket provider cleanup complete');
-      isInitializedRef.current = false;
-    };
-  }, []); // Empty dependency array - we only want to initialize once
-  
-  // Set up heartbeat whenever socket changes
-  useEffect(() => {
-    let heartbeatInterval: NodeJS.Timeout | null = null;
-    
-    if (socket && isConnected) {
-      heartbeatInterval = startHeartbeat(socket);
-    }
-    
-    return () => {
-      if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
+      // Close socket
+      if (socket) {
+        try {
+          socket.close(1000, 'Component unmounting');
+        } catch (e) {
+          // Ignore errors
+        }
       }
+      
+      // Reset state
+      alreadyInitialized.current = false;
     };
-  }, [socket, isConnected]); // Re-initialize heartbeat when socket or connection state changes
+  }, []);
   
   const contextValue: WebSocketContextType = {
     socket,

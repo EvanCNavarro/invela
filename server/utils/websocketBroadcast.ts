@@ -67,7 +67,7 @@ export function hasConnectedClients(wss: WebSocketServer): boolean {
 
 /**
  * Set up event handlers for the WebSocket server
- * Includes connection tracking, heartbeat monitoring, and ping/pong handling
+ * Simple and reliable implementation with heartbeat and basic error handling
  */
 export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
   if (!wss) {
@@ -78,91 +78,71 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
   // Set up server-side ping interval to detect dead connections
   const pingInterval = setInterval(() => {
     wss.clients.forEach((ws) => {
-      // @ts-ignore - we're adding our own property
+      // @ts-ignore - we're adding isAlive property
       if (ws.isAlive === false) {
-        logInfo('Terminating inactive connection');
         return ws.terminate();
       }
       
-      // @ts-ignore - we're adding our own property
+      // @ts-ignore - mark as not alive until we get a response
       ws.isAlive = false;
+      
+      // Send ping
       try {
         ws.send(JSON.stringify({ type: 'server_ping', timestamp: new Date().toISOString() }));
       } catch (e) {
         // Ignore errors on potentially dead connections
       }
     });
-  }, 45000); // 45 second interval, slightly more than client heartbeat
-  
-  // Clean up interval on server close - will be connected to the other close handler below
+  }, 40000); // 40 second interval
   
   // Handle new connections
   wss.on('connection', (ws, req) => {
     const clientIp = req.socket.remoteAddress || 'unknown';
     logInfo(`New client connected from ${clientIp}`);
     
-    // Initialize connection tracking properties
-    // @ts-ignore - we're adding custom properties
+    // Mark as alive initially
+    // @ts-ignore - adding isAlive property
     ws.isAlive = true;
-    // @ts-ignore - track additional connection info
-    ws.connectionInfo = {
-      clientIp,
-      connectedAt: new Date().toISOString(),
-      lastMessageAt: new Date().toISOString(),
-      messageCount: 0
-    };
     
+    // Handle messages
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
         
-        // Mark connection as alive for any message (implicit pong)
-        // @ts-ignore - we're using our own property
+        // Mark as alive for any message
+        // @ts-ignore - using isAlive property
         ws.isAlive = true;
         
-        // Update connection stats
-        // @ts-ignore - updating custom property
-        if (ws.connectionInfo) {
-          // @ts-ignore - updating custom property
-          ws.connectionInfo.lastMessageAt = new Date().toISOString();
-          // @ts-ignore - updating custom property
-          ws.connectionInfo.messageCount += 1;
-        }
-        
-        // For non-ping messages, log the type
+        // Don't log ping messages to reduce noise
         if (message.type !== 'ping') {
           logInfo(`Received message of type: ${message.type}`);
         }
         
-        // Handle ping messages with pong response
+        // Handle ping messages
         if (message.type === 'ping') {
           try {
             ws.send(JSON.stringify({
               type: 'pong',
               payload: {
                 timestamp: new Date().toISOString(),
-                echo: message.timestamp // Echo back the client's timestamp if available
+                echo: message.timestamp
               }
             }));
-          } catch (pingError) {
-            logError('Error sending pong response:', pingError);
+          } catch (e) {
+            // Ignore errors
           }
-        }
-        
-        // Handle explicit pong responses to server_ping
-        if (message.type === 'pong' || message.type === 'server_pong') {
-          // @ts-ignore - we're using our own property
-          ws.isAlive = true;
         }
       } catch (error) {
         logError('Error parsing message:', error);
       }
     });
     
+    // Handle errors
     ws.on('error', (error) => {
-      logError('Client connection error:', error);
+      logError('WebSocket error:', error);
     });
     
+    // Handle disconnection
     ws.on('close', (code, reason) => {
       logInfo(`Client disconnected: Code ${code}, Reason: ${reason || 'No reason provided'}`);
     });
@@ -173,7 +153,7 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
         type: 'connection_established',
         payload: {
           message: 'Connection established',
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         }
       }));
     } catch (error) {
@@ -181,14 +161,15 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
     }
   });
   
+  // Handle server errors
   wss.on('error', (error) => {
     logError('WebSocket server error:', error);
   });
   
+  // Handle server shutdown
   wss.on('close', () => {
-    // Clean up heartbeat interval
     clearInterval(pingInterval);
-    logInfo('WebSocket server closed, heartbeat cleared');
+    logInfo('WebSocket server closed');
   });
   
   logInfo('WebSocket server handlers configured');
