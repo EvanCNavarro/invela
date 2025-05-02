@@ -793,7 +793,7 @@ router.post('/api/kyb/bulk-update/:taskId', requireAuth, async (req, res) => {
     // Broadcast the progress update via WebSocket
     try {
       const { broadcastProgressUpdate } = await import('../utils/progress');
-      broadcastProgressUpdate(parseInt(taskId), progressPercentage, newStatus as any, task.metadata || {});
+      broadcastProgressUpdate(parseInt(taskId), progressPercentage, newStatus as any, existingTask.metadata || {});
     } catch (broadcastError) {
       logger.error('[KYB-ROUTES] Error broadcasting progress update:', broadcastError);
       // Continue even if broadcast fails
@@ -991,8 +991,8 @@ router.post('/api/kyb/progress', async (req, res) => {
               if (fieldKey === 'legalEntityName') {
                 console.log(`[SERVER DEBUG] Broadcasting legalEntityName update via WebSocket: "${responseValue}"`);
                 try {
-                  const { broadcastFieldUpdate } = await import('../services/websocket');
-                  broadcastFieldUpdate(taskId, fieldKey, responseValue);
+                  const { broadcastFieldUpdate } = await import('../utils/progress');
+                  broadcastFieldUpdate(taskId, fieldKey, responseValue, fieldId);
                 } catch (wsError) {
                   console.error(`[SERVER DEBUG] Error broadcasting field update:`, wsError);
                 }
@@ -1045,8 +1045,8 @@ router.post('/api/kyb/progress', async (req, res) => {
               if (fieldKey === 'legalEntityName') {
                 console.log(`[SERVER DEBUG] Broadcasting legalEntityName insert via WebSocket: "${responseValue}"`);
                 try {
-                  const { broadcastFieldUpdate } = await import('../services/websocket');
-                  broadcastFieldUpdate(taskId, fieldKey, responseValue);
+                  const { broadcastFieldUpdate } = await import('../utils/progress');
+                  broadcastFieldUpdate(taskId, fieldKey, responseValue, fieldId);
                 } catch (wsError) {
                   console.error(`[SERVER DEBUG] Error broadcasting field update:`, wsError);
                 }
@@ -1171,14 +1171,20 @@ router.post('/api/kyb/progress', async (req, res) => {
       
     // Broadcast task update via WebSocket for real-time progress updates
     console.log(`[WebSocket] Broadcasting task update for task ${taskId}: progress=${progress}, status=${newStatus}`);
-    WebSocketService.broadcastTaskUpdate({
-      id: taskId,
-      status: newStatus as TaskStatus,
-      progress: progress,
-      metadata: {
-        lastUpdated: timestamp.toISOString()
-      }
-    });
+    try {
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      broadcastProgressUpdate(
+        parseInt(taskId as string), 
+        progress, 
+        newStatus as TaskStatus, 
+        {
+          ...existingTask.metadata,
+          lastUpdated: timestamp.toISOString()
+        }
+      );
+    } catch (broadcastError) {
+      console.error('[KYB-ROUTES] Error broadcasting progress update:', broadcastError);
+    }
 
     // Get updated responses
     const updatedResponses = await db.select({
