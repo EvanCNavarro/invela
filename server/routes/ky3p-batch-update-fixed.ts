@@ -152,7 +152,8 @@ export function registerKY3PBatchUpdateRoutes() {
         // Calculate progress percentage
         const totalFields = fieldCount?.count || 1;
         const completedFields = responseCount?.count || 0;
-        const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+        // Use Math.round to match the universal progress calculator in utils/progress.ts
+        const progress = Math.min(100, Math.round((completedFields / totalFields) * 100));
         
         // Update task progress
         await db

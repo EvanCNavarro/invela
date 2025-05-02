@@ -1433,7 +1433,8 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
       // Use Math.floor to match the ky3p-batch-update.ts implementation
       let progressPercentage = 0;
       if (totalFields > 0) {
-        progressPercentage = Math.min(100, Math.floor((completedCount / totalFields) * 100));
+        // Use Math.round to match the universal progress calculator in utils/progress.ts
+        progressPercentage = Math.min(100, Math.round((completedCount / totalFields) * 100));
       }
       
       // Import the standardized status determination from utils/progress
