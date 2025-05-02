@@ -97,8 +97,9 @@ export async function calculateTaskProgressFromDB(
     }
     
     // Calculate progress percentage (0-100)
+    // Use Math.round for most accurate and user-friendly progress display
     const progressPercentage = totalFields > 0 
-      ? Math.min(100, Math.floor((completedFields / totalFields) * 100)) 
+      ? Math.min(100, Math.round((completedFields / totalFields) * 100)) 
       : 0;
     
     console.log(`${logPrefix} Calculated progress for task ${taskId} (${taskType}): ${completedFields}/${totalFields} = ${progressPercentage}%`);
