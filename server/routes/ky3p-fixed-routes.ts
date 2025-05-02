@@ -113,8 +113,8 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
             task_id: taskId,
             field_id: numericFieldId,
             response_value: String(value),
-            // Use the enum values directly - they are lowercase in the database schema
-            status: value ? 'complete' : 'empty'
+            // Use uppercase enum values that match our defined KYBFieldStatus enum
+            status: value ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY
           });
         } else {
           console.warn(`[KY3P API] Invalid field ID for key ${fieldKey}: ${fieldId}`);
