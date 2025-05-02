@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
-import { setupWebSocket } from "./services/websocket-setup";
+import { initializeWebSocketServer } from "./utils/unified-websocket";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
@@ -109,8 +109,8 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Setup WebSocket server with error handling
-setupWebSocket(server);
+// Setup WebSocket server with error handling - using unified implementation
+initializeWebSocketServer(server);
 
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
