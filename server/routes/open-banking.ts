@@ -1332,65 +1332,102 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
         }
       }
       
-      // Calculate task progress more accurately
+      // STANDARDIZED PROGRESS CALCULATION
+      // This ensures consistent progress calculation across all form types
       const totalFields = fields.length;
       
-      // Get all responses for this task
-      const completedResponses = await db.select().from(openBankingResponses)
+      // Count all responses for this task for detailed logging
+      const [totalResponses] = await db.select({ count: sql<number>`count(*)` })
+        .from(openBankingResponses)
+        .where(eq(openBankingResponses.task_id, taskId));
+      
+      // Get COMPLETE status responses for this task
+      const [completedResponses] = await db.select({ count: sql<number>`count(*)` })
+        .from(openBankingResponses)
         .where(and(
           eq(openBankingResponses.task_id, taskId),
           eq(openBankingResponses.status, KYBFieldStatus.COMPLETE)
         ));
       
-      const completedCount = completedResponses.length;
+      const completedCount = completedResponses.count || 0;
       
-      // Calculate progress - always round up to whole number percentage
-      // Progress is represented as a decimal from 0 to 1
-      let progress = 0;
-      if (totalFields > 0 && completedCount > 0) {
-        // Calculate percentage as whole number (0-100) and round up
-        const percentComplete = Math.ceil((completedCount / totalFields) * 100);
-        // Convert back to decimal for database (0-1)
-        progress = percentComplete / 100;
-        
-        // Ensure bounds are respected
-        progress = Math.min(1, Math.max(0, progress));
+      // Calculate progress as a whole number percentage (0-100)
+      // Use Math.floor to match the ky3p-batch-update.ts implementation
+      let progressPercentage = 0;
+      if (totalFields > 0) {
+        progressPercentage = Math.min(100, Math.floor((completedCount / totalFields) * 100));
       }
       
-      // Determine the correct task status based on progress
-      let newStatus = TaskStatus.NOT_STARTED;
-      if (progress > 0) {
-        newStatus = progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS;
+      // Import the standardized status determination from utils/progress
+      const { determineStatusFromProgress } = await import('../utils/progress');
+      
+      // Get current task information to update status correctly
+      const [task] = await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
       }
+      
+      // Determine the appropriate status based on progress
+      // Always preserve SUBMITTED status if the task was previously submitted
+      const newStatus = determineStatusFromProgress(
+        progressPercentage, 
+        task.status as any, // Cast to match the expected type
+        [], // No form responses needed for simple progress update
+        task.metadata || {} // Pass existing metadata
+      );
       
       // Log progress calculation for debugging
       logger.info('[OpenBankingRoutes] Progress calculation', {
         taskId,
         completedCount,
         totalFields,
-        calculatedProgress: progress,
-        calculatedStatus: newStatus
+        calculatedProgress: progressPercentage,
+        calculatedStatus: newStatus,
+        totalResponses: totalResponses?.count || 0
       });
       
-      // Update task progress
+      // Update task progress with new status_changed_at field if status is changing
+      const [existingTask] = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+        
+      const statusChanged = existingTask && existingTask.status !== newStatus;
+        
       await db.update(tasks)
         .set({ 
-          progress, 
+          progress: progressPercentage, 
           updated_at: new Date(),
-          status: newStatus  
+          status: newStatus,
+          // Add status_changed_at timestamp if status changed
+          ...(statusChanged ? { status_changed_at: new Date() } : {})
         })
         .where(eq(tasks.id, taskId));
       
       logger.info('[OpenBankingRoutes] Bulk update completed', { 
         taskId, 
         stats: processedCount,
-        progress
+        progress: progressPercentage,
+        statusChanged
       });
+      
+      // Broadcast the progress update via WebSocket
+      try {
+        const { broadcastProgressUpdate } = await import('../utils/progress');
+        broadcastProgressUpdate(taskId, progressPercentage, newStatus as any, task.metadata || {});
+      } catch (broadcastError) {
+        logger.error('[OpenBankingRoutes] Error broadcasting progress update:', broadcastError);
+        // Continue even if broadcast fails
+      }
       
       res.json({ 
         success: true, 
         taskId,
-        progress,
+        progress: progressPercentage,
+        status: newStatus,
         stats: processedCount,
         message: `Processed ${processedCount.updated + processedCount.created} responses`
       });
