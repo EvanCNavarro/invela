@@ -8,7 +8,7 @@
  * by directly counting field responses with status = 'complete'.
  */
 
-import { db } from '../db';
+import { db } from '@db';
 import { eq, and, sql } from 'drizzle-orm';
 import {
   tasks,
@@ -19,8 +19,16 @@ import {
   ky3pFields,
   openBankingFields,
   TaskStatus
-} from '../db/schema';
+} from '@db/schema';
 import { WebSocketServer } from 'ws';
+import WebSocket from 'ws';
+
+// Define response interface for better type checking
+interface ResponseWithStatus {
+  field_id: number;
+  status: string;
+  [key: string]: any; // Allow other properties
+}
 
 // Centralized log prefix for easy filtering
 const LOG_PREFIX = '[UnifiedProgress]';

@@ -422,6 +422,9 @@ export function registerRoutes(app: Express): Express {
   // Register WebSocket test routes
   app.use('/api/websocket', websocketRouter);
   
+  // Register unified task progress calculation API
+  app.use('/api/task-progress', taskProgressRouter);
+  
   // Test endpoints for WebSocket functionality have been removed
   // They have been replaced with standardized WebSocket implementation
   
