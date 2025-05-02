@@ -274,9 +274,9 @@ export async function calculateUniversalTaskProgress(
       
       console.log(`[ProgressDebug] KY3P responses for task ${taskId}:`, {
         responseCount: detailedResponses.length,
-        completeCount: detailedResponses.filter(r => r.status === 'COMPLETE').length,
-        incompleteCount: detailedResponses.filter(r => r.status !== 'COMPLETE').length,
-        statuses: detailedResponses.map(r => r.status),
+        completeCount: detailedResponses.filter((r: any) => r.status === 'COMPLETE').length,
+        incompleteCount: detailedResponses.filter((r: any) => r.status !== 'COMPLETE').length,
+        statuses: detailedResponses.map((r: any) => r.status),
         timestamp: new Date().toISOString()
       });
     }
@@ -355,6 +355,8 @@ export async function updateTaskProgress(
   
   try {
     // Using transaction for atomic operations
+    // Add explicit logging for transaction start/commit
+    console.log(`${logPrefix} Starting transaction for task ${taskId} (${taskType})`);
     return await db.transaction(async (tx) => {
       // Step 1: Get the current task with transaction
       const [task] = await tx
@@ -381,16 +383,30 @@ export async function updateTaskProgress(
         `  - Force update: ${forceUpdate}\n` +
         `  - Would ${storedProgress === newProgress ? 'NOT' : ''} update progress`);
       
-      // FIXED: Always force an update if the calculated progress is greater than 0 and stored is 0
-      // This handles the specific edge case where small progress values weren't getting saved
+      // CRITICAL FIX: Always force an update in the following cases:
+      // 1. If the calculated progress is greater than 0 and stored is 0 (zero-to-non-zero)
+      // 2. If forceUpdate flag is set to true (explicit force update request)
+      // 3. If there's a small but meaningful progress change (under 5%)
       const isZeroToNonZero = (storedProgress === 0 && newProgress > 0);
+      const isSmallProgressChange = (Math.abs(newProgress - storedProgress) > 0 && Math.abs(newProgress - storedProgress) < 5);
       
       if (isZeroToNonZero) {
         console.log(`${logPrefix} Forcing update due to zero-to-non-zero progress change: 0% -> ${newProgress}%`);
       }
       
+      if (isSmallProgressChange) {
+        console.log(`${logPrefix} Forcing update due to small but meaningful progress change: ${storedProgress}% -> ${newProgress}%`);
+      }
+      
+      // Only skip the update if ALL of these conditions are true:
+      // 1. No force update requested
+      // 2. Not a zero-to-non-zero change
+      // 3. Not a small progress change
+      // 4. The progress values are exactly equal
+      // 5. Both values are valid numbers
       if (!forceUpdate && 
           !isZeroToNonZero &&
+          !isSmallProgressChange &&
           storedProgress === newProgress && 
           !isNaN(storedProgress) && 
           !isNaN(newProgress)) {
@@ -460,11 +476,29 @@ export async function updateTaskProgress(
         }, 0);
       }
       
+      // Log successful transaction for debugging purposes
+      console.log(`${logPrefix} Successfully updated task ${taskId} progress from ${storedProgress}% to ${newProgress}%`);
+      
       // Return updated task data if needed for further processing
       return updatedTask;
     });
+    
+    // Log successful transaction completion outside transaction
+    console.log(`${logPrefix} Transaction completed successfully for task ${taskId} (${taskType})`);
   } catch (error) {
     console.error(`${logPrefix} Error updating task progress:`, error);
+    
+    // Add detailed error information for troubleshooting
+    console.error(`${logPrefix} Failed transaction details:`, {
+      taskId,
+      taskType,
+      forceUpdate,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : null,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Rethrow to allow caller to handle
     throw error;
   }
 }
