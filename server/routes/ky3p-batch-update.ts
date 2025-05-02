@@ -335,7 +335,7 @@ export function registerKY3PBatchUpdateRoutes() {
         return res.status(404).json({ error: `Task ${taskId} not found` });
       }
       
-      // Count responses for this task
+      // Count total responses for this task
       const [responseCount] = await db
         .select({ count: sql<number>`count(*)` })
         .from(ky3pResponses)
@@ -357,10 +357,19 @@ export function registerKY3PBatchUpdateRoutes() {
         .select({ count: sql<number>`count(*)` })
         .from(ky3pFields);
       
-      // Calculate progress percentage
+      // CRITICAL FIX: Calculate progress percentage based on COMPLETE fields only
+      // This ensures consistency with the batch-update endpoint
       const totalFields = fieldCount?.count || 1;
-      const completedFields = responseCount?.count || 0;
+      const completedFields = completedCount?.count || 0; // Use completedCount instead of responseCount
       const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      
+      console.log(`[KY3P-BATCH-UPDATE] Progress calculation for save-progress: ${completedFields}/${totalFields} = ${progress}%`);
+      console.log(`[KY3P-BATCH-UPDATE] Detailed counts:`, {
+        totalFields,
+        totalResponses: responseCount?.count || 0,
+        completedResponses: completedFields,
+        progress
+      });
       
       // Determine the appropriate status based on progress using our utility function
       const { determineStatusFromProgress, broadcastProgressUpdate } = await import('../utils/progress');
