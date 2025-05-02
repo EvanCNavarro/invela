@@ -11,7 +11,8 @@ import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { determineStatusFromProgress, updateTaskProgress } from '../utils/progress';
-import { broadcastProgressUpdate } from '../utils/task-broadcast';
+import { broadcastTaskProgressUpdate } from '../utils/task-broadcast';
+import { KYBFieldStatus } from '@db/schema';
 
 // Logger is already initialized in the imported module
 
@@ -135,7 +136,7 @@ export function registerKY3PFieldUpdateRoutes() {
           .set({ 
             response_value: value, 
             updated_at: now,
-            status: 'COMPLETE' // Always set status to COMPLETE when updating a field
+            status: KYBFieldStatus.COMPLETE // Use the enum value directly to ensure consistency
           })
           .where(
             and(
@@ -150,7 +151,7 @@ export function registerKY3PFieldUpdateRoutes() {
             task_id: taskId,
             field_id: fieldId,
             response_value: value,
-            status: 'COMPLETE', // Always set status to COMPLETE when inserting a field
+            status: KYBFieldStatus.COMPLETE, // Use the enum value directly to ensure consistency
             created_at: now,
             updated_at: now
           });
@@ -201,8 +202,8 @@ export function registerKY3PFieldUpdateRoutes() {
       console.error('[KY3P API] CRITICAL ERROR in field update:', {
         error: error instanceof Error ? error.message : 'Unknown error type',
         stack: error instanceof Error ? error.stack : null,
-        taskId,
-        fieldKey: field_key || req.body.fieldKey,
+        taskId: req.params.taskId,
+        fieldKey: req.body.field_key || req.body.fieldKey,
         timestamp: new Date().toISOString()
       });
       return res.status(500).json({ 
