@@ -36,10 +36,34 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const socketInstanceRef = useRef<WebSocket | null>(null);
+  const isInitializedRef = useRef(false);
   
-  // Connect to WebSocket
+  // Connect to WebSocket - only if we don't already have an active connection
   const connectWebSocket = () => {
+    // Don't create multiple connections
+    if (socketInstanceRef.current && 
+        (socketInstanceRef.current.readyState === WebSocket.CONNECTING || 
+         socketInstanceRef.current.readyState === WebSocket.OPEN)) {
+      logger.info('WebSocket connection already exists, skipping reconnect');
+      return;
+    }
+    
     try {
+      // Clean up any existing socket first
+      if (socketInstanceRef.current) {
+        try {
+          // Only try to close if it's not already closed
+          if (socketInstanceRef.current.readyState !== WebSocket.CLOSED && 
+              socketInstanceRef.current.readyState !== WebSocket.CLOSING) {
+            socketInstanceRef.current.close();
+          }
+        } catch (e) {
+          // Ignore errors when closing an already closed socket
+        }
+        socketInstanceRef.current = null;
+      }
+      
       // Create WebSocket URL based on current protocol and host
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -47,6 +71,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       logger.info('Connecting to WebSocket:', wsUrl);
       
       const newSocket = new WebSocket(wsUrl);
+      socketInstanceRef.current = newSocket;
       
       // Set up event handlers
       newSocket.addEventListener('open', () => {
@@ -171,44 +196,69 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     return heartbeatInterval;
   };
   
-  // Connect on component mount
+  // Connect once on component mount
   useEffect(() => {
+    // Prevent multiple initializations
+    if (isInitializedRef.current) {
+      return;
+    }
+    
+    isInitializedRef.current = true;
     logger.info('Smart WebSocket connection manager initialized');
     connectWebSocket();
     
-    // Set up a heartbeat interval when socket is initialized
-    let heartbeatInterval: NodeJS.Timeout | null = null;
-    
-    if (socket) {
-      heartbeatInterval = startHeartbeat(socket);
-    }
-    
     // Clean up on unmount
     return () => {
-      // Clear heartbeat interval
-      if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-      }
-      
-      // Close any open socket
-      if (socket) {
+      // Close any active socket reference
+      if (socketInstanceRef.current) {
         try {
-          if (socket.readyState === WebSocket.OPEN) {
-            socket.close(1000, 'Component unmounting'); // Normal closure
+          if (socketInstanceRef.current.readyState === WebSocket.OPEN || 
+              socketInstanceRef.current.readyState === WebSocket.CONNECTING) {
+            socketInstanceRef.current.close(1000, 'Component unmounting'); // Normal closure
           }
         } catch (e) {
           logger.error('Error closing WebSocket on unmount:', e);
+        }
+        socketInstanceRef.current = null;
+      }
+      
+      // Close the state-managed socket too
+      if (socket) {
+        try {
+          if (socket.readyState === WebSocket.OPEN || 
+              socket.readyState === WebSocket.CONNECTING) {
+            socket.close(1000, 'Component unmounting'); // Normal closure
+          }
+        } catch (e) {
+          logger.error('Error closing state socket on unmount:', e);
         }
       }
       
       // Clear any pending reconnection attempts
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
       
-      logger.info('FormSubmissionListener cleaned up form submission listener for task 718');
+      logger.info('WebSocket provider cleanup complete');
+      isInitializedRef.current = false;
     };
-  }, [socket]); // Re-initialize heartbeat when socket changes
+  }, []); // Empty dependency array - we only want to initialize once
+  
+  // Set up heartbeat whenever socket changes
+  useEffect(() => {
+    let heartbeatInterval: NodeJS.Timeout | null = null;
+    
+    if (socket && isConnected) {
+      heartbeatInterval = startHeartbeat(socket);
+    }
+    
+    return () => {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+      }
+    };
+  }, [socket, isConnected]); // Re-initialize heartbeat when socket or connection state changes
   
   const contextValue: WebSocketContextType = {
     socket,
