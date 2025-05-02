@@ -9,7 +9,7 @@
 
 import express from 'express';
 import { db } from '@db';
-import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
+import { ky3pFields, ky3pResponses, tasks, KYBFieldStatus } from '@db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { universalDemoAutoFillService } from '../services/universalDemoAutoFillService';
@@ -105,7 +105,7 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
             task_id: taskId,
             field_id: numericFieldId,
             response_value: String(value),
-            status: value ? 'complete' : 'empty'
+            status: value ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY
           });
         } else {
           console.warn(`[KY3P API] Invalid field ID for key ${fieldKey}: ${fieldId}`);
