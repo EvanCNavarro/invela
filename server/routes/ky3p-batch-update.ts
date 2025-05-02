@@ -111,7 +111,7 @@ export function registerKY3PBatchUpdateRoutes() {
             .update(ky3pResponses)
             .set({
               response_value: String(value),
-              status: 'complete', // Use correct lowercase value from KYBFieldStatus.COMPLETE
+              status: KYBFieldStatus.COMPLETE, // Use the enum key to ensure type safety
               updated_at: timestamp
             })
             .where(
@@ -135,7 +135,7 @@ export function registerKY3PBatchUpdateRoutes() {
               task_id: taskId,
               field_id: fieldId,
               response_value: String(value),
-              status: 'complete', // Use correct lowercase value from KYBFieldStatus.COMPLETE
+              status: KYBFieldStatus.COMPLETE, // Use the enum key to ensure type safety
               created_at: timestamp,
               updated_at: timestamp
             });
