@@ -40,6 +40,7 @@ import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-auto
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
+import taskProgressRouter from './routes/task-progress';
 import kybClearRouter from './routes/kyb-clear';
 import openBankingClearRouter from './routes/open-banking-clear';
 import fixKy3pFilesRouter from './routes/fix-ky3p-files';
