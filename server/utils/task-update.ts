@@ -243,8 +243,18 @@ export async function updateTaskProgress(
       
       // Step 4: Broadcast the update if requested
       if (broadcast) {
-        logger.debug(`Broadcasting task update with object format`, { taskId, status });
-        broadcastWebSocketMessage('task_update', { taskId, status });
+        logger.debug(`Broadcasting task update with object format`, { taskId, status, progress });
+        broadcastWebSocketMessage('task_update', { 
+          taskId, 
+          status, 
+          progress,
+          metadata: {
+            lastUpdated: new Date().toISOString(),
+            previousProgress: task.progress,
+            calculatedProgress: progress,
+            taskType: task.task_type
+          }
+        });
       }
     } else {
       logger.info(`[TaskUpdate] No changes for task ${taskId}`, {
