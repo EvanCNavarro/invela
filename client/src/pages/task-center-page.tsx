@@ -112,6 +112,17 @@ export default function TaskCenterPage() {
 
   // No longer need dependency checking as all tasks are unlocked by default
 
+  // Force task status refresh when navigating to task center
+  useEffect(() => {
+    // Immediate task refresh when the component mounts
+    const refreshTasks = async () => {
+      logger.info('[TaskCenter] Page loaded - refreshing task statuses');
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    };
+    
+    refreshTasks();
+  }, [queryClient]);
+
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
 
