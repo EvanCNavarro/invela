@@ -3,14 +3,16 @@
  * 
  * This module provides functionality for broadcasting updates via WebSocket.
  * It handles formatting and sending messages to connected clients.
+ * 
+ * Uses the improved websocketBroadcast utility for robust handling
  */
 
 import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
+import { broadcastMessage as wsBroadcastMessage, setupWebSocketServerHandlers, hasConnectedClients } from '../utils/websocketBroadcast';
 
 // Store for active WebSocket connections
 let wss: WebSocketServer | null = null;
-let clients: WebSocket[] = [];
 
 /**
  * Get the WebSocket server instance
@@ -35,7 +37,7 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
     server, 
     path: '/ws',
     // Verify the connection is not Vite HMR
-    verifyClient: (info) => {
+    verifyClient: (info: { req: { headers: Record<string, string | string[] | undefined> } }) => {
       const isViteHmr = info.req.headers['sec-websocket-protocol'] === 'vite-hmr';
       if (isViteHmr) {
         logger.info('Rejecting Vite HMR WebSocket connection');
@@ -45,56 +47,8 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
     }
   });
   
-  // Store connected clients
-  wss.on('connection', (ws: WebSocket, req) => {
-    logger.info('New WebSocket connection established', {
-      path: req.url,
-      headers: {
-        host: req.headers.host,
-        origin: req.headers.origin
-      }
-    });
-    
-    clients.push(ws);
-    
-    // Send initial connection established message
-    try {
-      ws.send(JSON.stringify({
-        type: 'connection_established',
-        payload: {
-          timestamp: new Date().toISOString(),
-          connectionId: Math.random().toString(36).substring(2, 15)
-        }
-      }));
-    } catch (error) {
-      logger.error('Error sending initial connection message', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-    
-    ws.on('close', () => {
-      logger.info('WebSocket connection closed');
-      clients = clients.filter(client => client !== ws);
-    });
-    
-    ws.on('error', (error) => {
-      logger.error('WebSocket connection error', {
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    });
-    
-    // Handle ping-pong for connection health checks
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        if (data.type === 'ping') {
-          ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
-        }
-      } catch (error) {
-        // Ignore parse errors for non-JSON messages
-      }
-    });
-  });
+  // Set up standardized WebSocket server handlers using our utility
+  setupWebSocketServerHandlers(wss);
   
   logger.info('WebSocket server initialized successfully');
   return wss;
@@ -105,6 +59,8 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
  * 
  * This enhanced version supports multiple message formats for compatibility
  * with different client implementations and improves error handling.
+ * 
+ * Uses our robust utility function under the hood.
  * 
  * @param type The type of message to broadcast
  * @param payload The payload to send with the message
@@ -125,8 +81,7 @@ export async function broadcast(type: string, payload: any): Promise<void> {
     
     // Create the message in the expected format with both data and payload fields
     // This supports multiple client implementations that expect different formats
-    const message = {
-      type,
+    const enhancedPayload = {
       // Include both payload and data fields for cross-compatibility
       payload: {
         ...payload,
@@ -142,26 +97,15 @@ export async function broadcast(type: string, payload: any): Promise<void> {
       timestamp
     };
     
-    // Count active clients
-    const activeClientCount = clients.length;
-    
-    if (activeClientCount === 0) {
+    if (!hasConnectedClients(wss)) {
       logger.info('No active WebSocket clients, skipping broadcast', {
         messageType: type
       });
       return;
     }
     
-    logger.info(`Broadcasting ${type} message to ${activeClientCount} clients`);
-    
-    // Broadcast to all connected clients
-    const messageString = JSON.stringify(message);
-    
-    for (const client of clients) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(messageString);
-      }
-    }
+    // Use our robust broadcast utility
+    wsBroadcastMessage(wss, type, enhancedPayload);
     
     logger.info(`Successfully broadcasted ${type} message`);
   } catch (error) {
