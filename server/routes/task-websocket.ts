@@ -68,19 +68,32 @@ export function configureTaskWebSocketRoutes(server: Server, wss: WebSocketServe
           
           // Handle different message types
           switch (data.type) {
+            case 'authenticate':
+              // Handle authentication requests
+              await handleAuthentication(socket as ExtendedWebSocket, data);
+              break;
+              
+            case 'ping':
+              // Handle ping messages (heartbeat)
+              socket.send(JSON.stringify({
+                type: 'pong',
+                timestamp: new Date().toISOString()
+              }));
+              break;
+              
             case 'reconcile-task-progress':
               // Trigger reconciliation for a specific task
-              await handleTaskReconciliation(socket, data.taskId);
+              await handleTaskReconciliation(socket as ExtendedWebSocket, data.taskId);
               break;
               
             case 'reconcile-company-tasks':
               // Reconcile all tasks for a company
-              await handleCompanyTaskReconciliation(socket, data.companyId || companyId);
+              await handleCompanyTaskReconciliation(socket as ExtendedWebSocket, data.companyId || companyId);
               break;
               
             case 'update-task-progress':
               // Manually update task progress
-              await handleUpdateTaskProgress(socket, data);
+              await handleUpdateTaskProgress(socket as ExtendedWebSocket, data);
               break;
               
             default:
@@ -247,6 +260,68 @@ async function handleCompanyTaskReconciliation(socket: ExtendedWebSocket, compan
       type: 'company-reconciliation-error',
       companyId,
       message: error instanceof Error ? error.message : 'Error reconciling company tasks',
+      timestamp: new Date().toISOString()
+    }));
+  }
+}
+
+/**
+ * Handle client authentication requests
+ * 
+ * @param socket WebSocket client
+ * @param data Authentication data
+ */
+async function handleAuthentication(socket: ExtendedWebSocket, data: any) {
+  try {
+    // Extract authentication data
+    const { userId, companyId, token } = data;
+    
+    // Log authentication attempt
+    console.log(`[TaskWebSocket] Authentication attempt:`, {
+      userId,
+      companyId,
+      hasToken: !!token,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Validate user ID if provided
+    if (userId && !isNaN(parseInt(userId))) {
+      socket.userId = parseInt(userId);
+    }
+    
+    // Validate company ID if provided
+    if (companyId && !isNaN(parseInt(companyId))) {
+      socket.companyId = parseInt(companyId);
+    }
+    
+    // TODO: In the future, implement token validation against the session store
+    
+    // Update clientId if available
+    if (data.clientId) {
+      socket.clientId = data.clientId;
+    }
+    
+    // Send authentication response
+    socket.send(JSON.stringify({
+      type: 'authenticated',
+      userId: socket.userId,
+      companyId: socket.companyId,
+      timestamp: new Date().toISOString()
+    }));
+    
+    console.log(`[TaskWebSocket] Client authenticated:`, {
+      clientId: socket.clientId,
+      userId: socket.userId,
+      companyId: socket.companyId,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(`[TaskWebSocket] Authentication error:`, error);
+    
+    // Send error message
+    socket.send(JSON.stringify({
+      type: 'authentication-error',
+      message: error instanceof Error ? error.message : 'Authentication error',
       timestamp: new Date().toISOString()
     }));
   }
