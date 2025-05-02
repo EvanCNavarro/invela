@@ -1622,7 +1622,9 @@ router.post('/api/kyb/save', async (req, res) => {
     res.json({
       success: true,
       fileId: fileCreationResult.fileId,
-      warnings: warnings.length ? warnings : undefined
+      warnings: warnings.length ? warnings : undefined,
+      progress: 100,
+      status: TaskStatus.SUBMITTED
     });
   } catch (error) {
     // Enhanced detailed error logging
@@ -1769,11 +1771,18 @@ router.post('/api/kyb/demo-autofill/:taskId', async (req, res) => {
         taskId
       });
       
-      // Return success result
+      // Get the current progress and status
+      const [updatedTask] = await db.select({ progress: tasks.progress, status: tasks.status })
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+
+      // Return success result with standardized progress and status
       res.json({
         success: true,
         message: result.message,
-        fieldCount: result.fieldCount
+        fieldCount: result.fieldCount,
+        progress: updatedTask.progress,
+        status: updatedTask.status
       });
     } catch (serviceError) {
       // Handle specific errors from the service
