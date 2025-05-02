@@ -171,7 +171,7 @@ export async function unlockOpenBankingTasks(companyId: number) {
       
       // Import determineStatusFromProgress function to ensure correct status
       const { determineStatusFromProgress } = await import('../utils/progress');
-
+      
       // Determine correct status based on task's progress
       const task = specificTask[0];
       const taskProgress = task.progress || 0;
@@ -354,18 +354,41 @@ export async function unlockAllTasks(companyId: number) {
       taskTypes: companyTasks.map(t => t.task_type)
     });
     
-    // Import determineStatusFromProgress function to ensure correct status
+    // Import needed functions from utility modules
     const { determineStatusFromProgress } = await import('../utils/progress');
-
+    const { calculateTaskProgressFromDB } = await import('../utils/task-reconciliation');
+    
     // Unlock each task
     for (const task of companyTasks) {
-      // Determine correct status based on task's progress
+      // Instead of using the stored progress (which might be 0),
+      // calculate the actual progress by counting completed responses
+      // for this task in the database
+      let taskProgress;
+      try {
+        // Try to calculate the actual progress based on responses in the database
+        taskProgress = await calculateTaskProgressFromDB(task.id, task.task_type);
+        logger.info('[TaskDependencies] Calculated actual progress from database', {
+          taskId: task.id,
+          taskType: task.task_type,
+          storedProgress: task.progress,
+          calculatedProgress: taskProgress 
+        });
+      } catch (error) {
+        // If calculation fails, fall back to stored progress
+        taskProgress = task.progress || 0;
+        logger.warn('[TaskDependencies] Failed to calculate progress from DB, using stored progress', {
+          taskId: task.id,
+          progress: taskProgress,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+      
+      // Determine correct status based on the accurate progress calculation
       // This ensures we follow the business rules:
       // 0% = Not Started
       // 1-99% = In Progress
       // 100% (not submitted) = Ready for Submission
       // 100% (submitted) = Submitted
-      const taskProgress = task.progress || 0;
       const newStatus = determineStatusFromProgress(
         taskProgress,
         task.status as any,
