@@ -616,46 +616,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [onCancel]);
   
-  // Handle demo auto-fill
-  const handleDemoAutoFillClick = useCallback(async () => {
-    if (!taskId) {
-      toast({
-        title: 'Demo Auto-Fill Error',
-        description: 'Cannot auto-fill without a task ID',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Create promise-wrapped versions of the callbacks to match expected types
-    const updateFieldAsync = async (fieldKey: string, value: any): Promise<void> => {
-      updateField(fieldKey, value, true);
-      return Promise.resolve();
-    };
-    
-    const refreshStatusAsync = async (): Promise<void> => {
-      refreshStatus();
-      return Promise.resolve();
-    };
-    
-    const saveProgressAsync = async (): Promise<void> => {
-      await saveProgress();
-      return Promise.resolve();
-    };
-    
-    await handleDemoAutoFill({
-      taskId,
-      taskType,
-      form,
-      resetForm,
-      updateField: updateFieldAsync,
-      refreshStatus: refreshStatusAsync,
-      saveProgress: saveProgressAsync,
-      onProgress,
-      formService,
-      setForceRerender
-    });
-  }, [taskId, taskType, form, resetForm, updateField, refreshStatus, saveProgress, onProgress, formService]);
+  // Demo auto-fill is now handled by the UnifiedDemoAutoFill component
   
   // Handle clear fields
   /**
@@ -1033,42 +994,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         {/* Demo buttons - Only show for demo companies */}
         {company?.isDemo && (
           <div className="flex gap-3 mt-4">
-            {/* Conditionally render the KY3PDemoAutoFill component for KY3P forms */}
-            {taskType === 'ky3p' || taskType === 'security_assessment' || taskType === 'security' ? (
-              <KY3PDemoAutoFill
-                taskId={taskId || 0}
-                onSuccess={() => {
-                  // Refresh form state after successful demo auto-fill
-                  refreshStatus();
-                  setForceRerender(prev => !prev);
-                }}
-                onError={(error) => {
-                  console.error('KY3P demo auto-fill error:', error);
-                }}
-              />
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
-                onClick={handleDemoAutoFillClick}
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="18" 
-                  height="18" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-                Demo Auto-Fill
-              </Button>
-            )}
+            {/* Use unified demo auto-fill component for all form types */}
+            <UnifiedDemoAutoFill
+              taskId={taskId}
+              taskType={taskType}
+              form={form}
+              resetForm={resetForm}
+              updateField={updateField}
+              refreshStatus={refreshStatus}
+              saveProgress={saveProgress}
+              onProgress={onProgress}
+              formService={formService}
+              setForceRerender={setForceRerender}
+            />
             
             {/* Clear Fields button is now visible */}
             <Button

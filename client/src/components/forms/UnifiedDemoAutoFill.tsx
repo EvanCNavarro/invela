@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+// Import needed for non-KY3P form types
 import { handleDemoAutoFill } from './handleDemoAutoFill';
 
 interface UnifiedDemoAutoFillProps {
@@ -10,9 +11,9 @@ interface UnifiedDemoAutoFillProps {
   taskType: string;
   form: any;
   resetForm: (data: Record<string, any>) => void;
-  updateField: (fieldKey: string, value: any) => Promise<void>;
-  refreshStatus: () => Promise<void>;
-  saveProgress: () => Promise<void>;
+  updateField: (fieldKey: string, value: any, isSaving?: boolean) => void;
+  refreshStatus: () => void;
+  saveProgress: () => Promise<boolean>;
   onProgress?: (progress: number) => void;
   formService: any;
   setForceRerender: React.Dispatch<React.SetStateAction<boolean>>;
