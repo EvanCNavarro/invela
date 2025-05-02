@@ -27,7 +27,7 @@ async function updateTaskProgress(taskId: number): Promise<number> {
     
     // Get completed responses count
     const completedResultQuery = await db.execute<{ count: number }>(
-      sql`SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId} AND status = 'complete'`
+      sql`SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId} AND status = ${KYBFieldStatus.COMPLETE}`
     );
     
     // Safely extract count values, handle different result formats
@@ -89,7 +89,7 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
       task_id: number;
       field_id: number;
       response_value: string;
-      status: string;
+      status: keyof typeof KYBFieldStatus;
     }> = [];
     
     // Convert responses with string keys to array format with explicit fieldId
