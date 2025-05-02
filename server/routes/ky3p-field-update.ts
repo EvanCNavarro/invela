@@ -129,7 +129,7 @@ export function registerKY3PFieldUpdateRoutes() {
           oldValue: existingResponses[0].response_value,
           newValue: value,
           oldStatus: existingResponses[0].status,
-          newStatus: 'COMPLETE'
+          newStatus: 'complete' // KYBFieldStatus.COMPLETE value for consistent logging
         });
         
         await db.update(ky3pResponses)

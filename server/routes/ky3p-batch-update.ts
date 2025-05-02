@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { db } from '@db';
-import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
+import { ky3pFields, ky3pResponses, tasks, KYBFieldStatus } from '@db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger';
