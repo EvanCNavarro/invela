@@ -292,6 +292,17 @@ export async function calculateUniversalTaskProgress(
  * @param options Optional configuration
  * @returns Promise<void>
  */
+/**
+ * Update task progress with transaction support for atomic operations
+ * 
+ * This function calculates the current progress for a task and updates it in the database
+ * using a transaction to ensure consistency. It also broadcasts the update to all connected clients.
+ * 
+ * @param taskId Task ID to update
+ * @param taskType Type of task (company_kyb, ky3p, open_banking)
+ * @param options Configuration options
+ * @returns Promise<void>
+ */
 export async function updateTaskProgress(
   taskId: number,
   taskType: string,
@@ -306,73 +317,82 @@ export async function updateTaskProgress(
   const logPrefix = '[Task Progress Update]';
   
   try {
-    // Step 1: Get the current task
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-      
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
-    
-    // Step 2: Calculate the accurate progress using our universal function
-    const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug });
-    
-    // Step 3: Check if update is needed
-    if (!forceUpdate && task.progress === calculatedProgress) {
-      if (debug) {
-        console.log(`${logPrefix} No progress change needed for task ${taskId} (${taskType}): ${calculatedProgress}%`);
+    // Using transaction for atomic operations
+    return await db.transaction(async (tx) => {
+      // Step 1: Get the current task with transaction
+      const [task] = await tx
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+        
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
       }
-      return;
-    }
-    
-    // Step 4: Determine the appropriate status based on progress
-    const newStatus = determineStatusFromProgress(
-      calculatedProgress,
-      task.status as TaskStatus,
-      [], // No formResponses needed since we're using the calculated progress
-      { ...task.metadata, ...metadata }
-    );
-    
-    if (debug) {
-      console.log(`${logPrefix} Updating task ${taskId} (${taskType}):`, {
-        progressFrom: task.progress,
-        progressTo: calculatedProgress,
-        statusFrom: task.status,
-        statusTo: newStatus
-      });
-    }
-    
-    // Step 5: Update the task with new progress and status
-    const [updatedTask] = await db
-      .update(tasks)
-      .set({
-        progress: calculatedProgress,
-        status: newStatus,
-        updated_at: new Date(),
-        metadata: {
-          ...task.metadata,
-          ...metadata,
-          lastProgressUpdate: new Date().toISOString(),
-          progressHistory: [
-            ...(task.metadata?.progressHistory || []),
-            { value: calculatedProgress, timestamp: new Date().toISOString() }
-          ].slice(-10) // Keep last 10 progress updates
-        }
-      })
-      .where(eq(tasks.id, taskId))
-      .returning();
       
-    // Step 6: Broadcast the update if not skipped
-    if (!skipBroadcast) {
-      broadcastProgressUpdate(
-        taskId,
+      // Step 2: Calculate the accurate progress using our universal function
+      const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug, tx });
+      
+      // Step 3: Check if update is needed
+      if (!forceUpdate && task.progress === calculatedProgress) {
+        if (debug) {
+          console.log(`${logPrefix} No progress change needed for task ${taskId} (${taskType}): ${calculatedProgress}%`);
+        }
+        return;
+      }
+      
+      // Step 4: Determine the appropriate status based on progress
+      const newStatus = determineStatusFromProgress(
         calculatedProgress,
-        newStatus,
-        updatedTask.metadata || {}
+        task.status as TaskStatus,
+        [], // No formResponses needed since we're using the calculated progress
+        { ...task.metadata, ...metadata }
       );
-    }
+      
+      if (debug) {
+        console.log(`${logPrefix} Updating task ${taskId} (${taskType}):`, {
+          progressFrom: task.progress,
+          progressTo: calculatedProgress,
+          statusFrom: task.status,
+          statusTo: newStatus
+        });
+      }
+      
+      // Step 5: Update the task with new progress and status using the transaction
+      const [updatedTask] = await tx
+        .update(tasks)
+        .set({
+          progress: calculatedProgress,
+          status: newStatus,
+          updated_at: new Date(),
+          metadata: {
+            ...task.metadata,
+            ...metadata,
+            lastProgressUpdate: new Date().toISOString(),
+            progressHistory: [
+              ...(task.metadata?.progressHistory || []),
+              { value: calculatedProgress, timestamp: new Date().toISOString() }
+            ].slice(-10) // Keep last 10 progress updates
+          }
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+        
+      // After successful transaction completion, broadcast the update if not skipped
+      if (!skipBroadcast) {
+        // Broadcasting is done outside of transaction as it doesn't require rollback
+        setTimeout(() => {
+          broadcastProgressUpdate(
+            taskId,
+            calculatedProgress,
+            newStatus,
+            updatedTask.metadata || {}
+          );
+        }, 0);
+      }
+      
+      // Return updated task data if needed for further processing
+      return updatedTask;
+    });
   } catch (error) {
     console.error(`${logPrefix} Error updating task progress:`, error);
     throw error;
