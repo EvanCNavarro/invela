@@ -1,253 +1,287 @@
 /**
- * Task Update Module
+ * Task Update Utility
  * 
- * This module handles atomic updates to task progress and status,
- * ensuring all updates are properly recorded in the database and
- * broadcasts are sent via WebSocket.
+ * This module provides atomic task update functionality with WebSocket broadcasting,
+ * ensuring that database updates and client notifications are properly synchronized.
+ * 
+ * By centralizing task update logic, we eliminate race conditions and inconsistencies
+ * between what's stored in the database and what's displayed in the UI.
  */
 
 import { db } from '@db';
-import { eq } from 'drizzle-orm';
 import { tasks } from '@db/schema';
-import { TaskStatus } from './status-constants';
-import { calculateTaskProgress } from './unified-progress-calculation';
+import { eq } from 'drizzle-orm';
 import { logger } from './logger';
-import { WebSocketServer } from 'ws';
-import WebSocket from 'ws';
+import { TaskStatus, normalizeTaskStatus } from './status-constants';
+import { calculateTaskProgress } from './unified-progress-calculation';
+import { WebSocketServer, WebSocket } from 'ws';
+
+// WebSocket client management
+let wss: WebSocketServer | null = null;
+const clients = new Map<string, WebSocket>();
 
 /**
- * Update a task's progress and status atomically
+ * Register WebSocket server for task updates
  * 
- * @param taskId Task ID
- * @param taskType Task type
- * @param options Update options
- * @returns Update result with the new progress and status
+ * @param websocketServer WebSocket server instance
  */
-export async function updateTaskProgressAndStatus(
-  taskId: number,
-  taskType: string,
-  options: {
-    debug?: boolean;
-    broadcastUpdates?: boolean;
-    source?: string;
-    transactionId?: string;
-    metadata?: Record<string, any>;
-  } = {}
-): Promise<{
-  success: boolean;
-  progress: number;
-  status: TaskStatus;
-  details: any;
-}> {
-  const {
-    debug = false,
-    broadcastUpdates = true,
-    source = 'api',
-    transactionId = `txid-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-    metadata = {}
-  } = options;
+export function registerWebSocketServer(websocketServer: WebSocketServer) {
+  wss = websocketServer;
   
-  // Set up logging context
-  const logContext = {
-    taskId,
-    taskType,
-    transactionId,
-    source,
-    timestamp: new Date().toISOString()
-  };
-  
-  logger.info(`[TaskUpdate] Starting atomic update for task ${taskId}`, logContext);
-  
-  try {
-    // Step 1: Calculate current progress and status
-    const progressResult = await calculateTaskProgress(taskId, taskType, { debug, transactionId });
-    const { progress, status, calculationDetails } = progressResult;
+  wss.on('connection', (ws: WebSocket) => {
+    const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    clients.set(clientId, ws);
     
-    logger.info(`[TaskUpdate] Calculated progress for task ${taskId}: ${progress}%, status: ${status}`, {
-      ...logContext,
-      progress,
-      status,
-      details: calculationDetails
+    logger.info(`[TaskWebSocket] Client connected: ${clientId}`);
+    
+    // Send connected message
+    ws.send(JSON.stringify({
+      type: 'connected',
+      clientId,
+      userId: null,
+      companyId: null,
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Handle messages
+    ws.on('message', (message: string) => {
+      try {
+        const data = JSON.parse(message.toString());
+        logger.info(`[TaskWebSocket] Received message from client ${clientId}:`, data);
+        
+        // Handle authentication message
+        if (data.type === 'authenticate') {
+          ws.send(JSON.stringify({
+            type: 'authenticated',
+            userId: data.userId,
+            companyId: data.companyId,
+            clientId,
+            data: {
+              userId: data.userId,
+              companyId: data.companyId,
+              clientId,
+              status: 'authenticated',
+              timestamp: new Date().toISOString()
+            },
+            payload: {
+              userId: data.userId,
+              companyId: data.companyId,
+              clientId,
+              status: 'authenticated',
+              timestamp: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          }));
+        }
+        
+        // Handle ping-pong for connection keep-alive
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({
+            type: 'pong',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        logger.error('[TaskWebSocket] Error processing message:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+      }
     });
     
-    // Step 2: Get current task to check if update is needed
-    const [existingTask] = await db.select()
+    // Handle disconnection
+    ws.on('close', () => {
+      clients.delete(clientId);
+      logger.info(`[TaskWebSocket] Client disconnected: ${clientId}`);
+    });
+    
+    // Handle errors
+    ws.on('error', (error) => {
+      logger.error(`[TaskWebSocket] Client error for ${clientId}:`, {
+        error: error.message,
+        stack: error.stack
+      });
+    });
+  });
+  
+  logger.info('[TaskWebSocket] WebSocket server registered');
+}
+
+/**
+ * Broadcast a message to all connected WebSocket clients
+ * 
+ * @param messageType Type of message
+ * @param payload Message payload
+ */
+export function broadcastWebSocketMessage(messageType: string, payload: any) {
+  if (!wss) {
+    logger.warn(`[TaskWebSocket] No WebSocket server registered, skipping broadcast`, { messageType });
+    return;
+  }
+  
+  const activeClients = Array.from(clients.values()).filter(
+    (client) => client.readyState === WebSocket.OPEN
+  );
+  
+  if (activeClients.length === 0) {
+    logger.info(`No active WebSocket clients, skipping broadcast`, { messageType });
+    return;
+  }
+  
+  const message = JSON.stringify({
+    type: messageType,
+    payload,
+    data: payload, // Add data field for backward compatibility
+    timestamp: new Date().toISOString()
+  });
+  
+  let successCount = 0;
+  let errorCount = 0;
+  
+  // Send message to all connected clients
+  activeClients.forEach((client) => {
+    try {
+      client.send(message);
+      successCount++;
+    } catch (error) {
+      errorCount++;
+      logger.error('[TaskWebSocket] Error sending message to client:', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  logger.info(`[TaskWebSocket] Broadcast ${messageType} to ${successCount} clients (${errorCount} failed)`);
+}
+
+/**
+ * Update a task's progress and status
+ * 
+ * This function handles:
+ * 1. Calculating the current progress
+ * 2. Determining the appropriate status
+ * 3. Updating the database
+ * 4. Broadcasting the update to clients
+ * 
+ * @param taskId Task ID to update
+ * @param options Update options
+ * @returns Updated task data
+ */
+export async function updateTaskProgress(
+  taskId: number,
+  options: {
+    recalculate?: boolean;
+    forceStatus?: TaskStatus;
+    debug?: boolean;
+    broadcast?: boolean;
+  } = {}
+) {
+  const {
+    recalculate = true,
+    forceStatus,
+    debug = false,
+    broadcast = true
+  } = options;
+  
+  const transactionId = `txid-${Date.now()}`;
+  const logContext = { taskId, transactionId };
+  
+  try {
+    // Step 1: Get task information
+    const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
     
-    if (!existingTask) {
+    if (!task) {
       throw new Error(`Task not found: ${taskId}`);
     }
     
-    // Check if update is needed - compare numeric progress values to avoid string/number issues
-    const needsUpdate = 
-      Number(existingTask.progress) !== progress ||
-      existingTask.status !== status;
+    // Step 2: Calculate task progress
+    let progress = task.progress;
+    let status = normalizeTaskStatus(task.status);
     
-    if (needsUpdate) {
-      // Step 3: Update the task in the database
-      const timestamp = new Date();
+    if (recalculate) {
+      const result = await calculateTaskProgress(taskId, task.task_type, { debug, transactionId });
+      progress = result.progress;
+      status = result.status;
       
-      const [updatedTask] = await db.update(tasks)
+      if (debug) {
+        logger.debug(`[TaskUpdate] Calculated progress for task ${taskId}:`, {
+          ...logContext,
+          taskType: task.task_type,
+          progress,
+          status,
+          calculationDetails: result.calculationDetails
+        });
+      }
+    }
+    
+    // Override status if specified
+    if (forceStatus) {
+      status = forceStatus;
+      logger.info(`[TaskUpdate] Forcing status for task ${taskId} to ${status}`, logContext);
+    }
+    
+    // Step 3: Update the database if needed
+    if (progress !== task.progress || status !== task.status) {
+      await db.update(tasks)
         .set({
           progress,
           status,
-          updated_at: timestamp,
-          // Only update status_changed_at if status is changing
-          ...(existingTask.status !== status ? { status_changed_at: timestamp } : {}),
-          // Merge existing metadata with new metadata
-          metadata: {
-            ...existingTask.metadata,
-            ...metadata,
-            lastProgressUpdate: timestamp.toISOString(),
-            progressUpdateSource: source,
-            progressUpdateTransactionId: transactionId
-          }
+          updated_at: new Date()
         })
-        .where(eq(tasks.id, taskId))
-        .returning();
+        .where(eq(tasks.id, taskId));
       
-      logger.info(`[TaskUpdate] Updated task ${taskId} in database`, {
+      logger.info(`[TaskUpdate] Updated task ${taskId}:`, {
         ...logContext,
-        oldProgress: existingTask.progress,
+        taskType: task.task_type,
+        previousProgress: task.progress,
         newProgress: progress,
-        oldStatus: existingTask.status,
+        previousStatus: task.status,
         newStatus: status
       });
       
-      // Step 4: Broadcast update if requested
-      if (broadcastUpdates) {
-        await broadcastTaskUpdate(taskId, progress, status, transactionId);
+      // Step 4: Broadcast the update if requested
+      if (broadcast) {
+        logger.debug(`Broadcasting task update with object format`, { taskId, status });
+        broadcastWebSocketMessage('task_update', { taskId, status });
       }
-      
-      return {
-        success: true,
-        progress,
-        status,
-        details: {
-          taskId,
-          taskType,
-          oldProgress: existingTask.progress,
-          newProgress: progress,
-          oldStatus: existingTask.status,
-          newStatus: status,
-          timestamp: timestamp.toISOString(),
-          transactionId
-        }
-      };
     } else {
-      // No update needed
-      logger.info(`[TaskUpdate] No update needed for task ${taskId}`, {
+      logger.info(`[TaskUpdate] No changes for task ${taskId}`, {
         ...logContext,
-        currentProgress: existingTask.progress,
-        calculatedProgress: progress,
-        currentStatus: existingTask.status,
-        calculatedStatus: status
+        progress,
+        status
       });
-      
-      return {
-        success: true,
-        progress: Number(existingTask.progress),
-        status: existingTask.status as TaskStatus,
-        details: {
-          taskId,
-          taskType,
-          noUpdateNeeded: true,
-          currentProgress: existingTask.progress,
-          currentStatus: existingTask.status,
-          timestamp: new Date().toISOString(),
-          transactionId
-        }
-      };
     }
+    
+    // Return updated task data
+    return {
+      id: taskId,
+      progress,
+      status,
+      task_type: task.task_type,
+      updated_at: new Date().toISOString()
+    };
   } catch (error) {
     logger.error(`[TaskUpdate] Error updating task ${taskId}`, {
       ...logContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
-    
-    return {
-      success: false,
-      progress: 0,
-      status: TaskStatus.NOT_STARTED,
-      details: {
-        taskId,
-        taskType,
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString(),
-        transactionId
-      }
-    };
+    throw error;
   }
 }
 
 /**
- * Broadcast a task update via WebSocket
+ * Update company tabs (tab unlocking)
  * 
- * @param taskId Task ID
- * @param progress Progress value (0-100)
- * @param status Task status
- * @param transactionId Unique transaction ID
+ * @param companyId Company ID
+ * @param tabs Available tabs
  */
-export async function broadcastTaskUpdate(
-  taskId: number,
-  progress: number,
-  status: TaskStatus,
-  transactionId: string
-): Promise<void> {
-  try {
-    // Access the WebSocket server from the global scope
-    const wss = (global as any).wss as WebSocketServer | undefined;
-    
-    if (!wss) {
-      logger.warn(`[TaskUpdate] WebSocket server not available for broadcasting`, {
-        taskId,
-        progress,
-        status,
-        transactionId
-      });
-      return;
-    }
-    
-    // Build a standardized message format
-    // Using consistent property names across the application
-    const message = {
-      type: 'task_update',
-      payload: {
-        id: taskId, // Use 'id' consistently instead of mixing 'id' and 'taskId'
-        progress,
-        status,
-        timestamp: new Date().toISOString(),
-        transactionId
-      }
-    };
-    
-    let clientCount = 0;
-    
-    // Broadcast to all clients in OPEN state
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(message));
-        clientCount++;
-      }
-    });
-    
-    logger.info(`[TaskUpdate] Broadcast sent to ${clientCount} clients`, {
-      taskId,
-      progress,
-      status,
-      clientCount,
-      transactionId
-    });
-  } catch (error) {
-    logger.error(`[TaskUpdate] Error broadcasting update for task ${taskId}`, {
-      taskId,
-      progress,
-      status,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      transactionId
-    });
-  }
+export function broadcastCompanyTabsUpdate(companyId: number, tabs: string[]) {
+  broadcastWebSocketMessage('company_tabs_update', {
+    companyId,
+    availableTabs: tabs,
+    tabs // Add tabs field for backward compatibility
+  });
 }

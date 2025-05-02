@@ -1,139 +1,50 @@
 /**
- * WebSocket Server Configuration for Risk Score Notifications
+ * WebSocket Router
  * 
- * This module sets up a WebSocket server to broadcast risk score updates to clients.
+ * This file integrates the unified task-update utilities with the WebSocket server,
+ * ensuring consistent real-time updates for tasks and progress tracking.
  */
 
-import { Server as HttpServer } from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
+import { Router } from 'express';
+import { WebSocketServer } from 'ws';
+import * as WebSocketService from '../services/websocket';
+import { registerWebSocketServer, broadcastWebSocketMessage } from '../utils/task-update';
 import { logger } from '../utils/logger';
 
-// Logger is already initialized in the imported module
+// Map to store active clients
+export const clients = new Map();
 
-// Keep track of connected clients
-const clients = new Set<WebSocket>();
+// WebSocket server instance
+let wss: WebSocketServer | null = null;
 
-// Initialize WebSocket server
-export function setupWebSocketServer(httpServer: HttpServer): WebSocketServer {
-  logger.info('[WebSocket] Server initialized on path: /ws');
+// Router for WebSocket-related HTTP endpoints
+const websocketRouter = Router();
+
+/**
+ * Initialize WebSocket server with proper path and handler registration
+ * 
+ * @param server HTTP server to attach the WebSocket server to
+ * @returns WebSocket server instance
+ */
+export function initializeWebSocketServer(server: any): WebSocketServer {
+  // Use the service to create the WebSocket server
+  wss = WebSocketService.initializeWebSocketServer(server);
   
-  // Create WebSocket server with a specific path to avoid conflict with Vite's HMR
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Register the WebSocket server with our task-update utility
+  registerWebSocketServer(wss);
   
-  // Handle new WebSocket connections
-  wss.on('connection', (ws) => {
-    logger.info('[WebSocket] New WebSocket client connected');
-    
-    // Add new client to the pool
-    clients.add(ws);
-    
-    // Send a welcome message to the client
-    ws.send(JSON.stringify({
-      type: 'connection_established',
-      message: 'Connected to Invela Risk Score WebSocket server',
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Handle messages from clients
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        logger.info('[WebSocket] Received message from client:', data);
-        
-        // Handle ping messages to keep connection alive
-        if (data.type === 'ping') {
-          ws.send(JSON.stringify({
-            type: 'pong',
-            timestamp: new Date().toISOString()
-          }));
-        }
-        
-        // Handle authentication messages
-        if (data.type === 'authenticate') {
-          logger.info('[WebSocket] Client authenticated');
-          ws.send(JSON.stringify({
-            type: 'authenticated',
-            payload: { success: true, timestamp: new Date().toISOString() }
-          }));
-        }
-      } catch (error) {
-        logger.error('[WebSocket] Error parsing message:', error);
-      }
-    });
-    
-    // Handle client disconnect
-    ws.on('close', (code, reason) => {
-      logger.info(`[WebSocket] WebSocket client disconnected with code ${code} and reason: ${reason}`);
-      clients.delete(ws);
-    });
-  });
+  logger.info('WebSocket server initialized and registered with task-update utility');
   
   return wss;
 }
 
-/**
- * Broadcast a message to all connected WebSocket clients
- */
-export function broadcastMessage(type: string, data: any) {
-  const message = JSON.stringify({
-    type,
-    data, // This will be the payload
-    timestamp: new Date().toISOString()
-  });
-  
-  logger.info(`[WebSocket] Broadcasting message of type ${type} to ${clients.size} clients`);
-  
-  clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-}
-
-/**
- * Send a risk score update to all clients
- */
-export function broadcastRiskScoreUpdate(companyId: number, newScore: number) {
-  broadcastMessage('risk_score_update', {
-    companyId,
-    newScore,
-    updatedAt: new Date().toISOString()
-  });
-}
-
-/**
- * Send risk dimension priorities update to all clients
- */
-export function broadcastRiskPrioritiesUpdate(priorities: any) {
-  // Send a standardized message format
-  const message = JSON.stringify({
-    type: 'risk_priorities_update',
-    payload: {
-      priorities,
-      updatedAt: new Date().toISOString()
-    },
-    timestamp: new Date().toISOString()
-  });
-  
-  logger.info(`[WebSocket] Broadcasting risk priorities update to ${clients.size} clients`);
-  
-  // Use the standardized message format expected by clients
-  clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-}
-
-// Create and export a router for WebSocket-related endpoints
-import { Router } from 'express';
-const websocketRouter = Router();
+// HTTP endpoints for WebSocket management and testing
 
 // GET endpoint to check WebSocket server status
 websocketRouter.get('/api/websocket/status', (req, res) => {
   res.json({
-    status: 'active',
-    clientCount: clients.size,
+    status: wss ? 'active' : 'inactive',
+    clientCount: WebSocketService.getWebSocketServer()?.clients.size || 0,
     timestamp: new Date().toISOString()
   });
 });
@@ -147,8 +58,42 @@ websocketRouter.post('/api/websocket/broadcast', (req, res) => {
   }
   
   try {
-    broadcastMessage(type, data || {});
-    res.json({ success: true, clientCount: clients.size });
+    // Use our improved broadcasting function
+    broadcastWebSocketMessage(type, data || {});
+    res.json({ 
+      success: true, 
+      clientCount: WebSocketService.getWebSocketServer()?.clients.size || 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+// POST endpoint to broadcast a task update
+websocketRouter.post('/api/websocket/task-update', (req, res) => {
+  const { taskId, status, progress } = req.body;
+  
+  if (!taskId) {
+    return res.status(400).json({ error: 'Task ID is required' });
+  }
+  
+  try {
+    // Use our task-update utility to broadcast the update
+    broadcastWebSocketMessage('task_update', { 
+      taskId, 
+      status, 
+      progress,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({ 
+      success: true, 
+      taskId,
+      status,
+      progress,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
