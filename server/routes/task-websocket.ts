@@ -301,12 +301,30 @@ async function handleAuthentication(socket: ExtendedWebSocket, data: any) {
       socket.clientId = data.clientId;
     }
     
-    // Send authentication response
+    // Send authentication response with both data and payload fields for compatibility
+    // with different client implementations
+    const timestamp = new Date().toISOString();
     socket.send(JSON.stringify({
       type: 'authenticated',
       userId: socket.userId,
       companyId: socket.companyId,
-      timestamp: new Date().toISOString()
+      clientId: socket.clientId,
+      // Include both data and payload for compatibility
+      data: {
+        userId: socket.userId,
+        companyId: socket.companyId,
+        clientId: socket.clientId,
+        status: 'authenticated',
+        timestamp
+      },
+      payload: {
+        userId: socket.userId,
+        companyId: socket.companyId,
+        clientId: socket.clientId,
+        status: 'authenticated',
+        timestamp
+      },
+      timestamp
     }));
     
     console.log(`[TaskWebSocket] Client authenticated:`, {
@@ -318,11 +336,24 @@ async function handleAuthentication(socket: ExtendedWebSocket, data: any) {
   } catch (error) {
     console.error(`[TaskWebSocket] Authentication error:`, error);
     
-    // Send error message
+    // Send error message with data and payload fields for compatibility
+    const errorTimestamp = new Date().toISOString();
+    const errorMessage = error instanceof Error ? error.message : 'Authentication error';
     socket.send(JSON.stringify({
       type: 'authentication-error',
-      message: error instanceof Error ? error.message : 'Authentication error',
-      timestamp: new Date().toISOString()
+      message: errorMessage,
+      // Include data and payload fields for client compatibility
+      data: {
+        message: errorMessage,
+        status: 'error',
+        timestamp: errorTimestamp
+      },
+      payload: {
+        message: errorMessage,
+        status: 'error',
+        timestamp: errorTimestamp
+      },
+      timestamp: errorTimestamp
     }));
   }
 }
