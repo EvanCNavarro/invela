@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import getLogger from '@/utils/logger';
+
+const logger = getLogger('UnifiedDemoAutoFill');
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
@@ -96,8 +99,32 @@ export function UnifiedDemoAutoFill(props: UnifiedDemoAutoFillProps) {
         });
         
         // Force a refresh of the form data
-        props.refreshStatus();
-        props.setForceRerender(prev => !prev);
+        // We need to reset the form with the new data to ensure UI update
+        try {
+          // First refresh the status to get progress updated
+          props.refreshStatus();
+          
+          // Get the updated form data from the server
+          const progressResponse = await fetch(`/api/ky3p/progress/${taskId}`);
+          
+          if (progressResponse.ok) {
+            const progressData = await progressResponse.json();
+            
+            if (progressData.success && progressData.formData) {
+              // Reset form with updated data
+              props.resetForm(progressData.formData);
+              logger.info('Reset form with updated KY3P data from server', {
+                fieldCount: Object.keys(progressData.formData).length,
+                progress: progressData.progress
+              });
+            }
+          }
+          
+          // Force UI to refresh
+          props.setForceRerender(prev => !prev);
+        } catch (syncError) {
+          console.error('Error syncing KY3P form data:', syncError);
+        }
         
         // Show success message
         toast({
