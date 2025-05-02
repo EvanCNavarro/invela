@@ -215,6 +215,8 @@ export async function broadcastEvent(eventType: string, data: any): Promise<void
  * for maximum compatibility with different client implementations,
  * and broadcasts on multiple channels for reliability.
  * 
+ * It also caches the events for potential client reconnections.
+ * 
  * @param formSubmissionData Form submission data containing taskId, formType, status, etc.
  */
 export async function broadcastFormSubmission(formSubmissionData: {
@@ -249,11 +251,15 @@ export async function broadcastFormSubmission(formSubmissionData: {
     const timestamp = new Date().toISOString();
     const submissionDate = timestamp;
     
+    // Generate a unique message ID for tracking/deduplication
+    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     // Create an enhanced payload with all necessary fields
     const payload = {
       ...formSubmissionData,
       submissionDate,
       timestamp,
+      messageId, // Add messageId for tracking
       // Convert any numeric IDs to strings for JSON compatibility
       taskId: String(formSubmissionData.taskId),
       // Ensure fileId is always a string when present
@@ -276,6 +282,34 @@ export async function broadcastFormSubmission(formSubmissionData: {
       taskId: formSubmissionData.taskId,
     };
     
+    // Cache the event for potential reconnections
+    try {
+      // Import dynamically to avoid circular dependencies
+      const { cacheFormEvent } = await import('./form-event-cache');
+      
+      // Cache the form submission event
+      cacheFormEvent({
+        ...formSubmissionData,
+        timestamp,
+        messageId,
+        // Make sure taskId is numeric in the cache
+        taskId: typeof formSubmissionData.taskId === 'string' ? 
+          parseInt(formSubmissionData.taskId) : formSubmissionData.taskId
+      });
+      
+      logger.debug('Cached form submission event for potential reconnections', {
+        taskId: formSubmissionData.taskId,
+        formType: formSubmissionData.formType,
+        messageId
+      });
+    } catch (cacheError) {
+      logger.warn('Failed to cache form submission event', {
+        error: cacheError instanceof Error ? cacheError.message : 'Unknown error',
+        taskId: formSubmissionData.taskId,
+        formType: formSubmissionData.formType
+      });
+    }
+    
     // Broadcast on multiple channels for maximum compatibility
     // Different client implementations might be listening to different event types
     await broadcast('form_submission', payload);
@@ -295,7 +329,8 @@ export async function broadcastFormSubmission(formSubmissionData: {
     logger.info('Successfully broadcasted form submission events', {
       taskId: formSubmissionData.taskId,
       status: formSubmissionData.status,
-      timestamp
+      timestamp,
+      messageId
     });
   } catch (error) {
     logger.error('Error broadcasting form submission:', {

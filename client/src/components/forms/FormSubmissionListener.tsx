@@ -90,15 +90,51 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     showToastsRef.current = showToasts;
   }, [onSuccess, onError, onInProgress, showToasts]);
 
+  // Track reconnection attempts
+  const reconnectionAttemptsRef = useRef<number>(0);
+  const lastProcessedMessageIdRef = useRef<string | null>(null);
+  
+  // Process messages after reconnection
+  useEffect(() => {
+    // If we have a socket and it's connected, and we've previously had a connection (were disconnected)
+    if (socket && isConnected && reconnectionAttemptsRef.current > 0 && handleMessageRef.current) {
+      logger.info(`WebSocket reconnected after ${reconnectionAttemptsRef.current} attempts, checking for missed messages`);
+      
+      // Reset reconnection counter when successfully reconnected
+      reconnectionAttemptsRef.current = 0;
+      
+      // Request any missed form submission events
+      try {
+        // Send a message to the server requesting any missed events for this task
+        socket.send(JSON.stringify({
+          type: 'request_missed_events',
+          taskId,
+          formType,
+          lastMessageId: lastProcessedMessageIdRef.current,
+          timestamp: new Date().toISOString()
+        }));
+        
+        logger.info(`Requested missed events for task ${taskId}`);
+      } catch (error) {
+        logger.error('Error requesting missed events:', error);
+      }
+    }
+  }, [socket, isConnected, taskId, formType]);
+
+  // Main effect for setting up WebSocket listeners
   useEffect(() => {
     // Only proceed if we actually have a socket and it's connected
     if (!socket || !isConnected) {
       // Don't show warnings during initial page load - only when we've been connected before
       if (hasSetupListenerRef.current) {
-        logger.warn('WebSocket not connected, form submission updates will not be received');
+        reconnectionAttemptsRef.current += 1;
+        logger.warn(`WebSocket not connected (attempt ${reconnectionAttemptsRef.current}), form submission updates will not be received`);
       }
       return;
     }
+    
+    // Reset reconnection counter when connected
+    reconnectionAttemptsRef.current = 0;
     
     // Handle scenario where socket reconnected but the component did not remount
     // We check both for new task and for existing socket listener attachment
