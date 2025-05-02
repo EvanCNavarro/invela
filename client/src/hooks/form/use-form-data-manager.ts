@@ -515,18 +515,22 @@ export function useFormDataManager({
         logger.info(`[BATCH UPDATER] Processing batch with ${Object.keys(fields).length} fields`);
         
         // Update form service with all fields in the batch
-        Object.entries(fields).forEach(([key, value]) => {
-          formService.updateFormData(key, value, taskId);
-        });
-        
-        // Save all changes at once
-        saveProgress()
-          .then(result => {
-            logger.info(`[BATCH UPDATER] Batch save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+        // Using Promise.all to handle async updateFormData properly
+        Promise.all(
+          Object.entries(fields).map(([key, value]) => {
+            return Promise.resolve(formService.updateFormData(key, value, taskId));
           })
-          .catch(err => {
-            logger.error(`[BATCH UPDATER] Batch save failed:`, err);
-          });
+        )
+        .then(() => {
+          // Save all changes at once after all field updates complete
+          return saveProgress();
+        })
+        .then(result => {
+          logger.info(`[BATCH UPDATER] Batch save completed with result: ${result ? 'SUCCESS' : 'FAILED'}`);
+        })
+        .catch(err => {
+          logger.error(`[BATCH UPDATER] Batch save failed:`, err);
+        });
       });
       
       // Return cleanup function that removes the listener
