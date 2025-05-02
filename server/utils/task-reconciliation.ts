@@ -194,8 +194,13 @@ export async function reconcileTaskProgress(
         });
         
         // If progress differs, update the task and broadcast
-        if (task.progress !== calculatedProgress) {
-          // Determine the correct status based on progress
+        if (forceUpdate || task.progress !== calculatedProgress) {
+          // CONSISTENT STATUS DETERMINATION:
+          // Strictly follow the business rules:
+          // 0% = Not Started
+          // 1-99% = In Progress
+          // 100% (not submitted) = Ready for Submission
+          // 100% (submitted) = Submitted
           const newStatus = 
             calculatedProgress === 0 ? TaskStatus.NOT_STARTED :
             calculatedProgress >= 100 ? TaskStatus.READY_FOR_SUBMISSION :
@@ -293,7 +298,12 @@ export async function reconcileTaskProgress(
         
         // If progress differs, update the task and broadcast
         if (forceUpdate || task.progress !== calculatedProgress) {
-          // Determine the correct status based on progress
+          // CONSISTENT STATUS DETERMINATION:
+          // Strictly follow the business rules:
+          // 0% = Not Started
+          // 1-99% = In Progress
+          // 100% (not submitted) = Ready for Submission
+          // 100% (submitted) = Submitted
           const newStatus = 
             calculatedProgress === 0 ? TaskStatus.NOT_STARTED :
             calculatedProgress >= 100 ? TaskStatus.READY_FOR_SUBMISSION :
