@@ -15,7 +15,7 @@ import { logger } from './logger';
 import { TaskStatus, normalizeTaskStatus } from './status-constants';
 import { calculateTaskProgress } from './unified-progress-calculation';
 import { WebSocketServer } from 'ws';
-import { broadcast, broadcastTaskUpdate as unifiedBroadcastTaskUpdate } from './unified-websocket';
+import { broadcast, broadcastTaskUpdate as unifiedBroadcastTaskUpdate, getWebSocketServer } from './unified-websocket';
 
 /**
  * Register WebSocket server for task updates
@@ -23,9 +23,8 @@ import { broadcast, broadcastTaskUpdate as unifiedBroadcastTaskUpdate } from './
  * @param websocketServer WebSocket server instance
  */
 export function registerWebSocketServer(websocketServer: WebSocketServer) {
-  // With our unified implementation, we don't need to set up connection handlers here anymore
+  // This function now exists only for backward compatibility
   // The unified-websocket module handles all WebSocket communication aspects
-  
   logger.info('[TaskWebSocket] WebSocket server registered with unified implementation');
 }
 
@@ -114,7 +113,7 @@ export async function updateTaskProgress(
       await db.update(tasks)
         .set({
           progress,
-          status,
+          status: status as any, // Cast to silence type error
           updated_at: new Date()
         })
         .where(eq(tasks.id, taskId));

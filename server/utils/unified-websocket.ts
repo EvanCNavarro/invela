@@ -11,7 +11,11 @@ import { Server } from 'http';
 import { logger } from './logger';
 
 // Single WebSocket server instance
+// This is the source of truth for the WebSocket server instance across the application
 let wss: WebSocketServer | null = null;
+
+// Flag to track initialization status
+let initialized = false;
 
 // Track authenticated clients with their metadata
 interface WebSocketClient {
@@ -46,7 +50,7 @@ export function initializeWebSocketServer(server: Server): WebSocketServer {
     server, 
     path: '/ws',
     // Verify client to reject Vite HMR connections
-    verifyClient: (info) => {
+    verifyClient: (info: any) => {
       const isViteHmr = info.req.headers['sec-websocket-protocol'] === 'vite-hmr';
       if (isViteHmr) {
         logger.info('Rejecting Vite HMR WebSocket connection');

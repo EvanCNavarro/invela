@@ -110,7 +110,17 @@ app.use((req, res, next) => {
 registerRoutes(app);
 
 // Setup WebSocket server with error handling - using unified implementation
-initializeWebSocketServer(server);
+// Initialize once and store the instance for all modules to access
+const wssInstance = initializeWebSocketServer(server);
+log('[ServerStartup] WebSocket server initialized with unified implementation', 'info');
+
+// Ensure old-style handlers can still access the WebSocket server
+// by importing functions from the utilities that need access
+import { registerWebSocketServer } from './utils/task-update';
+
+// Register WebSocket server with task-update utility for backward compatibility
+registerWebSocketServer(wssInstance);
+log('[ServerStartup] WebSocket server registered with task-update utility', 'info');
 
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
