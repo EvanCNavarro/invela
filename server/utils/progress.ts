@@ -191,27 +191,41 @@ export function determineStatusFromProgress(
  * @param options Optional configuration including transaction for atomic operations
  * @returns Promise<number> Progress percentage (0-100)
  */
+/**
+ * Calculate universal task progress across different task types
+ *
+ * This function implements a standardized way to calculate progress
+ * for all task types. It can use a transaction for atomic operations.
+ *
+ * @param taskId Task ID
+ * @param taskType Type of task (company_kyb, ky3p, open_banking)
+ * @param options Configuration options including transaction context
+ * @returns Promise<number> Progress percentage (0-100)
+ */
 export async function calculateUniversalTaskProgress(
   taskId: number,
   taskType: string,
-  options: { transaction?: any; debug?: boolean } = {}
+  options: { tx?: any; debug?: boolean } = {}
 ): Promise<number> {
   const logPrefix = '[Universal Progress]';
   let totalFields = 0;
   let completedFields = 0;
   const debug = options.debug || false;
   
+  // Use the passed transaction context or the global db instance
+  const dbContext = options.tx || db;
+  
   try {
     // Use the appropriate schema and table based on task type
     if (taskType === 'open_banking') {
       // Count total Open Banking fields
-      const totalFieldsResult = await db
+      const totalFieldsResult = await dbContext
         .select({ count: sql<number>`count(*)` })
         .from(openBankingFields);
       totalFields = totalFieldsResult[0].count;
       
       // Count completed Open Banking responses (with status = COMPLETE)
-      const completedResultQuery = await db
+      const completedResultQuery = await dbContext
         .select({ count: sql<number>`count(*)` })
         .from(openBankingResponses)
         .where(
@@ -225,13 +239,13 @@ export async function calculateUniversalTaskProgress(
     } 
     else if (taskType === 'ky3p' || taskType === 'security' || taskType === 'sp_ky3p_assessment' || taskType === 'security_assessment') {
       // Count total KY3P fields
-      const totalFieldsResult = await db
+      const totalFieldsResult = await dbContext
         .select({ count: sql<number>`count(*)` })
         .from(ky3pFields);
       totalFields = totalFieldsResult[0].count;
       
       // Count completed KY3P responses (with status = COMPLETE)
-      const completedResultQuery = await db
+      const completedResultQuery = await dbContext
         .select({ count: sql<number>`count(*)` })
         .from(ky3pResponses)
         .where(
@@ -246,13 +260,13 @@ export async function calculateUniversalTaskProgress(
     else { 
       // Default to KYB fields (company_kyb type)
       // Count total KYB fields
-      const totalFieldsResult = await db
+      const totalFieldsResult = await dbContext
         .select({ count: sql<number>`count(*)` })
         .from(kybFields);
       totalFields = totalFieldsResult[0].count;
       
       // Count completed KYB responses
-      const completedResultQuery = await db
+      const completedResultQuery = await dbContext
         .select({ count: sql<number>`count(*)` })
         .from(kybResponses)
         .where(
