@@ -26,6 +26,7 @@ import {
 import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
 import * as WebSocketService from '../services/websocket';
+import { broadcastMessage } from '../utils/websocketBroadcast';
 import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
 import path from 'path';
 import fs from 'fs';
@@ -1491,10 +1492,39 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
         statusChanged
       });
       
-      // Broadcast the progress update via WebSocket
+      // Broadcast the progress update via WebSocket using standardized function
       try {
         const { broadcastProgressUpdate } = await import('../utils/progress');
-        broadcastProgressUpdate(taskId, progressPercentage, newStatus as any, task.metadata || {});
+        
+        // Create standardized metadata for WebSocket event
+        const broadcastMetadata = {
+          ...task.metadata,
+          lastUpdated: new Date().toISOString(),
+          lastProgressReconciliation: new Date().toISOString(),
+          formType: 'open_banking',
+          broadcastSource: 'open-banking-bulk-update',
+          stats: {
+            created: processedCount.created,
+            updated: processedCount.updated,
+            skipped: processedCount.skipped,
+            total: processedCount.created + processedCount.updated + processedCount.skipped
+          }
+        };
+        
+        logger.info('[OpenBankingRoutes] Broadcasting bulk update progress via standardized broadcastProgressUpdate', {
+          taskId,
+          progress: progressPercentage,
+          status: newStatus,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Use standardized broadcast function
+        broadcastProgressUpdate(
+          taskId,
+          progressPercentage,
+          newStatus as any,
+          broadcastMetadata
+        );
       } catch (broadcastError) {
         logger.error('[OpenBankingRoutes] Error broadcasting progress update:', broadcastError);
         // Continue even if broadcast fails
@@ -1656,13 +1686,42 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
         })
         .where(eq(tasks.id, taskId));
         
-      // Broadcast task status update via WebSocket
-      broadcastMessage('task_updated', {
-        taskId,
-        status: TaskStatus.SUBMITTED,
-        progress: 100,
-        timestamp: new Date().toISOString()
-      });
+      // Broadcast task status update via WebSocket using standardized approach
+      try {
+        const { broadcastProgressUpdate } = await import('../utils/progress');
+        
+        // Create standardized metadata for broadcast
+        const broadcastMetadata = {
+          lastUpdated: new Date().toISOString(),
+          submissionDate: new Date().toISOString(),
+          fileId: fileRecord[0].id, // Include fileId for visibility in File Vault
+          fileName: effectiveFileName,
+          formType: 'open_banking',
+          broadcastSource: 'open-banking-submit-legacy', // Mark as legacy endpoint
+          riskScore,
+          unlocked: true, // Flag for UI to show unlocked status
+          companyId,
+          tabsUnlocked: true
+        };
+        
+        logger.info('[OpenBankingRoutes] Broadcasting task submission via standardized broadcastProgressUpdate', {
+          taskId,
+          status: TaskStatus.SUBMITTED,
+          timestamp: new Date().toISOString(),
+          fileId: fileRecord[0].id
+        });
+        
+        // Use standardized broadcast function
+        broadcastProgressUpdate(
+          taskId,
+          100, // 100% progress for submitted task
+          TaskStatus.SUBMITTED,
+          broadcastMetadata
+        );
+      } catch (broadcastError) {
+        logger.error('[OpenBankingRoutes] Error broadcasting task submission:', broadcastError);
+        // Continue with submission even if broadcast fails
+      }
       
       // Unlock dependent tasks if any
       const unlockedTaskCount = await unlockDependentTasks(taskId);
