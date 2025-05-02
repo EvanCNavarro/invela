@@ -108,7 +108,25 @@ export function UnifiedDemoAutoFill(props: UnifiedDemoAutoFillProps) {
       } 
       // For all other form types, use the generic handler
       else {
-        await handleDemoAutoFill(props);
+        // Create promise-wrapped versions of the callbacks to match expected types for handleDemoAutoFill
+        const adaptedProps = {
+          ...props,
+          updateField: async (fieldKey: string, value: any): Promise<void> => {
+            props.updateField(fieldKey, value, true);
+            return Promise.resolve();
+          },
+          refreshStatus: async (): Promise<void> => {
+            props.refreshStatus();
+            return Promise.resolve();
+          },
+          saveProgress: async (): Promise<void> => {
+            await props.saveProgress();
+            return Promise.resolve();
+          }
+        };
+        
+        // Call generic handler with adapted types
+        await handleDemoAutoFill(adaptedProps);
       }
     } catch (error) {
       console.error('Error during demo auto-fill:', error);
