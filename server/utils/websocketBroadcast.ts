@@ -50,11 +50,13 @@ export function broadcastMessage(
   // Generate a unique message ID for tracking/debugging if not provided
   const messageId = options.messageId || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
-  // Create a consistent message format that the client expects
+  // Create a message format that works with all client implementations
+  const timestamp = new Date().toISOString();
   const message = JSON.stringify({
     type,
-    payload,  // Always use 'payload' key for consistency
-    timestamp: new Date().toISOString(),
+    payload,  // Include the payload directly
+    data: payload, // Also include as data for clients expecting that format
+    timestamp,
     messageId // Include message ID for tracking
   });
   
@@ -151,12 +153,17 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
         // Handle ping messages
         if (message.type === 'ping') {
           try {
+            const pongTimestamp = new Date().toISOString();
+            const pongPayload = {
+              timestamp: pongTimestamp,
+              echo: message.timestamp
+            };
+            
             ws.send(JSON.stringify({
               type: 'pong',
-              payload: {
-                timestamp: new Date().toISOString(),
-                echo: message.timestamp
-              }
+              payload: pongPayload,
+              data: pongPayload, // Include data field for client compatibility
+              timestamp: pongTimestamp
             }));
           } catch (e) {
             // Ignore errors
@@ -233,14 +240,20 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
       logInfo(`Client disconnected: Code ${code}, Reason: ${reason || 'No reason provided'}`);
     });
     
-    // Send welcome message
+    // Send welcome message with both data and payload fields for consistency
     try {
+      const welcomeTimestamp = new Date().toISOString();
+      const welcomePayload = {
+        message: 'Connection established',
+        timestamp: welcomeTimestamp
+      };
+      
       ws.send(JSON.stringify({
         type: 'connection_established',
-        payload: {
-          message: 'Connection established',
-          timestamp: new Date().toISOString()
-        }
+        payload: welcomePayload,
+        data: welcomePayload, // Include both formats for client compatibility
+        timestamp: welcomeTimestamp,
+        messageId: `welcome_${Date.now()}`
       }));
     } catch (error) {
       logError('Error sending welcome message:', error);
