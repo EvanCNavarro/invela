@@ -12,6 +12,7 @@ import { db } from '@db';
 import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
+import { universalDemoAutoFillService } from '../services/universalDemoAutoFillService';
 
 const router = express.Router();
 
@@ -176,8 +177,7 @@ router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => 
       });
     }
     
-    // Import the universal service here to avoid circular dependencies
-    const { universalDemoAutoFillService } = require('../services/universalDemoAutoFillService');
+    // Using the imported service (now imported at the top of the file)
     
     // Log with deprecated notice
     console.log(`[KY3P API DEPRECATED] Demo auto-fill requested for task ${taskId}, delegating to universal service`);
