@@ -242,33 +242,27 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
       // Send the update using the standardized batch update endpoint
       logger.info(`[Unified KY3P] Sending standardized batch update for ${Object.keys(cleanData).length} fields`);
       
-      // We have two different batch update endpoints, with different formats:
-      // 1. ky3p-fixed-routes.ts expects { responses: { fieldKey: value, ... } }
-      // 2. ky3p-batch-update.ts expects the data directly { fieldKey: value, ... }
-      // 
-      // Let's try using the ky3p-batch-update.ts route instead, which takes the data directly
-      const dataPayload = cleanData; // Plain object with fieldKey -> value mapping
+      // CRITICAL FIX: Server expects { responses: { fieldKey1: value1, fieldKey2: value2, ... } }
+      // The prior implementation was sending the data directly without the 'responses' wrapper
+      // This caused the 400 error: "Invalid request: responses is required and must be an object"
+      const dataPayload = { responses: cleanData };
       
       // Debug logging to verify our payload structure
-      console.log('[DEBUG] KY3P Batch Update Payload:', {
+      logger.debug('[Unified KY3P] Batch Update Payload:', {
         payloadType: typeof dataPayload,
-        isArray: Array.isArray(dataPayload),
-        keyCount: Object.keys(dataPayload).length,
-        sampleKeys: Object.keys(dataPayload).slice(0, 5)
+        hasResponsesObject: !!dataPayload.responses,
+        responseKeysCount: Object.keys(cleanData).length,
+        sampleKeys: Object.keys(cleanData).slice(0, 5)
       });
       
-      // Log full payload for debugging
-      console.log('[DEBUG] KY3P Payload Full:', JSON.stringify(dataPayload, null, 2));
-      
-      // Server expects fields directly in the request body for ky3p-batch-update.ts
-      // Line 77 in ky3p-batch-update.ts: "for (const [fieldKey, value] of Object.entries(formData)) {"
+      // Send the correctly formatted data to the server
       const response = await fetch(`/api/ky3p/batch-update/${taskId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Important: include auth cookies
-        body: JSON.stringify(dataPayload), // Use the direct data payload without wrapping in a 'responses' object
+        body: JSON.stringify(dataPayload), // Now correctly wrapped in a 'responses' object
       });
       
       if (!response.ok) {
