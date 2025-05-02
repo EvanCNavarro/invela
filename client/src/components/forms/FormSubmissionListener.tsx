@@ -208,14 +208,16 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         };
         
         // Handle the event based on status
-        if (payload.status === 'success') {
+        const status = payload.status as 'success' | 'error' | 'in_progress';
+        
+        if (status === 'success') {
           // We've disabled toasts here to prevent duplication with parent components
           // Parent components can handle their own toast/modal UI
           // Only show toast if explicitly enabled (disabled by default for most cases)
           if (showToastsRef.current) {
             toast({
               title: 'Form submitted successfully',
-              description: payload.message || 'Your form has been successfully submitted.',
+              description: (payload.message as string) || 'Your form has been successfully submitted.',
               variant: 'success',
               duration: 5000,
             });
@@ -224,12 +226,12 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           if (onSuccessRef.current) {
             onSuccessRef.current(submissionEvent);
           }
-        } else if (payload.status === 'error') {
+        } else if (status === 'error') {
           // Always show error toasts since errors need to be visible
           if (showToastsRef.current) {
             toast({
               title: 'Form submission failed',
-              description: payload.error || 'An error occurred while submitting your form.',
+              description: (payload.error as string) || 'An error occurred while submitting your form.',
               variant: 'destructive',
               duration: 5000,
             });
@@ -238,7 +240,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           if (onErrorRef.current) {
             onErrorRef.current(submissionEvent);
           }
-        } else if (payload.status === 'in_progress') {
+        } else if (status === 'in_progress') {
           // In-progress toasts are less important for duplicate UI
           if (showToastsRef.current) {
             toast({
