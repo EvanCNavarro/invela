@@ -5,7 +5,7 @@
  * It logs events with timestamps to help measure and optimize the submission process.
  */
 
-import getLogger from './logger';
+import { logger } from './client-logger';
 
 // Add global gtag type for TypeScript
 declare global {
@@ -13,11 +13,6 @@ declare global {
     gtag?: (...args: any[]) => void;
   }
 }
-
-// Create a dedicated logger instance for submission tracking
-const logger = getLogger('SubmissionTracker', {
-  levels: { debug: true, info: true, warn: true, error: true }
-});
 
 class SubmissionTracker {
   private taskId: string | number = '';

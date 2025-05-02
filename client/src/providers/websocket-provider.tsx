@@ -6,9 +6,9 @@
  */
 
 import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
-import getLogger from '@/utils/logger';
+import { logger } from '@/utils/client-logger';
 
-const logger = getLogger('WebSocket');
+// Create a namespace for WebSocket logs to maintain the same format
 
 export interface WebSocketContextType {
   socket: WebSocket | null;
