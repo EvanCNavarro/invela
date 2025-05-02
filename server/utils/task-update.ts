@@ -14,11 +14,8 @@ import { eq } from 'drizzle-orm';
 import { logger } from './logger';
 import { TaskStatus, normalizeTaskStatus } from './status-constants';
 import { calculateTaskProgress } from './unified-progress-calculation';
-import { WebSocketServer, WebSocket } from 'ws';
-
-// WebSocket client management
-let wss: WebSocketServer | null = null;
-const clients = new Map<string, WebSocket>();
+import { WebSocketServer } from 'ws';
+import { broadcast, broadcastTaskUpdate as unifiedBroadcastTaskUpdate } from './unified-websocket';
 
 /**
  * Register WebSocket server for task updates
@@ -26,85 +23,10 @@ const clients = new Map<string, WebSocket>();
  * @param websocketServer WebSocket server instance
  */
 export function registerWebSocketServer(websocketServer: WebSocketServer) {
-  wss = websocketServer;
+  // With our unified implementation, we don't need to set up connection handlers here anymore
+  // The unified-websocket module handles all WebSocket communication aspects
   
-  wss.on('connection', (ws: WebSocket) => {
-    const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    clients.set(clientId, ws);
-    
-    logger.info(`[TaskWebSocket] Client connected: ${clientId}`);
-    
-    // Send connected message
-    ws.send(JSON.stringify({
-      type: 'connected',
-      clientId,
-      userId: null,
-      companyId: null,
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Handle messages
-    ws.on('message', (message: string) => {
-      try {
-        const data = JSON.parse(message.toString());
-        logger.info(`[TaskWebSocket] Received message from client ${clientId}:`, data);
-        
-        // Handle authentication message
-        if (data.type === 'authenticate') {
-          ws.send(JSON.stringify({
-            type: 'authenticated',
-            userId: data.userId,
-            companyId: data.companyId,
-            clientId,
-            data: {
-              userId: data.userId,
-              companyId: data.companyId,
-              clientId,
-              status: 'authenticated',
-              timestamp: new Date().toISOString()
-            },
-            payload: {
-              userId: data.userId,
-              companyId: data.companyId,
-              clientId,
-              status: 'authenticated',
-              timestamp: new Date().toISOString()
-            },
-            timestamp: new Date().toISOString()
-          }));
-        }
-        
-        // Handle ping-pong for connection keep-alive
-        if (data.type === 'ping') {
-          ws.send(JSON.stringify({
-            type: 'pong',
-            timestamp: new Date().toISOString()
-          }));
-        }
-      } catch (error) {
-        logger.error('[TaskWebSocket] Error processing message:', {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
-      }
-    });
-    
-    // Handle disconnection
-    ws.on('close', () => {
-      clients.delete(clientId);
-      logger.info(`[TaskWebSocket] Client disconnected: ${clientId}`);
-    });
-    
-    // Handle errors
-    ws.on('error', (error) => {
-      logger.error(`[TaskWebSocket] Client error for ${clientId}:`, {
-        error: error.message,
-        stack: error.stack
-      });
-    });
-  });
-  
-  logger.info('[TaskWebSocket] WebSocket server registered');
+  logger.info('[TaskWebSocket] WebSocket server registered with unified implementation');
 }
 
 /**
@@ -114,44 +36,9 @@ export function registerWebSocketServer(websocketServer: WebSocketServer) {
  * @param payload Message payload
  */
 export function broadcastWebSocketMessage(messageType: string, payload: any) {
-  if (!wss) {
-    logger.warn(`[TaskWebSocket] No WebSocket server registered, skipping broadcast`, { messageType });
-    return;
-  }
-  
-  const activeClients = Array.from(clients.values()).filter(
-    (client) => client.readyState === WebSocket.OPEN
-  );
-  
-  if (activeClients.length === 0) {
-    logger.info(`No active WebSocket clients, skipping broadcast`, { messageType });
-    return;
-  }
-  
-  const message = JSON.stringify({
-    type: messageType,
-    payload,
-    data: payload, // Add data field for backward compatibility
-    timestamp: new Date().toISOString()
-  });
-  
-  let successCount = 0;
-  let errorCount = 0;
-  
-  // Send message to all connected clients
-  activeClients.forEach((client) => {
-    try {
-      client.send(message);
-      successCount++;
-    } catch (error) {
-      errorCount++;
-      logger.error('[TaskWebSocket] Error sending message to client:', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-  
-  logger.info(`[TaskWebSocket] Broadcast ${messageType} to ${successCount} clients (${errorCount} failed)`);
+  // Use unified WebSocket broadcast service
+  logger.debug(`[TaskWebSocket] Broadcasting ${messageType} using unified WebSocket service`);
+  broadcast(messageType, payload);
 }
 
 /**
@@ -244,16 +131,13 @@ export async function updateTaskProgress(
       // Step 4: Broadcast the update if requested
       if (broadcast) {
         logger.debug(`Broadcasting task update with object format`, { taskId, status, progress });
-        broadcastWebSocketMessage('task_update', { 
-          taskId, 
-          status, 
-          progress,
-          metadata: {
-            lastUpdated: new Date().toISOString(),
-            previousProgress: task.progress,
-            calculatedProgress: progress,
-            taskType: task.task_type
-          }
+        
+        // Use the unified broadcast function for more consistent and reliable updates
+        unifiedBroadcastTaskUpdate(taskId, status, progress, {
+          lastUpdated: new Date().toISOString(),
+          previousProgress: task.progress,
+          calculatedProgress: progress,
+          taskType: task.task_type
         });
       }
     } else {
