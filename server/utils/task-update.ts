@@ -37,7 +37,19 @@ export function registerWebSocketServer(websocketServer: WebSocketServer) {
 export function broadcastWebSocketMessage(messageType: string, payload: any) {
   // Use unified WebSocket broadcast service
   logger.debug(`[TaskWebSocket] Broadcasting ${messageType} using unified WebSocket service`);
-  broadcast(messageType, payload);
+  
+  try {
+    // Add a short delay to allow the WebSocket server to initialize
+    // This helps with race conditions during startup
+    setTimeout(() => {
+      broadcast(messageType, payload);
+    }, 500);
+  } catch (error) {
+    logger.error(`[TaskWebSocket] Error broadcasting ${messageType}:`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  }
 }
 
 /**
@@ -132,12 +144,15 @@ export async function updateTaskProgress(
         logger.debug(`Broadcasting task update with object format`, { taskId, status, progress });
         
         // Use the unified broadcast function for more consistent and reliable updates
-        unifiedBroadcastTaskUpdate(taskId, status, progress, {
-          lastUpdated: new Date().toISOString(),
-          previousProgress: task.progress,
-          calculatedProgress: progress,
-          taskType: task.task_type
-        });
+        // Add a small delay to ensure WebSocket server is initialized
+        setTimeout(() => {
+          unifiedBroadcastTaskUpdate(taskId, status, progress, {
+            lastUpdated: new Date().toISOString(),
+            previousProgress: task.progress,
+            calculatedProgress: progress,
+            taskType: task.task_type
+          });
+        }, 250);
       }
     } else {
       logger.info(`[TaskUpdate] No changes for task ${taskId}`, {

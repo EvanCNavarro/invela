@@ -122,6 +122,15 @@ import { registerWebSocketServer } from './utils/task-update';
 registerWebSocketServer(wssInstance);
 log('[ServerStartup] WebSocket server registered with task-update utility', 'info');
 
+// Log WebSocket server initialization details for debugging
+setTimeout(() => {
+  if (wssInstance && wssInstance.clients) {
+    log(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`, 'info');
+  } else {
+    log('[ServerStartup] Warning: WebSocket server not properly initialized', 'warn');
+  }
+}, 1000);
+
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
   log("Setting up Vite development server", "info");
