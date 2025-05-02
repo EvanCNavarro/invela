@@ -387,29 +387,35 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
           // Continue with submission even if tab unlocking fails
         }
         
-        // Broadcast task update via WebSocket
-        const updatePayload = {
-          taskId,
-          status: TaskStatus.SUBMITTED,
-          progress: 100,
-          metadata: {
-            lastUpdated: new Date().toISOString(),
-            submissionDate: new Date().toISOString(),
-            fileId, // Include fileId for unified handling
-            unlocked: true // Flag for UI to show unlocked status
-          }
+        // Broadcast task update via WebSocket using standardized helper function
+        // Import the broadcastProgressUpdate function from utils/progress
+        // This ensures consistent message format across all form types
+        const { broadcastProgressUpdate } = await import('../utils/progress');
+        
+        // Create standardized metadata for broadcast
+        const broadcastMetadata = {
+          lastUpdated: new Date().toISOString(),
+          submissionDate: new Date().toISOString(),
+          fileId, // Include fileId for unified handling
+          unlocked: true, // Flag for UI to show unlocked status
+          formType: 'open_banking',
+          broadcastSource: 'open-banking-submit'
         };
         
-        if (wss) {
-          wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'task_updated',
-                payload: updatePayload
-              }));
-            }
-          });
-        }
+        // Log that we're using standardized WebSocketService
+        logger.info('[OpenBankingRoutes] Broadcasting task submission via standardized broadcastProgressUpdate', {
+          taskId,
+          status: TaskStatus.SUBMITTED,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Use standardized broadcast function
+        broadcastProgressUpdate(
+          taskId,
+          100, // 100% progress for submitted task
+          TaskStatus.SUBMITTED,
+          broadcastMetadata
+        );
         
         // Return comprehensive response with all necessary information for client handling
         return res.json({
