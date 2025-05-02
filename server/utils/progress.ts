@@ -203,18 +203,37 @@ export function determineStatusFromProgress(
  * @param options Configuration options including transaction context
  * @returns Promise<number> Progress percentage (0-100)
  */
+/**
+ * EXTENDED DIAGNOSTIC VERSION: Universal Task Progress Calculator with detailed logging
+ * 
+ * This enhanced version includes additional diagnostic information to track down
+ * inconsistencies in progress calculation.
+ */
 export async function calculateUniversalTaskProgress(
   taskId: number,
   taskType: string,
-  options: { tx?: any; debug?: boolean } = {}
+  options: { tx?: any; debug?: boolean; diagnosticId?: string } = {}
 ): Promise<number> {
-  const logPrefix = '[Universal Progress]';
+  // Generate a unique diagnostic ID for tracking this specific calculation through logs
+  const diagnosticId = options.diagnosticId || `prog-calc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const logPrefix = `[Universal Progress ${diagnosticId}]`;
   let totalFields = 0;
   let completedFields = 0;
   const debug = options.debug || false;
   
   // Use the passed transaction context or the global db instance
   const dbContext = options.tx || db;
+  
+  // Starting a new progress calculation - log so we can track it
+  console.log(`${logPrefix} Starting progress calculation for task ${taskId} (${taskType}):`, {
+    timestamp: new Date().toISOString(),
+    calculationId: diagnosticId,
+    taskId,
+    taskType,
+    debug,
+    usingTransaction: !!options.tx,
+    source: new Error().stack?.split('\n')[2]?.trim() || 'unknown'
+  });
   
   try {
     // Use the appropriate schema and table based on task type
@@ -311,9 +330,17 @@ export async function calculateUniversalTaskProgress(
       ? Math.min(100, Math.round((completedFields / totalFields) * 100))
       : 0;
     
-    if (debug) {
-      console.log(`${logPrefix} Calculated progress for task ${taskId} (${taskType}): ${completedFields}/${totalFields} = ${progressPercentage}%`);
-    }
+    // Always log progress calculation results at this diagnostic level
+    console.log(`${logPrefix} Calculation result: ${completedFields}/${totalFields} = ${progressPercentage}%`, {
+      taskId,
+      taskType,
+      totalFields,
+      completedFields,
+      progressPercentage,
+      calculationMethod: 'FIXED-ENUM-BASED', // Tracking that we're using the new fixed method
+      timestamp: new Date().toISOString(),
+      diagnosticId
+    });
     
     return progressPercentage;
   } catch (error) {
@@ -343,6 +370,12 @@ export async function calculateUniversalTaskProgress(
  * @param options Configuration options
  * @returns Promise<any> Returns the updated task object or void
  */
+/**
+ * ENHANCED DIAGNOSTIC VERSION: Update Task Progress with detailed tracking
+ * 
+ * This enhanced version includes additional diagnostic information to track down
+ * inconsistencies in progress calculation and updates.
+ */
 export async function updateTaskProgress(
   taskId: number,
   taskType: string,
@@ -351,6 +384,8 @@ export async function updateTaskProgress(
     skipBroadcast?: boolean; 
     debug?: boolean;
     metadata?: Record<string, any>;
+    diagnosticId?: string; // Tracking ID for this specific update
+    source?: string; // Where this update was triggered from
   } = {}
 ): Promise<any> {
   const { forceUpdate = false, skipBroadcast = false, debug = false, metadata = {} } = options;
@@ -510,11 +545,13 @@ export async function updateTaskProgress(
       if (!skipBroadcast && result) {
         // Broadcasting is done outside of transaction as it doesn't require rollback
         setTimeout(() => {
+          // Pass diagnostic ID for end-to-end tracking
           broadcastProgressUpdate(
             taskId,
             newProgress,
             result.status as TaskStatus,
-            result.metadata || {}
+            result.metadata || {},
+            options.diagnosticId || `update-${Date.now()}-${Math.floor(Math.random() * 1000)}`
           );
         }, 0);
       }
@@ -570,13 +607,40 @@ export async function updateTaskProgress(
   return executeProgressUpdate();
 }
 
+/**
+ * Enhanced WebSocket broadcast for task progress updates with detailed monitoring
+ *
+ * This function broadcasts progress updates to all connected WebSocket clients
+ * with enhanced monitoring to diagnose inconsistencies.
+ * 
+ * @param taskId Task ID to broadcast progress update for
+ * @param progress Progress value (0-100)
+ * @param status Optional task status
+ * @param metadata Optional metadata to include
+ * @param diagnosticId Optional tracking ID
+ * @param options Additional configuration options
+ */
 export function broadcastProgressUpdate(
   taskId: number,
   progress: number,
   status?: TaskStatus,
   metadata?: Record<string, any>,
+  diagnosticId?: string,
   options: { forceUpdate?: boolean; ignoreSkipCheck?: boolean } = {}
 ) {
+  // Generate a unique diagnostic ID for tracking this broadcast through logs
+  const broadcastId = diagnosticId || `broadcast-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  // Log the broadcast attempt with detailed information
+  console.log(`[Progress Broadcast ${broadcastId}] Broadcasting progress update for task ${taskId}:`, {
+    taskId,
+    progress,
+    status,
+    timestamp: new Date().toISOString(),
+    // Track where the broadcast was triggered from
+    source: new Error().stack?.split('\n')[2]?.trim() || 'unknown',
+    hasMetadata: !!metadata
+  });
   // Check if reconciliation is disabled for this task (e.g. during clearing operations)
   // This helps to prevent WebSocket spam during bulk operations like clearing all fields
   if (!options.ignoreSkipCheck) {
@@ -629,11 +693,36 @@ export function broadcastProgressUpdate(
     timestamp: new Date().toISOString()
   });
   
+  try {
+    // Import and use the WebSocket monitor
+    const { trackProgressBroadcast } = require('./websocket-monitor');
+    
+    // Track this progress update for monitoring
+    trackProgressBroadcast(
+      taskId,
+      validatedProgress,
+      String(finalStatus || status || TaskStatus.IN_PROGRESS),
+      metadata,
+      new Error().stack?.split('\n')[2]?.trim() || 'unknown',
+      broadcastId
+    );
+  } catch (monitorError) {
+    // If monitoring fails, log but continue with broadcast
+    console.error(`[Progress Utils] Error tracking progress broadcast:`, monitorError);
+  }
+  
   // Broadcast the update to all connected clients with the appropriate status
-  WebSocketService.broadcast('task_update', {
-    id: taskId,
-    status: finalStatus || status || TaskStatus.IN_PROGRESS,
-    progress: validatedProgress,
-    metadata: metadata || {}
-  });
+  try {
+    WebSocketService.broadcast('task_update', {
+      id: taskId,
+      status: finalStatus || status || TaskStatus.IN_PROGRESS,
+      progress: validatedProgress,
+      metadata: metadata || {},
+      diagnosticId: broadcastId // Include the diagnostic ID for end-to-end tracking
+    });
+    
+    console.log(`[Progress Broadcast ${broadcastId}] Successfully broadcast progress update for task ${taskId}`);
+  } catch (broadcastError) {
+    console.error(`[Progress Broadcast ${broadcastId}] Error broadcasting progress update:`, broadcastError);
+  }
 }
