@@ -12,6 +12,8 @@ const router = Router();
 
 // Create and test a KY3P task
 router.get('/test-ky3p-progress', async (req, res) => {
+  // Get optional 'responses' query parameter to control number of responses to add
+  const responseCount = parseInt(req.query.responses as string) || 3;
   try {
     // Step 1: Create a test KY3P task if it doesn't exist
     let taskId;
@@ -63,42 +65,55 @@ router.get('/test-ky3p-progress', async (req, res) => {
     
     const existingResponses = existingResponsesResult[0]?.count || 0;
     
-    // Step 4: Add a test response if none exist
-    if (existingResponses === 0) {
-      // Get some KY3P field IDs
-      const fields = await db
-        .select()
-        .from(ky3pFields)
-        .limit(3);
-      
-      if (fields.length === 0) {
-        return res.status(500).json({ error: 'No KY3P fields found' });
-      }
-      
-      // Add a completed response for each field
-      for (const field of fields) {
-        await db
-          .insert(ky3pResponses)
-          .values({
-            task_id: taskId,
-            field_id: field.id,
+    // Step 4: Clear existing responses and add new test responses
+    // First, delete any existing responses
+    await db
+      .delete(ky3pResponses)
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    logger.info(`Cleared existing responses for task ${taskId}`);
+    
+    // Get KY3P field IDs
+    const fields = await db
+      .select()
+      .from(ky3pFields)
+      .limit(responseCount);
+    
+    if (fields.length === 0) {
+      return res.status(500).json({ error: 'No KY3P fields found' });
+    }
+    
+    // Add a completed response for each field
+    for (const field of fields) {
+      await db
+        .insert(ky3pResponses)
+        .values({
+          task_id: taskId,
+          field_id: field.id,
+          response_value: 'Test response',
+          status: 'COMPLETE',
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .onConflictDoUpdate({
+          target: [ky3pResponses.task_id, ky3pResponses.field_id],
+          set: {
             value: 'Test response',
             status: 'COMPLETE',
-            created_at: new Date(),
             updated_at: new Date()
-          })
-          .onConflictDoUpdate({
-            target: [ky3pResponses.task_id, ky3pResponses.field_id],
-            set: {
-              value: 'Test response',
-              status: 'COMPLETE',
-              updated_at: new Date()
-            }
-          });
-      }
-      
-      logger.info(`Added ${fields.length} test responses to task ${taskId}`);
+          }
+        });
     }
+    
+    logger.info(`Added ${fields.length} test responses to task ${taskId}`);
+    
+    // Refresh response count after updates
+    const updatedResponsesResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(ky3pResponses)
+      .where(eq(ky3pResponses.task_id, taskId));
+    
+    const updatedResponses = updatedResponsesResult[0]?.count || 0;
     
     // Step 5: Force recalculate task progress
     const updatedTask = await updateTaskProgress(taskId, {
@@ -107,14 +122,28 @@ router.get('/test-ky3p-progress', async (req, res) => {
       broadcast: true
     });
     
-    // Return details
+    // Return comprehensive details for debugging
     return res.json({
       taskId,
       totalFields,
-      existingResponses,
+      responseCount: updatedResponses,
       progress: updatedTask.progress,
       status: updatedTask.status,
-      message: `KY3P task progress: ${updatedTask.progress}%, status: ${updatedTask.status}`
+      message: `KY3P task progress: ${updatedTask.progress}%, status: ${updatedTask.status}`,
+      details: {
+        percentPerField: totalFields > 0 ? (100 / totalFields).toFixed(4) : 'N/A',
+        rawProgress: updatedResponses > 0 ? ((updatedResponses / totalFields) * 100).toFixed(4) : 0,
+        minimumProgressApplied: updatedResponses > 0 && ((updatedResponses / totalFields) * 100) < 1,
+        requestedResponses: responseCount,
+        actualResponses: updatedResponses,
+        calculations: {
+          rawFormula: `${updatedResponses} / ${totalFields} * 100 = ${((updatedResponses / totalFields) * 100).toFixed(4)}%`,
+          finalResult: `${updatedTask.progress}%`,
+          reason: updatedResponses > 0 && ((updatedResponses / totalFields) * 100) < 1 ? 
+            'Using minimum 1% progress because there are completed fields but raw percentage < 1%' : 
+            'Using standard rounded percentage calculation'
+        }
+      }
     });
     
   } catch (error) {
