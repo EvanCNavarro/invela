@@ -72,6 +72,8 @@ export function initializeWebSocketServer(server: Server): WebSocketServer {
   });
   
   logger.info('Unified WebSocket server initialized successfully');
+  // Set initialization flag
+  initialized = true;
   return wss;
 }
 
