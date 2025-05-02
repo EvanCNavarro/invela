@@ -131,7 +131,6 @@ export function registerKY3PBatchUpdateRoutes() {
           await db
             .insert(ky3pResponses)
             .values({
-              id: randomUUID(),
               task_id: taskId,
               field_id: fieldId,
               response_value: String(value),
