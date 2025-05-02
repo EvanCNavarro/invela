@@ -12,7 +12,7 @@ import { db } from '@db';
 import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { calculateTaskProgress } from './unified-progress-calculation';
-import { TaskStatus } from './status-constants';
+import { TaskStatus, normalizeTaskStatus } from './status-constants';
 import { logger } from './logger';
 import { broadcastProgressUpdate } from './progress';
 
@@ -119,7 +119,7 @@ export async function calculateAndUpdateTaskProgress(
       .set({
         // Cast to ensure correct type handling
         progress: calculatedProgress,
-        status: String(calculatedStatus),
+        status: normalizeTaskStatus(calculatedStatus),
         updated_at: updateTime,
         metadata: {
           ...currentTask.metadata,
@@ -162,7 +162,7 @@ export async function calculateAndUpdateTaskProgress(
       broadcastProgressUpdate(
         taskId,
         calculatedProgress,
-        String(calculatedStatus),
+        normalizeTaskStatus(calculatedStatus),
         {
           transactionId,
           source,
