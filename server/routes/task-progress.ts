@@ -6,7 +6,7 @@
  */
 
 import express from 'express';
-import { calculateAndUpdateTaskProgress } from '../utils/unified-progress';
+import { calculateAndUpdateTaskProgress } from '../utils/unified-progress-fixed';
 
 const router = express.Router();
 
