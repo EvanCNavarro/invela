@@ -136,32 +136,21 @@ export function registerKY3PBatchUpdateRoutes() {
         }
       }
       
-      // Update the task progress
+      // Update the task progress using the centralized function for consistency
       try {
-        // Count total responses for this task
-        const [responseCount] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(ky3pResponses)
-          .where(eq(ky3pResponses.taskId, taskId));
+        // Import the updateTaskProgress function
+        const { updateTaskProgress } = await import('../utils/progress');
         
-        // Count total fields
-        const [fieldCount] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(ky3pFields);
+        // Use the centralized updateTaskProgress function instead of manual calculation
+        // This ensures consistent progress calculation across all task types
+        await updateTaskProgress(taskId, 'ky3p', { 
+          debug: true,
+          metadata: {
+            lastUpdateSource: 'ky3p-batch-update'
+          }
+        });
         
-        // Calculate progress percentage
-        const totalFields = fieldCount?.count || 1;
-        const completedFields = responseCount?.count || 0;
-        // Use Math.round to match the universal progress calculator in utils/progress.ts
-        const progress = Math.min(100, Math.round((completedFields / totalFields) * 100));
-        
-        // Update task progress
-        await db
-          .update(tasks)
-          .set({ progress })
-          .where(eq(tasks.id, taskId));
-        
-        console.log(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress to ${progress}%`);
+        console.log(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress using centralized function`);
       } catch (error) {
         console.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
         // Continue processing, don't fail the whole request
@@ -201,11 +190,15 @@ export function registerKY3PBatchUpdateRoutes() {
         .delete(ky3pResponses)
         .where(eq(ky3pResponses.taskId, taskId));
       
-      // Update task progress to 0
-      await db
-        .update(tasks)
-        .set({ progress: 0 })
-        .where(eq(tasks.id, taskId));
+      // Update task progress using centralized function
+      const { updateTaskProgress } = await import('../utils/progress');
+      await updateTaskProgress(taskId, 'ky3p', { 
+        forceUpdate: true, // Force update even if no responses changed
+        metadata: {
+          fieldCleared: true,
+          lastUpdateSource: 'ky3p-clear-fields'
+        }
+      });
       
       console.log(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}`);
       
@@ -246,34 +239,31 @@ export function registerKY3PBatchUpdateRoutes() {
         return res.status(404).json({ error: `Task ${taskId} not found` });
       }
       
-      // Count responses for this task
-      const [responseCount] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(ky3pResponses)
-        .where(eq(ky3pResponses.taskId, taskId));
+      // Use the centralized updateTaskProgress function for consistent progress calculation
+      const { updateTaskProgress } = await import('../utils/progress');
       
-      // Count total fields
-      const [fieldCount] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(ky3pFields);
+      // This will automatically calculate the progress based on completed fields
+      // and update the task status accordingly
+      await updateTaskProgress(taskId, 'ky3p', { 
+        debug: true,
+        metadata: {
+          lastUpdateSource: 'ky3p-save-progress',
+          saveRequestTime: new Date().toISOString()
+        }
+      });
       
-      // Calculate progress percentage using standardized Math.round
-      const totalFields = fieldCount?.count || 1;
-      const completedFields = responseCount?.count || 0;
-      const progress = Math.min(100, Math.round((completedFields / totalFields) * 100));
-      
-      // Update task progress
-      await db
-        .update(tasks)
-        .set({ progress })
+      // Get the updated task to return the current progress
+      const [updatedTask] = await db
+        .select({ progress: tasks.progress })
+        .from(tasks)
         .where(eq(tasks.id, taskId));
       
-      console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${progress}%`);
+      console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${updatedTask.progress}%`);
       
-      // Return success response
+      // Return success response with the updated progress
       return res.status(200).json({
         success: true,
-        progress,
+        progress: updatedTask.progress,
         message: `Successfully saved progress for task ${taskId}`
       });
     } catch (error) {
