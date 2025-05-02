@@ -4,6 +4,75 @@ import * as WebSocketService from '../services/websocket';
 import { hasAllRequiredFields } from './kyb-progress';
 
 /**
+ * Standardized form field update broadcast
+ * 
+ * This function broadcasts a form field update to all connected WebSocket clients
+ * with a consistent payload structure.
+ * 
+ * @param taskId Task ID
+ * @param fieldKey Field key (string identifier)
+ * @param value Field value
+ * @param fieldId Optional field ID (numeric)
+ */
+export function broadcastFieldUpdate(
+  taskId: number | string,
+  fieldKey: string,
+  value: string,
+  fieldId?: number
+) {
+  // Convert taskId to number to ensure consistency
+  const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+  
+  // Broadcast the field update with standard payload structure
+  WebSocketService.broadcast('field_update', {
+    taskId: numericTaskId,
+    fieldKey,
+    value,
+    fieldId: fieldId || null,
+    timestamp: new Date().toISOString()
+  });
+  
+  console.log(`[Progress Utils] Broadcasting field update for task ${numericTaskId}, field ${fieldKey}:`, {
+    value: value ? (value.length > 50 ? `${value.substring(0, 47)}...` : value) : '(empty)',
+    fieldId: fieldId || 'N/A',
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * Standardized submission status broadcast
+ * 
+ * This function broadcasts a form submission status update to all WebSocket clients
+ * for consistent submission handling feedback.
+ * 
+ * @param taskId Task ID
+ * @param status Submission status (success, error, etc.)
+ * @param details Optional details about the submission
+ */
+export function broadcastSubmissionStatus(
+  taskId: number | string, 
+  status: 'success' | 'error' | 'in_progress',
+  details: Record<string, any> = {}
+) {
+  // Convert taskId to number to ensure consistency
+  const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+  
+  // Broadcast the submission status
+  WebSocketService.broadcast('submission_status', {
+    taskId: numericTaskId,
+    status,
+    ...details,
+    timestamp: new Date().toISOString()
+  });
+  
+  console.log(`[Progress Utils] Broadcasting submission status for task ${numericTaskId}:`, {
+    status,
+    details: Object.keys(details).length > 0 ? details : '(none)',
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
  * Determine the appropriate task status based on progress value
  * 
  * @param progress Current progress value (0-100)
