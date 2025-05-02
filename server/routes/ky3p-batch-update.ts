@@ -148,7 +148,7 @@ export function registerKY3PBatchUpdateRoutes() {
         }
       }
       
-      // Update the task progress
+      // Update task progress with improved status tracking
       try {
         // Count total responses for this task
         const [responseCount] = await db
@@ -180,13 +180,46 @@ export function registerKY3PBatchUpdateRoutes() {
         
         console.log(`[KY3P-BATCH-UPDATE] Progress calculation: ${completedFields}/${totalFields} = ${progress}% (total responses: ${responseCount?.count || 0})`);
         
-        // Update task progress
-        await db
-          .update(tasks)
-          .set({ progress })
+        // Get current task information to update status correctly
+        const [task] = await db
+          .select()
+          .from(tasks)
           .where(eq(tasks.id, taskId));
         
-        console.log(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress to ${progress}%`);
+        if (!task) {
+          throw new Error(`Task ${taskId} not found`);
+        }
+        
+        // Determine the appropriate status based on progress
+        // Import the determineStatusFromProgress function from utils/progress
+        const { determineStatusFromProgress } = await import('../utils/progress');
+        
+        // Always preserve SUBMITTED status if the task was previously submitted
+        const newStatus = determineStatusFromProgress(
+          progress, 
+          task.status as any, // Cast to match the expected type
+          [], // No form responses needed for simple progress update
+          task.metadata || {} // Pass existing metadata
+        );
+        
+        // Update task progress and status
+        await db
+          .update(tasks)
+          .set({ 
+            progress,
+            status: newStatus,
+            // Update the new status_changed_at if status is changing
+            ...(task.status !== newStatus ? { status_changed_at: new Date() } : {})
+          })
+          .where(eq(tasks.id, taskId));
+        
+        // Import broadcastProgressUpdate function for WebSocket notification
+        const { broadcastProgressUpdate } = await import('../utils/progress');
+        
+        // Broadcast the update to connected clients
+        broadcastProgressUpdate(taskId, progress, newStatus as any, task.metadata || {});
+        
+        console.log(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress to ${progress}%, status: ${newStatus}`);
       } catch (error) {
         console.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
         // Continue processing, don't fail the whole request
@@ -226,13 +259,44 @@ export function registerKY3PBatchUpdateRoutes() {
         .delete(ky3pResponses)
         .where(eq(ky3pResponses.task_id, taskId));
       
-      // Update task progress to 0
-      await db
-        .update(tasks)
-        .set({ progress: 0 })
+      // Get current task before updating
+      const [task] = await db
+        .select()
+        .from(tasks)
         .where(eq(tasks.id, taskId));
       
-      console.log(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}`);
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+      
+      // Import status determination and broadcast utilities
+      const { determineStatusFromProgress, broadcastProgressUpdate } = await import('../utils/progress');
+      
+      // Set progress to 0 which will typically map to NOT_STARTED status
+      // unless the task was previously submitted
+      const newProgress = 0;
+      const newStatus = determineStatusFromProgress(
+        newProgress,
+        task.status as any,
+        [], // No form responses for cleared form
+        task.metadata || {}
+      );
+      
+      // Update task progress and status
+      await db
+        .update(tasks)
+        .set({ 
+          progress: newProgress,
+          status: newStatus,
+          // Update the status change timestamp if status is changing
+          ...(task.status !== newStatus ? { status_changed_at: new Date() } : {})
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // Broadcast the update
+      broadcastProgressUpdate(taskId, newProgress, newStatus as any, task.metadata || {});
+      
+      console.log(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}, new status: ${newStatus}`);
       
       // Return success response
       return res.status(200).json({
@@ -298,13 +362,32 @@ export function registerKY3PBatchUpdateRoutes() {
       const completedFields = responseCount?.count || 0;
       const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
       
-      // Update task progress
+      // Determine the appropriate status based on progress using our utility function
+      const { determineStatusFromProgress, broadcastProgressUpdate } = await import('../utils/progress');
+      
+      // Always preserve SUBMITTED status if the task was previously submitted
+      const newStatus = determineStatusFromProgress(
+        progress, 
+        task.status as any, // Cast to match the expected type
+        [], // No form responses needed for simple progress update
+        task.metadata || {} // Pass existing metadata
+      );
+      
+      // Update task progress and status
       await db
         .update(tasks)
-        .set({ progress })
+        .set({ 
+          progress,
+          status: newStatus,
+          // Update the new status_changed_at if status is changing
+          ...(task.status !== newStatus ? { status_changed_at: new Date() } : {})
+        })
         .where(eq(tasks.id, taskId));
       
-      console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${progress}%`);
+      // Broadcast the update to connected clients
+      broadcastProgressUpdate(taskId, progress, newStatus as any, task.metadata || {});
+      
+      console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${progress}%, status: ${newStatus}`);
       
       // Return success response
       return res.status(200).json({
