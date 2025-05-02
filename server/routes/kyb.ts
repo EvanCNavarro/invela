@@ -718,39 +718,92 @@ router.post('/api/kyb/bulk-update/:taskId', requireAuth, async (req, res) => {
     // Execute all updates in parallel
     await Promise.all(updatePromises);
     
-    // Update task progress based on the number of filled fields
-    const [responsesCount] = await db.select({ count: sql`count(*)` })
+    // STANDARDIZED PROGRESS CALCULATION
+    // Get all responses for this task for detailed logging
+    const [totalResponses] = await db.select({ count: sql<number>`count(*)` })
       .from(kybResponses)
       .where(eq(kybResponses.task_id, parseInt(taskId)));
-      
-    const [fieldsCount] = await db.select({ count: sql`count(*)` })
+    
+    // Get COMPLETE status responses for this task
+    const [completedResponses] = await db.select({ count: sql<number>`count(*)` })
+      .from(kybResponses)
+      .where(and(
+        eq(kybResponses.task_id, parseInt(taskId)),
+        eq(kybResponses.status, 'COMPLETE')
+      ));
+    
+    // Get total field count
+    const [fieldsCount] = await db.select({ count: sql<number>`count(*)` })
       .from(kybFields);
-      
-    const progress = Math.min(
-      Math.round((responsesCount.count / fieldsCount.count) * 100),
+    
+    // Calculate progress percentage based on COMPLETE fields (not just any response)
+    const completedCount = completedResponses?.count || 0;
+    const totalFields = fieldsCount?.count || 1;
+    const progressPercentage = Math.min(
+      Math.floor((completedCount / totalFields) * 100),
       99 // Cap at 99% - final submission sets to 100%
     );
     
-    // Update task progress
+    // Import the standardized status determination from utils/progress
+    const { determineStatusFromProgress } = await import('../utils/progress');
+    
+    // Get current task information to update status correctly
+    const [existingTask] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+    
+    if (!existingTask) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+    
+    // Determine the appropriate status based on progress
+    // Always preserve SUBMITTED status if the task was previously submitted
+    const newStatus = determineStatusFromProgress(
+      progressPercentage, 
+      existingTask.status as any, // Cast to match the expected type
+      [], // No form responses needed for simple progress update
+      existingTask.metadata || {} // Pass existing metadata
+    );
+    
+    // Log progress calculation for better debugging
+    logger.info('[KYB-ROUTES] Progress calculation', {
+      taskId,
+      completedCount,
+      totalFields,
+      calculatedProgress: progressPercentage,
+      calculatedStatus: newStatus,
+      totalResponses: totalResponses?.count || 0
+    });
+    
+    // Check if status has changed
+    const statusChanged = existingTask.status !== newStatus;
+    
+    // Update task progress with new status_changed_at field if status is changing
     await db.update(tasks)
       .set({
-        progress,
-        status: progress > 0 ? TaskStatus.IN_PROGRESS : TaskStatus.NOT_STARTED,
-        updated_at: new Date()
+        progress: progressPercentage,
+        status: newStatus,
+        updated_at: new Date(),
+        // Add status_changed_at timestamp if status changed
+        ...(statusChanged ? { status_changed_at: new Date() } : {})
       })
       .where(eq(tasks.id, parseInt(taskId)));
-      
-    // Broadcast task update via WebSocket
-    broadcastTaskUpdate({
-      id: parseInt(taskId),
-      progress,
-      status: progress > 0 ? TaskStatus.IN_PROGRESS : TaskStatus.NOT_STARTED
-    });
+    
+    // Broadcast the progress update via WebSocket
+    try {
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      broadcastProgressUpdate(parseInt(taskId), progressPercentage, newStatus as any, task.metadata || {});
+    } catch (broadcastError) {
+      logger.error('[KYB-ROUTES] Error broadcasting progress update:', broadcastError);
+      // Continue even if broadcast fails
+    }
     
     return res.status(200).json({
       success: true,
       message: `Updated ${Object.keys(responses).length} fields`,
-      progress
+      progress: progressPercentage,
+      status: newStatus
     });
     
   } catch (error) {
