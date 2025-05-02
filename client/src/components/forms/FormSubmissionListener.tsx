@@ -145,7 +145,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         // Enhanced payload extraction with improved compatibility
         // Handles multiple WebSocket message formats to ensure maximum compatibility
         // These variations can happen due to different WebSocket implementations or API changes
-        let payload = {};
+        let payload: Record<string, any> = {};
         
         // Try to extract payload from various possible formats
         if (data.payload !== undefined) {
