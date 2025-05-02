@@ -136,7 +136,7 @@ export function registerKY3PFieldUpdateRoutes() {
           .set({ 
             response_value: value, 
             updated_at: now,
-            status: KYBFieldStatus.COMPLETE // Use the enum value directly to ensure consistency
+            status: 'COMPLETE' // Use the enum key (not value) as required by the schema type
           })
           .where(
             and(
@@ -151,7 +151,7 @@ export function registerKY3PFieldUpdateRoutes() {
             task_id: taskId,
             field_id: fieldId,
             response_value: value,
-            status: KYBFieldStatus.COMPLETE, // Use the enum value directly to ensure consistency
+            status: 'COMPLETE', // Use the enum key (not value) as required by the schema type
             created_at: now,
             updated_at: now
           });
@@ -187,7 +187,7 @@ export function registerKY3PFieldUpdateRoutes() {
         });
       } catch (updateError) {
         // If progress update fails, log but still return success for the field update
-        logger.error(`[KY3P API] Error updating task progress (but field was updated):`, updateError);
+        logger.error(`[KY3P API] Error updating task progress (but field was updated):`, updateError instanceof Error ? { message: updateError.message, stack: updateError.stack } : updateError);
         
         return res.status(200).json({ 
           success: true, 
@@ -198,7 +198,7 @@ export function registerKY3PFieldUpdateRoutes() {
         });
       }
     } catch (error) {
-      logger.error('[KY3P API] Error processing field update:', error);
+      logger.error('[KY3P API] Error processing field update:', error instanceof Error ? { message: error.message, stack: error.stack } : error);
       console.error('[KY3P API] CRITICAL ERROR in field update:', {
         error: error instanceof Error ? error.message : 'Unknown error type',
         stack: error instanceof Error ? error.stack : null,
