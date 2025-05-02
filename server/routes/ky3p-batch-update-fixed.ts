@@ -256,10 +256,10 @@ export function registerKY3PBatchUpdateRoutes() {
         .select({ count: sql<number>`count(*)` })
         .from(ky3pFields);
       
-      // Calculate progress percentage
+      // Calculate progress percentage using standardized Math.round
       const totalFields = fieldCount?.count || 1;
       const completedFields = responseCount?.count || 0;
-      const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      const progress = Math.min(100, Math.round((completedFields / totalFields) * 100));
       
       // Update task progress
       await db
