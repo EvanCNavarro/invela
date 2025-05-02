@@ -350,14 +350,25 @@ export async function updateTaskProgress(
       const storedProgress = Number(task.progress);
       const newProgress = Number(calculatedProgress);
       
-      if (debug) {
-        console.log(`${logPrefix} Comparing stored progress (${storedProgress}, type: ${typeof storedProgress}) with new progress (${newProgress}, type: ${typeof newProgress})`);
+      // Add extensive debugging
+      console.log(`${logPrefix} PROGRESS DEBUG - Task ${taskId} (${taskType}):\n` +
+        `  - Stored progress: ${task.progress} (${typeof task.progress})\n` +
+        `  - New progress: ${calculatedProgress} (${typeof calculatedProgress})\n` +
+        `  - As numbers: ${storedProgress} vs ${newProgress}\n` +
+        `  - Force update: ${forceUpdate}\n` +
+        `  - Would ${storedProgress === newProgress ? 'NOT' : ''} update progress`);
+      
+      // FIXED: Always force an update if the calculated progress is greater than 0 and stored is 0
+      // This handles the specific edge case where small progress values weren't getting saved
+      const isZeroToNonZero = (storedProgress === 0 && newProgress > 0);
+      
+      if (isZeroToNonZero) {
+        console.log(`${logPrefix} Forcing update due to zero-to-non-zero progress change: 0% -> ${newProgress}%`);
       }
       
-      // FIXED: The comparison logic now handles string vs number types correctly
-      // and recognizes progress changes from 0 to small values like 2%
       if (!forceUpdate && 
-          Math.abs(storedProgress - newProgress) < 0.01 && 
+          !isZeroToNonZero &&
+          storedProgress === newProgress && 
           !isNaN(storedProgress) && 
           !isNaN(newProgress)) {
         if (debug) {
