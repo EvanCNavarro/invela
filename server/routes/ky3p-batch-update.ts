@@ -361,7 +361,7 @@ export function registerKY3PBatchUpdateRoutes() {
       // This ensures consistency with the batch-update endpoint
       const totalFields = fieldCount?.count || 1;
       const completedFields = completedCount?.count || 0; // Use completedCount instead of responseCount
-      const progress = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      const progress = Math.min(100, Math.round((completedFields / totalFields) * 100)); // Using Math.round() for consistent percentage calculation
       
       console.log(`[KY3P-BATCH-UPDATE] Progress calculation for save-progress: ${completedFields}/${totalFields} = ${progress}%`);
       console.log(`[KY3P-BATCH-UPDATE] Detailed counts:`, {
