@@ -251,8 +251,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(openBankingResponses.task_id, taskId),
-            // Match status directly
-            eq(openBankingResponses.status, KYBFieldStatus.COMPLETE)
+            // Match status value directly using the enum
+            eq(openBankingResponses.status, KYBFieldStatus.COMPLETE as unknown as string)
           )
         );
       completedFields = completedResultQuery[0].count;
@@ -271,8 +271,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(ky3pResponses.task_id, taskId),
-            // Match lowercase 'complete' which is what KYBFieldStatus.COMPLETE maps to
-            eq(ky3pResponses.status, KYBFieldStatus.COMPLETE)
+            // Match status value directly using the enum
+            eq(ky3pResponses.status, KYBFieldStatus.COMPLETE as unknown as string)
           )
         );
       completedFields = completedResultQuery[0].count;
@@ -317,8 +317,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(kybResponses.task_id, taskId),
-            // Match status directly using enum value
-            eq(kybResponses.status, KYBFieldStatus.COMPLETE)
+            // Match status value directly using the enum
+            eq(kybResponses.status, KYBFieldStatus.COMPLETE as unknown as string)
           )
         );
       completedFields = completedResultQuery[0].count;
@@ -341,6 +341,35 @@ export async function calculateUniversalTaskProgress(
       timestamp: new Date().toISOString(),
       diagnosticId
     });
+    
+    // Apply progress protection for read-only operations (not during transactions)
+    // This ensures progress calculations don't incorrectly show a lower value
+    // without actually updating the database
+    if (!options.tx) {
+      try {
+        const { validateProgressUpdate } = require('./progress-protection');
+        const validatedReadOnlyProgress = await validateProgressUpdate(taskId, progressPercentage, {
+          allowDecrease: false,
+          // Don't force update since this is a read-only operation
+          forceUpdate: false
+        });
+        
+        if (validatedReadOnlyProgress !== progressPercentage) {
+          console.log(`${logPrefix} Progress protection applied during read-only calculation:`, {
+            originalProgress: progressPercentage,
+            protectedProgress: validatedReadOnlyProgress,
+            taskId,
+            taskType,
+            timestamp: new Date().toISOString(),
+            diagnosticId
+          });
+          return validatedReadOnlyProgress;
+        }
+      } catch (protectionError) {
+        // If protection fails, log but continue with original value
+        console.error(`${logPrefix} Error applying progress protection:`, protectionError);
+      }
+    }
     
     return progressPercentage;
   } catch (error) {
@@ -383,6 +412,7 @@ export async function updateTaskProgress(
     forceUpdate?: boolean; 
     skipBroadcast?: boolean; 
     debug?: boolean;
+    allowDecrease?: boolean; // Whether to allow progress to decrease
     metadata?: Record<string, any>;
     diagnosticId?: string; // Tracking ID for this specific update
     source?: string; // Where this update was triggered from
@@ -501,11 +531,32 @@ export async function updateTaskProgress(
           });
         }
         
-        // Step 5: Update the task with new progress and status using the transaction
+        // Import the progress protection module
+        const { validateProgressUpdate } = require('./progress-protection');
+        
+        // Step 5: Validate the progress to prevent regressions
+        const validatedProgress = await validateProgressUpdate(taskId, Number(calculatedProgress), {
+          forceUpdate: options.forceUpdate,
+          allowDecrease: options.allowDecrease
+        });
+        
+        // Log if progress validation modified the value
+        if (validatedProgress !== Number(calculatedProgress)) {
+          console.log(`${logPrefix} Progress protection applied:`, {
+            originalProgress: Number(calculatedProgress),
+            protectedProgress: validatedProgress,
+            difference: validatedProgress - Number(calculatedProgress),
+            taskId,
+            timestamp: new Date().toISOString(),
+            transactionId
+          });
+        }
+        
+        // Step 6: Update the task with validated progress and status using the transaction
         const [updatedTask] = await tx
           .update(tasks)
           .set({
-            progress: Number(calculatedProgress), // Ensure numeric value in database
+            progress: validatedProgress, // Use the validated progress value
             status: newStatus,
             updated_at: new Date(),
             metadata: {
@@ -514,7 +565,7 @@ export async function updateTaskProgress(
               lastProgressUpdate: new Date().toISOString(),
               progressHistory: [
                 ...(task.metadata?.progressHistory || []),
-                { value: calculatedProgress, timestamp: new Date().toISOString() }
+                { value: validatedProgress, timestamp: new Date().toISOString() }
               ].slice(-10) // Keep last 10 progress updates
             }
           })
