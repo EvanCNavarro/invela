@@ -1913,7 +1913,8 @@ router.post('/api/kyb-fields/:taskId/update', requireAuth, async (req, res) => {
     // Calculate progress percentage based on COMPLETE fields
     const totalFields = fieldCount?.count || 1;
     const completedFields = completedCount?.count || 0;
-    const progressPercentage = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+    // Use Math.round to match the universal progress calculator in utils/progress.ts
+    const progressPercentage = Math.min(100, Math.round((completedFields / totalFields) * 100));
     
     logger.info(`[KYB API] Progress calculation for task ${taskId}: ${completedFields}/${totalFields} = ${progressPercentage}%`);
     
