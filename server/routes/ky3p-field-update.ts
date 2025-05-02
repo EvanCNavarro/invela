@@ -136,7 +136,7 @@ export function registerKY3PFieldUpdateRoutes() {
           .set({ 
             response_value: value, 
             updated_at: now,
-            status: 'COMPLETE' // Use the enum key (not value) as required by the schema type
+            status: KYBFieldStatus.COMPLETE // Use the enum key to ensure type safety
           })
           .where(
             and(
@@ -151,7 +151,7 @@ export function registerKY3PFieldUpdateRoutes() {
             task_id: taskId,
             field_id: fieldId,
             response_value: value,
-            status: 'COMPLETE', // Use the enum key (not value) as required by the schema type
+            status: KYBFieldStatus.COMPLETE, // Use the enum key to ensure type safety
             created_at: now,
             updated_at: now
           });
