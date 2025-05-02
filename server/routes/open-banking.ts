@@ -166,12 +166,32 @@ async function unlockDependentTasks(taskId: number) {
       
       logger.info('[OpenBankingRoutes] Unlocked dependent task', { taskId: depTask.id });
       
-      // Broadcast task update via WebSocket
-      WebSocketService.broadcast('task_update', {
+      // Import and use the standardized broadcastProgressUpdate function
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      
+      // Create standardized metadata for broadcast
+      const broadcastMetadata = {
+        lastUpdated: new Date().toISOString(),
+        taskUnlockOperation: 'DEPENDENCY_UNLOCK',
+        companyId,
+        formType: 'open_banking',
+        broadcastSource: 'open-banking-dependency-unlock',
+        parentTaskId: taskId
+      };
+      
+      logger.info('[OpenBankingRoutes] Broadcasting dependent task unlock via standardized broadcastProgressUpdate', {
         taskId: depTask.id,
-        companyId: companyId,
-        status: TaskStatus.NOT_STARTED
+        status: TaskStatus.NOT_STARTED,
+        timestamp: new Date().toISOString()
       });
+      
+      // Use standardized broadcast function
+      broadcastProgressUpdate(
+        depTask.id,
+        0, // 0% progress for newly unlocked task
+        TaskStatus.NOT_STARTED,
+        broadcastMetadata
+      );
     }
     
     return dependentTasks.length;
@@ -534,27 +554,37 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
       // Capture how long the operation took
       const operationTime = Date.now() - startTime;
       
-      // Create update payload with forceUpdate to ensure client doesn't try incremental updates
-      const updatePayload = {
-        id: taskId,
-        status: 'not_started',
-        progress: 0,
-        metadata: {
-          lastUpdated: new Date().toISOString(),
-          lastProgressReconciliation: new Date().toISOString(),
-          forceReload: true,  // Force client to reload all form state
-          forceReconciliationSkip: true  // Extra flag to indicate no reconciliation
-        },
-        timestamp: new Date().toISOString(),
-        forceUpdate: true
+      // Import and use the standardized broadcastProgressUpdate function
+      // This ensures consistent WebSocket message format across all form types
+      const { broadcastProgressUpdate } = await import('../utils/progress');
+      
+      // Create standardized metadata for broadcast
+      const broadcastMetadata = {
+        lastUpdated: new Date().toISOString(),
+        lastProgressReconciliation: new Date().toISOString(),
+        forceReload: true,  // Force client to reload all form state
+        forceReconciliationSkip: true,  // Extra flag to indicate no reconciliation
+        forceUpdate: true,
+        clearOperation: 'FAST_DELETE_ALL',
+        formType: 'open_banking',
+        broadcastSource: 'open-banking-clear'
       };
       
-      // Broadcast exactly one WebSocket message with all flags to prevent any further updates
-      // Use standardized WebSocketService to ensure consistent message format
-      WebSocketService.broadcast('task_update', updatePayload);
+      // Log that we're using standardized WebSocketService
+      logger.info('[OpenBankingRoutes] Broadcasting task clear via standardized broadcastProgressUpdate', {
+        taskId,
+        status: TaskStatus.NOT_STARTED,
+        timestamp: new Date().toISOString()
+      });
       
-      // Log that we're using standardized WebSocket broadcast
-      logger.info('[OpenBankingRoutes] Used standardized WebSocket broadcast for task update');
+      // Use standardized broadcast function with all options
+      broadcastProgressUpdate(
+        taskId,
+        0, // 0% progress after clearing
+        TaskStatus.NOT_STARTED,
+        broadcastMetadata,
+        { forceUpdate: true, ignoreSkipCheck: true } // Override any reconciliation locks
+      );
       
       logger.info('[OpenBankingRoutes] Fast clear completed successfully', { 
         taskId, 
@@ -919,18 +949,48 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
       const completedCount = completedResponses.length;
       const progress = totalFields > 0 ? Math.round((completedCount / totalFields) * 100) / 100 : 0;
       
+      // Determine appropriate task status based on progress
+      const newStatus = progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : progress > 0 ? TaskStatus.IN_PROGRESS : TaskStatus.NOT_STARTED;
+      
       // Update task progress
       await db.update(tasks)
         .set({ 
           progress, 
           updated_at: new Date(),
-          status: progress >= 1 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS
+          status: newStatus
         })
         .where(eq(tasks.id, taskId));
       
+      // Import and use standardized broadcast functions for consistent messaging
+      const { broadcastFieldUpdate, broadcastProgressUpdate } = await import('../utils/progress');
+      
+      logger.info('[OpenBankingRoutes] Broadcasting field update via standardized helper functions', {
+        taskId,
+        fieldId,
+        fieldKey: fieldDefinition?.field_key,
+        status,
+        progress
+      });
+      
+      // Broadcast field update to all clients
+      broadcastFieldUpdate(
+        taskId,
+        fieldDefinition?.field_key || `field_${fieldId}`,
+        responseValue,
+        fieldId
+      );
+      
+      // Broadcast overall progress update
+      broadcastProgressUpdate(
+        taskId,
+        progress * 100, // Convert from decimal to percentage (0-100)
+        newStatus
+      );
+      
       const responseData = {
         ...result[0],
-        progress
+        progress,
+        status: newStatus
       };
       
       res.json(responseData);
@@ -1085,20 +1145,31 @@ export function registerOpenBankingRoutes(app: Express, wss: WebSocketServer | n
               .where(eq(tasks.id, taskId));
           });
           
-          // After transaction succeeds, broadcast exactly one update
-          const updatePayload = {
-            id: taskId,
-            status: 'not_started',
-            progress: 0,
-            metadata: {
-              lastUpdated: new Date().toISOString(),
-              lastProgressReconciliation: new Date().toISOString()
-            },
-            timestamp: new Date().toISOString()
+          // After transaction succeeds, broadcast exactly one update using standardized function
+          const { broadcastProgressUpdate } = await import('../utils/progress');
+          
+          // Create standardized metadata for WebSocket event
+          const broadcastMetadata = {
+            lastUpdated: new Date().toISOString(),
+            lastProgressReconciliation: new Date().toISOString(),
+            clearOperation: 'BULK_CLEAR',
+            formType: 'open_banking',
+            broadcastSource: 'open-banking-bulk-clear'
           };
           
-          // Send only one WebSocket update using standardized WebSocketService
-          WebSocketService.broadcast('task_update', updatePayload);
+          logger.info('[OpenBankingRoutes] Broadcasting bulk clear via standardized broadcastProgressUpdate', {
+            taskId,
+            status: TaskStatus.NOT_STARTED,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Use standardized broadcast function
+          broadcastProgressUpdate(
+            taskId,
+            0, // 0% progress after clearing
+            TaskStatus.NOT_STARTED,
+            broadcastMetadata
+          );
           
           // Disable the task reconciliation process for this task for a few seconds
           // to prevent cascading updates
