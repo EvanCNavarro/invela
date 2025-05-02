@@ -9,6 +9,7 @@
  */
 
 import { reconcileTaskProgress } from './server/utils/task-reconciliation';
+import { calculateAndUpdateTaskProgress } from './server/utils/unified-progress-fixed';
 import { db } from '@db';
 import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
@@ -49,9 +50,19 @@ async function forceTaskUpdate() {
       status: task.status
     });
     
-    // Force the reconciliation with debug enabled
-    console.log(`[Force Reconcile] Initiating forced reconciliation...`);
+    // First try with the regular reconciliation
+    console.log(`[Force Reconcile] Initiating regular reconciliation...`);
     await reconcileTaskProgress(TARGET_TASK_ID, { forceUpdate: true, debug: true });
+    
+    // Now try with the improved unified calculator with transaction boundaries
+    console.log(`[Force Reconcile] Initiating improved unified progress calculation...`);
+    const improvedResult = await calculateAndUpdateTaskProgress(TARGET_TASK_ID, {
+      debug: true,
+      force: true,
+      source: 'force_reconcile_script'
+    });
+    
+    console.log(`[Force Reconcile] Improved calculation result:`, improvedResult);
     
     // Verify the update worked
     const updatedTask = await getTaskInfo(TARGET_TASK_ID);

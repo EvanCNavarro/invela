@@ -341,99 +341,34 @@ export async function reconcileTaskProgress(
       }
     } else if (taskType === 'ky3p') {
       try {
-        // Fetch KY3P responses - Add special handling for KY3P tasks
-        console.log(`${logPrefix} Fetching KY3P responses for task ${taskId}`);
+        // IMPROVED: Use the unified progress calculation with transaction boundaries
+        // to ensure proper persistence for KY3P tasks
+        console.log(`${logPrefix} Using improved unified progress calculation for KY3P task ${taskId}`);
         
-        // Count total KY3P fields
-        const totalFieldsResult = await db
-          .select({
-            count: sql<number>`count(*)`
-          })
-          .from(ky3pFields);
+        // Import the fixed version of the progress calculator
+        // Note: We're importing here to avoid circular dependencies
+        const { calculateAndUpdateTaskProgress } = await import('./unified-progress-fixed');
         
-        const totalFields = totalFieldsResult[0].count;
-        
-        // Count completed KY3P responses with proper status and non-empty response_value
-        const completedResponsesResult = await db
-          .select({
-            count: sql<number>`count(*)`
-          })
-          .from(ky3pResponses)
-          .where(
-            and(
-              eq(ky3pResponses.task_id, taskId),
-              or(
-                // Handle both capitalization variants for maximum compatibility
-                // This ensures we count all completed fields regardless of status format
-                sql`UPPER(${ky3pResponses.status}) = UPPER(${KYBFieldStatus.COMPLETE})`,
-                sql`UPPER(${ky3pResponses.status}) = 'FILLED'`
-              ),
-              // Only count fields with non-empty values
-              sql`${ky3pResponses.response_value} IS NOT NULL`,
-              sql`${ky3pResponses.response_value} != ''`
-            )
-          );
-        
-        // Extract the completed fields count
-        const completedFields = completedResponsesResult[0]?.count || 0;
-        
-        // Calculate accurate progress percentage
-        const calculatedProgress = 
-          totalFields > 0 && completedFields > 0
-            ? Math.min(100, Math.max(1, Math.ceil((completedFields / totalFields) * 100)))
-            : 0;
-            
-        console.log(`${logPrefix} Recalculated KY3P progress:`, {
-          taskId,
-          totalFields,
-          completedFields,
-          currentProgress: task.progress,
-          calculatedProgress
+        // Use the fixed implementation with proper transaction boundaries
+        const result = await calculateAndUpdateTaskProgress(taskId, {
+          debug: true,
+          force: forceUpdate,
+          source: 'task_reconciliation'
         });
         
-        // If progress differs, update the task and broadcast
-        if (forceUpdate || task.progress !== calculatedProgress) {
-          // CONSISTENT STATUS DETERMINATION:
-          // Strictly follow the business rules:
-          // 0% = Not Started
-          // 1-99% = In Progress
-          // 100% (not submitted) = Ready for Submission
-          // 100% (submitted) = Submitted
-          const newStatus = 
-            calculatedProgress === 0 ? TaskStatus.NOT_STARTED :
-            calculatedProgress >= 100 ? TaskStatus.READY_FOR_SUBMISSION :
-            TaskStatus.IN_PROGRESS;
-            
-          console.log(`${logPrefix} Updating KY3P task progress:`, {
-            taskId,
-            progressFrom: task.progress,
-            progressTo: calculatedProgress,
-            statusFrom: task.status,
-            statusTo: newStatus
-          });
-          
-          // Update task in database
-          const [updatedTask] = await db.update(tasks)
-            .set({
-              progress: calculatedProgress,
-              status: newStatus,
-              updated_at: new Date(),
-              metadata: {
-                ...task.metadata,
-                lastProgressReconciliation: new Date().toISOString()
-              }
-            })
-            .where(eq(tasks.id, taskId))
-            .returning();
-          
-          // Broadcast the update to all connected clients
-          broadcastProgressUpdate(
-            taskId,
-            calculatedProgress,
-            newStatus,
-            updatedTask.metadata || {}
-          );
-        }
+        console.log(`${logPrefix} KY3P progress update result:`, {
+          taskId,
+          success: result.success,
+          progress: result.progress,
+          status: result.status,
+          message: result.message
+        });
+        
+        // The calculateAndUpdateTaskProgress function handles everything:
+        // - Database update with proper transaction boundaries
+        // - Progress calculation
+        // - Status determination
+        // - WebSocket broadcasting
         
         // Exit early since we've handled everything for KY3P
         return;
