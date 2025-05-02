@@ -1069,8 +1069,22 @@ router.post('/api/kyb/progress', async (req, res) => {
     else if (req.body.status) {
       console.log('[KYB API Debug] Using client-provided status:', req.body.status);
       newStatus = req.body.status;
+      
+      // Additional validation to ensure client-provided status adheres to our business rules
+      // This is a safety measure to prevent inconsistent states
+      if (newStatus === TaskStatus.IN_PROGRESS && calculatedProgress === 0) {
+        console.log('[KYB API Debug] Overriding client-provided IN_PROGRESS status to NOT_STARTED for 0% progress');
+        newStatus = TaskStatus.NOT_STARTED;
+      } else if (newStatus === TaskStatus.NOT_STARTED && calculatedProgress > 0) {
+        console.log('[KYB API Debug] Overriding client-provided NOT_STARTED status to IN_PROGRESS for > 0% progress');
+        newStatus = TaskStatus.IN_PROGRESS;
+      }
     } 
-    // Otherwise calculate based on progress
+    // Otherwise calculate based on progress - Strictly following business rules:
+    // 0% = Not Started
+    // 1-99% = In Progress
+    // 100% (not submitted) = Ready for Submission
+    // 100% (submitted) = Submitted
     else {
       if (calculatedProgress === 0) {
         newStatus = TaskStatus.NOT_STARTED;

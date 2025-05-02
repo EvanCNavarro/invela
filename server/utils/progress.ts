@@ -133,6 +133,19 @@ export function broadcastProgressUpdate(
       explicitlySubmitted: metadata?.explicitlySubmitted,
       submittedAt: metadata?.submittedAt 
     });
+  } 
+  // If no explicit status is provided, determine based on progress
+  else if (!finalStatus) {
+    if (validatedProgress === 0) {
+      finalStatus = TaskStatus.NOT_STARTED;
+      console.log(`[Progress Utils] Setting status to NOT_STARTED based on 0% progress`);
+    } else if (validatedProgress < 100) {
+      finalStatus = TaskStatus.IN_PROGRESS;
+      console.log(`[Progress Utils] Setting status to IN_PROGRESS based on ${validatedProgress}% progress`);
+    } else if (validatedProgress === 100) {
+      finalStatus = TaskStatus.READY_FOR_SUBMISSION;
+      console.log(`[Progress Utils] Setting status to READY_FOR_SUBMISSION based on 100% progress`);
+    }
   }
   
   // Log the broadcast action with detailed information
