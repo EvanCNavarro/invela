@@ -206,37 +206,154 @@ router.post('/api/demo-autofill/:taskId', requireAuth, async (req, res) => {
 /**
  * KYB demo auto-fill endpoint (redirects to unified endpoint)
  */
-router.post('/api/kyb/demo-autofill/:taskId', requireAuth, (req, res, next) => {
-  // Set form type in body
-  req.body.formType = 'kyb';
-  next();
-}, (req, res) => {
-  // Forward to unified endpoint
-  router.handle(req, res);
+router.post('/api/kyb/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Set form type in body
+    req.body.formType = 'kyb';
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    // Call service directly instead of forwarding
+    const result = await unifiedDemoAutoFillService.applyDemoData(
+      taskId,
+      'kyb',
+      req.user?.id
+    );
+    
+    logger.info('Successfully applied KYB demo data', {
+      taskId,
+      formType: 'kyb',
+      fieldCount: result.fieldCount
+    });
+    
+    res.json({
+      success: true,
+      message: 'Demo data applied successfully',
+      fieldCount: result.fieldCount, 
+      progress: result.progress,
+      status: result.status,
+      taskId,
+      formType: 'kyb'
+    });
+  } catch (error) {
+    logger.error('Error applying KYB demo data', {
+      taskId: req.params.taskId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Determine appropriate status code
+    const statusCode = 
+      error instanceof Error && error.message.includes('demo companies') ? 403 :
+      error instanceof Error && error.message.includes('Task not found') ? 404 : 
+      400;
+    
+    res.status(statusCode).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 /**
  * KY3P demo auto-fill endpoint (redirects to unified endpoint)
  */
-router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, (req, res, next) => {
-  // Set form type in body
-  req.body.formType = 'ky3p';
-  next();
-}, (req, res) => {
-  // Forward to unified endpoint
-  router.handle(req, res);
+router.post('/api/ky3p/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Set form type in body
+    req.body.formType = 'ky3p';
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    // Call service directly instead of forwarding
+    const result = await unifiedDemoAutoFillService.applyDemoData(
+      taskId,
+      'ky3p',
+      req.user?.id
+    );
+    
+    logger.info('Successfully applied KY3P demo data', {
+      taskId,
+      formType: 'ky3p',
+      fieldCount: result.fieldCount
+    });
+    
+    res.json({
+      success: true,
+      message: 'Demo data applied successfully',
+      fieldCount: result.fieldCount, 
+      progress: result.progress,
+      status: result.status,
+      taskId,
+      formType: 'ky3p'
+    });
+  } catch (error) {
+    logger.error('Error applying KY3P demo data', {
+      taskId: req.params.taskId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Determine appropriate status code
+    const statusCode = 
+      error instanceof Error && error.message.includes('demo companies') ? 403 :
+      error instanceof Error && error.message.includes('Task not found') ? 404 : 
+      400;
+    
+    res.status(statusCode).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 /**
  * Open Banking demo auto-fill endpoint (redirects to unified endpoint)
  */
-router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, (req, res, next) => {
-  // Set form type in body
-  req.body.formType = 'open_banking';
-  next();
-}, (req, res) => {
-  // Forward to unified endpoint
-  router.handle(req, res);
+router.post('/api/open-banking/demo-autofill/:taskId', requireAuth, async (req, res) => {
+  try {
+    // Set form type in body
+    req.body.formType = 'open_banking';
+    const taskId = parseInt(req.params.taskId, 10);
+    
+    // Call service directly instead of forwarding
+    const result = await unifiedDemoAutoFillService.applyDemoData(
+      taskId,
+      'open_banking',
+      req.user?.id
+    );
+    
+    logger.info('Successfully applied Open Banking demo data', {
+      taskId,
+      formType: 'open_banking',
+      fieldCount: result.fieldCount
+    });
+    
+    res.json({
+      success: true,
+      message: 'Demo data applied successfully',
+      fieldCount: result.fieldCount, 
+      progress: result.progress,
+      status: result.status,
+      taskId,
+      formType: 'open_banking'
+    });
+  } catch (error) {
+    logger.error('Error applying Open Banking demo data', {
+      taskId: req.params.taskId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Determine appropriate status code
+    const statusCode = 
+      error instanceof Error && error.message.includes('demo companies') ? 403 :
+      error instanceof Error && error.message.includes('Task not found') ? 404 : 
+      400;
+    
+    res.status(statusCode).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 export default router;
