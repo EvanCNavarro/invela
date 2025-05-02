@@ -19,7 +19,7 @@ import {
   ky3pFields,
   openBankingFields
 } from '@db/schema';
-import { ResponseStatus, TaskStatus, normalizeStatus, getStatusFromProgress } from './status-constants';
+import { ResponseStatus, TaskStatus, normalizeResponseStatus, getStatusFromProgress } from './status-constants';
 import { logger } from './logger';
 
 // Type for task configuration
@@ -77,6 +77,29 @@ export function getFormTypeFromTaskType(taskType: string): string | null {
 function getConfigForTaskType(taskType: string): TaskTypeConfig | null {
   const formType = getFormTypeFromTaskType(taskType);
   return formType ? taskTypeConfigs[formType] : null;
+}
+
+/**
+ * Helper function to normalize response status for case-insensitive comparisons
+ */
+function normalizeStatus(status: string | null | undefined): string {
+  if (!status) return '';
+  
+  // Handle various status formats used across the application
+  const normalized = status.toLowerCase().trim();
+  
+  // Map common variations to standardized values
+  if (normalized === 'complete' || normalized === 'completed') {
+    return ResponseStatus.COMPLETE.toLowerCase();
+  } else if (normalized === 'incomplete' || normalized === 'in_progress' || normalized === 'in progress') {
+    return ResponseStatus.INCOMPLETE.toLowerCase();
+  } else if (normalized === 'empty' || normalized === 'not_started' || normalized === 'not started') {
+    return ResponseStatus.EMPTY.toLowerCase();
+  } else if (normalized === 'invalid' || normalized === 'error') {
+    return ResponseStatus.INVALID.toLowerCase();
+  }
+  
+  return normalized;
 }
 
 /**
@@ -139,7 +162,7 @@ export async function calculateTaskProgress(
       .where(
         and(
           eq(config.responsesTable.task_id, taskId),
-          sql`LOWER(${config.responsesTable.status}) = LOWER('${ResponseStatus.COMPLETE}')`
+          sql`LOWER(${config.responsesTable.status}) = LOWER(${ResponseStatus.COMPLETE})`
         )
       );
     
@@ -163,8 +186,8 @@ export async function calculateTaskProgress(
         samples: sampleResponses.map(r => ({
           field_id: r.field_id,
           status: r.status,
-          normalized_status: normalizeStatus(r.status),
-          is_complete: normalizeStatus(r.status) === normalizeStatus(ResponseStatus.COMPLETE)
+          normalized_status: normalizeResponseStatus(r.status),
+          is_complete: normalizeResponseStatus(r.status) === normalizeResponseStatus(ResponseStatus.COMPLETE)
         }))
       });
     }
@@ -175,7 +198,15 @@ export async function calculateTaskProgress(
       : 0;
     
     // Step 6: Determine appropriate status
-    const hasSubmissionData = !!task.submission_date || !!task.submitted;
+    // Check for submission-related fields in the task metadata
+    const metadata = task.metadata || {};
+    const hasSubmissionData = 
+      (task as any).submission_date !== undefined || 
+      (task as any).submitted !== undefined || 
+      metadata.submission_date !== undefined || 
+      metadata.submitted !== undefined || 
+      task.status === 'submitted';
+    
     const status = getStatusFromProgress(progress, hasSubmissionData);
     
     // Return detailed calculation result
