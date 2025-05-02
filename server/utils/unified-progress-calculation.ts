@@ -193,9 +193,19 @@ export async function calculateTaskProgress(
     }
     
     // Step 5: Calculate progress percentage
-    const progress = totalFields > 0
-      ? Math.min(100, Math.round((completedFields / totalFields) * 100))
-      : 0;
+    const rawProgress = totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
+    const progress = Math.min(100, Math.round(rawProgress));
+    
+    // Added comprehensive logging for debugging progress calculation issues
+    logger.info(`[UnifiedProgress] Calculated progress details for task ${taskId}:`, {
+      ...logContext,
+      taskType,
+      totalFields,
+      completedFields,
+      rawProgress,
+      roundedProgress: progress,
+      timestamp: new Date().toISOString()
+    });
     
     // Step 6: Determine appropriate status
     // Check for submission-related fields in the task metadata
