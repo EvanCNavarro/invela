@@ -89,11 +89,23 @@ export async function processDependencies(companyId: number) {
         count: dependentTasks.length
       });
       
+      // Import determineStatusFromProgress function to ensure correct status
+      const { determineStatusFromProgress } = await import('../utils/progress');
+
       // Unlock each dependent task
       for (const task of dependentTasks) {
+        // Determine correct status based on task's progress
+        const taskProgress = task.progress || 0;
+        const newStatus = determineStatusFromProgress(
+          taskProgress,
+          task.status as any,
+          [], // no form responses
+          task.metadata || {}
+        );
+        
         await db.update(tasks)
           .set({
-            status: 'not_started',
+            status: newStatus, // Use the properly determined status
             metadata: sql`jsonb_set(
               jsonb_set(
                 jsonb_set(
@@ -111,13 +123,16 @@ export async function processDependencies(companyId: number) {
         logger.info('[TaskDependencies] Unlocked dependent task', { 
           companyId, 
           dependentType: rule.dependentType,
-          taskId: task.id
+          taskId: task.id,
+          progress: taskProgress,
+          status: newStatus
         });
         
         // Broadcast the update via WebSocket
         broadcastTaskUpdate({
           id: task.id,
-          status: 'not_started',
+          status: newStatus,
+          progress: taskProgress,
           metadata: {
             locked: false,
             prerequisite_completed: true,
@@ -274,6 +289,7 @@ export async function unlockAllTasks(companyId: number) {
           or(
             eq(tasks.status, 'locked'),
             eq(tasks.status, 'not_started'),
+            eq(tasks.status, 'ready_for_submission'), // Also check for tasks with incorrect status
             isNull(tasks.status)
           )
         )
@@ -291,11 +307,35 @@ export async function unlockAllTasks(companyId: number) {
       taskTypes: companyTasks.map(t => t.task_type)
     });
     
+    // Import determineStatusFromProgress function to ensure correct status
+    const { determineStatusFromProgress } = await import('../utils/progress');
+
     // Unlock each task
     for (const task of companyTasks) {
+      // Determine correct status based on task's progress
+      // This ensures we follow the business rules:
+      // 0% = Not Started
+      // 1-99% = In Progress
+      // 100% (not submitted) = Ready for Submission
+      // 100% (submitted) = Submitted
+      const taskProgress = task.progress || 0;
+      const newStatus = determineStatusFromProgress(
+        taskProgress,
+        task.status as any,
+        [], // no form responses
+        task.metadata || {}
+      );
+      
+      logger.info('[TaskDependencies] Determining correct status for task', {
+        taskId: task.id,
+        progress: taskProgress,
+        currentStatus: task.status,
+        newStatus
+      });
+
       await db.update(tasks)
         .set({
-          status: 'not_started',
+          status: newStatus,
           metadata: sql`jsonb_set(
             jsonb_set(
               jsonb_set(
@@ -313,13 +353,16 @@ export async function unlockAllTasks(companyId: number) {
       logger.info('[TaskDependencies] Unlocked task', { 
         companyId, 
         taskId: task.id,
-        taskType: task.task_type
+        taskType: task.task_type,
+        progress: taskProgress,
+        status: newStatus
       });
       
       // Broadcast the update via WebSocket
       broadcastTaskUpdate({
         id: task.id,
-        status: 'not_started',
+        status: newStatus,
+        progress: taskProgress,
         metadata: {
           locked: false,
           prerequisite_completed: true,
