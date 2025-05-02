@@ -88,11 +88,13 @@ router.post('/api/kyb/clear/:taskId', requireAuth, async (req, res) => {
       });
     }
 
-    // Return success response
+    // Return success response with standardized progress and status
     return res.status(200).json({
       success: true,
       message: 'KYB fields cleared successfully',
-      taskId
+      taskId,
+      progress: 0,
+      status: 'not_started'
     });
   } catch (error) {
     // Rollback in case of error
