@@ -346,12 +346,25 @@ export async function updateTaskProgress(
       // Step 2: Calculate the accurate progress using our universal function
       const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug, tx });
       
-      // Step 3: Check if update is needed
-      if (!forceUpdate && task.progress === calculatedProgress) {
+      // Step 3: Check if update is needed with proper type conversion
+      const storedProgress = Number(task.progress);
+      const newProgress = Number(calculatedProgress);
+      
+      if (!forceUpdate && storedProgress === newProgress && !isNaN(storedProgress) && !isNaN(newProgress)) {
         if (debug) {
           console.log(`${logPrefix} No progress change needed for task ${taskId} (${taskType}): ${calculatedProgress}%`);
         }
         return;
+      }
+      
+      // Log progress change for debugging purposes
+      if (debug) {
+        console.log(`${logPrefix} Progress change detected for task ${taskId} (${taskType}):`, {
+          stored: storedProgress,
+          calculated: newProgress,
+          storedType: typeof task.progress,
+          calculatedType: typeof calculatedProgress
+        });
       }
       
       // Step 4: Determine the appropriate status based on progress
@@ -375,7 +388,7 @@ export async function updateTaskProgress(
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          progress: calculatedProgress,
+          progress: Number(calculatedProgress), // Ensure numeric value in database
           status: newStatus,
           updated_at: new Date(),
           metadata: {
