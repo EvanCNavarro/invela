@@ -86,8 +86,8 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
     
     // Determine field status based on value
     const hasValue = value !== null && value !== undefined && value !== '';
-    // Status must use values from KYBFieldStatus
-    const status = hasValue ? KYBFieldStatus.COMPLETE : KYBFieldStatus.INCOMPLETE;
+    // Status must use uppercase values from KYBFieldStatus enum
+    const status = hasValue ? 'COMPLETE' : 'INCOMPLETE';
     
     logger.info('[Open Banking API] Field update details', {
       taskId,
