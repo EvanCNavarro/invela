@@ -194,7 +194,17 @@ export async function calculateTaskProgress(
     
     // Step 5: Calculate progress percentage
     const rawProgress = totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
-    const progress = Math.min(100, Math.round(rawProgress));
+    
+    // FIXED: Ensure small percentages are not lost through rounding
+    // For tasks with a large number of fields (like KY3P with 120 fields),
+    // if there are completed fields but the raw percentage is less than 1%,
+    // we use a minimum of 1% to indicate progress
+    let progress;
+    if (completedFields > 0 && rawProgress < 1) {
+      progress = 1; // Minimum 1% if any fields are completed
+    } else {
+      progress = Math.min(100, Math.round(rawProgress));
+    }
     
     // Added comprehensive logging for debugging progress calculation issues
     logger.info(`[UnifiedProgress] Calculated progress details for task ${taskId}:`, {
@@ -204,6 +214,7 @@ export async function calculateTaskProgress(
       completedFields,
       rawProgress,
       roundedProgress: progress,
+      usedMinimumProgress: (completedFields > 0 && rawProgress < 1),
       timestamp: new Date().toISOString()
     });
     
