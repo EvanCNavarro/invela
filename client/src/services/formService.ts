@@ -124,8 +124,9 @@ export interface FormServiceInterface {
    * @param fieldKey Field key to update
    * @param value New value for the field
    * @param taskId Optional task ID for immediate saving
+   * @returns Promise that resolves when the update is complete or void for synchronous implementations
    */
-  updateFormData(fieldKey: string, value: any, taskId?: number): void;
+  updateFormData(fieldKey: string, value: any, taskId?: number): Promise<void> | void;
   
   /**
    * Get the current form data
