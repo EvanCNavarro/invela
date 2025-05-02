@@ -167,6 +167,9 @@ class WebSocketService {
           this.reconnectTimeout = 1000;
           this.startHeartbeat();
           
+          // Send authentication message with user and company ID
+          this.sendAuthenticationMessage();
+          
           // Update connection status to connected
           this.updateConnectionStatus('connected');
           
