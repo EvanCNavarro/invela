@@ -38,7 +38,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const connectAttempts = useRef(0);
   const alreadyInitialized = useRef(false);
   
-  // Connect to WebSocket
+  // Connect to WebSocket with improved resilience
   const connect = () => {
     try {
       // Clear any existing connection
@@ -59,8 +59,28 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       logger.info('Connecting to WebSocket:', wsUrl);
       
       const ws = new WebSocket(wsUrl);
+      const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Set connection timeout - if it doesn't connect in 5 seconds, try again
+      const connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          logger.warn('WebSocket connection timeout, attempting to reconnect');
+          try {
+            ws.close();
+          } catch (err) {
+            // Ignore close errors
+          }
+          // Schedule reconnection
+          const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 5000);
+          connectAttempts.current++;
+          reconnectTimeoutRef.current = setTimeout(connect, delay);
+        }
+      }, 5000);
       
       ws.onopen = () => {
+        // Clear the connection timeout since we successfully connected
+        clearTimeout(connectionTimeout);
+        
         setIsConnected(true);
         connectAttempts.current = 0;
         logger.info('WebSocket connection established');
@@ -72,12 +92,28 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         
         heartbeatIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
+            try {
+              ws.send(JSON.stringify({ 
+                type: 'ping', 
+                timestamp: new Date().toISOString(),
+                connectionId
+              }));
+            } catch (err) {
+              logger.warn('Error sending ping, connection may be dead', err);
+              if (heartbeatIntervalRef.current) {
+                clearInterval(heartbeatIntervalRef.current);
+              }
+              // Force reconnection
+              connect();
+            }
           }
-        }, 30000);
+        }, 20000); // More frequent heartbeat for better connection monitoring
       };
       
       ws.onclose = (event) => {
+        // Clear the connection timeout in case we're closing before it fired
+        clearTimeout(connectionTimeout);
+        
         setIsConnected(false);
         logger.info('WebSocket connection closed:', event.code, event.reason || 'No reason provided');
         
@@ -89,7 +125,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         
         // Try reconnecting if it wasn't a normal closure
         if (event.code !== 1000 && event.code !== 1001) {
-          if (connectAttempts.current < 3) {
+          // Increase reconnection attempts to improve resilience
+          if (connectAttempts.current < 10) { // Increased from 3 to 10 attempts
             const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 10000);
             connectAttempts.current++;
             
@@ -98,15 +135,22 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
               clearTimeout(reconnectTimeoutRef.current);
             }
             
+            logger.info(`Scheduling reconnection attempt in ${delay/1000} seconds...`);
             reconnectTimeoutRef.current = setTimeout(connect, delay);
           } else {
-            logger.warn('Maximum reconnection attempts reached');
+            logger.warn('Maximum reconnection attempts reached', {
+              connectionId,
+              timestamp: new Date().toISOString()
+            });
           }
         }
       };
       
       ws.onerror = (error) => {
-        logger.error('WebSocket error:', error);
+        logger.error('WebSocket error:', error, {
+          connectionId,
+          timestamp: new Date().toISOString()
+        });
       };
       
       ws.onmessage = (event: MessageEvent) => {
