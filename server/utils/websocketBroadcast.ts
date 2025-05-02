@@ -19,16 +19,43 @@ function logError(message: string, ...args: any[]): void {
 /**
  * Broadcast a message to all connected WebSocket clients
  * with proper error handling and payload formatting
+ * 
+ * @param wss WebSocket server instance
+ * @param type Message type/event name (e.g., 'task_update', 'form_submitted')
+ * @param payload Message payload/data to send (will be automatically wrapped)
+ * @param options Optional configuration for the broadcast
  */
-export function broadcastMessage(wss: WebSocketServer, type: string, payload: any): void {
+export function broadcastMessage(
+  wss: WebSocketServer, 
+  type: string, 
+  payload: any,
+  options: { skipLogging?: boolean; messageId?: string } = {}
+): void {
   if (!wss) {
     logError('Cannot broadcast: WebSocket server is not initialized');
     return;
   }
   
+  // Check if there are any clients before attempting to broadcast
+  const hasClients = Array.from(wss.clients).some(client => client.readyState === WebSocket.OPEN);
+  
+  if (!hasClients) {
+    // Only log if not skipping logging
+    if (!options.skipLogging) {
+      logInfo(`No active WebSocket clients, skipping broadcast`, { messageType: type });
+    }
+    return;
+  }
+  
+  // Generate a unique message ID for tracking/debugging if not provided
+  const messageId = options.messageId || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Create a consistent message format that the client expects
   const message = JSON.stringify({
     type,
-    payload,  // Use consistent 'payload' key for all messages
+    payload,  // Always use 'payload' key for consistency
+    timestamp: new Date().toISOString(),
+    messageId // Include message ID for tracking
   });
   
   let clientCount = 0;
@@ -46,7 +73,10 @@ export function broadcastMessage(wss: WebSocketServer, type: string, payload: an
     }
   });
   
-  logInfo(`Broadcast ${type} to ${clientCount} clients (${errorCount} errors)`);
+  // Only log if not skipping logging (useful for high-frequency events like heartbeats)
+  if (!options.skipLogging) {
+    logInfo(`Broadcast ${type} to ${clientCount} clients (${errorCount} errors)`, { messageId });
+  }
 }
 
 /**
