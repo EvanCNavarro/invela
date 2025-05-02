@@ -119,7 +119,7 @@ export async function calculateAndUpdateTaskProgress(
       .set({
         // Cast to ensure correct type handling
         progress: calculatedProgress,
-        status: String(normalizeTaskStatus(calculatedStatus)),
+        status: normalizeTaskStatus(calculatedStatus) as any,
         updated_at: updateTime,
         metadata: {
           ...currentTask.metadata,
@@ -162,7 +162,7 @@ export async function calculateAndUpdateTaskProgress(
       broadcastProgressUpdate(
         taskId,
         calculatedProgress,
-        normalizeTaskStatus(calculatedStatus),
+        String(normalizeTaskStatus(calculatedStatus)) as any,
         {
           transactionId,
           source,
