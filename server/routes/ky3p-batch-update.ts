@@ -111,7 +111,7 @@ export function registerKY3PBatchUpdateRoutes() {
             .update(ky3pResponses)
             .set({
               response_value: String(value),
-              status: 'COMPLETE', // Always set status to COMPLETE when updating a field
+              status: 'complete', // Use correct lowercase value from KYBFieldStatus.COMPLETE
               updated_at: timestamp
             })
             .where(
@@ -135,7 +135,7 @@ export function registerKY3PBatchUpdateRoutes() {
               task_id: taskId,
               field_id: fieldId,
               response_value: String(value),
-              status: 'COMPLETE', // Always set status to COMPLETE when inserting a field
+              status: 'complete', // Use correct lowercase value from KYBFieldStatus.COMPLETE
               created_at: timestamp,
               updated_at: timestamp
             });
