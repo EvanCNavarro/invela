@@ -156,12 +156,20 @@ export function registerKY3PBatchUpdateRoutes() {
         // Continue processing, don't fail the whole request
       }
       
-      // Return success response
+      // Get the updated task progress for consistent response format
+      const [updatedTask] = await db
+        .select({ progress: tasks.progress, status: tasks.status })
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      // Return success response with task progress
       return res.status(200).json({
         success: true,
         processedCount: batchResponses.length,
         message: `Successfully processed ${batchResponses.length} field updates`,
-        fields: fieldKeys
+        fields: fieldKeys,
+        progress: updatedTask.progress,
+        status: updatedTask.status
       });
     } catch (error) {
       console.error('[KY3P-BATCH-UPDATE] Error processing batch update:', error);
@@ -202,10 +210,18 @@ export function registerKY3PBatchUpdateRoutes() {
       
       console.log(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}`);
       
-      // Return success response
+      // Get the updated task progress and status for consistent response format
+      const [updatedTask] = await db
+        .select({ progress: tasks.progress, status: tasks.status })
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      // Return success response with task progress and status
       return res.status(200).json({
         success: true,
-        message: `Successfully cleared all fields for task ${taskId}`
+        message: `Successfully cleared all fields for task ${taskId}`,
+        progress: updatedTask.progress,
+        status: updatedTask.status
       });
     } catch (error) {
       console.error('[KY3P-BATCH-UPDATE] Error clearing fields:', error);
@@ -252,18 +268,19 @@ export function registerKY3PBatchUpdateRoutes() {
         }
       });
       
-      // Get the updated task to return the current progress
+      // Get the updated task to return the current progress and status
       const [updatedTask] = await db
-        .select({ progress: tasks.progress })
+        .select({ progress: tasks.progress, status: tasks.status })
         .from(tasks)
         .where(eq(tasks.id, taskId));
       
       console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${updatedTask.progress}%`);
       
-      // Return success response with the updated progress
+      // Return success response with the updated progress and status
       return res.status(200).json({
         success: true,
         progress: updatedTask.progress,
+        status: updatedTask.status,
         message: `Successfully saved progress for task ${taskId}`
       });
     } catch (error) {
