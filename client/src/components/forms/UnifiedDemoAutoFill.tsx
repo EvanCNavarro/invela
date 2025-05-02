@@ -130,7 +130,7 @@ export function UnifiedDemoAutoFill(props: UnifiedDemoAutoFillProps) {
         toast({
           title: 'Demo Auto-Fill Complete',
           description: `Successfully populated ${count} fields with demo data`,
-          variant: 'default'
+          variant: 'success'
         });
       } 
       // For all other form types, use the generic handler

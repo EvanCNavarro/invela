@@ -26,7 +26,18 @@ export function registerKY3PBatchUpdateRoutes() {
    */
   router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
-    const formData = req.body; // object with field_key: value pairs
+    
+    // CRITICAL FIX: Ensure we have the responses object wrapper 
+    // Format should be: { responses: { fieldKey1: value1, ... } }
+    if (!req.body.responses || typeof req.body.responses !== 'object') {
+      console.error(`[KY3P-BATCH-UPDATE] Invalid request format for task ${taskId}. Expected { responses: {...} } format`);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid request: responses is required and must be an object' 
+      });
+    }
+    
+    const formData = req.body.responses; // Get the actual field data from the responses wrapper
     
     console.log(`[KY3P-BATCH-UPDATE] Received batch update request for task ${taskId}`, {
       fieldCount: Object.keys(formData).length
@@ -88,8 +99,8 @@ export function registerKY3PBatchUpdateRoutes() {
           .from(ky3pResponses)
           .where(
             and(
-              eq(ky3pResponses.taskId, taskId),
-              eq(ky3pResponses.fieldId, fieldId)
+              eq(ky3pResponses.task_id, taskId),
+              eq(ky3pResponses.field_id, fieldId)
             )
           );
         

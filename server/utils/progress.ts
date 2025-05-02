@@ -64,26 +64,30 @@ export function determineStatusFromProgress(
     }
   }
   
-  // Standard logic based on progress percentage
+  // CRITICAL FIX: Ensure task status strictly follows business rules:
+  // 0% = Not Started
+  // 1-99% = In Progress
+  // 100% (not submitted) = Ready for Submission
+  // 100% (submitted) = Submitted
   if (progress === 0) {
     console.log(`[STATUS DETERMINATION] Task has 0% progress, setting to NOT_STARTED`);
     return TaskStatus.NOT_STARTED;
-  } else if (progress < 100) {
-    console.log(`[STATUS DETERMINATION] Task has ${progress}% progress (< 100%), setting to IN_PROGRESS`);
+  } else if (progress >= 1 && progress < 100) {
+    console.log(`[STATUS DETERMINATION] Task has ${progress}% progress (1-99%), setting to IN_PROGRESS`);
     return TaskStatus.IN_PROGRESS;
   } else if (progress === 100) {
-    // When we've reached 100% complete, check if this is a new completion or existing status
-    if (currentStatus === TaskStatus.SUBMITTED) {
-      console.log(`[STATUS DETERMINATION] Task already in SUBMITTED status, preserving status`);
+    // Special handling for 100% progress - depends on submission state
+    if (metadata?.submissionDate || metadata?.explicitlySubmitted === true || metadata?.status === 'submitted' || currentStatus === TaskStatus.SUBMITTED) {
+      console.log(`[STATUS DETERMINATION] Task has 100% progress and is submitted, setting to SUBMITTED`);
       return TaskStatus.SUBMITTED;
     } else {
-      console.log(`[STATUS DETERMINATION] Task has 100% progress, setting to READY_FOR_SUBMISSION`);
+      console.log(`[STATUS DETERMINATION] Task has 100% progress but is not submitted, setting to READY_FOR_SUBMISSION`);
       return TaskStatus.READY_FOR_SUBMISSION;
     }
   } else {
     // Fallback case, should never happen with validated progress
-    console.log(`[STATUS DETERMINATION] Unexpected progress value (${progress}), defaulting to IN_PROGRESS`);
-    return TaskStatus.IN_PROGRESS;
+    console.log(`[STATUS DETERMINATION] Unexpected progress value (${progress}), defaulting to NOT_STARTED`);
+    return TaskStatus.NOT_STARTED;
   }
 }
 
