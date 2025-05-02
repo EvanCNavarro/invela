@@ -116,7 +116,7 @@ router.post('/api/open-banking/:taskId/fields/:fieldKey', async (req, res) => {
           );
       } else {
         // Insert a new response
-        const newResponse: Partial<InsertOpenBankingResponse> = {
+        const newResponse = {
           task_id: parseInt(taskId),
           field_id: fieldDefinition.id,
           response_value: value,

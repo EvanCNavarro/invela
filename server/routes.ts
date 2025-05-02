@@ -6,7 +6,7 @@ import fs from 'fs';
 import { db } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
-import openBankingFieldUpdateRouter from './routes/open-banking-field-update';
+// Open Banking field update router is imported below
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';
@@ -49,6 +49,7 @@ import { router as debugRoutesTs } from './routes/debug-routes';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
+import openBankingFieldUpdateRouter from './routes/open-banking-field-update';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
