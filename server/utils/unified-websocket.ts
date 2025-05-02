@@ -256,6 +256,12 @@ export function broadcast(type: string, payload: any): void {
     return;
   }
   
+  // Additional check to make sure the WebSocket server is really ready
+  if (!initialized) {
+    logger.warn(`[WebSocket] Cannot broadcast ${type}, initialization incomplete`);
+    return;
+  }
+  
   // Create standardized message that works with all client implementations
   const timestamp = new Date().toISOString();
   const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
