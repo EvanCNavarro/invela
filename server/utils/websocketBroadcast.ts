@@ -162,6 +162,62 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
             // Ignore errors
           }
         }
+        
+        // Handle requests for missed events
+        if (message.type === 'request_missed_events') {
+          try {
+            // Extract task information
+            const { taskId, formType, lastMessageId } = message;
+            
+            if (!taskId || !formType) {
+              logError('Invalid request_missed_events message: missing taskId or formType');
+              return;
+            }
+            
+            logInfo(`Received request for missed events for task ${taskId} (${formType})`);
+            
+            // Import necessary services to check for recent form submission events
+            import('../services/form-event-cache').then(({ getRecentFormEvents }) => {
+              // Get recent form events for this task
+              getRecentFormEvents(taskId, formType)
+                .then(events => {
+                  if (!events || events.length === 0) {
+                    // No events to send
+                    logInfo(`No recent form events found for task ${taskId}`);
+                    return;
+                  }
+                  
+                  logInfo(`Sending ${events.length} missed form events for task ${taskId}`);
+                  
+                  // Send each event to the client
+                  events.forEach(event => {
+                    try {
+                      // Skip events that may have already been processed
+                      if (lastMessageId && event.messageId === lastMessageId) {
+                        return;
+                      }
+                      
+                      ws.send(JSON.stringify({
+                        type: 'form_submission',
+                        payload: event,
+                        timestamp: new Date().toISOString(),
+                        messageId: event.messageId || `resend_${Date.now()}`
+                      }));
+                    } catch (e) {
+                      logError(`Error sending missed event: ${e}`);
+                    }
+                  });
+                })
+                .catch(err => {
+                  logError(`Error retrieving missed events: ${err}`);
+                });
+            }).catch(err => {
+              logError(`Error importing form-event-cache module: ${err}`);
+            });
+          } catch (e) {
+            logError(`Error handling request_missed_events: ${e}`);
+          }
+        }
       } catch (error) {
         logError('Error parsing message:', error);
       }
