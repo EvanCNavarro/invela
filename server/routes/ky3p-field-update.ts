@@ -128,7 +128,7 @@ export function registerKY3PFieldUpdateRoutes() {
       // Calculate progress percentage based on COMPLETE fields
       const totalFields = fieldCount?.count || 1;
       const completedFields = completedCount?.count || 0;
-      const progressPercentage = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      const progressPercentage = Math.min(100, Math.round((completedFields / totalFields) * 100)); // Using standardized Math.round()
       
       logger.info(`[KY3P API] Progress calculation for task ${taskId}: ${completedFields}/${totalFields} = ${progressPercentage}%`);
       
@@ -292,7 +292,7 @@ export function registerKY3PFieldUpdateRoutes() {
       // Calculate progress percentage based on COMPLETE fields
       const totalFields = fieldCount?.count || 1;
       const completedFields = completedCount?.count || 0;
-      const progressPercentage = Math.min(100, Math.floor((completedFields / totalFields) * 100));
+      const progressPercentage = Math.min(100, Math.round((completedFields / totalFields) * 100)); // Using standardized Math.round()
       
       logger.info(`Progress calculation for task ${taskId}: ${completedFields}/${totalFields} = ${progressPercentage}%`);
       
