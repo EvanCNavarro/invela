@@ -256,6 +256,29 @@ export async function calculateUniversalTaskProgress(
           )
         );
       completedFields = completedResultQuery[0].count;
+      
+      // DIAGNOSTIC: Log detailed KY3P progress calculation
+      console.log(`[ProgressDebug] KY3P detailed calculation for task ${taskId}:`, {
+        totalFields,
+        completedFields,
+        rawPercentage: totalFields > 0 ? (completedFields / totalFields) * 100 : 0,
+        roundedPercentage: totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0,
+        timestamp: new Date().toISOString()
+      });
+      
+      // DIAGNOSTIC: Log the completed responses
+      const detailedResponses = await dbContext
+        .select()
+        .from(ky3pResponses)
+        .where(eq(ky3pResponses.task_id, taskId));
+      
+      console.log(`[ProgressDebug] KY3P responses for task ${taskId}:`, {
+        responseCount: detailedResponses.length,
+        completeCount: detailedResponses.filter(r => r.status === 'COMPLETE').length,
+        incompleteCount: detailedResponses.filter(r => r.status !== 'COMPLETE').length,
+        statuses: detailedResponses.map(r => r.status),
+        timestamp: new Date().toISOString()
+      });
     }
     else { 
       // Default to KYB fields (company_kyb type)
