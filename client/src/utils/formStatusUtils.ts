@@ -1,7 +1,5 @@
 import { TaskStatus } from '@db/schema';
-import getLogger from './logger';
-
-const logger = getLogger('FormStatusUtils');
+import { logger } from './client-logger';
 
 /**
  * UI display names for form/task status values
