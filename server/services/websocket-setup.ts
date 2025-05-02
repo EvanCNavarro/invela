@@ -9,6 +9,7 @@ import { Server } from 'http';
 import { WebSocketServer } from 'ws';
 import * as WebSocketService from './websocket';
 import { logger } from '../utils/logger';
+import { configureTaskWebSocketRoutes } from '../routes/task-websocket';
 
 // Logger is already initialized in the imported module
 
@@ -41,7 +42,10 @@ export function setupWebSocket(server: Server): void {
     // Initialize the WebSocket service with our custom server
     WebSocketService.initializeWebSocketServer(wss);
     
-    logger.info('WebSocket server initialized successfully');
+    // Configure task-specific WebSocket routes for progress calculation and reconciliation
+    configureTaskWebSocketRoutes(server, wss);
+    
+    logger.info('WebSocket server initialized successfully with task routes');
   } catch (error) {
     logger.error('Error setting up WebSocket server:', {
       error: error instanceof Error ? error.message : 'Unknown error',

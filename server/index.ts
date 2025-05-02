@@ -161,6 +161,9 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 // Import deployment helpers for port and host configuration
 import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
 
+// Import task reconciliation system
+import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
+
 // Get the appropriate port and host for the current environment
 const PORT = getDeploymentPort();
 const HOST = getDeploymentHost();
@@ -169,6 +172,14 @@ const HOST = getDeploymentHost();
 server.listen(PORT, HOST, () => {
   log(`Server running on ${HOST}:${PORT}`);
   log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
   // Log additional deployment information
   logDeploymentInfo(PORT, HOST);
+  
+  // Start the periodic task reconciliation system
+  if (process.env.NODE_ENV !== 'test') {
+    log('Starting periodic task reconciliation system...');
+    startPeriodicTaskReconciliation();
+    log('Task reconciliation system initialized successfully');
+  }
 });
