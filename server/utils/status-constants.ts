@@ -16,6 +16,7 @@
 export enum TaskStatus {
   NOT_STARTED = 'not_started',
   IN_PROGRESS = 'in_progress',
+  READY_FOR_SUBMISSION = 'ready_for_submission',
   SUBMITTED = 'submitted',
   APPROVED = 'approved',
   REJECTED = 'rejected',
@@ -51,6 +52,8 @@ export function normalizeTaskStatus(status: string | null | undefined): TaskStat
     return TaskStatus.NOT_STARTED;
   } else if (normalized === 'in progress' || normalized === 'in_progress' || normalized === 'inprogress') {
     return TaskStatus.IN_PROGRESS;
+  } else if (normalized === 'ready for submission' || normalized === 'ready_for_submission' || normalized === 'readyforsubmission') {
+    return TaskStatus.READY_FOR_SUBMISSION;
   } else if (normalized === 'submitted' || normalized === 'complete' || normalized === 'completed') {
     return TaskStatus.SUBMITTED;
   } else if (normalized === 'approved' || normalized === 'accepted') {
