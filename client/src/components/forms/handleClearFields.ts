@@ -47,9 +47,20 @@ export async function handleClearFieldsUtil(
     
     let serverClearSuccess = false;
     
+    // Get information about whether this is a form edit session
+    const isFormEditing = !!(formService as any)?.isEditing || 
+                         !!(formService as any)?.formContext?.isEditing ||
+                         document.location.href.includes('/edit');
+                       
     // If it's a KY3P form with a task ID, try server-side clearing first
     if (isKy3pForm && taskId) {
-      logger.info(`[ClearFields] Detected KY3P form with task ID ${taskId}, using dedicated clear approaches`);
+      logger.info(`[ClearFields] Detected KY3P form with task ID ${taskId}, using dedicated clear approaches`, {
+        isFormEditing
+      });
+      
+      // IMPORTANT ENHANCEMENT: When form is being edited, we want to preserve progress
+      // This fixes the critical bug where form editing resets progress to 0%
+      const preserveProgress = isFormEditing;
       
       // Try multiple approaches for maximum reliability
       
@@ -97,13 +108,20 @@ export async function handleClearFieldsUtil(
       // Approach 2: Try direct KY3P clear endpoint if approach 1 failed
       if (!serverClearSuccess) {
         try {
-          logger.info('[ClearFields] Trying dedicated KY3P clear endpoint');
+          logger.info('[ClearFields] Trying dedicated KY3P clear endpoint', { preserveProgress });
+          
+          // Construct the URL with the preserveProgress parameter if needed
+          let clearUrl = `/api/ky3p/clear-fields/${taskId}`;
+          if (preserveProgress) {
+            clearUrl += '?preserveProgress=true';
+          }
           
           // Call the dedicated KY3P clear endpoint directly
-          const response = await fetch(`/api/ky3p/clear-fields/${taskId}`, {
+          const response = await fetch(clearUrl, {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ preserveProgress })
           });
           
           // Check for server side success
@@ -121,13 +139,20 @@ export async function handleClearFieldsUtil(
       // Approach 3: Try alternative clear endpoint if other approaches failed
       if (!serverClearSuccess) {
         try {
-          logger.info('[ClearFields] Trying alternative task clear endpoint');
+          logger.info('[ClearFields] Trying alternative task clear endpoint', { preserveProgress });
           
           // Try the generic task clear endpoint as a fallback
-          const response = await fetch(`/api/tasks/${taskId}/clear`, {
+          // For KY3P tasks, also include preserveProgress in query and body
+          let clearUrl = `/api/tasks/${taskId}/clear`;
+          if (preserveProgress) {
+            clearUrl += '?preserveProgress=true';
+          }
+          
+          const response = await fetch(clearUrl, {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ preserveProgress, taskId, formType: 'ky3p' })
           });
           
           if (response.ok) {
@@ -184,15 +209,21 @@ export async function handleClearFieldsUtil(
  * 
  * @param taskId The task ID
  * @param formType The form type (kyb, ky3p, open_banking)
+ * @param options Additional options for the clear operation
  * @returns Result of the clearing operation
  */
 export async function directClearFields(
   taskId: number,
-  formType: string
+  formType: string,
+  options: {
+    preserveProgress?: boolean;
+    isFormEditing?: boolean;
+  } = {}
 ): Promise<{
   success: boolean;
   message: string;
   taskId: number;
+  preservedProgress?: number;
 }> {
   try {
     const normalizedFormType = formType.toLowerCase().replace('_', '-');
@@ -221,12 +252,37 @@ export async function directClearFields(
     
     logger.info(`[DirectClearFields] Using endpoint ${apiEndpoint} for task ${taskId}`);
     
+    // Determine if we should preserve progress (for KY3P form editing)
+    const preserveProgress = options.preserveProgress || options.isFormEditing;
+    
+    // For KY3P forms, add preserveProgress parameter when needed
+    const isKy3pForm = normalizedFormType === 'ky3p' || 
+                       normalizedFormType === 'sp-ky3p-assessment' ||
+                       normalizedFormType === 'security-assessment' ||
+                       normalizedFormType === 'security';
+                       
+    // Log what we're doing
+    if (isKy3pForm && preserveProgress) {
+      logger.info(`[DirectClearFields] KY3P form with preserveProgress=true for task ${taskId}`);
+    }
+    
+    // Add query parameter for KY3P forms when preserving progress
+    if (isKy3pForm && preserveProgress) {
+      // Add the preserveProgress parameter to the URL
+      if (!apiEndpoint.includes('?')) {
+        apiEndpoint += '?preserveProgress=true';
+      } else {
+        apiEndpoint += '&preserveProgress=true';
+      }
+    }
+    
     // Call the API to clear the fields
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      body: isKy3pForm ? JSON.stringify({ preserveProgress }) : undefined,
       credentials: 'include' // Important to include credentials for authentication
     });
     
@@ -268,10 +324,14 @@ export async function directClearFields(
       result = { success: true };
     }
     
+    // Extract the preserved progress if available
+    const preservedProgress = result?.preservedProgress || undefined;
+    
     return {
       success: true,
-      message: `Successfully cleared ${formType} fields for task ${taskId}`,
-      taskId
+      message: `Successfully cleared ${formType} fields for task ${taskId}${preserveProgress ? ' (preserved progress)' : ''}`,
+      taskId,
+      preservedProgress
     };
   } catch (error) {
     logger.error(`[DirectClearFields] Error clearing task ${taskId}:`, error);
