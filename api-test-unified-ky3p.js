@@ -5,21 +5,21 @@
  * the API endpoints and checking if progress is calculated and persisted correctly.
  */
 
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
-// Colors for console output
+// ANSI colors for prettier output
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
-  green: '\x1b[32m',
+  dim: '\x1b[2m',
   red: '\x1b[31m',
+  green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
+  cyan: '\x1b[36m'
 };
 
-// Log with colors and formatting
 function log(message, color = colors.reset) {
   console.log(`${color}${message}${colors.reset}`);
 }
@@ -28,7 +28,9 @@ function log(message, color = colors.reset) {
  * Login to the application to get a session
  */
 async function login() {
-  const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+  log('Logging in...', colors.blue);
+  
+  const response = await fetch('http://localhost:5000/api/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -39,196 +41,173 @@ async function login() {
     })
   });
   
-  if (loginResponse.ok) {
-    log('Successfully logged in', colors.green);
-    return true;
-  } else {
-    log('Login failed - continuing anonymously', colors.yellow);
-    return false;
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Login failed: ${error}`);
   }
+  
+  const cookies = response.headers.get('set-cookie');
+  
+  if (!cookies) {
+    throw new Error('No cookies returned from login');
+  }
+  
+  log('Login successful!', colors.green);
+  return cookies;
 }
 
 /**
  * Find a KY3P task to test with
  */
-async function findKy3pTask() {
-  try {
-    log('\nLooking for a KY3P task...', colors.blue);
-    
-    // Call the API to list tasks - this may require authentication
-    const tasksResponse = await fetch('http://localhost:5000/api/tasks');
-    
-    if (!tasksResponse.ok) {
-      log(`Failed to get tasks: ${tasksResponse.status} ${tasksResponse.statusText}`, colors.red);
-      
-      // Try a direct database query via the debug endpoint
-      const debugResponse = await fetch('http://localhost:5000/api/debug/ky3p-tasks');
-      
-      if (!debugResponse.ok) {
-        log('Could not get KY3P tasks even with debug endpoint', colors.red);
-        return null;
-      }
-      
-      const tasks = await debugResponse.json();
-      
-      if (!tasks || tasks.length === 0) {
-        log('No KY3P tasks found via debug endpoint', colors.red);
-        return null;
-      }
-      
-      log(`Found ${tasks.length} KY3P tasks via debug endpoint`, colors.green);
-      return tasks[0];
+async function findKy3pTask(cookies) {
+  log('Looking for a KY3P task...', colors.blue);
+  
+  const response = await fetch('http://localhost:5000/api/debug/ky3p-tasks', {
+    headers: {
+      'Cookie': cookies
     }
-    
-    const tasks = await tasksResponse.json();
-    
-    if (!Array.isArray(tasks)) {
-      log('Tasks response is not an array', colors.red);
-      return null;
-    }
-    
-    const ky3pTask = tasks.find(task => task.task_type === 'ky3p');
-    
-    if (!ky3pTask) {
-      log('No KY3P tasks found', colors.red);
-      return null;
-    }
-    
-    log(`Found KY3P task #${ky3pTask.id}: ${ky3pTask.title || 'No title'}`, colors.green);
-    return ky3pTask;
-  } catch (error) {
-    log(`Error finding KY3P task: ${error.message}`, colors.red);
-    return null;
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to fetch KY3P tasks: ${error}`);
   }
+  
+  const data = await response.json();
+  
+  if (!data.tasks || data.tasks.length === 0) {
+    throw new Error('No KY3P tasks found');
+  }
+  
+  // Get the most recently created KY3P task
+  const task = data.tasks.sort((a, b) => 
+    new Date(b.created_at) - new Date(a.created_at)
+  )[0];
+  
+  log(`Found KY3P task: #${task.id} - ${task.task_name}`, colors.green);
+  return task;
 }
 
 /**
  * Get KY3P field definitions
  */
-async function getKy3pFields() {
-  try {
-    log('\nFetching KY3P field definitions...', colors.blue);
-    
-    const fieldsResponse = await fetch('http://localhost:5000/api/ky3p/field-definitions');
-    
-    if (!fieldsResponse.ok) {
-      log(`Failed to get fields: ${fieldsResponse.status} ${fieldsResponse.statusText}`, colors.red);
-      return null;
+async function getKy3pFields(cookies) {
+  log('Getting KY3P field definitions...', colors.blue);
+  
+  const response = await fetch('http://localhost:5000/api/ky3p/fields', {
+    headers: {
+      'Cookie': cookies
     }
-    
-    const fields = await fieldsResponse.json();
-    
-    if (!Array.isArray(fields)) {
-      log('Fields response is not an array', colors.red);
-      return null;
-    }
-    
-    log(`Found ${fields.length} KY3P field definitions`, colors.green);
-    return fields;
-  } catch (error) {
-    log(`Error getting KY3P fields: ${error.message}`, colors.red);
-    return null;
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to fetch KY3P fields: ${error}`);
   }
+  
+  const data = await response.json();
+  
+  if (!data.fields || data.fields.length === 0) {
+    throw new Error('No KY3P fields found');
+  }
+  
+  log(`Found ${data.fields.length} KY3P fields`, colors.green);
+  return data.fields;
 }
 
 /**
  * Update fields using the unified KY3P update endpoint
  */
-async function updateFields(taskId, fields) {
-  try {
-    log('\nUpdating KY3P fields via unified endpoint...', colors.blue);
-    
-    // Select 5 random fields with valid field_key to update
-    const fieldsToUpdate = fields
-      .filter(field => field.field_key && field.field_key.length > 0)
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 5);
-      
-    if (fieldsToUpdate.length === 0) {
-      log('No valid fields to update', colors.red);
-      return false;
-    }
-    
-    log(`Selected ${fieldsToUpdate.length} fields to update:`, colors.cyan);
-    
-    // Create response data
-    const formData = {};
-    
-    fieldsToUpdate.forEach(field => {
-      formData[field.field_key] = `Test value for ${field.field_key} - ${new Date().toISOString()}`;
-      log(` - ${field.field_key}: ${field.label || field.display_name || field.question}`, colors.cyan);
-    });
-    
-    // Call the unified update endpoint
-    const updateResponse = await fetch(`http://localhost:5000/api/ky3p/unified-update/${taskId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ responses: formData })
-    });
-    
-    if (!updateResponse.ok) {
-      log(`Failed to update fields: ${updateResponse.status} ${updateResponse.statusText}`, colors.red);
-      return false;
-    }
-    
-    const updateResult = await updateResponse.json();
-    
-    if (!updateResult.success) {
-      log(`Update failed: ${updateResult.message}`, colors.red);
-      return false;
-    }
-    
-    log(`Successfully updated ${updateResult.processedCount} fields`, colors.green);
-    return true;
-  } catch (error) {
-    log(`Error updating fields: ${error.message}`, colors.red);
-    return false;
+async function updateFields(taskId, fields, cookies) {
+  log(`Updating KY3P fields for task #${taskId}...`, colors.blue);
+  
+  // Pick 20 random fields to update
+  const fieldsToUpdate = fields
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 20)
+    .map(field => ({
+      fieldId: field.id,
+      taskId,
+      value: `Test value for field ${field.id}`,
+      status: 'COMPLETE'
+    }));
+  
+  const response = await fetch(`http://localhost:5000/api/unified-ky3p/update/${taskId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Cookie': cookies
+    },
+    body: JSON.stringify({
+      fields: fieldsToUpdate
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to update KY3P fields: ${error}`);
   }
+  
+  const data = await response.json();
+  
+  log(`Updated ${fieldsToUpdate.length} KY3P fields with status: ${data.success ? 'SUCCESS' : 'FAILURE'}`, 
+    data.success ? colors.green : colors.red);
+    
+  return data;
 }
 
 /**
  * Check if the task progress was updated correctly
  */
-async function checkTaskProgress(taskId, initialProgress) {
-  try {
-    log('\nVerifying task progress update...', colors.blue);
-    
-    // Wait a moment for progress to be calculated
-    log('Waiting 2 seconds for progress to be calculated...', colors.cyan);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Get the updated task
-    const taskResponse = await fetch(`http://localhost:5000/api/tasks/${taskId}`);
-    
-    if (!taskResponse.ok) {
-      log(`Failed to get updated task: ${taskResponse.status} ${taskResponse.statusText}`, colors.red);
-      return false;
-    }
-    
-    const updatedTask = await taskResponse.json();
-    
-    log(`Initial progress: ${initialProgress}%`, colors.yellow);
-    log(`Current progress: ${updatedTask.progress}%`, colors.green);
-    log(`Task status: ${updatedTask.status}`, colors.cyan);
-    
-    // Check if progress was updated
-    if (updatedTask.progress > initialProgress) {
-      log('\n✅ SUCCESS: Progress increased as expected!', colors.bright + colors.green);
-      return true;
-    } else if (updatedTask.progress === initialProgress) {
-      log('\n⚠️ WARNING: Progress remained the same.', colors.yellow);
-      log('This could be normal if responses were already complete or all fields were filled.', colors.yellow);
-      return true;
-    } else {
-      log('\n❌ ERROR: Progress decreased unexpectedly!', colors.bright + colors.red);
-      return false;
-    }
-  } catch (error) {
-    log(`Error checking task progress: ${error.message}`, colors.red);
-    return false;
+async function checkTaskProgress(taskId, initialProgress, cookies) {
+  log(`Checking task progress for task #${taskId}...`, colors.blue);
+  
+  const response = await fetch(`http://localhost:5000/api/debug/test-unified-progress`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Cookie': cookies
+    },
+    body: JSON.stringify({
+      taskId,
+      taskType: 'ky3p',
+      debug: true,
+      forceUpdate: false
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to check task progress: ${error}`);
   }
+  
+  const data = await response.json();
+  
+  const progressChanged = data.updatedProgress !== initialProgress;
+  log(`Task #${taskId} progress: ${initialProgress}% -> ${data.updatedProgress}%`, 
+    progressChanged ? colors.green : colors.yellow);
+  log(`Task #${taskId} status: ${data.initialStatus} -> ${data.updatedStatus}`, 
+    data.initialStatus !== data.updatedStatus ? colors.green : colors.yellow);
+  
+  // Verify if the calculation is correct
+  const expectedProgress = Math.round((data.fieldCounts.completed / data.fieldCounts.total) * 100);
+  const progressIsCorrect = Math.abs(data.updatedProgress - expectedProgress) <= 1; // Allow for rounding differences
+  
+  log(`Field counts: ${data.fieldCounts.completed}/${data.fieldCounts.total} = ${expectedProgress}%`, 
+    progressIsCorrect ? colors.green : colors.red);
+  
+  if (!progressIsCorrect) {
+    log(`WARNING: Progress doesn't match expected value (${data.updatedProgress}% vs ${expectedProgress}%)`, 
+      colors.red);
+  }
+  
+  return {
+    success: progressChanged && progressIsCorrect,
+    initialProgress,
+    updatedProgress: data.updatedProgress,
+    expectedProgress,
+    fieldCounts: data.fieldCounts
+  };
 }
 
 /**
@@ -236,53 +215,50 @@ async function checkTaskProgress(taskId, initialProgress) {
  */
 async function runTest() {
   try {
-    log('=== Testing Unified KY3P Update API ===', colors.bright + colors.magenta);
+    log('\n===== TESTING UNIFIED KY3P PROGRESS SYSTEM =====\n', colors.bright + colors.cyan);
     
-    // Try to log in (optional)
-    await login();
+    // Step 1: Login to get cookies
+    const cookies = await login();
     
-    // Find a KY3P task to test with
-    const task = await findKy3pTask();
-    
-    if (!task) {
-      log('\n❌ Test aborted: Could not find a KY3P task', colors.bright + colors.red);
-      return;
-    }
-    
+    // Step 2: Find a KY3P task to test
+    const task = await findKy3pTask(cookies);
+    const taskId = task.id;
     const initialProgress = task.progress;
     
-    // Get KY3P field definitions
-    const fields = await getKy3pFields();
+    log(`\nInitial task state:`, colors.magenta);
+    log(`- Task ID: ${taskId}`);
+    log(`- Task Name: ${task.task_name}`);
+    log(`- Progress: ${initialProgress}%`);
+    log(`- Status: ${task.status}\n`);
     
-    if (!fields || fields.length === 0) {
-      log('\n❌ Test aborted: Could not get KY3P field definitions', colors.bright + colors.red);
-      return;
-    }
+    // Step 3: Get KY3P field definitions
+    const fields = await getKy3pFields(cookies);
     
-    // Update fields
-    const updateSuccess = await updateFields(task.id, fields);
+    // Step 4: Update some fields using the unified endpoint
+    const updateResult = await updateFields(taskId, fields, cookies);
     
-    if (!updateSuccess) {
-      log('\n❌ Test failed: Could not update fields', colors.bright + colors.red);
-      return;
-    }
+    // Step 5: Check if task progress was updated correctly
+    const progressResult = await checkTaskProgress(taskId, initialProgress, cookies);
     
-    // Check if progress was updated
-    const progressUpdated = await checkTaskProgress(task.id, initialProgress);
+    // Step 6: Print test summary
+    log('\n===== TEST SUMMARY =====\n', colors.bright + colors.cyan);
+    log(`Task ID: ${taskId}`);
+    log(`Fields updated: ${updateResult.updated || 0} (${updateResult.success ? 'SUCCESS' : 'FAILURE'})`);
+    log(`Progress change: ${initialProgress}% -> ${progressResult.updatedProgress}%`);
+    log(`Progress calculation: ${progressResult.fieldCounts.completed}/${progressResult.fieldCounts.total} = ${progressResult.expectedProgress}%`);
+    log(`Progress verification: ${progressResult.success ? 'PASS' : 'FAIL'}`);
     
-    // Final result
-    if (progressUpdated) {
-      log('\n✅ Test passed: Unified KY3P Progress implementation is working!', colors.bright + colors.green);
+    if (progressResult.success) {
+      log('\n✅ TEST PASSED - Unified KY3P progress system is working correctly!', colors.bright + colors.green);
     } else {
-      log('\n❌ Test failed: Unified KY3P Progress implementation has issues.', colors.bright + colors.red);
+      log('\n❌ TEST FAILED - Progress calculation or persistence not working correctly', colors.bright + colors.red);
     }
+    
   } catch (error) {
-    log(`\n❌ Test error: ${error.message}`, colors.bright + colors.red);
+    log(`\n❌ TEST ERROR: ${error.message}`, colors.bright + colors.red);
     console.error(error);
   }
 }
 
 // Run the test
-runTest().then(() => {
-  log('\n=== Test Complete ===', colors.bright + colors.blue);
-});
+runTest();

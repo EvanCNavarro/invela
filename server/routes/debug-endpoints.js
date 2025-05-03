@@ -5,29 +5,36 @@
  * They should NOT be enabled in production environments.
  */
 
-import { Router } from 'express';
-import { db } from '@db';
-import { tasks, ky3pFields, ky3pResponses } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+const express = require('express');
+const { updateTaskProgressAndBroadcast } = require('../utils/unified-task-progress');
+const router = express.Router();
 
-const router = Router();
+// Import database and schema
+const { db } = require('@db');
+const { tasks, ky3pResponses, kybResponses, ky3pFields, kybFields, openBankingResponses, openBankingFields } = require('@db/schema');
+const { eq, and, count } = require('drizzle-orm');
 
 /**
  * Get all KY3P tasks for testing purposes
  */
 router.get('/ky3p-tasks', async (req, res) => {
   try {
-    const ky3pTasks = await db
+    const tasksList = await db
       .select()
       .from(tasks)
-      .where(eq(tasks.task_type, 'ky3p'))
-      .limit(10);
-    
-    // Return the tasks
-    return res.json(ky3pTasks);
+      .where(eq(tasks.task_type, 'ky3p'));
+      
+    return res.json({
+      success: true,
+      count: tasksList.length,
+      tasks: tasksList
+    });
   } catch (error) {
-    console.error('[Debug] Error fetching KY3P tasks:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error(`[DebugEndpoints] Error fetching KY3P tasks:`, error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
@@ -39,167 +46,148 @@ router.get('/ky3p-fields', async (req, res) => {
     const fields = await db
       .select()
       .from(ky3pFields)
-      .limit(20);
-    
-    return res.json(fields);
+      .limit(100);
+      
+    return res.json({
+      success: true,
+      count: fields.length,
+      fields
+    });
   } catch (error) {
-    console.error('[Debug] Error fetching KY3P fields:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error(`[DebugEndpoints] Error fetching KY3P fields:`, error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
 /**
- * Direct test endpoint for the unified KY3P progress system
+ * Direct test endpoint for the unified task progress system
  */
-router.post('/test-unified-ky3p-progress/:taskId', async (req, res) => {
+router.post('/test-unified-progress', async (req, res) => {
+  const { taskId, taskType, forceUpdate = false, debug = true } = req.body;
+  
+  if (!taskId || !taskType) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing required parameters: taskId and taskType'
+    });
+  }
+  
   try {
-    const taskId = parseInt(req.params.taskId);
+    console.log(`[DebugEndpoints] Testing unified progress for task ${taskId} (${taskType})`);
     
-    if (isNaN(taskId)) {
-      return res.status(400).json({ success: false, message: 'Invalid task ID' });
-    }
-    
-    console.log(`[Debug] Testing unified KY3P progress for task ${taskId}`);
-    
-    // Get the task before any changes
-    const [taskBefore] = await db
+    // Get initial task state for comparison
+    const [task] = await db
       .select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
       
-    if (!taskBefore) {
-      return res.status(404).json({ success: false, message: 'Task not found' });
-    }
-    
-    console.log(`[Debug] Initial task state:`, {
-      id: taskBefore.id,
-      status: taskBefore.status,
-      progress: taskBefore.progress
-    });
-    
-    // Get a random KY3P field to update
-    const fields = await db
-      .select()
-      .from(ky3pFields)
-      .limit(5);
-      
-    if (!fields || fields.length === 0) {
-      return res.status(404).json({ success: false, message: 'No KY3P fields found' });
-    }
-    
-    // Pick a random field
-    const field = fields[Math.floor(Math.random() * fields.length)];
-    console.log(`[Debug] Selected field:`, {
-      id: field.id,
-      field_key: field.field_key,
-      category: field.category
-    });
-    
-    // Add a test response
-    const timestamp = new Date();
-    const [existingResponse] = await db
-      .select()
-      .from(ky3pResponses)
-      .where(
-        and(
-          eq(ky3pResponses.task_id, taskId),
-          eq(ky3pResponses.field_id, field.id)
-        )
-      );
-      
-    if (existingResponse) {
-      console.log(`[Debug] Updating existing response for field ${field.id}`);
-      await db
-        .update(ky3pResponses)
-        .set({
-          response_value: `Test value updated at ${timestamp.toISOString()}`,
-          status: 'COMPLETE',
-          updated_at: timestamp
-        })
-        .where(
-          and(
-            eq(ky3pResponses.task_id, taskId),
-            eq(ky3pResponses.field_id, field.id)
-          )
-        );
-    } else {
-      console.log(`[Debug] Adding new response for field ${field.id}`);
-      await db
-        .insert(ky3pResponses)
-        .values({
-          task_id: taskId,
-          field_id: field.id,
-          response_value: `Test value created at ${timestamp.toISOString()}`,
-          status: 'COMPLETE',
-          created_at: timestamp,
-          updated_at: timestamp
-        });
-    }
-    
-    // Import the unified task progress module
-    const { updateTaskProgress } = await import('../utils/unified-task-progress.js');
-    
-    // Call the unified progress update function
-    console.log(`[Debug] Calling unified progress update function`);
-    const updateResult = await updateTaskProgress(taskId, 'ky3p', {
-      debug: true,
-      forceUpdate: true,
-      metadata: {
-        testRun: true,
-        timestamp: timestamp.toISOString()
-      }
-    });
-    
-    console.log(`[Debug] Progress update result:`, updateResult);
-    
-    // Get the task after update
-    const [taskAfter] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-      
-    if (!taskAfter) {
-      return res.status(500).json({
+    if (!task) {
+      return res.status(404).json({
         success: false,
-        message: 'Task was deleted during the test',
-        updateResult
+        error: `Task ${taskId} not found`
       });
     }
     
-    console.log(`[Debug] Final task state:`, {
-      id: taskAfter.id,
-      status: taskAfter.status,
-      progress: taskAfter.progress
+    const initialProgress = task.progress;
+    const initialStatus = task.status;
+    
+    // Count completed responses for this task
+    let completedCount = 0;
+    let totalFields = 0;
+    
+    if (taskType === 'ky3p') {
+      const [result] = await db
+        .select({ count: count() })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.status, 'COMPLETE')
+          )
+        );
+      completedCount = result?.count || 0;
+      
+      // Get total field count
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(ky3pFields);
+      totalFields = totalResult?.count || 0;
+    } 
+    else if (taskType === 'company_kyb') {
+      const [result] = await db
+        .select({ count: count() })
+        .from(kybResponses)
+        .where(
+          and(
+            eq(kybResponses.task_id, taskId),
+            eq(kybResponses.status, 'COMPLETE')
+          )
+        );
+      completedCount = result?.count || 0;
+      
+      // Get total field count
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(kybFields);
+      totalFields = totalResult?.count || 0;
+    }
+    else if (taskType === 'open_banking') {
+      const [result] = await db
+        .select({ count: count() })
+        .from(openBankingResponses)
+        .where(
+          and(
+            eq(openBankingResponses.task_id, taskId),
+            eq(openBankingResponses.status, 'COMPLETE')
+          )
+        );
+      completedCount = result?.count || 0;
+      
+      // Get total field count
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(openBankingFields);
+      totalFields = totalResult?.count || 0;
+    }
+    
+    // Call the unified progress update function
+    const result = await updateTaskProgressAndBroadcast(taskId, taskType, {
+      debug,
+      forceUpdate
     });
     
-    // Return the test results
+    // Get updated task state
+    const [updatedTask] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
     return res.json({
       success: true,
       taskId,
-      fieldUpdated: field.id,
-      initialState: {
-        status: taskBefore.status,
-        progress: taskBefore.progress
+      taskType,
+      initialProgress,
+      initialStatus,
+      updatedProgress: updatedTask.progress,
+      updatedStatus: updatedTask.status,
+      fieldCounts: {
+        completed: completedCount,
+        total: totalFields,
+        calculatedPercentage: totalFields > 0 ? Math.round((completedCount / totalFields) * 100) : 0
       },
-      progressUpdateResult: updateResult,
-      finalState: {
-        status: taskAfter.status,
-        progress: taskAfter.progress
-      },
-      conclusion: {
-        progressChanged: taskBefore.progress !== taskAfter.progress,
-        statusChanged: taskBefore.status !== taskAfter.status,
-        persistenceWorking: updateResult.success && updateResult.progress === taskAfter.progress
-      }
+      result
     });
   } catch (error) {
-    console.error('[Debug] Error in unified KY3P progress test:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: `Error testing unified KY3P progress: ${error.message}`,
-      stack: error.stack
+    console.error(`[DebugEndpoints] Error testing unified progress:`, error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
 
-export default router;
+// Important: Only register these routes in development environments
+module.exports = router;
