@@ -93,7 +93,11 @@ export async function handleClearFieldsUtil(
         }
         
         // Use standardized bulk update to clear all fields at once
-        const success = await standardizedBulkUpdate(taskId, emptyData);
+        // Pass preserveProgress flag when form is being edited to prevent progress reset
+        const success = await standardizedBulkUpdate(taskId, emptyData, {
+          preserveProgress, // Pass through the preserveProgress flag
+          isFormEditing
+        });
         
         if (success) {
           logger.info('[ClearFields] Successfully cleared all fields via standardized bulk update');
