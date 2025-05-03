@@ -21,99 +21,102 @@ const colors = {
   cyan: '\x1b[36m',
 };
 
-// Log with colors and formatting
 function log(message, color = colors.reset) {
   console.log(`${color}${message}${colors.reset}`);
 }
 
 async function testUnifiedKy3pUpdate() {
   try {
-    // Step 1: Find a KY3P task to test with
-    log('Fetching tasks...', colors.blue);
-    const tasksResponse = await fetch('http://localhost:5000/api/tasks');
+    log('=== Testing Unified KY3P Progress Implementation ===', colors.bright + colors.magenta);
+
+    // 1. Find a KY3P task to test with
+    log('\nLooking for a KY3P task...', colors.blue);
+    
+    // Use the debug endpoint
+    const tasksResponse = await fetch('http://localhost:5000/api/debug/ky3p-tasks');
+    
+    if (!tasksResponse.ok) {
+      log(`Failed to get tasks: ${tasksResponse.status} ${tasksResponse.statusText}`, colors.red);
+      return;
+    }
+    
     const tasks = await tasksResponse.json();
     
-    // Find a KY3P task
-    const ky3pTask = tasks.find(task => task.task_type === 'ky3p');
-    
-    if (!ky3pTask) {
-      log('No KY3P task found. Creating a test task would be required.', colors.red);
+    if (!tasks || tasks.length === 0) {
+      log('No KY3P tasks found', colors.red);
       return;
     }
     
-    log(`Found KY3P task: #${ky3pTask.id} - ${ky3pTask.title}`, colors.green);
-    log(`Current progress: ${ky3pTask.progress}%`, colors.cyan);
+    // Find a task with progress < 100%
+    const task = tasks.find(t => t.progress < 100) || tasks[0];
     
-    // Get available fields
-    log('\nFetching KY3P fields...', colors.blue);
-    const fieldsResponse = await fetch(`http://localhost:5000/api/ky3p/field-definitions`);
-    const fields = await fieldsResponse.json();
+    log(`Found KY3P task #${task.id}: Progress = ${task.progress}%, Status = ${task.status}`, colors.green);
     
-    log(`Found ${fields.length} field definitions`, colors.green);
+    // 2. Test the progress update via direct test endpoint
+    log('\nTesting unified KY3P progress update...', colors.blue);
     
-    // Take 5 random fields to update
-    const fieldsToUpdate = fields
-      .filter(field => field.field_key && field.field_key.length > 0)
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 5);
-      
-    log(`Selected ${fieldsToUpdate.length} fields to update:`, colors.cyan);
-    fieldsToUpdate.forEach(field => {
-      log(` - ${field.field_key}: ${field.label || field.display_name || field.question}`, colors.cyan);
-    });
-    
-    // Create form data object
-    const formData = {};
-    fieldsToUpdate.forEach(field => {
-      formData[field.field_key] = `Test value for ${field.field_key} - ${new Date().toISOString()}`;
-    });
-    
-    // Step 2: Update fields via the unified endpoint
-    log('\nUpdating fields via unified endpoint...', colors.blue);
-    const updateResponse = await fetch(`http://localhost:5000/api/ky3p/unified-update/${ky3pTask.id}`, {
+    const progressTestUrl = `http://localhost:5000/api/debug/test-unified-ky3p-progress/${task.id}`;
+    const progressResponse = await fetch(progressTestUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ responses: formData })
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        testRun: true
+      })
     });
     
-    const updateResult = await updateResponse.json();
-    
-    if (updateResult.success) {
-      log(`Successfully updated ${updateResult.processedCount} fields`, colors.green);
-      log(JSON.stringify(updateResult, null, 2), colors.cyan);
-    } else {
-      log(`Error updating fields: ${updateResult.message}`, colors.red);
-      log(JSON.stringify(updateResult, null, 2), colors.red);
+    if (!progressResponse.ok) {
+      log(`Progress test failed: ${progressResponse.status} ${progressResponse.statusText}`, colors.red);
+      try {
+        const errorText = await progressResponse.text();
+        log(`Error details: ${errorText}`, colors.red);
+      } catch (e) {}
       return;
     }
     
-    // Step 3: Verify task progress was updated
-    log('\nVerifying task progress...', colors.blue);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for progress to be calculated
+    const testResult = await progressResponse.json();
     
-    const updatedTaskResponse = await fetch(`http://localhost:5000/api/tasks/${ky3pTask.id}`);
-    const updatedTask = await updatedTaskResponse.json();
+    log('\nTest Result:', colors.cyan);
+    log(`Initial State: Progress = ${testResult.initialState.progress}%, Status = ${testResult.initialState.status}`, colors.yellow);
+    log(`Final State: Progress = ${testResult.finalState.progress}%, Status = ${testResult.finalState.status}`, colors.green);
     
-    log(`Previous progress: ${ky3pTask.progress}%`, colors.yellow);
-    log(`Current progress: ${updatedTask.progress}%`, colors.green);
+    // 3. Analyze the result
+    log('\nAnalysis:', colors.blue);
     
-    // Check if progress was persisted correctly
-    if (updatedTask.progress > ky3pTask.progress) {
-      log('\n✅ SUCCESS: Progress was correctly updated and persisted!', colors.bright + colors.green);
-    } else if (updatedTask.progress === ky3pTask.progress) {
-      log('\n⚠️ WARNING: Progress remained the same. This might be expected if the fields were already completed.', colors.yellow);
+    if (testResult.conclusion.progressChanged) {
+      log('✅ Progress was updated correctly', colors.green);
     } else {
-      log('\n❌ ERROR: Progress decreased or was not updated correctly.', colors.red);
+      log('⚠️ Progress remained the same, which could be normal if the field was already complete', colors.yellow);
     }
     
-    log(`\nFinal task state: ${updatedTask.status} - ${updatedTask.progress}%`, colors.bright + colors.blue);
+    if (testResult.conclusion.statusChanged) {
+      log('✅ Task status was updated based on progress', colors.green);
+    } else {
+      log('ℹ️ Task status remained the same', colors.reset);
+    }
+    
+    if (testResult.conclusion.persistenceWorking) {
+      log('✅ Progress persistence is working correctly', colors.green);
+    } else {
+      log('❌ Progress persistence failed - the updated value was not saved to the database', colors.red);
+    }
+    
+    // Final evaluation
+    if (testResult.success && testResult.conclusion.persistenceWorking) {
+      log('\n✅ Unified KY3P Progress implementation is working correctly!', colors.bright + colors.green);
+    } else {
+      log('\n❌ Unified KY3P Progress implementation has issues.', colors.bright + colors.red);
+    }
+    
   } catch (error) {
-    log(`Error during test: ${error.message}`, colors.red);
+    log(`\n❌ Test error: ${error.message}`, colors.bright + colors.red);
     console.error(error);
   }
 }
 
-log('=== Testing Unified KY3P Update ===', colors.bright + colors.magenta);
+// Run the test
 testUnifiedKy3pUpdate().then(() => {
-  log('\nTest completed.', colors.bright + colors.green);
+  log('\n=== Test Complete ===', colors.bright + colors.blue);
 });

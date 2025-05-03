@@ -1,354 +1,339 @@
 /**
- * Unified Task Progress Module
+ * Unified Task Progress Calculation
  * 
- * This module provides a standardized implementation for progress calculation and persistence
- * that works consistently across all form types (KYB, KY3P, Open Banking).
+ * This module implements a standardized approach to calculate and update task progress
+ * for all form types (KYB, KY3P, Open Banking) in a consistent manner.
  * 
- * Core features:
- * 1. Single transaction boundary for all operations
- * 2. Consistent progress calculation logic
- * 3. Proper enum value handling
- * 4. Uniform status determination
- * 5. Reliable WebSocket broadcasting
+ * Key features:
+ * - Single source of truth for progress calculation
+ * - Proper transaction boundaries for atomic operations
+ * - WebSocket broadcast for progress updates to all connected clients
+ * - Standardized status mapping based on progress values
+ * - Diagnostics for troubleshooting
+ * 
+ * Used by:
+ * - Form field updates
+ * - Form submissions
+ * - Form clearing/reset
+ * - Demo auto-fill
  */
 
 import { db } from '@db';
-import { TaskStatus } from '../types';
-import { tasks, kybResponses, ky3pResponses, openBankingResponses, KYBFieldStatus } from '@db/schema';
-import { eq, and, or, sql } from 'drizzle-orm';
-import { logger } from './logger';
-import * as WebSocketService from '../services/websocket';
+import { sql, eq, and, count, SQL } from 'drizzle-orm';
+import {
+  tasks,
+  kybResponses,
+  ky3pResponses,
+  openBankingResponses,
+  kybFields,
+  ky3pFields, 
+  openBankingFields,
+} from '@db/schema';
 
-interface ProgressOptions {
-  forceUpdate?: boolean;
-  debug?: boolean;
-  metadata?: Record<string, any>;
-  allowDecrease?: boolean;
-  diagnosticId?: string;
-  skipBroadcast?: boolean;
+// Import WebSocket utilities
+import { broadcast } from '../utils/unified-websocket';
+
+// Constants for task status
+export const TaskStatus = {
+  NOT_STARTED: 'not_started',
+  IN_PROGRESS: 'in_progress',
+  READY_FOR_SUBMISSION: 'ready_for_submission',
+  SUBMITTED: 'submitted',
+  REJECTED: 'rejected',
+  APPROVED: 'approved',
+  ARCHIVED: 'archived',
+};
+
+/**
+ * Normalize a task status string to ensure consistent casing and format
+ */
+export function normalizeTaskStatus(status: string | null | undefined): string {
+  if (!status) return TaskStatus.NOT_STARTED;
+  
+  // Convert to lowercase for case-insensitive comparison
+  const normalizedStatus = status.toLowerCase();
+  
+  // Map to our standardized status values
+  switch (normalizedStatus) {
+    case 'not_started': 
+    case 'notstarted': 
+    case 'not started': 
+      return TaskStatus.NOT_STARTED;
+    case 'in_progress': 
+    case 'inprogress':
+    case 'in progress': 
+      return TaskStatus.IN_PROGRESS;
+    case 'ready_for_submission':
+    case 'readyforsubmission':
+    case 'ready for submission':
+      return TaskStatus.READY_FOR_SUBMISSION;
+    case 'submitted': 
+      return TaskStatus.SUBMITTED;
+    case 'rejected': 
+      return TaskStatus.REJECTED;
+    case 'approved': 
+      return TaskStatus.APPROVED;
+    case 'archived': 
+      return TaskStatus.ARCHIVED;
+    default:
+      console.log(`[UnifiedProgress] Unknown status: ${status}, defaulting to NOT_STARTED`);
+      return TaskStatus.NOT_STARTED;
+  }
 }
 
 /**
- * Calculate task progress value directly from the database
- * with proper handling of all form types
- * 
- * @param taskId Task ID to calculate progress for
- * @param taskType Type of task ('company_kyb', 'ky3p', 'open_banking')
- * @param opts Options for the calculation
- * @returns Progress percentage (0-100)
+ * Calculate progress for a specific task type using a standardized approach
  */
-export async function calculateTaskProgress(
-  taskId: number,
-  taskType: string,
-  opts: { tx?: any; debug?: boolean } = {}
-): Promise<number> {
-  const debug = opts.debug || false;
-  const dbContext = opts.tx || db;
-  const logPrefix = '[UnifiedProgressCalc]';
+async function calculateTaskProgress(taskId: number, taskType: string, options: any = {}) {
+  const debug = options.debug || false;
+  
+  if (debug) {
+    console.log(`[UnifiedProgressCalc] Calculating progress for task ${taskId} (${taskType})`);
+  }
+  
+  let totalFields = 0;
+  let completedFields = 0;
+  let progress = 0;
   
   try {
-    let totalFields = 0;
-    let completedFields = 0;
-    const normalizedType = taskType.toLowerCase();
-    
-    // Determine which tables to use based on the task type
-    if (normalizedType.includes('open_banking')) {
-      // Handle Open Banking forms
-      const totalFieldsResult = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(openBankingResponses.fieldTable);
-      totalFields = totalFieldsResult[0].count;
-
-      const completedResultQuery = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(openBankingResponses)
-        .where(
-          and(
-            eq(openBankingResponses.task_id, taskId),
-            eq(openBankingResponses.status, KYBFieldStatus.COMPLETE)
-          )
-        );
-      completedFields = completedResultQuery[0].count;
-    } 
-    else if (normalizedType.includes('ky3p') || normalizedType.includes('security')) {
-      // Handle KY3P forms
-      const totalFieldsResult = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(ky3pResponses.fieldTable);
-      totalFields = totalFieldsResult[0].count;
-
-      // Count completed KY3P responses using the enum value directly
-      const completedResultQuery = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(ky3pResponses)
-        .where(
-          and(
-            eq(ky3pResponses.task_id, taskId),
-            eq(ky3pResponses.status, KYBFieldStatus.COMPLETE)
-          )
-        );
-      completedFields = completedResultQuery[0].count;
-    }
-    else {
-      // Default to KYB forms
-      const totalFieldsResult = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(kybResponses.fieldTable);
-      totalFields = totalFieldsResult[0].count;
-
-      const completedResultQuery = await dbContext
-        .select({ count: sql<number>`count(*)` })
+    // Different schemas based on task type
+    if (taskType === 'company_kyb') {
+      // Count total fields
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(kybFields);
+      totalFields = totalResult?.count || 0;
+      
+      // Count completed fields
+      const [completedResult] = await db
+        .select({ count: count() })
         .from(kybResponses)
         .where(
           and(
             eq(kybResponses.task_id, taskId),
-            eq(kybResponses.status, KYBFieldStatus.COMPLETE)
+            eq(kybResponses.status, 'COMPLETE')
           )
         );
-      completedFields = completedResultQuery[0].count;
+      completedFields = completedResult?.count || 0;
+    } 
+    else if (taskType === 'ky3p') {
+      // Count total fields
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(ky3pFields);
+      totalFields = totalResult?.count || 0;
+      
+      // Count completed fields
+      const [completedResult] = await db
+        .select({ count: count() })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            eq(ky3pResponses.status, 'COMPLETE')
+          )
+        );
+      completedFields = completedResult?.count || 0;
+    } 
+    else if (taskType === 'open_banking') {
+      // Count total fields
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(openBankingFields);
+      totalFields = totalResult?.count || 0;
+      
+      // Count completed fields
+      const [completedResult] = await db
+        .select({ count: count() })
+        .from(openBankingResponses)
+        .where(
+          and(
+            eq(openBankingResponses.task_id, taskId),
+            eq(openBankingResponses.status, 'COMPLETE')
+          )
+        );
+      completedFields = completedResult?.count || 0;
     }
-
-    // Calculate progress with consistent logic across all form types
-    const progressPercentage = totalFields > 0
-      ? Math.min(100, Math.round((completedFields / totalFields) * 100))
-      : 0;
+    
+    // Calculate progress percentage
+    if (totalFields > 0) {
+      progress = Math.round((completedFields / totalFields) * 100);
+    }
+    
+    // Make sure progress is between 0 and 100
+    progress = Math.max(0, Math.min(100, progress));
     
     if (debug) {
-      logger.info(`${logPrefix} Progress calculation for task ${taskId} (${taskType}): ${completedFields}/${totalFields} = ${progressPercentage}%`);
-    }
-    
-    return progressPercentage;
-  }
-  catch (error) {
-    logger.error(`${logPrefix} Error calculating progress:`, {
-      taskId,
-      taskType,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    throw error;
-  }
-}
-
-/**
- * Determine appropriate task status based on progress value and metadata
- * 
- * @param progress Progress percentage (0-100)
- * @param currentStatus Current task status
- * @param metadata Task metadata containing submission information
- * @returns Appropriate TaskStatus enum value
- */
-export function determineTaskStatus(
-  progress: number,
-  currentStatus: TaskStatus,
-  metadata?: Record<string, any>
-): TaskStatus {
-  // Check for submission indicators in metadata
-  const hasSubmissionDate = !!(metadata?.submissionDate || metadata?.submittedAt);
-  const hasSubmittedFlag = metadata?.status === 'submitted' || metadata?.explicitlySubmitted === true;
-  const isAlreadySubmitted = currentStatus === TaskStatus.SUBMITTED;
-  
-  // CRITICAL: Always respect submission state
-  if (hasSubmissionDate || hasSubmittedFlag || isAlreadySubmitted) {
-    return TaskStatus.SUBMITTED;
-  }
-  
-  // Apply consistent status rules based on progress value
-  if (progress === 0) {
-    return TaskStatus.NOT_STARTED;
-  }
-  else if (progress > 0 && progress < 100) {
-    return TaskStatus.IN_PROGRESS;
-  }
-  else if (progress === 100) {
-    return TaskStatus.READY_FOR_SUBMISSION;
-  }
-  
-  // Fallback - should never reach here with valid progress values
-  return TaskStatus.NOT_STARTED;
-}
-
-/**
- * Broadcast a task progress update to all connected clients
- * 
- * @param taskId Task ID that was updated
- * @param progress Current progress value
- * @param status Current task status
- * @param metadata Additional metadata to include
- */
-export function broadcastProgressUpdate(
-  taskId: number,
-  progress: number,
-  status: TaskStatus,
-  metadata: Record<string, any> = {}
-): void {
-  try {
-    // Create payload with standard format
-    const payload = {
-      id: taskId,
-      progress,
-      status,
-      metadata: {
-        ...metadata,
-        lastUpdate: new Date().toISOString()
-      },
-      timestamp: new Date().toISOString()
-    };
-    
-    // Use consistent 'task_update' event type
-    WebSocketService.broadcast('task_update', {
-      taskId,
-      data: payload,
-      payload: payload,
-      timestamp: new Date().toISOString()
-    });
-    
-    logger.debug(`[UnifiedProgress] Broadcasted progress update for task ${taskId}: ${progress}% (${status})`);
-  }
-  catch (error) {
-    logger.error(`[UnifiedProgress] Error broadcasting update:`, {
-      taskId,
-      error: error instanceof Error ? error.message : String(error)
-    });
-  }
-}
-
-/**
- * Update task progress with transaction boundary and broadcast update
- * 
- * This is the main unified function to be used by all form types
- * to ensure consistent progress tracking across the application.
- * 
- * @param taskId Task ID to update
- * @param taskType Type of task ('company_kyb', 'ky3p', 'open_banking')
- * @param options Options for the update operation
- * @returns Object with success/error information and updated progress
- */
-export async function updateTaskProgress(
-  taskId: number,
-  taskType: string,
-  options: ProgressOptions = {}
-): Promise<{ success: boolean; message: string; progress?: number; status?: string }> {
-  const {
-    forceUpdate = false,
-    debug = true,
-    metadata = {},
-    skipBroadcast = false,
-    diagnosticId = `prog-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-  } = options;
-  
-  try {
-    logger.info(`[UnifiedProgress] Starting progress update for task ${taskId} (${taskType})`, {
-      taskId,
-      taskType,
-      diagnosticId,
-      metadata: Object.keys(metadata)
-    });
-    
-    // Use transaction to ensure atomicity of all operations
-    const result = await db.transaction(async (tx) => {
-      // Step 1: Get current task data
-      const [task] = await tx
-        .select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
-      
-      if (!task) {
-        throw new Error(`Task ${taskId} not found`);
-      }
-      
-      // Step 2: Calculate current progress
-      const calculatedProgress = await calculateTaskProgress(taskId, taskType, { tx, debug });
-      const currentProgress = Number(task.progress);
-      
-      // Step 3: Determine if update is needed
-      const progressChanged = currentProgress !== calculatedProgress;
-      const shouldUpdate = forceUpdate || progressChanged;
-      
-      if (!shouldUpdate) {
-        logger.info(`[UnifiedProgress] No progress update needed for task ${taskId}: ${currentProgress}% (unchanged)`);
-        return {
-          task,
-          progress: currentProgress,
-          updated: false
-        };
-      }
-      
-      // Step 4: Determine appropriate status
-      const newStatus = determineTaskStatus(
-        calculatedProgress,
-        task.status as TaskStatus,
-        { ...task.metadata, ...metadata }
-      );
-      
-      // Step 5: Update the task record
-      const [updatedTask] = await tx
-        .update(tasks)
-        .set({
-          progress: calculatedProgress,
-          status: newStatus,
-          updated_at: new Date(),
-          metadata: {
-            ...task.metadata,
-            ...metadata,
-            lastProgressUpdate: new Date().toISOString(),
-            progressHistory: [
-              ...(task.metadata?.progressHistory || []),
-              { value: calculatedProgress, timestamp: new Date().toISOString() }
-            ].slice(-10) // Keep last 10 updates
-          }
-        })
-        .where(eq(tasks.id, taskId))
-        .returning();
-      
-      // Validate that the update was successful
-      if (!updatedTask) {
-        throw new Error(`Failed to update task ${taskId}`);
-      }
-      
-      logger.info(`[UnifiedProgress] Progress updated for task ${taskId}: ${currentProgress}% → ${calculatedProgress}%`);
-      
-      return {
-        task: updatedTask,
-        progress: calculatedProgress,
-        updated: true
-      };
-    });
-    
-    // Broadcast the update outside of the transaction
-    if (result.updated && !skipBroadcast) {
-      // Use setTimeout to ensure broadcasting happens after transaction is committed
-      setTimeout(() => {
-        broadcastProgressUpdate(
-          taskId,
-          Number(result.progress),
-          result.task.status as TaskStatus,
-          result.task.metadata || {}
-        );
-      }, 0);
+      console.log(`[UnifiedProgressCalc] Task ${taskId} (${taskType}) progress: ${completedFields}/${totalFields} = ${progress}%`);
     }
     
     return {
       success: true,
-      message: result.updated
-        ? `Task ${taskId} progress updated to ${result.progress}%`
-        : `No update needed for task ${taskId} (progress: ${result.progress}%)`,
-      progress: result.progress,
-      status: result.task.status
+      taskId,
+      taskType,
+      totalFields,
+      completedFields,
+      progress,
     };
-  }
-  catch (error) {
-    logger.error(`[UnifiedProgress] Error updating task ${taskId} progress:`, {
+  } catch (error) {
+    console.error(`[UnifiedProgressCalc] Error calculating progress:`, {
       taskId,
       taskType,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      diagnosticId
     });
     
     return {
       success: false,
-      message: `Error updating task progress: ${error instanceof Error ? error.message : String(error)}`
+      taskId,
+      taskType,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+/**
+ * Determine task status based on progress and submission state
+ */
+function getStatusFromProgress(progress: number, currentStatus: string | null): string {
+  // First normalize the current status
+  const normalizedStatus = normalizeTaskStatus(currentStatus);
+  
+  // If the task is already in a terminal state, don't change it
+  if (
+    normalizedStatus === TaskStatus.SUBMITTED ||
+    normalizedStatus === TaskStatus.REJECTED ||
+    normalizedStatus === TaskStatus.APPROVED ||
+    normalizedStatus === TaskStatus.ARCHIVED
+  ) {
+    return normalizedStatus;
+  }
+  
+  // Otherwise, set the status based on progress
+  if (progress === 0) {
+    return TaskStatus.NOT_STARTED;
+  } else if (progress < 100) {
+    return TaskStatus.IN_PROGRESS;
+  } else { // progress === 100
+    return TaskStatus.READY_FOR_SUBMISSION;
+  }
+}
+
+/**
+ * Main function to update task progress
+ */
+export async function updateTaskProgress(taskId: number, taskType: string, options: any = {}) {
+  const debug = options?.debug || false;
+  const forceUpdate = options?.forceUpdate || false;
+  const metadata = options?.metadata || {};
+  const diagnosticId = `prog-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  console.log(`[UnifiedProgress] Starting progress update for task ${taskId} (${taskType})`, {
+    taskId,
+    taskType,
+    diagnosticId,
+    metadata: Object.keys(metadata),
+  });
+  
+  try {
+    // Using a transaction to make progress calculation and update atomic
+    return await db.transaction(async (tx) => {
+      // First get the current task state
+      const [task] = await tx
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+        
+      if (!task) {
+        return {
+          success: false,
+          message: `Task ${taskId} not found`,
+        };
+      }
+      
+      // Calculate the current progress
+      const progressResult = await calculateTaskProgress(taskId, taskType, { debug });
+      
+      if (!progressResult.success) {
+        throw new Error(`Error calculating progress: ${progressResult.error}`);
+      }
+      
+      const { progress } = progressResult;
+      
+      // If progress hasn't changed and we're not forcing an update, return early
+      if (task.progress === progress && !forceUpdate) {
+        return {
+          success: true,
+          taskId,
+          message: 'Progress unchanged',
+          progress,
+          status: task.status,
+        };
+      }
+      
+      // Determine the correct status based on progress
+      const newStatus = getStatusFromProgress(progress, task.status);
+      
+      // Update the task with the new progress value
+      const [updatedTask] = await tx
+        .update(tasks)
+        .set({
+          progress,
+          status: newStatus,
+          updated_at: new Date(),
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+        
+      if (!updatedTask) {
+        throw new Error('Task update failed');
+      }
+      
+      // Return the result including updated values
+      return {
+        success: true,
+        taskId,
+        progress,
+        status: newStatus,
+        previousProgress: task.progress,
+        previousStatus: task.status,
+        changed: task.progress !== progress || task.status !== newStatus,
+      };
+    });
+  } catch (error) {
+    console.error(`[UnifiedProgress] Error updating task ${taskId} progress:`, {
+      taskId,
+      taskType,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      diagnosticId,
+    });
+    
+    return {
+      success: false,
+      message: `Error updating task progress: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+/**
+ * Update task progress and broadcast the update to connected clients
+ */
+export async function updateTaskProgressAndBroadcast(taskId: number, taskType: string, options: any = {}) {
+  // Update the progress
+  const result = await updateTaskProgress(taskId, taskType, options);
+  
+  if (result.success) {
+    // Broadcast the task update to connected clients
+    broadcast('task_updated', {
+      taskId,
+      progress: result.progress,
+      status: result.status,
+      timestamp: new Date().toISOString(),
+      previousProgress: result.previousProgress,
+      previousStatus: result.previousStatus,
+    });
+  }
+  
+  return result;
 }
