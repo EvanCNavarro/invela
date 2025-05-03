@@ -61,8 +61,7 @@ The KISS (Keep It Simple, Stupid) principle dictates that we should maintain a s
      - Updated task #694 from "submitted" to "ready_for_submission"
      - Fixed other affected tasks (677, 332, 336) with the same issue
      - Ensured integrity of business rule: only user-submitted tasks are "submitted"
-     - Fixed additional inconsistency: task #694 showed 100% progress but "not_started" status
-     - Corrected KY3P tasks (710, 718, 723) with 0% progress but "submitted"/"in_progress" status
+     - Corrected KY3P tasks (710, 718, 723) with 0% progress but incorrect statuses
 
 3. **Unified Status Determination Logic**:
    - Now consistently follows these rules:
@@ -89,6 +88,24 @@ npx tsx fix-task-progress-duplicates.ts
 
 2. The status determination fix has been applied directly via SQL to the affected tasks.
 
+3. **Fix 3: Data Consistency Fix**
+   - To find and fix tasks with inconsistent progress values:
+   ```bash
+   # First check which tasks need fixing:
+   npx tsx fix-progress-data-consistency.ts
+   
+   # Then apply the fixes:
+   npx tsx fix-progress-data-consistency.ts --fix
+   ```
+   
+   - **Identified and fixed stored vs. actual progress inconsistencies**:
+     - Found KY3P tasks with 100% stored progress but 0% actual completion (#694, #678, #682, #686)
+     - Found task #718 with 0% stored progress but 1% actual completion
+     - Updated all tasks to have progress values that match their actual form completion state
+     - Applied correct statuses based on the unified status determination rules
+   
+   - **Root cause**: These inconsistencies occurred because progress was being set manually without considering the actual form responses, violating the KISS principle by creating multiple sources of truth.
+
 ## Long-term Guidelines
 
 1. Always use the primary `progress` field for storing task progress
@@ -97,3 +114,5 @@ npx tsx fix-task-progress-duplicates.ts
 4. Follow the KISS principle: avoid redundant tracking of the same value
 5. Maintain consistent status determination logic between frontend and backend
 6. Honor the business rule that tasks only reach "submitted" status when explicitly submitted by a user
+7. Ensure task progress values are always derived from actual form completion, not set manually
+8. Run periodic reconciliation checks to identify and fix data inconsistencies between stored progress and actual form state
