@@ -1,50 +1,54 @@
 # Task Progress Fix Summary
 
-## Problem
+## Overview
 
-We identified a critical issue where task progress values were being calculated correctly in the UI but not properly persisted in the database. This caused a discrepancy between what users see in the application and what's actually stored in the database, leading to potential data consistency problems.
+This document summarizes the changes made to fix issues with task progress calculation across different task types. The focus of this phase was to ensure that KY3P task progress is not reset to 0% when editing a form, addressing a critical issue in the user experience.
 
-Specifically for KY3P tasks:
-- Task #694 showed 99% progress in the UI, but had 0% progress in the database
-- Progress calculation was happening correctly, but database updates were failing silently
+## Problem Description
 
-## Root Causes
+A critical bug was identified where editing a KY3P form that already had substantial progress (e.g., 96%) would cause the progress to be reset to 0%. This occurred because the form editing flow called the `clearAllFields` method, which in turn called the `/api/ky3p/clear-fields/{taskId}` endpoint that forcefully reset progress to 0% regardless of context.
 
-1. **Type Mismatch**: Progress values might have been calculated as strings or objects in some cases instead of proper numbers
-2. **Validation Issues**: Lack of proper validation and type conversion for progress values
-3. **Transaction Boundaries**: Progress calculation and database updates were not always within proper transaction boundaries
+## Solution Approach
 
-## Solution 
+Following the OODA framework (Observe, Orient, Decide, Act) and KISS principles, we implemented a comprehensive solution instead of a bandaid fix:
 
-We implemented a comprehensive fix following the OODA framework (Observe, Orient, Decide, Act) and KISS principle (Keep It Simple, Stupid):
+1. Enhanced the server-side clear-fields endpoint with an optional `preserveProgress` parameter
+2. Updated all client-side code paths to pass this parameter when appropriate
+3. Ensured all three bulk update approaches consistently support the parameter
 
-1. **Direct Database Fix**: Created `fix-task-694-progress.ts` to directly update Task #694's progress from 0% to 99% in the database
-   - Verified the fix worked correctly with database queries
+## Detailed Changes
 
-2. **Systematic Solution**: Enhanced `unified-task-progress.ts` to properly handle progress data types:
-   - Added explicit `Number()` conversion to ensure progress is always a number
-   - Added validation to check for NaN values
-   - Improved transaction boundaries to ensure atomic operations
-   - Used consistent numeric types throughout the progress calculation and update functions
+### Server-Side Changes
 
-3. **Verification**: Created `test-task-progress-fix.ts` to test all KY3P tasks and verify that progress values are correctly calculated and persisted
+- **Enhanced KY3P clear-fields endpoint**: Added support for an optional `preserveProgress` parameter, allowing progress to be maintained during form edits while still clearing field values
 
-## Improvements
+### Client-Side Changes
 
-1. **Type Safety**: Now progress values are explicitly converted to numbers, preventing type mismatches
-2. **Validation**: Added checks to catch invalid progress values before they reach the database
-3. **Consistency**: Progress values are now guaranteed to be consistent between the UI and database
-4. **Error Handling**: Better error messages and logging for progress calculation and update failures
-5. **Transaction Safety**: Progress updates are now wrapped in proper database transactions to ensure data integrity
+1. **handleClearFields.ts**:
+   - Modified `handleClearFieldsUtil` to accept and use a `preserveProgress` parameter
+   - Updated all three approaches (standardized bulk update, direct KY3P endpoint, alternative endpoint) to pass the `preserveProgress` parameter in both URL and body
+   - Enhanced `directClearFields` function to handle the parameter appropriately for different form types
+
+2. **standardized-ky3p-update.ts**:
+   - Updated `standardizedBulkUpdate` function to accept and use options for `preserveProgress` and `isFormEditing`
+   - Enhanced all three update approaches (responses array, direct raw format, bulk endpoint) to include the preserve parameter in both URL and body
+
+## Testing
+
+The implementation was tested with the following scenarios:
+
+1. Editing a KY3P form with existing progress (96%) - progress is now correctly preserved
+2. Clearing a KY3P form explicitly (non-editing context) - progress is correctly reset to 0%
+3. Verified all three client-side approaches correctly pass the parameter
+
+## Future Considerations
+
+1. Apply a similar pattern to other form types (KYB, Open Banking) for consistency
+2. Consider making progress preservation the default behavior for form editing across all form types
+3. Add more extensive logging and telemetry to track progress calculation issues
 
 ## Related Files
 
-- `server/utils/unified-task-progress.ts` - Core progress calculation and update logic
-- `fix-task-694-progress.ts` - Direct fix for Task #694's progress
-- `test-task-progress-fix.ts` - Test script to verify the fix for all KY3P tasks
-
-## Future Work
-
-1. **Debug Endpoints**: Fix module compatibility issues in `server/routes/debug-endpoints.js`
-2. **WebSocket Integration**: Improve WebSocket broadcast reliability for task progress updates
-3. **Regression Testing**: Add automated tests to ensure progress updates continue to work correctly
+- server/routes/ky3p-batch-update.ts
+- client/src/components/forms/handleClearFields.ts
+- client/src/components/forms/standardized-ky3p-update.ts
