@@ -5,14 +5,14 @@
  * They should NOT be enabled in production environments.
  */
 
-const express = require('express');
-const { updateTaskProgressAndBroadcast } = require('../utils/unified-task-progress');
+import express from 'express';
+import { updateTaskProgressAndBroadcast } from '../utils/unified-task-progress';
 const router = express.Router();
 
 // Import database and schema
-const { db } = require('@db');
-const { tasks, ky3pResponses, kybResponses, ky3pFields, kybFields, openBankingResponses, openBankingFields } = require('@db/schema');
-const { eq, and, count } = require('drizzle-orm');
+import { db } from '@db';
+import { tasks, ky3pResponses, kybResponses, ky3pFields, kybFields, openBankingResponses, openBankingFields } from '@db/schema';
+import { eq, and, count } from 'drizzle-orm';
 
 /**
  * Get all KY3P tasks for testing purposes
@@ -190,4 +190,5 @@ router.post('/test-unified-progress', async (req, res) => {
 });
 
 // Important: Only register these routes in development environments
-module.exports = router;
+export default router;
+export { router };
