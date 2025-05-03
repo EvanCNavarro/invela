@@ -32,8 +32,8 @@ import testKy3pProgressRouter from './routes/test-ky3p-progress';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 // Import standardized KY3P batch update routes
+// Use the fixed KY3P batch update routes
 import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
-import { registerKY3PBatchUpdateRoutes as registerNewKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update';
 // Import the enhanced KY3P demo auto-fill routes
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 // Import enhanced Open Banking routes with improved reliability
@@ -357,9 +357,7 @@ export function registerRoutes(app: Express): Express {
   // Register the standardized KY3P batch update routes
   const ky3pBatchFixedRouter = registerKY3PBatchUpdateRoutes();
   app.use(ky3pBatchFixedRouter);
-  // Register our new standardized KY3P batch update routes
-  const ky3pBatchUpdateRouter = registerNewKY3PBatchUpdateRoutes();
-  app.use(ky3pBatchUpdateRouter);
+  // Removed reference to old KY3P batch update implementation
   // Register the standardized KY3P field update routes
   const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
   app.use(ky3pFieldUpdateRouter);

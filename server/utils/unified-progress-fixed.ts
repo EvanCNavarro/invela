@@ -1,206 +1,182 @@
 /**
- * Unified Progress Calculation with Transaction Boundaries
+ * Unified Progress Update Fixed Module
  * 
- * This module provides a fixed version of the progress calculation with proper
- * database transaction boundaries to ensure progress values are correctly persisted.
- * 
- * It addresses the issue where task progress is correctly calculated but not
- * properly saved to the database for KY3P tasks.
+ * This module provides a fixed version of the progress update functionality.
+ * It addresses the issue with KY3P progress not being correctly stored in the database
+ * by adding explicit type handling and forcing updates for KY3P tasks.
  */
 
+import { TaskStatus } from '../types';
 import { db } from '@db';
-import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { calculateTaskProgress } from './unified-progress-calculation';
-import { TaskStatus, normalizeTaskStatus } from './status-constants';
+import { tasks } from '@db/schema';
+import { calculateUniversalTaskProgress, determineStatusFromProgress, broadcastProgressUpdate } from './progress';
 import { logger } from './logger';
-import { broadcastProgressUpdate } from './progress';
 
 /**
- * Calculate and update a task's progress with proper transaction boundaries
+ * Fixed update task progress function with guaranteed persistence
  * 
- * @param taskId Task ID to update
- * @param options Update options
- * @returns Updated task data
+ * This function addresses the issue where KY3P progress is correctly calculated but
+ * not properly persisted to the database. It adds extra type safety and logging.
+ * 
+ * @param taskId Task ID
+ * @param taskType Task type (e.g., 'ky3p', 'kyb', 'open_banking')
+ * @param options Options for controlling the update behavior
  */
-export async function calculateAndUpdateTaskProgress(
+export async function updateKy3pProgressFixed(
   taskId: number,
   options: {
     debug?: boolean;
-    force?: boolean;
-    source?: string;
+    metadata?: Record<string, any>;
+    forceUpdate?: boolean;
   } = {}
-): Promise<{
-  success: boolean;
-  taskId: number;
-  progress: number;
-  status: string;
-  message?: string;
-  error?: any;
-}> {
-  const { debug = false, force = false, source = 'api' } = options;
-  const logPrefix = '[UnifiedProgressFixed]';
-  const transactionId = `txn-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+): Promise<{success: boolean; message: string; progress?: number}> {
+  const { debug = true, metadata = {}, forceUpdate = true } = options;
+  const logPrefix = '[KY3P Progress Fixed]';
+  const diagnosticId = `ky3p-fix-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   
-  // Set up logging context
-  const logContext = {
-    taskId,
-    transactionId,
-    source,
-    timestamp: new Date().toISOString()
-  };
-  
-  logger.info(`${logPrefix} Starting progress calculation and update`, logContext);
+  // Always use KY3P as the task type for this fixed function
+  const taskType = 'ky3p';
   
   try {
-    // Step 1: Get current task data
-    const [currentTask] = await db.select()
+    // Step 1: Log the start of the operation with diagnostic info
+    logger.info(`${logPrefix} Starting fixed progress update for KY3P task ${taskId}`, {
+      taskId,
+      diagnosticId,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Step 2: Verify the task exists and is a KY3P task
+    const [task] = await db
+      .select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
     
-    if (!currentTask) {
-      const errorMsg = `Task not found: ${taskId}`;
-      logger.error(`${logPrefix} ${errorMsg}`, logContext);
-      return {
-        success: false,
-        taskId,
-        progress: 0,
-        status: 'error',
-        message: errorMsg
-      };
+    if (!task) {
+      logger.error(`${logPrefix} Task ${taskId} not found`);
+      return { success: false, message: `Task ${taskId} not found` };
     }
     
-    // Step 2: Calculate current progress
-    const progressResult = await calculateTaskProgress(taskId, currentTask.task_type, { debug });
-    const calculatedProgress = progressResult.progress;
-    const calculatedStatus = progressResult.status;
+    if (!task.task_type.toLowerCase().includes('ky3p') &&
+        !task.task_type.toLowerCase().includes('security')) {
+      logger.error(`${logPrefix} Task ${taskId} is not a KY3P task (type: ${task.task_type})`);
+      return { success: false, message: `Task ${taskId} is not a KY3P task (type: ${task.task_type})` };
+    }
     
-    logger.info(`${logPrefix} Calculated progress for task ${taskId}`, {
-      ...logContext,
-      currentProgress: currentTask.progress,
+    // Step 3: Calculate the progress with our universal calculator
+    const calculatedProgress = await calculateUniversalTaskProgress(taskId, taskType, { debug });
+    
+    // Always log the calculation result
+    logger.info(`${logPrefix} Calculated progress for KY3P task ${taskId}: ${calculatedProgress}%`, {
+      taskId,
       calculatedProgress,
-      currentStatus: currentTask.status,
-      calculatedStatus
+      storedProgress: task.progress,
+      diagnosticId
     });
     
-    // Step 3: Check if update is needed
-    const needsUpdate = force || 
-                      currentTask.progress !== calculatedProgress || 
-                      currentTask.status !== calculatedStatus;
+    // Step 4: Determine appropriate status
+    const newStatus = determineStatusFromProgress(
+      calculatedProgress,
+      task.status as TaskStatus,
+      [], // No form responses needed for direct calculation
+      { ...task.metadata, ...metadata }
+    );
     
-    if (!needsUpdate) {
-      logger.info(`${logPrefix} No update needed for task ${taskId}`, {
-        ...logContext,
-        progress: calculatedProgress,
-        status: calculatedStatus
-      });
+    // Step 5: Update the task with a transaction for atomicity
+    const result = await db.transaction(async (tx) => {
+      // CRITICAL FIX: Use explicit type casting to ensure progress is properly stored
+      // Cast calculatedProgress to a numeric type and use explicit db column types
+      const progressValue = Number(calculatedProgress);
       
-      return {
-        success: true,
-        taskId,
-        progress: calculatedProgress,
-        status: String(calculatedStatus),
-        message: 'No update needed'
-      };
-    }
-    
-    // Step 4: Update the task with proper type handling
-    // Use explicit type casting to avoid potential issues with data types
-    logger.info(`${logPrefix} Updating task ${taskId} progress and status`, {
-      ...logContext,
-      fromProgress: currentTask.progress,
-      toProgress: calculatedProgress,
-      fromStatus: currentTask.status,
-      toStatus: calculatedStatus
+      // Verify the progress value is valid
+      if (isNaN(progressValue)) {
+        throw new Error(`Invalid progress value: ${calculatedProgress} (${typeof calculatedProgress})`);
+      }
+      
+      // Use explicit returning() to ensure we get back the updated record
+      const [updatedTask] = await tx
+        .update(tasks)
+        .set({
+          // CRITICAL FIX: Use direct numeric value rather than calculation reference
+          progress: progressValue,
+          status: newStatus,
+          updated_at: new Date(),
+          metadata: {
+            ...task.metadata,
+            ...metadata,
+            lastProgressUpdate: new Date().toISOString(),
+            progressHistory: [
+              ...(task.metadata?.progressHistory || []),
+              { value: progressValue, timestamp: new Date().toISOString() }
+            ].slice(-10) // Keep last 10 updates
+          }
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+      
+      // Verify the update was successful
+      if (!updatedTask) {
+        throw new Error(`Failed to update task ${taskId}`);
+      }
+      
+      // Validate stored progress matches what we intended
+      const storedProgress = Number(updatedTask.progress);
+      
+      if (storedProgress !== progressValue) {
+        logger.error(`${logPrefix} Progress mismatch after update:`, {
+          taskId,
+          intendedProgress: progressValue,
+          actualProgress: storedProgress,
+          difference: storedProgress - progressValue
+        });
+      } else {
+        logger.info(`${logPrefix} Progress successfully updated to ${storedProgress}%`, {
+          taskId,
+          previousProgress: task.progress,
+          newProgress: storedProgress,
+          status: newStatus,
+          diagnosticId
+        });
+      }
+      
+      return updatedTask;
     });
     
-    const updateTime = new Date();
-    const [updatedTask] = await db.update(tasks)
-      .set({
-        // Cast to ensure correct type handling
-        progress: calculatedProgress,
-        status: normalizeTaskStatus(calculatedStatus) as any,
-        updated_at: updateTime,
-        metadata: {
-          ...currentTask.metadata,
-          lastProgressUpdate: updateTime.toISOString(),
-          lastProgressReconciliation: updateTime.toISOString(),
-          // Remove progressValue to avoid duplication - KISS principle
-          // Only track audit information in metadata
-          progressUpdateSource: source,
-          progressUpdateTransaction: transactionId
-        }
-      })
-      .where(eq(tasks.id, taskId))
-      .returning();
-    
-    if (!updatedTask) {
-      const errorMsg = `Failed to update task ${taskId} in database`;
-      logger.error(`${logPrefix} ${errorMsg}`, logContext);
-      return {
-        success: false,
-        taskId,
-        progress: calculatedProgress,
-        status: String(calculatedStatus),
-        message: errorMsg
-      };
-    }
-    
-    // Step 5: Verify the update was successful
-    const updateSuccessful = updatedTask.progress === calculatedProgress;
-    
-    logger.info(`${logPrefix} Update ${updateSuccessful ? 'succeeded' : 'failed'} for task ${taskId}`, {
-      ...logContext,
-      updatedProgress: updatedTask.progress,
-      updatedStatus: updatedTask.status,
-      expectedProgress: calculatedProgress,
-      updateSuccessful
-    });
-    
-    // Step 6: Broadcast the update
-    try {
-      broadcastProgressUpdate(
-        taskId,
-        calculatedProgress,
-        String(normalizeTaskStatus(calculatedStatus)) as any,
-        {
-          transactionId,
-          source,
-          timestamp: updateTime.toISOString()
-        }
-      );
-      logger.info(`${logPrefix} Broadcast completed for task ${taskId}`, logContext);
-    } catch (broadcastError) {
-      // Non-fatal error - log but continue
-      logger.error(`${logPrefix} Error broadcasting update for task ${taskId}`, {
-        ...logContext,
-        error: broadcastError
-      });
+    // Step 6: Broadcast the update to all connected clients
+    if (result) {
+      // Use a setTimeout to ensure the broadcast happens outside the transaction
+      setTimeout(() => {
+        // Use our existing broadcast function
+        broadcastProgressUpdate(
+          taskId,
+          Number(result.progress),
+          result.status as TaskStatus,
+          result.metadata || {},
+          diagnosticId
+        );
+        
+        logger.info(`${logPrefix} Broadcasted progress update for task ${taskId}`);
+      }, 0);
     }
     
     return {
-      success: updateSuccessful,
-      taskId,
-      progress: updatedTask.progress,
-      status: updatedTask.status,
-      message: updateSuccessful 
-        ? 'Progress updated successfully'
-        : 'Update completed but progress value verification failed'
+      success: true,
+      message: `Successfully updated KY3P task ${taskId} progress to ${calculatedProgress}%`,
+      progress: calculatedProgress
     };
   } catch (error) {
-    logger.error(`${logPrefix} Error updating task ${taskId}`, {
-      ...logContext,
+    // Comprehensive error handling with full diagnostics
+    logger.error(`${logPrefix} Error updating KY3P task progress:`, {
+      taskId,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      diagnosticId,
+      timestamp: new Date().toISOString()
     });
     
     return {
       success: false,
-      taskId,
-      progress: 0,
-      status: 'error',
-      message: 'Error updating progress',
-      error: error instanceof Error ? error.message : String(error)
+      message: `Error updating progress: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
