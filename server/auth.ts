@@ -8,6 +8,8 @@ import { users, companies, registrationSchema, type SelectUser } from "@db/schem
 import { db, pool } from "@db";
 import { sql, eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
+import * as WebSocketService from "./services/websocket";
+import { invalidateCompanyCache } from "./routes";
 
 declare global {
   namespace Express {
@@ -281,40 +283,19 @@ export function setupAuth(app: Express) {
     // Clear company from cache
     try {
       // Try to get companyCache from routes module or the global scope
+      // Since we now directly import invalidateCompanyCache, no need for complex logic
       const clearCompanyCache = () => {
         try {
-          // Attempt to import the routes module to get the cache reference
-          const routesModule = require('./routes');
-          
-          // Check if we can access the company cache
-          if (routesModule && routesModule.companyCache) {
-            if (companyId) {
-              // First, try to clear the specific company
-              console.log(`[Auth] Clearing company ${companyId} from cache during logout via routes module`);
-              routesModule.companyCache.delete(companyId);
-            }
-            
-            // IMPORTANT: Always clear the entire cache on logout to prevent session overlap issues
-            console.log(`[Auth] Performing full company cache clear for session separation`);
-            const cacheSize = routesModule.companyCache.size;
-            routesModule.companyCache.clear();
-            console.log(`[Auth] Cleared ${cacheSize} company entries from cache`);
-            
-            // Use the invalidation function if available - will broadcast WebSocket events
-            if (routesModule.invalidateCompanyCache && companyId) {
-              try {
-                const invalidated = routesModule.invalidateCompanyCache(companyId);
-                console.log(`[Auth] Cache invalidation result for company ${companyId}: ${invalidated}`);
-              } catch (invalidateError) {
-                console.warn('[Auth] Error invalidating company cache:', invalidateError);
-              }
-            }
-            
-            return true;
+          if (companyId) {
+            // Clear the specific company
+            console.log(`[Auth] Clearing company ${companyId} from cache during logout`);
+            // Use the imported invalidate function
+            const invalidated = invalidateCompanyCache(companyId);
+            console.log(`[Auth] Cache invalidation result for company ${companyId}: ${invalidated}`);
           }
-          return false;
-        } catch (importError) {
-          console.warn('[Auth] Could not import routes module:', importError);
+          return true;
+        } catch (error) {
+          console.warn('[Auth] Error invalidating company cache:', error);
           return false;
         }
       };
@@ -327,17 +308,14 @@ export function setupAuth(app: Express) {
       
       // Broadcast WebSocket event to inform clients of cache invalidation
       try {
-        const { broadcastMessage } = require('./services/websocket');
-        if (broadcastMessage && typeof broadcastMessage === 'function') {
-          console.log(`[Auth] Broadcasting cache invalidation WebSocket message`);
-          broadcastMessage('cache_invalidation', {
-            type: 'logout',
-            userId: userId,
-            companyId: companyId,
-            timestamp: new Date().toISOString(),
-            cache_invalidation: true
-          });
-        }
+        console.log(`[Auth] Broadcasting cache invalidation WebSocket message`);
+        WebSocketService.broadcastMessage('cache_invalidation', {
+          type: 'logout',
+          userId: userId,
+          companyId: companyId,
+          timestamp: new Date().toISOString(),
+          cache_invalidation: true
+        });
       } catch (broadcastError) {
         console.warn('[Auth] Error broadcasting cache invalidation:', broadcastError);
       }
