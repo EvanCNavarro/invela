@@ -10,6 +10,8 @@ import { db } from '@db';
 import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+import { logger } from '../utils/logger';
+import { updateKy3pProgressFixed } from '../utils/unified-progress-fixed';
 
 /**
  * Register KY3P batch update routes
@@ -17,7 +19,7 @@ import { randomUUID } from 'crypto';
  * @returns Router with KY3P batch update routes
  */
 export function registerKY3PBatchUpdateRoutes() {
-  console.log('[KY3P-BATCH-UPDATE] Registering KY3P batch update routes');
+  logger.info('[KY3P-BATCH-UPDATE] Registering KY3P batch update routes');
   
   const router = Router();
 
@@ -26,9 +28,20 @@ export function registerKY3PBatchUpdateRoutes() {
    */
   router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
-    const formData = req.body; // object with field_key: value pairs
     
-    console.log(`[KY3P-BATCH-UPDATE] Received batch update request for task ${taskId}`, {
+    // CRITICAL FIX: Ensure we have the responses object wrapper 
+    // Format should be: { responses: { fieldKey1: value1, ... } }
+    if (!req.body.responses || typeof req.body.responses !== 'object') {
+      logger.error(`[KY3P-BATCH-UPDATE] Invalid request format for task ${taskId}. Expected { responses: {...} } format`);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid request: responses is required and must be an object' 
+      });
+    }
+    
+    const formData = req.body.responses; // Get the actual field data from the responses wrapper
+    
+    logger.info(`[KY3P-BATCH-UPDATE] Received batch update request for task ${taskId}`, {
       fieldCount: Object.keys(formData).length
     });
     
@@ -78,7 +91,7 @@ export function registerKY3PBatchUpdateRoutes() {
         const fieldId = fieldKeyToIdMap.get(fieldKey);
         
         if (!fieldId) {
-          console.warn(`[KY3P-BATCH-UPDATE] Field key not found: ${fieldKey}`);
+          logger.warn(`[KY3P-BATCH-UPDATE] Field key not found: ${fieldKey}`);
           continue;
         }
         
@@ -88,8 +101,8 @@ export function registerKY3PBatchUpdateRoutes() {
           .from(ky3pResponses)
           .where(
             and(
-              eq(ky3pResponses.taskId, taskId),
-              eq(ky3pResponses.fieldId, fieldId)
+              eq(ky3pResponses.task_id, taskId),
+              eq(ky3pResponses.field_id, fieldId)
             )
           );
         
@@ -98,13 +111,14 @@ export function registerKY3PBatchUpdateRoutes() {
           await db
             .update(ky3pResponses)
             .set({
-              value: String(value),
-              updatedAt: timestamp
+              response_value: String(value),
+              status: 'COMPLETE', // Use string directly instead of enum
+              updated_at: timestamp
             })
             .where(
               and(
-                eq(ky3pResponses.taskId, taskId),
-                eq(ky3pResponses.fieldId, fieldId)
+                eq(ky3pResponses.task_id, taskId),
+                eq(ky3pResponses.field_id, fieldId)
               )
             );
           
@@ -119,12 +133,12 @@ export function registerKY3PBatchUpdateRoutes() {
           await db
             .insert(ky3pResponses)
             .values({
-              id: randomUUID(),
-              taskId,
-              fieldId,
-              value: String(value),
-              createdAt: timestamp,
-              updatedAt: timestamp
+              task_id: taskId,
+              field_id: fieldId,
+              response_value: String(value),
+              status: 'COMPLETE', // Use string directly instead of enum
+              created_at: timestamp,
+              updated_at: timestamp
             });
           
           batchResponses.push({
@@ -136,43 +150,40 @@ export function registerKY3PBatchUpdateRoutes() {
         }
       }
       
-      // Update the task progress using the centralized function for consistency
+      // Update task progress using the fixed progress update function
       try {
-        // Import the updateTaskProgress function
-        const { updateTaskProgress } = await import('../utils/progress');
-        
-        // Use the centralized updateTaskProgress function instead of manual calculation
-        // This ensures consistent progress calculation across all task types
-        await updateTaskProgress(taskId, 'ky3p', { 
+        // IMPROVED SOLUTION: Use the fixed progress update function for KY3P tasks
+        // to ensure the progress is correctly persisted to the database
+        const progressResult = await updateKy3pProgressFixed(taskId, { 
           debug: true,
           metadata: {
-            lastUpdateSource: 'ky3p-batch-update'
+            lastBatchUpdate: new Date().toISOString(),
+            batchUpdateSize: batchResponses.length
           }
         });
         
-        console.log(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress using centralized function`);
+        if (progressResult.success) {
+          logger.info(`[KY3P-BATCH-UPDATE] Successfully updated task ${taskId} progress to ${progressResult.progress}%`);
+        } else {
+          logger.warn(`[KY3P-BATCH-UPDATE] Progress update warning:`, {
+            taskId,
+            message: progressResult.message
+          });
+        }
       } catch (error) {
-        console.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
+        logger.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
         // Continue processing, don't fail the whole request
       }
       
-      // Get the updated task progress for consistent response format
-      const [updatedTask] = await db
-        .select({ progress: tasks.progress, status: tasks.status })
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
-      
-      // Return success response with task progress
+      // Return success response
       return res.status(200).json({
         success: true,
         processedCount: batchResponses.length,
         message: `Successfully processed ${batchResponses.length} field updates`,
-        fields: fieldKeys,
-        progress: updatedTask.progress,
-        status: updatedTask.status
+        fields: fieldKeys
       });
     } catch (error) {
-      console.error('[KY3P-BATCH-UPDATE] Error processing batch update:', error);
+      logger.error('[KY3P-BATCH-UPDATE] Error processing batch update:', error);
       return res.status(500).json({
         error: 'Failed to process batch update',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -186,7 +197,7 @@ export function registerKY3PBatchUpdateRoutes() {
   router.post('/api/ky3p/clear-fields/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     
-    console.log(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`);
+    logger.info(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`);
     
     if (!taskId || isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
@@ -196,35 +207,34 @@ export function registerKY3PBatchUpdateRoutes() {
       // Delete all responses for this task
       const result = await db
         .delete(ky3pResponses)
-        .where(eq(ky3pResponses.taskId, taskId));
+        .where(eq(ky3pResponses.task_id, taskId));
       
-      // Update task progress using centralized function
-      const { updateTaskProgress } = await import('../utils/progress');
-      await updateTaskProgress(taskId, 'ky3p', { 
-        forceUpdate: true, // Force update even if no responses changed
+      // Use the fixed progress update function for guaranteed persistence
+      const progressResult = await updateKy3pProgressFixed(taskId, { 
+        debug: true,
+        forceUpdate: true, // Force update to 0% after clearing responses
         metadata: {
-          fieldCleared: true,
-          lastUpdateSource: 'ky3p-clear-fields'
+          lastFieldClear: new Date().toISOString(),
+          fieldClearOperation: true,
+          explicitReset: true // Explicitly request a reset to 0%
         }
       });
       
-      console.log(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}`);
-      
-      // Get the updated task progress and status for consistent response format
+      // Get the updated task to log the current progress and status
       const [updatedTask] = await db
-        .select({ progress: tasks.progress, status: tasks.status })
+        .select()
         .from(tasks)
         .where(eq(tasks.id, taskId));
       
-      // Return success response with task progress and status
+      logger.info(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}, new status: ${updatedTask?.status}`);
+      
+      // Return success response
       return res.status(200).json({
         success: true,
-        message: `Successfully cleared all fields for task ${taskId}`,
-        progress: updatedTask.progress,
-        status: updatedTask.status
+        message: `Successfully cleared all fields for task ${taskId}`
       });
     } catch (error) {
-      console.error('[KY3P-BATCH-UPDATE] Error clearing fields:', error);
+      logger.error('[KY3P-BATCH-UPDATE] Error clearing fields:', error);
       return res.status(500).json({
         error: 'Failed to clear fields',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -238,7 +248,7 @@ export function registerKY3PBatchUpdateRoutes() {
   router.post('/api/ky3p/save-progress/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     
-    console.log(`[KY3P-BATCH-UPDATE] Received save progress request for task ${taskId}`);
+    logger.info(`[KY3P-BATCH-UPDATE] Received save progress request for task ${taskId}`);
     
     if (!taskId || isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
@@ -255,28 +265,37 @@ export function registerKY3PBatchUpdateRoutes() {
         return res.status(404).json({ error: `Task ${taskId} not found` });
       }
       
-      // Use the centralized updateTaskProgress function for consistent progress calculation
-      const { updateTaskProgress } = await import('../utils/progress');
-      
-      // This will automatically calculate the progress based on completed fields
-      // and update the task status accordingly
-      await updateTaskProgress(taskId, 'ky3p', { 
+      // Use the fixed progress update function for guaranteed persistence
+      const progressResult = await updateKy3pProgressFixed(taskId, { 
         debug: true,
+        forceUpdate: true, // Force the update even if no apparent change in progress
         metadata: {
-          lastUpdateSource: 'ky3p-save-progress',
-          saveRequestTime: new Date().toISOString()
+          lastProgressSave: new Date().toISOString(),
+          manualSave: true
         }
       });
       
-      // Get the updated task to return the current progress and status
+      // Log the result with more detailed information
+      logger.info(`[KY3P-BATCH-UPDATE] Manual progress save result:`, {
+        taskId,
+        success: progressResult.success,
+        progress: progressResult.progress,
+        message: progressResult.message
+      });
+      
+      // Get the updated task to return the current progress
       const [updatedTask] = await db
-        .select({ progress: tasks.progress, status: tasks.status })
+        .select()
         .from(tasks)
         .where(eq(tasks.id, taskId));
       
-      console.log(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${updatedTask.progress}%`);
+      if (!updatedTask) {
+        throw new Error(`Task ${taskId} not found after update`);
+      }
       
-      // Return success response with the updated progress and status
+      logger.info(`[KY3P-BATCH-UPDATE] Saved progress for task ${taskId}: ${updatedTask.progress}%, status: ${updatedTask.status}`);
+      
+      // Return success response with the updated progress
       return res.status(200).json({
         success: true,
         progress: updatedTask.progress,
@@ -284,7 +303,7 @@ export function registerKY3PBatchUpdateRoutes() {
         message: `Successfully saved progress for task ${taskId}`
       });
     } catch (error) {
-      console.error('[KY3P-BATCH-UPDATE] Error saving progress:', error);
+      logger.error('[KY3P-BATCH-UPDATE] Error saving progress:', error);
       return res.status(500).json({
         error: 'Failed to save progress',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -292,7 +311,7 @@ export function registerKY3PBatchUpdateRoutes() {
     }
   });
 
-  console.log('Registering KY3P batch update routes');
+  logger.info('Registering KY3P batch update routes');
   
   return router;
 }

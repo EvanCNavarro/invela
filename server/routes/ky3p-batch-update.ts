@@ -149,14 +149,13 @@ export function registerKY3PBatchUpdateRoutes() {
         }
       }
       
-      // Update task progress using the unified task progress calculation function
+      // Update task progress using the fixed progress update function
       try {
-        // Import the updateTaskProgress function for consistent progress calculation
-        const { updateTaskProgress } = await import('../utils/progress');
+        // IMPROVED SOLUTION: Use the fixed progress update function for KY3P tasks
+        // to ensure the progress is correctly persisted to the database
+        const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
         
-        // UNIFIED SOLUTION: Use the centralized progress update function
-        // This ensures consistent progress calculation across all form types
-        await updateTaskProgress(taskId, 'ky3p', { 
+        const progressResult = await updateKy3pProgressFixed(taskId, { 
           debug: true,
           metadata: {
             lastBatchUpdate: new Date().toISOString(),
@@ -164,14 +163,13 @@ export function registerKY3PBatchUpdateRoutes() {
           }
         });
         
-        // Get the updated task to log the current progress and status
-        const [updatedTask] = await db
-          .select()
-          .from(tasks)
-          .where(eq(tasks.id, taskId));
-        
-        if (updatedTask) {
-          logger.info(`[KY3P-BATCH-UPDATE] Updated task ${taskId} progress to ${updatedTask.progress}%, status: ${updatedTask.status}`);
+        if (progressResult.success) {
+          logger.info(`[KY3P-BATCH-UPDATE] Successfully updated task ${taskId} progress to ${progressResult.progress}%`);
+        } else {
+          logger.warn(`[KY3P-BATCH-UPDATE] Progress update warning:`, {
+            taskId,
+            message: progressResult.message
+          });
         }
       } catch (error) {
         logger.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
@@ -212,17 +210,18 @@ export function registerKY3PBatchUpdateRoutes() {
         .delete(ky3pResponses)
         .where(eq(ky3pResponses.task_id, taskId));
       
-      // Import the updateTaskProgress function for consistent progress calculation
-      const { updateTaskProgress } = await import('../utils/progress');
+      // Use the fixed progress update function for guaranteed persistence
+      const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
       
-      // UNIFIED SOLUTION: Use the centralized progress update function
-      // Since all responses are deleted, this will set progress to 0 (NOT_STARTED)
-      await updateTaskProgress(taskId, 'ky3p', { 
+      // ENHANCED SOLUTION: Use the fixed progress function specifically for KY3P
+      // This ensures proper persistence for KY3P progress to the database
+      await updateKy3pProgressFixed(taskId, { 
         debug: true,
-        forceUpdate: true, // Force the update even if no change in progress is detected
+        forceUpdate: true, // Force update to 0% after clearing responses
         metadata: {
           lastFieldClear: new Date().toISOString(),
-          fieldClearOperation: true
+          fieldClearOperation: true,
+          explicitReset: true // Explicitly request a reset to 0%
         }
       });
       
@@ -271,18 +270,26 @@ export function registerKY3PBatchUpdateRoutes() {
         return res.status(404).json({ error: `Task ${taskId} not found` });
       }
       
-      // Import the updateTaskProgress function for consistent progress calculation
-      const { updateTaskProgress } = await import('../utils/progress');
+      // Use the fixed progress update function for guaranteed persistence
+      const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
       
-      // UNIFIED SOLUTION: Use the centralized progress update function
-      // This ensures consistent progress calculation across all form types
-      await updateTaskProgress(taskId, 'ky3p', { 
+      // ENHANCED SOLUTION: Use the fixed progress function specifically for KY3P
+      // This ensures proper persistence for KY3P progress to the database
+      const progressResult = await updateKy3pProgressFixed(taskId, { 
         debug: true,
         forceUpdate: true, // Force the update even if no apparent change in progress
         metadata: {
           lastProgressSave: new Date().toISOString(),
           manualSave: true
         }
+      });
+      
+      // Log the result with more detailed information
+      logger.info(`[KY3P-BATCH-UPDATE] Manual progress save result:`, {
+        taskId,
+        success: progressResult.success,
+        progress: progressResult.progress,
+        message: progressResult.message
       });
       
       // Get the updated task to return the current progress
