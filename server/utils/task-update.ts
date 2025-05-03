@@ -147,8 +147,11 @@ export async function updateTaskProgress(
         // Add a small delay to ensure WebSocket server is initialized
         setTimeout(() => {
           unifiedBroadcastTaskUpdate(taskId, {
+            progress: progress,
+            status: status,
             lastUpdated: new Date().toISOString(),
             previousProgress: task.progress,
+            previousStatus: task.status,
             calculatedProgress: progress,
             taskType: task.task_type
           });
