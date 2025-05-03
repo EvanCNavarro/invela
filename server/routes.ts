@@ -206,7 +206,8 @@ export function registerRoutes(app: Express): Express {
         console.log(`[EMERGENCY] File vault already enabled for company ${companyId}`);
         
         // Force broadcast WebSocket event to refresh client caches
-        WebSocketService.broadcastEvent('company_tabs_updated', {
+        // Use the unified broadcast function for consistent handling
+        broadcast('company_tabs_updated', {
           companyId,
           availableTabs: currentTabs,
           timestamp: new Date().toISOString(),
@@ -252,7 +253,8 @@ export function registerRoutes(app: Express): Express {
       console.log(`[EMERGENCY] Invalidated cache for company ${companyId}`);
       
       // Broadcast WebSocket event to update clients
-      WebSocketService.broadcastEvent('company_tabs_updated', {
+      // Use the unified broadcast function
+      broadcast('company_tabs_updated', {
         companyId,
         availableTabs: updatedCompany.available_tabs,
         timestamp: new Date().toISOString(),
@@ -319,7 +321,8 @@ export function registerRoutes(app: Express): Express {
         console.log(`[File Vault] Added file-vault tab for company ${companyId}`);
         
         // Broadcast the update via WebSocket
-        WebSocketService.broadcastEvent('company_tabs_updated', {
+        // Use the unified broadcast function for consistency
+        broadcast('company_tabs_updated', {
           companyId,
           availableTabs: newTabs,
           cache_invalidation: true,
@@ -386,7 +389,8 @@ export function registerRoutes(app: Express): Express {
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
-  registerOpenBankingRoutes(app, WebSocketService.getWebSocketServer());
+  // Use getWebSocketServer from the unified implementation
+  registerOpenBankingRoutes(app, getWebSocketServer());
   
   // Register Open Banking Progress routes for standardized form handling
   const openBankingProgressRouter = Router();
