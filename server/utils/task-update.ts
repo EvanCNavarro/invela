@@ -146,7 +146,7 @@ export async function updateTaskProgress(
         // Use the unified broadcast function for more consistent and reliable updates
         // Add a small delay to ensure WebSocket server is initialized
         setTimeout(() => {
-          unifiedBroadcastTaskUpdate(taskId, status, progress, {
+          unifiedBroadcastTaskUpdate(taskId, {
             lastUpdated: new Date().toISOString(),
             previousProgress: task.progress,
             calculatedProgress: progress,
