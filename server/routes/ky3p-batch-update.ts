@@ -194,17 +194,40 @@ export function registerKY3PBatchUpdateRoutes() {
 
   /**
    * Clear all KY3P field responses for a task
+   * 
+   * FIXED: Added preserveProgress query parameter to control whether progress is reset
+   * This fixes the issue where form editing resets progress to 0% even when the user
+   * has already completed many fields. During form editing, we want to preserve the
+   * current progress, not reset it to 0%.
    */
   router.post('/api/ky3p/clear-fields/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
+    // NEW PARAMETER: Check if we should preserve progress (default to false for backwards compatibility)
+    const preserveProgress = req.query.preserveProgress === 'true' || req.body.preserveProgress === true;
     
-    logger.info(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`);
+    logger.info(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`, {
+      preserveProgress
+    });
     
     if (!taskId || isNaN(taskId)) {
       return res.status(400).json({ error: 'Invalid task ID' });
     }
     
     try {
+      // IMPROVEMENT: Get the task progress before clearing responses (if preserveProgress is true)
+      const [existingTask] = preserveProgress ? await db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId)) : [null];
+      
+      // Store existing progress if we're preserving it
+      const existingProgress = preserveProgress && existingTask ? existingTask.progress || 0 : 0;
+      const existingStatus = preserveProgress && existingTask ? existingTask.status : 'not_started';
+      
+      if (preserveProgress) {
+        logger.info(`[KY3P-BATCH-UPDATE] Preserving progress for task ${taskId}: ${existingProgress}%, status: ${existingStatus}`);
+      }
+      
       // Delete all responses for this task
       const result = await db
         .delete(ky3pResponses)
@@ -213,17 +236,37 @@ export function registerKY3PBatchUpdateRoutes() {
       // Use the fixed progress update function for guaranteed persistence
       const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
       
-      // ENHANCED SOLUTION: Use the fixed progress function specifically for KY3P
-      // This ensures proper persistence for KY3P progress to the database
-      await updateKy3pProgressFixed(taskId, { 
-        debug: true,
-        forceUpdate: true, // Force update to 0% after clearing responses
-        metadata: {
-          lastFieldClear: new Date().toISOString(),
-          fieldClearOperation: true,
-          explicitReset: true // Explicitly request a reset to 0%
-        }
-      });
+      if (preserveProgress) {
+        // ENHANCEMENT: If preserving progress, use the existing progress value
+        // instead of recalculating (which would be 0% after clearing responses)
+        // This ensures progress doesn't reset during form editing
+        await db
+          .update(tasks)
+          .set({
+            updated_at: new Date(),
+            metadata: {
+              ...(existingTask?.metadata || {}),
+              lastFieldClear: new Date().toISOString(),
+              fieldClearOperation: true,
+              preservedProgress: existingProgress,
+              preservedStatus: existingStatus
+            }
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info(`[KY3P-BATCH-UPDATE] Cleared fields but preserved progress for task ${taskId}: ${existingProgress}%`);
+      } else {
+        // Original behavior: reset progress to 0%
+        await updateKy3pProgressFixed(taskId, { 
+          debug: true,
+          forceUpdate: true, // Force update to 0% after clearing responses
+          metadata: {
+            lastFieldClear: new Date().toISOString(),
+            fieldClearOperation: true,
+            explicitReset: true // Explicitly request a reset to 0%
+          }
+        });
+      }
       
       // Get the updated task to log the current progress and status
       const [updatedTask] = await db
@@ -236,7 +279,10 @@ export function registerKY3PBatchUpdateRoutes() {
       // Return success response
       return res.status(200).json({
         success: true,
-        message: `Successfully cleared all fields for task ${taskId}`
+        preservedProgress: preserveProgress ? existingProgress : undefined,
+        progress: updatedTask?.progress || 0,
+        status: updatedTask?.status || 'not_started',
+        message: `Successfully cleared all fields for task ${taskId}${preserveProgress ? ' (preserved progress)' : ''}`
       });
     } catch (error) {
       logger.error('[KY3P-BATCH-UPDATE] Error clearing fields:', error);
