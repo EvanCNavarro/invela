@@ -6,7 +6,8 @@
  */
 
 import express from 'express';
-import { calculateAndUpdateTaskProgress } from '../utils/unified-progress-fixed';
+import { updateKy3pProgressFixed } from '../utils/unified-progress-fixed';
+import { updateTaskProgress } from '../utils/progress';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
@@ -36,10 +37,37 @@ router.post('/:taskId/progress', async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
-    const result = await calculateAndUpdateTaskProgress(taskId, {
-      force,
+    // First, determine if this is a KY3P task
+    const { db } = await import('@db');
+    const { tasks } = await import('@db/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: `Task ${taskId} not found`
+      });
+    }
+    
+    // Use the KY3P specific function for KY3P tasks
+    const isKy3pTask = task.task_type.toLowerCase().includes('ky3p') || 
+                      task.task_type.toLowerCase().includes('security');
+    
+    const result = isKy3pTask
+      ? await updateKy3pProgressFixed(taskId, {
+          debug,
+          forceUpdate: force,
+          metadata: { source: source }
+        })
+      : await updateTaskProgress(taskId, task.task_type.toLowerCase(), {
+      forceUpdate: force,
       debug,
-      source
+      metadata: { source: source }
     });
     
     // Log the result
@@ -82,11 +110,38 @@ router.get('/:taskId/progress', async (req, res) => {
   }
   
   try {
-    // Use calculateAndUpdateTaskProgress with force=false to just calculate without updating
-    const result = await calculateAndUpdateTaskProgress(taskId, {
-      force: false,
+    // First, determine if this is a KY3P task
+    const { db } = await import('@db');
+    const { tasks } = await import('@db/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: `Task ${taskId} not found`
+      });
+    }
+    
+    // Use the KY3P specific function for KY3P tasks
+    const isKy3pTask = task.task_type.toLowerCase().includes('ky3p') || 
+                      task.task_type.toLowerCase().includes('security');
+    
+    // Use appropriate function without forcing update
+    const result = isKy3pTask
+      ? await updateKy3pProgressFixed(taskId, {
+          debug: true,
+          forceUpdate: false,
+          metadata: { source: 'api-get' }
+        })
+      : await updateTaskProgress(taskId, task.task_type.toLowerCase(), {
+      forceUpdate: false,
       debug: true,
-      source: 'api-get'
+      metadata: { source: 'api-get' }
     });
     
     return res.json({
