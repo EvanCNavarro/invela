@@ -1790,14 +1790,23 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         })
         .where(eq(invitations.id, invitation.id));
 
-      // Log the user in
-      req.login(updatedUser, (err) => {
-        if (err) {
-          console.error("[Account Setup] Login error:", err);
-          return res.status(500).json({ message: "Error logging in" });
-        }
-        res.json(updatedUser);
+      // Log the user in - wrap req.login in a Promise for proper async/await handling
+      await new Promise<void>((resolve, reject) => {
+        req.login(updatedUser, (err) => {
+          if (err) {
+            console.error("[Account Setup] Login error:", err);
+            reject(err);
+          } else {
+            console.log("[Account Setup] Login successful for user ID:", updatedUser.id);
+            resolve();
+          }
+        });
+      }).catch(err => {
+        throw new Error(`Login failed: ${err.message}`);
       });
+
+      // Only respond after successful login
+      res.json(updatedUser);
 
     } catch (error) {
       console.error("[Account Setup] Account setup error:", error);
