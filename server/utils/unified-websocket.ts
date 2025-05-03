@@ -74,6 +74,15 @@ export function initializeWebSocketServer(server: Server): WebSocketServer {
   logger.info('Unified WebSocket server initialized successfully');
   // Set initialization flag
   initialized = true;
+  
+  // Log successful initialization with object details
+  logger.info('Unified WebSocket server initialized successfully with details:', {
+    clients: wss.clients ? wss.clients.size : 0,
+    path: '/ws',
+    id: Math.random().toString(36).substring(2, 10),
+    timestamp: new Date().toISOString()
+  });
+  
   return wss;
 }
 

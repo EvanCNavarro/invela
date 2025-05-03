@@ -27,6 +27,13 @@ interface ExtendedWebSocket extends WebSocket {
 export function setWebSocketServer(wss: WebSocketServer): void {
   wssRef = wss;
   console.log('[TaskBroadcast] WebSocket server reference set up');
+  
+  // Verify that the WebSocket server is active
+  if (wss && wss.clients) {
+    console.log(`[TaskBroadcast] WebSocket server active with ${wss.clients.size} connected clients`);
+  } else {
+    console.warn('[TaskBroadcast] WebSocket server reference set, but clients property is missing');
+  }
 }
 
 /**

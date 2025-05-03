@@ -117,10 +117,15 @@ log('[ServerStartup] WebSocket server initialized with unified implementation', 
 // Ensure old-style handlers can still access the WebSocket server
 // by importing functions from the utilities that need access
 import { registerWebSocketServer } from './utils/task-update';
+import { setWebSocketServer } from './utils/task-broadcast';
 
 // Register WebSocket server with task-update utility for backward compatibility
 registerWebSocketServer(wssInstance);
 log('[ServerStartup] WebSocket server registered with task-update utility', 'info');
+
+// Set WebSocket server reference for task-broadcast utility
+setWebSocketServer(wssInstance);
+log('[ServerStartup] WebSocket server registered with task-broadcast utility', 'info');
 
 // Log WebSocket server initialization details for debugging
 setTimeout(() => {
