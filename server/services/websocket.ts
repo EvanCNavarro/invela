@@ -41,12 +41,21 @@ export function getWebSocketServer(): WebSocketServer | null {
 
 // Initialize WebSocket server
 export function initializeWebSocketServer(server: any): WebSocketServer {
+  // First check if we already have a local reference
   if (wss) {
     logger.info('WebSocket server already initialized');
     return wss;
   }
   
-  logger.info('Initializing WebSocket server');
+  // Check if unified WebSocket server exists
+  const unifiedWss = getUnifiedWebSocketServer();
+  if (unifiedWss) {
+    logger.info('Using existing unified WebSocket server');
+    wss = unifiedWss;
+    return wss;
+  }
+  
+  logger.info('Initializing new WebSocket server');
   
   // Create WebSocket server on a distinct path to avoid conflicts with Vite HMR
   wss = new WebSocketServer({ 
@@ -83,9 +92,16 @@ export function initializeWebSocketServer(server: any): WebSocketServer {
  */
 export async function broadcast(type: string, payload: any): Promise<void> {
   try {
+    // First try to use our local reference
     if (!wss) {
-      logger.warn('WebSocket server not initialized, skipping broadcast');
-      return;
+      // Try to get the unified WebSocket server
+      wss = getUnifiedWebSocketServer();
+      if (wss) {
+        logger.info('Successfully retrieved unified WebSocket server for broadcast');
+      } else {
+        logger.warn('WebSocket server not initialized, skipping broadcast');
+        return;
+      }
     }
     
     // Set standard timestamp for all messages
