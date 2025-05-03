@@ -52,6 +52,7 @@ import fixKy3pFilesRouter from './routes/fix-ky3p-files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
+import debugEndpoints from './routes/debug-endpoints';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
@@ -342,6 +343,8 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/debug', debugRouter);
   // Register debug-routes.ts
   app.use('/api/debug', debugRoutesTs);
+  // Register additional debug endpoints for KY3P testing
+  app.use('/api/debug', debugEndpoints);
   
   app.use(cardRouter);
   app.use(securityRouter);
