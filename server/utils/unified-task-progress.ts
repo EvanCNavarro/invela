@@ -158,6 +158,8 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
     // Calculate progress percentage
     if (totalFields > 0) {
       progress = Math.round((completedFields / totalFields) * 100);
+      // Ensure progress is properly converted to a number to avoid type mismatches
+      progress = Number(progress);
     }
     
     // Make sure progress is between 0 and 100
@@ -275,10 +277,16 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
       const newStatus = getStatusFromProgress(progress, task.status);
       
       // Update the task with the new progress value
+      // Ensure progress is a valid number
+      const numericProgress = Number(progress);
+      if (isNaN(numericProgress)) {
+        throw new Error(`Invalid progress value: ${progress}`);
+      }
+      
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          progress,
+          progress: numericProgress, // Use the validated numeric value
           status: newStatus,
           updated_at: new Date(),
         })
@@ -293,11 +301,11 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
       return {
         success: true,
         taskId,
-        progress,
+        progress: numericProgress, // Use the validated numeric value for consistency
         status: newStatus,
         previousProgress: task.progress,
         previousStatus: task.status,
-        changed: task.progress !== progress || task.status !== newStatus,
+        changed: task.progress !== numericProgress || task.status !== newStatus,
       };
     });
   } catch (error) {
