@@ -66,12 +66,21 @@ export async function standardizedBulkUpdate(
         }))
       };
       
+      // Construct the URL with the preserveProgress parameter if needed
+      let batchUpdateUrl = `/api/ky3p/batch-update/${taskId}`;
+      if (preserveProgress) {
+        batchUpdateUrl += '?preserveProgress=true';
+      }
+      
       // Using fetch directly with credentials included for authentication
-      const responsesResponse = await fetch(`/api/ky3p/batch-update/${taskId}`, {
+      const responsesResponse = await fetch(batchUpdateUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(responsesData)
+        body: JSON.stringify({
+          ...responsesData,
+          preserveProgress // Include preserveProgress in the request body
+        })
       });
       
       if (responsesResponse.ok) {
@@ -101,8 +110,14 @@ export async function standardizedBulkUpdate(
     try {
       logger.info(`Trying direct raw format for task ${taskId}`);
       
+      // Construct URL with preserveProgress parameter for approach 2
+      let directUrl = `/api/ky3p/batch-update/${taskId}`;
+      if (preserveProgress) {
+        directUrl += '?preserveProgress=true';
+      }
+      
       // Direct fetch with the special field format that worked in server logs
-      const directResponse = await fetch(`/api/ky3p/batch-update/${taskId}`, {
+      const directResponse = await fetch(directUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Important for authentication
@@ -110,7 +125,8 @@ export async function standardizedBulkUpdate(
           taskIdRaw: String(taskId),
           fieldIdRaw: 'bulk',
           responseValue: JSON.stringify(formData),
-          responseValueType: 'object'
+          responseValueType: 'object',
+          preserveProgress // Include preserveProgress parameter
         }),
       });
       
@@ -141,12 +157,27 @@ export async function standardizedBulkUpdate(
     try {
       logger.info(`Trying dedicated bulk endpoint for task ${taskId}`);
       
-      const bulkEndpoint = `/api/ky3p/responses/${taskId}/bulk`;
+      // Construct URL with preserveProgress parameter for approach 3
+      let bulkEndpoint = `/api/ky3p/responses/${taskId}/bulk`;
+      if (preserveProgress) {
+        bulkEndpoint += '?preserveProgress=true';
+      }
+      
+      // Include preserveProgress in payload
+      const bulkPayload = {
+        ...formData,
+        _meta: {
+          preserveProgress,
+          isFormEditing: options.isFormEditing
+        }
+      };
+      
+      // Call the bulk endpoint with preserveProgress
       const bulkResponse = await fetch(bulkEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(formData), // Send raw form data object
+        body: JSON.stringify(bulkPayload)
       });
       
       if (bulkResponse.ok) {
