@@ -53,12 +53,16 @@ The KISS (Keep It Simple, Stupid) principle dictates that we should maintain a s
 2. **Fix 2: Consistent Status Determination**
    - **Updated status-constants.ts**:
      - Fixed `getStatusFromProgress` to use READY_FOR_SUBMISSION for 100% progress without submission
+     - Added READY_FOR_SUBMISSION to TaskStatus enum
+     - Updated normalizeTaskStatus to handle this status correctly
      - Ensured consistent logic between frontend and backend
 
    - **Fixed affected tasks**:
      - Updated task #694 from "submitted" to "ready_for_submission"
      - Fixed other affected tasks (677, 332, 336) with the same issue
      - Ensured integrity of business rule: only user-submitted tasks are "submitted"
+     - Fixed additional inconsistency: task #694 showed 100% progress but "not_started" status
+     - Corrected KY3P tasks (710, 718, 723) with 0% progress but "submitted"/"in_progress" status
 
 3. **Unified Status Determination Logic**:
    - Now consistently follows these rules:
