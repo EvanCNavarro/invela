@@ -150,14 +150,59 @@ export default function TaskCenterPage() {
           // Message data now comes directly from the WebSocket service
           console.log('[TaskCenter] Raw WebSocket task_update data:', data);
           
-          // The data should now come directly without requiring payload extraction
-          const taskData = data || {};
-          const taskId = taskData.id;
+          // Enhanced logging to help diagnose the exact structure
+          console.log('[TaskCenter] WebSocket message structure analysis:', {
+            hasPayload: !!data?.payload,
+            hasNestedPayload: !!data?.payload?.payload,
+            hasData: !!data?.data,
+            hasNestedData: !!data?.data?.data,
+            directTaskId: data?.id,
+            payloadTaskId: data?.payload?.id,
+            nestedPayloadTaskId: data?.payload?.payload?.id,
+            dataTaskId: data?.data?.id,
+            nestedDataTaskId: data?.data?.data?.id,
+          });
+          
+          // Extract task data from potentially nested structure
+          // First try direct properties, then look inside payload, then inside nested payload
+          let taskData: any = null;
+          let taskId: number | null = null;
+          
+          // Try to extract from different possible structures
+          if (data?.id) {
+            // Direct structure
+            taskData = data;
+            taskId = data.id;
+          } else if (data?.payload?.id) {
+            // payload.id structure
+            taskData = data.payload;
+            taskId = data.payload.id;
+          } else if (data?.payload?.payload?.id) {
+            // Doubly nested payload structure
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.id;
+          } else if (data?.taskId) {
+            // Has explicit taskId field
+            taskData = data;
+            taskId = data.taskId;
+          } else if (data?.payload?.taskId) {
+            // payload.taskId structure
+            taskData = data.payload;
+            taskId = data.payload.taskId;
+          }
+          
+          // If we still don't have task data but have a taskId, construct minimal object
+          if (!taskData && taskId) {
+            taskData = { id: taskId };
+          }
+          
+          // Fallback to empty object if no task data found
+          taskData = taskData || {};
           
           // Get current timestamp for this update
           const now = Date.now();
 
-          console.log('[TaskCenter] WebSocket task_update received:', {
+          console.log('[TaskCenter] WebSocket task_update processed:', {
             taskId,
             status: taskData.status,
             progress: taskData.progress,
@@ -228,14 +273,61 @@ export default function TaskCenterPage() {
         
         // 2. Subscribe to test task notifications as well
         const unsubTaskTestNotification = await wsService.subscribe('task_test_notification', (data: any) => {
-          // Now gets payload directly from WebSocket service
-          const taskData = data || {};
-          const taskId = taskData.id;
+          // Enhanced logging to see the raw data structure
+          console.log('[TaskCenter] Raw WebSocket test_notification data:', data);
+
+          // Enhanced logging to help diagnose the exact structure
+          console.log('[TaskCenter] Test notification structure analysis:', {
+            hasPayload: !!data?.payload,
+            hasNestedPayload: !!data?.payload?.payload,
+            hasData: !!data?.data,
+            hasNestedData: !!data?.data?.data,
+            directTaskId: data?.id,
+            payloadTaskId: data?.payload?.id,
+            nestedPayloadTaskId: data?.payload?.payload?.id,
+            dataTaskId: data?.data?.id,
+            nestedDataTaskId: data?.data?.data?.id,
+          });
+          
+          // Extract task data from potentially nested structure - same approach as task_update
+          let taskData: any = null;
+          let taskId: number | null = null;
+          
+          // Try to extract from different possible structures
+          if (data?.id) {
+            // Direct structure
+            taskData = data;
+            taskId = data.id;
+          } else if (data?.payload?.id) {
+            // payload.id structure
+            taskData = data.payload;
+            taskId = data.payload.id;
+          } else if (data?.payload?.payload?.id) {
+            // Doubly nested payload structure
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.id;
+          } else if (data?.taskId) {
+            // Has explicit taskId field
+            taskData = data;
+            taskId = data.taskId;
+          } else if (data?.payload?.taskId) {
+            // payload.taskId structure
+            taskData = data.payload;
+            taskId = data.payload.taskId;
+          }
+          
+          // If we still don't have task data but have a taskId, construct minimal object
+          if (!taskData && taskId) {
+            taskData = { id: taskId };
+          }
+          
+          // Fallback to empty object if no task data found
+          taskData = taskData || {};
           
           // Get current timestamp for this update
           const now = Date.now();
           
-          console.log('[TaskCenter] WebSocket test notification received:', {
+          console.log('[TaskCenter] WebSocket test notification processed:', {
             taskId,
             status: taskData.status,
             progress: taskData.progress,
