@@ -13,6 +13,7 @@ import { emailService } from './services/email';
 import { requireAuth, optionalAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
 import * as WebSocketService from './services/websocket';
+import { broadcast, broadcastTaskUpdate } from './utils/unified-websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -2402,9 +2403,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             duration: Date.now() - txStartTime
           });
 
-          // Broadcast task update
-          broadcastMessage('task_update', {
-            id: onboardingTask.id,
+          // Broadcast task update using unified WebSocket implementation
+          broadcastTaskUpdate(onboardingTask.id, {
             status: onboardingTask.status,
             progress: onboardingTask.progress,
             metadata: onboardingTask.metadata
