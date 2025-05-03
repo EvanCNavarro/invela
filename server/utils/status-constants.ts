@@ -130,6 +130,6 @@ export function getStatusFromProgress(progress: number, hasSubmissionData: boole
   } else if (progress < 100) {
     return TaskStatus.IN_PROGRESS;
   } else {
-    return TaskStatus.SUBMITTED;
+    return TaskStatus.READY_FOR_SUBMISSION;
   }
 }
