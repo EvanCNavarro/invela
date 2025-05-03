@@ -11,7 +11,10 @@ import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
 import { broadcastMessage as wsBroadcastMessage, setupWebSocketServerHandlers, hasConnectedClients } from '../utils/websocketBroadcast';
 
-// Store for active WebSocket connections
+// Import the unified WebSocket server instance
+import { getWebSocketServer as getUnifiedWebSocketServer } from '../utils/unified-websocket';
+
+// Store for active WebSocket connections - use the unified websocket server
 let wss: WebSocketServer | null = null;
 
 /**
@@ -20,6 +23,19 @@ let wss: WebSocketServer | null = null;
  * @returns The WebSocket server instance or null if not initialized
  */
 export function getWebSocketServer(): WebSocketServer | null {
+  // First try to use our local reference
+  if (wss) {
+    return wss;
+  }
+  
+  // Fall back to the unified WebSocket server
+  const unifiedWss = getUnifiedWebSocketServer();
+  if (unifiedWss) {
+    // Store the reference for future use
+    wss = unifiedWss;
+    logger.info('Using unified WebSocket server from now on');
+  }
+  
   return wss;
 }
 
