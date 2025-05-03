@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
-import { initializeWebSocketServer } from "./utils/unified-websocket";
+import { initWebSocketServer } from "./utils/unified-websocket";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
@@ -111,7 +111,7 @@ registerRoutes(app);
 
 // Setup WebSocket server with error handling - using unified implementation
 // Initialize once and store the instance for all modules to access
-const wssInstance = initializeWebSocketServer(server);
+const wssInstance = initWebSocketServer(server);
 log('[ServerStartup] WebSocket server initialized with unified implementation', 'info');
 
 // Ensure old-style handlers can still access the WebSocket server
