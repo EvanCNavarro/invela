@@ -194,10 +194,7 @@ export const CompanyTabsService = {
       
       // CRITICAL: Invalidate the company cache
       try {
-        // Import the invalidateCompanyCache function from routes
-        const { invalidateCompanyCache } = require('../routes');
-        
-        // Use the dedicated cache invalidation function
+        // Use the imported invalidateCompanyCache function directly
         const cacheInvalidated = invalidateCompanyCache(companyId);
         
         if (cacheInvalidated) {
@@ -212,15 +209,14 @@ export const CompanyTabsService = {
       // CRITICAL: Broadcast the WebSocket event immediately
       let broadcastSuccess = false;
       try {
-        // Import the WebSocket service and broadcast right away
-        const { broadcastCompanyTabsUpdate, broadcastMessage } = require('../services/websocket');
+        // Use the imported WebSocketService directly
         
         // Use both broadcast methods for redundancy
         // 1. Use the specific company tabs update method 
-        broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
+        WebSocketService.broadcastCompanyTabsUpdate(companyId, updatedCompany.available_tabs);
         
         // 2. Also use the generic broadcast method as backup with cache_invalidation flag
-        broadcastMessage('company_tabs_updated', {
+        WebSocketService.broadcastMessage('company_tabs_updated', {
           companyId,
           availableTabs: updatedCompany.available_tabs,
           timestamp: new Date().toISOString(),
@@ -239,7 +235,7 @@ export const CompanyTabsService = {
           setTimeout(() => {
             try {
               console.log(`[CompanyTabsService] Sending delayed (${delay}ms) websocket broadcast for file vault unlock, company ${companyId}`);
-              broadcastMessage('company_tabs_updated', {
+              WebSocketService.broadcastMessage('company_tabs_updated', {
                 companyId,
                 availableTabs: updatedCompany.available_tabs,
                 timestamp: new Date().toISOString(),

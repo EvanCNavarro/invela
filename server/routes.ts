@@ -2840,8 +2840,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             answers.push(...chunkAnswers);
 
             // Send progress update via WebSocket
-            broadcastMessage('task_update', {
-              id: taskId, // Using the task ID
+            WebSocketService.broadcastMessage('task_update', {
+              id: req.body.taskId, // Using the task ID from request body
               metadata: {
                 type: 'CLASSIFICATION_UPDATE',
                 fileId: file.id.toString(),
