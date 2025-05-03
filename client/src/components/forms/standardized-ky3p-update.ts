@@ -35,7 +35,11 @@ const logger = getLogger('StandardizedKY3PUpdate');
  */
 export async function standardizedBulkUpdate(
   taskId: number | undefined,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  options: {
+    preserveProgress?: boolean;
+    isFormEditing?: boolean;
+  } = {}
 ): Promise<boolean> {
   // Verify taskId is provided
   if (!taskId) {
@@ -43,7 +47,13 @@ export async function standardizedBulkUpdate(
     return false;
   }
   try {
-    logger.info(`Performing standardized bulk update for task ${taskId} with ${Object.keys(formData).length} fields`);
+    // Determine if we should preserve progress (for KY3P form editing)
+    const preserveProgress = options.preserveProgress || options.isFormEditing;
+    
+    logger.info(`Performing standardized bulk update for task ${taskId} with ${Object.keys(formData).length} fields`, {
+      preserveProgress,
+      isFormEditing: options.isFormEditing
+    });
     
     // APPROACH 1: Use the responses array format - this has proven to work in the server logs
     try {
