@@ -319,6 +319,7 @@ class UnifiedDemoAutoFillService {
             await db.update(config.responsesTable)
               .set({
                 [config.responseValueColumn]: demoValue,
+                field_key: fieldKey, // Ensure field_key is always set/updated
                 status: responseStatus,
                 updated_at: timestamp,
                 version: existingResponse.version + 1
@@ -332,6 +333,7 @@ class UnifiedDemoAutoFillService {
               .values({
                 task_id: taskId,
                 field_id: fieldId,
+                field_key: fieldKey, // Include field_key for all response types for consistency
                 [config.responseValueColumn]: demoValue,
                 status: responseStatus,
                 created_at: timestamp,
