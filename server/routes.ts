@@ -373,6 +373,9 @@ export function registerRoutes(app: Express): Express {
   // Register the fully unified KY3P update routes
   const unifiedKy3pRouter = registerUnifiedKY3PUpdateRoutes();
   app.use(unifiedKy3pRouter);
+  
+  // Register the KY3P progress update endpoint for demo auto-fill
+  app.use(ky3pUpdateProgressRouter);
   // Removed reference to old KY3P batch update implementation
   // Register the standardized KY3P field update routes
   const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
