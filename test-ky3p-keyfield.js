@@ -6,50 +6,56 @@
  * numeric field_id references.
  */
 
-const axios = require('axios');
-const colors = require('./server/utils/console-colors');
+import axios from 'axios';
+import { db } from './db/index.js';
+import { tasks, ky3pFields } from './db/schema.js';
+import { eq } from 'drizzle-orm';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'http://localhost:5000';
 
-function log(message, color = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
+function log(message, type = 'info') {
+  const prefix = type === 'error' ? '❌ ERROR:' :
+                type === 'success' ? '✅ SUCCESS:' :
+                type === 'warn' ? '⚠️ WARNING:' : 'ℹ️ INFO:';
+  console.log(`${prefix} ${message}`);
 }
 
 async function findKy3pTask() {
   try {
-    log('Finding a KY3P task to test with...', colors.blue);
-    const response = await axios.get(`${API_URL}/api/tasks`);
+    log('Finding a KY3P task to test with...');
     
-    // Find a KY3P task
-    const ky3pTask = response.data.find(task => 
-      task.task_type === 'ky3p' || 
-      task.task_type.includes('ky3p') || 
-      task.task_type.includes('security')
-    );
+    // Direct DB query - more reliable for testing
+    const ky3pTasks = await db.select()
+      .from(tasks)
+      .where(eq(tasks.task_type, 'ky3p'))
+      .limit(5);
     
-    if (!ky3pTask) {
-      log('No KY3P task found. Please create one before running this test.', colors.red);
+    if (!ky3pTasks.length) {
+      log('No KY3P task found. Please create one before running this test.', 'error');
       return null;
     }
     
-    log(`Found KY3P task: ${ky3pTask.id} - ${ky3pTask.title}`, colors.green);
+    // Get the first KY3P task
+    const ky3pTask = ky3pTasks[0];
+    
+    log(`Found KY3P task: ${ky3pTask.id} - ${ky3pTask.title}`, 'success');
     return ky3pTask;
   } catch (error) {
-    log(`Error finding KY3P task: ${error.message}`, colors.red);
+    log(`Error finding KY3P task: ${error.message}`, 'error');
     return null;
   }
 }
 
 async function getKy3pFields() {
   try {
-    log('Getting KY3P field definitions...', colors.blue);
+    log('Getting KY3P field definitions...');
     const response = await axios.get(`${API_URL}/api/ky3p/fields`);
     const fields = response.data;
     
-    log(`Found ${fields.length} KY3P fields`, colors.green);
+    log(`Found ${fields.length} KY3P fields`, 'success');
     return fields;
   } catch (error) {
-    log(`Error getting KY3P fields: ${error.message}`, colors.red);
+    log(`Error getting KY3P fields: ${error.message}`, 'error');
     return [];
   }
 }
@@ -64,8 +70,8 @@ async function testKeyfieldProgress(taskId, fields) {
       formData[field.field_key] = `Test value for ${field.field_key}`;
     }
     
-    log('Testing KY3P keyfield-progress endpoint...', colors.blue);
-    log(`Updating ${Object.keys(formData).length} fields for task ${taskId}`, colors.blue);
+    log('Testing KY3P keyfield-progress endpoint...');
+    log(`Updating ${Object.keys(formData).length} fields for task ${taskId}`);
     
     // Use our new keyfield-progress endpoint
     const response = await axios.post(`${API_URL}/api/ky3p/keyfield-progress`, {
@@ -74,15 +80,15 @@ async function testKeyfieldProgress(taskId, fields) {
       formData
     });
     
-    log('Response:', colors.green);
-    log(JSON.stringify(response.data, null, 2), colors.green);
+    log('Response:', 'success');
+    log(JSON.stringify(response.data, null, 2), 'success');
     
     return response.data;
   } catch (error) {
-    log(`Error testing keyfield-progress: ${error.message}`, colors.red);
+    log(`Error testing keyfield-progress: ${error.message}`, 'error');
     if (error.response) {
-      log('Server response:', colors.red);
-      log(JSON.stringify(error.response.data, null, 2), colors.red);
+      log('Server response:', 'error');
+      log(JSON.stringify(error.response.data, null, 2), 'error');
     }
     return null;
   }
@@ -91,18 +97,18 @@ async function testKeyfieldProgress(taskId, fields) {
 // Get progress data from the new endpoint
 async function getKeyfieldProgress(taskId) {
   try {
-    log('Getting KY3P keyfield progress...', colors.blue);
+    log('Getting KY3P keyfield progress...');
     const response = await axios.get(`${API_URL}/api/ky3p/keyfield-progress/${taskId}`);
     
-    log('Response:', colors.green);
-    log(JSON.stringify(response.data, null, 2), colors.green);
+    log('Response:', 'success');
+    log(JSON.stringify(response.data, null, 2), 'success');
     
     return response.data;
   } catch (error) {
-    log(`Error getting keyfield progress: ${error.message}`, colors.red);
+    log(`Error getting keyfield progress: ${error.message}`, 'error');
     if (error.response) {
-      log('Server response:', colors.red);
-      log(JSON.stringify(error.response.data, null, 2), colors.red);
+      log('Server response:', 'error');
+      log(JSON.stringify(error.response.data, null, 2), 'error');
     }
     return null;
   }
@@ -110,7 +116,7 @@ async function getKeyfieldProgress(taskId) {
 
 async function run() {
   try {
-    log('Starting KY3P keyfield router test...', colors.cyan);
+    log('Starting KY3P keyfield router test...');
     
     // Find a KY3P task to test with
     const task = await findKy3pTask();
@@ -128,9 +134,9 @@ async function run() {
     const progressData = await getKeyfieldProgress(task.id);
     if (!progressData) return;
     
-    log('Test completed successfully!', colors.cyan);
+    log('Test completed successfully!', 'success');
   } catch (error) {
-    log(`Unexpected error: ${error.message}`, colors.red);
+    log(`Unexpected error: ${error.message}`, 'error');
     console.error(error);
   }
 }
