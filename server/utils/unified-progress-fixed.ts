@@ -95,22 +95,34 @@ export async function updateKy3pProgressFixed(
       }
       
       // Use explicit returning() to ensure we get back the updated record
+      // Add detailed logging for the update operation
+      logger.info(`${logPrefix} Performing database update for KY3P task ${taskId}`, {
+        taskId,
+        progressValue,
+        newStatus,
+        diagnosticId,
+        timestamp: new Date().toISOString()
+      });
+      
+      // CRITICAL FIX: Use SQL type casting for progress to ensure proper persistence
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          // CRITICAL FIX: Use direct numeric value rather than calculation reference
-          progress: progressValue,
+          // CRITICAL FIX: Use explicit SQL casting to integer 
+          progress: sql`${progressValue}::integer`,
           status: newStatus,
           updated_at: new Date(),
-          metadata: {
-            ...task.metadata,
-            ...metadata,
-            lastProgressUpdate: new Date().toISOString(),
-            progressHistory: [
-              ...(task.metadata?.progressHistory || []),
-              { value: progressValue, timestamp: new Date().toISOString() }
-            ].slice(-10) // Keep last 10 updates
-          }
+          // Use SQL jsonb operations for metadata to ensure proper merging
+          metadata: sql`jsonb_set(
+            jsonb_set(
+              COALESCE(${tasks.metadata}, '{}'::jsonb), 
+              '{lastProgressUpdate}', 
+              to_jsonb(now()::text)
+            ),
+            '{progressHistory}',
+            COALESCE(${tasks.metadata} -> 'progressHistory', '[]'::jsonb) || 
+            jsonb_build_array(jsonb_build_object('value', ${progressValue}, 'timestamp', now()::text))
+          )`
         })
         .where(eq(tasks.id, taskId))
         .returning();
@@ -263,17 +275,31 @@ export async function calculateAndUpdateTaskProgress(
       // Only update if progress is different or status needs to change
       if (force || task.progress !== calculatedProgress || currentStatus !== calculatedStatus) {
         // Update the task record with calculated progress and status
+        // CRITICAL FIX: Use explicit SQL type casting for progress value
+        logger.info(`[KY3P Progress] Using explicit SQL casting for task ${taskId} progress update`, {
+          taskId,
+          calculatedProgress,
+          calculatedStatus,
+          timestamp: new Date().toISOString(),
+          source
+        });
+        
         const [updatedTask] = await tx
           .update(tasks)
           .set({
-            progress: calculatedProgress,
+            // Use explicit SQL casting to integer to ensure proper type handling
+            progress: sql`${calculatedProgress}::integer`,
             status: calculatedStatus,
             updated_at: new Date(),
-            metadata: {
-              ...task.metadata,
-              lastProgressReconciliation: new Date().toISOString(),
-              reconciliationSource: source
-            }
+            metadata: sql`jsonb_set(
+              jsonb_set(
+                COALESCE(${tasks.metadata}, '{}'::jsonb),
+                '{lastProgressReconciliation}',
+                to_jsonb(now()::text)
+              ),
+              '{reconciliationSource}',
+              to_jsonb(${source}::text)
+            )`
           })
           .where(eq(tasks.id, taskId))
           .returning();

@@ -282,13 +282,28 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
       if (isNaN(numericProgress)) {
         throw new Error(`Invalid progress value: ${progress}`);
       }
+
+      // CRITICAL FIX: Use explicit SQL casting to ensure progress is properly persisted
+      // This ensures proper type handling by the database system
+      console.log(`[UnifiedProgress] Updating task ${taskId} progress with explicit SQL casting:`, {
+        progress: numericProgress,
+        status: newStatus,
+        taskType
+      });
       
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          progress: numericProgress, // Use the validated numeric value
+          // Use explicit SQL casting for progress to ensure it's treated as a number
+          progress: sql`${numericProgress}::integer`,
           status: newStatus,
           updated_at: new Date(),
+          // Add more diagnostic info to metadata
+          metadata: sql`jsonb_set(
+            COALESCE(${tasks.metadata}, '{}'::jsonb),
+            '{lastProgressUpdate}',
+            to_jsonb(now()::text)
+          )`
         })
         .where(eq(tasks.id, taskId))
         .returning();
