@@ -99,14 +99,18 @@ async function broadcastTaskUpdate(taskId, progress, status, metadata) {
 async function run() {
   // Task ID 739 is the KY3P task we want to update
   const taskId = 739;
-  const progress = 97;
+  const progress = 3;
   const status = 'in_progress';
   
   // Add metadata that needs to be included in the broadcast
   const metadata = {
     locked: false,
     prerequisite_completed: true,
-    prerequisite_completed_at: new Date().toISOString()
+    prerequisite_completed_at: new Date().toISOString(),
+    manualReconciliation: true,
+    previousProgress: 0,
+    previousStatus: 'not_started',
+    lastProgressUpdate: new Date().toISOString()
   };
   
   const result = await broadcastTaskUpdate(taskId, progress, status, metadata);
