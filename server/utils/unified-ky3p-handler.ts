@@ -235,7 +235,8 @@ export async function getKy3pResponsesByFieldKey(taskId: number): Promise<Ky3pRe
           field_key: ky3pFields.field_key,
         })
         .from(ky3pFields)
-        .where(sql`${ky3pFields.id} IN (${fieldIds.join(',')})`);
+        .where(sql`${ky3pFields.id} IN (${sql.join(fieldIds.map(id => sql`${id}`), sql`, `)})`);
+
         
         // Create a map of field_id to field_key
         const fieldKeyMap: Record<number, string> = {};
