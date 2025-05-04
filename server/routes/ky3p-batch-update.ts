@@ -125,7 +125,7 @@ export function registerKY3PBatchUpdateRoutes() {
             .update(ky3pResponses)
             .set({
               response_value: String(value),
-              status: KYBFieldStatus.COMPLETE, // Use the enum key to ensure type safety
+              status: "COMPLETE" as const, // Use string literal to match expected type
               updated_at: timestamp
             })
             .where(
@@ -149,7 +149,7 @@ export function registerKY3PBatchUpdateRoutes() {
               task_id: taskId,
               field_id: fieldId,
               response_value: String(value),
-              status: KYBFieldStatus.COMPLETE, // Use the enum key to ensure type safety
+              status: "COMPLETE" as const, // Use string literal to match expected type
               created_at: timestamp,
               updated_at: timestamp
             });
@@ -163,30 +163,29 @@ export function registerKY3PBatchUpdateRoutes() {
         }
       }
       
-      // Update task progress using the fixed progress update function
+      // Update task progress using our unified progress calculator
       try {
-        // IMPROVED SOLUTION: Use the fixed progress update function for KY3P tasks
-        // to ensure the progress is correctly persisted to the database
-        const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
+        // Use our new unified progress calculator for guaranteed consistency
+        const { updateAndBroadcastProgress } = await import('../utils/unified-progress-calculator');
         
-        const progressResult = await updateKy3pProgressFixed(taskId, { 
+        // Calculate updated progress with the unified calculator
+        const progress = await updateAndBroadcastProgress(taskId, 'ky3p', { 
           debug: true,
           metadata: {
             lastBatchUpdate: new Date().toISOString(),
-            batchUpdateSize: batchResponses.length
+            batchUpdateSize: batchResponses.length,
+            usingUnifiedCalculator: true,
+            source: source || 'batch-update'
           }
         });
         
-        if (progressResult.success) {
-          logger.info(`[KY3P-BATCH-UPDATE] Successfully updated task ${taskId} progress to ${progressResult.progress}%`);
-        } else {
-          logger.warn(`[KY3P-BATCH-UPDATE] Progress update warning:`, {
-            taskId,
-            message: progressResult.message
-          });
-        }
+        logger.info(`[KY3P-BATCH-UPDATE] Successfully updated task ${taskId} progress to ${progress}% using unified calculator`);
       } catch (error) {
-        logger.error('[KY3P-BATCH-UPDATE] Error updating task progress:', error);
+        logger.error('[KY3P-BATCH-UPDATE] Error updating task progress:', {
+          taskId,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
         // Continue processing, don't fail the whole request
       }
       
@@ -363,26 +362,26 @@ export function registerKY3PBatchUpdateRoutes() {
         return res.status(404).json({ error: `Task ${taskId} not found` });
       }
       
-      // Use the fixed progress update function for guaranteed persistence
-      const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
+      // Use our unified progress calculator for guaranteed persistence
+      const { updateAndBroadcastProgress } = await import('../utils/unified-progress-calculator');
       
-      // ENHANCED SOLUTION: Use the fixed progress function specifically for KY3P
-      // This ensures proper persistence for KY3P progress to the database
-      const progressResult = await updateKy3pProgressFixed(taskId, { 
+      // Use our unified progress calculator for maximum consistency
+      const progress = await updateAndBroadcastProgress(taskId, 'ky3p', { 
         debug: true,
-        forceUpdate: true, // Force the update even if no apparent change in progress
+        // Don't force a specific progress value, let the calculator determine the correct value
         metadata: {
           lastProgressSave: new Date().toISOString(),
-          manualSave: true
+          manualSave: true,
+          usingUnifiedCalculator: true,
+          source: 'save-progress-endpoint'
         }
       });
       
       // Log the result with more detailed information
       logger.info(`[KY3P-BATCH-UPDATE] Manual progress save result:`, {
         taskId,
-        success: progressResult.success,
-        progress: progressResult.progress,
-        message: progressResult.message
+        progress,
+        usingUnifiedCalculator: true
       });
       
       // Get the updated task to return the current progress
