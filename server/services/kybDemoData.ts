@@ -5,88 +5,72 @@
  * It generates realistic looking data that can be used to auto-fill KYB forms for testing or demo purposes.
  */
 
-export async function getKybDemoData() {
-  // Create some demo fields with sample data
-  const fields = [
-    // Company Information
-    { id: 2001, value: 'ABC Technologies Ltd.', status: 'COMPLETE' },
-    { id: 2002, value: '123 Main Street, Suite 500, San Francisco, CA 94105, USA', status: 'COMPLETE' },
-    { id: 2003, value: '+1 (415) 555-1234', status: 'COMPLETE' },
-    { id: 2004, value: 'contact@abctech.com', status: 'COMPLETE' },
-    { id: 2005, value: 'www.abctech.com', status: 'COMPLETE' },
-    
-    // Business Structure
-    { id: 2011, value: 'Corporation', status: 'COMPLETE' },
-    { id: 2012, value: 'USA', status: 'COMPLETE' },
-    { id: 2013, value: 'DE12345678', status: 'COMPLETE' },
-    { id: 2014, value: '2010-03-15', status: 'COMPLETE' },
-    { id: 2015, value: 'Delaware', status: 'COMPLETE' },
-    
-    // Business Activity
-    { id: 2021, value: 'Financial Technology Services', status: 'COMPLETE' },
-    { id: 2022, value: 'SaaS, Payment Processing, Data Analytics', status: 'COMPLETE' },
-    { id: 2023, value: 'United States, Canada, United Kingdom, France, Germany', status: 'COMPLETE' },
-    { id: 2024, value: 'Consumers, Small Businesses, Enterprise', status: 'COMPLETE' },
-    { id: 2025, value: '$25M - $50M', status: 'COMPLETE' },
-    
-    // Ownership & Management
-    { id: 2031, value: 'Jane Smith', status: 'COMPLETE' },
-    { id: 2032, value: 'CEO', status: 'COMPLETE' },
-    { id: 2033, value: 'jane.smith@abctech.com', status: 'COMPLETE' },
-    { id: 2034, value: '+1 (415) 555-5678', status: 'COMPLETE' },
-    { id: 2035, value: '45%', status: 'COMPLETE' },
-    
-    // Secondary Owner/Manager
-    { id: 2041, value: 'Michael Johnson', status: 'COMPLETE' },
-    { id: 2042, value: 'CTO', status: 'COMPLETE' },
-    { id: 2043, value: 'michael.johnson@abctech.com', status: 'COMPLETE' },
-    { id: 2044, value: '+1 (415) 555-9012', status: 'COMPLETE' },
-    { id: 2045, value: '30%', status: 'COMPLETE' },
-    
-    // Regulatory & Compliance
-    { id: 2051, value: 'MSB Registration #12345', status: 'COMPLETE' },
-    { id: 2052, value: 'PCI-DSS Level 1', status: 'COMPLETE' },
-    { id: 2053, value: 'SOC 2 Type II', status: 'COMPLETE' },
-    { id: 2054, value: 'ISO 27001', status: 'COMPLETE' },
-    { id: 2055, value: 'Yes, all jurisdictions', status: 'COMPLETE' },
-    
-    // Banking Information
-    { id: 2061, value: 'First National Bank', status: 'COMPLETE' },
-    { id: 2062, value: '1234567890', status: 'COMPLETE' },
-    { id: 2063, value: 'FNBUS12345', status: 'COMPLETE' },
-    { id: 2064, value: '123 Banking St, New York, NY 10001', status: 'COMPLETE' },
-    { id: 2065, value: '2015-06-01', status: 'COMPLETE' },
-    
-    // Verification Data
-    { id: 2071, value: 'Yes', status: 'COMPLETE' },
-    { id: 2072, value: 'Yes', status: 'COMPLETE' },
-    { id: 2073, value: 'No', status: 'COMPLETE' },
-    { id: 2074, value: 'Yes', status: 'COMPLETE' },
-    { id: 2075, value: 'Yes', status: 'COMPLETE' },
-    
-    // Additional Fields
-    { id: 2081, value: '12-3456789', status: 'COMPLETE' },
-    { id: 2082, value: 'DUNS: 123456789', status: 'COMPLETE' },
-    { id: 2083, value: 'Private', status: 'COMPLETE' },
-    { id: 2084, value: '250-500', status: 'COMPLETE' },
-    { id: 2085, value: 'Venture Capital, Series C', status: 'COMPLETE' },
-    
-    // Board Members
-    { id: 2091, value: 'Sarah Williams, Robert Chen, David Garcia', status: 'COMPLETE' },
-    { id: 2092, value: 'Independent', status: 'COMPLETE' },
-    { id: 2093, value: 'Quarterly', status: 'COMPLETE' },
-    { id: 2094, value: 'Audit, Compensation, Governance', status: 'COMPLETE' },
-    { id: 2095, value: '5 years', status: 'COMPLETE' },
-    
-    // Risk Assessment
-    { id: 2101, value: 'Medium', status: 'COMPLETE' },
-    { id: 2102, value: 'Low', status: 'COMPLETE' },
-    { id: 2103, value: 'Low', status: 'COMPLETE' },
-    { id: 2104, value: 'Medium', status: 'COMPLETE' },
-    { id: 2105, value: 'Low', status: 'COMPLETE' },
-  ];
+import { logger } from '../utils/logger';
 
-  return {
-    fields
-  };
+/**
+ * Generate and return demo data for KYB forms
+ */
+export async function getKybDemoData() {
+  try {
+    const demoData = {
+      fields: [
+        // Company Information
+        { id: 1, value: 'DevTech Solutions Inc.', status: 'COMPLETE' },
+        { id: 2, value: 'Limited Liability Company (LLC)', status: 'COMPLETE' },
+        { id: 3, value: '123 Main Street, Suite 500, San Francisco, CA 94105', status: 'COMPLETE' },
+        { id: 4, value: 'https://www.devtechsolutions.example', status: 'COMPLETE' },
+        
+        // Business Information
+        { id: 5, value: 'Financial Technology', status: 'COMPLETE' },
+        { id: 6, value: 'Payment processing, fraud detection, and risk management solutions', status: 'COMPLETE' },
+        { id: 7, value: '2018', status: 'COMPLETE' },
+        { id: 8, value: '101-250', status: 'COMPLETE' },
+        
+        // Regulatory Information
+        { id: 9, value: 'Yes', status: 'COMPLETE' },
+        { id: 10, value: 'Money Services Business (MSB) License', status: 'COMPLETE' },
+        { id: 11, value: 'Financial Crimes Enforcement Network (FinCEN)', status: 'COMPLETE' },
+        { id: 12, value: 'April 2023', status: 'COMPLETE' },
+        
+        // Financial Information
+        { id: 13, value: '$10-50 million', status: 'COMPLETE' },
+        { id: 14, value: '35%', status: 'COMPLETE' },
+        { id: 15, value: 'Series B', status: 'COMPLETE' },
+        { id: 16, value: 'Venture Capital', status: 'COMPLETE' },
+        
+        // Key Personnel
+        { id: 17, value: 'Jane Smith, CEO and Co-founder', status: 'COMPLETE' },
+        { id: 18, value: 'John Davis, CTO and Co-founder', status: 'COMPLETE' },
+        { id: 19, value: 'Sarah Johnson, CFO', status: 'COMPLETE' },
+        { id: 20, value: 'Michael Chen, Chief Compliance Officer', status: 'COMPLETE' },
+        
+        // Compliance Information
+        { id: 21, value: 'Yes', status: 'COMPLETE' },
+        { id: 22, value: 'Anti-Money Laundering (AML) Policy', status: 'COMPLETE' },
+        { id: 23, value: 'Know Your Customer (KYC) Procedures', status: 'COMPLETE' },
+        { id: 24, value: 'Suspicious Activity Reporting Protocol', status: 'COMPLETE' },
+        
+        // Risk Assessment
+        { id: 25, value: 'Low to Medium', status: 'COMPLETE' },
+        { id: 26, value: 'Yes', status: 'COMPLETE' },
+        { id: 27, value: 'Internal audit team and annual third-party assessment', status: 'COMPLETE' },
+        { id: 28, value: 'Compliance department with direct reporting to CCO', status: 'COMPLETE' },
+        
+        // Business Relationships
+        { id: 29, value: 'Mastercard, Visa', status: 'COMPLETE' },
+        { id: 30, value: 'AWS, Microsoft Azure', status: 'COMPLETE' }
+      ],
+      metadata: {
+        autoFilled: true,
+        fillTimestamp: new Date().toISOString(),
+        source: 'unified-demo-service'
+      }
+    };
+    
+    logger.info(`[KYBDemoData] Generated demo data with ${demoData.fields.length} fields`);
+    return demoData;
+  } catch (error) {
+    logger.error(`[KYBDemoData] Error generating demo data: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
 }
