@@ -135,6 +135,7 @@ export function registerKY3PFieldUpdateRoutes() {
         await db.update(ky3pResponses)
           .set({ 
             response_value: value, 
+            field_key: field_key, // Ensure field_key is set for consistency
             updated_at: now,
             status: KYBFieldStatus.COMPLETE // Use the enum key to ensure type safety
           })
@@ -150,6 +151,7 @@ export function registerKY3PFieldUpdateRoutes() {
           .values({
             task_id: taskId,
             field_id: fieldId,
+            field_key: field_key, // Add field_key for consistency with other form types
             response_value: value,
             status: KYBFieldStatus.COMPLETE, // Use the enum key to ensure type safety
             created_at: now,
