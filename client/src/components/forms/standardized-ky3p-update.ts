@@ -50,13 +50,18 @@ export async function standardizedBulkUpdate(
       source
     });
     
-    // Prepare data in the responses array format
-    const responsesData = {
-      responses: Object.entries(formData).map(([fieldKey, value]) => ({
-        fieldKey,
-        value
-      }))
-    };
+    // Prepare data in the responses format expected by the server
+    // Server expects { responses: { key1: value1, key2: value2 } } format
+    // NOT the fieldKey/value array format used by some other endpoints
+    const responses: Record<string, any> = {};
+    
+    // Convert form data to key-value pairs
+    Object.entries(formData).forEach(([fieldKey, value]) => {
+      responses[fieldKey] = value;
+    });
+    
+    // Package in the expected format
+    const responsesData = { responses };
     
     // Construct URL with appropriate query parameters
     let batchUpdateUrl = `/api/ky3p/batch-update/${taskId}`;

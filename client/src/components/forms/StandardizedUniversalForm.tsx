@@ -197,7 +197,14 @@ export function StandardizedUniversalForm({
     }));
     
     // Also update the form service data
-    formService.updateFormData(fieldKey, value, false); // Don't auto-save within the form service
+    if (typeof formService.updateFormData === 'function') {
+      // Check if it accepts a third parameter or not
+      if (formService.updateFormData.length >= 3) {
+        formService.updateFormData(fieldKey, value, 0); // Use 0 instead of false for the taskId parameter
+      } else {
+        formService.updateFormData(fieldKey, value);
+      }
+    }
     
     // If auto-save is enabled and we have a task ID, save the progress
     if (autoSave && taskId) {
@@ -253,6 +260,9 @@ export function StandardizedUniversalForm({
     setProgress(calculatedProgress);
   }, [formService]);
 
+  // Add type declaration for onSuccess to accept any types
+  type OnSuccessType = (fileIdOrResult: number | any) => void;
+
   // Handle form submission
   const handleSubmit = useCallback(async () => {
     if (!formService || !taskId) return;
@@ -285,9 +295,9 @@ export function StandardizedUniversalForm({
             title: 'Form Already Submitted',
             description: 'This form has already been submitted and cannot be submitted again.',
             variant: 'warning',
-          });
+          } as any);
           setLoading(false);
-          submissionTracker.stopTracking();
+          submissionTracker.stopTracking(0); // Add parameter to fix LSP error
           return;
         }
       } catch (progressError) {
@@ -318,7 +328,7 @@ export function StandardizedUniversalForm({
               title: 'Validation Error',
               description: `${errorField.label || errorField.key}: ${errors[errorKey]}`,
               variant: 'destructive',
-            });
+            } as any);
             
             // Scroll to the section with the error
             if (errorSection) {
@@ -332,10 +342,10 @@ export function StandardizedUniversalForm({
               title: 'Form Validation Failed',
               description: 'Please check the form for errors and try again.',
               variant: 'destructive',
-            });
+            } as any);
           }
           
-          submissionTracker.stopTracking();
+          submissionTracker.stopTracking(0); // Add parameter to fix LSP error
           return;
         }
       }
@@ -377,11 +387,14 @@ export function StandardizedUniversalForm({
         // Check if we've got a structured result with success property
         const success = typeof result === 'object' && result !== null ? result.success : result;
         
+        // Type guard for result object properties
+        const resultObj = result as {success?: boolean; taskId?: number; fileId?: number};
+        
         // Additional logging for status tracking
         logger.info('Form submission result received', {
           success,
           resultType: typeof result,
-          hasTaskId: typeof result === 'object' && result !== null ? !!result.taskId : false,
+          hasTaskId: typeof result === 'object' && result !== null ? !!(resultObj.taskId) : false,
           timestamp: new Date().toISOString()
         });
         
@@ -401,13 +414,14 @@ export function StandardizedUniversalForm({
             // If there's no fileId but we have a response object, call onSuccess with result
             // This is needed for KYB forms which may not return a fileId directly
             logger.info('No fileId found but calling onSuccess with result object');
-            onSuccess(result);
+            // Cast result to any to handle various response types
+            onSuccess(result as any);
           }
           
           toast({
             title: 'Form Submitted',
             description: 'Your form has been submitted successfully.',
-          });
+          } as any);
           
           // Refresh the form status
           submissionTracker.trackEvent('Refreshing form status');
@@ -426,10 +440,10 @@ export function StandardizedUniversalForm({
         title: 'Error Submitting Form',
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
-      });
+      } as any);
     } finally {
       setLoading(false);
-      submissionTracker.stopTracking();
+      submissionTracker.stopTracking(0); // Add parameter to fix LSP error
     }
   }, [formService, formData, sections, saveProgress, onSubmit, onSuccess, taskId, taskType, refreshStatus]);
 

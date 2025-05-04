@@ -58,21 +58,27 @@ export async function fixedUniversalSaveProgress(
     let endpoint = '';
     let bodyFormat: any = {};
     
+    // Create a standardized responses object - all endpoints should accept this format
+    const responseObj: Record<string, any> = {};
+    Object.entries(formData).forEach(([key, value]) => {
+      responseObj[key] = value;
+    });
+    
     switch (lowerTaskType) {
       case 'kyb':
         endpoint = `/api/kyb/bulk-update/${taskId}`;
-        bodyFormat = { responses: Object.entries(formData).map(([key, value]) => ({ fieldKey: key, value })) };
+        bodyFormat = { responses: responseObj };
         break;
         
       case 'open_banking':
       case 'open_banking_survey':
         endpoint = `/api/open-banking/bulk-update/${taskId}`;
-        bodyFormat = { responses: Object.entries(formData).map(([key, value]) => ({ fieldKey: key, value })) };
+        bodyFormat = { responses: responseObj };
         break;
         
       default:
         endpoint = `/api/${lowerTaskType}/bulk-update/${taskId}`;
-        bodyFormat = { responses: Object.entries(formData).map(([key, value]) => ({ fieldKey: key, value })) };
+        bodyFormat = { responses: responseObj };
         logger.warn(`Using generic endpoint for form type: ${lowerTaskType}`);
     }
     
