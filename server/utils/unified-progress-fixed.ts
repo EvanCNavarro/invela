@@ -99,22 +99,23 @@ export async function updateKy3pProgressFixed(
       { ...task.metadata, ...metadata }
     );
     
-    // Step 5: Update the task with a transaction for atomicity
+    // CRITICAL FIX: Import the progress validator utility OUTSIDE the transaction
+    // to avoid transaction boundary issues with dynamic imports
+    const { validateProgressForUpdate, getProgressSqlValue } = await import('./progress-validator');
+    
+    // Validate and normalize the progress value to ensure consistency
+    const progressValue = validateProgressForUpdate(taskId, calculatedProgress, {
+      source: 'unified-ky3p-fixed',
+      debug: debug,
+      context: {
+        originalTask: task?.id,
+        calculationMethod: 'fixed-ky3p-progress',
+        isForceUpdate: forceUpdate
+      }
+    });
+    
+    // Step 5: Update the task with a transaction for atomicity AFTER imports are complete
     const result = await db.transaction(async (tx) => {
-      // CRITICAL FIX: Use progress validator utility for guaranteed type safety
-      // Import the progress validator utility
-      const { validateProgressForUpdate, getProgressSqlValue } = await import('./progress-validator');
-      
-      // Validate and normalize the progress value to ensure consistency
-      const progressValue = validateProgressForUpdate(taskId, calculatedProgress, {
-        source: 'unified-ky3p-fixed',
-        debug: debug,
-        context: {
-          originalTask: task?.id,
-          calculationMethod: 'fixed-ky3p-progress',
-          isForceUpdate: forceUpdate
-        }
-      });
       
       // Use explicit returning() to ensure we get back the updated record
       // Add detailed logging for the update operation
@@ -243,6 +244,9 @@ export async function calculateAndUpdateTaskProgress(
   const logPrefix = '[KY3P Progress]';
   const diagnosticId = `ky3p-progress-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   
+  // CRITICAL FIX: Import the validator utility OUTSIDE transaction to avoid boundary issues
+  const { validateProgressForUpdate, getProgressSqlValue } = await import('./progress-validator');
+  
   try {
     // Step 1: Verify the task exists
     const task = await db.query.tasks.findFirst({
@@ -307,10 +311,11 @@ export async function calculateAndUpdateTaskProgress(
           source
         });
         
-        // Import the validator utility
-        const { validateProgressForUpdate, getProgressSqlValue } = await import('./progress-validator');
+        // CRITICAL FIX: Import the validator utility is now done OUTSIDE the transaction
+        // See the import at the top of the function
         
         // Validate the progress value to ensure consistency
+        // Using the validateProgressForUpdate imported at the top of the function
         const validatedProgress = validateProgressForUpdate(taskId, calculatedProgress, {
           source: source,
           debug: debug,
@@ -325,6 +330,7 @@ export async function calculateAndUpdateTaskProgress(
           .update(tasks)
           .set({
             // Use our validator utility's SQL value generator for consistent type handling
+            // Using the getProgressSqlValue imported at the top of the function
             progress: getProgressSqlValue(validatedProgress), 
             status: calculatedStatus,
             updated_at: new Date(),
