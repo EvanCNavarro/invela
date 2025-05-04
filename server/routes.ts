@@ -55,6 +55,8 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
+// Import our manual KY3P fix route
+import { manualKy3pFix } from './routes/manual-ky3p-fix';
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
 import { registerOpenBankingRoutes } from './routes/open-banking';
