@@ -1,100 +1,85 @@
 /**
  * Open Banking Demo Data Service
  * 
- * This service provides demo data for Open Banking forms.
+ * This module provides demo data generation functions for Open Banking Survey forms.
+ * It generates realistic looking data that can be used to auto-fill forms for testing or demo purposes.
  */
 
-import { logger } from '../utils/logger';
-import { DemoData, DemoField } from './ky3pDemoData';
-
-/**
- * Get Open Banking demo data for automatically filling forms
- * 
- * @returns Promise with demo field data
- */
-export async function getOpenBankingDemoData(): Promise<DemoData> {
-  logger.info('[OpenBankingDemoData] Generating Open Banking demo data');
-  
-  // Generate demo field data
-  const fields: DemoField[] = [];
-  
-  // Generate 44 sample fields with realistic values
-  for (let i = 1; i <= 44; i++) {
-    fields.push({
-      id: i,
-      value: getDemoValueForField(i),
-      status: 'COMPLETE'
-    });
-  }
-  
-  return {
-    fields,
-    metadata: {
-      generatedAt: new Date().toISOString(),
-      source: 'open_banking_demo_generator'
-    }
-  };
-}
-
-/**
- * Get a realistic value for an Open Banking field based on its ID
- * 
- * @param fieldId Field ID
- * @returns Demo value string
- */
-function getDemoValueForField(fieldId: number): string {
-  // Common field patterns for Open Banking assessments
-  switch (fieldId % 10) { // Use modulo to create repeating patterns
-    case 0: // Yes/No pattern
-      return fieldId % 3 === 0 ? 'Yes' : 'No';
-    case 1: // API status
-      return ['Active', 'In Development', 'Planned', 'Deprecated'][Math.floor(Math.random() * 4)];
-    case 2: // Implementation timeline
-      return ['Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025', 'Q1 2026'][Math.floor(Math.random() * 5)];
-    case 3: // Standards compliance
-      return ['Fully Compliant', 'Partially Compliant', 'Non-Compliant', 'In Progress'][Math.floor(Math.random() * 4)];
-    case 4: // Data sharing scope
-      return ['Account Information', 'Payment Initiation', 'Both', 'Other'][Math.floor(Math.random() * 4)];
-    case 5: // Authentication method
-      return ['OAuth 2.0', 'FAPI', 'Proprietary', 'Multiple Methods'][Math.floor(Math.random() * 4)];
-    case 6: // Regulatory status
-      return ['Regulated', 'Exempt', 'Pending Approval', 'Not Applicable'][Math.floor(Math.random() * 4)];
-    case 7: // API versions
-      return ['v1.0', 'v2.0', 'v3.0', 'Multiple Versions'][Math.floor(Math.random() * 4)];
-    case 8: // Long text field
-      return getRandomText(20, 80);
-    case 9: // Numeric field
-      return String(Math.floor(Math.random() * 1000));
-    default:
-      return 'Sample Value';
-  }
-}
-
-/**
- * Generate random text for longer text fields
- * 
- * @param minLength Minimum length of text
- * @param maxLength Maximum length of text
- * @returns Random text string
- */
-function getRandomText(minLength: number, maxLength: number): string {
-  const words = [
-    'api', 'integration', 'banking', 'open', 'standard', 'financial',
-    'data', 'customer', 'account', 'payment', 'transaction', 'balance',
-    'authentication', 'authorization', 'consent', 'security', 'encryption', 'implementation',
-    'regulation', 'compliance', 'interface', 'sandbox', 'production', 'testing',
-    'documentation', 'specification', 'version', 'endpoint', 'response', 'request',
-    'service', 'provider', 'third-party', 'access', 'permission', 'scope',
-    'developer', 'portal', 'registry', 'certificate', 'token', 'credential'
+export async function getOpenBankingDemoData() {
+  // Create some demo fields with sample data
+  const fields = [
+    // Banking Integration & Capabilities
+    { id: 3001, value: 'UK Open Banking Standard', status: 'COMPLETE' },
+    { id: 3002, value: 'Account Information, Payment Initiation', status: 'COMPLETE' },
+    { id: 3003, value: 'Yes, FCA Authorized', status: 'COMPLETE' },
+    { id: 3004, value: 'OAuth 2.0, OpenID Connect', status: 'COMPLETE' },
+    { id: 3005, value: 'Multiple institutions', status: 'COMPLETE' },
+    
+    // Compliance & Security
+    { id: 3011, value: 'FCA, ICO, PSD2', status: 'COMPLETE' },
+    { id: 3012, value: 'SOC 2 Type II, ISO 27001', status: 'COMPLETE' },
+    { id: 3013, value: 'Yes, quarterly', status: 'COMPLETE' },
+    { id: 3014, value: 'mTLS, API keys, OAuth tokens', status: 'COMPLETE' },
+    { id: 3015, value: '24 month retention policy', status: 'COMPLETE' },
+    
+    // Data Usage & Privacy
+    { id: 3021, value: 'Account balance, transaction data, spending analysis', status: 'COMPLETE' },
+    { id: 3022, value: 'YES', status: 'COMPLETE' },
+    { id: 3023, value: 'YES', status: 'COMPLETE' },
+    { id: 3024, value: '90 days after user termination', status: 'COMPLETE' },
+    { id: 3025, value: 'YES', status: 'COMPLETE' },
+    
+    // Technical Implementation
+    { id: 3031, value: 'RESTful API, Webhook notifications', status: 'COMPLETE' },
+    { id: 3032, value: 'OAuth 2.0', status: 'COMPLETE' },
+    { id: 3033, value: 'YES', status: 'COMPLETE' },
+    { id: 3034, value: 'AES-256, TLS 1.3', status: 'COMPLETE' },
+    { id: 3035, value: 'YES', status: 'COMPLETE' },
+    
+    // Banking Partners
+    { id: 3041, value: 'HSBC, Barclays, Lloyds, Santander, NatWest', status: 'COMPLETE' },
+    { id: 3042, value: '45+ institutions, 95% market coverage', status: 'COMPLETE' },
+    { id: 3043, value: 'YES', status: 'COMPLETE' },
+    { id: 3044, value: '99.9% (monthly)', status: 'COMPLETE' },
+    { id: 3045, value: '< 300ms average', status: 'COMPLETE' },
+    
+    // Risk & Incident Management
+    { id: 3051, value: 'YES', status: 'COMPLETE' },
+    { id: 3052, value: 'Full audit trail, anomaly detection', status: 'COMPLETE' },
+    { id: 3053, value: 'YES', status: 'COMPLETE' },
+    { id: 3054, value: '< 15 minutes SLA', status: 'COMPLETE' },
+    { id: 3055, value: 'Rate limiting, fraud detection, behavioral analysis', status: 'COMPLETE' },
+    
+    // Business Continuity
+    { id: 3061, value: 'Multi-region deployment', status: 'COMPLETE' },
+    { id: 3062, value: 'RTO < 1 hour, RPO < 5 minutes', status: 'COMPLETE' },
+    { id: 3063, value: 'Quarterly', status: 'COMPLETE' },
+    { id: 3064, value: 'YES', status: 'COMPLETE' },
+    { id: 3065, value: 'Automatic failover', status: 'COMPLETE' },
+    
+    // User Experience
+    { id: 3071, value: 'Embedded, redirect, and decoupled flows', status: 'COMPLETE' },
+    { id: 3072, value: 'YES', status: 'COMPLETE' },
+    { id: 3073, value: 'English, French, German, Spanish, Italian', status: 'COMPLETE' },
+    { id: 3074, value: 'Web, iOS, Android', status: 'COMPLETE' },
+    { id: 3075, value: 'YES', status: 'COMPLETE' },
+    
+    // Support & SLAs
+    { id: 3081, value: '24/7 technical support', status: 'COMPLETE' },
+    { id: 3082, value: '< 2 hours (critical), < 24 hours (standard)', status: 'COMPLETE' },
+    { id: 3083, value: 'Email, phone, dedicated Slack', status: 'COMPLETE' },
+    { id: 3084, value: 'YES', status: 'COMPLETE' },
+    { id: 3085, value: 'YES', status: 'COMPLETE' },
+    
+    // Performance Metrics
+    { id: 3091, value: '> 99.95%', status: 'COMPLETE' },
+    { id: 3092, value: '< 5 minutes/month', status: 'COMPLETE' },
+    { id: 3093, value: 'YES', status: 'COMPLETE' },
+    { id: 3094, value: '> 100,000 daily API calls', status: 'COMPLETE' },
+    { id: 3095, value: 'Real-time dashboards, weekly reports', status: 'COMPLETE' },
   ];
-  
-  const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
-  let result = '';
-  
-  while (result.length < length) {
-    const word = words[Math.floor(Math.random() * words.length)];
-    result += (result ? ' ' : '') + word;
-  }
-  
-  return result.substring(0, maxLength);
+
+  return {
+    fields
+  };
 }

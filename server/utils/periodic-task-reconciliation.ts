@@ -17,6 +17,21 @@ import { broadcastProgressUpdate } from './progress';
 // Map of tasks that were recently reconciled to prevent redundant operations
 const recentlyReconciledTasks = new Map<number, number>();
 
+// Map of tasks that were recently updated by transactional services
+// These tasks should not be reconciled automatically to prevent overwriting atomic updates
+const transactionallyUpdatedTasks = new Map<number, number>();
+
+/**
+ * Mark a task as being updated by a transactional service
+ * This ensures the periodic reconciliation system won't interfere with atomic updates
+ * 
+ * @param taskId The task ID that was updated transactionally
+ */
+export function markTaskAsTransactionallyUpdated(taskId: number): void {
+  transactionallyUpdatedTasks.set(taskId, Date.now());
+  console.log(`[PeriodicTaskReconciliation] Task ${taskId} marked as transactionally updated and protected from automatic reconciliation`);
+}
+
 // Maximum number of tasks to reconcile in each batch
 const MAX_BATCH_SIZE = 10;
 
@@ -59,11 +74,24 @@ async function findTasksNeedingReconciliation(): Promise<number[]> {
       )
       .limit(MAX_BATCH_SIZE);
       
-    // Filter out recently reconciled tasks (in-memory cache)
+    // Filter out recently reconciled tasks and transactionally updated tasks (in-memory cache)
     const currentTime = Date.now();
     const filteredTasks = tasksToCheck.filter(task => {
+      // Check if the task was recently reconciled
       const lastReconciled = recentlyReconciledTasks.get(task.id);
-      return !lastReconciled || (currentTime - lastReconciled > MIN_RECONCILIATION_INTERVAL);
+      if (lastReconciled && (currentTime - lastReconciled <= MIN_RECONCILIATION_INTERVAL)) {
+        return false;
+      }
+      
+      // Check if the task was recently updated by a transactional service
+      // These tasks should be excluded from automatic reconciliation to prevent overrides
+      const lastTransactional = transactionallyUpdatedTasks.get(task.id);
+      if (lastTransactional && (currentTime - lastTransactional <= MIN_RECONCILIATION_INTERVAL * 5)) { // 5x longer protection for transactional updates
+        console.log(`[PeriodicTaskReconciliation] Skipping task ${task.id} - recently updated via transactional service`);
+        return false;
+      }
+      
+      return true;
     });
     
     // Return just the task IDs
@@ -145,18 +173,27 @@ async function reconcileBatch(): Promise<void> {
 function cleanupCache(): void {
   try {
     const currentTime = Date.now();
-    let expiredCount = 0;
+    let expiredReconciledCount = 0;
+    let expiredTransactionalCount = 0;
     
     // Delete entries older than the reconciliation interval
     for (const [taskId, timestamp] of recentlyReconciledTasks.entries()) {
       if (currentTime - timestamp > MIN_RECONCILIATION_INTERVAL * 2) {
         recentlyReconciledTasks.delete(taskId);
-        expiredCount++;
+        expiredReconciledCount++;
       }
     }
     
-    if (expiredCount > 0) {
-      console.log(`[PeriodicTaskReconciliation] Cleaned up ${expiredCount} expired entries from cache`);
+    // Delete entries older than the 5x reconciliation interval
+    for (const [taskId, timestamp] of transactionallyUpdatedTasks.entries()) {
+      if (currentTime - timestamp > MIN_RECONCILIATION_INTERVAL * 5) {
+        transactionallyUpdatedTasks.delete(taskId);
+        expiredTransactionalCount++;
+      }
+    }
+    
+    if (expiredReconciledCount > 0 || expiredTransactionalCount > 0) {
+      console.log(`[PeriodicTaskReconciliation] Cleaned up ${expiredReconciledCount} reconciled and ${expiredTransactionalCount} transactional entries from cache`);
     }
   } catch (error) {
     console.error('[PeriodicTaskReconciliation] Error cleaning up cache:', error);

@@ -1,0 +1,102 @@
+[UnifiedKY3PFormService] [Unified KY3P] Saving form data for task 739
+[UnifiedKY3PFormService] [Unified KY3P] Bulk updating 124 fields for task 739
+[UnifiedKY3PFormService] [Unified KY3P] Loaded form data with 124 entries
+[UnifiedKY3PFormService] [Unified KY3P] Sending standardized batch update for 120 fields
+[UnifiedKY3PFormService] [Unified KY3P] Batch Update Payload: 
+Object {payloadType: "object", hasResponsesObject: true, responseKeysCount: 120, sampleKeys: Array(5)}
+[FormSubmissionListener] Cleaned up form submission listener for task 739
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=267, path=/task-center, file-vault-unlocked=true
+[Sidebar] Form submission was for company 262, but current company is 267
+[CurrentCompany] Setting company context: 267
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 310, email: "12@e.com", onboardingCompleted: true, userObject: "{↵  "id": 310,↵  "email": "12@e.com",↵  "full_name": "John Doe",↵  "first_name":…"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-04T10:39:32.247Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[SidebarTab] Special case: File Vault tab appears unlocked
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[SidebarTab] Special case: File Vault tab appears unlocked
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-04T10:39:32.506Z", messageId: "msg_1746355172506_ksu6k0yde"}
+[TaskCenter] Raw WebSocket task_update data: 
+Object {payload: {…}, data: {…}, taskId: 739, timestamp: "2025-05-04T10:39:32.506Z"}
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: true, hasNestedPayload: false, hasData: true, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: 739, status: "not_started", progress: 0, metadata: {…}, timestamp: "2025-05-04T10:39:32.487Z"}
+[TaskCenter] Update for task 739 is newer, applying 
+Object {prevTimestamp: "2025-05-04T10:39:32.249Z", newTimestamp: "2025-05-04T10:39:32.487Z"}
+[TaskCenter] Updated task state via WebSocket: 
+Object {taskId: 739, progress: 0, status: "not_started", updatedTask: {…}}
+[SidebarTab] Special case: File Vault tab appears unlocked
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[UnifiedKY3PFormService] [Unified KY3P] Processing batch update with 1 fields for task 739
+[UnifiedKY3PFormService] [Unified KY3P] No valid fields to update after filtering
+[UnifiedKY3PFormService] [Unified KY3P] Batch update succeeded
+[2025-05-04T10:39:32.493Z] [INFO] Received message of type: task_update
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/modal_userOboarding_1.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_2.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] Special case: File Vault tab appears unlocked
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_3.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_4.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_5.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[UnifiedKY3PFormService] [Unified KY3P] Server confirmed successful batch update
+[UnifiedKY3PFormService] [Unified KY3P] Successfully completed bulk update
+[UnifiedKY3PFormService] [Unified KY3P] Form data saved successfully
+[WebSocket] Received message: 
+Object {type: "pong", payload: {…}, data: {…}}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-04T10:39:47.980Z", messageId: "msg_1746355187980_povt6whts"}
+[TaskCenter] Raw WebSocket task_update data: 
+Object {payload: {…}, data: {…}, taskId: 738, timestamp: "2025-05-04T10:39:47.980Z"}
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: true, hasNestedPayload: false, hasData: true, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: 738, status: "ready_for_submission", progress: 100, metadata: {…}, timestamp: "2025-05-04T10:39:47.963Z"}
+[TaskCenter] Update for task 738 is newer, applying 
+Object {prevTimestamp: "2025-05-04T10:39:32.639Z", newTimestamp: "2025-05-04T10:39:47.963Z"}
+[TaskCenter] Updated task state via WebSocket: 
+Object {taskId: 738, progress: 100, status: "ready_for_submission", updatedTask: {…}}
+[2025-05-04T10:39:47.963Z] [INFO] Received message of type: task_update
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-04T10:39:48.071Z", messageId: "msg_1746355188071_k0ojf290y"}
+[TaskCenter] Raw WebSocket task_update data: 
+Object {payload: {…}, data: {…}, taskId: 740, timestamp: "2025-05-04T10:39:48.071Z"}
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: true, hasNestedPayload: false, hasData: true, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: 740, status: "not_started", progress: 0, metadata: {…}, timestamp: "2025-05-04T10:39:48.046Z"}
+[TaskCenter] Update for task 740 is newer, applying 
+Object {prevTimestamp: "2025-05-04T10:39:32.639Z", newTimestamp: "2025-05-04T10:39:48.046Z"}
+[TaskCenter] Updated task state via WebSocket: 
+Object {taskId: 740, progress: 0, status: "not_started", updatedTask: {…}}
+[2025-05-04T10:39:48.046Z] [INFO] Received message of type: task_update
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-04T10:39:48.161Z", messageId: "msg_1746355188161_a2qebesmv"}
+[2025-05-04T10:39:48.138Z] [INFO] Received message of type: task_update
