@@ -46,8 +46,6 @@ import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
-// Import our new unified demo service routes
-import unifiedDemoServiceRouter from './routes/unified-demo-service-routes';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
 import taskProgressRouter from './routes/task-progress';
@@ -59,6 +57,7 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
+import unifiedDemoServiceRoutes from './routes/unified-demo-service-routes';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
@@ -395,7 +394,7 @@ export function registerRoutes(app: Express): Express {
   app.use(unifiedDemoAutofillRouter);
   
   // Register our new transactional demo service routes that handle form updates and progress atomically
-  app.use(unifiedDemoServiceRouter);
+  app.use(unifiedDemoServiceRoutes);
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
