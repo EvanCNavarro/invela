@@ -15,45 +15,46 @@ async function migrateKy3pResponses() {
   console.log('[KY3P-MIGRATION] Starting KY3P responses migration');
   
   try {
-    // Get all KY3P responses without field_key
-    const query = `
-      SELECT r.id, r.field_id, f.field_key 
-      FROM ky3p_responses r
-      JOIN ky3p_fields f ON r.field_id = f.id
-      WHERE r.field_key IS NULL
+    // Check how many responses need migration
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM ky3p_responses
+      WHERE field_key IS NULL
     `;
     
-    const responsesResult = await db.execute(query);
-    const responses = responsesResult.rows;
+    const countResult = await db.execute(countQuery);
+    const count = parseInt(String(countResult.rows[0].count));
     
-    console.log(`[KY3P-MIGRATION] Found ${responses.length} responses needing migration`);
+    console.log(`[KY3P-MIGRATION] Found ${count} responses needing migration`);
     
-    if (responses.length === 0) {
+    if (count === 0) {
       console.log('[KY3P-MIGRATION] No responses need migration, exiting');
       return { migrated: 0, total: 0 };
     }
     
-    // Begin transaction for updates
-    let migratedCount = 0;
+    // Use a direct SQL UPDATE for all records at once - much more efficient
+    const updateQuery = `
+      UPDATE ky3p_responses AS r
+      SET field_key = f.field_key
+      FROM ky3p_fields AS f
+      WHERE r.field_id = f.id AND r.field_key IS NULL
+    `;
     
-    await db.transaction(async (tx) => {
-      for (const response of responses) {
-        await tx.execute(`
-          UPDATE ky3p_responses 
-          SET field_key = $1 
-          WHERE id = $2
-        `, [response.field_key, response.id]);
-        
-        migratedCount++;
-        
-        if (migratedCount % 100 === 0) {
-          console.log(`[KY3P-MIGRATION] Migrated ${migratedCount}/${responses.length} responses`);
-        }
-      }
-    });
+    console.log('[KY3P-MIGRATION] Executing bulk update query...');
+    await db.execute(updateQuery);
     
-    console.log(`[KY3P-MIGRATION] Migration complete, migrated ${migratedCount}/${responses.length} responses`);
-    return { migrated: migratedCount, total: responses.length };
+    // Verify how many were updated
+    const verifyQuery = `
+      SELECT COUNT(*) as count
+      FROM ky3p_responses
+      WHERE field_key IS NOT NULL
+    `;
+    
+    const verifyResult = await db.execute(verifyQuery);
+    const updatedCount = parseInt(String(verifyResult.rows[0].count));
+    
+    console.log(`[KY3P-MIGRATION] Migration complete, migrated ${updatedCount} responses`);
+    return { migrated: updatedCount, total: count };
     
   } catch (error) {
     console.error('[KY3P-MIGRATION] Error during migration:', error);
@@ -70,7 +71,7 @@ async function verifyMigration() {
       WHERE field_key IS NULL
     `);
     
-    const nullCount = parseInt(nullKeyResponses.rows[0].count);
+    const nullCount = parseInt(String(nullKeyResponses.rows[0].count));
     
     // Check total migrated responses
     const migratedResponses = await db.execute(`
@@ -79,7 +80,7 @@ async function verifyMigration() {
       WHERE field_key IS NOT NULL
     `);
     
-    const migratedCount = parseInt(migratedResponses.rows[0].count);
+    const migratedCount = parseInt(String(migratedResponses.rows[0].count));
     
     console.log(`[KY3P-MIGRATION] Verification results:`);
     console.log(`- Total responses with field_key: ${migratedCount}`);
@@ -119,8 +120,10 @@ async function main() {
   }
 }
 
-// Run the migration if this script is executed directly
-if (require.main === module) {
+// Run the migration if this is the main module
+// Using ESM detection method
+const isMainModule = import.meta.url.endsWith(process.argv[1]);
+if (isMainModule) {
   main().then(() => {
     console.log('[KY3P-MIGRATION] Script execution completed');
     process.exit(0);
@@ -131,3 +134,4 @@ if (require.main === module) {
 }
 
 export { migrateKy3pResponses, verifyMigration };
+
