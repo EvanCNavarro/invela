@@ -149,95 +149,148 @@ async function saveDemoResponses(taskId: number, demoData: Record<string, any>):
   fieldCount: number;
 }> {
   try {
-    logger.info(`[KY3P Demo Auto-Fill] Saving ${Object.keys(demoData).length} demo responses for task ${taskId}`);
+    logger.info(`[KY3P Demo Auto-Fill] Saving ${Object.keys(demoData).length} demo responses for task ${taskId} with transaction`);
     
-    // First, delete any existing responses for this task
-    await db.delete(ky3pResponses).where(eq(ky3pResponses.task_id, taskId));
+    // Import needed modules before transaction to prevent hangs
+    const { tasks } = await import('@db/schema');
+    const { calculateUniversalTaskProgress, determineStatusFromProgress, broadcastProgressUpdate } = await import('../utils/progress');
     
-    // Get field IDs for all fields
-    const fields = await db.select({ id: ky3pFields.id, field_key: ky3pFields.field_key }).from(ky3pFields);
-    
-    // Create a map of field keys to field IDs
-    const fieldKeyToIdMap = new Map<string, number>();
-    fields.forEach(field => {
-      const key = field.field_key || field.id.toString();
-      fieldKeyToIdMap.set(key, field.id);
-    });
-    
-    // Create batch insert data with BOTH field_id and field_key
-    // This ensures compatibility with both old and new code paths
-    const responsesToInsert = Object.entries(demoData).map(([fieldKey, value]) => {
-      const fieldId = fieldKeyToIdMap.get(fieldKey);
+    // CRITICAL CHANGE: Wrap everything in a single transaction to ensure atomicity
+    return await db.transaction(async (tx) => {
+      // Step 1: Delete any existing responses for this task
+      await tx.delete(ky3pResponses).where(eq(ky3pResponses.task_id, taskId));
       
-      // Skip fields that don't exist in the database
-      if (!fieldId) {
-        logger.warn(`[KY3P Demo Auto-Fill] Field with key "${fieldKey}" not found in database`);
-        return null;
-      }
+      // Step 2: Get field IDs for all fields
+      const fields = await tx.select({ id: ky3pFields.id, field_key: ky3pFields.field_key }).from(ky3pFields);
       
-      // Using field value to determine status
-      const status = value ? 'COMPLETE' : 'EMPTY';
-      
-      return {
-        task_id: taskId,
-        field_id: fieldId,
-        field_key: fieldKey, // Include field_key for compatibility with unified system
-        response_value: value?.toString() || '',
-        status: status, // Include explicit status for each response
-        created_at: new Date(),
-        updated_at: new Date(),
-        version: 1
-      };
-    }).filter(item => item !== null);
-    
-    // Insert all responses in a batch
-    let insertedCount = 0;
-    if (responsesToInsert.length > 0) {
-      // Insert the responses, TS doesn't like the null filtering so we cast
-      await db.insert(ky3pResponses).values(responsesToInsert as any);
-      insertedCount = responsesToInsert.length;
-    }
-    
-    logger.info(`[KY3P Demo Auto-Fill] Successfully saved ${insertedCount} demo responses`);
-    
-    // Update task progress using the fixed KY3P progress update function
-    // to ensure progress is properly persisted
-    try {
-      const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
-      
-      logger.info(`[KY3P Demo Auto-Fill] Updating task progress for task ${taskId} after saving responses`);
-      
-      const progressResult = await updateKy3pProgressFixed(taskId, {
-        debug: true,
-        metadata: {
-          lastProgressUpdate: new Date().toISOString(),
-          updatedVia: 'ky3p-demo-autofill'
-        },
-        forceUpdate: true
+      // Create a map of field keys to field IDs
+      const fieldKeyToIdMap = new Map<string, number>();
+      fields.forEach(field => {
+        const key = field.field_key || field.id.toString();
+        fieldKeyToIdMap.set(key, field.id);
       });
       
-      if (progressResult.success) {
-        logger.info(`[KY3P Demo Auto-Fill] Successfully updated task progress to ${progressResult.progress}%`);
+      // Step 3: Create batch insert data with BOTH field_id and field_key
+      // This ensures compatibility with both old and new code paths
+      const responsesToInsert = Object.entries(demoData).map(([fieldKey, value]) => {
+        const fieldId = fieldKeyToIdMap.get(fieldKey);
+        
+        // Skip fields that don't exist in the database
+        if (!fieldId) {
+          logger.warn(`Field with key "${fieldKey}" not found in database`);
+          return null;
+        }
+        
+        // Using field value to determine status
+        const status = value ? 'COMPLETE' : 'EMPTY';
+        
         return {
-          success: true,
-          progress: progressResult.progress,
-          status: 'ready_for_submission', // Default status for 100% complete tasks
-          fieldCount: insertedCount
+          task_id: taskId,
+          field_id: fieldId,
+          field_key: fieldKey, // Include field_key for compatibility with unified system
+          response_value: value?.toString() || '',
+          status: status, // Include explicit status for each response
+          created_at: new Date(),
+          updated_at: new Date(),
+          version: 1
         };
-      } else {
-        logger.warn(`[KY3P Demo Auto-Fill] Failed to update task progress: ${progressResult.message}`);
+      }).filter(item => item !== null);
+      
+      // Step 4: Insert all responses in a batch
+      let insertedCount = 0;
+      if (responsesToInsert.length > 0) {
+        // Insert the responses, TS doesn't like the null filtering so we cast
+        await tx.insert(ky3pResponses).values(responsesToInsert as any);
+        insertedCount = responsesToInsert.length;
       }
-    } catch (progressError) {
-      logger.error('[KY3P Demo Auto-Fill] Error updating task progress:', progressError);
-    }
-    
-    // Return basic success even if progress update failed
-    return {
-      success: true,
-      fieldCount: insertedCount
-    };
+      
+      logger.info(`Successfully saved ${insertedCount} demo responses for task ${taskId}`);
+      
+      // Step 5: Calculate progress WITHIN the transaction
+      const calculatedProgress = await calculateUniversalTaskProgress(taskId, 'ky3p', { debug: true, trx: tx });
+      
+      logger.info(`Calculated progress for task ${taskId}: ${calculatedProgress}%`, {
+        taskId,
+        calculatedProgress,
+        source: 'ky3p-demo-autofill-transaction'
+      });
+      
+      // Step 6: Get the task for status determination and update
+      const [task] = await tx.select().from(tasks).where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+      
+      // Step 7: Determine the appropriate status
+      const newStatus = determineStatusFromProgress(
+        calculatedProgress,
+        task.status as any,
+        [], // No form responses needed for direct calculation
+        task.metadata || {}
+      );
+      
+      logger.info(`Determined status for task ${taskId}: ${newStatus} (from ${task.status})`);
+      
+      // Step 8: Update the task directly in the database within the SAME transaction
+      const [updatedTask] = await tx.update(tasks)
+        .set({
+          progress: calculatedProgress,
+          status: newStatus,
+          updated_at: new Date(),
+          metadata: {
+            ...task.metadata,
+            lastProgressUpdate: new Date().toISOString(),
+            updatedVia: 'ky3p-demo-autofill-transactional',
+            progressHistory: [
+              ...(task.metadata?.progressHistory || []),
+              { value: calculatedProgress, timestamp: new Date().toISOString() }
+            ].slice(-10) // Keep last 10 updates
+          }
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+      
+      if (!updatedTask) {
+        throw new Error(`Failed to update task ${taskId}`);
+      }
+      
+      // Verify the update was successful by checking the stored progress
+      const storedProgress = Number(updatedTask.progress);
+      
+      logger.info(`Task progress update result:`, {
+        taskId,
+        calculatedProgress,
+        storedProgress,
+        status: newStatus,
+        match: storedProgress === calculatedProgress
+      });
+      
+      // Step 9: Schedule a broadcast outside the transaction
+      setTimeout(() => {
+        try {
+          broadcastProgressUpdate(
+            taskId,
+            calculatedProgress,
+            newStatus as any,
+            updatedTask.metadata || {}
+          );
+          logger.info(`Broadcasted progress update for task ${taskId}`);
+        } catch (broadcastError) {
+          logger.error('Error broadcasting progress update:', broadcastError);
+        }
+      }, 0);
+      
+      // Return success with the progress info
+      return {
+        success: true,
+        progress: calculatedProgress,
+        status: newStatus,
+        fieldCount: insertedCount
+      };
+    });
   } catch (error) {
-    logger.error('[KY3P Demo Auto-Fill] Error saving demo responses:', error);
+    logger.error('Error saving demo responses:', error);
     return {
       success: false,
       fieldCount: 0
