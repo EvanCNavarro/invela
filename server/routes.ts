@@ -13,7 +13,7 @@ import { emailService } from './services/email';
 import { requireAuth, optionalAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
 import * as WebSocketService from './services/websocket';
-import { broadcast, broadcastTaskUpdate } from './utils/unified-websocket';
+import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
