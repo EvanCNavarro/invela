@@ -355,12 +355,44 @@ class UnifiedDemoAutoFillService {
         }
       }
       
-      // Use the unified task update function to update progress and status
-      // This ensures consistent progress calculation and WebSocket broadcasting
-      const updateResult = await updateTaskProgress(taskId, {
-        recalculate: true,
-        debug: true
-      });
+      // Use the appropriate task update function based on form type
+      // For KY3P tasks, we need to use the fixed implementation to ensure progress persists
+      let updateResult;
+      
+      if (formType === 'ky3p') {
+        // Import the fixed version for KY3P tasks
+        const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
+        
+        logger.info('Using KY3P fixed progress update for demo auto-fill', {
+          ...logContext,
+          formType,
+          taskType: task.task_type
+        });
+        
+        // Use the fixed KY3P progress update function
+        const fixedResult = await updateKy3pProgressFixed(taskId, {
+          debug: true,
+          metadata: {
+            lastProgressUpdate: new Date().toISOString(),
+            updatedVia: 'demo-autofill'
+          },
+          forceUpdate: true
+        });
+        
+        // Convert to standard format
+        updateResult = {
+          id: taskId,
+          progress: fixedResult.progress || 0,
+          status: 'ready_for_submission',
+          task_type: task.task_type
+        };
+      } else {
+        // Use standard update for other form types
+        updateResult = await updateTaskProgress(taskId, {
+          recalculate: true,
+          debug: true
+        });
+      }
       
       logger.info('Successfully applied demo data and updated task', {
         ...logContext,

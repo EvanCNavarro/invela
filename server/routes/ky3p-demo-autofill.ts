@@ -136,13 +136,18 @@ async function generateKy3pDemoData(taskId: number): Promise<Record<string, any>
 }
 
 /**
- * Save demo data responses to the database
+ * Save demo data responses to the database and update task progress
  * 
  * @param taskId The task ID
  * @param demoData The demo data object
- * @returns Success status
+ * @returns Result including success status and progress information
  */
-async function saveDemoResponses(taskId: number, demoData: Record<string, any>): Promise<boolean> {
+async function saveDemoResponses(taskId: number, demoData: Record<string, any>): Promise<{
+  success: boolean;
+  progress?: number;
+  status?: string;
+  fieldCount: number;
+}> {
   try {
     logger.info(`[KY3P Demo Auto-Fill] Saving ${Object.keys(demoData).length} demo responses for task ${taskId}`);
     
@@ -159,7 +164,8 @@ async function saveDemoResponses(taskId: number, demoData: Record<string, any>):
       fieldKeyToIdMap.set(key, field.id);
     });
     
-    // Create batch insert data
+    // Create batch insert data with BOTH field_id and field_key
+    // This ensures compatibility with both old and new code paths
     const responsesToInsert = Object.entries(demoData).map(([fieldKey, value]) => {
       const fieldId = fieldKeyToIdMap.get(fieldKey);
       
@@ -169,25 +175,73 @@ async function saveDemoResponses(taskId: number, demoData: Record<string, any>):
         return null;
       }
       
+      // Using field value to determine status
+      const status = value ? 'COMPLETE' : 'EMPTY';
+      
       return {
         task_id: taskId,
         field_id: fieldId,
+        field_key: fieldKey, // Include field_key for compatibility with unified system
         response_value: value?.toString() || '',
+        status: status, // Include explicit status for each response
+        created_at: new Date(),
+        updated_at: new Date(),
+        version: 1
       };
     }).filter(item => item !== null);
     
     // Insert all responses in a batch
+    let insertedCount = 0;
     if (responsesToInsert.length > 0) {
       // Insert the responses, TS doesn't like the null filtering so we cast
       await db.insert(ky3pResponses).values(responsesToInsert as any);
+      insertedCount = responsesToInsert.length;
     }
     
-    logger.info(`[KY3P Demo Auto-Fill] Successfully saved ${responsesToInsert.length} demo responses`);
+    logger.info(`[KY3P Demo Auto-Fill] Successfully saved ${insertedCount} demo responses`);
     
-    return true;
+    // Update task progress using the fixed KY3P progress update function
+    // to ensure progress is properly persisted
+    try {
+      const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
+      
+      logger.info(`[KY3P Demo Auto-Fill] Updating task progress for task ${taskId} after saving responses`);
+      
+      const progressResult = await updateKy3pProgressFixed(taskId, {
+        debug: true,
+        metadata: {
+          lastProgressUpdate: new Date().toISOString(),
+          updatedVia: 'ky3p-demo-autofill'
+        },
+        forceUpdate: true
+      });
+      
+      if (progressResult.success) {
+        logger.info(`[KY3P Demo Auto-Fill] Successfully updated task progress to ${progressResult.progress}%`);
+        return {
+          success: true,
+          progress: progressResult.progress,
+          status: 'ready_for_submission', // Default status for 100% complete tasks
+          fieldCount: insertedCount
+        };
+      } else {
+        logger.warn(`[KY3P Demo Auto-Fill] Failed to update task progress: ${progressResult.message}`);
+      }
+    } catch (progressError) {
+      logger.error('[KY3P Demo Auto-Fill] Error updating task progress:', progressError);
+    }
+    
+    // Return basic success even if progress update failed
+    return {
+      success: true,
+      fieldCount: insertedCount
+    };
   } catch (error) {
     logger.error('[KY3P Demo Auto-Fill] Error saving demo responses:', error);
-    return false;
+    return {
+      success: false,
+      fieldCount: 0
+    };
   }
 }
 
