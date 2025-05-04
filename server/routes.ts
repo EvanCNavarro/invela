@@ -366,6 +366,8 @@ export function registerRoutes(app: Express): Express {
   app.use(testKy3pProgressRouter);
   // Register KY3P progress fix test route
   app.use(ky3pProgressFixTestRouter);
+  // Register manual KY3P progress fix endpoint
+  app.use(manualKy3pFix);
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
   // Use our enhanced KY3P demo auto-fill routes
