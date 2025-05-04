@@ -112,6 +112,7 @@ export function registerKY3PBatchUpdateRoutes() {
             .update(ky3pResponses)
             .set({
               response_value: String(value),
+              field_key: fieldKey, // Ensure field_key is set for existing responses
               status: 'COMPLETE', // Use string directly instead of enum
               updated_at: timestamp
             })
@@ -135,6 +136,7 @@ export function registerKY3PBatchUpdateRoutes() {
             .values({
               task_id: taskId,
               field_id: fieldId,
+              field_key: fieldKey, // Add field_key for consistency with other form types
               response_value: String(value),
               status: 'COMPLETE', // Use string directly instead of enum
               created_at: timestamp,
