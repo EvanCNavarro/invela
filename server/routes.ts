@@ -57,8 +57,7 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
-// Import our manual KY3P fix route
-import { manualKy3pFix } from './routes/manual-ky3p-fix';
+// Manual KY3P fix route already imported above
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
 import { registerOpenBankingRoutes } from './routes/open-banking';
@@ -369,7 +368,7 @@ export function registerRoutes(app: Express): Express {
   // Register KY3P progress fix test route
   app.use(ky3pProgressFixTestRouter);
   // Register manual KY3P progress fix endpoint
-  app.use(manualKy3pFix);
+  app.use('/api/ky3p/manual-fix', manualKy3pFix);
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
   // Use our enhanced KY3P demo auto-fill routes
