@@ -85,14 +85,20 @@ export async function updateKy3pProgressFixed(
     
     // Step 5: Update the task with a transaction for atomicity
     const result = await db.transaction(async (tx) => {
-      // CRITICAL FIX: Use explicit type casting to ensure progress is properly stored
-      // Cast calculatedProgress to a numeric type and use explicit db column types
-      const progressValue = Number(calculatedProgress);
+      // CRITICAL FIX: Use progress validator utility for guaranteed type safety
+      // Import the progress validator utility
+      const { validateProgressForUpdate, getProgressSqlValue } = await import('./progress-validator');
       
-      // Verify the progress value is valid
-      if (isNaN(progressValue)) {
-        throw new Error(`Invalid progress value: ${calculatedProgress} (${typeof calculatedProgress})`);
-      }
+      // Validate and normalize the progress value to ensure consistency
+      const progressValue = validateProgressForUpdate(taskId, calculatedProgress, {
+        source: 'unified-ky3p-fixed',
+        debug: debug,
+        context: {
+          originalTask: task?.id,
+          calculationMethod: 'fixed-ky3p-progress',
+          isForceUpdate: forceUpdate
+        }
+      });
       
       // Use explicit returning() to ensure we get back the updated record
       // Add detailed logging for the update operation
@@ -108,8 +114,8 @@ export async function updateKy3pProgressFixed(
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          // CRITICAL FIX: Use explicit SQL casting to integer 
-          progress: sql`${progressValue}::integer`,
+          // CRITICAL FIX: Use progress validator's SQL value generator for consistent type handling
+          progress: getProgressSqlValue(progressValue),
           status: newStatus,
           updated_at: new Date(),
           // Use SQL jsonb operations for metadata to ensure proper merging
@@ -284,11 +290,25 @@ export async function calculateAndUpdateTaskProgress(
           source
         });
         
+        // Import the validator utility
+        const { validateProgressForUpdate, getProgressSqlValue } = await import('./progress-validator');
+        
+        // Validate the progress value to ensure consistency
+        const validatedProgress = validateProgressForUpdate(taskId, calculatedProgress, {
+          source: source,
+          debug: debug,
+          context: {
+            calculationMethod: 'calculateAndUpdateTaskProgress',
+            isForceUpdate: force,
+            previous: task.progress
+          }
+        });
+        
         const [updatedTask] = await tx
           .update(tasks)
           .set({
-            // Use explicit SQL casting to integer to ensure proper type handling
-            progress: sql`${calculatedProgress}::integer`,
+            // Use our validator utility's SQL value generator for consistent type handling
+            progress: getProgressSqlValue(validatedProgress), 
             status: calculatedStatus,
             updated_at: new Date(),
             metadata: sql`jsonb_set(
