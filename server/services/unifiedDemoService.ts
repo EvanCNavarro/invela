@@ -1,234 +1,235 @@
 /**
  * Unified Demo Service
  * 
- * This service handles demo auto-fill and progress calculation in a single
- * atomic transaction to ensure data consistency and prevent race conditions.
- * 
- * It replaces the current approach where demo auto-fill and progress updates are
- * separate operations, which can lead to inconsistent state and UI flashing.
+ * This service provides a unified transactional approach to populating forms
+ * with demo data and properly updating task progress in a single atomic operation.
+ * It ensures that progress values are consistent and prevents the periodic reconciliation
+ * system from overriding updates by temporarily blacklisting tasks after updates.
  */
 
 import { db } from '@db';
-import { tasks, ky3pResponses, openBankingResponses, kybResponses } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { tasks, TaskStatus, ky3pResponses, kybResponses, openBankingResponses } from '@db/schema';
 import { logger } from '../utils/logger';
-import { broadcast } from '../utils/unified-websocket';
+import { calculateTaskProgressFromDB } from '../utils/task-reconciliation';
+import { broadcastProgressUpdate } from '../utils/progress';
 import { getKy3pDemoData } from '../services/ky3pDemoData';
 import { getOpenBankingDemoData } from '../services/openBankingDemoData';
 import { getKybDemoData } from '../services/kybDemoData';
-import { determineStatusFromProgress } from '../utils/progress';
+import { markTaskAsTransactionallyUpdated } from '../utils/periodic-task-reconciliation';
+
+interface UnifiedDemoServiceOptions {
+  broadcast?: boolean;
+  debug?: boolean;
+  markAsTransactional?: boolean;
+  [key: string]: any;
+}
 
 /**
- * Apply demo data to a form and update progress in a single transaction
- * 
- * This method ensures that form data population and progress updates happen
- * atomically, preventing race conditions and inconsistent UI state.
- * 
- * @param taskId - The task ID
- * @param formType - The form type (ky3p, open_banking, company_kyb)
- * @param userId - Optional user ID for tracking purposes
- * @returns Result object with success status and details
+ * Apply demo data to a form and update progress with progress reconciliation
+ * protection in a single atomic operation
  */
-export async function applyDemoDataTransactional(
+export async function fillFormWithDemoData(
   taskId: number,
   formType: string,
-  userId?: number
+  options: UnifiedDemoServiceOptions = {}
 ): Promise<{
   success: boolean;
-  message: string;
   fieldCount: number;
   progress: number;
   status: string;
+  error?: string;
 }> {
-  logger.info('[UnifiedDemoService] Starting transactional demo data application', {
-    taskId,
-    formType,
-    userId
-  });
+  const { broadcast = true, debug = true, markAsTransactional = true } = options;
+  const log = debug ? logger.info.bind(logger) : () => {};
+  
+  log(`[UnifiedDemoService] Starting demo auto-fill for ${formType} task ${taskId}`);
   
   try {
-    // 1. Get the current task to verify it exists and get metadata
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-      
+    // 1. Verify task exists and get current details
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
     if (!task) {
       throw new Error(`Task ${taskId} not found`);
     }
     
-    // 2. Normalize form type (handle aliases like security_assessment → ky3p)
-    const normalizedFormType = normalizeFormType(formType || task.task_type);
+    // 2. Get the appropriate demo data based on form type
+    let demoData;
+    let fieldsPopulated = 0;
     
-    // 3. Get demo data for the appropriate form type
-    const demoData = await getDemoData(normalizedFormType, taskId);
+    // Normalize form type for internal processing
+    const normalizedFormType = normalizeFormType(formType);
+    log(`[UnifiedDemoService] Using normalized form type: ${normalizedFormType}`);
     
-    if (!demoData || !demoData.fields || demoData.fields.length === 0) {
-      throw new Error(`No demo data available for ${normalizedFormType} form type`);
+    // Define transaction function to ensure atomic update
+    await db.transaction(async (tx) => {
+      // Get demo data based on form type
+      switch (normalizedFormType) {
+        case 'ky3p':
+          demoData = await getKy3pDemoData();
+          // Apply KY3P demo data
+          for (const field of demoData.fields) {
+            await tx.insert(ky3p_responses).values({
+              task_id: taskId,
+              field_id: field.id,
+              response_value: field.value,
+              status: field.status || 'COMPLETE'
+            }).onConflictDoUpdate({
+              target: [ky3p_responses.task_id, ky3p_responses.field_id],
+              set: {
+                response_value: field.value,
+                status: field.status || 'COMPLETE',
+                updated_at: new Date()
+              }
+            });
+          }
+          fieldsPopulated = demoData.fields.length;
+          break;
+          
+        case 'company_kyb':
+          demoData = await getKybDemoData();
+          // Apply KYB demo data
+          for (const field of demoData.fields) {
+            await tx.insert(kyb_responses).values({
+              task_id: taskId,
+              field_id: field.id,
+              value: field.value,
+              status: field.status || 'COMPLETE',
+              reasoning: '',
+              completed_at: new Date()
+            }).onConflictDoUpdate({
+              target: [kyb_responses.task_id, kyb_responses.field_id],
+              set: {
+                value: field.value,
+                status: field.status || 'COMPLETE',
+                updated_at: new Date()
+              }
+            });
+          }
+          fieldsPopulated = demoData.fields.length;
+          break;
+          
+        case 'open_banking':
+          demoData = await getOpenBankingDemoData();
+          // Apply Open Banking demo data
+          for (const field of demoData.fields) {
+            await tx.insert(open_banking_responses).values({
+              task_id: taskId,
+              field_id: field.id,
+              response_value: field.value,
+              status: field.status || 'COMPLETE'
+            }).onConflictDoUpdate({
+              target: [open_banking_responses.task_id, open_banking_responses.field_id],
+              set: {
+                response_value: field.value,
+                status: field.status || 'COMPLETE',
+                updated_at: new Date()
+              }
+            });
+          }
+          fieldsPopulated = demoData.fields.length;
+          break;
+          
+        default:
+          throw new Error(`Unsupported form type: ${normalizedFormType}`);
+      }
+      
+      // Calculate new progress directly from database in the same transaction
+      const calculatedProgress = await calculateTaskProgressFromDB(taskId, task.task_type);
+      
+      // Determine correct status based on progress
+      let newStatus = task.status;
+      if (calculatedProgress === 0) {
+        newStatus = TaskStatus.NOT_STARTED;
+      } else if (calculatedProgress === 100) {
+        newStatus = task.completion_date ? TaskStatus.SUBMITTED : TaskStatus.READY_FOR_SUBMISSION;
+      } else if (calculatedProgress > 0 && calculatedProgress < 100) {
+        newStatus = TaskStatus.IN_PROGRESS;
+      }
+      
+      // Update task progress and status atomically
+      await tx.update(tasks).set({
+        progress: calculatedProgress,
+        status: newStatus,
+        updated_at: new Date(),
+        metadata: {
+          ...task.metadata,
+          lastProgressReconciliation: new Date().toISOString(),
+          lastAutomaticFill: new Date().toISOString(),
+          progressHistory: [
+            ...(task.metadata?.progressHistory || []),
+            {
+              value: calculatedProgress,
+              timestamp: new Date().toISOString()
+            }
+          ]
+        }
+      }).where(eq(tasks.id, taskId));
+      
+      log(`[UnifiedDemoService] Successfully updated ${normalizedFormType} form with demo data and progress ${calculatedProgress}%`);
+      
+      // Broadcast progress update if requested
+      if (broadcast) {
+        broadcastProgressUpdate(taskId, calculatedProgress, newStatus as TaskStatus);
+      }
+      
+      // Mark the task as transactionally updated to prevent periodic reconciliation
+      // system from overriding our update
+      if (markAsTransactional) {
+        markTaskAsTransactionallyUpdated(taskId);
+      }
+    });
+    
+    // Get the final task state after transaction completion
+    const updatedTask = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!updatedTask) {
+      throw new Error(`Task ${taskId} not found after update`);
     }
     
-    // 4. Perform all database operations in a transaction
-    return await db.transaction(async (tx) => {
-      let insertCount = 0;
-      
-      // Apply demo data based on form type
-      if (normalizedFormType === 'ky3p') {
-        // Clear existing responses first
-        await tx
-          .delete(ky3pResponses)
-          .where(eq(ky3pResponses.task_id, taskId));
-        
-        // Insert new responses
-        const insertOperations = demoData.fields.map(field => {
-          return tx
-            .insert(ky3pResponses)
-            .values({
-              task_id: taskId,
-              field_id: field.id,
-              value: String(field.value || ''),
-              status: 'COMPLETE',
-              timestamp: new Date().toISOString()
-            });
-        });
-        
-        await Promise.all(insertOperations);
-        insertCount = demoData.fields.length;
-      } 
-      else if (normalizedFormType === 'open_banking') {
-        // Clear existing responses first
-        await tx
-          .delete(openBankingResponses)
-          .where(eq(openBankingResponses.task_id, taskId));
-        
-        // Insert new responses
-        const insertOperations = demoData.fields.map(field => {
-          return tx
-            .insert(openBankingResponses)
-            .values({
-              task_id: taskId,
-              field_id: field.id,
-              value: String(field.value || ''),
-              status: 'COMPLETE',
-              timestamp: new Date().toISOString()
-            });
-        });
-        
-        await Promise.all(insertOperations);
-        insertCount = demoData.fields.length;
-      }
-      else if (normalizedFormType === 'company_kyb') {
-        // Clear existing responses first
-        await tx
-          .delete(kybResponses)
-          .where(eq(kybResponses.task_id, taskId));
-        
-        // Insert new responses
-        const insertOperations = demoData.fields.map(field => {
-          return tx
-            .insert(kybResponses)
-            .values({
-              task_id: taskId,
-              field_id: field.id,
-              value: String(field.value || ''),
-              status: 'COMPLETE',
-              timestamp: new Date().toISOString()
-            });
-        });
-        
-        await Promise.all(insertOperations);
-        insertCount = demoData.fields.length;
-      }
-      
-      // Calculate progress (always 100% for demo auto-fill)
-      const progress = 100;
-      const status = determineStatusFromProgress(progress, false);
-      
-      // Update task progress and status in the same transaction
-      await tx
-        .update(tasks)
-        .set({
-          progress,
-          status,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, taskId));
-      
-      // Broadcast update via WebSocket (still in the transaction boundary)
-      broadcast('task_update', {
-        taskId,
-        progress,
-        status,
-        timestamp: new Date().toISOString(),
-        source: 'demo_autofill_tx'
-      });
-      
-      logger.info('[UnifiedDemoService] Successfully applied demo data and updated progress', {
-        taskId,
-        formType: normalizedFormType,
-        fieldCount: insertCount,
-        progress,
-        status
-      });
-      
-      // Return result
-      return {
-        success: true,
-        message: 'Demo data applied successfully with progress update',
-        fieldCount: insertCount,
-        progress,
-        status
-      };
-    });
-  } catch (error) {
-    logger.error('[UnifiedDemoService] Error applying demo data', {
-      taskId,
-      formType,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    return {
+      success: true,
+      fieldCount: fieldsPopulated,
+      progress: updatedTask.progress || 0,
+      status: updatedTask.status
+    };
     
-    throw error;
+  } catch (error) {
+    logger.error(`[UnifiedDemoService] Error filling form with demo data: ${error instanceof Error ? error.message : String(error)}`);
+    return {
+      success: false,
+      fieldCount: 0,
+      progress: 0,
+      status: 'error',
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 }
 
 /**
- * Get appropriate demo data for the form type
- * 
- * @param formType Normalized form type
- * @param taskId Task ID
- * @returns Promise with demo data
- */
-async function getDemoData(formType: string, taskId: number) {
-  switch (formType) {
-    case 'ky3p':
-      return getKy3pDemoData();
-    case 'open_banking':
-      return getOpenBankingDemoData();
-    case 'company_kyb':
-      return getKybDemoData();
-    default:
-      throw new Error(`Unsupported form type: ${formType}`);
-  }
-}
-
-/**
- * Normalize form type to handle aliases
- * 
- * @param formType Form type to normalize
- * @returns Normalized form type
+ * Normalize form type to ensure consistent internal form type identifiers
  */
 function normalizeFormType(formType: string): string {
-  formType = formType.toLowerCase();
+  const type = formType.toLowerCase();
   
-  // Map security assessment forms to ky3p
-  if (formType === 'security_assessment' || formType === 'security' || formType === 'sp_ky3p_assessment') {
+  // KY3P variants
+  if (['security', 'security_assessment', 'sp_ky3p_assessment'].includes(type)) {
     return 'ky3p';
   }
   
-  // Handle other form types
-  if (formType === 'kyb') {
+  // KYB variants
+  if (type === 'kyb') {
     return 'company_kyb';
   }
   
-  return formType;
+  // Open Banking variants
+  if (type === 'ob' || type === 'openbanking') {
+    return 'open_banking';
+  }
+  
+  return type;
 }

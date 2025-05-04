@@ -1,142 +1,92 @@
 /**
  * KYB Demo Data Service
  * 
- * This service provides demo data for KYB forms.
+ * This module provides demo data generation functions for KYB (Know Your Business) forms.
+ * It generates realistic looking data that can be used to auto-fill KYB forms for testing or demo purposes.
  */
 
-import { logger } from '../utils/logger';
-import { DemoData, DemoField } from './ky3pDemoData';
-
-/**
- * Get KYB demo data for automatically filling forms
- * 
- * @returns Promise with demo field data
- */
-export async function getKybDemoData(): Promise<DemoData> {
-  logger.info('[KYBDemoData] Generating KYB demo data');
-  
-  // Generate demo field data
-  const fields: DemoField[] = [];
-  
-  // Generate 30 sample fields with realistic values
-  for (let i = 1; i <= 30; i++) {
-    fields.push({
-      id: i,
-      value: getDemoValueForField(i),
-      status: 'COMPLETE'
-    });
-  }
-  
-  return {
-    fields,
-    metadata: {
-      generatedAt: new Date().toISOString(),
-      source: 'kyb_demo_generator'
-    }
-  };
-}
-
-/**
- * Get a realistic value for a KYB field based on its ID
- * 
- * @param fieldId Field ID
- * @returns Demo value string
- */
-function getDemoValueForField(fieldId: number): string {
-  // Common field patterns for KYB forms
-  switch (fieldId % 15) { // Use modulo to create repeating patterns
-    case 0: // Company name
-      return ['TechFin Solutions', 'Global Payment Systems', 'NextGen Banking', 'Digital Financial Services', 'Secure Transaction Technologies'][Math.floor(Math.random() * 5)];
-    case 1: // Company registration number
-      return `REG-${Math.floor(1000000 + Math.random() * 9000000)}`;
-    case 2: // Incorporation date
-      return generateRandomDate(new Date(2010, 0, 1), new Date(2022, 11, 31));
-    case 3: // Business address
-      return generateBusinessAddress();
-    case 4: // Business type
-      return ['LLC', 'Corporation', 'Partnership', 'Sole Proprietorship', 'Public Company'][Math.floor(Math.random() * 5)];
-    case 5: // Industry sector
-      return ['Financial Technology', 'Banking Services', 'Payment Processing', 'Lending', 'Investment Management'][Math.floor(Math.random() * 5)];
-    case 6: // Number of employees
-      return String(Math.floor(10 + Math.random() * 990)); // 10-1000 employees
-    case 7: // Annual revenue
-      return `$${(Math.floor(1 + Math.random() * 100)) * 1000000}`; // $1M-$100M
-    case 8: // Website URL
-      const domains = ['example.com', 'tech-finance.com', 'digitalpayments.io', 'securetransact.com', 'nextgenbanking.net'];
-      return `https://www.${domains[Math.floor(Math.random() * domains.length)]}`;
-    case 9: // Contact email
-      const emailDomains = ['example.com', 'business.com', 'enterprise.io', 'corporate.net', 'fintech.co'];
-      return `contact@${emailDomains[Math.floor(Math.random() * emailDomains.length)]}`;
-    case 10: // Contact phone
-      return `+1 (${Math.floor(100 + Math.random() * 900)}) ${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`;
-    case 11: // Tax ID
-      return `TAX-${Math.floor(10000000 + Math.random() * 90000000)}`;
-    case 12: // Regulatory status
-      return ['Fully Regulated', 'Partially Regulated', 'Exempt', 'Pending Approval', 'Not Regulated'][Math.floor(Math.random() * 5)];
-    case 13: // Long description
-      return getRandomText(30, 100);
-    case 14: // Yes/No field
-      return fieldId % 3 === 0 ? 'Yes' : 'No';
-    default:
-      return 'Sample Value';
-  }
-}
-
-/**
- * Generate a random date string in YYYY-MM-DD format
- * 
- * @param start Start date range
- * @param end End date range
- * @returns Date string
- */
-function generateRandomDate(start: Date, end: Date): string {
-  const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-  return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-}
-
-/**
- * Generate a realistic business address
- * 
- * @returns Address string
- */
-function generateBusinessAddress(): string {
-  const streetNumbers = [123, 456, 789, 555, 999, 1000, 1200, 8800];
-  const streetNames = ['Main Street', 'Technology Drive', 'Financial Avenue', 'Corporate Boulevard', 'Innovation Way', 'Commerce Street'];
-  const cities = ['New York', 'San Francisco', 'Chicago', 'Boston', 'Austin', 'Seattle', 'Denver', 'Atlanta', 'Miami'];
-  const states = ['NY', 'CA', 'IL', 'MA', 'TX', 'WA', 'CO', 'GA', 'FL'];
-  const zipCodes = ['10001', '94105', '60604', '02110', '78701', '98101', '80202', '30303', '33131'];
-  
-  const streetNumber = streetNumbers[Math.floor(Math.random() * streetNumbers.length)];
-  const streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
-  const cityIndex = Math.floor(Math.random() * cities.length);
-  
-  return `${streetNumber} ${streetName}, ${cities[cityIndex]}, ${states[cityIndex]} ${zipCodes[cityIndex]}`;
-}
-
-/**
- * Generate random text for longer text fields
- * 
- * @param minLength Minimum length of text
- * @param maxLength Maximum length of text
- * @returns Random text string
- */
-function getRandomText(minLength: number, maxLength: number): string {
-  const words = [
-    'business', 'company', 'financial', 'services', 'technology', 'platform',
-    'solution', 'enterprise', 'corporate', 'commercial', 'banking', 'payment',
-    'transaction', 'processing', 'digital', 'secure', 'innovative', 'compliant',
-    'regulatory', 'customer', 'client', 'partner', 'global', 'local',
-    'international', 'domestic', 'market', 'industry', 'sector', 'growth',
-    'development', 'strategy', 'implementation', 'management', 'leadership', 'team'
+export async function getKybDemoData() {
+  // Create some demo fields with sample data
+  const fields = [
+    // Company Information
+    { id: 2001, value: 'ABC Technologies Ltd.', status: 'COMPLETE' },
+    { id: 2002, value: '123 Main Street, Suite 500, San Francisco, CA 94105, USA', status: 'COMPLETE' },
+    { id: 2003, value: '+1 (415) 555-1234', status: 'COMPLETE' },
+    { id: 2004, value: 'contact@abctech.com', status: 'COMPLETE' },
+    { id: 2005, value: 'www.abctech.com', status: 'COMPLETE' },
+    
+    // Business Structure
+    { id: 2011, value: 'Corporation', status: 'COMPLETE' },
+    { id: 2012, value: 'USA', status: 'COMPLETE' },
+    { id: 2013, value: 'DE12345678', status: 'COMPLETE' },
+    { id: 2014, value: '2010-03-15', status: 'COMPLETE' },
+    { id: 2015, value: 'Delaware', status: 'COMPLETE' },
+    
+    // Business Activity
+    { id: 2021, value: 'Financial Technology Services', status: 'COMPLETE' },
+    { id: 2022, value: 'SaaS, Payment Processing, Data Analytics', status: 'COMPLETE' },
+    { id: 2023, value: 'United States, Canada, United Kingdom, France, Germany', status: 'COMPLETE' },
+    { id: 2024, value: 'Consumers, Small Businesses, Enterprise', status: 'COMPLETE' },
+    { id: 2025, value: '$25M - $50M', status: 'COMPLETE' },
+    
+    // Ownership & Management
+    { id: 2031, value: 'Jane Smith', status: 'COMPLETE' },
+    { id: 2032, value: 'CEO', status: 'COMPLETE' },
+    { id: 2033, value: 'jane.smith@abctech.com', status: 'COMPLETE' },
+    { id: 2034, value: '+1 (415) 555-5678', status: 'COMPLETE' },
+    { id: 2035, value: '45%', status: 'COMPLETE' },
+    
+    // Secondary Owner/Manager
+    { id: 2041, value: 'Michael Johnson', status: 'COMPLETE' },
+    { id: 2042, value: 'CTO', status: 'COMPLETE' },
+    { id: 2043, value: 'michael.johnson@abctech.com', status: 'COMPLETE' },
+    { id: 2044, value: '+1 (415) 555-9012', status: 'COMPLETE' },
+    { id: 2045, value: '30%', status: 'COMPLETE' },
+    
+    // Regulatory & Compliance
+    { id: 2051, value: 'MSB Registration #12345', status: 'COMPLETE' },
+    { id: 2052, value: 'PCI-DSS Level 1', status: 'COMPLETE' },
+    { id: 2053, value: 'SOC 2 Type II', status: 'COMPLETE' },
+    { id: 2054, value: 'ISO 27001', status: 'COMPLETE' },
+    { id: 2055, value: 'Yes, all jurisdictions', status: 'COMPLETE' },
+    
+    // Banking Information
+    { id: 2061, value: 'First National Bank', status: 'COMPLETE' },
+    { id: 2062, value: '1234567890', status: 'COMPLETE' },
+    { id: 2063, value: 'FNBUS12345', status: 'COMPLETE' },
+    { id: 2064, value: '123 Banking St, New York, NY 10001', status: 'COMPLETE' },
+    { id: 2065, value: '2015-06-01', status: 'COMPLETE' },
+    
+    // Verification Data
+    { id: 2071, value: 'Yes', status: 'COMPLETE' },
+    { id: 2072, value: 'Yes', status: 'COMPLETE' },
+    { id: 2073, value: 'No', status: 'COMPLETE' },
+    { id: 2074, value: 'Yes', status: 'COMPLETE' },
+    { id: 2075, value: 'Yes', status: 'COMPLETE' },
+    
+    // Additional Fields
+    { id: 2081, value: '12-3456789', status: 'COMPLETE' },
+    { id: 2082, value: 'DUNS: 123456789', status: 'COMPLETE' },
+    { id: 2083, value: 'Private', status: 'COMPLETE' },
+    { id: 2084, value: '250-500', status: 'COMPLETE' },
+    { id: 2085, value: 'Venture Capital, Series C', status: 'COMPLETE' },
+    
+    // Board Members
+    { id: 2091, value: 'Sarah Williams, Robert Chen, David Garcia', status: 'COMPLETE' },
+    { id: 2092, value: 'Independent', status: 'COMPLETE' },
+    { id: 2093, value: 'Quarterly', status: 'COMPLETE' },
+    { id: 2094, value: 'Audit, Compensation, Governance', status: 'COMPLETE' },
+    { id: 2095, value: '5 years', status: 'COMPLETE' },
+    
+    // Risk Assessment
+    { id: 2101, value: 'Medium', status: 'COMPLETE' },
+    { id: 2102, value: 'Low', status: 'COMPLETE' },
+    { id: 2103, value: 'Low', status: 'COMPLETE' },
+    { id: 2104, value: 'Medium', status: 'COMPLETE' },
+    { id: 2105, value: 'Low', status: 'COMPLETE' },
   ];
-  
-  const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
-  let result = '';
-  
-  while (result.length < length) {
-    const word = words[Math.floor(Math.random() * words.length)];
-    result += (result ? ' ' : '') + word;
-  }
-  
-  return result.substring(0, maxLength);
+
+  return {
+    fields
+  };
 }
