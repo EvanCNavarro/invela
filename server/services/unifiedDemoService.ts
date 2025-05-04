@@ -71,13 +71,13 @@ export async function fillFormWithDemoData(
           demoData = await getKy3pDemoData();
           // Apply KY3P demo data
           for (const field of demoData.fields) {
-            await tx.insert(ky3p_responses).values({
+            await tx.insert(ky3pResponses).values({
               task_id: taskId,
               field_id: field.id,
               response_value: field.value,
               status: field.status || 'COMPLETE'
             }).onConflictDoUpdate({
-              target: [ky3p_responses.task_id, ky3p_responses.field_id],
+              target: [ky3pResponses.task_id, ky3pResponses.field_id],
               set: {
                 response_value: field.value,
                 status: field.status || 'COMPLETE',
@@ -92,7 +92,7 @@ export async function fillFormWithDemoData(
           demoData = await getKybDemoData();
           // Apply KYB demo data
           for (const field of demoData.fields) {
-            await tx.insert(kyb_responses).values({
+            await tx.insert(kybResponses).values({
               task_id: taskId,
               field_id: field.id,
               value: field.value,
@@ -100,7 +100,7 @@ export async function fillFormWithDemoData(
               reasoning: '',
               completed_at: new Date()
             }).onConflictDoUpdate({
-              target: [kyb_responses.task_id, kyb_responses.field_id],
+              target: [kybResponses.task_id, kybResponses.field_id],
               set: {
                 value: field.value,
                 status: field.status || 'COMPLETE',
@@ -115,13 +115,13 @@ export async function fillFormWithDemoData(
           demoData = await getOpenBankingDemoData();
           // Apply Open Banking demo data
           for (const field of demoData.fields) {
-            await tx.insert(open_banking_responses).values({
+            await tx.insert(openBankingResponses).values({
               task_id: taskId,
               field_id: field.id,
               response_value: field.value,
               status: field.status || 'COMPLETE'
             }).onConflictDoUpdate({
-              target: [open_banking_responses.task_id, open_banking_responses.field_id],
+              target: [openBankingResponses.task_id, openBankingResponses.field_id],
               set: {
                 response_value: field.value,
                 status: field.status || 'COMPLETE',
