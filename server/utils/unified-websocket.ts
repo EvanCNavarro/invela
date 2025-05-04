@@ -177,11 +177,34 @@ export function getConnectedClientCount() {
 
 /**
  * Broadcast a task update message to all connected clients
+ * 
+ * @param taskId The ID of the task that was updated
+ * @param progress The new progress value (0-100)
+ * @param status The new status ('not_started', 'in_progress', etc.)
+ * @param metadata Additional metadata to include in the message
+ * @returns Boolean indicating whether the broadcast was successful
  */
-export function broadcastTaskUpdate(taskId: number, data: any) {
-  return broadcast('task_updated', {
+export function broadcastTaskUpdate(
+  taskId: number,
+  progress: number,
+  status: string,
+  metadata: Record<string, any> = {}
+) {
+  // Create timestamp once for consistent messaging
+  const timestamp = new Date().toISOString();
+  
+  // Create a standardized message payload structure
+  const payload = {
+    id: taskId,
     taskId,
-    ...data,
-    timestamp: new Date().toISOString()
-  });
+    status,
+    progress,
+    metadata: {
+      ...metadata,
+      lastUpdate: timestamp
+    },
+    timestamp
+  };
+  
+  return broadcast('task_update', payload);
 }
