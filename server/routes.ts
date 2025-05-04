@@ -57,6 +57,7 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
+import unifiedDemoServiceRoutes from './routes/unified-demo-service-routes';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
@@ -391,6 +392,9 @@ export function registerRoutes(app: Express): Express {
   // Register unified demo auto-fill API for all form types (KYB, KY3P, Open Banking)
   // This implementation resolves inconsistencies with case sensitivity and status handling
   app.use(unifiedDemoAutofillRouter);
+  
+  // Register our new transactional demo service routes that handle form updates and progress atomically
+  app.use(unifiedDemoServiceRoutes);
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support

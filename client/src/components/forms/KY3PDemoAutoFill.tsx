@@ -46,8 +46,8 @@ export function KY3PDemoAutoFill({
         variant: 'default'
       });
       
-      // 1. Get demo data from the KY3P endpoint - this is the preferred approach for KY3P
-      logger.info('Fetching demo data from the dedicated KY3P endpoint');
+      // 1. Use the new unified transactional endpoint that handles data fill and progress atomically
+      logger.info('Using the unified transactional demo service for KY3P');
       const response = await fetch(`/api/ky3p/demo-autofill/${taskId}`, {
         method: 'POST',
         headers: {
@@ -70,29 +70,7 @@ export function KY3PDemoAutoFill({
       // Accept both fieldCount (new) or fieldsPopulated (legacy) properties for compatibility
       const count = result.fieldCount || result.fieldsPopulated || 0;
       
-      // 2. Update the task progress explicitly to ensure task center shows the correct state
-      logger.info('Updating task progress in the database...');
-      try {
-        const progressResponse = await fetch(`/api/ky3p/update-progress/${taskId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            progress: 100, // Mark as 100% complete
-            status: 'completed' // Set status to completed
-          })
-        });
-        
-        if (progressResponse.ok) {
-          logger.info('Successfully updated task progress to completed');
-        }
-      } catch (progressError) {
-        logger.warn('Error updating task progress:', progressError);
-      }
-      
-      // 3. Invalidate all queries to ensure the UI is updated correctly
+      // 2. Invalidate all queries to ensure the UI is updated correctly
       logger.info('Invalidating queries to refresh UI data...');
       await queryClient.invalidateQueries({
         queryKey: [`/api/tasks/${taskId}/ky3p-responses`]
@@ -124,7 +102,7 @@ export function KY3PDemoAutoFill({
       // 4. Show success message
       toast({
         title: 'Demo Auto-Fill Complete',
-        description: `Successfully populated ${count} fields with demo data`,
+        description: `Successfully populated ${count} fields with demo data. Progress updated to ${result.progress}%.`,
         variant: 'default'
       });
       
