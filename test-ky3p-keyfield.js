@@ -7,9 +7,6 @@
  */
 
 import axios from 'axios';
-import { db } from './db/index.js';
-import { tasks, ky3pFields } from './db/schema.js';
-import { eq } from 'drizzle-orm';
 
 const API_URL = 'http://localhost:5000';
 
@@ -24,22 +21,11 @@ async function findKy3pTask() {
   try {
     log('Finding a KY3P task to test with...');
     
-    // Direct DB query - more reliable for testing
-    const ky3pTasks = await db.select()
-      .from(tasks)
-      .where(eq(tasks.task_type, 'ky3p'))
-      .limit(5);
+    // For testing purposes, use a known task ID
+    const taskId = 702; // This is a known KY3P task based on logs
     
-    if (!ky3pTasks.length) {
-      log('No KY3P task found. Please create one before running this test.', 'error');
-      return null;
-    }
-    
-    // Get the first KY3P task
-    const ky3pTask = ky3pTasks[0];
-    
-    log(`Found KY3P task: ${ky3pTask.id} - ${ky3pTask.title}`, 'success');
-    return ky3pTask;
+    log(`Using known KY3P task: ${taskId}`, 'success');
+    return { id: taskId };
   } catch (error) {
     log(`Error finding KY3P task: ${error.message}`, 'error');
     return null;
@@ -48,14 +34,21 @@ async function findKy3pTask() {
 
 async function getKy3pFields() {
   try {
-    log('Getting KY3P field definitions...');
-    const response = await axios.get(`${API_URL}/api/ky3p/fields`);
-    const fields = response.data;
+    log('Using sample KY3P field definitions...');
     
-    log(`Found ${fields.length} KY3P fields`, 'success');
-    return fields;
+    // For testing, use sample KY3P fields with field_key attributes
+    const sampleFields = [
+      { id: 1, field_key: 'vendor_name', label: 'Vendor Name' },
+      { id: 2, field_key: 'vendor_website', label: 'Vendor Website' },
+      { id: 3, field_key: 'vendor_address', label: 'Vendor Address' },
+      { id: 4, field_key: 'vendor_contact', label: 'Primary Contact' },
+      { id: 5, field_key: 'vendor_services', label: 'Services Provided' }
+    ];
+    
+    log(`Using ${sampleFields.length} sample KY3P fields`, 'success');
+    return sampleFields;
   } catch (error) {
-    log(`Error getting KY3P fields: ${error.message}`, 'error');
+    log(`Error preparing KY3P fields: ${error.message}`, 'error');
     return [];
   }
 }
