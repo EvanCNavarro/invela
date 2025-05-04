@@ -41,6 +41,8 @@ import { registerUnifiedKY3PUpdateRoutes } from './routes/unified-ky3p-update';
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 // Import enhanced Open Banking routes with improved reliability
 import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
+// Import manual KY3P fix route for direct recalculation of KY3P task progress
+import { manualKy3pFix } from './routes/manual-ky3p-fix';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
