@@ -14,71 +14,68 @@ export async function getOpenBankingDemoData() {
   try {
     const demoData = {
       fields: [
-        // API Infrastructure
-        { id: 1, value: 'Yes', status: 'COMPLETE' },
-        { id: 2, value: 'REST APIs with OAuth 2.0', status: 'COMPLETE' },
-        { id: 3, value: 'Account Information, Payment Initiation, Funds Confirmation', status: 'COMPLETE' },
-        { id: 4, value: 'Yes, published on developer portal', status: 'COMPLETE' },
+        // Open Banking Strategy
+        { id: 201, value: 'Comprehensive platform for financial data aggregation and API services', status: 'COMPLETE' },
+        { id: 202, value: 'Current phase of multi-year roadmap implementing Account Information and Payment Services', status: 'COMPLETE' },
+        { id: 203, value: 'Q2 2024 for next major feature release', status: 'COMPLETE' },
+        { id: 204, value: 'Collaboration with existing financial partners and new FinTech entrants', status: 'COMPLETE' },
+        { id: 205, value: '25-person dedicated Open Banking team with banking and API expertise', status: 'COMPLETE' },
+        
+        // Technical Implementation
+        { id: 206, value: 'RESTful APIs with OAuth 2.0 and OpenID Connect for authentication', status: 'COMPLETE' },
+        { id: 207, value: 'Microservices architecture running on Kubernetes in multi-region cloud', status: 'COMPLETE' },
+        { id: 208, value: 'ISO 20022, JSON, and XML supported for data formats', status: 'COMPLETE' },
+        { id: 209, value: 'Real-time data processing with event-driven architecture', status: 'COMPLETE' },
+        { id: 210, value: 'Yes, all APIs fully documented with interactive Swagger/OpenAPI portal', status: 'COMPLETE' },
         
         // Security Measures
-        { id: 5, value: 'OAuth 2.0 with mutual TLS', status: 'COMPLETE' },
-        { id: 6, value: 'Yes, following OWASP guidelines', status: 'COMPLETE' },
-        { id: 7, value: 'Monthly penetration testing', status: 'COMPLETE' },
-        { id: 8, value: 'Yes, HTTPS with TLS 1.3', status: 'COMPLETE' },
-        
-        // Data Protection
-        { id: 9, value: 'End-to-end encryption (AES-256)', status: 'COMPLETE' },
-        { id: 10, value: 'Yes, all customer data is encrypted at rest and in transit', status: 'COMPLETE' },
-        { id: 11, value: 'Yes, using access tokens with short expiry', status: 'COMPLETE' },
-        { id: 12, value: 'Yes, using secure data tokenization', status: 'COMPLETE' },
-        
-        // Customer Consent
-        { id: 13, value: 'Yes, granular permission system', status: 'COMPLETE' },
-        { id: 14, value: 'Consent management dashboard for users', status: 'COMPLETE' },
-        { id: 15, value: 'Yes, can be revoked through mobile app or website', status: 'COMPLETE' },
-        { id: 16, value: '90 days with option to extend', status: 'COMPLETE' },
+        { id: 211, value: 'Multi-layered security with TLS 1.3, certificate pinning, and JWS', status: 'COMPLETE' },
+        { id: 212, value: 'Tokenization of sensitive data with session-specific encryption', status: 'COMPLETE' },
+        { id: 213, value: 'Multi-factor authentication with biometric options', status: 'COMPLETE' },
+        { id: 214, value: 'Yes, quarterly by independent security firms, most recent Feb 2025', status: 'COMPLETE' },
+        { id: 215, value: 'SOC 2 Type II, ISO 27001, PCI-DSS Level 1', status: 'COMPLETE' },
         
         // Regulatory Compliance
-        { id: 17, value: 'Yes, PSD2, GDPR, and local regulations', status: 'COMPLETE' },
-        { id: 18, value: 'Quarterly audits by external firm', status: 'COMPLETE' },
-        { id: 19, value: 'Yes, dedicated compliance team', status: 'COMPLETE' },
-        { id: 20, value: 'Yes, annual certification process', status: 'COMPLETE' },
+        { id: 216, value: 'Full compliance with PSD2, GDPR, and UK Open Banking standards', status: 'COMPLETE' },
+        { id: 217, value: 'Yes, regulatory requirements mapped to control framework with testing', status: 'COMPLETE' },
+        { id: 218, value: 'Legal, Compliance, and Data Protection teams review all changes', status: 'COMPLETE' },
+        { id: 219, value: 'Yes, dedicated regulatory technology tracking with automated alerts', status: 'COMPLETE' },
+        { id: 220, value: 'Open Banking Implementation Entity (OBIE) and Financial Conduct Authority (FCA)', status: 'COMPLETE' },
         
-        // Third-Party Access
-        { id: 21, value: 'Strict vetting process with security assessment', status: 'COMPLETE' },
-        { id: 22, value: 'Yes, using granular permission model', status: 'COMPLETE' },
-        { id: 23, value: 'Real-time monitoring system with alerts', status: 'COMPLETE' },
-        { id: 24, value: 'Detailed audit logs for all access events', status: 'COMPLETE' },
+        // Data Handling
+        { id: 221, value: 'Data classified by sensitivity with appropriate controls for each tier', status: 'COMPLETE' },
+        { id: 222, value: 'Encrypted data at rest and in transit with key rotation', status: 'COMPLETE' },
+        { id: 223, value: 'Strict data minimization and purpose limitation principles applied', status: 'COMPLETE' },
+        { id: 224, value: 'Automated data retention and purge cycles based on classification', status: 'COMPLETE' },
+        { id: 225, value: 'Data Protection Impact Assessment completed for all data flows', status: 'COMPLETE' },
+        
+        // Third Party Management
+        { id: 226, value: 'Tiered access model with strict verification for API consumers', status: 'COMPLETE' },
+        { id: 227, value: 'Sandbox environment with synthetic data for development and testing', status: 'COMPLETE' },
+        { id: 228, value: 'Monitored onboarding process with technical and compliance verification', status: 'COMPLETE' },
+        { id: 229, value: 'Annual security reviews and continuous monitoring for connected partners', status: 'COMPLETE' },
+        { id: 230, value: 'Real-time activity monitoring with automated anomaly detection', status: 'COMPLETE' },
         
         // User Experience
-        { id: 25, value: 'In-app and web interface', status: 'COMPLETE' },
-        { id: 26, value: 'Yes, usability testing conducted monthly', status: 'COMPLETE' },
-        { id: 27, value: 'Yes, multi-language support', status: 'COMPLETE' },
-        { id: 28, value: 'Accessibility guidelines WCAG 2.1 AA', status: 'COMPLETE' },
+        { id: 231, value: 'User-centric design with focus on simplified consent journeys', status: 'COMPLETE' },
+        { id: 232, value: 'Yes, granular permission controls with easy management interface', status: 'COMPLETE' },
+        { id: 233, value: 'Mobile-first responsive design with accessibility compliance', status: 'COMPLETE' },
+        { id: 234, value: 'Biweekly user testing sessions and A/B testing for enhancements', status: 'COMPLETE' },
+        { id: 235, value: '87% satisfaction rating from consent journey user surveys', status: 'COMPLETE' },
         
-        // Incident Response
-        { id: 29, value: 'Yes, 24/7 response team', status: 'COMPLETE' },
-        { id: 30, value: '15 minutes SLA for critical issues', status: 'COMPLETE' },
-        { id: 31, value: 'Yes, automated and manual monitoring', status: 'COMPLETE' },
-        { id: 32, value: 'Quarterly simulations and drills', status: 'COMPLETE' },
+        // Performance and Reliability
+        { id: 236, value: '99.99% uptime for core API services with 24/7 monitoring', status: 'COMPLETE' },
+        { id: 237, value: 'Average response time under 200ms with 99th percentile under 500ms', status: 'COMPLETE' },
+        { id: 238, value: 'Auto-scaling infrastructure with multi-region failover capability', status: 'COMPLETE' },
+        { id: 239, value: 'Monthly DR exercises and quarterly full recovery simulations', status: 'COMPLETE' },
+        { id: 240, value: 'Real-time monitoring dashboards with proactive alerting', status: 'COMPLETE' },
         
-        // Technical Standards
-        { id: 33, value: 'ISO20022, JSON, OAuth 2.0, OpenID Connect', status: 'COMPLETE' },
-        { id: 34, value: 'Yes, comprehensive implementation', status: 'COMPLETE' },
-        { id: 35, value: 'Yes, sandbox environment available', status: 'COMPLETE' },
-        { id: 36, value: 'Bi-weekly updates to API standards', status: 'COMPLETE' },
-        
-        // Performance & Scalability
-        { id: 37, value: '99.99% uptime SLA', status: 'COMPLETE' },
-        { id: 38, value: '<200ms response time', status: 'COMPLETE' },
-        { id: 39, value: 'Auto-scaling cloud infrastructure', status: 'COMPLETE' },
-        { id: 40, value: 'Daily load testing', status: 'COMPLETE' },
-        
-        // Innovation & Future Plans
-        { id: 41, value: 'Account aggregation, financial insights, predictive analytics', status: 'COMPLETE' },
-        { id: 42, value: 'Biometric authentication integration', status: 'COMPLETE' },
-        { id: 43, value: 'Yes, quarterly roadmap updates', status: 'COMPLETE' },
-        { id: 44, value: 'Active participation in industry working groups', status: 'COMPLETE' }
+        // Business Model
+        { id: 241, value: 'Tiered pricing based on API call volume and service level', status: 'COMPLETE' },
+        { id: 242, value: 'Premium services include advanced analytics and dedicated support', status: 'COMPLETE' },
+        { id: 243, value: 'Enterprise partnerships with revenue sharing arrangements', status: 'COMPLETE' },
+        { id: 244, value: '35% year-over-year growth in API transaction volume', status: 'COMPLETE' },
+        { id: 245, value: 'Expanding to additional markets in North America and Asia-Pacific', status: 'COMPLETE' },
       ],
       metadata: {
         autoFilled: true,
