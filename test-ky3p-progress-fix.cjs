@@ -152,10 +152,10 @@ async function triggerTaskReconciliation(taskId) {
   // Update the task progress directly
   const updateQuery = `
     UPDATE tasks
-    SET progress = $1,
+    SET progress = $1::integer,
         status = CASE 
-          WHEN $1 = 0 THEN 'not_started' 
-          WHEN $1 = 100 THEN 'ready_for_submission' 
+          WHEN $1::integer = 0 THEN 'not_started' 
+          WHEN $1::integer = 100 THEN 'ready_for_submission' 
           ELSE 'in_progress' 
         END,
         updated_at = NOW()
@@ -163,7 +163,7 @@ async function triggerTaskReconciliation(taskId) {
     RETURNING progress, status
   `;
   
-  const updateResult = await client.query(updateQuery, [progress, taskId]);
+  const updateResult = await client.query(updateQuery, [Math.round(progress), taskId]);
   log(`Task updated: progress=${updateResult.rows[0].progress}, status=${updateResult.rows[0].status}`, colors.green);
   
   return progress;
