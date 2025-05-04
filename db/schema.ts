@@ -602,6 +602,7 @@ export const ky3pResponses = pgTable("ky3p_responses", {
   id: serial("id").primaryKey(),
   task_id: integer("task_id").references(() => tasks.id).notNull(),
   field_id: integer("field_id").references(() => ky3pFields.id).notNull(),
+  field_key: text("field_key"), // Added as part of KY3P unification with KYB and Open Banking
   response_value: text("response_value"),
   status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default('empty'),
   version: integer("version").notNull().default(1),
