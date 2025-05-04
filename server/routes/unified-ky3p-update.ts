@@ -113,6 +113,7 @@ export function registerUnifiedKY3PUpdateRoutes() {
               .update(ky3pResponses)
               .set({
                 response_value: String(value),
+                field_key: fieldKey, // Ensure field_key is set for all responses
                 status: 'COMPLETE', // Always use uppercase string for consistency
                 updated_at: timestamp
               })
@@ -136,6 +137,7 @@ export function registerUnifiedKY3PUpdateRoutes() {
               .values({
                 task_id: taskId,
                 field_id: fieldId,
+                field_key: fieldKey, // Add the field_key to ensure consistency with KYB and Open Banking
                 response_value: String(value),
                 status: 'COMPLETE', // Always use uppercase string for consistency
                 created_at: timestamp,
