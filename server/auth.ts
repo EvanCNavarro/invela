@@ -90,11 +90,27 @@ async function getUserByEmail(email: string) {
 export function setupAuth(app: Express) {
   console.log('[Auth] Setting up authentication...');
 
-  const store = new PostgresSessionStore({
-    pool,
-    createTableIfMissing: true,
-    tableName: 'session'
-  });
+  // Create an in-memory session store as fallback when database session store fails
+  // This is useful for development and allows the application to function even when
+  // there are database connectivity issues
+  let store;
+  
+  try {
+    console.log('[Auth] Setting up PostgreSQL session store');
+    store = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+      tableName: 'session',
+      // Add error handling for session store
+      errorLog: (err) => console.error('[Session Store] Error:', err)
+    });
+    console.log('[Auth] PostgreSQL session store initialized successfully');
+  } catch (error) {
+    console.error('[Auth] Error setting up PostgreSQL session store, using in-memory store as fallback:', error);
+    // When Neon DB connectivity fails, use in-memory session store as fallback
+    // This allows the app to function even when the database is unavailable
+    store = new session.MemoryStore();
+  }
 
   const sessionSettings: session.SessionOptions = {
     store,
