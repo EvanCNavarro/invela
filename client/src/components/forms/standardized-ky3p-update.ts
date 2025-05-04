@@ -39,6 +39,7 @@ export async function standardizedBulkUpdate(
   options: {
     preserveProgress?: boolean;
     isFormEditing?: boolean;
+    source?: string;
   } = {}
 ): Promise<boolean> {
   // Verify taskId is provided
@@ -47,12 +48,17 @@ export async function standardizedBulkUpdate(
     return false;
   }
   try {
-    // Determine if we should preserve progress (for KY3P form editing)
-    const preserveProgress = options.preserveProgress || options.isFormEditing;
+    // CRITICAL FIX: Determine if we should preserve progress (for KY3P form editing)
+    // Default to true for all operations except explicit reset requests
+    // This is a critical fix to prevent accidental progress resets during form editing
+    const preserveProgress = options.preserveProgress !== false;
+    const source = options.source || (options.isFormEditing ? 'form-editing' : 'standardized-update');
     
     logger.info(`Performing standardized bulk update for task ${taskId} with ${Object.keys(formData).length} fields`, {
       preserveProgress,
-      isFormEditing: options.isFormEditing
+      isFormEditing: options.isFormEditing,
+      source,
+      defaultBehavior: 'preserveProgress=true'
     });
     
     // APPROACH 1: Use the responses array format - this has proven to work in the server logs
@@ -66,10 +72,21 @@ export async function standardizedBulkUpdate(
         }))
       };
       
-      // Construct the URL with the preserveProgress parameter if needed
+      // Construct the URL with the preserveProgress and source parameters
+      // Server now defaults to preserveProgress=true, so we only need to specify if false
       let batchUpdateUrl = `/api/ky3p/batch-update/${taskId}`;
-      if (preserveProgress) {
-        batchUpdateUrl += '?preserveProgress=true';
+      const queryParams = [];
+      
+      if (!preserveProgress) {
+        queryParams.push('preserveProgress=false');
+      }
+      
+      if (source) {
+        queryParams.push(`source=${encodeURIComponent(source)}`);
+      }
+      
+      if (queryParams.length > 0) {
+        batchUpdateUrl += `?${queryParams.join('&')}`;
       }
       
       // Using fetch directly with credentials included for authentication
@@ -110,10 +127,20 @@ export async function standardizedBulkUpdate(
     try {
       logger.info(`Trying direct raw format for task ${taskId}`);
       
-      // Construct URL with preserveProgress parameter for approach 2
+      // Construct URL with preserveProgress and source parameters for approach 2
       let directUrl = `/api/ky3p/batch-update/${taskId}`;
-      if (preserveProgress) {
-        directUrl += '?preserveProgress=true';
+      const directQueryParams = [];
+      
+      if (!preserveProgress) {
+        directQueryParams.push('preserveProgress=false');
+      }
+      
+      if (source) {
+        directQueryParams.push(`source=${encodeURIComponent(source)}`);
+      }
+      
+      if (directQueryParams.length > 0) {
+        directUrl += `?${directQueryParams.join('&')}`;
       }
       
       // Direct fetch with the special field format that worked in server logs
@@ -157,10 +184,20 @@ export async function standardizedBulkUpdate(
     try {
       logger.info(`Trying dedicated bulk endpoint for task ${taskId}`);
       
-      // Construct URL with preserveProgress parameter for approach 3
+      // Construct URL with preserveProgress and source parameters for approach 3
       let bulkEndpoint = `/api/ky3p/responses/${taskId}/bulk`;
-      if (preserveProgress) {
-        bulkEndpoint += '?preserveProgress=true';
+      const bulkQueryParams = [];
+      
+      if (!preserveProgress) {
+        bulkQueryParams.push('preserveProgress=false');
+      }
+      
+      if (source) {
+        bulkQueryParams.push(`source=${encodeURIComponent(source)}`);
+      }
+      
+      if (bulkQueryParams.length > 0) {
+        bulkEndpoint += `?${bulkQueryParams.join('&')}`;
       }
       
       // Include preserveProgress in payload
