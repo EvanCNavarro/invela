@@ -15,50 +15,46 @@ export async function getKybDemoData() {
     const demoData = {
       fields: [
         // Company Information
-        { id: 1, value: 'DevTech Solutions Inc.', status: 'COMPLETE' },
-        { id: 2, value: 'Limited Liability Company (LLC)', status: 'COMPLETE' },
-        { id: 3, value: '123 Main Street, Suite 500, San Francisco, CA 94105', status: 'COMPLETE' },
-        { id: 4, value: 'https://www.devtechsolutions.example', status: 'COMPLETE' },
+        { id: 1, value: 'FinTech Solutions Inc.', status: 'COMPLETE' },
+        { id: 2, value: 'Delaware', status: 'COMPLETE' },
+        { id: 3, value: '2018-05-12', status: 'COMPLETE' },
+        { id: 4, value: '1 Innovation Drive, San Francisco, CA 94105', status: 'COMPLETE' },
+        { id: 5, value: 'www.fintechsolutions.example', status: 'COMPLETE' },
         
-        // Business Information
-        { id: 5, value: 'Financial Technology', status: 'COMPLETE' },
-        { id: 6, value: 'Payment processing, fraud detection, and risk management solutions', status: 'COMPLETE' },
-        { id: 7, value: '2018', status: 'COMPLETE' },
-        { id: 8, value: '101-250', status: 'COMPLETE' },
-        
-        // Regulatory Information
-        { id: 9, value: 'Yes', status: 'COMPLETE' },
-        { id: 10, value: 'Money Services Business (MSB) License', status: 'COMPLETE' },
-        { id: 11, value: 'Financial Crimes Enforcement Network (FinCEN)', status: 'COMPLETE' },
-        { id: 12, value: 'April 2023', status: 'COMPLETE' },
+        // Business Classification
+        { id: 6, value: 'FinTech', status: 'COMPLETE' },
+        { id: 7, value: 'Financial Technology Services', status: 'COMPLETE' },
+        { id: 8, value: 'Payment Processing, Digital Banking, Personal Finance Management', status: 'COMPLETE' },
+        { id: 9, value: 'United States, Canada, Europe', status: 'COMPLETE' },
+        { id: 10, value: 'C-Corporation', status: 'COMPLETE' },
         
         // Financial Information
-        { id: 13, value: '$10-50 million', status: 'COMPLETE' },
-        { id: 14, value: '35%', status: 'COMPLETE' },
-        { id: 15, value: 'Series B', status: 'COMPLETE' },
-        { id: 16, value: 'Venture Capital', status: 'COMPLETE' },
+        { id: 11, value: '12,500,000', status: 'COMPLETE' },
+        { id: 12, value: '78,000,000', status: 'COMPLETE' },
+        { id: 13, value: 'Series B', status: 'COMPLETE' },
+        { id: 14, value: 'Acme Ventures, Innovation Capital, Tech Growth Fund', status: 'COMPLETE' },
+        { id: 15, value: 'FTS123456789', status: 'COMPLETE' },
         
-        // Key Personnel
-        { id: 17, value: 'Jane Smith, CEO and Co-founder', status: 'COMPLETE' },
-        { id: 18, value: 'John Davis, CTO and Co-founder', status: 'COMPLETE' },
-        { id: 19, value: 'Sarah Johnson, CFO', status: 'COMPLETE' },
-        { id: 20, value: 'Michael Chen, Chief Compliance Officer', status: 'COMPLETE' },
+        // Compliance & Risk
+        { id: 16, value: 'SOC 2 Type II, PCI DSS Level 1', status: 'COMPLETE' },
+        { id: 17, value: 'Yes, quarterly penetration testing', status: 'COMPLETE' },
+        { id: 18, value: 'Yes, Chief Compliance Officer and dedicated team', status: 'COMPLETE' },
+        { id: 19, value: 'Annual third-party audits, internal quarterly reviews', status: 'COMPLETE' },
+        { id: 20, value: 'No regulatory actions or material litigation', status: 'COMPLETE' },
         
-        // Compliance Information
-        { id: 21, value: 'Yes', status: 'COMPLETE' },
-        { id: 22, value: 'Anti-Money Laundering (AML) Policy', status: 'COMPLETE' },
-        { id: 23, value: 'Know Your Customer (KYC) Procedures', status: 'COMPLETE' },
-        { id: 24, value: 'Suspicious Activity Reporting Protocol', status: 'COMPLETE' },
+        // Leadership & Organization
+        { id: 21, value: '145', status: 'COMPLETE' },
+        { id: 22, value: 'Sarah Johnson (CEO), Michael Chen (CTO), Elena Rodriguez (CFO)', status: 'COMPLETE' },
+        { id: 23, value: 'Board consists of 7 members including 3 independent directors', status: 'COMPLETE' },
+        { id: 24, value: 'Yes, quarterly reviews and annual strategy sessions', status: 'COMPLETE' },
+        { id: 25, value: 'Engineering (35%), Sales (25%), Operations (20%), Other (20%)', status: 'COMPLETE' },
         
-        // Risk Assessment
-        { id: 25, value: 'Low to Medium', status: 'COMPLETE' },
-        { id: 26, value: 'Yes', status: 'COMPLETE' },
-        { id: 27, value: 'Internal audit team and annual third-party assessment', status: 'COMPLETE' },
-        { id: 28, value: 'Compliance department with direct reporting to CCO', status: 'COMPLETE' },
-        
-        // Business Relationships
-        { id: 29, value: 'Mastercard, Visa', status: 'COMPLETE' },
-        { id: 30, value: 'AWS, Microsoft Azure', status: 'COMPLETE' }
+        // Customer & Partnership Information
+        { id: 26, value: 'Major Bank A, Financial Institution B, Technology Platform C', status: 'COMPLETE' },
+        { id: 27, value: 'Cloud Provider X, Security Firm Y, Data Analytics Partner Z', status: 'COMPLETE' },
+        { id: 28, value: 'Subscription model with tiered pricing, enterprise contracts', status: 'COMPLETE' },
+        { id: 29, value: '350+ business clients, 2.2M end users through our platform', status: 'COMPLETE' },
+        { id: 30, value: 'HIPAA, GDPR, CCPA compliance where applicable', status: 'COMPLETE' }
       ],
       metadata: {
         autoFilled: true,
@@ -67,10 +63,10 @@ export async function getKybDemoData() {
       }
     };
     
-    logger.info(`[KYBDemoData] Generated demo data with ${demoData.fields.length} fields`);
+    logger.info(`[KybDemoData] Generated demo data with ${demoData.fields.length} fields`);
     return demoData;
   } catch (error) {
-    logger.error(`[KYBDemoData] Error generating demo data: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`[KybDemoData] Error generating demo data: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }

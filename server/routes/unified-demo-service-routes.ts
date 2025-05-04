@@ -64,7 +64,8 @@ router.get('/api/unified-demo/data/:taskType', requireAuth, async (req, res) => 
       return res.status(400).json({ error: 'Invalid task type. Must be one of: kyb, ky3p, open_banking, company_kyb' });
     }
     
-    const normalizedTaskType = taskType === 'company_kyb' ? 'kyb' : taskType;
+    // Ensure we're using the correct normalized task type
+    const normalizedTaskType = taskType === 'company_kyb' ? 'kyb' : taskType as 'kyb' | 'ky3p' | 'open_banking';
     
     logger.info(`[UnifiedDemoServiceRoutes] Getting demo data for task type ${normalizedTaskType}`);
     
