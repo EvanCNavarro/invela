@@ -28,8 +28,6 @@ import ky3pRouter from './routes/ky3p';
 import ky3pFieldsRouter from './routes/ky3p-fields';
 // Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
-// Import the KY3P update progress route
-import ky3pUpdateProgressRouter from './routes/ky3p-update-progress';
 // Import the KY3P progress test route
 import testKy3pProgressRouter from './routes/test-ky3p-progress';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
@@ -57,7 +55,6 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
-import unifiedDemoServiceRoutes from './routes/unified-demo-service-routes';
 import { registerOpenBankingRoutes } from './routes/open-banking';
 import { registerOpenBankingProgressRoutes } from './routes/open-banking-progress';
 import { registerOpenBankingTimestampRoutes } from './routes/open-banking-timestamp-routes';
@@ -374,9 +371,6 @@ export function registerRoutes(app: Express): Express {
   // Register the fully unified KY3P update routes
   const unifiedKy3pRouter = registerUnifiedKY3PUpdateRoutes();
   app.use(unifiedKy3pRouter);
-  
-  // Register the KY3P progress update endpoint for demo auto-fill
-  app.use(ky3pUpdateProgressRouter);
   // Removed reference to old KY3P batch update implementation
   // Register the standardized KY3P field update routes
   const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
@@ -392,9 +386,6 @@ export function registerRoutes(app: Express): Express {
   // Register unified demo auto-fill API for all form types (KYB, KY3P, Open Banking)
   // This implementation resolves inconsistencies with case sensitivity and status handling
   app.use(unifiedDemoAutofillRouter);
-  
-  // Register our new transactional demo service routes that handle form updates and progress atomically
-  app.use(unifiedDemoServiceRoutes);
   app.use(filesRouter);
   
   // Register Open Banking Survey routes with WebSocket support
