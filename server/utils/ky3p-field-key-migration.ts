@@ -1,123 +1,196 @@
 /**
  * KY3P Field Key Migration Utility
  * 
- * This module handles the migration from numeric field_id to string-based field_key
- * references for KY3P responses, making them consistent with KYB and Open Banking.
+ * This module provides utilities to migrate KY3P responses from using numeric field_id
+ * to string-based field_key for consistency with KYB and Open Banking forms.
+ * 
+ * This follows the KISS principle to create a unified approach without special case handling.
  */
 
 import { db } from '@db';
 import { ky3pFields, ky3pResponses } from '@db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, sql, isNull, and } from 'drizzle-orm';
 import { logger } from './logger';
 
 /**
- * Populate field_key for all KY3P responses that don't have it set
- *
- * This is a one-time migration utility to ensure all KY3P responses have
- * the field_key populated based on their field_id references.
- *
- * @returns Statistics about the migration process
+ * Results of a field key migration operation
  */
-export async function populateKy3pResponseFieldKeys(): Promise<{
+type MigrationResult = {
   success: boolean;
   message: string;
   count?: number;
   error?: string;
-}> {
-  const logPrefix = '[KY3P-FIELD-KEY-MIGRATION]';
-  const startTime = Date.now();
+};
+
+/**
+ * Map of field ID to field key for KY3P fields
+ */
+type FieldKeyMap = Record<number, string>;
+
+/**
+ * Build a map of field IDs to field keys from the ky3p_fields table
+ * 
+ * @returns Map of field IDs to field keys
+ */
+async function buildFieldKeyMap(): Promise<FieldKeyMap> {
+  try {
+    logger.info('[KY3P-MIGRATION] Building field ID to field key map');
+    
+    const fields = await db.select({
+      id: ky3pFields.id,
+      field_key: ky3pFields.field_key,
+    })
+    .from(ky3pFields)
+    .where(sql`${ky3pFields.field_key} IS NOT NULL`);
+    
+    const fieldKeyMap: FieldKeyMap = {};
+    
+    fields.forEach(field => {
+      if (field.id && field.field_key) {
+        fieldKeyMap[field.id] = field.field_key;
+      }
+    });
+    
+    const fieldCount = Object.keys(fieldKeyMap).length;
+    logger.info(`[KY3P-MIGRATION] Found ${fieldCount} fields with valid field keys`);
+    
+    return fieldKeyMap;
+  } catch (error) {
+    logger.error('[KY3P-MIGRATION] Error building field ID to field key map:', error);
+    return {};
+  }
+}
+
+/**
+ * Find KY3P responses without field_key populated
+ * 
+ * @returns Array of response IDs that need field_key populated
+ */
+async function findResponsesWithoutFieldKey(): Promise<{ id: number; field_id: number | null; task_id: number | null }[]> {
+  try {
+    logger.info('[KY3P-MIGRATION] Finding KY3P responses without field_key');
+    
+    const responses = await db.select({
+      id: ky3pResponses.id,
+      field_id: ky3pResponses.field_id,
+      task_id: ky3pResponses.task_id,
+    })
+    .from(ky3pResponses)
+    .where(
+      and(
+        isNull(ky3pResponses.field_key),
+        sql`${ky3pResponses.field_id} IS NOT NULL`
+      )
+    );
+    
+    logger.info(`[KY3P-MIGRATION] Found ${responses.length} responses without field_key`);
+    
+    return responses;
+  } catch (error) {
+    logger.error('[KY3P-MIGRATION] Error finding responses without field_key:', error);
+    return [];
+  }
+}
+
+/**
+ * Update KY3P responses to use field_key
+ * 
+ * @param responses Array of responses to update
+ * @param fieldKeyMap Map of field IDs to field keys
+ * @returns Number of responses updated
+ */
+async function updateResponsesWithFieldKey(
+  responses: { id: number; field_id: number | null; task_id: number | null }[],
+  fieldKeyMap: FieldKeyMap
+): Promise<number> {
+  let updatedCount = 0;
   
   try {
-    logger.info(`${logPrefix} Starting field_key population for KY3P responses`);
+    logger.info(`[KY3P-MIGRATION] Updating ${responses.length} responses with field_key`);
     
-    // Step 1: Get all KY3P fields to build a map of field_id to field_key
-    const fields = await db.select().from(ky3pFields);
-    
-    if (!fields || fields.length === 0) {
-      logger.warn(`${logPrefix} No KY3P fields found in the database`);
-      return {
-        success: true,
-        message: 'No KY3P fields found to map',
-        count: 0
-      };
-    }
-    
-    // Build a map of field_id to field_key for quick lookups
-    const fieldIdToKeyMap = new Map<number, string>();
-    for (const field of fields) {
-      if (field.id && field.field_key) {
-        fieldIdToKeyMap.set(field.id, field.field_key);
-      }
-    }
-    
-    logger.info(`${logPrefix} Built field_id to field_key map with ${fieldIdToKeyMap.size} entries`);
-    
-    // Step 2: Find all KY3P responses that have null field_key
-    const responsesNeedingUpdate = await db
-      .select()
-      .from(ky3pResponses)
-      .where(isNull(ky3pResponses.field_key));
-    
-    if (!responsesNeedingUpdate || responsesNeedingUpdate.length === 0) {
-      logger.info(`${logPrefix} No KY3P responses found with missing field_key`);
-      return {
-        success: true,
-        message: 'No KY3P responses found with missing field_key',
-        count: 0
-      };
-    }
-    
-    logger.info(`${logPrefix} Found ${responsesNeedingUpdate.length} KY3P responses with missing field_key`);
-    
-    // Step 3: Update all responses with missing field_key
-    let updatedCount = 0;
-    let skippedCount = 0;
-    
-    // Use a transaction for atomicity
+    // Use a transaction to ensure consistency
     await db.transaction(async (tx) => {
-      for (const response of responsesNeedingUpdate) {
-        const fieldKey = fieldIdToKeyMap.get(response.field_id);
-        
-        if (!fieldKey) {
-          logger.warn(`${logPrefix} Could not find field_key for field_id ${response.field_id}, skipping response ID ${response.id}`);
-          skippedCount++;
+      for (const response of responses) {
+        if (!response.field_id) {
+          logger.warn(`[KY3P-MIGRATION] Response ${response.id} has null field_id, skipping`);
           continue;
         }
         
-        // Update the response with the field_key
-        await tx
-          .update(ky3pResponses)
-          .set({ field_key: fieldKey })
+        const fieldKey = fieldKeyMap[response.field_id];
+        if (!fieldKey) {
+          logger.warn(`[KY3P-MIGRATION] No field_key found for field_id ${response.field_id}, skipping response ${response.id}`);
+          continue;
+        }
+        
+        await tx.update(ky3pResponses)
+          .set({
+            field_key: fieldKey,
+            updated_at: new Date(),
+          })
           .where(eq(ky3pResponses.id, response.id));
         
         updatedCount++;
+        
+        if (updatedCount % 100 === 0) {
+          logger.info(`[KY3P-MIGRATION] Updated ${updatedCount} responses with field_key`);
+        }
       }
     });
     
-    const duration = Date.now() - startTime;
+    logger.info(`[KY3P-MIGRATION] Successfully updated ${updatedCount} responses with field_key`);
     
-    logger.info(`${logPrefix} Successfully updated ${updatedCount} KY3P responses with field_key in ${duration}ms`);
+    return updatedCount;
+  } catch (error) {
+    logger.error('[KY3P-MIGRATION] Error updating responses with field_key:', error);
+    throw error;
+  }
+}
+
+/**
+ * Populate field_key for all KY3P responses that don't have it
+ * 
+ * @returns Result of the migration operation
+ */
+export async function populateKy3pResponseFieldKeys(): Promise<MigrationResult> {
+  try {
+    logger.info('[KY3P-MIGRATION] Starting KY3P response field_key population');
     
-    if (skippedCount > 0) {
-      logger.warn(`${logPrefix} Skipped ${skippedCount} KY3P responses due to missing field_key mapping`);
+    // Build the field ID to field key map
+    const fieldKeyMap = await buildFieldKeyMap();
+    
+    if (Object.keys(fieldKeyMap).length === 0) {
+      return {
+        success: false,
+        message: 'No field keys found in ky3p_fields table',
+      };
     }
+    
+    // Find responses without field_key
+    const responses = await findResponsesWithoutFieldKey();
+    
+    if (responses.length === 0) {
+      return {
+        success: true,
+        message: 'No responses found that need field_key populated',
+        count: 0,
+      };
+    }
+    
+    // Update responses with field_key
+    const updatedCount = await updateResponsesWithFieldKey(responses, fieldKeyMap);
     
     return {
       success: true,
-      message: `Successfully updated ${updatedCount} KY3P responses with field_key`,
-      count: updatedCount
+      message: `Successfully updated ${updatedCount} responses with field_key`,
+      count: updatedCount,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`${logPrefix} Error populating field_key for KY3P responses:`, {
-      error: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    logger.error('[KY3P-MIGRATION] Error populating KY3P response field_key:', error);
     
     return {
       success: false,
-      message: 'Error populating field_key for KY3P responses',
-      error: errorMessage
+      message: 'Error populating KY3P response field_key',
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
