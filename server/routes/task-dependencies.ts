@@ -11,6 +11,7 @@ import { eq, and, or, isNull } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { broadcastTaskUpdate } from '../services/websocket';
 import { logger } from '../utils/logger';
+import { calculateTaskProgress, updateAndBroadcastProgress } from '../utils/unified-progress-calculator';
 
 // Logger is already initialized in the imported module
 
@@ -354,91 +355,40 @@ export async function unlockAllTasks(companyId: number) {
       taskTypes: companyTasks.map(t => t.task_type)
     });
     
-    // Import needed functions from utility modules
-    const { determineStatusFromProgress } = await import('../utils/progress');
-    const { calculateTaskProgressFromDB } = await import('../utils/task-reconciliation');
-    
-    // Unlock each task
+    // Unlock each task using the unified progress calculator
     for (const task of companyTasks) {
-      // Instead of using the stored progress (which might be 0),
-      // calculate the actual progress by counting completed responses
-      // for this task in the database
-      let taskProgress;
-      try {
-        // Try to calculate the actual progress based on responses in the database
-        taskProgress = await calculateTaskProgressFromDB(task.id, task.task_type);
-        logger.info('[TaskDependencies] Calculated actual progress from database', {
-          taskId: task.id,
-          taskType: task.task_type,
-          storedProgress: task.progress,
-          calculatedProgress: taskProgress 
-        });
-      } catch (error) {
-        // If calculation fails, fall back to stored progress
-        taskProgress = task.progress || 0;
-        logger.warn('[TaskDependencies] Failed to calculate progress from DB, using stored progress', {
-          taskId: task.id,
-          progress: taskProgress,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        });
-      }
+      // IMPORTANT CHANGE: Use the new unified progress calculator
+      // This ensures consistent progress calculation across all systems
+      // The preserveExisting flag ensures we don't reset progress if it already exists
       
-      // Determine correct status based on the accurate progress calculation
-      // This ensures we follow the business rules:
-      // 0% = Not Started
-      // 1-99% = In Progress
-      // 100% (not submitted) = Ready for Submission
-      // 100% (submitted) = Submitted
-      const newStatus = determineStatusFromProgress(
-        taskProgress,
-        task.status as any,
-        [], // no form responses
-        task.metadata || {}
-      );
+      // Create metadata for the task update
+      const updateMetadata = {
+        locked: false,
+        prerequisite_completed: true,
+        prerequisite_completed_at: new Date().toISOString(),
+        dependencyUnlockOperation: true,
+        previousProgress: task.progress || 0,
+        previousStatus: task.status || 'unknown'
+      };
       
-      logger.info('[TaskDependencies] Determining correct status for task', {
-        taskId: task.id,
-        progress: taskProgress,
-        currentStatus: task.status,
-        newStatus
+      // Use the unified progress calculator with preserveExisting=true
+      // This ensures we don't reset progress for tasks that already have progress
+      const taskProgress = await updateAndBroadcastProgress(task.id, task.task_type, {
+        debug: true,
+        preserveExisting: true, // Critical flag to prevent progress resets
+        metadata: updateMetadata
       });
-
-      await db.update(tasks)
-        .set({
-          status: newStatus,
-          metadata: sql`jsonb_set(
-            jsonb_set(
-              jsonb_set(
-                COALESCE(metadata, '{}'::jsonb),
-                '{locked}', 'false'
-              ),
-              '{prerequisite_completed}', 'true'
-            ),
-            '{prerequisite_completed_at}', to_jsonb(now())
-          )`,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, task.id));
-        
-      logger.info('[TaskDependencies] Unlocked task', { 
+      
+      logger.info('[TaskDependencies] Unlocked task using unified progress calculator', { 
         companyId, 
         taskId: task.id,
         taskType: task.task_type,
-        progress: taskProgress,
-        status: newStatus
+        calculatedProgress: taskProgress,
+        previousProgress: task.progress || 0,
+        wasPreserved: (task.progress || 0) > 0 && taskProgress === (task.progress || 0)
       });
       
-      // Broadcast the update via WebSocket
-      broadcastTaskUpdate({
-        id: task.id,
-        status: newStatus,
-        progress: taskProgress,
-        metadata: {
-          locked: false,
-          prerequisite_completed: true,
-          prerequisite_completed_at: new Date().toISOString()
-        }
-      });
+      // Note: We don't need to broadcast the update here because updateAndBroadcastProgress already does it
     }
     
     logger.info('[TaskDependencies] Successfully unlocked all tasks', { 

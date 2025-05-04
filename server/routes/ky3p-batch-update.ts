@@ -252,37 +252,35 @@ export function registerKY3PBatchUpdateRoutes() {
         .delete(ky3pResponses)
         .where(eq(ky3pResponses.task_id, taskId));
       
-      // Use the fixed progress update function for guaranteed persistence
-      const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
+      // Use our new unified progress calculator for guaranteed persistence
+      const { updateAndBroadcastProgress } = await import('../utils/unified-progress-calculator');
       
       if (preserveProgress) {
-        // ENHANCEMENT: If preserving progress, use the existing progress value
-        // instead of recalculating (which would be 0% after clearing responses)
-        // This ensures progress doesn't reset during form editing
-        await db
-          .update(tasks)
-          .set({
-            updated_at: new Date(),
-            metadata: {
-              ...(existingTask?.metadata || {}),
-              lastFieldClear: new Date().toISOString(),
-              fieldClearOperation: true,
-              preservedProgress: existingProgress,
-              preservedStatus: existingStatus
-            }
-          })
-          .where(eq(tasks.id, taskId));
-          
-        logger.info(`[KY3P-BATCH-UPDATE] Cleared fields but preserved progress for task ${taskId}: ${existingProgress}%`);
-      } else {
-        // Original behavior: reset progress to 0%
-        await updateKy3pProgressFixed(taskId, { 
+        // ENHANCED SOLUTION: Use the new unified progress calculator with forceProgress option
+        // This ensures progress is properly preserved during form editing
+        await updateAndBroadcastProgress(taskId, 'ky3p', {
           debug: true,
-          forceUpdate: true, // Force update to 0% after clearing responses
+          forceProgress: existingProgress, // Force the progress to remain at the existing value
           metadata: {
             lastFieldClear: new Date().toISOString(),
             fieldClearOperation: true,
-            explicitReset: true // Explicitly request a reset to 0%
+            preservedProgress: existingProgress,
+            preservedStatus: existingStatus,
+            usingUnifiedCalculator: true
+          }
+        });
+          
+        logger.info(`[KY3P-BATCH-UPDATE] Cleared fields but preserved progress for task ${taskId}: ${existingProgress}% using unified calculator`);
+      } else {
+        // Original behavior: reset progress to 0%
+        await updateAndBroadcastProgress(taskId, 'ky3p', { 
+          debug: true,
+          forceProgress: 0, // Force progress to 0% after clearing responses
+          metadata: {
+            lastFieldClear: new Date().toISOString(),
+            fieldClearOperation: true,
+            explicitReset: true, // Explicitly request a reset to 0%
+            usingUnifiedCalculator: true
           }
         });
       }
