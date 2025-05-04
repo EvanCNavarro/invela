@@ -28,17 +28,31 @@ export function registerKY3PBatchUpdateRoutes() {
   router.post('/api/ky3p/batch-update/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     
-    // CRITICAL FIX: Ensure we have the responses object wrapper 
-    // Format should be: { responses: { fieldKey1: value1, ... } }
-    if (!req.body.responses || typeof req.body.responses !== 'object') {
-      logger.error(`[KY3P-BATCH-UPDATE] Invalid request format for task ${taskId}. Expected { responses: {...} } format`);
+    // CRITICAL FIX #1: Make preserveProgress default to true
+    // This is a critical change to fix progress reset issues during form editing
+    // Parse the preserveProgress parameter with a default of true
+    const preserveProgress = req.query.preserveProgress !== 'false';
+    const source = req.query.source || 'api';
+    
+    // CRITICAL FIX #2: Ensure we have the responses object wrapper 
+    // Format should be: { responses: [{ fieldKey: key1, value: value1 }, ...] }
+    if (!req.body.responses || !Array.isArray(req.body.responses)) {
+      logger.error(`[KY3P-BATCH-UPDATE] Invalid request format for task ${taskId}. Expected { responses: [...] } format`);
       return res.status(400).json({ 
         success: false, 
-        message: 'Invalid request: responses is required and must be an object' 
+        message: 'Invalid request: responses is required and must be an array' 
       });
     }
     
-    const formData = req.body.responses; // Get the actual field data from the responses wrapper
+    // Convert the array of field objects to a more usable format
+    const formData = {};
+    req.body.responses.forEach(item => {
+      if (item && item.fieldKey) {
+        formData[item.fieldKey] = item.value;
+      }
+    });
+    
+    logger.info(`[KY3P-BATCH-UPDATE] Batch update for task ${taskId} with preserveProgress=${preserveProgress}, source=${source}`);
     
     logger.info(`[KY3P-BATCH-UPDATE] Received batch update request for task ${taskId}`, {
       fieldCount: Object.keys(formData).length
@@ -202,11 +216,16 @@ export function registerKY3PBatchUpdateRoutes() {
    */
   router.post('/api/ky3p/clear-fields/:taskId', async (req, res) => {
     const taskId = parseInt(req.params.taskId);
-    // NEW PARAMETER: Check if we should preserve progress (default to false for backwards compatibility)
-    const preserveProgress = req.query.preserveProgress === 'true' || req.body.preserveProgress === true;
+    // NEW PARAMETER: Check if we should preserve progress 
+    // Now defaulting to TRUE for KY3P tasks to prevent accidental progress resets
+    // Client can explicitly set preserveProgress=false to force progress reset
+    const preserveProgress = req.query.preserveProgress !== 'false' && req.body.preserveProgress !== false;
     
     logger.info(`[KY3P-BATCH-UPDATE] Received clear fields request for task ${taskId}`, {
-      preserveProgress
+      preserveProgress,
+      requestMethod: 'IMPROVED DEFAULT: preserveProgress=true',
+      source: req.body.source || req.query.source || 'unknown',
+      userAgent: req.headers['user-agent']
     });
     
     if (!taskId || isNaN(taskId)) {
@@ -269,12 +288,42 @@ export function registerKY3PBatchUpdateRoutes() {
       }
       
       // Get the updated task to log the current progress and status
-      const [updatedTask] = await db
+      let updatedTask;
+      [updatedTask] = await db
         .select()
         .from(tasks)
         .where(eq(tasks.id, taskId));
+        
+      // CRITICAL FIX: Ensure progress is properly preserved when requested
+      // This fixes an edge case where progress is correctly kept in the database record
+      // but the response doesn't reflect the preserved progress
+      if (preserveProgress && existingProgress > 0 && updatedTask && updatedTask.progress === 0) {
+        logger.error(`[KY3P CRITICAL ERROR] Progress reset detected despite preserveProgress=true. Task ${taskId}: ${existingProgress}% -> 0%`);
+        
+        // Force update the progress back to the original value
+        await db
+          .update(tasks)
+          .set({
+            progress: existingProgress,
+            metadata: {
+              ...updatedTask.metadata,
+              progressEmergencyFixed: true,
+              originalProgress: existingProgress,
+              fixTimestamp: new Date().toISOString()
+            }
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info(`[KY3P-BATCH-UPDATE] Emergency progress restoration performed for task ${taskId}: restored to ${existingProgress}%`);
+        
+        // Get the task again after emergency fix
+        [updatedTask] = await db
+          .select()
+          .from(tasks)
+          .where(eq(tasks.id, taskId));
+      }
       
-      logger.info(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}, new status: ${updatedTask?.status}`);
+      logger.info(`[KY3P-BATCH-UPDATE] Cleared all fields for task ${taskId}, new status: ${updatedTask?.status}, progress: ${updatedTask?.progress}%`);
       
       // Return success response
       return res.status(200).json({
