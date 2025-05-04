@@ -42,18 +42,23 @@ manualKy3pFix.post('/api/ky3p/manual-fix/:taskId', async (req, res) => {
     // Calculate task progress directly from the database
     const progressData = await db.transaction(async (tx) => {
       // First, count total responses for this specific task
-      const [totalResult] = await tx.execute(
+      const totalResult = await tx.execute(
         sql`SELECT COUNT(*) as total FROM ky3p_responses WHERE task_id = ${taskId}`
       );
       
       // Then, count completed responses
-      const [completedResult] = await tx.execute(
+      const completedResult = await tx.execute(
         sql`SELECT COUNT(*) as completed FROM ky3p_responses 
             WHERE task_id = ${taskId} AND UPPER(status) = 'COMPLETE'`
       );
       
-      const totalResponses = parseInt(totalResult.total as string);
-      const completedResponses = parseInt(completedResult.completed as string);
+      // Get the first row from both result sets
+      const totalRow = Array.isArray(totalResult) ? totalResult[0] : totalResult;
+      const completedRow = Array.isArray(completedResult) ? completedResult[0] : completedResult;
+      
+      // Extract values and ensure they're numbers
+      const totalResponses = parseInt(totalRow?.total?.toString() || '0');
+      const completedResponses = parseInt(completedRow?.completed?.toString() || '0');
       
       // Calculate the progress percentage
       const calculatedProgress = totalResponses > 0
@@ -81,7 +86,7 @@ manualKy3pFix.post('/api/ky3p/manual-fix/:taskId', async (req, res) => {
             ),
             '{progressHistory}',
             COALESCE(${tasks.metadata} -> 'progressHistory', '[]'::jsonb) ||
-            jsonb_build_array(jsonb_build_object('value', ${calculatedProgress}, 'timestamp', now()::text, 'source', ${source}))
+            jsonb_build_array(jsonb_build_object('value', ${calculatedProgress}, 'timestamp', now()::text, 'source', 'manual-ky3p-fix'::text))
           )`
         })
         .where(eq(tasks.id, taskId))
