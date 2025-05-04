@@ -1,188 +1,300 @@
 /**
- * Unified KY3P Response Handler
+ * Unified KY3P Handler
  * 
- * This module implements a standardized approach to handle KY3P form responses
- * using string-based field_key instead of numeric field_id, making it consistent
- * with KYB and Open Banking form handling.
+ * This module provides standardized methods for working with KY3P responses
+ * using the field_key approach (consistent with KYB and Open Banking forms).
+ * 
+ * It provides backward compatibility while moving the system toward a unified approach.
  */
 
 import { db } from '@db';
-import { tasks, ky3pFields, ky3pResponses } from '@db/schema';
-import { eq, and, isNull, sql } from 'drizzle-orm';
+import { ky3pResponses, ky3pFields, tasks } from '@db/schema';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 import { logger } from './logger';
 import { updateKy3pProgressFixed } from './unified-progress-fixed';
 
-type ResponseStatus = 'empty' | 'incomplete' | 'COMPLETE' | 'INCOMPLETE' | 'EMPTY';
+/**
+ * Result of a KY3P field update operation
+ */
+type Ky3pFieldUpdateResult = {
+  success: boolean;
+  message: string;
+  fieldKey?: string;
+  fieldId?: number;
+  task?: {
+    id: number;
+    progress: number | undefined;
+    status: string;
+  };
+  error?: string;
+};
 
 /**
- * Update a KY3P form field response using field_key
+ * Result of a KY3P get responses operation
+ */
+type Ky3pResponsesResult = {
+  success: boolean;
+  message?: string;
+  responses?: Record<string, any>;
+  error?: string;
+};
+
+/**
+ * Get field ID from field key
+ * 
+ * @param fieldKey The field key to look up
+ * @returns The field ID if found, null otherwise
+ */
+async function getFieldIdFromKey(fieldKey: string): Promise<number | null> {
+  try {
+    const [field] = await db.select({
+      id: ky3pFields.id,
+    })
+    .from(ky3pFields)
+    .where(eq(ky3pFields.field_key, fieldKey))
+    .limit(1);
+    
+    return field?.id || null;
+  } catch (error) {
+    logger.error(`[UNIFIED-KY3P] Error getting field ID for key ${fieldKey}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Update a KY3P field by field key
+ * 
+ * @param taskId Task ID 
+ * @param fieldKey Field key to update
+ * @param value Value to set
+ * @param status Response status (COMPLETE, INCOMPLETE, EMPTY)
+ * @returns Result of the update operation
  */
 export async function updateKy3pFieldByKey(
-  taskId: number,
-  fieldKey: string,
+  taskId: number, 
+  fieldKey: string, 
   value: string,
-  status: ResponseStatus = 'COMPLETE'
-): Promise<{ success: boolean; message: string }> {
-  const logPrefix = '[KY3P-FIELD-UPDATE]';
-  
-  // Normalize field status to uppercase for consistency
-  const normalizedStatus = typeof status === 'string' ? status.toUpperCase() : 'COMPLETE';
-  const validStatuses = ['COMPLETE', 'INCOMPLETE', 'EMPTY'];
-  const finalStatus = validStatuses.includes(normalizedStatus) ? normalizedStatus : 'COMPLETE';
-  
-  logger.info(`${logPrefix} Updating KY3P field by key: taskId=${taskId}, fieldKey=${fieldKey}, status=${finalStatus}`);
-  
+  status: string = 'COMPLETE'
+): Promise<Ky3pFieldUpdateResult> {
   try {
-    // First, validate the task exists
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
+    logger.info(`[UNIFIED-KY3P] Updating field ${fieldKey} for task ${taskId}`);
     
-    if (!task) {
-      logger.error(`${logPrefix} Task ${taskId} not found`);
-      return { success: false, message: `Task ${taskId} not found` };
+    // Get the field ID from the field key
+    const fieldId = await getFieldIdFromKey(fieldKey);
+    
+    if (!fieldId) {
+      return {
+        success: false,
+        message: `Field with key ${fieldKey} not found`,
+        fieldKey
+      };
     }
     
-    // Get the field definition using field_key
-    const [field] = await db
-      .select()
-      .from(ky3pFields)
-      .where(eq(ky3pFields.field_key, fieldKey));
+    // Standardize status to upper case
+    const upperStatus = status.toUpperCase();
     
-    if (!field) {
-      logger.error(`${logPrefix} Field with key '${fieldKey}' not found`);
-      return { success: false, message: `Field with key '${fieldKey}' not found` };
-    }
+    // Check if a response already exists for this task and field
+    const [existingResponse] = await db.select({
+      id: ky3pResponses.id,
+    })
+    .from(ky3pResponses)
+    .where(
+      and(
+        eq(ky3pResponses.task_id, taskId),
+        eq(ky3pResponses.field_id, fieldId)
+      )
+    )
+    .limit(1);
     
-    // Use a transaction to ensure atomic operations
-    await db.transaction(async (tx) => {
-      // Check if a response already exists for this task and field
-      const [existingResponse] = await tx
-        .select()
-        .from(ky3pResponses)
-        .where(
-          and(
-            eq(ky3pResponses.task_id, taskId),
-            eq(ky3pResponses.field_key, fieldKey)
-          )
-        );
-      
+    // Begin a transaction
+    return await db.transaction(async (tx) => {
       if (existingResponse) {
-        // Update existing response
-        await tx
-          .update(ky3pResponses)
+        // Update the existing response
+        await tx.update(ky3pResponses)
           .set({
             response_value: value,
-            status: finalStatus,
-            updated_at: new Date()
+            status: upperStatus,
+            field_key: fieldKey, // Ensure field_key is set even for existing responses
+            updated_at: new Date(),
           })
           .where(eq(ky3pResponses.id, existingResponse.id));
       } else {
-        // Insert new response using both field_id and field_key
-        await tx
-          .insert(ky3pResponses)
+        // Create a new response
+        await tx.insert(ky3pResponses)
           .values({
             task_id: taskId,
-            field_id: field.id, // Still set field_id for backward compatibility
-            field_key: fieldKey, // Use field_key as the primary identifier
+            field_id: fieldId,
+            field_key: fieldKey,
             response_value: value,
-            status: finalStatus,
+            // Use SQL.raw to handle the status
+            status: sql`${upperStatus}::text`,
             created_at: new Date(),
-            updated_at: new Date()
+            updated_at: new Date(),
           });
       }
-    });
-    
-    // Update progress after field update
-    // Using the fixed method to ensure proper progress persistence
-    try {
-      await updateKy3pProgressFixed(taskId, {
-        debug: true,
-        metadata: {
-          lastFieldUpdate: new Date().toISOString(),
-          updatedFieldKey: fieldKey
+      
+      // Recalculate progress
+      const progressResult = await updateKy3pProgressFixed(taskId, { forceUpdate: true });
+      
+      // Get the current task to get the latest status
+      const [updatedTask] = await tx.select({
+        id: tasks.id,
+        progress: tasks.progress,
+        status: tasks.status
+      })
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1);
+      
+      return {
+        success: true,
+        message: `Successfully updated field ${fieldKey} for task ${taskId}`,
+        fieldKey,
+        fieldId,
+        task: {
+          id: taskId,
+          progress: progressResult.progress || updatedTask.progress,
+          status: updatedTask.status,
         }
-      });
-    } catch (error) {
-      // Log but don't fail the operation if progress update fails
-      logger.error(`${logPrefix} Error updating progress after field update:`, {
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-    
-    logger.info(`${logPrefix} Successfully updated KY3P field: taskId=${taskId}, fieldKey=${fieldKey}`);
-    
-    return {
-      success: true,
-      message: `Successfully updated field ${fieldKey} for task ${taskId}`
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`${logPrefix} Error updating KY3P field:`, {
-      error: errorMessage,
-      taskId,
-      fieldKey
+      };
     });
+  } catch (error) {
+    logger.error(`[UNIFIED-KY3P] Error updating field ${fieldKey} for task ${taskId}:`, error);
     
     return {
       success: false,
-      message: `Error updating field: ${errorMessage}`
+      message: `Error updating field ${fieldKey} for task ${taskId}`,
+      fieldKey,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
 
 /**
- * Get all responses for a KY3P task with field_key as the identifier
+ * Get all KY3P responses for a task, keyed by field_key
+ * 
+ * @param taskId Task ID to get responses for
+ * @returns Object mapping field_key to response data
  */
-export async function getKy3pResponsesByFieldKey(taskId: number): Promise<{
-  success: boolean;
-  responses?: Record<string, any>;
-  message?: string;
-}> {
-  const logPrefix = '[KY3P-GET-RESPONSES]';
-  
+export async function getKy3pResponsesByFieldKey(taskId: number): Promise<Ky3pResponsesResult> {
   try {
-    // Get all responses for the task
-    const responses = await db
-      .select()
-      .from(ky3pResponses)
-      .where(eq(ky3pResponses.task_id, taskId));
+    logger.info(`[UNIFIED-KY3P] Getting responses by field key for task ${taskId}`);
     
-    // Convert to a field_key-indexed map
-    const responseMap: Record<string, any> = {};
+    // First verify task exists and is a KY3P task
+    const [task] = await db.select({
+      id: tasks.id,
+      task_type: tasks.task_type,
+    })
+    .from(tasks)
+    .where(eq(tasks.id, taskId))
+    .limit(1);
     
-    for (const response of responses) {
-      // Skip responses without field_key
-      if (!response.field_key) {
-        logger.warn(`${logPrefix} Found response without field_key: ${response.id}, field_id: ${response.field_id}`);
-        continue;
-      }
-      
-      responseMap[response.field_key] = {
-        value: response.response_value,
-        status: response.status,
-        fieldId: response.field_id, // Include field_id for backward compatibility
-        fieldKey: response.field_key
+    if (!task) {
+      return {
+        success: false,
+        message: `Task ${taskId} not found`,
       };
     }
     
-    logger.info(`${logPrefix} Found ${Object.keys(responseMap).length} responses for task ${taskId}`);
+    // Normalize task type (both 'ky3p' and 'security_assessment' are valid)
+    const isKy3pTask = task.task_type === 'ky3p' || task.task_type === 'security_assessment';
     
-    return {
-      success: true,
-      responses: responseMap
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`${logPrefix} Error getting KY3P responses:`, {
-      error: errorMessage,
-      taskId
+    if (!isKy3pTask) {
+      return {
+        success: false,
+        message: `Task ${taskId} is not a KY3P task (type: ${task.task_type})`,
+      };
+    }
+    
+    // Get all responses for this task
+    const responses = await db.select({
+      id: ky3pResponses.id,
+      field_id: ky3pResponses.field_id,
+      field_key: ky3pResponses.field_key,
+      response_value: ky3pResponses.response_value,
+      status: ky3pResponses.status,
+      created_at: ky3pResponses.created_at,
+      updated_at: ky3pResponses.updated_at,
+    })
+    .from(ky3pResponses)
+    .where(eq(ky3pResponses.task_id, taskId));
+    
+    // If there are responses with missing field_key, try to populate them
+    const responsesWithoutFieldKey = responses.filter(r => !r.field_key);
+    
+    if (responsesWithoutFieldKey.length > 0) {
+      logger.warn(`[UNIFIED-KY3P] Found ${responsesWithoutFieldKey.length} responses without field_key for task ${taskId}`);
+      
+      // Get field IDs that need field_key
+      const fieldIds = [...new Set(responsesWithoutFieldKey.map(r => r.field_id).filter(Boolean))];
+      
+      if (fieldIds.length > 0) {
+        // Get field definitions for these IDs
+        const fields = await db.select({
+          id: ky3pFields.id,
+          field_key: ky3pFields.field_key,
+        })
+        .from(ky3pFields)
+        .where(sql`${ky3pFields.id} IN (${fieldIds.join(',')})`);
+        
+        // Create a map of field_id to field_key
+        const fieldKeyMap: Record<number, string> = {};
+        fields.forEach(field => {
+          if (field.id && field.field_key) {
+            fieldKeyMap[field.id] = field.field_key;
+          }
+        });
+        
+        // Update responses with field_key in a transaction
+        await db.transaction(async (tx) => {
+          for (const response of responsesWithoutFieldKey) {
+            if (response.field_id && fieldKeyMap[response.field_id]) {
+              await tx.update(ky3pResponses)
+                .set({
+                  field_key: fieldKeyMap[response.field_id],
+                  updated_at: new Date(),
+                })
+                .where(eq(ky3pResponses.id, response.id));
+                
+              // Update the response in our local array too
+              response.field_key = fieldKeyMap[response.field_id];
+            }
+          }
+        });
+        
+        logger.info(`[UNIFIED-KY3P] Updated ${responsesWithoutFieldKey.length} responses with field_key for task ${taskId}`);
+      }
+    }
+    
+    // Convert to a map of field_key to response data
+    const responseMap: Record<string, any> = {};
+    
+    responses.forEach(response => {
+      // Use field_key if available, otherwise use field_id as string
+      const key = response.field_key || `field_id_${response.field_id}`;
+      
+      responseMap[key] = {
+        id: response.id,
+        field_id: response.field_id,
+        field_key: response.field_key,
+        value: response.response_value,
+        status: response.status,
+        created_at: response.created_at,
+        updated_at: response.updated_at,
+      };
     });
     
     return {
+      success: true,
+      responses: responseMap,
+    };
+  } catch (error) {
+    logger.error(`[UNIFIED-KY3P] Error getting responses by field key for task ${taskId}:`, error);
+    
+    return {
       success: false,
-      message: `Error getting responses: ${errorMessage}`
+      message: `Error getting responses by field key for task ${taskId}`,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
