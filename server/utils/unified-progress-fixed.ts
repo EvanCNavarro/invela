@@ -9,9 +9,10 @@
 import { TaskStatus } from '../types';
 import { db } from '@db';
 import { eq } from 'drizzle-orm';
-import { tasks } from '@db/schema';
+import { tasks, ky3pResponses, ky3pFields } from '@db/schema';
 import { calculateUniversalTaskProgress, determineStatusFromProgress, broadcastProgressUpdate } from './progress';
 import { logger } from './logger';
+import { sql } from 'drizzle-orm';
 
 /**
  * Fixed update task progress function with guaranteed persistence
@@ -177,6 +178,161 @@ export async function updateKy3pProgressFixed(
     return {
       success: false,
       message: `Error updating progress: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+}
+
+/**
+ * Calculate and update task progress with proper transaction boundaries
+ * 
+ * This function calculates the current progress for a KY3P task and updates
+ * the task record with the calculated value, all within a single transaction.
+ * 
+ * @param taskId Task ID
+ * @param options Options for controlling the update behavior
+ * @returns Object with success status, progress value, and status
+ */
+export async function calculateAndUpdateTaskProgress(
+  taskId: number,
+  options: {
+    debug?: boolean;
+    force?: boolean;
+    source?: string;
+  } = {}
+): Promise<{
+  success: boolean;
+  message: string;
+  progress: number;
+  status: string;
+}> {
+  const { debug = false, force = false, source = 'unknown' } = options;
+  const logPrefix = '[KY3P Progress]';
+  const diagnosticId = `ky3p-progress-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  try {
+    // Step 1: Verify the task exists
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      logger.error(`${logPrefix} Task ${taskId} not found`);
+      return { 
+        success: false, 
+        message: `Task ${taskId} not found`,
+        progress: 0,
+        status: 'error' 
+      };
+    }
+    
+    // Step 2: Calculate accurate progress directly from the database within a transaction
+    const result = await db.transaction(async (tx) => {
+      // Count total KY3P fields
+      const totalFieldsResult = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pFields);
+      
+      const totalFields = totalFieldsResult[0].count;
+      
+      // Count completed KY3P responses with complete status
+      const completedResultQuery = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pResponses)
+        .where(
+          sql`${ky3pResponses.task_id} = ${taskId} AND UPPER(${ky3pResponses.status}) = 'COMPLETE'`
+        );
+      
+      // Calculate what percentage of responses are complete
+      const completedFields = completedResultQuery[0].count;
+      
+      // Calculate progress percentage (0-100)
+      const calculatedProgress = totalFields > 0 
+        ? Math.min(100, Math.round((completedFields / totalFields) * 100)) 
+        : 0;
+      
+      // Log calculation details
+      logger.info(`${logPrefix} Calculated progress for task ${taskId}: ${completedFields}/${totalFields} = ${calculatedProgress}%`);
+      
+      // Determine appropriate status based on progress
+      const currentStatus = task.status as TaskStatus;
+      const calculatedStatus = 
+        calculatedProgress === 0 ? TaskStatus.NOT_STARTED :
+        calculatedProgress >= 100 ? TaskStatus.READY_FOR_SUBMISSION :
+        TaskStatus.IN_PROGRESS;
+      
+      // Only update if progress is different or status needs to change
+      if (force || task.progress !== calculatedProgress || currentStatus !== calculatedStatus) {
+        // Update the task record with calculated progress and status
+        const [updatedTask] = await tx
+          .update(tasks)
+          .set({
+            progress: calculatedProgress,
+            status: calculatedStatus,
+            updated_at: new Date(),
+            metadata: {
+              ...task.metadata,
+              lastProgressReconciliation: new Date().toISOString(),
+              reconciliationSource: source
+            }
+          })
+          .where(eq(tasks.id, taskId))
+          .returning();
+        
+        // Return the updated task
+        return {
+          task: updatedTask,
+          progress: calculatedProgress,
+          status: calculatedStatus,
+          previousProgress: task.progress
+        };
+      }
+      
+      // No update needed, return current values
+      return {
+        task,
+        progress: task.progress,
+        status: currentStatus,
+        previousProgress: task.progress,
+        noUpdateNeeded: true
+      };
+    });
+    
+    // Step 3: Broadcast progress update outside the transaction
+    if (result && !result.noUpdateNeeded) {
+      // Use our existing broadcast function to notify clients
+      broadcastProgressUpdate(
+        taskId,
+        result.progress,
+        result.status as TaskStatus,
+        result.task.metadata || {}
+      );
+      
+      logger.info(`${logPrefix} Broadcasted progress update for task ${taskId}: ${result.progress}% (${result.status})`);
+    } else if (result?.noUpdateNeeded && debug) {
+      logger.info(`${logPrefix} No update needed for task ${taskId}: progress=${result.progress}%, status=${result.status}`);
+    }
+    
+    return {
+      success: true,
+      message: `Task ${taskId} progress calculation complete`,
+      progress: result?.progress || 0,
+      status: result?.status || 'unknown'
+    };
+  } catch (error) {
+    // Comprehensive error handling
+    logger.error(`${logPrefix} Error calculating KY3P task progress:`, {
+      taskId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      source,
+      diagnosticId
+    });
+    
+    return {
+      success: false,
+      message: `Error calculating progress: ${error instanceof Error ? error.message : String(error)}`,
+      progress: 0,
+      status: 'error'
     };
   }
 }
