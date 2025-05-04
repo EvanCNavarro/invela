@@ -263,14 +263,16 @@ router.get('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
     // Generate the demo data
     const demoData = await generateKy3pDemoData(taskId);
     
-    // Save the demo responses to the database
-    await saveDemoResponses(taskId, demoData);
+    // Save the demo responses to the database and get progress information
+    const saveResult = await saveDemoResponses(taskId, demoData);
     
     // Return the demo data in a standardized format
     // Include both formData and direct properties for maximum compatibility
     return res.status(200).json({
       success: true,
       fieldCount: Object.keys(demoData).length,
+      progress: saveResult.progress,
+      status: saveResult.status,
       formData: demoData,
       // Include the raw data too for services that expect it directly
       ...demoData
@@ -302,14 +304,16 @@ router.post('/api/ky3p/demo-autofill/:taskId', async (req, res) => {
     // Generate the demo data
     const demoData = await generateKy3pDemoData(taskId);
     
-    // Save the demo responses to the database
-    await saveDemoResponses(taskId, demoData);
+    // Save the demo responses to the database and get progress information
+    const saveResult = await saveDemoResponses(taskId, demoData);
     
     // Return the demo data in a standardized format
     // Include both formData and direct properties for maximum compatibility
     return res.status(200).json({
       success: true,
       fieldCount: Object.keys(demoData).length,
+      progress: saveResult.progress,
+      status: saveResult.status,
       formData: demoData,
       // Include the raw data too for services that expect it directly
       ...demoData
