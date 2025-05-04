@@ -37,6 +37,8 @@ export async function updateKy3pProgressFixed(
   const diagnosticId = `ky3p-fix-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   
   // Always use KY3P as the task type for this fixed function
+  // IMPORTANT: Always use 'ky3p' as the taskType to ensure consistent database interactions
+  // regardless of the actual task type in the database
   const taskType = 'ky3p';
   
   try {
@@ -47,7 +49,7 @@ export async function updateKy3pProgressFixed(
       timestamp: new Date().toISOString()
     });
     
-    // Step 2: Verify the task exists and is a KY3P task
+    // Step 2: Verify the task exists and is a KY3P task (with support for all KY3P task type variants)
     const [task] = await db
       .select()
       .from(tasks)
@@ -58,10 +60,24 @@ export async function updateKy3pProgressFixed(
       return { success: false, message: `Task ${taskId} not found` };
     }
     
-    if (!task.task_type.toLowerCase().includes('ky3p') &&
-        !task.task_type.toLowerCase().includes('security')) {
+    // Enhanced detection for ALL KY3P task type variants
+    const taskTypeLower = task.task_type.toLowerCase();
+    const isKy3pTask = (
+      taskTypeLower === 'ky3p' ||
+      taskTypeLower.includes('ky3p') ||
+      taskTypeLower.includes('security') ||
+      taskTypeLower === 'security_assessment' ||
+      taskTypeLower === 'sp_ky3p_assessment'
+    );
+    
+    if (!isKy3pTask) {
       logger.error(`${logPrefix} Task ${taskId} is not a KY3P task (type: ${task.task_type})`);
       return { success: false, message: `Task ${taskId} is not a KY3P task (type: ${task.task_type})` };
+    }
+    
+    // Log that we're treating this task as a KY3P task regardless of its actual type
+    if (taskTypeLower !== 'ky3p') {
+      logger.info(`${logPrefix} Treating task ${taskId} with type ${task.task_type} as a standard KY3P task`);
     }
     
     // Step 3: Calculate the progress with our universal calculator
@@ -245,14 +261,15 @@ export async function calculateAndUpdateTaskProgress(
     
     // Step 2: Calculate accurate progress directly from the database within a transaction
     const result = await db.transaction(async (tx) => {
-      // Count total KY3P fields
-      const totalFieldsResult = await tx
+      // First, count total responses for THIS specific task
+      const totalResponsesResult = await tx
         .select({ count: sql<number>`count(*)` })
-        .from(ky3pFields);
+        .from(ky3pResponses)
+        .where(eq(ky3pResponses.task_id, taskId));
       
-      const totalFields = totalFieldsResult[0].count;
+      const totalResponses = totalResponsesResult[0].count;
       
-      // Count completed KY3P responses with complete status
+      // Count completed KY3P responses with complete status for THIS specific task
       const completedResultQuery = await tx
         .select({ count: sql<number>`count(*)` })
         .from(ky3pResponses)
@@ -263,13 +280,13 @@ export async function calculateAndUpdateTaskProgress(
       // Calculate what percentage of responses are complete
       const completedFields = completedResultQuery[0].count;
       
-      // Calculate progress percentage (0-100)
-      const calculatedProgress = totalFields > 0 
-        ? Math.min(100, Math.round((completedFields / totalFields) * 100)) 
+      // Calculate progress percentage (0-100) based on THIS task's responses
+      const calculatedProgress = totalResponses > 0 
+        ? Math.min(100, Math.round((completedFields / totalResponses) * 100)) 
         : 0;
       
       // Log calculation details
-      logger.info(`${logPrefix} Calculated progress for task ${taskId}: ${completedFields}/${totalFields} = ${calculatedProgress}%`);
+      logger.info(`${logPrefix} Calculated progress for task ${taskId}: ${completedFields}/${totalResponses} = ${calculatedProgress}%`);
       
       // Determine appropriate status based on progress
       const currentStatus = task.status as TaskStatus;
