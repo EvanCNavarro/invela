@@ -265,13 +265,20 @@ export async function calculateAndUpdateTaskProgress(
     
     // Step 2: Calculate accurate progress directly from the database within a transaction
     const result = await db.transaction(async (tx) => {
-      // First, count total responses for THIS specific task
-      const totalResponsesResult = await tx
-        .select({ count: sql<number>`count(*)` })
+      // IMPROVED: Count only unique field IDs that have responses for THIS specific task
+      // This matches the approach in task-reconciliation.ts and fixes the fundamental calculation issue
+      const totalFieldsResult = await tx
+        .select({ count: sql<number>`count(DISTINCT ${ky3pResponses.field_id})` })
         .from(ky3pResponses)
         .where(eq(ky3pResponses.task_id, taskId));
       
-      const totalResponses = totalResponsesResult[0].count;
+      let totalFields = totalFieldsResult[0].count;
+      
+      // If no responses exist yet, set totalFields to 1 to avoid division by zero
+      // This ensures progress starts at 0% when no fields have been answered
+      if (totalFields === 0) {
+        totalFields = 1;
+      }
       
       // Count completed KY3P responses with complete status for THIS specific task
       const completedResultQuery = await tx
@@ -285,12 +292,12 @@ export async function calculateAndUpdateTaskProgress(
       const completedFields = completedResultQuery[0].count;
       
       // Calculate progress percentage (0-100) based on THIS task's responses
-      const calculatedProgress = totalResponses > 0 
-        ? Math.min(100, Math.round((completedFields / totalResponses) * 100)) 
+      const calculatedProgress = totalFields > 0 
+        ? Math.min(100, Math.round((completedFields / totalFields) * 100)) 
         : 0;
       
       // Log calculation details
-      logger.info(`${logPrefix} Calculated progress for task ${taskId}: ${completedFields}/${totalResponses} = ${calculatedProgress}%`);
+      logger.info(`${logPrefix} Calculated progress for task ${taskId}: ${completedFields}/${totalFields} = ${calculatedProgress}%`);
       
       // Determine appropriate status based on progress
       const currentStatus = task.status as TaskStatus;
