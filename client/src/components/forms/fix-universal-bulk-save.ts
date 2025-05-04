@@ -1,90 +1,115 @@
 /**
  * Universal Form Bulk Save Fix
  * 
- * This module provides a fixed universal bulk save function for form data
- * that works across all form types, with fallbacks for older form data formats.
+ * This module provides a unified approach to saving form data across all form types
+ * using a single, consistent format that works with the unified progress calculator.
+ * 
+ * KISS PRINCIPLE IMPLEMENTATION: This file has been simplified to use a single,
+ * consistent approach to bulk updates to improve reliability and maintainability.
  */
 
 import getLogger from '@/utils/logger';
+import { standardizedBulkUpdate } from './standardized-ky3p-update';
 
-const logger = getLogger('FixedUniversalBulkSave');
+const logger = getLogger('UnifiedFormSave');
 
 /**
- * Fixed universal save progress function that works with all form types
+ * Unified save progress function that works with all form types
  * 
- * This uses standardized endpoint formats and handles different saving patterns consistently
+ * This uses standardized endpoint formats with the responses array pattern
+ * and ensures progress is properly preserved across all form types.
  * 
  * @param taskId Task ID
  * @param taskType Form type (kyb, ky3p, open_banking)
  * @param formData Form data to save
+ * @param options Additional save options
  * @returns Promise<boolean> indicating success or failure
  */
 export async function fixedUniversalSaveProgress(
   taskId: number,
   taskType: string,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  options: {
+    preserveProgress?: boolean;
+    isFormEditing?: boolean;
+    source?: string;
+  } = {}
 ): Promise<boolean> {
-  logger.info(`Saving progress for ${taskType} task ${taskId} via fixed universal save`);
-  
   const lowerTaskType = taskType.toLowerCase();
+  const source = options.source || 'universal-save';
+  
+  logger.info(`Saving progress for ${lowerTaskType} task ${taskId} via unified save`, {
+    fieldCount: Object.keys(formData).length,
+    preserveProgress: options.preserveProgress !== false,
+    source
+  });
   
   try {
+    // For KY3P forms, use the standardized bulk update function
+    if (lowerTaskType === 'ky3p') {
+      return await standardizedBulkUpdate(taskId, formData, {
+        preserveProgress: options.preserveProgress,
+        isFormEditing: options.isFormEditing,
+        source
+      });
+    }
+    
     // Determine the appropriate endpoint based on task type
     let endpoint = '';
-    let method = 'POST';
-    let bodyData: any = {};
+    let bodyFormat: any = {};
     
     switch (lowerTaskType) {
       case 'kyb':
         endpoint = `/api/kyb/bulk-update/${taskId}`;
-        bodyData = { responses: formData };
-        break;
-        
-      case 'ky3p':
-        endpoint = `/api/ky3p/batch-update/${taskId}`;
-        bodyData = { responses: formData };
+        bodyFormat = { responses: Object.entries(formData).map(([key, value]) => ({ fieldKey: key, value })) };
         break;
         
       case 'open_banking':
       case 'open_banking_survey':
         endpoint = `/api/open-banking/bulk-update/${taskId}`;
-        bodyData = { responses: formData };
+        bodyFormat = { responses: Object.entries(formData).map(([key, value]) => ({ fieldKey: key, value })) };
         break;
         
       default:
         endpoint = `/api/${lowerTaskType}/bulk-update/${taskId}`;
-        bodyData = { responses: formData };
-        logger.warn(`Using generic endpoint for unknown form type: ${lowerTaskType}`);
+        bodyFormat = { responses: Object.entries(formData).map(([key, value]) => ({ fieldKey: key, value })) };
+        logger.warn(`Using generic endpoint for form type: ${lowerTaskType}`);
     }
     
-    // For clearing, empty formData should use the clear-fields endpoint
+    // For clearing, empty formData should use the clear-fields endpoint with preserveProgress=true
     if (Object.keys(formData).length === 0) {
-      logger.info(`Empty form data detected, using clear-fields endpoint for ${lowerTaskType}`);
-      endpoint = `/api/${lowerTaskType}/clear-fields/${taskId}`;
+      logger.info(`Empty form data detected, using clear-fields endpoint with preserveProgress for ${lowerTaskType}`);
+      endpoint = `/api/${lowerTaskType}/clear-fields/${taskId}?preserveProgress=true`;
+      bodyFormat = {};
     }
     
     logger.info(`Saving to endpoint: ${endpoint}`);
     
-    // Make the API request
+    // Make the API request using consistent format
     const response = await fetch(endpoint, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(bodyData),
+      body: JSON.stringify({
+        ...bodyFormat,
+        preserveProgress: options.preserveProgress !== false
+      }),
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      logger.error(`API error (${response.status}): ${errorText}`);
+      try {
+        const errorText = await response.text();
+        logger.error(`API error (${response.status}): ${errorText}`);
+      } catch (e) {
+        logger.error(`API error (${response.status}): Could not read error response`);
+      }
       return false;
     }
     
     logger.info(`Successfully saved form data for ${lowerTaskType} task ${taskId}`);
     return true;
   } catch (error) {
-    logger.error(`Error in fixedUniversalSaveProgress:`, error);
+    logger.error(`Error in unified form save:`, error);
     return false;
   }
 }

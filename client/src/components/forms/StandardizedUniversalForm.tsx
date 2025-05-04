@@ -118,33 +118,37 @@ export function StandardizedUniversalForm({
     }
   }, [formService, taskId]);
 
-  // Save progress to the server
+  // Save progress to the server using the standardized approach
   const saveProgress = useCallback(async () => {
     if (!formService || !taskId) return;
     
     try {
       setSaving(true);
-      logger.info(`Saving progress for task ${taskId} using fixed universal implementation`);
+      logger.info(`Saving progress for task ${taskId} using unified approach`);
       
-      // First try our fixed implementation
-      try {
-        const success = await fixedUniversalSaveProgress(taskId, taskType, formData);
-        
-        if (success) {
-          logger.info(`Successfully saved progress for task ${taskId} using fixed implementation`);
-          
-          // Calculate and update the progress
-          const calculatedProgress = formService.calculateProgress();
-          setProgress(calculatedProgress);
-          return;
-        }
-      } catch (fixedError) {
-        logger.warn('Fixed implementation failed:', fixedError);
+      let success = false;
+      
+      // Use the appropriate save method based on task type
+      if (taskType.toLowerCase() === 'ky3p') {
+        // For KY3P forms, use standardizedBulkUpdate which is optimized for KY3P
+        success = await standardizedBulkUpdate(taskId, formData, {
+          preserveProgress: true,
+          source: 'bulk-save'
+        });
+      } else {
+        // For all other form types, use the unified save function
+        success = await fixedUniversalSaveProgress(taskId, taskType, formData, {
+          preserveProgress: true,
+          source: 'bulk-save'
+        });
       }
       
-      // Fallback to the form service implementation
-      logger.info(`Falling back to form service saveProgress for task ${taskId}`);
-      await formService.saveProgress(taskId);
+      if (success) {
+        logger.info(`Successfully saved progress for ${taskType} task ${taskId}`);
+      } else {
+        logger.error(`Failed to save progress for ${taskType} task ${taskId}`);
+        throw new Error(`Failed to save form progress`);
+      }
       
       // Calculate and update the progress
       const calculatedProgress = formService.calculateProgress();
@@ -198,22 +202,31 @@ export function StandardizedUniversalForm({
     // If auto-save is enabled and we have a task ID, save the progress
     if (autoSave && taskId) {
       try {
-        // First try our fixed implementation for single field update
-        const success = await fixedUniversalSaveProgress(taskId, taskType, {
-          [fieldKey]: value
-        });
+        logger.info(`Auto-saving field ${fieldKey} for ${taskType} task ${taskId}`);
+        
+        // Use the appropriate save method based on task type
+        let success = false;
+        
+        if (taskType.toLowerCase() === 'ky3p') {
+          // For KY3P forms, use standardizedBulkUpdate which is optimized for KY3P
+          success = await standardizedBulkUpdate(taskId, {
+            [fieldKey]: value
+          }, {
+            source: 'auto-save'
+          });
+        } else {
+          // For all other form types, use the unified save function
+          success = await fixedUniversalSaveProgress(taskId, taskType, {
+            [fieldKey]: value
+          }, {
+            source: 'auto-save'
+          });
+        }
         
         if (success) {
-          logger.info(`Successfully saved field ${fieldKey} using fixed implementation`);
+          logger.info(`Successfully saved field ${fieldKey}`);
         } else {
-          // Fallback to standardized bulk update
-          const altSuccess = await standardizedBulkUpdate(taskId, {
-            [fieldKey]: value
-          });
-          
-          if (!altSuccess) {
-            logger.error(`Failed to auto-save field ${fieldKey}`);
-          }
+          logger.error(`Failed to auto-save field ${fieldKey}`);
         }
         
         // Calculate and update the progress
