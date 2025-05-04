@@ -55,11 +55,20 @@ export async function calculateTaskProgressFromDB(
       completedFields = completedResultQuery[0].count;
     } 
     else if (taskType === 'ky3p') {
-      // Count total KY3P fields
+      // FIXED: Count only fields that have responses for THIS specific task
+      // instead of all fields in the database, making KY3P work just like KYB
       const totalFieldsResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(ky3pFields);
+        .select({ count: sql<number>`count(DISTINCT ${ky3pResponses.field_id})` })
+        .from(ky3pResponses)
+        .where(eq(ky3pResponses.task_id, taskId));
+      
       totalFields = totalFieldsResult[0].count;
+      
+      // If no responses exist yet, set totalFields to 1 to avoid division by zero
+      // and to ensure progress is 0% when no fields have been answered
+      if (totalFields === 0) {
+        totalFields = 1;
+      }
       
       // Count completed KY3P responses with non-empty values
       const completedResultQuery = await db
