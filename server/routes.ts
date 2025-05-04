@@ -38,7 +38,8 @@ import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed'
 // Import the new unified KY3P update routes
 import { registerUnifiedKY3PUpdateRoutes } from './routes/unified-ky3p-update';
 // Import the KY3P field key router for string-based field key references
-import ky3pFieldKeyRouter, { registerKY3PFieldKeyRouter } from './routes/ky3p-keyfield-router';
+import ky3pFieldKeyRouter from './routes/ky3p-keyfield-router';
+import { registerKY3PFieldKeyRouter } from './routes/ky3p-keyfield-router';
 // Import the enhanced KY3P demo auto-fill routes
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 // Import enhanced Open Banking routes with improved reliability
