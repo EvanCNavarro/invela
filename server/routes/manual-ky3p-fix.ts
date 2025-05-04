@@ -16,7 +16,7 @@ import { broadcastTaskUpdate } from '../utils/unified-websocket';
 export const manualKy3pFix = Router();
 
 // Endpoint to trigger manual KY3P progress recalculation
-manualKy3pFix.post('/api/ky3p/manual-fix/:taskId', async (req, res) => {
+manualKy3pFix.post('/:taskId', async (req, res) => {
   try {
     const taskId = parseInt(req.params.taskId);
     const source = req.body?.source || 'manual-fix-api';
