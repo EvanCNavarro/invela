@@ -8,7 +8,7 @@
 
 import { WebSocketServer } from 'ws';
 import { logger } from './logger';
-import { getWebSocketServer } from './unified-websocket-server';
+import { getWebSocketServer } from '../utils/unified-websocket';
 
 /**
  * Broadcast a task update to all connected WebSocket clients

@@ -11,7 +11,7 @@ import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from '../utils/task-update-broadcaster';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
 export const manualKy3pFix = Router();
 
