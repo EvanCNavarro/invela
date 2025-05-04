@@ -113,7 +113,7 @@ export async function updateKy3pFieldByKey(
         await tx.update(ky3pResponses)
           .set({
             response_value: value,
-            status: upperStatus,
+            status: sql`${upperStatus}::text`, // Cast to text type for consistency
             field_key: fieldKey, // Ensure field_key is set even for existing responses
             updated_at: new Date(),
           })
