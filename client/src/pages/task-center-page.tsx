@@ -168,8 +168,15 @@ export default function TaskCenterPage() {
           let taskData: any = null;
           let taskId: number | null = null;
           
+          // Handle a special triple-nested structure seen for KY3P tasks
+          if (data?.payload?.payload?.taskId && data?.payload?.payload?.progress !== undefined) {
+            // Triple-nested structure for KY3P tasks
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.taskId;
+            console.log('[TaskCenter] Detected special triple-nested KY3P task structure');
+          }
           // Try to extract from different possible structures
-          if (data?.id) {
+          else if (data?.id) {
             // Direct structure
             taskData = data;
             taskId = data.id;
@@ -293,8 +300,15 @@ export default function TaskCenterPage() {
           let taskData: any = null;
           let taskId: number | null = null;
           
+          // Handle a special triple-nested structure seen for KY3P tasks
+          if (data?.payload?.payload?.taskId && data?.payload?.payload?.progress !== undefined) {
+            // Triple-nested structure for KY3P tasks
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.taskId;
+            console.log('[TaskCenter] Detected special triple-nested KY3P task structure in test notification');
+          }
           // Try to extract from different possible structures
-          if (data?.id) {
+          else if (data?.id) {
             // Direct structure
             taskData = data;
             taskId = data.id;
