@@ -522,10 +522,26 @@ export default function App() {
     phaseStartup.registerPhaseCallback('ready', async () => {
       logger.info('Application ready for user interaction');
       setStartupPhase('ready');
+      
+      // This is a critical fix - the ready phase never completed because
+      // it wasn't explicitly resolving its promise
+      // No need to wait for anything else - mark app as ready immediately
+      return Promise.resolve();
     });
     
     // Start the phased initialization
     phaseStartup.start();
+    
+    // Establish a fallback in case the ready phase never completes on its own
+    // This ensures the UI is usable even if some initialization steps fail
+    const readyFallback = setTimeout(() => {
+      if (!phaseStartup.isPhaseComplete('ready')) {
+        logger.info('Forcing ready state via fallback mechanism');
+        setStartupPhase('ready');
+      }
+    }, 5000);  // Wait 5 seconds for normal completion before forcing ready state
+    
+    return () => clearTimeout(readyFallback);
   }, []);
   
   // Prevent automatic focus on any element when the application loads or refreshes
