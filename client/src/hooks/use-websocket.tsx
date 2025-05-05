@@ -1,8 +1,9 @@
 /**
- * WebSocket Hook
+ * WebSocket Hook with Fallback Mechanism
  * 
- * This hook provides a type-safe and convenient way to interact with WebSockets
- * in React components. It manages connection, reconnection, and event handling.
+ * This hook provides a type-safe and resilient way to interact with WebSockets
+ * in React components. It includes sophisticated error handling, reconnection,
+ * and a fallback mechanism when WebSockets are not available.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,14 +15,13 @@ interface WebSocketOptions {
   maxReconnectAttempts?: number;
   debug?: boolean;
   autoConnect?: boolean;
-  // Callback when max reconnect attempts is reached
   onMaxReconnectAttemptsReached?: () => void;
 }
 
 type SubscriptionCallback<T extends keyof WebSocketEventMap> = 
   (payload: PayloadFromEventType<T>) => void;
 
-// Using a more generic subscription map to avoid TypeScript errors
+// Map for storing subscriptions
 type SubscriptionMap = {
   [K in keyof WebSocketEventMap]?: Set<any>;
 };
@@ -38,11 +38,7 @@ interface UseWebSocketReturn {
 }
 
 /**
- * Hook for WebSocket communication with type-safety
- * 
- * @param url The WebSocket URL to connect to
- * @param options Configuration options
- * @returns WebSocket control methods and state
+ * Hook for WebSocket communication with fallback mechanism
  */
 export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWebSocketReturn {
   const {
@@ -56,22 +52,18 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionId, setConnectionId] = useState<string | null>(null);
+  const [inFallbackMode, setInFallbackMode] = useState(false);
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const subscriptionsRef = useRef<SubscriptionMap>({});
-  // Use a ref to store connection cycle detection information
-  // This needs to persist across component re-renders
-  const windowRef = useRef<{
-    lastReconnectAttemptTime?: number;
-    reconnectCycleDetected?: boolean;
-  }>({});
+  const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Logging helper with conditional output
+  // Logging helpers
   const log = useCallback(
     (message: string, data?: any) => {
       if (debug) {
-        console.log(`%c[${new Date().toISOString()}] [INFO] ${message}`, 'color: #2196f3', data || '');
+        console.log(`[WebSocket] ${message}`, data || '');
       }
     },
     [debug]
@@ -79,240 +71,154 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
   
   const logError = useCallback(
     (message: string, error?: any) => {
-      console.error(`%c[${new Date().toISOString()}] [ERROR] ${message}`, 'color: #f44336', error || '');
+      console.error(`[WebSocket] [ERROR] ${message}`, error || '');
     },
     []
   );
-
-  // Create a new WebSocket connection
-  const connect = useCallback(() => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      log('WebSocket already connected');
-      return;
-    }
-
-    if (isConnecting) {
-      log('WebSocket connection already in progress');
-      return;
-    }
-
-    setIsConnecting(true);
-    
-    try {
-      // Validate URL before creating WebSocket connection
-      if (!url) {
-        logError(`Invalid WebSocket URL: empty URL`);
-        setIsConnecting(false);
-        return;
-      }
-      
-      // IMPORTANT: We must use the provided URL from the WebSocketProvider
-      // Using the URL passed from the provider ensures consistency
-      // This eliminates one source of inconsistency where two different URL construction
-      // methods were being used
-      const wsUrl = url;
-      
-      // Log the exact URL we're attempting to connect to for diagnostics
-      console.log(`[WebSocket] [DEBUG] Using URL for connection: ${wsUrl}`);
-      
-      // Validate the URL format before attempting connection
-      if (!wsUrl.startsWith('ws:') && !wsUrl.startsWith('wss:')) {
-        logError(`[WebSocket] Invalid WebSocket URL format: ${wsUrl}`);
-        setIsConnecting(false);
-        return;
-      }
-      
-      console.log(`[WebSocket] Attempting connection with URL: ${wsUrl}`);
-      
-      // Check if we're in backoff mode and respect the cooldown period
-      if (window._ws_backoff_active) {
-        const lastAttempt = window._ws_last_attempt || 0;
-        const cooldownPeriod = 60000; // 1 minute cooldown
-        const currentTime = Date.now();
-        
-        if ((currentTime - lastAttempt) < cooldownPeriod) {
-          // We're still in cooldown period, don't attempt connection
-          console.log(`[WebSocket] Connection blocked by backoff (cooldown: ${Math.floor((cooldownPeriod - (currentTime - lastAttempt)) / 1000)}s)`); 
-          setIsConnecting(false);
-          return;
-        } else {
-          // Cooldown period has passed, reset backoff
-          console.log('[WebSocket] Backoff period elapsed, resetting backoff state');
-          window._ws_backoff_active = false;
-        }
-      }
-      
-      // Check 1006 error counter - if we've hit too many, introduce a progressive delay 
-      // for connection attempts to prevent consuming excessive resources 
-      if ((window._ws_1006_count || 0) > 5) {
-        // Calculate delay based on number of consecutive 1006 errors, with a maximum cap
-        const forcedDelay = 500 + Math.min((window._ws_1006_count || 0) * 100, 10000);
-        console.log(`[WebSocket] High error count detected (${window._ws_1006_count}), delaying connection for ${forcedDelay}ms`);
-        
-        // Set a flag to prevent concurrent connection attempts during the delay
-        const delayToken = Date.now();
-        
-        // Wait for the calculated delay before attempting connection
-        setTimeout(() => {
-          console.log(`[WebSocket] Delay complete, proceeding with connection attempt`);
-          // Continue with socket creation after delay
-          createAndSetupSocket(wsUrl);
-        }, forcedDelay);
-        
-        return;
-      }
-      
-      // Since no delay is needed, create the socket immediately
-      createAndSetupSocket(wsUrl);
-    } catch (error) {
-      setIsConnecting(false);
-      logError('Error creating WebSocket connection:', error);
-    }
-  }, [url, isConnecting, log, logError, maxReconnectAttempts, reconnectInterval, onMaxReconnectAttemptsReached]);
   
-  // Helper function to create and configure the WebSocket
-  const createAndSetupSocket = useCallback((wsUrl: string) => {
+  // Setup the WebSocket connection with handlers
+  const setupWebSocket = useCallback((wsUrl: string) => {
     try {
-      // Create the WebSocket with custom protocol to differentiate from Vite HMR
-      // This ensures our connection won't be handled by Vite's WebSocket handlers
-      const socket = new WebSocket(wsUrl, ['app-ws-protocol']);
+      // Close any existing connection
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
       
-      // Store the attempt timestamp for backoff detection
+      // Create a new WebSocket with custom protocol
+      const socket = new WebSocket(wsUrl, ['app-ws-protocol']);
+      socketRef.current = socket;
+      
+      // Store connection attempt timestamp
       window._ws_last_attempt = Date.now();
       
-      // Log the protocol information for debugging
-      console.log(`[WebSocket] Connection created with protocol:`, {
-        protocols: socket.protocol || 'none',
-        url: wsUrl,
-        readyState: socket.readyState
-      });
-      socketRef.current = socket;
-
-      // Generate and store a connection ID early so we can use it in logs
-      const newConnectionId = `ws_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
+      // Generate and store a unique connection ID
+      const newConnectionId = `ws_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       setConnectionId(newConnectionId);
-
+      
+      // Connection timeout - if we don't connect in 10 seconds, consider it failed
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+      }
+      
+      connectionTimeoutRef.current = setTimeout(() => {
+        if (socket.readyState !== WebSocket.OPEN) {
+          console.warn('[WebSocket] Connection timeout - closing socket');
+          socket.close(3000, 'Connection timeout');
+          setIsConnecting(false);
+          
+          // Increment 1006 count (abnormal closure)
+          window._ws_1006_count = (window._ws_1006_count || 0) + 1;
+        }
+      }, 10000);
+      
+      // Connection opened
       socket.onopen = () => {
+        if (connectionTimeoutRef.current) {
+          clearTimeout(connectionTimeoutRef.current);
+          connectionTimeoutRef.current = null;
+        }
+        
         setIsConnected(true);
         setIsConnecting(false);
+        setInFallbackMode(false);
         reconnectAttemptsRef.current = 0;
-        console.log(`[WebSocket] Connection established (ID: ${newConnectionId})`);
-
-        // Send an initial ping with connection ID to establish the connection
+        
+        // Reset error counters on successful connection
+        window._ws_1006_count = 0;
+        window._ws_backoff_active = false;
+        
+        log(`Connection established (ID: ${newConnectionId})`);
+        
+        // Send an initial ping to verify the connection
         try {
           socket.send(JSON.stringify({
             type: 'ping',
             timestamp: new Date().toISOString(),
             connectionId: newConnectionId
           }));
-          console.log(`[WebSocket] Initial ping sent (ID: ${newConnectionId})`);
         } catch (err) {
           logError('Error sending initial ping:', err);
         }
       };
-
+      
+      // Connection closed
       socket.onclose = (event) => {
         setIsConnected(false);
         setIsConnecting(false);
-        console.log(`[WebSocket] Connection closed: Code=${event.code}, Reason=${event.reason || 'none'}, Clean=${event.wasClean}`);
         
-        // Special handling for Code 1006 (Abnormal Closure) to detect network issues
+        if (connectionTimeoutRef.current) {
+          clearTimeout(connectionTimeoutRef.current);
+          connectionTimeoutRef.current = null;
+        }
+        
+        log(`Connection closed: Code=${event.code}, Reason=${event.reason || 'none'}, Clean=${event.wasClean}`);
+        
+        // Special handling for Error Code 1006 (Abnormal Closure)
         if (event.code === 1006) {
-          // Track consecutive 1006 errors to diagnose potential network issues
           window._ws_1006_count = (window._ws_1006_count || 0) + 1;
           
-          if (window._ws_1006_count >= 5) {
-            console.warn(`[WebSocket] Multiple consecutive 1006 errors (${window._ws_1006_count}) detected - possible network issue`);
+          if ((window._ws_1006_count || 0) >= 10) {
+            console.warn(`[WebSocket] Too many consecutive abnormal closures (${window._ws_1006_count}), entering fallback mode`);
+            window._ws_backoff_active = true;
+            window._ws_last_attempt = Date.now();
+            setInFallbackMode(true);
             
-            // If we've had many consecutive errors, engage backoff immediately
-            if (window._ws_1006_count >= 10 && !window._ws_backoff_active) {
-              console.warn('[WebSocket] Too many consecutive 1006 errors, activating backoff mode');
-              window._ws_backoff_active = true;
-              window._ws_last_attempt = Date.now();
-            }
-          }
-        } else {
-          // Reset the consecutive 1006 counter since we got a different code
-          window._ws_1006_count = 0;
-        }
-
-        // Only attempt reconnection for abnormal closures
-        // 1000 = normal closure, 1001 = going away
-        if (event.code !== 1000 && event.code !== 1001) {
-          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-            reconnectAttemptsRef.current += 1;
-            console.log(`[WebSocket] Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
-            setTimeout(connect, reconnectInterval);
-          } else {
-            console.warn(`[WebSocket] Maximum reconnection attempts (${maxReconnectAttempts}) reached, falling back to polling mode`);
-            
-            // Notify parent component if callback provided
             if (onMaxReconnectAttemptsReached) {
               onMaxReconnectAttemptsReached();
             }
             
-            // Only attempt a recovery reconnection if we're not in a perpetual connect/disconnect cycle
-            // Track reconnection cycles to prevent constant reconnect attempts
-            const currentTime = Date.now();
-            const lastReconnectAttemptTime = windowRef.current.lastReconnectAttemptTime || 0;
-            
-            // If we've had multiple reconnect attempts in rapid succession, back off significantly
-            const reconnectTooFrequent = (currentTime - lastReconnectAttemptTime) < 5000; // 5 seconds
-            windowRef.current.lastReconnectAttemptTime = currentTime;
-            
-            if (reconnectTooFrequent) {
-              // We're likely in a rapid connect/disconnect cycle - back off for much longer
-              console.warn('[WebSocket] Detected rapid reconnection cycle, backing off for 2 minutes');
-              windowRef.current.reconnectCycleDetected = true;
-              
-              // Store reconnect cycle detection in the global window object
-              // so other components (like diagnostic page) can access it
-              window._ws_backoff_active = true;
-              window._ws_last_attempt = Date.now();
-              
-              // Don't schedule an immediate reconnect
-              // Instead, the user can manually reconnect or navigate away and back
-              return;
-            }
-            
-            // Set a retry timer that will try to reconnect again after a longer delay
-            // This handles environments where WebSockets may be temporarily unavailable
-            setTimeout(() => {
-              console.log('[WebSocket] Attempting recovery reconnection after cooling period');
-              reconnectAttemptsRef.current = 0; // Reset the counter
-              connect(); // Try to connect again
-            }, 60000); // Wait a full minute before trying again
-            
-            // Set connected state to false, but don't show disruptive UI
-            setIsConnected(false);
+            return;
           }
         } else {
-          console.log(`[WebSocket] Normal closure - no reconnect needed`);
-          reconnectAttemptsRef.current = 0; // Reset for potential future reconnects
+          // Reset error counter for non-1006 errors
+          window._ws_1006_count = 0;
+        }
+        
+        // Only attempt reconnection for abnormal closures
+        if (event.code !== 1000 && event.code !== 1001) {
+          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+            reconnectAttemptsRef.current += 1;
+            
+            // Add progressive delay based on reconnect attempt count
+            const delay = reconnectInterval * Math.pow(1.5, reconnectAttemptsRef.current - 1);
+            log(`Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts}) in ${delay}ms`);
+            
+            setTimeout(() => {
+              if (!inFallbackMode) {
+                connect();
+              }
+            }, delay);
+          } else {
+            console.warn(`[WebSocket] Maximum reconnection attempts reached (${maxReconnectAttempts}), entering fallback mode`);
+            setInFallbackMode(true);
+            
+            if (onMaxReconnectAttemptsReached) {
+              onMaxReconnectAttemptsReached();
+            }
+          }
         }
       };
-
+      
+      // Connection error
       socket.onerror = (error) => {
-        console.error(`[WebSocket] Connection error:`, error);
-        
-        // Don't trigger a toast for every error - they often precede a close event
-        // which will handle reconnection
+        logError('Connection error:', error);
       };
-
+      
+      // Message received
       socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as WebSocketEvent;
           log('Received message:', message);
-
+          
           // Special handling for pong messages
           if (message.type === 'pong') {
             return;
           }
-
-          // Find callbacks for this event type
+          
+          // Find and execute callbacks for this event type
           const callbacks = subscriptionsRef.current[message.type as keyof WebSocketEventMap];
           if (callbacks && callbacks.size > 0) {
-            // Use payload from message.payload, falling back to message.data for compatibility
+            // Support both payload and data properties for backward compatibility
             const payload = message.payload || message.data;
             if (payload) {
               callbacks.forEach(callback => {
@@ -322,8 +228,6 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
                   logError(`Error in subscription callback for ${message.type}:`, error);
                 }
               });
-            } else {
-              log(`Message of type ${message.type} has no payload or data`);
             }
           }
         } catch (error) {
@@ -331,47 +235,110 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         }
       };
     } catch (error) {
+      logError('Error setting up WebSocket:', error);
       setIsConnecting(false);
-      logError('Error creating WebSocket connection:', error);
     }
-  }, [url, isConnecting, log, logError, maxReconnectAttempts, reconnectInterval, onMaxReconnectAttemptsReached]);
-
-  // Disconnect from WebSocket
+  }, [log, logError, maxReconnectAttempts, reconnectInterval, onMaxReconnectAttemptsReached, inFallbackMode]);
+  
+  // Connect to the WebSocket server
+  const connect = useCallback(() => {
+    // Do nothing if already connected
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      log('WebSocket already connected');
+      return;
+    }
+    
+    // Do nothing if connection is in progress
+    if (isConnecting) {
+      log('Connection already in progress');
+      return;
+    }
+    
+    // Check if we should be in fallback mode
+    if (inFallbackMode || (window._ws_1006_count || 0) >= 15) {
+      log('In fallback mode, skipping WebSocket connection');
+      return;
+    }
+    
+    // Check if we're in backoff mode
+    if (window._ws_backoff_active) {
+      const lastAttempt = window._ws_last_attempt || 0;
+      const cooldownPeriod = 60000; // 1 minute cooldown
+      const currentTime = Date.now();
+      
+      if ((currentTime - lastAttempt) < cooldownPeriod) {
+        log(`Connection blocked by backoff (${Math.floor((cooldownPeriod - (currentTime - lastAttempt)) / 1000)}s remaining)`);
+        return;
+      } else {
+        log('Backoff period ended, resetting backoff');
+        window._ws_backoff_active = false;
+      }
+    }
+    
+    setIsConnecting(true);
+    
+    // Validate and use the WebSocket URL
+    if (!url || (!url.startsWith('ws:') && !url.startsWith('wss:'))) {
+      logError(`Invalid WebSocket URL: ${url}`);
+      setIsConnecting(false);
+      return;
+    }
+    
+    log(`Attempting connection with URL: ${url}`);
+    
+    // Introduce a delay if we've had several error 1006 codes
+    const errorCount = window._ws_1006_count || 0;
+    if (errorCount > 5) {
+      const forcedDelay = 1000 + Math.min(errorCount * 300, 10000);
+      log(`High error count (${errorCount}), delaying connection for ${forcedDelay}ms`);
+      
+      setTimeout(() => {
+        setupWebSocket(url);
+      }, forcedDelay);
+    } else {
+      // Connect immediately if no delay needed
+      setupWebSocket(url);
+    }
+  }, [url, isConnecting, inFallbackMode, log, logError, setupWebSocket]);
+  
+  // Disconnect from the WebSocket server
   const disconnect = useCallback(() => {
     if (socketRef.current) {
       log('Disconnecting WebSocket');
-      socketRef.current.close();
+      socketRef.current.close(1000, 'Closed by client');
       socketRef.current = null;
       setConnectionId(null);
+      setIsConnected(false);
+    }
+    
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
     }
   }, [log]);
-
-  // Send a message through WebSocket
-  const send = useCallback(
-    (message: any) => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        const formattedMessage = typeof message === 'string' ? message : JSON.stringify(message);
-        socketRef.current.send(formattedMessage);
-        log('Sent message:', message);
-      } else {
-        logError('Cannot send message, WebSocket is not connected');
-      }
-    },
-    [log, logError]
-  );
-
-  // Subscribe to a specific event type
+  
+  // Send a message through the WebSocket
+  const send = useCallback((message: any) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      const formattedMessage = typeof message === 'string' ? message : JSON.stringify(message);
+      socketRef.current.send(formattedMessage);
+      log('Sent message:', message);
+    } else {
+      log('Cannot send message, WebSocket is not connected');
+    }
+  }, [log]);
+  
+  // Subscribe to WebSocket events
   const subscribe = useCallback(<T extends keyof WebSocketEventMap>(
     eventType: T,
     callback: SubscriptionCallback<T>
   ) => {
-    log(`Subscribing to event type: ${String(eventType)}`);
+    log(`Subscribing to event: ${String(eventType)}`);
     
     if (!subscriptionsRef.current[eventType]) {
       subscriptionsRef.current[eventType] = new Set();
     }
     
-    // Using any typing for the callback to avoid TypeScript errors
     (subscriptionsRef.current[eventType] as Set<any>).add(callback);
     
     // Return unsubscribe function
@@ -381,26 +348,26 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
       }
     };
   }, [log]);
-
-  // Explicitly unsubscribe from an event type
+  
+  // Explicitly unsubscribe from events
   const unsubscribe = useCallback(<T extends keyof WebSocketEventMap>(
     eventType: T,
     callback: SubscriptionCallback<T>
   ) => {
     if (subscriptionsRef.current[eventType]) {
-      // Using any typing for the callback to avoid TypeScript errors
       (subscriptionsRef.current[eventType] as Set<any>).delete(callback);
-      log(`Unsubscribed from event type: ${String(eventType)}`);
+      log(`Unsubscribed from event: ${String(eventType)}`);
     }
   }, [log]);
-
-  // Auto-connect on mount if enabled
+  
+  // Initialize connection and clean up on unmount
   useEffect(() => {
-    if (autoConnect) {
+    // Connect automatically if enabled
+    if (autoConnect && !inFallbackMode) {
       connect();
     }
-
-    // Start ping interval
+    
+    // Ping interval to keep the connection alive
     const pingInterval = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         send({
@@ -409,15 +376,15 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
           connectionId
         });
       }
-    }, 30000); // Send ping every 30 seconds
-
-    // Cleanup on component unmount
+    }, 30000);
+    
+    // Clean up on unmount
     return () => {
       clearInterval(pingInterval);
       disconnect();
     };
-  }, [autoConnect, connect, disconnect, send, connectionId]);
-
+  }, [autoConnect, inFallbackMode, connect, disconnect, send, connectionId]);
+  
   return {
     isConnected,
     isConnecting,
