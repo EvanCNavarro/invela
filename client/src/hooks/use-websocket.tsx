@@ -124,9 +124,30 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
       
       console.log(`[WebSocket] Attempting connection with URL: ${wsUrl}`);
       
+      // Check if we're in backoff mode and respect the cooldown period
+      if (window._ws_backoff_active) {
+        const lastAttempt = window._ws_last_attempt || 0;
+        const cooldownPeriod = 60000; // 1 minute cooldown
+        const currentTime = Date.now();
+        
+        if ((currentTime - lastAttempt) < cooldownPeriod) {
+          // We're still in cooldown period, don't attempt connection
+          console.log(`[WebSocket] Connection blocked by backoff (cooldown: ${Math.floor((cooldownPeriod - (currentTime - lastAttempt)) / 1000)}s)`); 
+          setIsConnecting(false);
+          return;
+        } else {
+          // Cooldown period has passed, reset backoff
+          console.log('[WebSocket] Backoff period elapsed, resetting backoff state');
+          window._ws_backoff_active = false;
+        }
+      }
+      
       // Create the WebSocket with custom protocol to differentiate from Vite HMR
       // This ensures our connection won't be handled by Vite's WebSocket handlers
       const socket = new WebSocket(wsUrl, ['app-ws-protocol']);
+      
+      // Store the attempt timestamp for backoff detection
+      window._ws_last_attempt = Date.now();
       
       // Log the protocol information for debugging
       console.log(`[WebSocket] Connection created with protocol:`, {
@@ -163,6 +184,26 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         setIsConnected(false);
         setIsConnecting(false);
         console.log(`[WebSocket] Connection closed: Code=${event.code}, Reason=${event.reason || 'none'}, Clean=${event.wasClean}`);
+        
+        // Special handling for Code 1006 (Abnormal Closure) to detect network issues
+        if (event.code === 1006) {
+          // Track consecutive 1006 errors to diagnose potential network issues
+          window._ws_1006_count = (window._ws_1006_count || 0) + 1;
+          
+          if (window._ws_1006_count >= 5) {
+            console.warn(`[WebSocket] Multiple consecutive 1006 errors (${window._ws_1006_count}) detected - possible network issue`);
+            
+            // If we've had many consecutive errors, engage backoff immediately
+            if (window._ws_1006_count >= 10 && !window._ws_backoff_active) {
+              console.warn('[WebSocket] Too many consecutive 1006 errors, activating backoff mode');
+              window._ws_backoff_active = true;
+              window._ws_last_attempt = Date.now();
+            }
+          }
+        } else {
+          // Reset the consecutive 1006 counter since we got a different code
+          window._ws_1006_count = 0;
+        }
 
         // Only attempt reconnection for abnormal closures
         // 1000 = normal closure, 1001 = going away
