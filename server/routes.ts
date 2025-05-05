@@ -60,8 +60,6 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
-// Import task progress routes for testing and direct manipulation
-import taskProgressRouter from './routes/task-progress';
 // Manual KY3P fix route already imported above
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
