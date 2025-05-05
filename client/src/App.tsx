@@ -495,13 +495,16 @@ export default function App() {
       setStartupPhase('services');
       
       try {
-        // KISS: Use the unified service registration for all form services
+        // KISS: Use only one service registration system to avoid conflicts
+        // This is a critical fix to prevent double registration of services
         logger.info('Initializing unified service registration');
+        // Only use the unified registration, not both
         initializeServices();
         
-        // Legacy services - will be eventually removed
-        logger.info('Initializing legacy services for compatibility');
-        registerStandardizedServices();
+        // Legacy service registration is commented out to avoid conflict
+        // Previously this would override the unified registration and cause issues
+        // logger.info('Initializing legacy services for compatibility');
+        // registerStandardizedServices();
       } catch (error) {
         logger.error('Error during service initialization:', 
           error instanceof Error ? error.message : String(error));
