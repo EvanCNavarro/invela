@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, Suspense, useState } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -10,6 +10,13 @@ import { WebSocketProvider } from "@/providers/websocket-provider";
 import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+
+// Import new unified services and phased startup components
+import { initializeServices } from "./services/unified-service-registration";
+import { phaseStartup, StartupPhase } from "./utils/phased-startup";
+import getLogger from "./utils/standardized-logger";
+
+// Legacy imports - will be eventually removed
 import { registerServices } from "./services/registerServices";
 import { registerStandardizedServices, useStandardizedServices } from "./services/register-standardized-services";
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
@@ -450,36 +457,72 @@ function Router() {
   );
 }
 
+// App logger created with the standardized logger
+const logger = getLogger('App');
+
 export default function App() {
-  // Register all form services when the app initializes
+  // Track application startup phase
+  const [startupPhase, setStartupPhase] = useState<StartupPhase>('framework');
+
+  // Implement phased startup with OODA loop principles
   useEffect(() => {
-    console.log('[App] Registering form services at application startup');
+    /**
+     * OODA Loop approach to application initialization:
+     * - Observe: Track startup phases and dependencies
+     * - Orient: Organize initialization in logical phases
+     * - Decide: Determine correct execution order
+     * - Act: Execute each phase in sequence
+     */
+    logger.info('Initializing application with phased startup approach');
     
-    // Properly initialize services with explicit context to avoid deprecated warnings
-    try {
-      // CRITICAL BUGFIX: Only use one service registration approach to prevent 
-      // duplicate services and excessive API calls
-      console.log('[App] Using only standardized form services');
+    // Phase 1: Framework - React framework and core providers
+    phaseStartup.registerPhaseCallback('framework', async () => {
+      logger.info('Framework phase initializing');
+      setStartupPhase('framework');
+      // Framework initialization happens automatically with React
+    });
+    
+    // Phase 2: Context - User and company contexts
+    phaseStartup.registerPhaseCallback('context', async () => {
+      logger.info('Context phase initializing');
+      setStartupPhase('context');
+      // Context initialization happens in providers
+    });
+    
+    // Phase 3: Services - Form services and business logic
+    phaseStartup.registerPhaseCallback('services', async () => {
+      logger.info('Services phase initializing');
+      setStartupPhase('services');
       
-      // We're explicitly choosing the standardized services and skipping the older registerServices()
-      // function completely to prevent duplicate service registration
-      console.log('[App] Registering standardized form services');
-      registerStandardizedServices();
-      
-      // Ensure our standardized services are selected as the default
-      console.log('[App] Setting standardized form services as default');
-      useStandardizedServices();
-      
-      // Initialize app-wide services with explicit context values
-      // This prevents "Using deprecated default instance" warnings
-      console.log('[App] Initializing core services with explicit context values');
-      
-      // Use the current user's company ID if available, or 0 for app-level context
-      const appContext = { companyId: 0, taskId: 0 };
-      console.log('[App] Using application context:', appContext);
-    } catch (error) {
-      console.error('[App] Error during service initialization:', error);
-    }
+      try {
+        // KISS: Use the unified service registration for all form services
+        logger.info('Initializing unified service registration');
+        initializeServices();
+        
+        // Legacy services - will be eventually removed
+        logger.info('Initializing legacy services for compatibility');
+        registerStandardizedServices();
+      } catch (error) {
+        logger.error('Error during service initialization:', 
+          error instanceof Error ? error.message : String(error));
+      }
+    });
+    
+    // Phase 4: Communication - WebSocket and real-time updates
+    phaseStartup.registerPhaseCallback('communication', async () => {
+      logger.info('Communication phase initializing');
+      setStartupPhase('communication');
+      // WebSocket initialization happens in provider
+    });
+    
+    // Phase 5: Ready - Application ready for user interaction
+    phaseStartup.registerPhaseCallback('ready', async () => {
+      logger.info('Application ready for user interaction');
+      setStartupPhase('ready');
+    });
+    
+    // Start the phased initialization
+    phaseStartup.start();
   }, []);
   
   // Prevent automatic focus on any element when the application loads or refreshes
@@ -489,7 +532,7 @@ export default function App() {
       // This will blur any element that might have received focus during page load
       if (document.activeElement instanceof HTMLElement && 
           document.activeElement !== document.body) {
-        console.log('[App] Removing autofocus from', document.activeElement);
+        logger.info('Removing autofocus from element', document.activeElement);
         document.activeElement.blur();
       }
     };
