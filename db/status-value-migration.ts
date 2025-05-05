@@ -168,8 +168,11 @@ async function run() {
   }
 }
 
-// Run the migration if this script is executed directly
-if (require.main === module) {
+// This is an alternative way to check if script is run directly vs imported
+// Compatible with ES modules
+const isMainModule = process.argv[1].includes('status-value-migration.ts');
+
+if (isMainModule) {
   run().then(() => process.exit(0)).catch(err => {
     console.error('Migration failed:', err);
     process.exit(1);

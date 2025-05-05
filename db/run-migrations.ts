@@ -61,8 +61,11 @@ async function runMigrations() {
   }
 }
 
-// Run if this is the main module
-if (require.main === module) {
+// This alternative approach checks the import.meta.url to see if this is the main module
+// Compatible with ES modules
+const isMainModule = process.argv[1].includes('run-migrations.ts');
+
+if (isMainModule) {
   runMigrations().then(() => {
     console.log('Migration script execution completed');
     process.exit(0);
