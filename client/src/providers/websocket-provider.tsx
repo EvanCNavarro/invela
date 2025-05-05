@@ -1,265 +1,96 @@
 /**
  * WebSocket Provider
  * 
- * This component provides WebSocket connectivity to the entire app.
- * It uses React Context to share the WebSocket connection and manages reconnection logic.
+ * This component provides WebSocket connectivity to the entire application
+ * using React Context. It handles connection setup, reconnection, and
+ * exposes methods for sending messages and subscribing to events.
  */
 
-import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
-import { logger } from '@/utils/client-logger';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useWebSocket } from '@/hooks/use-websocket';
+import { WebSocketEventMap, PayloadFromEventType } from '@/lib/websocket-types';
 
-// Create a namespace for WebSocket logs to maintain the same format
-
-export interface WebSocketContextType {
-  socket: WebSocket | null;
+interface WebSocketContextType {
   isConnected: boolean;
-  lastMessage: any | null;
-  sendMessage: (message: any) => void;
+  isConnecting: boolean;
+  connectionId: string | null;
+  send: (message: any) => void;
+  subscribe: <T extends keyof WebSocketEventMap>(
+    eventType: T,
+    callback: (payload: PayloadFromEventType<T>) => void
+  ) => () => void;
+  unsubscribe: <T extends keyof WebSocketEventMap>(
+    eventType: T,
+    callback: (payload: PayloadFromEventType<T>) => void
+  ) => void;
 }
 
-// Create the WebSocket context
-export const WebSocketContext = createContext<WebSocketContextType>({
-  socket: null,
-  isConnected: false,
-  lastMessage: null,
-  sendMessage: () => {}
-});
+export const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
+  debug?: boolean;
 }
 
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<any | null>(null);
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const connectAttempts = useRef(0);
-  const alreadyInitialized = useRef(false);
+/**
+ * WebSocket Provider Component
+ * 
+ * This component sets up the WebSocket connection and provides it to all child components.
+ */
+export function WebSocketProvider({ children, debug = false }: WebSocketProviderProps) {
+  const [wsUrl, setWsUrl] = useState<string>('');
   
-  // Connect to WebSocket with improved resilience
-  const connect = () => {
-    try {
-      // Clear any existing connection
-      if (socket) {
-        try {
-          socket.close(1000, 'Reconnecting');
-        } catch (err) {
-          // Ignore errors on close
-        }
-      }
-      
-      // Create WebSocket URL based on current protocol and host
-      // Make sure we use the same host as the current page to handle Replit environment
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host || '0.0.0.0:5000';
-      const wsUrl = `${protocol}//${host}/ws`;
-      
-      logger.info('Connecting to WebSocket:', wsUrl);
-      
-      const ws = new WebSocket(wsUrl);
-      const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Set connection timeout - if it doesn't connect in 5 seconds, try again
-      const connectionTimeout = setTimeout(() => {
-        if (ws.readyState !== WebSocket.OPEN) {
-          logger.warn('WebSocket connection timeout, attempting to reconnect');
-          try {
-            ws.close();
-          } catch (err) {
-            // Ignore close errors
-          }
-          // Schedule reconnection
-          const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 5000);
-          connectAttempts.current++;
-          reconnectTimeoutRef.current = setTimeout(connect, delay);
-        }
-      }, 5000);
-      
-      ws.onopen = () => {
-        // Clear the connection timeout since we successfully connected
-        clearTimeout(connectionTimeout);
-        
-        setIsConnected(true);
-        connectAttempts.current = 0;
-        logger.info('WebSocket connection established');
-        
-        // Start heartbeat
-        if (heartbeatIntervalRef.current) {
-          clearInterval(heartbeatIntervalRef.current);
-        }
-        
-        heartbeatIntervalRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            try {
-              ws.send(JSON.stringify({ 
-                type: 'ping', 
-                timestamp: new Date().toISOString(),
-                connectionId
-              }));
-            } catch (err) {
-              logger.warn('Error sending ping, connection may be dead', err);
-              if (heartbeatIntervalRef.current) {
-                clearInterval(heartbeatIntervalRef.current);
-              }
-              // Force reconnection
-              connect();
-            }
-          }
-        }, 20000); // More frequent heartbeat for better connection monitoring
-      };
-      
-      ws.onclose = (event) => {
-        // Clear the connection timeout in case we're closing before it fired
-        clearTimeout(connectionTimeout);
-        
-        setIsConnected(false);
-        logger.info('WebSocket connection closed:', event.code, event.reason || 'No reason provided');
-        
-        // Stop heartbeat
-        if (heartbeatIntervalRef.current) {
-          clearInterval(heartbeatIntervalRef.current);
-          heartbeatIntervalRef.current = null;
-        }
-        
-        // Try reconnecting if it wasn't a normal closure
-        if (event.code !== 1000 && event.code !== 1001) {
-          // Increase reconnection attempts to improve resilience
-          if (connectAttempts.current < 10) { // Increased from 3 to 10 attempts
-            const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 10000);
-            connectAttempts.current++;
-            
-            // Clear any existing reconnect timeout
-            if (reconnectTimeoutRef.current) {
-              clearTimeout(reconnectTimeoutRef.current);
-            }
-            
-            logger.info(`Scheduling reconnection attempt in ${delay/1000} seconds...`);
-            reconnectTimeoutRef.current = setTimeout(connect, delay);
-          } else {
-            logger.warn('Maximum reconnection attempts reached', {
-              connectionId,
-              timestamp: new Date().toISOString()
-            });
-          }
-        }
-      };
-      
-      ws.onerror = (error) => {
-        logger.error('WebSocket error:', error, {
-          connectionId,
-          timestamp: new Date().toISOString()
-        });
-      };
-      
-      ws.onmessage = (event: MessageEvent) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          // Don't log heartbeat messages to reduce console spam
-          if (data.type !== 'ping' && data.type !== 'pong') {
-            logger.info(`Received message of type: ${data.type}`);
-          }
-          
-          // Handle special message types
-          if (data.type === 'form_submission' || data.type === 'form_submitted') {
-            // Log submission updates separately
-            logger.info('Form submission update:', {
-              type: data.type,
-              taskId: data.payload?.taskId || data.taskId,
-              status: data.payload?.status || 'unknown'
-            });
-          }
-          
-          // Store normalized message
-          setLastMessage({
-            type: data.type,
-            payload: data.payload || data.data || data,
-            timestamp: new Date().toISOString()
-          });
-        } catch (error) {
-          logger.error('Error parsing WebSocket message:', error);
-        }
-      };
-      
-      setSocket(ws);
-    } catch (error) {
-      logger.error('Error connecting to WebSocket:', error);
-    }
-  };
-  
-  // Send a message
-  const sendMessage = (message: any) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(typeof message === 'string' ? message : JSON.stringify(message));
-    } else {
-      logger.warn('Cannot send message: WebSocket not connected');
-    }
-  };
-  
-  // Connect on mount
+  // Determine the correct WebSocket URL based on the current location
   useEffect(() => {
-    if (alreadyInitialized.current) return;
-    
-    alreadyInitialized.current = true;
-    logger.info('WebSocket connection manager initialized');
-    connect();
-    
-    // Clean up on unmount
-    return () => {
-      // Stop heartbeat
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-        heartbeatIntervalRef.current = null;
-      }
-      
-      // Cancel any pending reconnection
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-      
-      // Close socket
-      if (socket) {
-        try {
-          socket.close(1000, 'Component unmounting');
-        } catch (e) {
-          // Ignore errors
-        }
-      }
-      
-      // Reset state
-      alreadyInitialized.current = false;
-    };
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    // Ensure we're using the correct WebSocket URL
+    console.log(`[WebSocket] Setting up connection to ${protocol}//${host}/ws`);
+    setWsUrl(`${protocol}//${host}/ws`);
   }, []);
   
-  const contextValue: WebSocketContextType = {
-    socket,
+  // Only create the WebSocket connection after we have the URL
+  const {
     isConnected,
-    lastMessage,
-    sendMessage
+    isConnecting,
+    connectionId,
+    send,
+    subscribe,
+    unsubscribe
+  } = useWebSocket(wsUrl, {
+    debug,
+    autoConnect: wsUrl !== '', // Only auto-connect once we have a URL
+    reconnectInterval: 3000,
+    maxReconnectAttempts: 5
+  });
+  
+  const value = {
+    isConnected,
+    isConnecting,
+    connectionId,
+    send,
+    subscribe,
+    unsubscribe
   };
   
   return (
-    <WebSocketContext.Provider value={contextValue}>
+    <WebSocketContext.Provider value={value}>
       {children}
     </WebSocketContext.Provider>
   );
-};
+}
 
 /**
- * Custom hook to use the WebSocket context
- * @returns WebSocketContextType
+ * Hook to use the WebSocket service within components
+ * 
+ * @returns WebSocket methods and state
  */
-export const useWebSocketContext = (): WebSocketContextType => {
+export function useWebSocketService() {
   const context = useContext(WebSocketContext);
   
   if (!context) {
-    throw new Error('useWebSocketContext must be used within a WebSocketProvider');
+    throw new Error('useWebSocketService must be used within a WebSocketProvider');
   }
   
   return context;
-};
-
-export default WebSocketProvider;
+}
