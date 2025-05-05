@@ -60,6 +60,12 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const subscriptionsRef = useRef<SubscriptionMap>({});
+  // Use a ref to store connection cycle detection information
+  // This needs to persist across component re-renders
+  const windowRef = useRef<{
+    lastReconnectAttemptTime?: number;
+    reconnectCycleDetected?: boolean;
+  }>({});
   
   // Logging helper with conditional output
   const log = useCallback(
@@ -171,6 +177,30 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
             // Notify parent component if callback provided
             if (onMaxReconnectAttemptsReached) {
               onMaxReconnectAttemptsReached();
+            }
+            
+            // Only attempt a recovery reconnection if we're not in a perpetual connect/disconnect cycle
+            // Track reconnection cycles to prevent constant reconnect attempts
+            const currentTime = Date.now();
+            const lastReconnectAttemptTime = windowRef.current.lastReconnectAttemptTime || 0;
+            
+            // If we've had multiple reconnect attempts in rapid succession, back off significantly
+            const reconnectTooFrequent = (currentTime - lastReconnectAttemptTime) < 5000; // 5 seconds
+            windowRef.current.lastReconnectAttemptTime = currentTime;
+            
+            if (reconnectTooFrequent) {
+              // We're likely in a rapid connect/disconnect cycle - back off for much longer
+              console.warn('[WebSocket] Detected rapid reconnection cycle, backing off for 2 minutes');
+              windowRef.current.reconnectCycleDetected = true;
+              
+              // Store reconnect cycle detection in the global window object
+              // so other components (like diagnostic page) can access it
+              window._ws_backoff_active = true;
+              window._ws_last_attempt = Date.now();
+              
+              // Don't schedule an immediate reconnect
+              // Instead, the user can manually reconnect or navigate away and back
+              return;
             }
             
             // Set a retry timer that will try to reconnect again after a longer delay
