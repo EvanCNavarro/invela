@@ -130,10 +130,19 @@ export function Sidebar({
     const unsubSidebarRefresh = wsService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh);
     unsubscribeFunctions.push(unsubSidebarRefresh);
     
-    // Start polling more frequently when we know an update might be coming
+    // Only start polling more frequently in fallback mode, with a more reasonable interval
+    // This significantly reduces server load and browser performance impact
     const intervalId = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-    }, 3000); // Check every 3 seconds instead of 10 seconds
+      // Only poll frequently if websockets are in fallback mode AND we're not in development
+      const inFallbackMode = wsService.getStatus().fallbackMode;
+      const isFilevaultTab = location.includes('file-vault');
+      const shouldPollMore = inFallbackMode || isFilevaultTab;
+      
+      if (shouldPollMore) {
+        console.debug('[Sidebar] Polling in fallback mode');
+        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      }
+    }, 10000); // Check every 10 seconds instead of 3 seconds
     
     return () => {
       // Unsubscribe from all WebSocket subscriptions

@@ -230,14 +230,22 @@ export function WelcomeModal() {
 
       if (connected && websocket && onboardingTask?.id) {
         try {
-          websocket.send('task_update', {
-            taskId: onboardingTask.id,
-            status: 'completed',
-            metadata: {
-              onboardingCompleted: true,
-              completionTime: new Date().toISOString()
-            }
-          });
+          // Use the correct send method based on our WebSocket service
+          if (typeof websocket.send === 'function') {
+            websocket.send('task_update', {
+              taskId: onboardingTask.id,
+              status: 'completed'
+            });
+          } else if (websocket.sendMessage && typeof websocket.sendMessage === 'function') {
+            // Alternative API if available
+            websocket.sendMessage({
+              type: 'task_update',
+              payload: {
+                taskId: onboardingTask.id,
+                status: 'completed'
+              }
+            });
+          }
         } catch (error) {
           console.error('[WelcomeModal] WebSocket send error:', error);
         }

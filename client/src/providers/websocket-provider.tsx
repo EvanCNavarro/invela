@@ -17,10 +17,18 @@ interface WebSocketContextType {
   connectionId: string | null;
   // Flag to track if we've tried and failed to connect multiple times
   hasAttemptedConnecting: boolean;
+  // Status information
+  getStatus: () => {
+    connected: boolean;
+    connecting: boolean;
+    reconnectAttempts: number;
+    fallbackMode: boolean;
+  };
   // Connection control methods
   connect: () => void;
   disconnect: () => void;
-  send: (message: any) => void;
+  send: (eventType: string, payload: any) => void;
+  sendMessage: (message: any) => void;
   subscribe: <T extends keyof WebSocketEventMap>(
     eventType: T,
     callback: (payload: PayloadFromEventType<T>) => void
