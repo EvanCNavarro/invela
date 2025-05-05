@@ -99,19 +99,21 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         return;
       }
       
-      // Create a simplified URL that matches exactly what the server expects
-      // This is the most critical part - we need to make sure the URL is correctly formatted
-      const wsUrl = (() => {
-        try {
-          // Get the protocol and host from current location
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const host = window.location.host;
-          return `${protocol}//${host}/ws`;
-        } catch (err) {
-          // Fallback to the original URL if anything fails
-          return url;
-        }
-      })();
+      // IMPORTANT: We must use the provided URL from the WebSocketProvider
+      // Using the URL passed from the provider ensures consistency
+      // This eliminates one source of inconsistency where two different URL construction
+      // methods were being used
+      const wsUrl = url;
+      
+      // Log the exact URL we're attempting to connect to for diagnostics
+      console.log(`[WebSocket] [DEBUG] Using URL for connection: ${wsUrl}`);
+      
+      // Validate the URL format before attempting connection
+      if (!wsUrl.startsWith('ws:') && !wsUrl.startsWith('wss:')) {
+        logError(`[WebSocket] Invalid WebSocket URL format: ${wsUrl}`);
+        setIsConnecting(false);
+        return;
+      }
       
       console.log(`[WebSocket] Attempting connection with URL: ${wsUrl}`);
       const socket = new WebSocket(wsUrl);
