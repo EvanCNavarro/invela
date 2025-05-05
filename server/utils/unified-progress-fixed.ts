@@ -13,6 +13,7 @@ import { tasks, ky3pResponses, ky3pFields } from '@db/schema';
 import { calculateUniversalTaskProgress, determineStatusFromProgress, broadcastProgressUpdate } from './progress';
 import { logger } from './logger';
 import { sql } from 'drizzle-orm';
+import { FieldStatus } from './field-status';
 
 /**
  * Fixed update task progress function with guaranteed persistence
@@ -285,7 +286,7 @@ export async function calculateAndUpdateTaskProgress(
         .select({ count: sql<number>`count(*)` })
         .from(ky3pResponses)
         .where(
-          sql`${ky3pResponses.task_id} = ${taskId} AND LOWER(${ky3pResponses.status}) = 'complete'`
+          sql`${ky3pResponses.task_id} = ${taskId} AND LOWER(${ky3pResponses.status}) = ${FieldStatus.COMPLETE}`
         );
       
       // Calculate what percentage of responses are complete
