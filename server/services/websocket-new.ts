@@ -234,7 +234,15 @@ export function broadcastMessage(type: string, payload: any) {
   });
 }
 
-export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: string) {
+/**
+ * Broadcast a field update to all connected clients
+ * 
+ * @param taskId Task ID
+ * @param fieldKey Field key (field_key from the database)
+ * @param value Field value
+ * @param status Optional status (e.g., 'complete', 'incomplete', 'empty')
+ */
+export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: string, status?: string) {
   if (!wss) {
     console.warn('[WebSocket] Server not initialized, cannot broadcast field update');
     return;
@@ -242,6 +250,7 @@ export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: st
 
   console.log(`[WebSocket] Broadcasting field update for task ${taskId}, field "${fieldKey}":`, {
     value: value,
+    status: status || 'complete',
     timestamp: new Date().toISOString()
   });
 
@@ -252,8 +261,9 @@ export function broadcastFieldUpdate(taskId: number, fieldKey: string, value: st
           type: 'field_update',
           payload: {
             taskId,
-            fieldKey,
+            fieldKey, // Always use field_key for consistent reference
             value,
+            status: status || 'complete', // Default to 'complete' if not provided
             timestamp: Date.now()
           }
         }));
