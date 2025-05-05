@@ -67,21 +67,23 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
       // Build the WebSocket URL - use host which already includes port if present
       const websocketUrl = `${protocol}//${host}${wsPath}`;
       
-      // Log detailed connection information for diagnostics
-      console.log(`[WebSocket] URL construction:`, {
-        protocol,
-        host,
-        path: wsPath,
-        fullUrl: websocketUrl,
-        locationInfo: {
-          href: window.location.href,
-          host: window.location.host,
-          hostname: window.location.hostname,
-          port: window.location.port || (window.location.protocol === 'https:' ? '443' : '80'),
-          protocol: window.location.protocol
-        },
-        timestamp: new Date().toISOString()
-      });
+      // Log detailed connection information for diagnostics only in debug mode
+      if (debug) {
+        console.log(`[WebSocket] URL construction:`, {
+          protocol,
+          host,
+          path: wsPath,
+          fullUrl: websocketUrl,
+          locationInfo: {
+            href: window.location.href,
+            host: window.location.host,
+            hostname: window.location.hostname,
+            port: window.location.port || (window.location.protocol === 'https:' ? '443' : '80'),
+            protocol: window.location.protocol
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
       
       // Safety check to ensure the URL is valid before we attempt to connect
       if (!websocketUrl.startsWith('ws:') && !websocketUrl.startsWith('wss:')) {
@@ -90,13 +92,15 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
         return;
       }
       
-      console.log(`[WebSocket] Setting connection URL: ${websocketUrl}`);
+      if (debug) {
+        console.log(`[WebSocket] Setting connection URL: ${websocketUrl}`);
+      }
       setWsUrl(websocketUrl);
     } catch (error) {
       console.error('[WebSocket] Error constructing WebSocket URL:', error);
       // We don't set the URL in case of error, preventing connection attempts
     }
-  }, []);
+  }, [debug]);
   
   // Only create the WebSocket connection after we have the URL
   const {

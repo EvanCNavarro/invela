@@ -84,8 +84,17 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         socketRef.current.close();
       }
       
-      // Create a new WebSocket with custom protocol
-      const socket = new WebSocket(wsUrl, ['app-ws-protocol']);
+      // Create a new WebSocket
+      // Try with protocol first, fallback to no protocol if needed
+      let socket: WebSocket;
+      try {
+        // Try with protocol first
+        socket = new WebSocket(wsUrl, ['app-ws-protocol']);
+      } catch(e) {
+        // Fallback to no protocol if that fails
+        log('Protocol connection failed, trying without protocol');
+        socket = new WebSocket(wsUrl);
+      }
       socketRef.current = socket;
       
       // Store connection attempt timestamp
