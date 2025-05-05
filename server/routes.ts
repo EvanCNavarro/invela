@@ -60,6 +60,8 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
+// Import task progress routes for testing and direct manipulation
+import taskProgressRouter from './routes/task-progress';
 // Manual KY3P fix route already imported above
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
@@ -372,6 +374,8 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pProgressFixTestRouter);
   // Register manual KY3P progress fix endpoint
   app.use('/api/ky3p/manual-fix', manualKy3pFix);
+  // Register task progress endpoints for testing and direct manipulation
+  app.use(taskProgressRouter);
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
   // Use our enhanced KY3P demo auto-fill routes
@@ -460,8 +464,7 @@ export function registerRoutes(app: Express): Express {
   // Register WebSocket test routes
   app.use('/api/websocket', websocketRouter);
   
-  // Register unified task progress calculation API
-  app.use('/api/task-progress', taskProgressRouter);
+  // We already registered taskProgressRouter earlier, so we don't need to do it again here
   
   // Test endpoints for WebSocket functionality have been removed
   // They have been replaced with standardized WebSocket implementation
