@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KY3P Progress Preservation Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: #2563eb;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+    }
+    
+    .card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    
+    .button:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .button-secondary {
+      background-color: #6b7280;
+    }
+    
+    .button-secondary:hover {
+      background-color: #4b5563;
+    }
+    
+    .log-area {
+      background-color: #f3f4f6;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 20px;
+    }
+    
+    .info {
+      color: #2563eb;
+    }
+    
+    .success {
+      color: #10b981;
+    }
+    
+    .error {
+      color: #ef4444;
+    }
+    
+    .warning {
+      color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+  <h1>KY3P Form Clear Progress Preservation Test</h1>
+  
+  <div class="card">
+    <h2>Test Description</h2>
+    <p>This test verifies that the KY3P form clearing functionality correctly preserves progress when the <code>preserveProgress</code> parameter is used.</p>
+    <p>When editing a KY3P form, clearing the fields should not reset the progress to 0% if the <code>preserveProgress</code> parameter is set to true.</p>
+  </div>
+  
+  <div class="card">
+    <h2>Test Controls</h2>
+    <div>
+      <label for="taskId">Task ID:</label>
+      <input type="number" id="taskId" value="694" min="1" style="margin-bottom: 10px; padding: 5px;">
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button id="check-button" class="button button-secondary">Check Current Progress</button>
+      <button id="preserve-button" class="button">Clear WITH Progress Preservation</button>
+      <button id="reset-button" class="button button-secondary">Clear WITHOUT Progress Preservation</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Test Results</h2>
+    <div id="log" class="log-area">Test results will appear here...</div>
+  </div>
+  
+  <script>
+    // Log output functions
+    const logEl = document.getElementById('log');
+    function log(message, type = 'info') {
+      const timestamp = new Date().toISOString().substring(11, 19);
+      const line = document.createElement('div');
+      line.className = type;
+      line.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    
+    // Get task progress
+    async function getTaskProgress(taskId) {
+      log(`Getting current progress for task ${taskId}...`);
+      
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          log(`Error getting task: ${response.status} - ${errorText}`, 'error');
+          return null;
+        }
+        
+        const task = await response.json();
+        log(`Current task: ID=${task.id}, Type=${task.task_type}, Status=${task.status}, Progress=${task.progress}%`, 'info');
+        return task;
+      } catch (error) {
+        log(`Error getting task progress: ${error}`, 'error');
+        return null;
+      }
+    }
+    
+    // Clear with progress preservation
+    async function clearWithPreserveProgress(taskId) {
+      log(`Testing progress preservation for KY3P task ${taskId}...`);
+      
+      // Check initial task progress
+      const initialTask = await getTaskProgress(taskId);
+      if (!initialTask) return;
+      
+      log(`Initial task progress: ${initialTask.progress}%`);
+      
+      if (initialTask.progress === 0) {
+        log('Task already has 0% progress, this test may not show correct results', 'warning');
+      }
+      
+      // Call the KY3P clear endpoint with preserveProgress=true parameter
+      log('Calling KY3P clear endpoint with preserveProgress=true');
+      
+      try {
+        const response = await fetch(`/api/ky3p/clear-fields/${taskId}?preserveProgress=true`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ preserveProgress: true })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          log(`Error clearing KY3P fields: ${response.status} - ${errorText}`, 'error');
+          return;
+        }
+        
+        const result = await response.json();
+        log(`Clear operation result: ${JSON.stringify(result)}`, 'info');
+        
+        // Check task progress after clear
+        setTimeout(async () => {
+          const afterTask = await getTaskProgress(taskId);
+          if (!afterTask) return;
+          
+          log(`Task progress after clear with preserveProgress: ${afterTask.progress}%`);
+          
+          // Verify that progress is still the same as before
+          if (afterTask.progress === initialTask.progress) {
+            log(`✅ SUCCESS: Progress was correctly preserved at ${afterTask.progress}%!`, 'success');
+          } else {
+            log(`❌ FAILURE: Progress changed from ${initialTask.progress}% to ${afterTask.progress}%`, 'error');
+          }
+        }, 1000); // Wait a bit for progress update to propagate
+      } catch (error) {
+        log(`Error in test: ${error}`, 'error');
+      }
+    }
+    
+    // Clear without progress preservation
+    async function clearWithoutPreserveProgress(taskId) {
+      log(`Testing standard clear without progress preservation for KY3P task ${taskId}...`);
+      
+      // Check initial task progress
+      const initialTask = await getTaskProgress(taskId);
+      if (!initialTask) return;
+      
+      log(`Initial task progress: ${initialTask.progress}%`);
+      
+      // Call the KY3P clear endpoint without preserveProgress parameter
+      log('Calling KY3P clear endpoint without preserveProgress');
+      
+      try {
+        const response = await fetch(`/api/ky3p/clear-fields/${taskId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          log(`Error clearing KY3P fields: ${response.status} - ${errorText}`, 'error');
+          return;
+        }
+        
+        const result = await response.json();
+        log(`Clear operation result: ${JSON.stringify(result)}`, 'info');
+        
+        // Check task progress after clear
+        setTimeout(async () => {
+          const afterTask = await getTaskProgress(taskId);
+          if (!afterTask) return;
+          
+          log(`Task progress after standard clear: ${afterTask.progress}%`);
+          
+          // Verify that progress is reset to 0%
+          if (afterTask.progress === 0) {
+            log(`✅ SUCCESS: Progress was correctly reset to 0%`, 'success');
+          } else {
+            log(`❌ FAILURE: Progress was not reset to 0%, current: ${afterTask.progress}%`, 'error');
+          }
+        }, 1000); // Wait a bit for progress update to propagate
+      } catch (error) {
+        log(`Error in test: ${error}`, 'error');
+      }
+    }
+    
+    // Set up event listeners
+    document.getElementById('check-button').addEventListener('click', () => {
+      const taskId = document.getElementById('taskId').value;
+      getTaskProgress(taskId);
+    });
+    
+    document.getElementById('preserve-button').addEventListener('click', () => {
+      const taskId = document.getElementById('taskId').value;
+      clearWithPreserveProgress(taskId);
+    });
+    
+    document.getElementById('reset-button').addEventListener('click', () => {
+      const taskId = document.getElementById('taskId').value;
+      clearWithoutPreserveProgress(taskId);
+    });
+    
+    // Initial log message
+    log('Test page loaded. Use the buttons above to run tests.', 'info');
+  </script>
+</body>
+</html>
