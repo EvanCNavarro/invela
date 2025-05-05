@@ -52,6 +52,9 @@ export function determineTaskStatus(input: StatusDeterminationInput): TaskStatus
     metadata = {}
   } = input;
   
+  // Derive effective hasResponses from progress - if progress > 0, the task MUST have responses
+  const effectiveHasResponses = hasResponses || progress > 0;
+  
   // Log key info for debugging status transitions
   console.log('[STATUS DETERMINATION] Calculating status for task with:', {
     progress,
@@ -59,6 +62,7 @@ export function determineTaskStatus(input: StatusDeterminationInput): TaskStatus
     hasSubmissionDate,
     hasSubmittedFlag,
     hasResponses,
+    effectiveHasResponses,
     timestamp
   });
   
@@ -74,14 +78,14 @@ export function determineTaskStatus(input: StatusDeterminationInput): TaskStatus
     return TaskStatus.READY_FOR_SUBMISSION;
   }
   
-  // Rule 3: If progress is 0%, use NOT_STARTED
-  if (progress === 0) {
-    console.log('[STATUS DETERMINATION] Task has 0% progress, setting to NOT_STARTED');
+  // Rule 3: If progress is 0% and no responses, use NOT_STARTED
+  if (progress === 0 && !effectiveHasResponses) {
+    console.log('[STATUS DETERMINATION] Task has 0% progress and no responses, setting to NOT_STARTED');
     return TaskStatus.NOT_STARTED;
   }
   
-  // Rule 4: Otherwise, task is in progress (0% < progress < 100%)
-  console.log('[STATUS DETERMINATION] Task has partial progress, setting to IN_PROGRESS');
+  // Rule 4: Otherwise, task is in progress (0% < progress < 100% or has responses)
+  console.log('[STATUS DETERMINATION] Task has partial progress or responses, setting to IN_PROGRESS');
   return TaskStatus.IN_PROGRESS;
 }
 
