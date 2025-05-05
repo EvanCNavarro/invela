@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWebSocketService } from '@/providers/websocket-provider';
-import { WebSocketEventMap } from '@/lib/websocket-types';
+import { WebSocketEventMap, WebSocketEvent } from '@/lib/websocket-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,13 +47,31 @@ export default function WebSocketDiagnosticPage() {
       }
     };
     
-    // We're using 'connection_status' as a generic message type
-    // that the server sends when a client connects
-    const unsubscribeFunc = subscribe('connection_status', handleMessage);
+    // Subscribe to multiple event types for comprehensive monitoring
+    const unsubscribers = [
+      // Connection status events
+      subscribe('connection_status', handleMessage),
+      // Authentication events
+      subscribe('authenticated', handleMessage),
+      // Task-related events
+      subscribe('task_update', handleMessage),
+      subscribe('task_status_update', handleMessage),
+      // Form-related events
+      subscribe('form_submitted', handleMessage),
+      subscribe('form_field_update', handleMessage),
+      // Company-related events
+      subscribe('company_tabs_update', handleMessage),
+      subscribe('sidebar_refresh_tabs', handleMessage),
+      // Connection events
+      subscribe('connection_established', handleMessage),
+      // Response events
+      subscribe('ping', handleMessage),
+      subscribe('pong', handleMessage)
+    ];
     
-    // Cleanup subscription on component unmount
+    // Cleanup all subscriptions on component unmount
     return () => {
-      unsubscribeFunc();
+      unsubscribers.forEach(unsub => unsub());
     };
   }, [subscribe, unsubscribe, lastPingSent]);
   
@@ -78,6 +96,32 @@ export default function WebSocketDiagnosticPage() {
   // Handle manual connection attempt
   const handleReconnect = () => {
     handleConnect();
+  };
+  
+  // Clear messages for a cleaner view
+  const handleClearMessages = () => {
+    setMessages([]);
+    setPingLatency(null);
+  };
+  
+  // Authentication test
+  const handleAuthTest = () => {
+    send({
+      type: 'authenticate',
+      userId: null,
+      companyId: null,
+      clientId: connectionId || `manual_${Date.now()}`,
+      timestamp: new Date().toISOString()
+    });
+    
+    setMessages(prev => [
+      { 
+        type: 'SENT', 
+        payload: { type: 'authenticate' }, 
+        timestamp: new Date().toISOString() 
+      },
+      ...prev
+    ]);
   };
   
   return (
@@ -144,23 +188,44 @@ export default function WebSocketDiagnosticPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between gap-4">
-            <Button 
-              onClick={handlePing} 
-              disabled={!isConnected}
-              className="flex-1"
-              size="sm"
-            >
-              <Send className="mr-2 h-4 w-4" /> Send Ping
-            </Button>
-            <Button 
-              onClick={handleReconnect} 
-              variant="outline" 
-              size="sm"
-              className="flex-1"
-            >
-              <Wifi className="mr-2 h-4 w-4" /> Reconnect
-            </Button>
+          <CardFooter className="flex-col space-y-2">
+            <div className="flex justify-between gap-2 w-full">
+              <Button 
+                onClick={handlePing} 
+                disabled={!isConnected}
+                className="flex-1"
+                size="sm"
+              >
+                <Send className="mr-2 h-4 w-4" /> Send Ping
+              </Button>
+              <Button 
+                onClick={handleReconnect} 
+                variant="outline" 
+                size="sm"
+                className="flex-1"
+              >
+                <Wifi className="mr-2 h-4 w-4" /> Reconnect
+              </Button>
+            </div>
+            <div className="flex justify-between gap-2 w-full">
+              <Button 
+                onClick={handleAuthTest} 
+                disabled={!isConnected}
+                variant="secondary"
+                size="sm"
+                className="flex-1"
+              >
+                Test Auth
+              </Button>
+              <Button 
+                onClick={handleClearMessages} 
+                variant="outline" 
+                size="sm"
+                className="flex-1"
+              >
+                Clear Log
+              </Button>
+            </div>
           </CardFooter>
         </Card>
         
