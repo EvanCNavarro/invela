@@ -14,6 +14,7 @@ import { registerServices } from "./services/registerServices";
 import { registerStandardizedServices, useStandardizedServices } from "./services/register-standardized-services";
 import TaskStatusDebugger from "@/pages/debug/status-fixer";
 import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
+import WebSocketDiagnosticPage from "@/pages/debug/websocket-diagnostic";
 import WebSocketTestPage from "@/pages/websocket-test";
 import FormSubmissionTestPage from "@/pages/form-submission-test";
 import FormSubmissionWorkflowPage from "@/pages/form-submission-workflow";
@@ -428,6 +429,17 @@ function Router() {
             <OnboardingWrapper>
               <Suspense fallback={<div>Loading WebSocket debugger...</div>}>
                 <WebSocketDebuggerPage />
+              </Suspense>
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        </Route>
+
+        {/* WebSocket Diagnostic - Enhanced WebSocket Connection Monitoring */}
+        <Route path="/debug/websocket-diagnostic">
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <Suspense fallback={<div>Loading WebSocket diagnostic...</div>}>
+                <WebSocketDiagnosticPage />
               </Suspense>
             </OnboardingWrapper>
           </ProtectedLayout>
