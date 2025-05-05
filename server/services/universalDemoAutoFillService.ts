@@ -391,7 +391,7 @@ export class UniversalDemoAutoFillService {
           await db.update(config.responsesTable)
             .set({
               [config.responseValueColumn]: demoValue,
-              status: demoValue && String(demoValue).trim().length > 0 ? 'COMPLETE' : 'EMPTY',
+              status: demoValue && String(demoValue).trim().length > 0 ? 'complete' : 'empty',
               updated_at: timestamp,
               version: existingResponse.version + 1
             })
@@ -410,7 +410,7 @@ export class UniversalDemoAutoFillService {
               task_id: taskId,
               field_id: field.id,
               [config.responseValueColumn]: demoValue,
-              status: demoValue && String(demoValue).trim().length > 0 ? 'COMPLETE' : 'EMPTY',
+              status: demoValue && String(demoValue).trim().length > 0 ? 'complete' : 'empty',
               created_at: timestamp,
               updated_at: timestamp,
               version: 1
