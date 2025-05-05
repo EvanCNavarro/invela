@@ -120,16 +120,60 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
     }
   });
   
+  // Create a getStatus method to provide status information
+  const getStatus = () => ({
+    connected: isConnected,
+    connecting: isConnecting,
+    reconnectAttempts: 0, // This would be available from useWebSocket if exposed
+    fallbackMode: hasAttemptedConnecting,
+  });
+
+  // Add a sendMessage method that accepts a single object for compatibility
+  const sendMessage = (message: any) => {
+    if (!message || typeof message !== 'object') {
+      console.error('[WebSocket] Invalid message format:', message);
+      return;
+    }
+    
+    if (message.type && message.payload) {
+      send(message.type, message.payload);
+    } else {
+      console.error('[WebSocket] Message missing type or payload:', message);
+    }
+  };
+  
+  // Create an adapter for the send method to support both legacy and new signature
+  const adaptedSend = (messageOrType: any, payload?: any) => {
+    if (typeof send === 'function') {
+      if (payload !== undefined) {
+        // Try to convert into an object format for backward compatibility
+        // This handles the legacy interface expecting a single message object
+        try {
+          send({ type: messageOrType, payload });
+        } catch (error) {
+          console.error('[WebSocket] Error sending message with adapted format:', error);
+        }
+      } else {
+        // Just pass through the message object
+        send(messageOrType);
+      }
+    }
+  };
+  
   const value = {
     isConnected,
     isConnecting,
     connectionId,
     // Include the flag to tell components we've tried but failed to connect
     hasAttemptedConnecting,
+    // Add status method
+    getStatus,
     // Add connection control methods
     connect,
     disconnect,
-    send,
+    // Provide both method signatures for compatibility
+    send: adaptedSend,
+    sendMessage,
     subscribe,
     unsubscribe
   };
