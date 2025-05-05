@@ -74,7 +74,7 @@ export async function updateKy3pFieldByKey(
   taskId: number, 
   fieldKey: string, 
   value: string,
-  status: string = 'COMPLETE'
+  status: string = 'complete'
 ): Promise<Ky3pFieldUpdateResult> {
   try {
     logger.info(`[UNIFIED-KY3P] Updating field ${fieldKey} for task ${taskId}`);
@@ -90,8 +90,9 @@ export async function updateKy3pFieldByKey(
       };
     }
     
-    // Standardize status to upper case
-    const upperStatus = status.toUpperCase();
+    // Use original status value (lowercase) for consistency
+    // No need to convert to uppercase as the database schema uses lowercase values
+    const normalizedStatus = status.toLowerCase();
     
     // Check if a response already exists for this task and field
     const [existingResponse] = await db.select({
@@ -113,7 +114,7 @@ export async function updateKy3pFieldByKey(
         await tx.update(ky3pResponses)
           .set({
             response_value: value,
-            status: sql`${upperStatus}::text`, // Cast to text type for consistency
+            status: sql`${normalizedStatus}::text`, // Cast to text type for consistency
             field_key: fieldKey, // Ensure field_key is set even for existing responses
             updated_at: new Date(),
           })
@@ -127,7 +128,7 @@ export async function updateKy3pFieldByKey(
             field_key: fieldKey,
             response_value: value,
             // Use SQL.raw to handle the status
-            status: sql`${upperStatus}::text`,
+            status: sql`${normalizedStatus}::text`,
             created_at: new Date(),
             updated_at: new Date(),
           });
