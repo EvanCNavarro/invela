@@ -131,6 +131,14 @@ log('[ServerStartup] WebSocket server registered with task-broadcast utility', '
 setTimeout(() => {
   if (wssInstance && wssInstance.clients) {
     log(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`, 'info');
+    // Add detailed information about the WebSocket server for diagnostics
+    const wsConfig = {
+      path: wssInstance.options.path,
+      clientCount: wssInstance.clients.size,
+      timestamp: new Date().toISOString(),
+      server: 'active'
+    };
+    log(`[ServerStartup] WebSocket server details: ${JSON.stringify(wsConfig)}`, 'debug');
   } else {
     log('[ServerStartup] Warning: WebSocket server not properly initialized', 'warn');
   }
