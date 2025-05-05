@@ -12,6 +12,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { determineStatusFromProgress, broadcastProgressUpdate } from '../utils/progress';
 import { TaskStatus } from '../types';
+import { FieldStatus } from '../utils/field-status';
 
 // Create the router
 export const ky3pKeyFieldRouter = Router();
@@ -140,7 +141,7 @@ ky3pKeyFieldRouter.post('/api/ky3p/keyfield-progress', async (req, res) => {
           await tx.update(ky3pResponses)
             .set({
               response_value: stringValue,
-              status: 'COMPLETE',
+              status: sql`${FieldStatus.COMPLETE}::text`,
               updated_at: new Date()
             })
             .where(eq(ky3pResponses.id, existingResponseId));
@@ -151,7 +152,7 @@ ky3pKeyFieldRouter.post('/api/ky3p/keyfield-progress', async (req, res) => {
               task_id: taskId,
               field_id: fieldId,
               response_value: stringValue,
-              status: 'COMPLETE',
+              status: 'complete', // Use lowercase value as per FieldStatus.COMPLETE
               created_at: new Date(),
               updated_at: new Date()
             });
