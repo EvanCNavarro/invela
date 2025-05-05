@@ -11,13 +11,8 @@ import express from 'express';
 import { db } from '@db';
 import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
 
-// Define field status enum to match database schema
-const KYBFieldStatus = {
-  EMPTY: 'EMPTY',
-  INCOMPLETE: 'INCOMPLETE',
-  COMPLETE: 'COMPLETE',
-  INVALID: 'INVALID'
-} as const;
+// Import the standardized field status enum
+import { FieldStatus } from '../utils/field-status';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { universalDemoAutoFillService } from '../services/universalDemoAutoFillService';
@@ -35,7 +30,7 @@ async function updateTaskProgress(taskId: number): Promise<number> {
     
     // Get completed responses count
     const completedResultQuery = await db.execute<{ count: number }>(
-      sql`SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId} AND status = ${KYBFieldStatus.COMPLETE}`
+      sql`SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId} AND LOWER(status) = ${FieldStatus.COMPLETE}`
     );
     
     // Safely extract count values, handle different result formats
@@ -97,7 +92,7 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
       task_id: number;
       field_id: number;
       response_value: string;
-      status: keyof typeof KYBFieldStatus;
+      status: string;
     }> = [];
     
     // Convert responses with string keys to array format with explicit fieldId
@@ -113,8 +108,8 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
             task_id: taskId,
             field_id: numericFieldId,
             response_value: String(value),
-            // Use uppercase enum values that match our defined KYBFieldStatus enum
-            status: value ? KYBFieldStatus.COMPLETE : KYBFieldStatus.EMPTY
+            // Use the standardized FieldStatus enum
+            status: value ? FieldStatus.COMPLETE : FieldStatus.EMPTY
           });
         } else {
           console.warn(`[KY3P API] Invalid field ID for key ${fieldKey}: ${fieldId}`);
