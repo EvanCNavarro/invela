@@ -299,8 +299,8 @@ export async function calculateUniversalTaskProgress(
       
       console.log(`[ProgressDebug] KY3P responses for task ${taskId}:`, {
         responseCount: detailedResponses.length,
-        completeCount: detailedResponses.filter((r: any) => r.status === KYBFieldStatus.COMPLETE).length,
-        incompleteCount: detailedResponses.filter((r: any) => r.status !== KYBFieldStatus.COMPLETE).length,
+        completeCount: detailedResponses.filter((r: any) => r.status === FieldStatus.COMPLETE).length,
+        incompleteCount: detailedResponses.filter((r: any) => r.status !== FieldStatus.COMPLETE).length,
         statuses: detailedResponses.map((r: any) => r.status),
         timestamp: new Date().toISOString()
       });
