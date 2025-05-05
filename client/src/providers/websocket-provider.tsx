@@ -38,6 +38,27 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const connectAttempts = useRef(0);
   const alreadyInitialized = useRef(false);
   
+  /**
+   * Get WebSocket URL with improved reliability
+   * 
+   * KISS Principle: Simple function that just returns the proper URL or null
+   * if we need to delay connection. This avoids invalid WebSocket URLs.
+   */
+  const getWebSocketUrl = () => {
+    // Determine protocol (wss for https, ws for http)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    
+    // OODA: Observe - Check if we have valid host information
+    if (!window.location.host) {
+      // Log as info to avoid false alarms, this is expected during startup
+      logger.info('[WebSocket] No host information available yet, delaying connection');
+      return null; // Signal we need to delay
+    }
+    
+    // KISS: Simple direct WebSocket URL with /ws path
+    return `${protocol}//${window.location.host}/ws`;
+  };
+  
   // Connect to WebSocket with improved resilience
   const connect = () => {
     try {
@@ -50,14 +71,20 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
       }
       
-      // Create WebSocket URL based on current protocol and host
-      // Make sure we use the same host as the current page to handle Replit environment
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host || '0.0.0.0:5000';
-      const wsUrl = `${protocol}//${host}/ws`;
+      // OODA: Orient - Get a reliable WebSocket URL
+      const wsUrl = getWebSocketUrl();
+      
+      // OODA: Decide - If URL isn't ready, delay and retry
+      if (!wsUrl) {
+        // Schedule a retry after a short delay
+        logger.info('[WebSocket] Scheduling connection retry in 500ms...');
+        setTimeout(connect, 500);
+        return;
+      }
       
       logger.info('Connecting to WebSocket:', wsUrl);
       
+      // OODA: Act - Create the WebSocket with the valid URL
       const ws = new WebSocket(wsUrl);
       const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
