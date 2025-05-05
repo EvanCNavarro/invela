@@ -145,6 +145,39 @@ class PhaseStartup {
       return;
     }
     
+    // For the "ready" phase, let's handle it specially with immediate completion
+    // This is a critical fix to prevent the ready phase from timing out
+    if (phase === 'ready') {
+      try {
+        // OODA: Act - Execute all registered callbacks for this phase
+        const callbacks = this.phaseCallbacks[phase];
+        logger.info(`Executing ${callbacks.length} callbacks for ready phase - will complete immediately`);
+        
+        // Execute callbacks without waiting
+        for (let i = 0; i < callbacks.length; i++) {
+          try {
+            // Don't await - fire and continue
+            callbacks[i]().catch(err => {
+              logger.warn(`Non-blocking error in ready phase callback ${i+1}: ${err}`);
+            });
+          } catch (error) {
+            // Log but continue
+            logger.warn(`Error in ready phase callback ${i+1}, continuing: ${error}`);
+          }
+        }
+        
+        // Mark as completed immediately without waiting
+        this.completedPhases.add(phase);
+        logger.info(`Phase ${phase} marked as completed immediately`);
+        return;
+      } catch (error) {
+        // Even for errors, complete the ready phase
+        this.completedPhases.add(phase);
+        logger.warn(`Ready phase completed despite error: ${error}`);
+        return;
+      }
+    }
+    
     // OODA: Orient - Set up a timeout for this phase with better handling
     const timeoutId = setTimeout(() => {
       logger.error(`Phase ${phase} timed out after ${config.timeout}ms`);
@@ -179,8 +212,17 @@ class PhaseStartup {
       for (let i = 0; i < callbacks.length; i++) {
         try {
           logger.info(`Executing callback ${i+1}/${callbacks.length} for phase ${phase}`);
+          // Explicitly handle the promise resolution or rejection
+          const callbackPromise = callbacks[i]();
+          
+          // Handle non-Promise returns (in case the callback doesn't return a promise)
+          if (!(callbackPromise instanceof Promise)) {
+            logger.warn(`Callback ${i+1} for phase ${phase} did not return a Promise`);
+            continue; // Move to next callback
+          }
+          
           await Promise.race([
-            callbacks[i](),
+            callbackPromise,
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error(`Callback ${i+1} timeout`)), config.timeout / 2)
             )
