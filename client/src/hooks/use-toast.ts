@@ -4,12 +4,17 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
+import getLogger from '@/utils/logger'
+
+const logger = getLogger('ToastSystem')
 
 const TOAST_LIMIT = 3 // Allow up to 3 toasts at once
 // Standard timeout for all toasts (3 seconds)
 const TOAST_REMOVE_DELAY = 3000
 // Kept for backward compatibility but we'll use TOAST_REMOVE_DELAY for error toasts too
 const ERROR_TOAST_REMOVE_DELAY = TOAST_REMOVE_DELAY
+// Deduplication timeout window in milliseconds
+const DEDUPLICATION_WINDOW = 1500
 
 type ToasterToast = ToastProps & {
   id: string
@@ -140,10 +145,71 @@ function dispatch(action: Action) {
   })
 }
 
+// Track recent toast signatures to prevent duplicates
+const recentToasts = new Map<string, { timestamp: number, id: string }>()
+
+// Function to generate a unique signature for a toast
+function generateToastSignature(props: Toast): string {
+  // Create a signature based on title, description, and variant
+  return `${props.variant || 'default'}-${props.title || ''}-${props.description || ''}`
+}
+
+// Cleanup function for removing old toast signatures
+function cleanupOldToastSignatures() {
+  const now = Date.now()
+  for (const [signature, data] of recentToasts.entries()) {
+    if (now - data.timestamp > DEDUPLICATION_WINDOW) {
+      recentToasts.delete(signature)
+    }
+  }
+}
+
 export type Toast = Omit<ToasterToast, "id"> & { id?: string }
 
 function toast({ ...props }: Toast) {
-  const id = genId()
+  // Use provided ID or generate one
+  const id = props.id || genId()
+  
+  // Generate a signature for deduplication
+  const signature = generateToastSignature(props)
+  
+  // Check for recent duplicate toast
+  const existingToast = recentToasts.get(signature)
+  
+  if (existingToast) {
+    // If we have a recent duplicate, update the existing toast instead
+    const timeSinceLastToast = Date.now() - existingToast.timestamp
+    
+    if (timeSinceLastToast < DEDUPLICATION_WINDOW) {
+      logger.info('Deduplicating toast with signature: ' + signature)
+      // If the ID is provided and doesn't match existing toast, update existing
+      if (props.id && props.id !== existingToast.id) {
+        // Update the existing toast with new properties
+        dispatch({
+          type: "UPDATE_TOAST",
+          toast: { ...props, id: existingToast.id },
+        })
+      }
+      // Return the existing toast controls to allow chaining/dismissal
+      return {
+        id: existingToast.id,
+        dismiss: () => dispatch({ type: "DISMISS_TOAST", toastId: existingToast.id }),
+        update: (props: ToasterToast) => dispatch({
+          type: "UPDATE_TOAST",
+          toast: { ...props, id: existingToast.id },
+        }),
+      } as const
+    }
+  }
+  
+  // Store this toast in recent history for deduplication
+  recentToasts.set(signature, {
+    timestamp: Date.now(),
+    id
+  })
+  
+  // Run cleanup of old signatures periodically
+  cleanupOldToastSignatures()
 
   const update = (props: ToasterToast) =>
     dispatch({

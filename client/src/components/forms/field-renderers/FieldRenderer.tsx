@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/tooltip';
 import { FormField as FormFieldType } from '@/services/formService';
 import { TaskTemplateWithConfigs } from '@/services/taskTemplateService';
+import getLogger from '@/utils/logger';
 
 // Helper function to determine component type
 function getFieldComponentType(field: FormFieldType, defaultType = 'single-line'): string {
@@ -218,14 +219,22 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   // Get the field key to use throughout the renderer
   const fieldKey = getFieldKey(field);
   
-  // Added debugging logs
-  console.log(`[FieldRenderer] Rendering field:`, { 
-    fieldKey,
-    originalKey: field.key,
-    alternativeKey: (field as any).fieldKey,
-    id: (field as any).id,
-    label: field.label
-  });
+  // Use standardized logger with appropriate log level
+  // This will only log in development or when explicitly enabled
+  if (process.env.NODE_ENV === 'development') {
+    // Create or get logger - use imported getLogger or fallback to console
+    const logger = getLogger('FieldRenderer');
+    
+    // Use debug level to avoid polluting the console logs
+    if (logger && typeof logger.debug === 'function') {
+      logger.debug('Rendering field:', { 
+        fieldKey,
+        originalKey: field.key,
+        id: (field as any).id,
+        label: field.label
+      });
+    }
+  }
   
   return (
     <FormField
