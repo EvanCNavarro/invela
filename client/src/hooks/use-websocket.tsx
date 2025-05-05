@@ -142,6 +142,37 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         }
       }
       
+      // Check 1006 error counter - if we've hit too many, introduce a progressive delay 
+      // for connection attempts to prevent consuming excessive resources 
+      if ((window._ws_1006_count || 0) > 5) {
+        // Calculate delay based on number of consecutive 1006 errors, with a maximum cap
+        const forcedDelay = 500 + Math.min((window._ws_1006_count || 0) * 100, 10000);
+        console.log(`[WebSocket] High error count detected (${window._ws_1006_count}), delaying connection for ${forcedDelay}ms`);
+        
+        // Set a flag to prevent concurrent connection attempts during the delay
+        const delayToken = Date.now();
+        
+        // Wait for the calculated delay before attempting connection
+        setTimeout(() => {
+          console.log(`[WebSocket] Delay complete, proceeding with connection attempt`);
+          // Continue with socket creation after delay
+          createAndSetupSocket(wsUrl);
+        }, forcedDelay);
+        
+        return;
+      }
+      
+      // Since no delay is needed, create the socket immediately
+      createAndSetupSocket(wsUrl);
+    } catch (error) {
+      setIsConnecting(false);
+      logError('Error creating WebSocket connection:', error);
+    }
+  }, [url, isConnecting, log, logError, maxReconnectAttempts, reconnectInterval, onMaxReconnectAttemptsReached]);
+  
+  // Helper function to create and configure the WebSocket
+  const createAndSetupSocket = useCallback((wsUrl: string) => {
+    try {
       // Create the WebSocket with custom protocol to differentiate from Vite HMR
       // This ensures our connection won't be handled by Vite's WebSocket handlers
       const socket = new WebSocket(wsUrl, ['app-ws-protocol']);
