@@ -322,11 +322,14 @@ export function WelcomeModal() {
 
   // Don't render anything if user has completed onboarding or modal isn't ready to show
   if (!user || user.onboarding_user_completed === true || !showModal) {
-    console.log('[WelcomeModal] Not rendering modal because:', {
-      noUser: !user,
-      onboardingCompleted: user?.onboarding_user_completed === true,
-      modalHidden: !showModal
-    });
+    // Only log on debug builds or when explicitly requested
+    if (process.env.NODE_ENV === 'development') {
+      // Use a more efficient check that doesn't create objects constantly
+      const reasonFlags = (!user ? 'noUser ' : '') + 
+                       (user?.onboarding_user_completed ? 'completed ' : '') + 
+                       (!showModal ? 'hidden' : '');
+      console.debug(`[WelcomeModal] Not shown: ${reasonFlags.trim()}`);
+    }
     return null;
   }
 
