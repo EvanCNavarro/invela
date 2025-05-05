@@ -12,6 +12,7 @@ import { ky3pResponses, ky3pFields, tasks } from '@db/schema';
 import { eq, and, sql, isNull } from 'drizzle-orm';
 import { logger } from './logger';
 import { updateKy3pProgressFixed } from './unified-progress-fixed';
+import { FieldStatus, normalizeFieldStatus } from './field-status';
 
 /**
  * Result of a KY3P field update operation
@@ -74,7 +75,7 @@ export async function updateKy3pFieldByKey(
   taskId: number, 
   fieldKey: string, 
   value: string,
-  status: string = 'complete'
+  status: string = FieldStatus.COMPLETE
 ): Promise<Ky3pFieldUpdateResult> {
   try {
     logger.info(`[UNIFIED-KY3P] Updating field ${fieldKey} for task ${taskId}`);
@@ -90,9 +91,8 @@ export async function updateKy3pFieldByKey(
       };
     }
     
-    // Use original status value (lowercase) for consistency
-    // No need to convert to uppercase as the database schema uses lowercase values
-    const normalizedStatus = status.toLowerCase();
+    // Use the normalizeFieldStatus helper to ensure consistent status values
+    const normalizedStatus = normalizeFieldStatus(status);
     
     // Check if a response already exists for this task and field
     const [existingResponse] = await db.select({
