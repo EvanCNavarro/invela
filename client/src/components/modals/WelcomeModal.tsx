@@ -273,18 +273,36 @@ export function WelcomeModal() {
               status: 'completed'
             });
             
-            // Use the standard WebSocket sendMessage method available in the context
-            if (typeof websocket.sendMessage === 'function') {
-              websocket.sendMessage('task_update', {
-                taskId: onboardingTask.id,
-                status: 'completed',
-                metadata: {
-                  onboardingCompleted: true,
-                  completionTime: new Date().toISOString()
-                }
-              });
+            // Use the WebSocket API based on the useWebSocket hook implementation
+            if (websocket && connected && typeof websocket.sendMessage === 'function') {
+              try {
+                // Create a properly formatted message object
+                const message = {
+                  type: 'task_update',
+                  payload: {
+                    taskId: onboardingTask.id,
+                    status: 'completed',
+                    metadata: {
+                      onboardingCompleted: true,
+                      completionTime: new Date().toISOString()
+                    }
+                  }
+                };
+                
+                // Send the message using the context's sendMessage method
+                websocket.sendMessage(message);
+                
+                logger.info('[WelcomeModal] Successfully sent task completion via WebSocket');
+              } catch (innerError) {
+                logger.error('[WelcomeModal] Error sending WebSocket message', { error: innerError });
+              }
             } else {
-              logger.warn('[WelcomeModal] WebSocket sendMessage not available, skipping update');
+              // WebSocket not available or not connected
+              logger.warn('[WelcomeModal] WebSocket unavailable, skipping update', {
+                connected,
+                hasWebsocket: !!websocket,
+                hasSendMethod: !!(websocket && typeof websocket.sendMessage === 'function')
+              });
             }
           });
         } catch (error) {
@@ -369,10 +387,35 @@ export function WelcomeModal() {
     setShowModal(open);
   };
 
+  // Debounced effect to log only once per session (or when state changes)
+  useEffect(() => {
+    // We only want to log this once per session
+    const hasLoggedKey = 'has_logged_modal_hidden';
+    if (!user || user.onboarding_user_completed === true || !showModal) {
+      // Check if we've already logged this state
+      const hasLogged = sessionStorage.getItem(hasLoggedKey);
+      if (!hasLogged) {
+        // Import logger dynamically to avoid bundling it unnecessarily
+        import('@/lib/logger').then(({ logger }) => {
+          logger.debug('[WelcomeModal] Not rendering modal because', {
+            noUser: !user,
+            onboardingCompleted: user?.onboarding_user_completed === true,
+            modalHidden: !showModal,
+            timestamp: new Date().toISOString()
+          });
+        });
+        // Mark that we've logged this state
+        try {
+          sessionStorage.setItem(hasLoggedKey, 'true');
+        } catch (e) {
+          // Ignore storage errors
+        }
+      }
+    }
+  }, [user, showModal]);
+  
   // Don't render anything if user has completed onboarding or modal isn't ready to show
   if (!user || user.onboarding_user_completed === true || !showModal) {
-    // Only log this once per session to avoid excessive logs
-    // We use a debounced effect for this later
     return null;
   }
 
