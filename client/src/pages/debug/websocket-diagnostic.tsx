@@ -167,6 +167,9 @@ export default function WebSocketDiagnosticPage() {
     }, 1500);
   };
   
+  // Check if we're in fallback mode (using our enhanced mechanism)
+  const inFallbackMode = (window._ws_1006_count || 0) >= 15 || window._ws_backoff_active;
+  
   // Authentication test
   const handleAuthTest = () => {
     send({
@@ -230,6 +233,16 @@ export default function WebSocketDiagnosticPage() {
                     className={isConnected ? "bg-green-600 hover:bg-green-600/80" : ""}
                   >
                     {isConnected ? "Connected" : isConnecting ? "Connecting" : "Disconnected"}
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Connection Mode:</span>
+                  <Badge 
+                    variant={inFallbackMode ? "destructive" : "secondary"}
+                    className={inFallbackMode ? "bg-red-600" : ""}
+                  >
+                    {inFallbackMode ? "Fallback Mode" : "WebSocket"}
                   </Badge>
                 </div>
                 
