@@ -14,6 +14,8 @@ interface WebSocketOptions {
   maxReconnectAttempts?: number;
   debug?: boolean;
   autoConnect?: boolean;
+  // Callback when max reconnect attempts is reached
+  onMaxReconnectAttemptsReached?: () => void;
 }
 
 type SubscriptionCallback<T extends keyof WebSocketEventMap> = 
@@ -46,7 +48,8 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
     reconnectInterval = 3000,
     maxReconnectAttempts = 5,
     debug = false,
-    autoConnect = true
+    autoConnect = true,
+    onMaxReconnectAttemptsReached
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
@@ -150,16 +153,23 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
             console.log(`[WebSocket] Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
             setTimeout(connect, reconnectInterval);
           } else {
-            console.error(`[WebSocket] Maximum reconnection attempts (${maxReconnectAttempts}) reached`);
+            console.warn(`[WebSocket] Maximum reconnection attempts (${maxReconnectAttempts}) reached, falling back to polling mode`);
             
-            // Only show toast in production environment
-            if (process.env.NODE_ENV === 'production') {
-              toast({
-                title: 'Connection issue',
-                description: 'Having trouble connecting. Some real-time updates may be delayed.',
-                variant: 'destructive',
-              });
+            // Notify parent component if callback provided
+            if (onMaxReconnectAttemptsReached) {
+              onMaxReconnectAttemptsReached();
             }
+            
+            // Set a retry timer that will try to reconnect again after a longer delay
+            // This handles environments where WebSockets may be temporarily unavailable
+            setTimeout(() => {
+              console.log('[WebSocket] Attempting recovery reconnection after cooling period');
+              reconnectAttemptsRef.current = 0; // Reset the counter
+              connect(); // Try to connect again
+            }, 60000); // Wait a full minute before trying again
+            
+            // Set connected state to false, but don't show disruptive UI
+            setIsConnected(false);
           }
         } else {
           console.log(`[WebSocket] Normal closure - no reconnect needed`);
@@ -209,7 +219,7 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
       setIsConnecting(false);
       logError('Error creating WebSocket connection:', error);
     }
-  }, [url, isConnecting, log, logError, maxReconnectAttempts, reconnectInterval]);
+  }, [url, isConnecting, log, logError, maxReconnectAttempts, reconnectInterval, onMaxReconnectAttemptsReached]);
 
   // Disconnect from WebSocket
   const disconnect = useCallback(() => {
