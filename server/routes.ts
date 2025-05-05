@@ -82,6 +82,8 @@ import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
 import fileVaultRouter from './routes/file-vault';
 import broadcastRouter from './routes/broadcast';
+// Unified Form Update endpoint for all form types
+import unifiedFormUpdateRouter from './routes/unified-form-update';
 // Test routes have been removed
 import { createUnifiedFormSubmissionRouter } from './routes/index';
 import { createTransactionalFormRouter } from './routes/transactional-form-routes';
@@ -376,6 +378,8 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/ky3p/manual-fix', manualKy3pFix);
   // Register task progress endpoints for testing and direct manipulation
   app.use(taskProgressRouter);
+  // Register the unified form update API for all form types
+  app.use(unifiedFormUpdateRouter);
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
   // Use our enhanced KY3P demo auto-fill routes
