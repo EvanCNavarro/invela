@@ -1,214 +1,265 @@
 /**
  * WebSocket Provider
  * 
- * This component provides WebSocket connectivity to the entire application
- * using React Context. It handles connection setup, reconnection, and
- * exposes methods for sending messages and subscribing to events.
+ * This component provides WebSocket connectivity to the entire app.
+ * It uses React Context to share the WebSocket connection and manages reconnection logic.
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-// Direct import without using @ alias to prevent circular dependency issues
-import { useWebSocket } from '../hooks/use-websocket.tsx';
-import { WebSocketEventMap, PayloadFromEventType } from '@/lib/websocket-types';
+import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import { logger } from '@/utils/client-logger';
 
-interface WebSocketContextType {
+// Create a namespace for WebSocket logs to maintain the same format
+
+export interface WebSocketContextType {
+  socket: WebSocket | null;
   isConnected: boolean;
-  isConnecting: boolean;
-  connectionId: string | null;
-  // Flag to track if we've tried and failed to connect multiple times
-  hasAttemptedConnecting: boolean;
-  // Status information
-  getStatus: () => {
-    connected: boolean;
-    connecting: boolean;
-    reconnectAttempts: number;
-    fallbackMode: boolean;
-  };
-  // Connection control methods
-  connect: () => void;
-  disconnect: () => void;
-  send: (messageOrType: any, payload?: any) => void;
+  lastMessage: any | null;
   sendMessage: (message: any) => void;
-  subscribe: <T extends keyof WebSocketEventMap>(
-    eventType: T,
-    callback: (payload: PayloadFromEventType<T>) => void
-  ) => () => void;
-  unsubscribe: <T extends keyof WebSocketEventMap>(
-    eventType: T,
-    callback: (payload: PayloadFromEventType<T>) => void
-  ) => void;
 }
 
-export const WebSocketContext = createContext<WebSocketContextType | null>(null);
+// Create the WebSocket context
+export const WebSocketContext = createContext<WebSocketContextType>({
+  socket: null,
+  isConnected: false,
+  lastMessage: null,
+  sendMessage: () => {}
+});
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
-  debug?: boolean;
 }
 
-/**
- * WebSocket Provider Component
- * 
- * This component sets up the WebSocket connection and provides it to all child components.
- */
-export function WebSocketProvider({ children, debug = false }: WebSocketProviderProps) {
-  const [wsUrl, setWsUrl] = useState<string>('');
-  // Add a state to track failed connection attempts even after recovery tries
-  const [hasAttemptedConnecting, setHasAttemptedConnecting] = useState(false);
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastMessage, setLastMessage] = useState<any | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectAttempts = useRef(0);
+  const alreadyInitialized = useRef(false);
   
-  // Determine the correct WebSocket URL based on the current location
-  useEffect(() => {
+  // Connect to WebSocket with improved resilience
+  const connect = () => {
     try {
-      // In Replit, we need to use the same host as the current page
+      // Clear any existing connection
+      if (socket) {
+        try {
+          socket.close(1000, 'Reconnecting');
+        } catch (err) {
+          // Ignore errors on close
+        }
+      }
+      
+      // Create WebSocket URL based on current protocol and host
+      // Make sure we use the same host as the current page to handle Replit environment
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host; // This includes hostname and port
-      const wsPath = '/ws';
+      const host = window.location.host || '0.0.0.0:5000';
+      const wsUrl = `${protocol}//${host}/ws`;
       
-      // Build the WebSocket URL - use host which already includes port if present
-      const websocketUrl = `${protocol}//${host}${wsPath}`;
+      logger.info('Connecting to WebSocket:', wsUrl);
       
-      // Log detailed connection information for diagnostics only in debug mode
-      if (debug) {
-        console.log(`[WebSocket] URL construction:`, {
-          protocol,
-          host,
-          path: wsPath,
-          fullUrl: websocketUrl,
-          locationInfo: {
-            href: window.location.href,
-            host: window.location.host,
-            hostname: window.location.hostname,
-            port: window.location.port || (window.location.protocol === 'https:' ? '443' : '80'),
-            protocol: window.location.protocol
-          },
+      const ws = new WebSocket(wsUrl);
+      const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Set connection timeout - if it doesn't connect in 5 seconds, try again
+      const connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          logger.warn('WebSocket connection timeout, attempting to reconnect');
+          try {
+            ws.close();
+          } catch (err) {
+            // Ignore close errors
+          }
+          // Schedule reconnection
+          const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 5000);
+          connectAttempts.current++;
+          reconnectTimeoutRef.current = setTimeout(connect, delay);
+        }
+      }, 5000);
+      
+      ws.onopen = () => {
+        // Clear the connection timeout since we successfully connected
+        clearTimeout(connectionTimeout);
+        
+        setIsConnected(true);
+        connectAttempts.current = 0;
+        logger.info('WebSocket connection established');
+        
+        // Start heartbeat
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+        }
+        
+        heartbeatIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.send(JSON.stringify({ 
+                type: 'ping', 
+                timestamp: new Date().toISOString(),
+                connectionId
+              }));
+            } catch (err) {
+              logger.warn('Error sending ping, connection may be dead', err);
+              if (heartbeatIntervalRef.current) {
+                clearInterval(heartbeatIntervalRef.current);
+              }
+              // Force reconnection
+              connect();
+            }
+          }
+        }, 20000); // More frequent heartbeat for better connection monitoring
+      };
+      
+      ws.onclose = (event) => {
+        // Clear the connection timeout in case we're closing before it fired
+        clearTimeout(connectionTimeout);
+        
+        setIsConnected(false);
+        logger.info('WebSocket connection closed:', event.code, event.reason || 'No reason provided');
+        
+        // Stop heartbeat
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
+        }
+        
+        // Try reconnecting if it wasn't a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+          // Increase reconnection attempts to improve resilience
+          if (connectAttempts.current < 10) { // Increased from 3 to 10 attempts
+            const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 10000);
+            connectAttempts.current++;
+            
+            // Clear any existing reconnect timeout
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
+            }
+            
+            logger.info(`Scheduling reconnection attempt in ${delay/1000} seconds...`);
+            reconnectTimeoutRef.current = setTimeout(connect, delay);
+          } else {
+            logger.warn('Maximum reconnection attempts reached', {
+              connectionId,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+      };
+      
+      ws.onerror = (error) => {
+        logger.error('WebSocket error:', error, {
+          connectionId,
           timestamp: new Date().toISOString()
         });
-      }
+      };
       
-      // Safety check to ensure the URL is valid before we attempt to connect
-      if (!websocketUrl.startsWith('ws:') && !websocketUrl.startsWith('wss:')) {
-        console.error(`[WebSocket] Invalid WebSocket URL: ${websocketUrl}`);
-        // Don't set the URL if it's invalid
-        return;
-      }
-      
-      if (debug) {
-        console.log(`[WebSocket] Setting connection URL: ${websocketUrl}`);
-      }
-      setWsUrl(websocketUrl);
-    } catch (error) {
-      console.error('[WebSocket] Error constructing WebSocket URL:', error);
-      // We don't set the URL in case of error, preventing connection attempts
-    }
-  }, [debug]);
-  
-  // Only create the WebSocket connection after we have the URL
-  const {
-    isConnected,
-    isConnecting,
-    connectionId,
-    connect,
-    disconnect,
-    send,
-    subscribe,
-    unsubscribe
-  } = useWebSocket(wsUrl, {
-    debug,
-    autoConnect: wsUrl !== '', // Only auto-connect once we have a URL
-    reconnectInterval: 2000, // Faster reconnection attempts
-    maxReconnectAttempts: 10,  // More reconnection attempts before giving up
-    onMaxReconnectAttemptsReached: () => {
-      // Track that we've attempted connecting extensively
-      setHasAttemptedConnecting(true);
-      console.log('[WebSocket] Maximum reconnection attempts reached, operating in fallback mode');
-    }
-  });
-  
-  // Create a getStatus method to provide status information
-  const getStatus = () => ({
-    connected: isConnected,
-    connecting: isConnecting,
-    reconnectAttempts: 0, // This would be available from useWebSocket if exposed
-    fallbackMode: hasAttemptedConnecting,
-  });
-
-  // Add a sendMessage method that accepts a single object for compatibility
-  const sendMessage = (message: any) => {
-    if (!message || typeof message !== 'object') {
-      console.error('[WebSocket] Invalid message format:', message);
-      return;
-    }
-    
-    if (message.type && message.payload) {
-      send(message.type, message.payload);
-    } else {
-      console.error('[WebSocket] Message missing type or payload:', message);
-    }
-  };
-  
-  // Create an adapter for the send method to support both legacy and new signature
-  const adaptedSend = (messageOrType: any, payload?: any) => {
-    if (typeof send === 'function') {
-      if (payload !== undefined) {
-        // Try to convert into an object format for backward compatibility
-        // This handles the legacy interface expecting a single message object
+      ws.onmessage = (event: MessageEvent) => {
         try {
-          send({ type: messageOrType, payload });
+          const data = JSON.parse(event.data);
+          
+          // Don't log heartbeat messages to reduce console spam
+          if (data.type !== 'ping' && data.type !== 'pong') {
+            logger.info(`Received message of type: ${data.type}`);
+          }
+          
+          // Handle special message types
+          if (data.type === 'form_submission' || data.type === 'form_submitted') {
+            // Log submission updates separately
+            logger.info('Form submission update:', {
+              type: data.type,
+              taskId: data.payload?.taskId || data.taskId,
+              status: data.payload?.status || 'unknown'
+            });
+          }
+          
+          // Store normalized message
+          setLastMessage({
+            type: data.type,
+            payload: data.payload || data.data || data,
+            timestamp: new Date().toISOString()
+          });
         } catch (error) {
-          console.error('[WebSocket] Error sending message with adapted format:', error);
+          logger.error('Error parsing WebSocket message:', error);
         }
-      } else {
-        // Just pass through the message object
-        send(messageOrType);
-      }
+      };
+      
+      setSocket(ws);
+    } catch (error) {
+      logger.error('Error connecting to WebSocket:', error);
     }
   };
   
-  const value = {
+  // Send a message
+  const sendMessage = (message: any) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(typeof message === 'string' ? message : JSON.stringify(message));
+    } else {
+      logger.warn('Cannot send message: WebSocket not connected');
+    }
+  };
+  
+  // Connect on mount
+  useEffect(() => {
+    if (alreadyInitialized.current) return;
+    
+    alreadyInitialized.current = true;
+    logger.info('WebSocket connection manager initialized');
+    connect();
+    
+    // Clean up on unmount
+    return () => {
+      // Stop heartbeat
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      
+      // Cancel any pending reconnection
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      // Close socket
+      if (socket) {
+        try {
+          socket.close(1000, 'Component unmounting');
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+      
+      // Reset state
+      alreadyInitialized.current = false;
+    };
+  }, []);
+  
+  const contextValue: WebSocketContextType = {
+    socket,
     isConnected,
-    isConnecting,
-    connectionId,
-    // Include the flag to tell components we've tried but failed to connect
-    hasAttemptedConnecting,
-    // Add status method
-    getStatus,
-    // Add connection control methods
-    connect,
-    disconnect,
-    // Provide both method signatures for compatibility
-    send: adaptedSend,
-    sendMessage,
-    subscribe,
-    unsubscribe
+    lastMessage,
+    sendMessage
   };
   
   return (
-    <WebSocketContext.Provider value={value}>
+    <WebSocketContext.Provider value={contextValue}>
       {children}
     </WebSocketContext.Provider>
   );
-}
+};
 
 /**
- * Hook to use the WebSocket service within components
- * 
- * @returns WebSocket methods and state
+ * Custom hook to use the WebSocket context
+ * @returns WebSocketContextType
  */
-export function useWebSocketService() {
+export const useWebSocketContext = (): WebSocketContextType => {
   const context = useContext(WebSocketContext);
   
   if (!context) {
-    throw new Error('useWebSocketService must be used within a WebSocketProvider');
+    throw new Error('useWebSocketContext must be used within a WebSocketProvider');
   }
   
   return context;
-}
+};
 
-/**
- * Legacy alias for useWebSocketService - for backward compatibility
- * 
- * @returns WebSocket methods and state
- */
-export function useWebSocketContext() {
-  return useWebSocketService();
-}
+export default WebSocketProvider;

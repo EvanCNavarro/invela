@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
-import { useWebSocketService } from "@/providers/websocket-provider";
+import { wsService } from "@/lib/websocket";
 import { TaskCountData, CompanyTabsUpdateEvent, FormSubmittedEvent, SidebarRefreshEvent } from "@/lib/websocket-types";
 
 interface SidebarProps {
@@ -50,7 +50,6 @@ export function Sidebar({
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
   const queryClient = useQueryClient();
-  const wsService = useWebSocketService();
   
   // Get current company data
   const { data: company } = useQuery<{ id: number; name: string; available_tabs?: string[] }>({
@@ -119,43 +118,24 @@ export function Sidebar({
     const unsubscribeFunctions: Array<() => void> = [];
     
     // Subscribe to the company_tabs_update event
-    const unsubTabsUpdate = wsService.subscribe('company_tabs_update', handleTabsUpdate);
-    unsubscribeFunctions.push(unsubTabsUpdate);
+    wsService.subscribe('company_tabs_update', handleTabsUpdate)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to company_tabs_update:', err));
     
     // Subscribe to the company_tabs_updated event (alternative format)
-    const unsubTabsUpdated = wsService.subscribe('company_tabs_updated', handleTabsUpdate);
-    unsubscribeFunctions.push(unsubTabsUpdated);
+    wsService.subscribe('company_tabs_updated', handleTabsUpdate)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to company_tabs_updated:', err));
     
     // Subscribe to the sidebar_refresh_tabs event
-    const unsubSidebarRefresh = wsService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh);
-    unsubscribeFunctions.push(unsubSidebarRefresh);
+    wsService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to sidebar_refresh_tabs:', err));
     
-    // Only start polling more frequently in fallback mode, with a more reasonable interval
-    // This significantly reduces server load and browser performance impact
+    // Start polling more frequently when we know an update might be coming
     const intervalId = setInterval(() => {
-      // Only poll frequently if websockets are in fallback mode or on specific tabs
-      // First check if the hasAttemptedConnecting property exists (for backward compatibility)
-      let inFallbackMode = false;
-      
-      try {
-        if (wsService.hasAttemptedConnecting) {
-          inFallbackMode = true;
-        } else if (typeof wsService.getStatus === 'function') {
-          const status = wsService.getStatus();
-          inFallbackMode = status.fallbackMode;
-        }
-      } catch (error) {
-        // Ignore errors from accessing potentially missing methods
-        console.debug('[Sidebar] Unable to determine WebSocket fallback mode');
-      }
-      const isFilevaultTab = location.includes('file-vault');
-      const shouldPollMore = inFallbackMode || isFilevaultTab;
-      
-      if (shouldPollMore) {
-        console.debug('[Sidebar] Polling in fallback mode');
-        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-      }
-    }, 10000); // Check every 10 seconds instead of 3 seconds
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+    }, 3000); // Check every 3 seconds instead of 10 seconds
     
     return () => {
       // Unsubscribe from all WebSocket subscriptions
@@ -243,7 +223,7 @@ export function Sidebar({
 
     const subscriptions: Array<() => void> = [];
 
-    const setupWebSocketSubscriptions = () => {
+    const setupWebSocketSubscriptions = async () => {
       try {
         // Set up task count update handler (reused across all task events)
         const handleTaskCountUpdate = (data: TaskCountData) => {
@@ -259,15 +239,15 @@ export function Sidebar({
         };
         
         // Subscribe to task creation
-        const unsubTaskCreate = wsService.subscribe('task_created', handleTaskCountUpdate);
+        const unsubTaskCreate = await wsService.subscribe('task_created', handleTaskCountUpdate);
         subscriptions.push(unsubTaskCreate);
 
         // Subscribe to task deletion
-        const unsubTaskDelete = wsService.subscribe('task_deleted', handleTaskCountUpdate);
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', handleTaskCountUpdate);
         subscriptions.push(unsubTaskDelete);
 
         // Subscribe to task updates
-        const unsubTaskUpdate = wsService.subscribe('task_update', handleTaskCountUpdate);
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', handleTaskCountUpdate);
         subscriptions.push(unsubTaskUpdate);
         
         // CRITICAL FIX: Enhanced WebSocket handling for sidebar updates
@@ -316,19 +296,19 @@ export function Sidebar({
         };
         
         // Subscribe to company tabs updates - both event names for compatibility
-        const unsubCompanyTabsUpdate = wsService.subscribe('company_tabs_update', (data: CompanyTabsUpdateEvent['payload']) => {
+        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: CompanyTabsUpdateEvent['payload']) => {
           handleCompanyTabsUpdate(data, 'company_tabs_update');
         });
         subscriptions.push(unsubCompanyTabsUpdate);
         
         // Also subscribe to the alternative event name
-        const unsubCompanyTabsUpdated = wsService.subscribe('company_tabs_updated', (data: CompanyTabsUpdateEvent['payload']) => {
+        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: CompanyTabsUpdateEvent['payload']) => {
           handleCompanyTabsUpdate(data, 'company_tabs_updated');
         });
         subscriptions.push(unsubCompanyTabsUpdated);
         
         // Listen for form submission events that may affect tab access
-        const unsubFormSubmitted = wsService.subscribe('form_submitted', (data: FormSubmittedEvent['payload']) => {
+        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: FormSubmittedEvent['payload']) => {
           console.log(`[Sidebar] Received form_submitted event:`, data);
           
           // Only process events for our company
