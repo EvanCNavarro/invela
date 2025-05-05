@@ -23,14 +23,18 @@ const router = express.Router();
 async function updateTaskProgress(taskId: number): Promise<number> {
   try {
     // Direct database update to calculate and update progress
-    // Get all fields count (we're not using is_visible at this time)
+    // Get total number of distinct fields by field_key
     const totalResultQuery = await db.execute<{ count: number }>(
       sql`SELECT COUNT(*) as count FROM ky3p_fields`
     );
     
-    // Get completed responses count
+    // Get completed responses count, using field_key instead of field_id
+    // This ensures progress is calculated based on unique fields
     const completedResultQuery = await db.execute<{ count: number }>(
-      sql`SELECT COUNT(*) as count FROM ky3p_responses WHERE task_id = ${taskId} AND LOWER(status) = ${FieldStatus.COMPLETE}`
+      sql`SELECT COUNT(DISTINCT field_key) as count 
+          FROM ky3p_responses 
+          WHERE task_id = ${taskId} 
+          AND status = ${FieldStatus.COMPLETE}`
     );
     
     // Safely extract count values, handle different result formats
@@ -43,12 +47,34 @@ async function updateTaskProgress(taskId: number): Promise<number> {
     // Calculate progress percentage (0-100)
     const progressPercent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
     
-    // Update the task progress in the tasks table directly
+    // Update the task progress in the tasks table directly with type casting for safety
     await db.execute(
-      sql`UPDATE tasks SET progress = ${progressPercent}, updated_at = NOW() WHERE id = ${taskId}`
+      sql`UPDATE tasks SET progress = CAST(${progressPercent} AS REAL), updated_at = NOW() WHERE id = ${taskId}`
     );
     
-    console.log(`[KY3P] Task ${taskId} progress updated: ${progressPercent}%`);
+    console.log(`[KY3P] Task ${taskId} progress updated: ${progressPercent}% (${completed}/${total} fields complete)`);
+    
+    // Broadcast the update using the websocket
+    try {
+      const { broadcastTaskUpdate } = await import('../services/websocket-new');
+      const status = progressPercent === 0 ? 'not_started' : 
+                    progressPercent === 100 ? 'ready_for_submission' : 
+                    'in_progress';
+        
+      broadcastTaskUpdate({
+        id: taskId,
+        status,
+        progress: progressPercent,
+        metadata: {
+          updatedVia: 'ky3p-fixed-routes',
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (wsError) {
+      console.error('[KY3P] Error broadcasting progress update', wsError);
+      // Continue execution even if the broadcast fails
+    }
+    
     return progressPercent;
   } catch (error) {
     console.error('[KY3P] Error updating task progress', error);
@@ -139,8 +165,23 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
           inArray(ky3pResponses.field_id, responseEntries.map(entry => entry.field_id))
         ));
       
-      // Then insert new responses
-      await tx.insert(ky3pResponses).values(responseEntries);
+      // Then insert new responses with field_key for each entry
+      for (const entry of responseEntries) {
+        // Find the corresponding field_key for this field_id
+        const fieldKey = [...fieldKeyToIdMap].find(([key, id]) => id === entry.field_id)?.[0];
+        
+        // Insert the response with field_key included
+        await tx.insert(ky3pResponses).values({
+          task_id: entry.task_id,
+          field_id: entry.field_id,
+          field_key: fieldKey, // Include field_key from our map
+          response_value: entry.response_value,
+          status: entry.status,
+          version: 1,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
     });
     
     // Update task progress
