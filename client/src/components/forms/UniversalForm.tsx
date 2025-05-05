@@ -643,7 +643,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       toast({
         title: 'Clear Fields',
         description: 'Clearing all form fields...',
-        variant: 'default',
+        variant: 'info',
       });
       
       // Log the current section where the clear operation was initiated from
@@ -711,7 +711,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // Show success toast
           toast({
             title: 'Fields cleared successfully',
-            variant: 'default',
+            variant: 'success',
           });
           
           // Navigate to the first section AFTER successfully clearing the fields
@@ -794,7 +794,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           toast({
             title: 'Fields Cleared',
             description: 'Fields cleared successfully, but there was an issue updating progress.',
-            variant: 'default',
+            variant: 'success',
           });
           
           // Still try to navigate back to first section even if there was an error updating progress
@@ -1290,7 +1290,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 toast({
                                   title: 'Processing Submission',
                                   description: 'Working on submitting your data...',
-                                  variant: 'default',
+                                  variant: 'info',
                                 });
                                 
                                 try {
