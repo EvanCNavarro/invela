@@ -141,7 +141,7 @@ ky3pKeyFieldRouter.post('/api/ky3p/keyfield-progress', async (req, res) => {
           await tx.update(ky3pResponses)
             .set({
               response_value: stringValue,
-              status: 'complete', // Use lowercase value as per FieldStatus.COMPLETE
+              status: FieldStatus.COMPLETE, // Use FieldStatus enum for consistent status handling
               updated_at: new Date()
             })
             .where(eq(ky3pResponses.id, existingResponseId));
@@ -152,7 +152,7 @@ ky3pKeyFieldRouter.post('/api/ky3p/keyfield-progress', async (req, res) => {
               task_id: taskId,
               field_id: fieldId,
               response_value: stringValue,
-              status: 'complete', // Use lowercase value as per FieldStatus.COMPLETE
+              status: FieldStatus.COMPLETE, // Use FieldStatus enum for consistent status handling
               created_at: new Date(),
               updated_at: new Date()
             });
