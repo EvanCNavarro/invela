@@ -27,7 +27,7 @@ interface WebSocketContextType {
   // Connection control methods
   connect: () => void;
   disconnect: () => void;
-  send: (eventType: string, payload: any) => void;
+  send: (messageOrType: any, payload?: any) => void;
   sendMessage: (message: any) => void;
   subscribe: <T extends keyof WebSocketEventMap>(
     eventType: T,
