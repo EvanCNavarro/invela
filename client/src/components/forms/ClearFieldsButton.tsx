@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
+import { showClearFieldsToast } from '@/hooks/use-unified-toast';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('ClearFieldsButton');
@@ -42,7 +42,6 @@ export function ClearFieldsButton({
 }: ClearFieldsButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  const { toast } = useToast();
   
   const handleClearFields = async () => {
     try {
@@ -68,19 +67,11 @@ export function ClearFieldsButton({
       // Call parent's onClear function
       await onClear();
       
-      // Show success toast
-      toast({
-        title: "Fields Cleared",
-        description: "All form fields have been cleared successfully.",
-        variant: "success",
-      });
+      // Show success toast using the unified toast system
+      showClearFieldsToast('success');
     } catch (error) {
       logger.error('[ClearFieldsButton] Error clearing fields:', error);
-      toast({
-        title: "Clear Fields Failed",
-        description: error instanceof Error ? error.message : "There was an error clearing the form fields",
-        variant: "destructive",
-      });
+      showClearFieldsToast('error', error instanceof Error ? error.message : "There was an error clearing the form fields");
     } finally {
       setIsClearing(false);
     }
