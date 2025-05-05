@@ -1,0 +1,111 @@
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_2.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=268, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 268
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+Preloaded image: /assets/harmonized_modal_userOboarding_3.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_4.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+Preloaded image: /assets/harmonized_modal_userOboarding_5.png
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Too many consecutive abnormal closures (10), entering fallback mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Too many consecutive abnormal closures (11), entering fallback mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Too many consecutive abnormal closures (12), entering fallback mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] [ERROR] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Too many consecutive abnormal closures (13), entering fallback mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}

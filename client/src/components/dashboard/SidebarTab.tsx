@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { LockIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useEffect } from "react";
 
 interface SidebarTabProps {
   icon: React.ElementType;
@@ -135,11 +136,16 @@ export function SidebarTab({
   // 
   // File Vault tab access is controlled by the server based on form submissions.
   // No special client-side handling is needed anymore, making the code much cleaner.
+  // We only need to check this once when the tab is first rendered
+  // or when its disabled state changes, not on every render
   const isFileVaultTab = (label === "File Vault");
   
-  if (isFileVaultTab) {
-    console.log(`[SidebarTab] File Vault tab state: isDisabled=${isDisabled}`);
-  }
+  // Using useEffect with proper dependency array to only log when isDisabled changes
+  useEffect(() => {
+    if (isFileVaultTab && process.env.NODE_ENV === 'development') {
+      console.debug(`[SidebarTab] File Vault tab state: isDisabled=${isDisabled}`);
+    }
+  }, [isFileVaultTab, isDisabled]); // Only re-run when these values change
   
   return (
     <Link 
