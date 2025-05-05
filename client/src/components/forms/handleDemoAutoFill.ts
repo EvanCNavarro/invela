@@ -10,7 +10,7 @@
 
 import type { FormServiceInterface } from '@/services/formService';
 import getLogger from '@/utils/logger';
-import { toast } from '@/hooks/use-toast';
+import { showDemoAutoFillToast } from '@/hooks/use-unified-toast';
 
 const logger = getLogger('DemoAutoFill');
 
@@ -57,11 +57,7 @@ export async function handleDemoAutoFill({
   if (!formService) {
     logger.error('No form service provided for demo auto-fill');
     if (!skipToasts) {
-      toast({
-        title: 'Demo Auto-Fill Error',
-        description: 'Form service not available',
-        variant: 'destructive'
-      });
+      showDemoAutoFillToast('error', 'Form service not available');
     }
     return;
   }
@@ -69,11 +65,7 @@ export async function handleDemoAutoFill({
   if (!taskId) {
     logger.error('No task ID provided for demo auto-fill');
     if (!skipToasts) {
-      toast({
-        title: 'Demo Auto-Fill Error',
-        description: 'Task ID not provided',
-        variant: 'destructive'
-      });
+      showDemoAutoFillToast('error', 'Task ID not provided');
     }
     return;
   }
