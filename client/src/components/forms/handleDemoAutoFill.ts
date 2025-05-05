@@ -74,11 +74,7 @@ export async function handleDemoAutoFill({
   
   // Show loading toast
   if (!skipToasts) {
-    toast({
-      title: 'Demo Auto-Fill',
-      description: 'Loading demo data...',
-      variant: 'default'
-    });
+    showDemoAutoFillToast('loading', 'Loading demo data...');
   }
   
   // Reset any potential stuck state by triggering a force rerender
@@ -93,11 +89,7 @@ export async function handleDemoAutoFill({
       
       // Show an explicit error and force redirect to the proper component
       if (!skipToasts) {
-        toast({
-          title: 'Demo Auto-Fill Prevented',
-          description: 'KY3P forms require the dedicated KY3PDemoAutoFill component. This operation has been blocked to prevent duplicate service calls.',
-          variant: 'destructive'
-        });
+        showDemoAutoFillToast('error', 'KY3P forms require the dedicated KY3PDemoAutoFill component. This operation has been blocked to prevent duplicate service calls.');
       }
       
       // Exit early to prevent any duplicate service calls
@@ -113,11 +105,7 @@ export async function handleDemoAutoFill({
       if (!hasGetDemoData(formService)) {
         logger.error('FormService does not implement getDemoData method');
         if (!skipToasts) {
-          toast({
-            title: 'Demo Auto-Fill Error',
-            description: 'This form service does not support demo data',
-            variant: 'destructive'
-          });
+          showDemoAutoFillToast('error', 'This form service does not support demo data');
         }
         return;
       }
@@ -128,11 +116,7 @@ export async function handleDemoAutoFill({
       if (!demoData || Object.keys(demoData).length === 0) {
         logger.error('No demo data returned from service');
         if (!skipToasts) {
-          toast({
-            title: 'Demo Auto-Fill Error',
-            description: 'No demo data available for this form',
-            variant: 'destructive'
-          });
+          showDemoAutoFillToast('error', 'No demo data available for this form');
         }
         return;
       }
@@ -142,11 +126,7 @@ export async function handleDemoAutoFill({
       
       // Show progress toast
       if (!skipToasts) {
-        toast({
-          title: 'Demo Auto-Fill',
-          description: `Populating ${fieldCount} fields...`,
-          variant: 'default'
-        });
+        showDemoAutoFillToast('progress', `Populating ${fieldCount} fields...`);
       }
       
       // Reset form with demo data
@@ -204,31 +184,19 @@ export async function handleDemoAutoFill({
       
       // Show success toast
       if (!skipToasts) {
-        toast({
-          title: 'Demo Auto-Fill Complete',
-          description: `Successfully filled ${fieldCount} fields with demo data`,
-          variant: 'success'
-        });
+        showDemoAutoFillToast('success', `Successfully filled ${fieldCount} fields with demo data`);
       }
       
     } catch (error) {
       logger.error(`Error in demo auto-fill for ${taskType}:`, error);
       if (!skipToasts) {
-        toast({
-          title: 'Demo Auto-Fill Error',
-          description: error instanceof Error ? error.message : 'Failed to apply demo data',
-          variant: 'destructive'
-        });
+        showDemoAutoFillToast('error', error instanceof Error ? error.message : 'Failed to apply demo data');
       }
     }
   } catch (error) {
     logger.error('Unexpected error in handleDemoAutoFill:', error);
     if (!skipToasts) {
-      toast({
-        title: 'Demo Auto-Fill Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
-      });
+      showDemoAutoFillToast('error', 'An unexpected error occurred');
     };
   }
 }
