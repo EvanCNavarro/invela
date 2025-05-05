@@ -96,6 +96,16 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         setIsConnecting(false);
         return;
       }
+      
+      // Parse the URL to ensure it's valid
+      try {
+        // This will throw if the URL is invalid
+        new URL(url);
+      } catch (err) {
+        logError(`Invalid WebSocket URL format: ${url}`, err);
+        setIsConnecting(false);
+        return;
+      }
 
       console.log(`[WebSocket] Creating connection to: ${url}`);
       const socket = new WebSocket(url);
