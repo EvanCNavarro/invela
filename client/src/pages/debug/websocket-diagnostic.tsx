@@ -15,12 +15,20 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, CheckCircle2, RefreshCw, Send, Wifi, WifiOff } from 'lucide-react';
 
 export default function WebSocketDiagnosticPage() {
-  const { isConnected, isConnecting, connectionId, hasAttemptedConnecting, send, subscribe, unsubscribe } = useWebSocketService();
+  const { isConnected, isConnecting, connectionId, send, subscribe, unsubscribe, connect, disconnect } = useWebSocketService();
+  
+  // Track if we've exhausted reconnection attempts
+  const [hasAttemptedConnecting, setHasAttemptedConnecting] = useState(false);
+  
+  // Check if we're in reconnection backoff mode
+  useEffect(() => {
+    setHasAttemptedConnecting(window._ws_backoff_active || false);
+  }, [isConnected, isConnecting]);
   
   // Get WebSocket provider methods
   const handleConnect = () => {
-    if (typeof window !== 'undefined') {
-      window.location.reload(); // Force a refresh to reconnect
+    if (!isConnected && !isConnecting) {
+      connect();
     }
   };
   const [messages, setMessages] = useState<{type: string, payload: any, timestamp: string}[]>([]);
@@ -95,7 +103,22 @@ export default function WebSocketDiagnosticPage() {
   
   // Handle manual connection attempt
   const handleReconnect = () => {
-    handleConnect();
+    // Reset reconnect cycle detection status before trying to reconnect
+    // This allows a user to manually break out of the reconnect backoff
+    if (window._ws_backoff_active) {
+      console.log('[WebSocket] Manually resetting reconnection backoff');
+      window._ws_backoff_active = false;
+      window._ws_last_attempt = 0;
+    }
+    
+    // First disconnect to ensure a clean connection attempt
+    disconnect();
+    
+    // Short delay before reconnecting to ensure socket is fully closed
+    setTimeout(() => {
+      connect();
+      console.log('[WebSocket] Manual reconnection initiated');
+    }, 500);
   };
   
   // Clear messages for a cleaner view
