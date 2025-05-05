@@ -332,12 +332,23 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
         taskType
       });
       
+      // Handle the status field properly - convert newStatus to SQL expression if needed
+      const safeStatus = typeof newStatus === 'string' ? newStatus : TaskStatus.NOT_STARTED;
+      
+      // Log the SQL update query parameters
+      console.log(`[UnifiedProgress] Updating task ${taskId} with values:`, {
+        progress: validatedProgress,
+        status: safeStatus,
+        taskType,
+        timestamp: new Date().toISOString()
+      });
+      
       const [updatedTask] = await tx
         .update(tasks)
         .set({
           // Use consistent SQL type casting for all task types
           progress: getProgressSqlValue(validatedProgress),
-          status: newStatus,
+          status: sql`${safeStatus}::text`, // Cast status to text to ensure proper type handling
           updated_at: new Date(),
           // Add more diagnostic info to metadata
           metadata: sql`jsonb_set(
