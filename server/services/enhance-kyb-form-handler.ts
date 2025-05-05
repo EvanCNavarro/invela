@@ -9,10 +9,10 @@
 import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket';
 
-const logger = new Logger('EnhancedKybFormHandler');
+// Use the logger directly, no need to create a new instance
 
 /**
  * Update task with file information using the unified tracking approach
