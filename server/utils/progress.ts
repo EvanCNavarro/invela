@@ -13,6 +13,9 @@ import {
   KYBFieldStatus
 } from '@db/schema';
 
+// Import standardized field status
+import { FieldStatus } from './field-status';
+
 import { hasAllRequiredFields } from './kyb-progress';
 
 /**
@@ -251,8 +254,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(openBankingResponses.task_id, taskId),
-            // Match status value directly using the enum
-            eq(openBankingResponses.status, KYBFieldStatus.COMPLETE as unknown as string)
+            // Match status value directly using the standardized FieldStatus enum
+            eq(openBankingResponses.status, FieldStatus.COMPLETE)
           )
         );
       completedFields = completedResultQuery[0].count;
@@ -271,8 +274,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(ky3pResponses.task_id, taskId),
-            // Match status value directly using the enum
-            eq(ky3pResponses.status, KYBFieldStatus.COMPLETE as unknown as string)
+            // Match status value directly using the standardized FieldStatus enum
+            eq(ky3pResponses.status, FieldStatus.COMPLETE)
           )
         );
       completedFields = completedResultQuery[0].count;
@@ -284,8 +287,8 @@ export async function calculateUniversalTaskProgress(
         rawPercentage: totalFields > 0 ? (completedFields / totalFields) * 100 : 0,
         roundedPercentage: totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0,
         timestamp: new Date().toISOString(),
-        KYBFieldStatusEnumValue: KYBFieldStatus.COMPLETE,
-        queryCondition: 'Using direct enum value match (KYBFieldStatus.COMPLETE) now instead of uppercase SQL comparison'
+        statusEnumValue: FieldStatus.COMPLETE,
+        queryCondition: 'Using standardized FieldStatus.COMPLETE enum value for consistent status handling'
       });
       
       // DIAGNOSTIC: Log the completed responses
@@ -317,8 +320,8 @@ export async function calculateUniversalTaskProgress(
         .where(
           and(
             eq(kybResponses.task_id, taskId),
-            // Match status value directly using the enum
-            eq(kybResponses.status, KYBFieldStatus.COMPLETE as unknown as string)
+            // Match status value directly using the standardized FieldStatus enum
+            eq(kybResponses.status, FieldStatus.COMPLETE)
           )
         );
       completedFields = completedResultQuery[0].count;
