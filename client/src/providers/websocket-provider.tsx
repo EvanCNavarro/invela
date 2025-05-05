@@ -8,7 +8,7 @@
 import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
 import getLogger from '@/utils/standardized-logger';
 
-// Create a logger instance for WebSocket provider
+// Create a logger instance for WebSocket provider with appropriate context
 const logger = getLogger('WebSocket');
 
 // Create a namespace for WebSocket logs to maintain the same format
@@ -106,9 +106,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       
       // OODA: Decide - If URL isn't ready, delay and retry
       if (!wsUrl) {
-        // Schedule a retry after a short delay
-        logger.info('[WebSocket] Scheduling connection retry in 500ms...');
-        setTimeout(connect, 500);
+        // Schedule a retry after a short delay (using exponential backoff)
+        const delay = Math.min(500 * Math.pow(1.2, Math.min(connectAttempts.current, 5)), 2000);
+        logger.info(`Scheduling connection retry in ${delay}ms...`, null, { tags: ['reconnect'] });
+        setTimeout(connect, delay);
         return;
       }
       
