@@ -18,45 +18,9 @@ export default function WebSocketDiagnosticPage() {
   const wsService = useWebSocketService();
   const { isConnected, isConnecting, connectionId, subscribe, unsubscribe, connect, disconnect } = wsService;
   
-  // Add compatibility for different WebSocket send method signatures
-  const send = (messageOrType: any, payload?: any) => {
-    if (typeof wsService.send === 'function') {
-      if (payload !== undefined) {
-        // New API format: send(type, payload)
-        wsService.send(messageOrType, payload);
-      } else {
-        // Old API format: send(message)
-        wsService.send(messageOrType);
-      }
-    } else if (wsService.sendMessage && typeof wsService.sendMessage === 'function') {
-      // Alternative API
-      if (typeof messageOrType === 'string' && payload !== undefined) {
-        wsService.sendMessage({
-          type: messageOrType,
-          payload
-        });
-      } else {
-        wsService.sendMessage(messageOrType);
-      }
-    } else {
-      console.error('[WebSocketDiagnostic] No valid send method found on WebSocket service');
-    }
-  };
-  
-  // Alias for compatibility
-  const sendMessage = (message: any) => {
-    if (wsService.sendMessage && typeof wsService.sendMessage === 'function') {
-      wsService.sendMessage(message);
-    } else if (typeof wsService.send === 'function') {
-      if (message && message.type && message.payload) {
-        wsService.send(message.type, message.payload);
-      } else {
-        wsService.send(message);
-      }
-    } else {
-      console.error('[WebSocketDiagnostic] No valid send method found on WebSocket service');
-    }
-  };
+  // Use the updated WebSocket send method that supports both signatures
+  const send = wsService.send;
+  const sendMessage = wsService.sendMessage;
   
   // Track if we've exhausted reconnection attempts
   const [hasAttemptedConnecting, setHasAttemptedConnecting] = useState(false);

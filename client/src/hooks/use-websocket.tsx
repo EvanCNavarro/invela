@@ -32,7 +32,7 @@ interface UseWebSocketReturn {
   connectionId: string | null;
   connect: () => void;
   disconnect: () => void;
-  send: (message: any) => void;
+  send: (messageOrType: any, payload?: any) => void;
   subscribe: <T extends keyof WebSocketEventMap>(eventType: T, callback: SubscriptionCallback<T>) => () => void;
   unsubscribe: <T extends keyof WebSocketEventMap>(eventType: T, callback: SubscriptionCallback<T>) => void;
 }
@@ -317,16 +317,37 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
     }
   }, [log]);
   
-  // Send a message through the WebSocket
-  const send = useCallback((message: any) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      const formattedMessage = typeof message === 'string' ? message : JSON.stringify(message);
-      socketRef.current.send(formattedMessage);
-      log('Sent message:', message);
-    } else {
+  // Send a message through the WebSocket with support for both old and new signatures
+  const send = useCallback((messageOrType: any, payload?: any) => {
+    if (socketRef.current?.readyState !== WebSocket.OPEN) {
       log('Cannot send message, WebSocket is not connected');
+      return;
     }
-  }, [log]);
+    
+    try {
+      let messageToSend;
+      
+      if (payload !== undefined) {
+        // New format: send(type, payload)
+        messageToSend = {
+          type: messageOrType,
+          payload: payload
+        };
+      } else {
+        // Old format: send(message)
+        messageToSend = messageOrType;
+      }
+      
+      const formattedMessage = typeof messageToSend === 'string' 
+        ? messageToSend 
+        : JSON.stringify(messageToSend);
+      
+      socketRef.current.send(formattedMessage);
+      log('Sent message:', messageToSend);
+    } catch (error) {
+      logError('Error sending message:', error);
+    }
+  }, [log, logError]);
   
   // Subscribe to WebSocket events
   const subscribe = useCallback(<T extends keyof WebSocketEventMap>(
