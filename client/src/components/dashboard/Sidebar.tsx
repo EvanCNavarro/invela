@@ -133,8 +133,21 @@ export function Sidebar({
     // Only start polling more frequently in fallback mode, with a more reasonable interval
     // This significantly reduces server load and browser performance impact
     const intervalId = setInterval(() => {
-      // Only poll frequently if websockets are in fallback mode AND we're not in development
-      const inFallbackMode = wsService.getStatus().fallbackMode;
+      // Only poll frequently if websockets are in fallback mode or on specific tabs
+      // First check if the hasAttemptedConnecting property exists (for backward compatibility)
+      let inFallbackMode = false;
+      
+      try {
+        if (wsService.hasAttemptedConnecting) {
+          inFallbackMode = true;
+        } else if (typeof wsService.getStatus === 'function') {
+          const status = wsService.getStatus();
+          inFallbackMode = status.fallbackMode;
+        }
+      } catch (error) {
+        // Ignore errors from accessing potentially missing methods
+        console.debug('[Sidebar] Unable to determine WebSocket fallback mode');
+      }
       const isFilevaultTab = location.includes('file-vault');
       const shouldPollMore = inFallbackMode || isFilevaultTab;
       

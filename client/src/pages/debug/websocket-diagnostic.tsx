@@ -15,7 +15,48 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, CheckCircle2, RefreshCcw, RefreshCw, Send, Wifi, WifiOff } from 'lucide-react';
 
 export default function WebSocketDiagnosticPage() {
-  const { isConnected, isConnecting, connectionId, send, subscribe, unsubscribe, connect, disconnect } = useWebSocketService();
+  const wsService = useWebSocketService();
+  const { isConnected, isConnecting, connectionId, subscribe, unsubscribe, connect, disconnect } = wsService;
+  
+  // Add compatibility for different WebSocket send method signatures
+  const send = (messageOrType: any, payload?: any) => {
+    if (typeof wsService.send === 'function') {
+      if (payload !== undefined) {
+        // New API format: send(type, payload)
+        wsService.send(messageOrType, payload);
+      } else {
+        // Old API format: send(message)
+        wsService.send(messageOrType);
+      }
+    } else if (wsService.sendMessage && typeof wsService.sendMessage === 'function') {
+      // Alternative API
+      if (typeof messageOrType === 'string' && payload !== undefined) {
+        wsService.sendMessage({
+          type: messageOrType,
+          payload
+        });
+      } else {
+        wsService.sendMessage(messageOrType);
+      }
+    } else {
+      console.error('[WebSocketDiagnostic] No valid send method found on WebSocket service');
+    }
+  };
+  
+  // Alias for compatibility
+  const sendMessage = (message: any) => {
+    if (wsService.sendMessage && typeof wsService.sendMessage === 'function') {
+      wsService.sendMessage(message);
+    } else if (typeof wsService.send === 'function') {
+      if (message && message.type && message.payload) {
+        wsService.send(message.type, message.payload);
+      } else {
+        wsService.send(message);
+      }
+    } else {
+      console.error('[WebSocketDiagnostic] No valid send method found on WebSocket service');
+    }
+  };
   
   // Track if we've exhausted reconnection attempts
   const [hasAttemptedConnecting, setHasAttemptedConnecting] = useState(false);
@@ -86,10 +127,32 @@ export default function WebSocketDiagnosticPage() {
   // Handle testing ping
   const handlePing = () => {
     setLastPingSent(Date.now());
-    send({
-      type: 'ping',
-      timestamp: new Date().toISOString()
-    });
+    
+    // Check which send method is available - this is compatible with both implementations
+    if (typeof send === 'function') {
+      if (send.length >= 2) {
+        // Using the new API with separate type and payload parameters
+        send('ping', {
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // Using the older API with a single message object
+        send({
+          type: 'ping',
+          payload: {
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+    } else if (sendMessage && typeof sendMessage === 'function') {
+      // Alternative API if available
+      sendMessage({
+        type: 'ping',
+        payload: {
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
     
     setMessages(prev => [
       { 
@@ -172,13 +235,40 @@ export default function WebSocketDiagnosticPage() {
   
   // Authentication test
   const handleAuthTest = () => {
-    send({
-      type: 'authenticate',
-      userId: null,
-      companyId: null,
-      clientId: connectionId || `manual_${Date.now()}`,
-      timestamp: new Date().toISOString()
-    });
+    // Check which send method is available - this is compatible with both implementations
+    if (typeof send === 'function') {
+      if (send.length >= 2) {
+        // Using the new API with separate type and payload parameters
+        send('authenticate', {
+          userId: null,
+          companyId: null,
+          clientId: connectionId || `manual_${Date.now()}`,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // Using the older API with a single message object
+        send({
+          type: 'authenticate',
+          payload: {
+            userId: null,
+            companyId: null,
+            clientId: connectionId || `manual_${Date.now()}`,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+    } else if (sendMessage && typeof sendMessage === 'function') {
+      // Alternative API if available
+      sendMessage({
+        type: 'authenticate',
+        payload: {
+          userId: null,
+          companyId: null,
+          clientId: connectionId || `manual_${Date.now()}`,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
     
     setMessages(prev => [
       { 
