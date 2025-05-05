@@ -114,7 +114,7 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
         .where(
           and(
             eq(kybResponses.task_id, taskId),
-            eq(kybResponses.status, 'complete')
+            sql`${kybResponses.status} = 'complete'`
           )
         );
       completedFields = completedResult?.count || 0;
@@ -134,7 +134,7 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
         .where(
           and(
             eq(ky3pResponses.task_id, taskId),
-            eq(ky3pResponses.status, 'complete')
+            sql`${ky3pResponses.status} = 'complete'`
           )
         );
       completedFields = completedResult?.count || 0;
@@ -164,7 +164,7 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
         .where(
           and(
             eq(openBankingResponses.task_id, taskId),
-            eq(openBankingResponses.status, 'complete')
+            sql`${openBankingResponses.status} = 'complete'`
           )
         );
       completedFields = completedResult?.count || 0;
