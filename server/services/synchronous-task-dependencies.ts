@@ -69,26 +69,41 @@ export async function unlockDependentTasks(
     const now = new Date().toISOString();
     let tasksToUnlock: number[] = [];
     
+    // CRITICAL FIX: Normalize task type to handle variations of KY3P task types
+    // This ensures both 'ky3p' and 'sp_ky3p_assessment' are recognized as the same type
+    const normalizedTaskType = completedTaskType.toLowerCase();
+    const isKy3pTask = normalizedTaskType === 'ky3p' || normalizedTaskType === 'sp_ky3p_assessment';
+    
+    // Log the normalized task type for debugging
+    logger.info(`[TaskDependencies] Normalized task type: ${normalizedTaskType}, isKy3pTask: ${isKy3pTask}`, {
+      originalType: completedTaskType,
+      normalizedType: normalizedTaskType,
+      isKy3pTask
+    });
+    
     // Determine which tasks to unlock based on the completed task type
-    switch (completedTaskType) {
-      case "kyb":
-        // Unlock KY3P and Open Banking after KYB completion
-        tasksToUnlock = await findLockedTasksByType(companyId, ["ky3p", "open_banking"]);
-        break;
-        
-      case "ky3p":
-        // Specific dependencies for KY3P
-        if (await checkKybCompleted(companyId)) {
-          // Only unlock Open Banking if KYB is also completed
-          tasksToUnlock = await findLockedTasksByType(companyId, ["open_banking"]);
-        }
-        break;
-        
-      case "open_banking":
-        // Unlock dashboard access and File Vault
-        await unlockDashboardAndInsightsTabs(companyId);
-        await unlockFileVaultAccess(companyId);
-        break;
+    if (normalizedTaskType === "company_kyb" || normalizedTaskType === "kyb") {
+      // Unlock KY3P and Open Banking after KYB completion
+      // Ensure we include both KY3P task type variations
+      tasksToUnlock = await findLockedTasksByType(companyId, ["ky3p", "sp_ky3p_assessment", "open_banking"]);
+      logger.info(`[TaskDependencies] Unlocking KY3P and Open Banking tasks after KYB completion`, {
+        tasksToUnlock
+      });
+    } 
+    else if (isKy3pTask) {
+      // Specific dependencies for KY3P
+      if (await checkKybCompleted(companyId)) {
+        // Only unlock Open Banking if KYB is also completed
+        tasksToUnlock = await findLockedTasksByType(companyId, ["open_banking"]);
+        logger.info(`[TaskDependencies] Unlocking Open Banking tasks after KY3P completion`, {
+          tasksToUnlock
+        });
+      }
+    }
+    else if (normalizedTaskType === "open_banking") {
+      // Unlock dashboard access and File Vault
+      await unlockDashboardAndInsightsTabs(companyId);
+      await unlockFileVaultAccess(companyId);
     }
     
     // No tasks to unlock
@@ -166,16 +181,28 @@ async function findLockedTasksByType(
   taskTypes: string[]
 ): Promise<number[]> {
   try {
+    // IMPROVEMENT: Add detailed logging for the lookup process
+    logger.info(`[TaskDependencies] Looking for tasks with types: ${taskTypes.join(', ')}`, {
+      companyId,
+      taskTypes
+    });
+    
     const lockedTasks = await withRetry(
       async () => {
         return db
-          .select({ id: tasks.id, type: tasks.task_type })
+          .select({ id: tasks.id, type: tasks.task_type, status: tasks.status, progress: tasks.progress })
           .from(tasks)
           .where(
             and(
               eq(tasks.company_id, companyId),
-              // Only include tasks where metadata.locked is true or undefined
-              sql`tasks.metadata->>'locked' = 'true' OR tasks.metadata->>'locked' IS NULL`
+              // IMPROVEMENT: Include more task states to ensure we find all relevant tasks
+              // This ensures tasks with any locked state or null state are included
+              or(
+                sql`tasks.metadata->>'locked' = 'true'`,
+                sql`tasks.metadata->>'locked' IS NULL`,
+                eq(tasks.status, 'locked'),
+                eq(tasks.status, 'not_started')
+              )
             )
           );
       },
@@ -185,10 +212,34 @@ async function findLockedTasksByType(
       }
     );
     
+    // IMPROVEMENT: Add logging about all tasks found before filtering
+    logger.info(`[TaskDependencies] Found ${lockedTasks.length} potential tasks for unlocking`, {
+      companyId,
+      taskCounts: lockedTasks.reduce((acc, task) => {
+        acc[task.type] = (acc[task.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    });
+    
     // Filter tasks by requested types
-    return lockedTasks
+    const filteredTasks = lockedTasks
       .filter(task => taskTypes.includes(task.type))
-      .map(task => task.id);
+      .map(task => ({
+        id: task.id,
+        type: task.type,
+        status: task.status,
+        progress: task.progress
+      }));
+    
+    // IMPROVEMENT: Log the exact tasks we've found after filtering
+    logger.info(`[TaskDependencies] After filtering, found ${filteredTasks.length} tasks to unlock`, {
+      companyId,
+      taskTypes,
+      taskDetails: filteredTasks
+    });
+    
+    // Return just the IDs for the actual operation
+    return filteredTasks.map(task => task.id);
       
   } catch (error) {
     logger.error(`[TaskDependencies] Error finding locked tasks:`, error);
