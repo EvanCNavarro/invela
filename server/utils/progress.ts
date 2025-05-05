@@ -720,9 +720,8 @@ export function broadcastProgressUpdate(
   });
   
   try {
-    // Import and use the WebSocket monitor
-    const { trackProgressBroadcast } = require('./websocket-monitor');
-    
+    // WebSocket monitor is disabled temporarily to focus on status standardization
+    /* 
     // Track this progress update for monitoring
     trackProgressBroadcast(
       taskId,
@@ -732,6 +731,7 @@ export function broadcastProgressUpdate(
       new Error().stack?.split('\n')[2]?.trim() || 'unknown',
       broadcastId
     );
+    */
   } catch (monitorError) {
     // If monitoring fails, log but continue with broadcast
     console.error(`[Progress Utils] Error tracking progress broadcast:`, monitorError);
