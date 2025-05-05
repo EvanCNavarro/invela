@@ -6,7 +6,10 @@
  */
 
 import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
-import { logger } from '@/utils/client-logger';
+import getLogger from '@/utils/standardized-logger';
+
+// Create a logger instance for WebSocket provider
+const logger = getLogger('WebSocket');
 
 // Create a namespace for WebSocket logs to maintain the same format
 
@@ -43,20 +46,47 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
    * 
    * KISS Principle: Simple function that just returns the proper URL or null
    * if we need to delay connection. This avoids invalid WebSocket URLs.
+   * 
+   * OODA Loop Implementation:
+   * - Observe: Check for valid location and host information
+   * - Orient: Determine the appropriate protocol and connection strategy
+   * - Decide: Choose whether to create URL or delay connection
+   * - Act: Return properly formed URL or null to trigger retry
    */
   const getWebSocketUrl = () => {
-    // Determine protocol (wss for https, ws for http)
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    // OODA: Observe - Check if we have valid host information
-    if (!window.location.host) {
-      // Log as info to avoid false alarms, this is expected during startup
-      logger.info('[WebSocket] No host information available yet, delaying connection');
-      return null; // Signal we need to delay
+    try {
+      // OODA: Observe - Verify window and location are available
+      if (!window || !window.location) {
+        logger.info('Window or location not available, delaying connection');
+        return null;
+      }
+      
+      // Determine protocol (wss for https, ws for http)
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      
+      // OODA: Observe - Check if we have valid host information
+      if (!window.location.host || window.location.host.includes('undefined')) {
+        // Log as info to avoid false alarms, this is expected during startup
+        logger.info('No valid host information available yet, delaying connection', null, { tags: ['startup'] });
+        return null; // Signal we need to delay
+      }
+      
+      // OODA: Orient - Create URL based on current location
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      // Validate URL before returning
+      try {
+        // This will throw if the URL is invalid
+        new URL(wsUrl);
+        return wsUrl;
+      } catch (urlError) {
+        logger.warn(`Invalid WebSocket URL: ${wsUrl}`, urlError);
+        return null;
+      }
+    } catch (error) {
+      logger.warn('Error generating WebSocket URL', error);
+      return null;
     }
-    
-    // KISS: Simple direct WebSocket URL with /ws path
-    return `${protocol}//${window.location.host}/ws`;
   };
   
   // Connect to WebSocket with improved resilience
@@ -142,7 +172,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         clearTimeout(connectionTimeout);
         
         setIsConnected(false);
-        logger.info('WebSocket connection closed:', event.code, event.reason || 'No reason provided');
+        logger.info('WebSocket connection closed', { code: event.code, reason: event.reason || 'No reason provided' });
         
         // Stop heartbeat
         if (heartbeatIntervalRef.current) {
@@ -174,10 +204,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       };
       
       ws.onerror = (error) => {
-        logger.error('WebSocket error:', error, {
+        // Create separate data object to avoid mixing with log options
+        const errorData = {
+          errorEvent: error,
           connectionId,
           timestamp: new Date().toISOString()
-        });
+        };
+        
+        // Pass the data and valid log options separately
+        logger.error('WebSocket error', errorData, { tags: ['error', 'websocket'] });
       };
       
       ws.onmessage = (event: MessageEvent) => {
