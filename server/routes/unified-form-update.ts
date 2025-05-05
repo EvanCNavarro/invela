@@ -23,6 +23,7 @@ import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { broadcastFieldUpdate } from '../utils/progress';
 import { reconcileTaskFields } from '../utils/unified-task-reconciler';
+import { reconcileTaskFieldsFixed } from '../utils/fixed-task-reconciler';
 
 const router = express.Router();
 
@@ -105,9 +106,9 @@ router.post('/api/form/update-fields', requireAuth, async (req, res) => {
       }
     }
     
-    // Reconcile task progress and status
+    // Reconcile task progress and status using the fixed reconciler to avoid type errors
     try {
-      const reconcileResult = await reconcileTaskFields(
+      const reconcileResult = await reconcileTaskFieldsFixed(
         taskId,
         fields.map(f => f.fieldKey),
         { taskType: normalizedType }
