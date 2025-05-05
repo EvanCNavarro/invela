@@ -320,12 +320,50 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             
             // Additional logging for specific important message types
             if (data.type === 'task_update') {
-              const taskId = data.taskId || data.payload?.taskId || data.payload?.id || data.payload?.payload?.id;
-              const status = data.status || data.payload?.status || data.payload?.payload?.status;
-              const progress = data.progress || data.payload?.progress || data.payload?.payload?.progress;
+              // Handle complex nested structures in task updates by safely extracting payload
+              // This handles all known payload structures we've seen in the logs
+              const extractTaskId = (data: any) => {
+                if (data.taskId) return data.taskId;
+                if (data.id) return data.id;
+                if (data.payload?.taskId) return data.payload.taskId;
+                if (data.payload?.id) return data.payload.id;
+                if (data.payload?.payload?.id) return data.payload.payload.id;
+                if (data.data?.id) return data.data.id;
+                return undefined;
+              };
+              
+              const extractStatus = (data: any) => {
+                if (data.status) return data.status;
+                if (data.payload?.status) return data.payload.status;
+                if (data.payload?.payload?.status) return data.payload.payload.status;
+                if (data.data?.status) return data.data.status;
+                return 'unknown';
+              };
+              
+              const extractProgress = (data: any) => {
+                if (data.progress !== undefined) return data.progress;
+                if (data.payload?.progress !== undefined) return data.payload.progress;
+                if (data.payload?.payload?.progress !== undefined) return data.payload.payload.progress;
+                if (data.data?.progress !== undefined) return data.data.progress;
+                return undefined;
+              };
+              
+              const taskId = extractTaskId(data);
+              const status = extractStatus(data);
+              const progress = extractProgress(data);
               
               if (taskId && (status || progress !== undefined)) {
                 logger.info(`Task update received: Task #${taskId} - Status: ${status || 'unknown'}, Progress: ${progress !== undefined ? progress + '%' : 'unknown'}`);
+              } else {
+                // Log the raw structure if we couldn't extract the expected fields
+                logger.info('Received task_update with unexpected structure:', {
+                  hasTaskId: !!taskId,
+                  hasStatus: status !== 'unknown',
+                  hasProgress: progress !== undefined,
+                  messageKeys: Object.keys(data),
+                  payloadKeys: data.payload ? Object.keys(data.payload) : 'no payload',
+                  nestedDataKeys: data.data ? Object.keys(data.data) : 'no data'
+                });
               }
             } else if (data.type === 'authenticated') {
               logger.info('WebSocket authentication confirmed for client: ' + (data.clientId || data.payload?.clientId || 'unknown'));
