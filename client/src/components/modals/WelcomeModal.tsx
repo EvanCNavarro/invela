@@ -230,22 +230,14 @@ export function WelcomeModal() {
 
       if (connected && websocket && onboardingTask?.id) {
         try {
-          // Use the correct send method based on our WebSocket service
-          if (typeof websocket.send === 'function') {
-            websocket.send('task_update', {
-              taskId: onboardingTask.id,
-              status: 'completed'
-            });
-          } else if (websocket.sendMessage && typeof websocket.sendMessage === 'function') {
-            // Alternative API if available
-            websocket.sendMessage({
-              type: 'task_update',
-              payload: {
-                taskId: onboardingTask.id,
-                status: 'completed'
-              }
-            });
-          }
+          websocket.send('task_update', {
+            taskId: onboardingTask.id,
+            status: 'completed',
+            metadata: {
+              onboardingCompleted: true,
+              completionTime: new Date().toISOString()
+            }
+          });
         } catch (error) {
           console.error('[WelcomeModal] WebSocket send error:', error);
         }
@@ -330,14 +322,11 @@ export function WelcomeModal() {
 
   // Don't render anything if user has completed onboarding or modal isn't ready to show
   if (!user || user.onboarding_user_completed === true || !showModal) {
-    // Only log on debug builds or when explicitly requested
-    if (process.env.NODE_ENV === 'development') {
-      // Use a more efficient check that doesn't create objects constantly
-      const reasonFlags = (!user ? 'noUser ' : '') + 
-                       (user?.onboarding_user_completed ? 'completed ' : '') + 
-                       (!showModal ? 'hidden' : '');
-      console.debug(`[WelcomeModal] Not shown: ${reasonFlags.trim()}`);
-    }
+    console.log('[WelcomeModal] Not rendering modal because:', {
+      noUser: !user,
+      onboardingCompleted: user?.onboarding_user_completed === true,
+      modalHidden: !showModal
+    });
     return null;
   }
 
