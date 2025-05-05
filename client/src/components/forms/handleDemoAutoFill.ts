@@ -30,6 +30,7 @@ interface DemoAutoFillOptions {
   onProgress?: (progress: number) => void;
   formService: FormServiceInterface | null;
   setForceRerender: React.Dispatch<React.SetStateAction<boolean>>;
+  skipToasts?: boolean; // Skip showing toast notifications when true
 }
 
 /**
@@ -50,36 +51,43 @@ export async function handleDemoAutoFill({
   saveProgress,
   onProgress,
   formService,
-  setForceRerender
+  setForceRerender,
+  skipToasts = false // Default to false for backward compatibility
 }: DemoAutoFillOptions): Promise<void> {
   if (!formService) {
     logger.error('No form service provided for demo auto-fill');
-    toast({
-      title: 'Demo Auto-Fill Error',
-      description: 'Form service not available',
-      variant: 'destructive'
-    });
+    if (!skipToasts) {
+      toast({
+        title: 'Demo Auto-Fill Error',
+        description: 'Form service not available',
+        variant: 'destructive'
+      });
+    }
     return;
   }
 
   if (!taskId) {
     logger.error('No task ID provided for demo auto-fill');
-    toast({
-      title: 'Demo Auto-Fill Error',
-      description: 'Task ID not provided',
-      variant: 'destructive'
-    });
+    if (!skipToasts) {
+      toast({
+        title: 'Demo Auto-Fill Error',
+        description: 'Task ID not provided',
+        variant: 'destructive'
+      });
+    }
     return;
   }
 
   logger.info(`Starting demo auto-fill for ${taskType} task ${taskId}`);
   
   // Show loading toast
-  toast({
-    title: 'Demo Auto-Fill',
-    description: 'Loading demo data...',
-    variant: 'default'
-  });
+  if (!skipToasts) {
+    toast({
+      title: 'Demo Auto-Fill',
+      description: 'Loading demo data...',
+      variant: 'default'
+    });
+  }
   
   // Reset any potential stuck state by triggering a force rerender
   setForceRerender(prev => !prev);
@@ -92,11 +100,13 @@ export async function handleDemoAutoFill({
       logger.warn(`Using the generic handler can cause duplicate service calls.`);
       
       // Show an explicit error and force redirect to the proper component
-      toast({
-        title: 'Demo Auto-Fill Prevented',
-        description: 'KY3P forms require the dedicated KY3PDemoAutoFill component. This operation has been blocked to prevent duplicate service calls.',
-        variant: 'destructive'
-      });
+      if (!skipToasts) {
+        toast({
+          title: 'Demo Auto-Fill Prevented',
+          description: 'KY3P forms require the dedicated KY3PDemoAutoFill component. This operation has been blocked to prevent duplicate service calls.',
+          variant: 'destructive'
+        });
+      }
       
       // Exit early to prevent any duplicate service calls
       logger.info('Blocking generic demo auto-fill handler for KY3P form to prevent duplicate calls');
@@ -110,11 +120,13 @@ export async function handleDemoAutoFill({
       // Check if the form service supports demo data
       if (!hasGetDemoData(formService)) {
         logger.error('FormService does not implement getDemoData method');
-        toast({
-          title: 'Demo Auto-Fill Error',
-          description: 'This form service does not support demo data',
-          variant: 'destructive'
-        });
+        if (!skipToasts) {
+          toast({
+            title: 'Demo Auto-Fill Error',
+            description: 'This form service does not support demo data',
+            variant: 'destructive'
+          });
+        }
         return;
       }
       
@@ -123,11 +135,13 @@ export async function handleDemoAutoFill({
       
       if (!demoData || Object.keys(demoData).length === 0) {
         logger.error('No demo data returned from service');
-        toast({
-          title: 'Demo Auto-Fill Error',
-          description: 'No demo data available for this form',
-          variant: 'destructive'
-        });
+        if (!skipToasts) {
+          toast({
+            title: 'Demo Auto-Fill Error',
+            description: 'No demo data available for this form',
+            variant: 'destructive'
+          });
+        }
         return;
       }
       
@@ -135,11 +149,13 @@ export async function handleDemoAutoFill({
       logger.info(`Retrieved ${fieldCount} demo fields for ${taskType}`);
       
       // Show progress toast
-      toast({
-        title: 'Demo Auto-Fill',
-        description: `Populating ${fieldCount} fields...`,
-        variant: 'default'
-      });
+      if (!skipToasts) {
+        toast({
+          title: 'Demo Auto-Fill',
+          description: `Populating ${fieldCount} fields...`,
+          variant: 'default'
+        });
+      }
       
       // Reset form with demo data
       resetForm(demoData);
@@ -195,26 +211,32 @@ export async function handleDemoAutoFill({
       await refreshStatus();
       
       // Show success toast
-      toast({
-        title: 'Demo Auto-Fill Complete',
-        description: `Successfully filled ${fieldCount} fields with demo data`,
-        variant: 'success'
-      });
+      if (!skipToasts) {
+        toast({
+          title: 'Demo Auto-Fill Complete',
+          description: `Successfully filled ${fieldCount} fields with demo data`,
+          variant: 'success'
+        });
+      }
       
     } catch (error) {
       logger.error(`Error in demo auto-fill for ${taskType}:`, error);
-      toast({
-        title: 'Demo Auto-Fill Error',
-        description: error instanceof Error ? error.message : 'Failed to apply demo data',
-        variant: 'destructive'
-      });
+      if (!skipToasts) {
+        toast({
+          title: 'Demo Auto-Fill Error',
+          description: error instanceof Error ? error.message : 'Failed to apply demo data',
+          variant: 'destructive'
+        });
+      }
     }
   } catch (error) {
     logger.error('Unexpected error in handleDemoAutoFill:', error);
-    toast({
-      title: 'Demo Auto-Fill Error',
-      description: 'An unexpected error occurred',
-      variant: 'destructive'
-    });
+    if (!skipToasts) {
+      toast({
+        title: 'Demo Auto-Fill Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+    };
   }
 }
