@@ -152,8 +152,11 @@ export function UnifiedDemoAutoFill(props: UnifiedDemoAutoFillProps) {
           }
         };
         
-        // Call generic handler with adapted types
-        await handleDemoAutoFill(adaptedProps);
+        // Call generic handler with adapted types and skip toasts (we already show them here)
+        await handleDemoAutoFill({
+          ...adaptedProps,
+          skipToasts: true // Skip toasts in the handler since we show them here
+        });
       }
     } catch (error) {
       console.error('Error during demo auto-fill:', error);
