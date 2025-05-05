@@ -71,7 +71,7 @@ export default function WebSocketDiagnosticPage() {
     
     // Cleanup all subscriptions on component unmount
     return () => {
-      unsubscribers.forEach(unsub => unsub());
+      unsubscribers.forEach(unsub => typeof unsub === 'function' && unsub());
     };
   }, [subscribe, unsubscribe, lastPingSent]);
   
@@ -158,33 +158,45 @@ export default function WebSocketDiagnosticPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Connection Status:</span>
-                <Badge 
-                  variant={isConnected ? "default" : isConnecting ? "outline" : "destructive"}
-                  className={isConnected ? "bg-green-600 hover:bg-green-600/80" : ""}
-                >
-                  {isConnected ? "Connected" : isConnecting ? "Connecting" : "Disconnected"}
-                </Badge>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Reconnection Attempts:</span>
-                <Badge variant={hasAttemptedConnecting ? "outline" : "secondary"}>
-                  {hasAttemptedConnecting ? "Exhausted" : "Normal"}
-                </Badge>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Ping Latency:</span>
-                {pingLatency !== null ? (
-                  <Badge variant="outline" className={pingLatency < 300 ? "text-green-500" : "text-amber-500"}>
-                    {pingLatency}ms
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Connection Status:</span>
+                  <Badge 
+                    variant={isConnected ? "default" : isConnecting ? "outline" : "destructive"}
+                    className={isConnected ? "bg-green-600 hover:bg-green-600/80" : ""}
+                  >
+                    {isConnected ? "Connected" : isConnecting ? "Connecting" : "Disconnected"}
                   </Badge>
-                ) : (
-                  <Badge variant="outline">Not tested</Badge>
-                )}
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Reconnection Attempts:</span>
+                  <Badge variant={hasAttemptedConnecting ? "outline" : "secondary"}>
+                    {hasAttemptedConnecting ? "Exhausted" : "Normal"}
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Ping Latency:</span>
+                  {pingLatency !== null ? (
+                    <Badge variant="outline" className={pingLatency < 300 ? "text-green-500" : "text-amber-500"}>
+                      {pingLatency}ms
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Not tested</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium mb-2">WebSocket Configuration</h4>
+                <div className="text-xs p-2 bg-muted rounded-md break-all">
+                  <p className="mb-1"><span className="font-semibold">Protocol:</span> {window.location.protocol === 'https:' ? 'wss:' : 'ws:'}</p>
+                  <p className="mb-1"><span className="font-semibold">Host:</span> {window.location.host}</p>
+                  <p><span className="font-semibold">Path:</span> /ws</p>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Using app-specific protocol to separate from Vite HMR</p>
               </div>
             </div>
           </CardContent>
