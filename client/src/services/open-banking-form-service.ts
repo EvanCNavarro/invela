@@ -1266,4 +1266,15 @@ export class OpenBankingFormServiceFactory {
 
 // Create singleton instance for use in the application
 export const openBankingFormService = _instance || (_instance = new OpenBankingFormService());
-export const openBankingFormServiceFactory = OpenBankingFormServiceFactory.getInstance();
+/**
+ * Export factory singleton instance with proper interface
+ * This implementation adds a static createService method that works with
+ * the unified service registration system
+ */
+export const openBankingFormServiceFactory = {
+  ...OpenBankingFormServiceFactory.getInstance(),
+  // Add static method expected by UnifiedServiceRegistration
+  createService: (companyId?: number, taskId?: number) => {
+    return new OpenBankingFormService(companyId, taskId);
+  }
+};
