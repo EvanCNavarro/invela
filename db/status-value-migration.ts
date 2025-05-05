@@ -83,53 +83,53 @@ async function migrateStatusValues() {
   
   // Migrate KYB responses
   await db.update(kybResponses)
-    .set({ status: FieldStatus.COMPLETE })
+    .set({ status: 'complete' }) // Use string value matching FieldStatus.COMPLETE
     .where(like(kybResponses.status, '%COMPLETE%'));
     
   await db.update(kybResponses)
-    .set({ status: FieldStatus.EMPTY })
+    .set({ status: 'empty' }) // Use string value matching FieldStatus.EMPTY
     .where(like(kybResponses.status, '%EMPTY%'));
     
   await db.update(kybResponses)
-    .set({ status: FieldStatus.INCOMPLETE })
+    .set({ status: 'incomplete' }) // Use string value matching FieldStatus.INCOMPLETE
     .where(like(kybResponses.status, '%INCOMPLETE%'));
     
   await db.update(kybResponses)
-    .set({ status: FieldStatus.INVALID })
+    .set({ status: 'invalid' }) // Use string value matching FieldStatus.INVALID
     .where(like(kybResponses.status, '%INVALID%'));
   
   // Migrate KY3P responses
   await db.update(ky3pResponses)
-    .set({ status: FieldStatus.COMPLETE })
+    .set({ status: 'complete' }) // Use string value matching FieldStatus.COMPLETE
     .where(like(ky3pResponses.status, '%COMPLETE%'));
     
   await db.update(ky3pResponses)
-    .set({ status: FieldStatus.EMPTY })
+    .set({ status: 'empty' }) // Use string value matching FieldStatus.EMPTY
     .where(like(ky3pResponses.status, '%EMPTY%'));
     
   await db.update(ky3pResponses)
-    .set({ status: FieldStatus.INCOMPLETE })
+    .set({ status: 'incomplete' }) // Use string value matching FieldStatus.INCOMPLETE
     .where(like(ky3pResponses.status, '%INCOMPLETE%'));
     
   await db.update(ky3pResponses)
-    .set({ status: FieldStatus.INVALID })
+    .set({ status: 'invalid' }) // Use string value matching FieldStatus.INVALID
     .where(like(ky3pResponses.status, '%INVALID%'));
   
   // Migrate Open Banking responses
   await db.update(openBankingResponses)
-    .set({ status: FieldStatus.COMPLETE })
+    .set({ status: 'complete' }) // Use string value matching FieldStatus.COMPLETE
     .where(like(openBankingResponses.status, '%COMPLETE%'));
     
   await db.update(openBankingResponses)
-    .set({ status: FieldStatus.EMPTY })
+    .set({ status: 'empty' }) // Use string value matching FieldStatus.EMPTY
     .where(like(openBankingResponses.status, '%EMPTY%'));
     
   await db.update(openBankingResponses)
-    .set({ status: FieldStatus.INCOMPLETE })
+    .set({ status: 'incomplete' }) // Use string value matching FieldStatus.INCOMPLETE
     .where(like(openBankingResponses.status, '%INCOMPLETE%'));
     
   await db.update(openBankingResponses)
-    .set({ status: FieldStatus.INVALID })
+    .set({ status: 'invalid' }) // Use string value matching FieldStatus.INVALID
     .where(like(openBankingResponses.status, '%INVALID%'));
   
   console.log('Status value migration completed successfully');
