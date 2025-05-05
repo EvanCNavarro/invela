@@ -15,6 +15,8 @@ interface WebSocketContextType {
   isConnected: boolean;
   isConnecting: boolean;
   connectionId: string | null;
+  // Flag to track if we've tried and failed to connect multiple times
+  hasAttemptedConnecting: boolean;
   send: (message: any) => void;
   subscribe: <T extends keyof WebSocketEventMap>(
     eventType: T,
@@ -40,6 +42,8 @@ interface WebSocketProviderProps {
  */
 export function WebSocketProvider({ children, debug = false }: WebSocketProviderProps) {
   const [wsUrl, setWsUrl] = useState<string>('');
+  // Add a state to track failed connection attempts even after recovery tries
+  const [hasAttemptedConnecting, setHasAttemptedConnecting] = useState(false);
   
   // Determine the correct WebSocket URL based on the current location
   useEffect(() => {
@@ -81,13 +85,20 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
     debug,
     autoConnect: wsUrl !== '', // Only auto-connect once we have a URL
     reconnectInterval: 2000, // Faster reconnection attempts
-    maxReconnectAttempts: 10  // More reconnection attempts before giving up
+    maxReconnectAttempts: 10,  // More reconnection attempts before giving up
+    onMaxReconnectAttemptsReached: () => {
+      // Track that we've attempted connecting extensively
+      setHasAttemptedConnecting(true);
+      console.log('[WebSocket] Maximum reconnection attempts reached, operating in fallback mode');
+    }
   });
   
   const value = {
     isConnected,
     isConnecting,
     connectionId,
+    // Include the flag to tell components we've tried but failed to connect
+    hasAttemptedConnecting,
     send,
     subscribe,
     unsubscribe
