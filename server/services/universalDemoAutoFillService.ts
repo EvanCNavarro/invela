@@ -15,6 +15,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { broadcastTaskUpdate } from './websocket';
 import { logger } from '../utils/logger';
 import { determineStatusFromProgress } from '../utils/progress';
+import { FieldStatus } from '../utils/field-status';
 
 // Add namespace context to logs
 const logContext = { service: 'UniversalDemoAutoFillService' };
@@ -391,7 +392,7 @@ export class UniversalDemoAutoFillService {
           await db.update(config.responsesTable)
             .set({
               [config.responseValueColumn]: demoValue,
-              status: demoValue && String(demoValue).trim().length > 0 ? 'complete' : 'empty',
+              status: demoValue && String(demoValue).trim().length > 0 ? FieldStatus.COMPLETE : FieldStatus.EMPTY,
               updated_at: timestamp,
               version: existingResponse.version + 1
             })
@@ -410,7 +411,7 @@ export class UniversalDemoAutoFillService {
               task_id: taskId,
               field_id: field.id,
               [config.responseValueColumn]: demoValue,
-              status: demoValue && String(demoValue).trim().length > 0 ? 'complete' : 'empty',
+              status: demoValue && String(demoValue).trim().length > 0 ? FieldStatus.COMPLETE : FieldStatus.EMPTY,
               created_at: timestamp,
               updated_at: timestamp,
               version: 1
