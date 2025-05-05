@@ -80,8 +80,8 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
   } = useWebSocket(wsUrl, {
     debug,
     autoConnect: wsUrl !== '', // Only auto-connect once we have a URL
-    reconnectInterval: 3000,
-    maxReconnectAttempts: 5
+    reconnectInterval: 2000, // Faster reconnection attempts
+    maxReconnectAttempts: 10  // More reconnection attempts before giving up
   });
   
   const value = {

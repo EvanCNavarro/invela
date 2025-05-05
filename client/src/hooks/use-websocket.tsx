@@ -87,8 +87,7 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
     }
 
     setIsConnecting(true);
-    log(`Connecting to WebSocket at ${url}`);
-
+    
     try {
       // Validate URL before creating WebSocket connection
       if (!url) {
@@ -97,65 +96,82 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}): UseWe
         return;
       }
       
-      // Parse the URL to ensure it's valid
-      try {
-        // This will throw if the URL is invalid
-        new URL(url);
-      } catch (err) {
-        logError(`Invalid WebSocket URL format: ${url}`, err);
-        setIsConnecting(false);
-        return;
-      }
-
-      console.log(`[WebSocket] Creating connection to: ${url}`);
-      const socket = new WebSocket(url);
+      // Create a simplified URL that matches exactly what the server expects
+      // This is the most critical part - we need to make sure the URL is correctly formatted
+      const wsUrl = (() => {
+        try {
+          // Get the protocol and host from current location
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const host = window.location.host;
+          return `${protocol}//${host}/ws`;
+        } catch (err) {
+          // Fallback to the original URL if anything fails
+          return url;
+        }
+      })();
+      
+      console.log(`[WebSocket] Attempting connection with URL: ${wsUrl}`);
+      const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
+
+      // Generate and store a connection ID early so we can use it in logs
+      const newConnectionId = `ws_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
+      setConnectionId(newConnectionId);
 
       socket.onopen = () => {
         setIsConnected(true);
         setIsConnecting(false);
         reconnectAttemptsRef.current = 0;
-        log('WebSocket connection established');
-
-        // Generate and store a connection ID
-        const newConnectionId = `ws_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
-        setConnectionId(newConnectionId);
+        console.log(`[WebSocket] Connection established (ID: ${newConnectionId})`);
 
         // Send an initial ping with connection ID to establish the connection
-        socket.send(JSON.stringify({
-          type: 'ping',
-          timestamp: new Date().toISOString(),
-          connectionId: newConnectionId
-        }));
+        try {
+          socket.send(JSON.stringify({
+            type: 'ping',
+            timestamp: new Date().toISOString(),
+            connectionId: newConnectionId
+          }));
+          console.log(`[WebSocket] Initial ping sent (ID: ${newConnectionId})`);
+        } catch (err) {
+          logError('Error sending initial ping:', err);
+        }
       };
 
       socket.onclose = (event) => {
         setIsConnected(false);
         setIsConnecting(false);
-        log(`WebSocket connection closed: ${event.code} - ${event.reason}`);
+        console.log(`[WebSocket] Connection closed: Code=${event.code}, Reason=${event.reason || 'none'}, Clean=${event.wasClean}`);
 
-        // Handle reconnection
-        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-          reconnectAttemptsRef.current += 1;
-          log(`Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
-          setTimeout(connect, reconnectInterval);
+        // Only attempt reconnection for abnormal closures
+        // 1000 = normal closure, 1001 = going away
+        if (event.code !== 1000 && event.code !== 1001) {
+          if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+            reconnectAttemptsRef.current += 1;
+            console.log(`[WebSocket] Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
+            setTimeout(connect, reconnectInterval);
+          } else {
+            console.error(`[WebSocket] Maximum reconnection attempts (${maxReconnectAttempts}) reached`);
+            
+            // Only show toast in production environment
+            if (process.env.NODE_ENV === 'production') {
+              toast({
+                title: 'Connection issue',
+                description: 'Having trouble connecting. Some real-time updates may be delayed.',
+                variant: 'destructive',
+              });
+            }
+          }
         } else {
-          logError('Maximum reconnection attempts reached');
-          toast({
-            title: 'Connection lost',
-            description: 'Unable to reconnect to server. Please refresh the page.',
-            variant: 'destructive',
-          });
+          console.log(`[WebSocket] Normal closure - no reconnect needed`);
+          reconnectAttemptsRef.current = 0; // Reset for potential future reconnects
         }
       };
 
       socket.onerror = (error) => {
-        logError('WebSocket error:', error);
-        toast({
-          title: 'Connection error',
-          description: 'There was a problem with the connection. Attempting to reconnect...',
-          variant: 'destructive',
-        });
+        console.error(`[WebSocket] Connection error:`, error);
+        
+        // Don't trigger a toast for every error - they often precede a close event
+        // which will handle reconnection
       };
 
       socket.onmessage = (event) => {
