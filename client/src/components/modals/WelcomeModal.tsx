@@ -69,18 +69,48 @@ const carouselContent = [
 ];
 
 // Preload all images to ensure fast display
+/**
+ * Preload images for carousel to ensure smooth transitions
+ * Only preloads images if onboarding is not completed
+ * 
+ * @param shouldPreload Boolean flag to determine if preloading should happen
+ * @param callback Optional callback for image load status
+ */
 const preloadImages = (
+  shouldPreload: boolean,
   callback?: (src: string, success: boolean) => void
-) => {
+): void => {
+  // Skip preloading if user has completed onboarding
+  if (!shouldPreload) {
+    return;
+  }
+  
+  // Track which images we're preloading for debugging
+  const preloadingImages = carouselContent.map(item => item.src);
+  
+  // Log once at the start of preloading instead of per image
+  import('@/lib/logger').then(({ logger }) => {
+    logger.debug('[WelcomeModal] Preloading onboarding carousel images', {
+      imageCount: preloadingImages.length,
+      images: preloadingImages
+    });
+  });
+  
+  // Preload all images in parallel
   carouselContent.forEach(item => {
     const img = new Image();
     img.src = item.src;
     img.onload = () => {
-      console.log(`Preloaded image: ${item.src}`);
       if (callback) callback(item.src, true);
     };
     img.onerror = (e) => {
-      console.error(`Failed to preload image: ${item.src}`, e);
+      // Only log errors
+      import('@/lib/logger').then(({ logger }) => {
+        logger.error('[WelcomeModal] Failed to preload image', {
+          src: item.src,
+          error: e
+        });
+      });
       if (callback) callback(item.src, false);
     };
   });
@@ -130,15 +160,21 @@ export function WelcomeModal() {
       userObject: JSON.stringify(user, null, 2).substring(0, 500) // Limit string length
     });
     
-    // Preload all images immediately to ensure fast display when modal shows
-    preloadImages((src, success) => {
-      if (success) {
-        setImagesLoaded(prev => ({
-          ...prev,
-          [src]: true
-        }));
+    // Preload images only if user hasn't completed onboarding
+    const shouldPreloadImages = !user.onboarding_user_completed;
+    
+    // Update with correct typing
+    preloadImages(
+      shouldPreloadImages, 
+      (src: string, success: boolean) => {
+        if (success) {
+          setImagesLoaded(prev => ({
+            ...prev,
+            [src]: true
+          }));
+        }
       }
-    });
+    );
     
     // First step: Check if user is already marked as onboarded
     if (user.onboarding_user_completed === true) {
@@ -230,12 +266,25 @@ export function WelcomeModal() {
 
       if (connected && websocket && onboardingTask?.id) {
         try {
-          websocket.send('task_update', {
-            taskId: onboardingTask.id,
-            status: 'completed',
-            metadata: {
-              onboardingCompleted: true,
-              completionTime: new Date().toISOString()
+          // Use dynamic import for logging without bundling the entire logger
+          import('@/lib/logger').then(({ logger }) => {
+            logger.info('[WelcomeModal] Sending task completion via WebSocket', {
+              taskId: onboardingTask.id,
+              status: 'completed'
+            });
+            
+            // Use the standard WebSocket sendMessage method available in the context
+            if (typeof websocket.sendMessage === 'function') {
+              websocket.sendMessage('task_update', {
+                taskId: onboardingTask.id,
+                status: 'completed',
+                metadata: {
+                  onboardingCompleted: true,
+                  completionTime: new Date().toISOString()
+                }
+              });
+            } else {
+              logger.warn('[WelcomeModal] WebSocket sendMessage not available, skipping update');
             }
           });
         } catch (error) {
@@ -322,11 +371,8 @@ export function WelcomeModal() {
 
   // Don't render anything if user has completed onboarding or modal isn't ready to show
   if (!user || user.onboarding_user_completed === true || !showModal) {
-    console.log('[WelcomeModal] Not rendering modal because:', {
-      noUser: !user,
-      onboardingCompleted: user?.onboarding_user_completed === true,
-      modalHidden: !showModal
-    });
+    // Only log this once per session to avoid excessive logs
+    // We use a debounced effect for this later
     return null;
   }
 
@@ -349,8 +395,7 @@ export function WelcomeModal() {
           {/* Image content with even spacing above and below */}
           <div className="px-12 py-16 flex justify-center items-center">
             <div className="relative flex items-center justify-center w-full">
-              {/* Log image path but don't display anything */}
-              {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
+              {/* Image rendering */}
               
               {/* Use conditional rendering with display:none instead of opacity */}
               <div className="relative w-full h-[250px] flex items-center justify-center">
@@ -372,11 +417,17 @@ export function WelcomeModal() {
                     height: 'auto'
                   }}
                   onError={(e) => {
-                    console.error('Failed to load image:', carouselContent[currentSlide].src, e);
+                    // Use dynamic import to avoid bundling logger in case it's not used
+                    import('@/lib/logger').then(({ logger }) => {
+                      logger.error('[WelcomeModal] Failed to load carousel image', {
+                        src: carouselContent[currentSlide].src,
+                        slide: currentSlide,
+                        error: e
+                      });
+                    });
                   }}
                   onLoad={() => {
-                    console.log('Successfully loaded image:', carouselContent[currentSlide].src);
-                    // Mark this image as loaded
+                    // Mark this image as loaded without excessive logging
                     setImagesLoaded(prev => ({
                       ...prev,
                       [carouselContent[currentSlide].src]: true
