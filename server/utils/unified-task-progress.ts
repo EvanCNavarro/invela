@@ -33,6 +33,9 @@ import {
 // Import WebSocket utilities
 import { broadcast } from '../utils/unified-websocket';
 
+// Import the progress validator utilities
+import { validateProgress, validateProgressForUpdate, getProgressSqlValue, isProgressDifferent } from './progress-validator';
+
 // Constants for task status
 export const TaskStatus = {
   NOT_STARTED: 'not_started',
@@ -123,7 +126,8 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
         .from(ky3pFields);
       totalFields = totalResult?.count || 0;
       
-      // Count completed fields
+      // Count completed fields - handle both field_id and field_key responses
+      // KY3P is special because it has both numeric and string field identifiers
       const [completedResult] = await db
         .select({ count: count() })
         .from(ky3pResponses)
@@ -134,6 +138,17 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
           )
         );
       completedFields = completedResult?.count || 0;
+      
+      // Log extended diagnostics for KY3P progress calculation
+      if (debug) {
+        console.log(`[KY3P Progress] Calculated progress for task ${taskId}:`, {
+          taskId,
+          totalFields,
+          completedFields,
+          progress: totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0,
+          timeStamp: new Date().toISOString()
+        });
+      }
     } 
     else if (taskType === 'open_banking') {
       // Count total fields
@@ -157,13 +172,10 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
     
     // Calculate progress percentage
     if (totalFields > 0) {
-      progress = Math.round((completedFields / totalFields) * 100);
-      // Ensure progress is properly converted to a number to avoid type mismatches
-      progress = Number(progress);
+      const rawProgress = Math.round((completedFields / totalFields) * 100);
+      // Use our validateProgress function to ensure consistent handling
+      progress = validateProgress(rawProgress) as number;
     }
-    
-    // Make sure progress is between 0 and 100
-    progress = Math.max(0, Math.min(100, progress));
     
     if (debug) {
       console.log(`[UnifiedProgressCalc] Task ${taskId} (${taskType}) progress: ${completedFields}/${totalFields} = ${progress}%`);
@@ -197,9 +209,22 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
 /**
  * Determine task status based on progress and submission state
  */
-function getStatusFromProgress(progress: number, currentStatus: string | null): string {
+function getStatusFromProgress(progress: number | undefined | null, currentStatus: string | null): string {
   // First normalize the current status
   const normalizedStatus = normalizeTaskStatus(currentStatus);
+  
+  // Ensure progress is a valid number - default to 0 if undefined or null
+  const safeProgress = typeof progress === 'number' && !isNaN(progress) ? progress : 0;
+  
+  // Log debug information when determining status
+  console.log(`[STATUS DETERMINATION] Calculating status for task with:`, {
+    progress: safeProgress,
+    currentStatus: normalizedStatus,
+    hasSubmissionDate: false, // These would be passed by the caller if needed
+    hasSubmittedFlag: false,
+    hasResponses: false,
+    timestamp: new Date().toISOString()
+  });
   
   // If the task is already in a terminal state, don't change it
   if (
@@ -208,15 +233,19 @@ function getStatusFromProgress(progress: number, currentStatus: string | null): 
     normalizedStatus === TaskStatus.APPROVED ||
     normalizedStatus === TaskStatus.ARCHIVED
   ) {
+    console.log(`[STATUS DETERMINATION] Task is in terminal state, maintaining status: ${normalizedStatus}`);
     return normalizedStatus;
   }
   
   // Otherwise, set the status based on progress
-  if (progress === 0) {
+  if (safeProgress === 0) {
+    console.log(`[STATUS DETERMINATION] Task has 0% progress, setting to NOT_STARTED`);
     return TaskStatus.NOT_STARTED;
-  } else if (progress < 100) {
+  } else if (safeProgress < 100) {
+    console.log(`[STATUS DETERMINATION] Task has ${safeProgress}% progress, setting to IN_PROGRESS`);
     return TaskStatus.IN_PROGRESS;
   } else { // progress === 100
+    console.log(`[STATUS DETERMINATION] Task has 100% progress, setting to READY_FOR_SUBMISSION`);
     return TaskStatus.READY_FOR_SUBMISSION;
   }
 }
@@ -283,10 +312,22 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
         throw new Error(`Invalid progress value: ${progress}`);
       }
 
-      // CRITICAL FIX: Use explicit SQL casting to ensure progress is properly persisted
-      // This ensures proper type handling by the database system
+      // CRITICAL FIX: Use our progress validator to ensure consistent SQL type casting
+      // This ensures proper type handling by the database system for all task types
+      // Import validator functions - these must be imported at the top of the file
+      // Validate progress and get proper SQL expression
+      const validatedProgress = validateProgressForUpdate(taskId, numericProgress, {
+        source: 'unified-task-progress',
+        debug: debug,
+        context: {
+          taskType,
+          previousProgress: task.progress ?? 0, // Default to 0 if null/undefined
+          isForceUpdate: forceUpdate
+        }
+      });
+      
       console.log(`[UnifiedProgress] Updating task ${taskId} progress with explicit SQL casting:`, {
-        progress: numericProgress,
+        progress: validatedProgress,
         status: newStatus,
         taskType
       });
@@ -294,15 +335,20 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          // Use explicit SQL casting for progress to ensure it's treated as a number
-          progress: sql`${numericProgress}::integer`,
+          // Use consistent SQL type casting for all task types
+          progress: getProgressSqlValue(validatedProgress),
           status: newStatus,
           updated_at: new Date(),
           // Add more diagnostic info to metadata
           metadata: sql`jsonb_set(
-            COALESCE(${tasks.metadata}, '{}'::jsonb),
-            '{lastProgressUpdate}',
-            to_jsonb(now()::text)
+            jsonb_set(
+              COALESCE(${tasks.metadata}, '{}'::jsonb),
+              '{lastProgressUpdate}',
+              to_jsonb(now()::text)
+            ),
+            '{progressHistory}',
+            COALESCE(${tasks.metadata} -> 'progressHistory', '[]'::jsonb) || 
+            jsonb_build_array(jsonb_build_object('value', ${validatedProgress}, 'timestamp', now()::text))
           )`
         })
         .where(eq(tasks.id, taskId))
