@@ -257,6 +257,9 @@ router.get('/api/ky3p/responses/:taskId', requireAuth, async (req, res) => {
 
 /**
  * Clear all responses for a KY3P task
+ * 
+ * @param preserveProgress If true, don't reset progress to 0% after clearing fields
+ *                         This is useful when editing forms to prevent progress from resetting
  */
 router.post('/api/ky3p/clear-fields/:taskId', requireAuth, async (req, res) => {
   try {
@@ -268,20 +271,54 @@ router.post('/api/ky3p/clear-fields/:taskId', requireAuth, async (req, res) => {
       });
     }
     
-    console.log(`[KY3P API] Clear all fields requested for task ${taskId}`);
+    // Check if we should preserve progress (used during form editing)
+    const preserveProgress = req.query.preserveProgress === 'true';
+    
+    console.log(`[KY3P API] Clear all fields requested for task ${taskId}`, {
+      preserveProgress
+    });
+    
+    // Save current progress if we need to preserve it
+    let currentProgress = 0;
+    if (preserveProgress) {
+      const [task] = await db.select({ progress: tasks.progress })
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      currentProgress = task?.progress || 0;
+      console.log(`[KY3P API] Preserving current progress: ${currentProgress}%`);
+    }
     
     // Delete all responses for this task
     await db.delete(ky3pResponses)
       .where(eq(ky3pResponses.task_id, taskId));
     
-    // Update task progress (will be 0%)
-    await updateTaskProgress(taskId);
-    
-    return res.status(200).json({
-      success: true,
-      message: `Successfully cleared all fields for task ${taskId}`,
-      progressPercent: 0
-    });
+    if (preserveProgress) {
+      // If preserving progress, update the task with the previous progress value
+      await db.update(tasks)
+        .set({
+          // Use the SQL value validator to ensure proper type casting
+          progress: sql`CAST(${currentProgress} AS INTEGER)`,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+      
+      return res.status(200).json({
+        success: true,
+        message: `Successfully cleared all fields for task ${taskId} while preserving progress`,
+        progressPercent: currentProgress,
+        preservedProgress: true
+      });
+    } else {
+      // Standard behavior: update task progress (will be 0%)
+      await updateTaskProgress(taskId);
+      
+      return res.status(200).json({
+        success: true,
+        message: `Successfully cleared all fields for task ${taskId}`,
+        progressPercent: 0,
+        preservedProgress: false
+      });
+    }
   } catch (error) {
     console.error('[KY3P API] Error clearing fields', error);
     return res.status(500).json({
