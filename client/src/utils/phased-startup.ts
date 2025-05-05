@@ -36,36 +36,36 @@ const phaseConfigs: Record<StartupPhase, PhaseConfig> = {
   // Phase 1: React framework, router, core providers
   framework: {
     dependencies: [],
-    timeout: 2000,
+    timeout: 5000, // Increased from 2000ms to 5000ms
     critical: true
   },
   
   // Phase 2: User and company context providers
   context: {
     dependencies: ['framework'],
-    timeout: 3000,
+    timeout: 6000, // Increased from 3000ms to 6000ms
     critical: true
   },
   
   // Phase 3: Form services and other business logic services
   services: {
     dependencies: ['context'],
-    timeout: 3000,
+    timeout: 8000, // Increased from 3000ms to 8000ms
     critical: true
   },
   
   // Phase 4: WebSocket and other communication channels
   communication: {
     dependencies: ['services'],
-    timeout: 5000,
+    timeout: 10000, // Increased from 5000ms to 10000ms
     critical: false // App can function without WebSocket initially
   },
   
   // Phase 5: Application is fully initialized and ready
   ready: {
     dependencies: ['framework', 'context', 'services'], // Communication not required
-    timeout: 10000, // Increased from 1000ms to 10000ms to allow more time for component initialization
-    critical: false // Changed from true to false to prevent application failure when timeout occurs
+    timeout: 20000, // Increased from 10000ms to 20000ms to allow adequate time for component initialization
+    critical: false // Non-critical to prevent application failure when timeout occurs
   }
 };
 
@@ -130,23 +130,40 @@ class PhaseStartup {
   private async executePhase(phase: StartupPhase): Promise<void> {
     logger.info(`Executing startup phase: ${phase}`);
     
-    // OODA: Observe - Check if dependencies are satisfied
-    const config = phaseConfigs[phase];
-    for (const dep of config.dependencies) {
-      if (!this.completedPhases.has(dep)) {
-        logger.warn(`Cannot execute phase ${phase}, dependency ${dep} not satisfied`);
-        return;
-      }
+    // Prevent duplicate execution
+    if (this.completedPhases.has(phase)) {
+      logger.info(`Phase ${phase} already completed, skipping`);
+      return;
     }
     
-    // OODA: Orient - Set up a timeout for this phase
+    // OODA: Observe - Check if dependencies are satisfied
+    const config = phaseConfigs[phase];
+    const unsatisfiedDeps = config.dependencies.filter(dep => !this.completedPhases.has(dep));
+    
+    if (unsatisfiedDeps.length > 0) {
+      logger.warn(`Cannot execute phase ${phase}, dependencies not satisfied: ${unsatisfiedDeps.join(', ')}`);
+      return;
+    }
+    
+    // OODA: Orient - Set up a timeout for this phase with better handling
     const timeoutId = setTimeout(() => {
       logger.error(`Phase ${phase} timed out after ${config.timeout}ms`);
+      
       if (config.critical) {
         logger.error(`Critical phase ${phase} failed, application may not function correctly`);
+        // Log more diagnostic information
+        logger.error(`Pending callbacks for phase ${phase}: ${this.phaseCallbacks[phase].length}`);
+        logger.error(`Completed phases: ${Array.from(this.completedPhases).join(', ')}`);
       } else {
-        // Continue with next phases if non-critical
+        // Continue with next phases if non-critical with enhanced logging
+        logger.warn(`Non-critical phase ${phase} timed out, continuing startup process`);
         this.completedPhases.add(phase);
+        
+        // Clear the timer reference
+        delete this.timers[phase];
+        
+        // Give detailed debugging information
+        logger.info(`Moving forward from phase ${phase} timeout to dependent phases`);
         this.proceedToNextPhases(phase);
       }
     }, config.timeout);
@@ -158,35 +175,57 @@ class PhaseStartup {
       const callbacks = this.phaseCallbacks[phase];
       logger.info(`Executing ${callbacks.length} callbacks for phase ${phase}`);
       
-      // Execute callbacks in sequence (not parallel to ensure proper order)
-      for (const callback of callbacks) {
+      // Execute callbacks in sequence with more robust error handling
+      for (let i = 0; i < callbacks.length; i++) {
         try {
-          await callback();
+          logger.info(`Executing callback ${i+1}/${callbacks.length} for phase ${phase}`);
+          await Promise.race([
+            callbacks[i](),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error(`Callback ${i+1} timeout`)), config.timeout / 2)
+            )
+          ]);
         } catch (error) {
-          logger.error(`Error in phase ${phase} callback:`, 
-            error instanceof Error ? error.message : String(error));
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error(`Error in phase ${phase} callback ${i+1}/${callbacks.length}: ${errorMessage}`);
+          
           if (config.critical) {
-            throw error; // Re-throw for critical phases
+            // Only throw for critical phases to stop execution
+            throw error;
+          } else {
+            // For non-critical phases, log and continue to next callback
+            logger.warn(`Continuing to next callback despite error in phase ${phase}`);
           }
         }
       }
       
       // Phase completed successfully
-      clearTimeout(this.timers[phase]);
+      if (this.timers[phase]) {
+        clearTimeout(this.timers[phase]);
+        delete this.timers[phase];
+      }
+      
       this.completedPhases.add(phase);
       logger.info(`Phase ${phase} completed successfully`);
       
       // Proceed to the next phases that depend on this one
       this.proceedToNextPhases(phase);
     } catch (error) {
-      clearTimeout(this.timers[phase]);
-      logger.error(`Phase ${phase} failed:`, 
-        error instanceof Error ? error.message : String(error));
+      // Ensure timeout is cleared
+      if (this.timers[phase]) {
+        clearTimeout(this.timers[phase]);
+        delete this.timers[phase];
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`Phase ${phase} failed: ${errorMessage}`);
       
       if (config.critical) {
         logger.error(`Critical phase ${phase} failed, stopping startup process`);
+        // Do not proceed to next phases for critical failures
       } else {
         // Continue with next phases if non-critical
+        logger.warn(`Non-critical phase ${phase} failed, continuing startup process`);
         this.completedPhases.add(phase);
         this.proceedToNextPhases(phase);
       }
