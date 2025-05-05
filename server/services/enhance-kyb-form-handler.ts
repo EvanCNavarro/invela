@@ -12,7 +12,13 @@ import { eq, and } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket';
 
-// Use the logger directly, no need to create a new instance
+// Use logger with a specific context for this service
+const serviceLogger = {
+  info: (message, meta) => logger.info(`[EnhancedKybFormHandler] ${message}`, meta),
+  error: (message, meta) => logger.error(`[EnhancedKybFormHandler] ${message}`, meta),
+  debug: (message, meta) => logger.debug(`[EnhancedKybFormHandler] ${message}`, meta),
+  warn: (message, meta) => logger.warn(`[EnhancedKybFormHandler] ${message}`, meta)
+};
 
 /**
  * Update task with file information using the unified tracking approach

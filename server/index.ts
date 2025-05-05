@@ -192,13 +192,39 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 const PORT = getDeploymentPort();
 const HOST = getDeploymentHost();
 
-// Start the server with the configured port and host
-server.listen(PORT, HOST, () => {
-  log(`Server running on ${HOST}:${PORT}`);
+// Differentiate between development and deployment environments
+// For local development (workflow), use port 5000
+// For Autoscale deployment, use port 8080
+const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
+
+// Set environment variables based on context
+if (isDeployment) {
+  // For Autoscale deployment
+  process.env.NODE_ENV = 'production';
+  process.env.PORT = '8080';
+  process.env.HOST = '0.0.0.0';
+} else {
+  // For local development workflow
+  process.env.NODE_ENV = 'development';
+  process.env.PORT = '5000';
+  process.env.HOST = '0.0.0.0';
+}
+
+// Use environment-appropriate settings
+const FORCE_USE_ENV_PORT = parseInt(process.env.PORT, 10);
+const FORCE_USE_ENV_HOST = '0.0.0.0'; // Required for Replit
+const FORCE_PRODUCTION = process.env.NODE_ENV === 'production';
+
+// Log environment detection information
+console.log(`[ENV] Using PORT=${FORCE_USE_ENV_PORT} from environment (override: ${process.env.PORT ? 'yes' : 'no'})`);
+console.log(`[ENV] Environment=${process.env.NODE_ENV || 'development'} (production: ${FORCE_PRODUCTION ? 'yes' : 'no'})`);
+
+server.listen(FORCE_USE_ENV_PORT, FORCE_USE_ENV_HOST, () => {
+  log(`Server running on ${FORCE_USE_ENV_HOST}:${FORCE_USE_ENV_PORT}`);
   log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Log additional deployment information
-  logDeploymentInfo(PORT, HOST);
+  logDeploymentInfo(FORCE_USE_ENV_PORT, FORCE_USE_ENV_HOST);
   
   // Start the periodic task reconciliation system
   if (process.env.NODE_ENV !== 'test') {
