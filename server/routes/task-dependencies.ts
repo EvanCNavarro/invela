@@ -329,6 +329,8 @@ export async function unlockAllTasks(companyId: number) {
   
   try {
     // Find all tasks for this company
+    // CRITICAL FIX: Ensure we don't have any task type restrictions
+    // This ensures KY3P tasks are properly included in the unlocking process
     const companyTasks = await db.select()
       .from(tasks)
       .where(
@@ -338,6 +340,7 @@ export async function unlockAllTasks(companyId: number) {
             eq(tasks.status, 'locked'),
             eq(tasks.status, 'not_started'),
             eq(tasks.status, 'ready_for_submission'), // Also check for tasks with incorrect status
+            eq(tasks.status, 'in_progress'),         // Include in_progress tasks to ensure KY3P tasks are processed
             isNull(tasks.status)
           )
         )
@@ -348,18 +351,24 @@ export async function unlockAllTasks(companyId: number) {
       return;
     }
     
+    // IMPROVEMENT: Explicitly log any KY3P tasks found to verify they're being included
+    const ky3pTasks = companyTasks.filter(t => 
+      t.task_type === 'ky3p' || t.task_type === 'sp_ky3p_assessment'
+    );
+    
     logger.info('[TaskDependencies] Found tasks to unlock', { 
       companyId, 
       count: companyTasks.length,
       taskIds: companyTasks.map(t => t.id),
-      taskTypes: companyTasks.map(t => t.task_type)
+      taskTypes: companyTasks.map(t => t.task_type),
+      ky3pTaskCount: ky3pTasks.length,
+      ky3pTaskIds: ky3pTasks.map(t => t.id)
     });
     
     // Unlock each task using the unified progress calculator
     for (const task of companyTasks) {
-      // IMPORTANT CHANGE: Use the new unified progress calculator
-      // This ensures consistent progress calculation across all systems
-      // The preserveExisting flag ensures we don't reset progress if it already exists
+      // CRITICAL FIX: Special handling for KY3P tasks to ensure their progress is preserved
+      const isKy3pTask = task.task_type === 'ky3p' || task.task_type === 'sp_ky3p_assessment';
       
       // Create metadata for the task update
       const updateMetadata = {
@@ -368,21 +377,38 @@ export async function unlockAllTasks(companyId: number) {
         prerequisite_completed_at: new Date().toISOString(),
         dependencyUnlockOperation: true,
         previousProgress: task.progress || 0,
-        previousStatus: task.status || 'unknown'
+        previousStatus: task.status || 'unknown',
+        // Add a flag to indicate this is a KY3P task if applicable
+        isKy3pTask: isKy3pTask
       };
       
+      // For KY3P tasks, log detailed information before updating
+      if (isKy3pTask) {
+        logger.info('[TaskDependencies] Processing KY3P task', {
+          taskId: task.id,
+          taskType: task.task_type,
+          currentProgress: task.progress,
+          currentStatus: task.status,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       // Use the unified progress calculator with preserveExisting=true
-      // This ensures we don't reset progress for tasks that already have progress
+      // This ensures we don't reset progress if it already exists
+      // CRITICAL FIX: Force preserveExisting for KY3P tasks to prevent progress resets
       const taskProgress = await updateAndBroadcastProgress(task.id, task.task_type, {
         debug: true,
         preserveExisting: true, // Critical flag to prevent progress resets
+        forcePreserve: isKy3pTask, // Force preservation for KY3P tasks
         metadata: updateMetadata
       });
       
+      // Enhanced logging to track task updates
       logger.info('[TaskDependencies] Unlocked task using unified progress calculator', { 
         companyId, 
         taskId: task.id,
         taskType: task.task_type,
+        isKy3pTask,
         calculatedProgress: taskProgress,
         previousProgress: task.progress || 0,
         wasPreserved: (task.progress || 0) > 0 && taskProgress === (task.progress || 0)

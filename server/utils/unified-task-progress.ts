@@ -119,7 +119,10 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
         );
       completedFields = completedResult?.count || 0;
     } 
-    else if (taskType === 'ky3p') {
+    else if (taskType === 'ky3p' || taskType === 'sp_ky3p_assessment') {
+      // IMPROVEMENT: Added support for both KY3P task types
+      // This ensures we use the same progress calculation logic regardless of task_type name
+      
       // Count total fields
       const [totalResult] = await db
         .select({ count: count() })
@@ -134,7 +137,7 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
         .where(
           and(
             eq(ky3pResponses.task_id, taskId),
-            sql`${ky3pResponses.status} = 'complete'`
+            sql`LOWER(${ky3pResponses.status}) = 'complete'` // Normalize status to lowercase
           )
         );
       completedFields = completedResult?.count || 0;
@@ -143,6 +146,8 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
       if (debug) {
         console.log(`[KY3P Progress] Calculated progress for task ${taskId}:`, {
           taskId,
+          taskType,
+          normalizedTaskType: 'ky3p', // We use the same calculation for both KY3P task types
           totalFields,
           completedFields,
           progress: totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0,

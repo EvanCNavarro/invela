@@ -11,9 +11,9 @@
  * Usage: node fix-task-743-missing-from-dependencies.js [task_id]
  */
 
-const { db } = require('./server/db');
-const { eq, and } = require('drizzle-orm');
-const { tasks } = require('./db/schema');
+import { db } from './server/db';
+import { eq, and } from 'drizzle-orm';
+import { tasks } from './db/schema';
 
 // ANSI color codes for console output
 const colors = {
