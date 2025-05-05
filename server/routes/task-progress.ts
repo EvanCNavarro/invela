@@ -1,49 +1,32 @@
 /**
- * Task Progress API
+ * Task Progress API Routes
  * 
- * Provides endpoints for calculating and updating task progress using the
- * unified progress calculation system with transaction boundaries.
+ * This file provides API endpoints for managing task progress directly.
  */
 
-import express from 'express';
-import { updateKy3pProgressFixed } from '../utils/unified-progress-fixed';
-import { updateTaskProgress } from '../utils/progress';
-import { logger } from '../utils/logger';
+import { Router } from 'express';
+import { db } from '@db';
+import { tasks } from '@db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { requireAuth } from '../middleware/auth';
 
-const router = express.Router();
+const router = Router();
 
 /**
- * Force update progress for a specific task
- * POST /api/tasks/:taskId/progress
+ * Get a task's current progress
  */
-router.post('/:taskId/progress', async (req, res) => {
-  const taskId = parseInt(req.params.taskId, 10);
-  const { force = false, debug = false, source = 'api' } = req.body;
-  
-  if (isNaN(taskId) || taskId <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid task ID'
-    });
-  }
-  
+router.get('/api/tasks/:taskId', requireAuth, async (req, res) => {
   try {
-    logger.info(`[Task Progress API] Updating progress for task ${taskId}`, {
-      taskId,
-      force,
-      debug,
-      source,
-      requestedBy: req.session?.user?.email || 'unknown',
-      timestamp: new Date().toISOString()
-    });
+    const taskId = parseInt(req.params.taskId);
+    if (isNaN(taskId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
+    }
     
-    // First, determine if this is a KY3P task
-    const { db } = await import('@db');
-    const { tasks } = await import('@db/schema');
-    const { eq } = await import('drizzle-orm');
-    
-    const [task] = await db
-      .select()
+    // Get the task
+    const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
     
@@ -54,112 +37,68 @@ router.post('/:taskId/progress', async (req, res) => {
       });
     }
     
-    // Use the KY3P specific function for KY3P tasks
-    const isKy3pTask = task.task_type.toLowerCase().includes('ky3p') || 
-                      task.task_type.toLowerCase().includes('security');
-    
-    const result = isKy3pTask
-      ? await updateKy3pProgressFixed(taskId, {
-          debug,
-          forceUpdate: force,
-          metadata: { source: source }
-        })
-      : await updateTaskProgress(taskId, task.task_type.toLowerCase(), {
-      forceUpdate: force,
-      debug,
-      metadata: { source: source }
-    });
-    
-    // Log the result
-    logger.info(`[Task Progress API] Progress update result for task ${taskId}`, {
-      taskId,
-      success: result.success,
-      progress: result.progress,
-      status: result.status,
-      message: result.message
-    });
-    
-    return res.json(result);
+    return res.status(200).json(task);
   } catch (error) {
-    logger.error(`[Task Progress API] Error updating progress for task ${taskId}`, {
-      taskId,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
+    console.error('[Task API] Error getting task', error);
     return res.status(500).json({
       success: false,
-      message: 'Error updating task progress',
+      message: 'An error occurred while getting the task',
       error: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
 /**
- * Get current progress for a specific task
- * GET /api/tasks/:taskId/progress
+ * Update a task's progress directly
+ * This is useful for testing progress-related functionality
  */
-router.get('/:taskId/progress', async (req, res) => {
-  const taskId = parseInt(req.params.taskId, 10);
-  
-  if (isNaN(taskId) || taskId <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid task ID'
-    });
-  }
-  
+router.post('/api/tasks/:taskId/progress', requireAuth, async (req, res) => {
   try {
-    // First, determine if this is a KY3P task
-    const { db } = await import('@db');
-    const { tasks } = await import('@db/schema');
-    const { eq } = await import('drizzle-orm');
+    const taskId = parseInt(req.params.taskId);
+    if (isNaN(taskId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
+    }
     
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
+    const { progress } = req.body;
+    if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid progress value (must be a number between 0 and 100)'
+      });
+    }
     
-    if (!task) {
+    // Update the task progress
+    const [updatedTask] = await db.update(tasks)
+      .set({
+        progress: sql`CAST(${progress} AS INTEGER)`,
+        updated_at: new Date(),
+        status: progress === 0 ? 'not_started' : 
+               progress < 100 ? 'in_progress' : 
+               'ready_for_submission'
+      })
+      .where(eq(tasks.id, taskId))
+      .returning();
+    
+    if (!updatedTask) {
       return res.status(404).json({
         success: false,
         message: `Task ${taskId} not found`
       });
     }
     
-    // Use the KY3P specific function for KY3P tasks
-    const isKy3pTask = task.task_type.toLowerCase().includes('ky3p') || 
-                      task.task_type.toLowerCase().includes('security');
-    
-    // Use appropriate function without forcing update
-    const result = isKy3pTask
-      ? await updateKy3pProgressFixed(taskId, {
-          debug: true,
-          forceUpdate: false,
-          metadata: { source: 'api-get' }
-        })
-      : await updateTaskProgress(taskId, task.task_type.toLowerCase(), {
-      forceUpdate: false,
-      debug: true,
-      metadata: { source: 'api-get' }
-    });
-    
-    return res.json({
+    return res.status(200).json({
       success: true,
-      taskId,
-      progress: result.progress,
-      status: result.status
+      message: `Successfully updated progress for task ${taskId} to ${progress}%`,
+      task: updatedTask
     });
   } catch (error) {
-    logger.error(`[Task Progress API] Error getting progress for task ${taskId}`, {
-      taskId,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
+    console.error('[Task API] Error updating task progress', error);
     return res.status(500).json({
       success: false,
-      message: 'Error getting task progress',
+      message: 'An error occurred while updating the task progress',
       error: error instanceof Error ? error.message : String(error)
     });
   }
