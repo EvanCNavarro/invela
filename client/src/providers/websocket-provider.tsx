@@ -64,20 +64,32 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       // Determine protocol (wss for https, ws for http)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       
-      // OODA: Observe - Check if we have valid host information
-      if (!window.location.host || window.location.host.includes('undefined')) {
+      // OODA: Observe - Enhanced check for valid host information
+      if (!window.location.host || 
+          window.location.host === '' || 
+          window.location.host.includes('undefined') || 
+          window.location.host.includes('null')) {
         // Log as info to avoid false alarms, this is expected during startup
-        logger.info('No valid host information available yet, delaying connection', null, { tags: ['startup'] });
+        logger.info('No valid host information available yet, delaying connection', 
+          { host: window.location.host }, { tags: ['startup'] });
         return null; // Signal we need to delay
       }
       
       // OODA: Orient - Create URL based on current location
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      // Validate URL before returning
+      // Validate URL before returning with more detailed error reporting
       try {
         // This will throw if the URL is invalid
-        new URL(wsUrl);
+        const url = new URL(wsUrl);
+        
+        // Additional validation to catch problematic URLs that might parse successfully
+        // but would still lead to connection errors
+        if (!url.host || url.host === '' || url.host.includes('undefined')) {
+          logger.warn(`Technically valid but suspicious WebSocket URL: ${wsUrl}, host: ${url.host}`);
+          return null;
+        }
+        
         return wsUrl;
       } catch (urlError) {
         logger.warn(`Invalid WebSocket URL: ${wsUrl}`, urlError);
@@ -261,16 +273,27 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
   };
   
-  // Connect on mount
+  // Connect on mount with delayed initial connection
   useEffect(() => {
     if (alreadyInitialized.current) return;
     
     alreadyInitialized.current = true;
     logger.info('WebSocket connection manager initialized');
-    connect();
+    
+    // Intentionally delay initial connection attempt to give the application time to fully initialize
+    // This allows location information to be properly populated before attempting connection
+    const initialDelay = 1000; // 1 second delay for initial connection
+    logger.info(`Scheduling initial WebSocket connection in ${initialDelay}ms to ensure environment is ready`);
+    
+    const initialConnectionTimer = setTimeout(() => {
+      connect();
+    }, initialDelay);
     
     // Clean up on unmount
     return () => {
+      // Cancel initial connection if component unmounts before it happens
+      clearTimeout(initialConnectionTimer);
+      
       // Stop heartbeat
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
