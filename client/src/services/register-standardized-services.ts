@@ -14,6 +14,7 @@ import { formServiceFactory } from './form-service-factory';
 import { createUnifiedKY3PFormService } from './unified-ky3p-form-service';
 import { FormServiceInterface, FormField, FormSection, FormSubmitOptions } from './formService';
 import { ky3pFormServiceFactory } from './ky3p-form-service';
+import { openBankingFormService, openBankingFormServiceFactory } from './open-banking-form-service';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('RegisterStandardizedServices');
@@ -138,7 +139,16 @@ export function registerStandardizedServices(): void {
     
     logger.info('[RegisterServices] Successfully registered unified KY3P form service for all task types');
     
-    // Additional service registrations can go here
+    // Register Open Banking form service
+    logger.info('[RegisterServices] Registering Open Banking form service');
+    const openBankingTaskTypes = ['open_banking', 'open_banking_survey'];
+    
+    openBankingTaskTypes.forEach(taskType => {
+      logger.info(`[RegisterServices] Registering Open Banking service for task type: ${taskType}`);
+      componentFactory.registerFormService(taskType, openBankingFormService);
+    });
+    
+    logger.info('[RegisterServices] Successfully registered Open Banking form service');
     
     logger.info('[RegisterServices] All standardized form services registered successfully');
   } catch (error) {
@@ -214,6 +224,15 @@ export function useStandardizedServices(): void {
       logger.info(`[KY3PFormServiceFactory] Using unified service for company ${companyId}, task ${taskId}`);
       return syncFactoryAdapter(companyId, taskId);
     };
+    
+    // Also register Open Banking form service in useStandardizedServices
+    logger.info('[RegisterServices] Re-registering Open Banking form service as default');
+    const openBankingTaskTypes = ['open_banking', 'open_banking_survey'];
+    
+    openBankingTaskTypes.forEach(taskType => {
+      logger.info(`[RegisterServices] Re-registering Open Banking service for task type: ${taskType}`);
+      componentFactory.registerFormService(taskType, openBankingFormService);
+    });
     
     logger.info('[RegisterServices] Unified form services are now the default');
   } catch (error) {
