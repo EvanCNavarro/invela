@@ -96,47 +96,28 @@ export function broadcastSubmissionStatus(
  * @param metadata Optional task metadata to check for submission date
  * @returns Updated task status
  */
-export function determineStatusFromProgress(
+export /**
+ * Determine task status based on progress and other factors
+ * 
+ * This function uses the centralized task-status-determiner utility
+ * to ensure consistent status determination across all parts of the application.
+ * 
+ * @param progress Task progress (0-100)
+ * @param currentStatus Current task status
+ * @param formResponses Optional form responses for additional validation
+ * @param metadata Optional task metadata
+ * @returns Determined task status
+ */
+function determineStatusFromProgress(
   progress: number, 
   currentStatus: TaskStatus,
   formResponses?: Array<{ status: string; hasValue: boolean; required?: boolean; field?: string }>,
   metadata?: Record<string, any>
 ): TaskStatus {
-  // Add extra debugging for status transitions
-  console.log(`[STATUS DETERMINATION] Calculating status for task with:`, {
-    progress,
-    currentStatus,
-    hasSubmissionDate: !!metadata?.submissionDate,
-    hasSubmittedFlag: metadata?.status === 'submitted',
-    hasResponses: !!(formResponses && formResponses.length > 0),
-    timestamp: new Date().toISOString()
-  });
+  // Import the centralized determiner
+  const { determineTaskStatus } = require('./task-status-determiner');
   
-  // CRITICAL: Always respect submission state
-  // If the task has a submissionDate in metadata, it should always be in SUBMITTED status
-  if (metadata?.submissionDate) {
-    console.log(`[STATUS DETERMINATION] Task has submissionDate (${metadata.submissionDate}), setting to SUBMITTED`);
-    return TaskStatus.SUBMITTED;
-  }
-  
-  // Handle explicit submission request via metadata
-  // Check both the legacy 'status' flag and our new 'explicitlySubmitted' flag
-  if (metadata?.status === 'submitted' || metadata?.explicitlySubmitted === true) {
-    console.log(`[STATUS DETERMINATION] Task has explicit submission flags in metadata, setting to SUBMITTED`);
-    console.log(`[STATUS DETERMINATION] Metadata submission flags:`, { 
-      status: metadata?.status,
-      explicitlySubmitted: metadata?.explicitlySubmitted,
-      submittedAt: metadata?.submittedAt 
-    });
-    return TaskStatus.SUBMITTED;
-  }
-  
-  // Skip status update if task is already in a terminal state
-  if ([TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED].includes(currentStatus)) {
-    console.log(`[STATUS DETERMINATION] Task is in terminal state (${currentStatus}), preserving status`);
-    return currentStatus;
-  }
-  
+  // Handle special case for required fields
   // If form responses are provided, check if ANY required fields are empty
   if (formResponses && formResponses.length > 0) {
     const hasCompletedRequiredFields = hasAllRequiredFields(formResponses);
@@ -148,31 +129,15 @@ export function determineStatusFromProgress(
     }
   }
   
-  // CRITICAL FIX: Ensure task status strictly follows business rules:
-  // 0% = Not Started
-  // 1-99% = In Progress
-  // 100% (not submitted) = Ready for Submission
-  // 100% (submitted) = Submitted
-  if (progress === 0) {
-    console.log(`[STATUS DETERMINATION] Task has 0% progress, setting to NOT_STARTED`);
-    return TaskStatus.NOT_STARTED;
-  } else if (progress >= 1 && progress < 100) {
-    console.log(`[STATUS DETERMINATION] Task has ${progress}% progress (1-99%), setting to IN_PROGRESS`);
-    return TaskStatus.IN_PROGRESS;
-  } else if (progress === 100) {
-    // Special handling for 100% progress - depends on submission state
-    if (metadata?.submissionDate || metadata?.explicitlySubmitted === true || metadata?.status === 'submitted' || currentStatus === TaskStatus.SUBMITTED) {
-      console.log(`[STATUS DETERMINATION] Task has 100% progress and is submitted, setting to SUBMITTED`);
-      return TaskStatus.SUBMITTED;
-    } else {
-      console.log(`[STATUS DETERMINATION] Task has 100% progress but is not submitted, setting to READY_FOR_SUBMISSION`);
-      return TaskStatus.READY_FOR_SUBMISSION;
-    }
-  } else {
-    // Fallback case, should never happen with validated progress
-    console.log(`[STATUS DETERMINATION] Unexpected progress value (${progress}), defaulting to NOT_STARTED`);
-    return TaskStatus.NOT_STARTED;
-  }
+  // Use the centralized task status determiner for standard cases
+  return determineTaskStatus({
+    progress,
+    currentStatus,
+    hasSubmissionDate: !!metadata?.submissionDate,
+    hasSubmittedFlag: metadata?.status === 'submitted' || metadata?.explicitlySubmitted === true,
+    hasResponses: !!(formResponses && formResponses.length > 0),
+    metadata
+  });
 }
 
 /**
