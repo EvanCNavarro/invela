@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWebSocketService } from '@/providers/websocket-provider';
+import { WebSocketEventMap } from '@/lib/websocket-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,14 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, CheckCircle2, RefreshCw, Send, Wifi, WifiOff } from 'lucide-react';
 
 export default function WebSocketDiagnosticPage() {
-  const { isConnected, isConnecting, connectionId, hasAttemptedConnecting, send, connect, subscribe, unsubscribe } = useWebSocketService();
+  const { isConnected, isConnecting, connectionId, hasAttemptedConnecting, send, subscribe, unsubscribe } = useWebSocketService();
+  
+  // Get WebSocket provider methods
+  const handleConnect = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload(); // Force a refresh to reconnect
+    }
+  };
   const [messages, setMessages] = useState<{type: string, payload: any, timestamp: string}[]>([]);
   const [pingLatency, setPingLatency] = useState<number | null>(null);
   const [lastPingSent, setLastPingSent] = useState<number | null>(null);
@@ -39,9 +47,9 @@ export default function WebSocketDiagnosticPage() {
       }
     };
     
-    // We're using 'connection_established' as a generic message type
+    // We're using 'connection_status' as a generic message type
     // that the server sends when a client connects
-    const unsubscribeFunc = subscribe('connection_established', handleMessage);
+    const unsubscribeFunc = subscribe('connection_status', handleMessage);
     
     // Cleanup subscription on component unmount
     return () => {
@@ -69,7 +77,7 @@ export default function WebSocketDiagnosticPage() {
   
   // Handle manual connection attempt
   const handleReconnect = () => {
-    connect();
+    handleConnect();
   };
   
   return (
@@ -110,7 +118,8 @@ export default function WebSocketDiagnosticPage() {
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Connection Status:</span>
                 <Badge 
-                  variant={isConnected ? "success" : isConnecting ? "outline" : "destructive"}
+                  variant={isConnected ? "default" : isConnecting ? "outline" : "destructive"}
+                  className={isConnected ? "bg-green-600 hover:bg-green-600/80" : ""}
                 >
                   {isConnected ? "Connected" : isConnecting ? "Connecting" : "Disconnected"}
                 </Badge>
