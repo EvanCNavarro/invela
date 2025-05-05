@@ -20,11 +20,28 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
     return wss;
   }
   
-  // Create WebSocket server on the specified path
+  // Create WebSocket server on the specified path with protocol handling
   wss = new WebSocketServer({ 
     server, 
     path,
-    clientTracking: true
+    clientTracking: true,
+    // Add a handler to properly handle our custom protocol
+    handleProtocols: (protocols, request) => {
+      console.log(`[WebSocket] Client requesting protocols:`, protocols);
+      
+      // Accept our app-specific protocol if available
+      if (Array.isArray(protocols) && protocols.includes('app-ws-protocol')) {
+        return 'app-ws-protocol';
+      }
+      
+      // Accept without protocol if no protocol specified or if it's empty
+      if (!protocols || (Array.isArray(protocols) && protocols.length === 0)) {
+        return false;
+      }
+      
+      // Otherwise, accept the first protocol
+      return Array.isArray(protocols) ? protocols[0] : protocols;
+    }
   });
   
   // Generate a unique ID for the server instance
