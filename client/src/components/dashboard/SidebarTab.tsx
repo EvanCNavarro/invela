@@ -137,11 +137,12 @@ export function SidebarTab({
   // but our code in Sidebar.tsx uses localStorage to visually unlock the tab.
   // This creates a conflict where the link APPEARS clickable but is actually disabled.
   
-  // Create a special check for File Vault to ensure consistent behavior
-  const isFileVaultSpecialCase = (!isDisabled && label === "File Vault");
+  // No special case handling needed for File Vault tab anymore
+  // This was creating a bug where File Vault appeared unlocked even before KYB form submission
+  const isFileVaultTab = (label === "File Vault");
   
-  if (isFileVaultSpecialCase) {
-    console.log(`[SidebarTab] Special case: File Vault tab appears unlocked`);
+  if (isFileVaultTab && !isDisabled) {
+    console.log(`[SidebarTab] File Vault tab is properly unlocked via server-side tabs`);
   }
   
   return (
