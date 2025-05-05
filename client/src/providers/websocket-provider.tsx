@@ -7,7 +7,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useWebSocket } from '@/hooks/use-websocket';
+import { useWebSocket } from '@/hooks/use-websocket.tsx';
 import { WebSocketEventMap, PayloadFromEventType } from '@/lib/websocket-types';
 
 interface WebSocketContextType {
@@ -44,9 +44,24 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    // Ensure we're using the correct WebSocket URL
-    console.log(`[WebSocket] Setting up connection to ${protocol}//${host}/ws`);
-    setWsUrl(`${protocol}//${host}/ws`);
+    
+    // In Replit environment, we may need to handle ports differently
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const wsPath = '/ws';
+    
+    // Build the WebSocket URL with explicit port handling
+    const websocketUrl = `${protocol}//${window.location.hostname}${port}${wsPath}`;
+    
+    // Log the URL formation process for debugging
+    console.log(`[WebSocket] URL formation details:`, {
+      protocol,
+      hostname: window.location.hostname,
+      port: window.location.port || 'default',
+      path: wsPath,
+      finalUrl: websocketUrl
+    });
+    
+    setWsUrl(websocketUrl);
   }, []);
   
   // Only create the WebSocket connection after we have the URL
@@ -93,4 +108,13 @@ export function useWebSocketService() {
   }
   
   return context;
+}
+
+/**
+ * Legacy alias for useWebSocketService - for backward compatibility
+ * 
+ * @returns WebSocket methods and state
+ */
+export function useWebSocketContext() {
+  return useWebSocketService();
 }
