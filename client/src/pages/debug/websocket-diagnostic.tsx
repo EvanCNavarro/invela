@@ -194,11 +194,29 @@ export default function WebSocketDiagnosticPage() {
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Reconnection Attempts:</span>
-                  <Badge variant={hasAttemptedConnecting ? "outline" : "secondary"}>
-                    {hasAttemptedConnecting ? "Exhausted" : "Normal"}
+                  <span className="text-sm text-muted-foreground">Reconnection Status:</span>
+                  <Badge 
+                    variant={window._ws_backoff_active ? "destructive" : hasAttemptedConnecting ? "outline" : "secondary"}
+                    className={window._ws_backoff_active ? "bg-red-600" : ""}
+                  >
+                    {window._ws_backoff_active ? "Backoff Active" : hasAttemptedConnecting ? "Exhausted" : "Normal"}
                   </Badge>
                 </div>
+                
+                {window._ws_backoff_active && (
+                  <div className="rounded-md p-2 bg-red-50 dark:bg-red-950 text-xs">
+                    <p className="font-semibold text-red-700 dark:text-red-400 mb-1">
+                      Connection Cycle Detected
+                    </p>
+                    <p className="text-red-600 dark:text-red-300">
+                      Rapid connect/disconnect cycling detected. Backoff enabled to prevent browser strain.
+                      Use the Reconnect button to try again.
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      Last attempt: {window._ws_last_attempt ? new Date(window._ws_last_attempt).toLocaleTimeString() : 'Unknown'}
+                    </p>
+                  </div>
+                )}
                 
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Ping Latency:</span>
