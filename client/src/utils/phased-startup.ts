@@ -64,8 +64,8 @@ const phaseConfigs: Record<StartupPhase, PhaseConfig> = {
   // Phase 5: Application is fully initialized and ready
   ready: {
     dependencies: ['framework', 'context', 'services'], // Communication not required
-    timeout: 1000,
-    critical: true
+    timeout: 10000, // Increased from 1000ms to 10000ms to allow more time for component initialization
+    critical: false // Changed from true to false to prevent application failure when timeout occurs
   }
 };
 
