@@ -133,7 +133,12 @@ export async function reconcileTaskProgressFixed(
         wasUpdated: result.wasUpdated
       };
     } catch (calculationError) {
-      logger.error(`${logPrefix} Error calculating progress for task ${taskId}:`, calculationError);
+      logger.error(`${logPrefix} Error calculating progress for task ${taskId}:`, {
+        taskId,
+        error: calculationError instanceof Error ? calculationError.message : String(calculationError),
+        stack: calculationError instanceof Error ? calculationError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       throw calculationError;
     }
   } catch (error) {
