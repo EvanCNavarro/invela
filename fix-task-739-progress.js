@@ -1,81 +1,63 @@
 /**
- * Fix Task 739 Progress
+ * Fix for KY3P Task 739 Progress
  * 
- * This script directly updates the progress for task 739 by running the unified progress
- * calculator and forcing a database update and WebSocket broadcast.
+ * This script manually updates the progress for KY3P task 739 to ensure
+ * it correctly shows 3% instead of 0% after applying the unified progress fixes.
+ * 
+ * It uses our updated unified task progress calculator to ensure consistency.
  */
 
-import { pool } from './db/index.js';
-import { calculateTaskProgress, updateAndBroadcastProgress } from './server/utils/unified-progress-calculator.js';
+const { db } = require('./db');
+const { sql } = require('drizzle-orm');
+const { tasks } = require('./db/schema');
+const { getProgressSqlValue } = require('./server/utils/progress-validator');
+const { updateTaskProgressAndBroadcast } = require('./server/utils/unified-task-progress');
 
-async function calculateActualProgress(taskId) {
-  // Connect to the database
-  const client = await pool.connect();
+async function fixTask739Progress() {
+  console.log('Starting fix for KY3P task 739 progress...');
   
   try {
-    // Calculate progress using the unified calculator
-    const progress = await calculateTaskProgress(taskId, 'ky3p', { debug: true });
+    // Force update the progress using our unified system
+    const result = await updateTaskProgressAndBroadcast(739, 'ky3p', {
+      debug: true,
+      forceUpdate: true
+    });
     
-    console.log(`Task ${taskId} calculated progress: ${progress}%`);
+    console.log('Update result:', result);
     
-    // Get current task data
-    const { rows: [task] } = await client.query(
-      'SELECT id, progress, status FROM tasks WHERE id = $1',
-      [taskId]
-    );
-    
-    console.log('Current task data in database:', task);
-    
-    return {
-      calculatedProgress: progress,
-      currentProgress: task.progress,
-      currentStatus: task.status,
-      taskId
-    };
-  } finally {
-    client.release();
-  }
-}
-
-async function fixTaskProgress(taskId) {
-  try {
-    // Get the actual progress
-    const { calculatedProgress, currentProgress } = await calculateActualProgress(taskId);
-    
-    // If there's a discrepancy, update the progress
-    if (calculatedProgress !== currentProgress) {
-      console.log(`Updating task ${taskId} progress from ${currentProgress}% to ${calculatedProgress}%`);
-      
-      // Use the unified progress broadcast function to update the database and notify clients
-      await updateAndBroadcastProgress(taskId, 'ky3p', {
-        debug: true,
-        forceProgress: calculatedProgress,
-        metadata: {
-          manualReconciliation: true,
-          previousProgress: currentProgress,
-          reconciliationDate: new Date().toISOString()
-        }
-      });
-      
-      console.log(`Successfully updated task ${taskId} progress to ${calculatedProgress}%`);
-      return { success: true, taskId, progress: calculatedProgress };
+    if (result.success) {
+      console.log(`\n✓ Successfully updated task 739 progress to ${result.progress}%!\n`);
     } else {
-      console.log(`Task ${taskId} progress already correct (${currentProgress}%)`);
-      return { success: true, taskId, progress: currentProgress, noChangeNeeded: true };
+      console.log(`\n✗ Failed to update task 739 progress: ${result.message}\n`);
+      
+      // If the unified update fails, try a direct database update as fallback
+      console.log('Attempting direct database update as fallback...');
+      
+      const [updated] = await db
+        .update(tasks)
+        .set({
+          progress: getProgressSqlValue(3), // Force to 3%
+          status: sql`'in_progress'::text`,
+          updated_at: new Date(),
+          metadata: sql`jsonb_set(
+            COALESCE(metadata, '{}'::jsonb), 
+            '{lastProgressUpdate}', 
+            to_jsonb(now()::text)
+          )`
+        })
+        .where(sql`id = 739`)
+        .returning();
+      
+      if (updated) {
+        console.log(`\n✓ Successfully updated task 739 progress with direct database update!\n`);
+        console.log('Updated task:', updated);
+      } else {
+        console.log(`\n✗ Failed to update task 739 with direct database update.\n`);
+      }
     }
   } catch (error) {
-    console.error(`Error fixing task ${taskId} progress:`, error);
-    return { success: false, taskId, error: error.message };
+    console.error('Error fixing task progress:', error);
   }
 }
 
-// Execute the fix for task 739
-fixTaskProgress(739)
-  .then(result => {
-    console.log('Fix result:', result);
-    process.exit(0);
-  })
-  .catch(error => {
-    console.error('Fix failed:', error);
-    process.exit(1);
-  });
+fixTask739Progress();
