@@ -285,7 +285,7 @@ export async function calculateAndUpdateTaskProgress(
         .select({ count: sql<number>`count(*)` })
         .from(ky3pResponses)
         .where(
-          sql`${ky3pResponses.task_id} = ${taskId} AND UPPER(${ky3pResponses.status}) = 'COMPLETE'`
+          sql`${ky3pResponses.task_id} = ${taskId} AND LOWER(${ky3pResponses.status}) = 'complete'`
         );
       
       // Calculate what percentage of responses are complete
