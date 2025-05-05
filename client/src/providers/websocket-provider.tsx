@@ -7,7 +7,8 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useWebSocket } from '@/hooks/use-websocket.tsx';
+// Direct import without using @ alias to prevent circular dependency issues
+import { useWebSocket } from '../hooks/use-websocket.tsx';
 import { WebSocketEventMap, PayloadFromEventType } from '@/lib/websocket-types';
 
 interface WebSocketContextType {
@@ -42,23 +43,27 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
   
   // Determine the correct WebSocket URL based on the current location
   useEffect(() => {
+    // In Replit, we need to use the same host as the current page
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    
-    // In Replit environment, we may need to handle ports differently
-    const port = window.location.port ? `:${window.location.port}` : '';
+    const host = window.location.host; // This includes hostname and port
     const wsPath = '/ws';
     
-    // Build the WebSocket URL with explicit port handling
-    const websocketUrl = `${protocol}//${window.location.hostname}${port}${wsPath}`;
+    // Build the WebSocket URL - use host which already includes port if present
+    const websocketUrl = `${protocol}//${host}${wsPath}`;
     
-    // Log the URL formation process for debugging
-    console.log(`[WebSocket] URL formation details:`, {
+    // Log detailed connection information
+    console.log(`[WebSocket] Attempting connection with URL: ${websocketUrl}`, {
       protocol,
-      hostname: window.location.hostname,
-      port: window.location.port || 'default',
+      host,
       path: wsPath,
-      finalUrl: websocketUrl
+      fullUrl: websocketUrl,
+      locationInfo: {
+        href: window.location.href,
+        host: window.location.host,
+        hostname: window.location.hostname,
+        port: window.location.port,
+        protocol: window.location.protocol
+      }
     });
     
     setWsUrl(websocketUrl);
