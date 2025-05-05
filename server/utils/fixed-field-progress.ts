@@ -133,15 +133,16 @@ export async function calculateTaskProgressFixed(
           },
           useFieldKey,
           byFieldKey: useFieldKey
-            ? Object.fromEntries(
-                Array.from(
-                  responseDetails.reduce((acc, r) => {
-                    const key = r.field_key || 'unknown';
-                    acc.set(key, (acc.get(key) || 0) + 1);
-                    return acc;
-                  }, new Map<string, number>())
-                )
-              )
+            ? (() => {
+                // Create a simpler field key counter to avoid type issues
+                const fieldKeyCounter = new Map<string, number>();
+                for (const r: {field_key?: string} of responseDetails) {
+                  const key = r.field_key || 'unknown';
+                  fieldKeyCounter.set(key, (fieldKeyCounter.get(key) || 0) + 1);
+                }
+                // Convert the Map to an array of entries and then to an object
+                return Object.fromEntries([...fieldKeyCounter.entries()]);
+              })()
             : 'Field key analysis disabled'
         });
       }
