@@ -105,11 +105,14 @@ export default function WebSocketDiagnosticPage() {
   const handleReconnect = () => {
     // Reset reconnect cycle detection status before trying to reconnect
     // This allows a user to manually break out of the reconnect backoff
-    if (window._ws_backoff_active) {
-      console.log('[WebSocket] Manually resetting reconnection backoff');
-      window._ws_backoff_active = false;
-      window._ws_last_attempt = 0;
-    }
+    console.log('[WebSocket] Manually resetting reconnection backoff and forcing reconnect');
+    
+    // Reset backoff detection completely
+    window._ws_backoff_active = false;
+    window._ws_last_attempt = 0;
+    
+    // Add tracking to global window to monitor success of manual reconnect
+    window._manual_reconnect_attempt = Date.now();
     
     // First disconnect to ensure a clean connection attempt
     disconnect();
@@ -117,14 +120,51 @@ export default function WebSocketDiagnosticPage() {
     // Short delay before reconnecting to ensure socket is fully closed
     setTimeout(() => {
       connect();
+      
+      setMessages(prev => [{
+        type: 'SYSTEM', 
+        payload: { message: 'Manual reconnection initiated', timestamp: new Date().toISOString() },
+        timestamp: new Date().toISOString() 
+      }, ...prev]);
+      
       console.log('[WebSocket] Manual reconnection initiated');
-    }, 500);
+    }, 1000); // Longer delay to ensure clean disconnection
   };
   
   // Clear messages for a cleaner view
   const handleClearMessages = () => {
     setMessages([]);
     setPingLatency(null);
+  };
+  
+  // Reset everything including error counters
+  const handleFullReset = () => {
+    // Reset connection status
+    disconnect();
+    
+    // Reset all WebSocket-related window variables
+    window._ws_backoff_active = false;
+    window._ws_last_attempt = 0;
+    window._ws_1006_count = 0;
+    window._manual_reconnect_attempt = Date.now();
+    
+    // Clear UI state
+    setMessages([
+      { 
+        type: 'SYSTEM', 
+        payload: { message: 'Full system reset performed', timestamp: new Date().toISOString() },
+        timestamp: new Date().toISOString() 
+      }
+    ]);
+    setPingLatency(null);
+    
+    // Log the reset
+    console.log('[WebSocket] Full system reset performed');
+    
+    // Wait a bit and reconnect
+    setTimeout(() => {
+      connect();
+    }, 1500);
   };
   
   // Authentication test
@@ -219,6 +259,28 @@ export default function WebSocketDiagnosticPage() {
                 )}
                 
                 <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Error 1006 Count:</span>
+                  <Badge 
+                    variant={(window._ws_1006_count || 0) > 5 ? "destructive" : "outline"}
+                    className={(window._ws_1006_count || 0) > 5 ? "bg-red-600" : ""}
+                  >
+                    {window._ws_1006_count || 0}
+                  </Badge>
+                </div>
+                
+                {(window._ws_1006_count || 0) > 5 && (
+                  <div className="rounded-md p-2 bg-amber-50 dark:bg-amber-950 text-xs mb-2">
+                    <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">
+                      Multiple Error 1006 Detected
+                    </p>
+                    <p className="text-amber-600 dark:text-amber-300">
+                      Error 1006 (Abnormal Closure) indicates possible network issues. 
+                      Check your internet connection or firewall settings.
+                    </p>
+                  </div>
+                )}
+                
+                <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Ping Latency:</span>
                   {pingLatency !== null ? (
                     <Badge variant="outline" className={pingLatency < 300 ? "text-green-500" : "text-amber-500"}>
@@ -279,6 +341,15 @@ export default function WebSocketDiagnosticPage() {
                 Clear Log
               </Button>
             </div>
+            
+            <Button 
+              onClick={handleFullReset}
+              variant="destructive"
+              size="sm"
+              className="w-full"
+            >
+              <RefreshCcw className="mr-2 h-4 w-4" /> Full Reset
+            </Button>
           </CardFooter>
         </Card>
         
