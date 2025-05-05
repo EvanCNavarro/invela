@@ -1,0 +1,106 @@
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Maximum reconnection attempts (10) reached, falling back to polling mode
+[WebSocket] Maximum reconnection attempts reached, operating in fallback mode
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established (ID: ws_1746455157846_czr7zrk4ml)
+[WebSocket] Initial ping sent (ID: ws_1746455157846_czr7zrk4ml)
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Attempting to reconnect (1/10)...
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Attempting to reconnect (2/10)...
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
+[WebSocket] Attempting to reconnect (3/10)...
+[SidebarTab] File Vault tab state: isDisabled=true
+[WelcomeModal] Not rendering modal because: 
+Object {noUser: false, onboardingCompleted: true, modalHidden: true}
+[WebSocket] Attempting connection with URL: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection error: 
+Event {isTrusted: true}
+
+[WebSocket] Connection closed: Code=1006, Reason=none, Clean=false
