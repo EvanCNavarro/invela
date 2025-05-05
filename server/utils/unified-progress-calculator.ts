@@ -50,21 +50,38 @@ export async function calculateTaskProgress(
     // If preserveExisting is true, first check if the task already has progress
     if (preserveExisting) {
       const existingTask = await dbContext
-        .select({ progress: tasks.progress })
+        .select({ progress: tasks.progress, metadata: tasks.metadata })
         .from(tasks)
         .where(eq(tasks.id, taskId));
       
       if (existingTask.length > 0 && existingTask[0].progress > 0) {
         const existingProgress = existingTask[0].progress;
+        const metadata = existingTask[0].metadata || {};
         
-        logger.info(`${logPrefix} Preserving existing progress for task ${taskId} (${taskType}): ${existingProgress}%`, {
-          taskId,
-          taskType,
-          existingProgress,
-          operation: 'preserve-existing'
-        });
+        // CRITICAL FIX: Don't preserve progress for KY3P tasks when they've been unlocked via task dependencies
+        // This ensures form progress is always calculated based on actual field completion
+        // and isn't stuck at the artificial 60% value set during task unlocking
+        const isTaskUnlocked = metadata.dependencyUnlockOperation === true;
+        const isKy3pTask = taskType === 'ky3p' || taskType === 'sp_ky3p_assessment';
         
-        return existingProgress;
+        // Only preserve progress if it's not a KY3P task that was unlocked via dependencies
+        if (!(isKy3pTask && isTaskUnlocked)) {
+          logger.info(`${logPrefix} Preserving existing progress for task ${taskId} (${taskType}): ${existingProgress}%`, {
+            taskId,
+            taskType,
+            existingProgress,
+            operation: 'preserve-existing'
+          });
+          
+          return existingProgress;
+        } else {
+          logger.info(`${logPrefix} Not preserving progress for KY3P task that was unlocked via dependencies: ${taskId}`, {
+            taskId,
+            taskType,
+            existingProgress,
+            operation: 'recalculate-ky3p-progress'
+          });
+        }
       }
     }
     
