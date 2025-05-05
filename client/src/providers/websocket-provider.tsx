@@ -17,6 +17,9 @@ interface WebSocketContextType {
   connectionId: string | null;
   // Flag to track if we've tried and failed to connect multiple times
   hasAttemptedConnecting: boolean;
+  // Connection control methods
+  connect: () => void;
+  disconnect: () => void;
   send: (message: any) => void;
   subscribe: <T extends keyof WebSocketEventMap>(
     eventType: T,
@@ -92,6 +95,8 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
     isConnected,
     isConnecting,
     connectionId,
+    connect,
+    disconnect,
     send,
     subscribe,
     unsubscribe
@@ -113,6 +118,9 @@ export function WebSocketProvider({ children, debug = false }: WebSocketProvider
     connectionId,
     // Include the flag to tell components we've tried but failed to connect
     hasAttemptedConnecting,
+    // Add connection control methods
+    connect,
+    disconnect,
     send,
     subscribe,
     unsubscribe
