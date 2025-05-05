@@ -20,7 +20,14 @@ import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
 import { wsService } from "@/lib/websocket";
-import { TaskCountData } from "@/lib/types";
+
+// Define the TaskCountData interface if it doesn't exist in @/lib/types
+interface TaskCountData {
+  count?: { total?: number };
+  taskId?: number;
+  companyId?: number;
+  status?: string;
+}
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -159,33 +166,24 @@ export function Sidebar({
     // Log basic state for debugging
     console.log(`[Sidebar] Tab state check: company=${currentCompanyId}, path=${location}, file-vault-unlocked=${availableTabs.includes('file-vault')}`);
     
-    // Special case: If we're already ON the file-vault route but it's not available in tabs
-    // This can happen during page loads or when switching between companies
+    // Handle tab access mismatch
+    // If we're on a route that should require access control but isn't in availableTabs
     if (location.includes('file-vault') && !availableTabs.includes('file-vault')) {
-      console.log('[Sidebar] 🚨 Tab state mismatch: On file-vault route but tab not in availableTabs');
+      console.log('[Sidebar] 🚨 Access control mismatch: On file-vault route but tab not in availableTabs');
       
-      // CRITICAL: Check that we're not in a company transition (don't force if company ID is changing)
-      // This is crucial to prevent incorrect forcing during company switches
+      // Get current and last company ID to ensure we're not switching companies
       const lastCompanyId = parseInt(localStorage.getItem('last_company_id') || '0');
       
-      // Only force if we're still in the same company
+      // Only refresh tabs data if we're still in the same company
       if (currentCompanyId && lastCompanyId === currentCompanyId) {
-        console.log(`[Sidebar] ✅ Same company (${currentCompanyId}), safe to force tab visibility`);
-        // Force a server refresh to make sure our tabs are up to date
+        console.log(`[Sidebar] 🔄 Refreshing tab data to verify access rights`);
+        
+        // Force a refresh of company data to ensure we have the most up-to-date tabs
         queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
         queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-        
-        // This is a development-only flag to help us track forced access paths
-        document.body.classList.add('file-vault-forced-access');
-        
-        // Important diagnostic - this helps us see if we're in a mismatch state
-        console.log('[SidebarTab] Special case: File Vault tab appears unlocked');
       } else {
-        console.log(`[Sidebar] ⚠️ Company transition detected (${lastCompanyId} → ${currentCompanyId}), not forcing tab visibility`);
+        console.log(`[Sidebar] ⚠️ Company transition detected (${lastCompanyId} → ${currentCompanyId})`);
       }
-    } else if (location.includes('file-vault')) {
-      // We're on file vault and it's in available tabs - normal state
-      document.body.classList.remove('file-vault-forced-access');
     }
     
     // Update last company ID for next check
@@ -197,7 +195,7 @@ export function Sidebar({
       }
     }
     
-    // Also check for form submission success from localStorage, but only for current company
+    // Check for recent form submissions to ensure proper tab state
     try {
       const lastFormSubmission = localStorage.getItem('lastFormSubmission');
       if (lastFormSubmission) {
@@ -207,25 +205,15 @@ export function Sidebar({
         const fiveMinutesAgo = currentTime - (5 * 60 * 1000); // 5 minutes ago
         
         // Only process if the submission is for the current company
-        if (submission.companyId === currentCompanyId) {
-          // If submission was recent (within 5 minutes) and was a KYB form
-          if (submissionTime > fiveMinutesAgo && 
-              (submission.formType === 'kyb' || submission.formType === 'company_kyb')) {
-            console.log(`[Sidebar] 🔑 Recent KYB form submission detected, unlocking File Vault tab:`, submission);
-            
-            if (!availableTabs.includes('file-vault')) {
-              console.log('[Sidebar] 🚨 File Vault tab not in available tabs despite recent KYB form submission');
-              // Force a server refresh
-              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-              queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-            }
-          }
-        } else {
-          console.log(`[Sidebar] Form submission was for company ${submission.companyId}, but current company is ${currentCompanyId}`);
+        if (submission.companyId === currentCompanyId && submissionTime > fiveMinutesAgo) {
+          console.log(`[Sidebar] Recent form submission detected:`, submission);
+          
+          // Refresh company data to ensure tabs are up-to-date
+          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
         }
       }
     } catch (error) {
-      console.error('[Sidebar] Error checking localStorage for recent form submissions:', error);
+      console.error('[Sidebar] Error checking localStorage for form submissions:', error);
     }
   }, [location, availableTabs, queryClient, company?.id]);
   
@@ -325,20 +313,17 @@ export function Sidebar({
         });
         subscriptions.push(unsubCompanyTabsUpdated);
         
-        // CRITICAL FIX: Also listen for form submission success events as they often trigger tab changes
-        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: { unlockedTabs?: string[] }) => {
+        // Listen for form submission events that may affect tab access
+        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: { companyId?: number; unlockedTabs?: string[] }) => {
           console.log(`[Sidebar] Received form_submitted event:`, data);
           
-          // Check if this event includes unlockedTabs information
-          if (data.unlockedTabs && Array.isArray(data.unlockedTabs) && data.unlockedTabs.length > 0) {
-            console.log(`[Sidebar] Form submission unlocked tabs:`, data.unlockedTabs);
+          // Only process events for our company
+          if (company && data.companyId === company.id) {
+            console.log(`[Sidebar] Form submitted for our company ${company.id}`);
             
-            // Form submission unlocked tabs, we should refresh company data
-            if (data.unlockedTabs.includes('file-vault')) {
-              console.log(`[Sidebar] 🚨 File vault tab unlocked, refreshing company data...`);
-              queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-              queryClient.refetchQueries({ queryKey: ['/api/companies/current'] });
-            }
+            // Always refresh company data after a form submission
+            // This ensures tab access rights are up-to-date
+            queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
           }
         });
         subscriptions.push(unsubFormSubmitted);
