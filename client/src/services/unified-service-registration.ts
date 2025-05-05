@@ -78,14 +78,16 @@ export function registerAllServices(options: Partial<ServiceRegistrationOptions>
     const existingServices = componentFactory.getRegisteredFormServices();
     const existingTypes = Object.keys(existingServices);
     
-    logger.info(`Clearing ${existingTypes.length} existing service registrations`);
+    // Check which service types are already registered
+    if (existingTypes.length > 0) {
+      logger.info(`Found ${existingTypes.length} registered services: ${existingTypes.join(', ')}`);
+    } else {
+      logger.info('No existing service registrations found');
+    }
     
-    // Clear all registration by re-registering empty services
-    // This is a workaround since ComponentFactory doesn't have a clearRegistrations method
-    logger.info('Using safe method to clear existing registrations');
-    
-    // Skip clearing to prevent TypeScript errors
-    // The new registrations will override the existing ones anyway
+    // We no longer attempt to clear registrations as it can cause TypeScript errors
+    // and race conditions if services are cleared while they're being used
+    // Instead, we track which services are registered to avoid duplicate registrations
   }
   
   // OODA: Orient - Create a registry of service factories
@@ -143,9 +145,21 @@ export function registerAllServices(options: Partial<ServiceRegistrationOptions>
     }
   };
   
+  // Get existing services before registering new ones
+  const existingServices = componentFactory.getRegisteredFormServices();
+  
   // OODA: Decide - Register each task type with its appropriate service
   Object.entries(taskTypeRegistry).forEach(([taskType, serviceType]) => {
     try {
+      // Check if this task type already has a service registered
+      const alreadyRegistered = Object.prototype.hasOwnProperty.call(existingServices, taskType);
+      
+      // If already registered and we're running this during startup initialization, skip it
+      if (alreadyRegistered && !opts.clearExisting) {
+        logger.info(`Task type ${taskType} already has a service registered (${serviceType}), skipping...`);
+        return; // Skip this registration
+      }
+      
       // Create a default instance for the component factory
       const serviceFactory = serviceFactories[serviceType];
       
