@@ -8,7 +8,12 @@
 import { db } from '@db';
 import { kybResponses, ky3pResponses, openBankingResponses } from '@db/schema';
 import { eq, sql, and, or, like } from 'drizzle-orm';
-import { FieldStatus } from '../server/utils/field-status';
+// Use string literals directly instead of importing FieldStatus enum
+// This prevents TypeScript type errors with drizzle-orm
+const STATUS_COMPLETE = 'complete';
+const STATUS_EMPTY = 'empty';
+const STATUS_INCOMPLETE = 'incomplete';
+const STATUS_INVALID = 'invalid';
 
 async function checkForUppercaseStatusValues() {
   console.log('Checking for uppercase status values in the database...');
@@ -24,10 +29,10 @@ async function checkForUppercaseStatusValues() {
           like(kybResponses.status, '%INCOMPLETE%'),
           like(kybResponses.status, '%INVALID%')
         ),
-        sql`${kybResponses.status} != ${FieldStatus.COMPLETE} AND 
-            ${kybResponses.status} != ${FieldStatus.EMPTY} AND 
-            ${kybResponses.status} != ${FieldStatus.INCOMPLETE} AND 
-            ${kybResponses.status} != ${FieldStatus.INVALID}`
+        sql`${kybResponses.status} != ${STATUS_COMPLETE} AND 
+            ${kybResponses.status} != ${STATUS_EMPTY} AND 
+            ${kybResponses.status} != ${STATUS_INCOMPLETE} AND 
+            ${kybResponses.status} != ${STATUS_INVALID}`
       )
     );
   
@@ -42,10 +47,10 @@ async function checkForUppercaseStatusValues() {
           like(ky3pResponses.status, '%INCOMPLETE%'),
           like(ky3pResponses.status, '%INVALID%')
         ),
-        sql`${ky3pResponses.status} != ${FieldStatus.COMPLETE} AND 
-            ${ky3pResponses.status} != ${FieldStatus.EMPTY} AND 
-            ${ky3pResponses.status} != ${FieldStatus.INCOMPLETE} AND 
-            ${ky3pResponses.status} != ${FieldStatus.INVALID}`
+        sql`${ky3pResponses.status} != ${STATUS_COMPLETE} AND 
+            ${ky3pResponses.status} != ${STATUS_EMPTY} AND 
+            ${ky3pResponses.status} != ${STATUS_INCOMPLETE} AND 
+            ${ky3pResponses.status} != ${STATUS_INVALID}`
       )
     );
   
@@ -60,10 +65,10 @@ async function checkForUppercaseStatusValues() {
           like(openBankingResponses.status, '%INCOMPLETE%'),
           like(openBankingResponses.status, '%INVALID%')
         ),
-        sql`${openBankingResponses.status} != ${FieldStatus.COMPLETE} AND 
-            ${openBankingResponses.status} != ${FieldStatus.EMPTY} AND 
-            ${openBankingResponses.status} != ${FieldStatus.INCOMPLETE} AND 
-            ${openBankingResponses.status} != ${FieldStatus.INVALID}`
+        sql`${openBankingResponses.status} != ${STATUS_COMPLETE} AND 
+            ${openBankingResponses.status} != ${STATUS_EMPTY} AND 
+            ${openBankingResponses.status} != ${STATUS_INCOMPLETE} AND 
+            ${openBankingResponses.status} != ${STATUS_INVALID}`
       )
     );
   
@@ -83,53 +88,53 @@ async function migrateStatusValues() {
   
   // Migrate KYB responses
   await db.update(kybResponses)
-    .set({ status: 'complete' }) // Use string value matching FieldStatus.COMPLETE
+    .set({ status: STATUS_COMPLETE }) // Use string constants to avoid type errors
     .where(like(kybResponses.status, '%COMPLETE%'));
     
   await db.update(kybResponses)
-    .set({ status: 'empty' }) // Use string value matching FieldStatus.EMPTY
+    .set({ status: STATUS_EMPTY }) // Use string constants to avoid type errors
     .where(like(kybResponses.status, '%EMPTY%'));
     
   await db.update(kybResponses)
-    .set({ status: 'incomplete' }) // Use string value matching FieldStatus.INCOMPLETE
+    .set({ status: STATUS_INCOMPLETE }) // Use string constants to avoid type errors
     .where(like(kybResponses.status, '%INCOMPLETE%'));
     
   await db.update(kybResponses)
-    .set({ status: 'invalid' }) // Use string value matching FieldStatus.INVALID
+    .set({ status: STATUS_INVALID }) // Use string constants to avoid type errors
     .where(like(kybResponses.status, '%INVALID%'));
   
   // Migrate KY3P responses
   await db.update(ky3pResponses)
-    .set({ status: 'complete' }) // Use string value matching FieldStatus.COMPLETE
+    .set({ status: STATUS_COMPLETE }) // Use string constants to avoid type errors
     .where(like(ky3pResponses.status, '%COMPLETE%'));
     
   await db.update(ky3pResponses)
-    .set({ status: 'empty' }) // Use string value matching FieldStatus.EMPTY
+    .set({ status: STATUS_EMPTY }) // Use string constants to avoid type errors
     .where(like(ky3pResponses.status, '%EMPTY%'));
     
   await db.update(ky3pResponses)
-    .set({ status: 'incomplete' }) // Use string value matching FieldStatus.INCOMPLETE
+    .set({ status: STATUS_INCOMPLETE }) // Use string constants to avoid type errors
     .where(like(ky3pResponses.status, '%INCOMPLETE%'));
     
   await db.update(ky3pResponses)
-    .set({ status: 'invalid' }) // Use string value matching FieldStatus.INVALID
+    .set({ status: STATUS_INVALID }) // Use string constants to avoid type errors
     .where(like(ky3pResponses.status, '%INVALID%'));
   
   // Migrate Open Banking responses
   await db.update(openBankingResponses)
-    .set({ status: 'complete' }) // Use string value matching FieldStatus.COMPLETE
+    .set({ status: STATUS_COMPLETE }) // Use string constants to avoid type errors
     .where(like(openBankingResponses.status, '%COMPLETE%'));
     
   await db.update(openBankingResponses)
-    .set({ status: 'empty' }) // Use string value matching FieldStatus.EMPTY
+    .set({ status: STATUS_EMPTY }) // Use string constants to avoid type errors
     .where(like(openBankingResponses.status, '%EMPTY%'));
     
   await db.update(openBankingResponses)
-    .set({ status: 'incomplete' }) // Use string value matching FieldStatus.INCOMPLETE
+    .set({ status: STATUS_INCOMPLETE }) // Use string constants to avoid type errors
     .where(like(openBankingResponses.status, '%INCOMPLETE%'));
     
   await db.update(openBankingResponses)
-    .set({ status: 'invalid' }) // Use string value matching FieldStatus.INVALID
+    .set({ status: STATUS_INVALID }) // Use string constants to avoid type errors
     .where(like(openBankingResponses.status, '%INVALID%'));
   
   console.log('Status value migration completed successfully');
