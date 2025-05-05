@@ -314,6 +314,30 @@ export default function WebSocketDiagnosticPage() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Using app-specific protocol to separate from Vite HMR</p>
               </div>
+              
+              {inFallbackMode && (
+                <div className="rounded-md p-3 bg-amber-50 dark:bg-amber-950/30 text-xs">
+                  <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">
+                    Operating in Fallback Mode
+                  </p>
+                  <p className="text-amber-600 dark:text-amber-300 mb-2">
+                    Due to persistent connection issues, the application is using a polling fallback mechanism instead of WebSockets.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Real-time updates will be delayed. Tasks and updates may require refreshing the page to see the latest data.
+                  </p>
+                  <div className="mt-2">
+                    <Button 
+                      onClick={handleFullReset} 
+                      variant="outline" 
+                      size="sm"
+                      className="w-full text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700/50"
+                    >
+                      <RefreshCw className="mr-2 h-3 w-3" /> Try Reset & Reconnect
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex-col space-y-2">
