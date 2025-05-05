@@ -123,20 +123,22 @@ export async function calculateTaskProgressFixed(
           
         logger.debug(`${logPrefix} KY3P responses details:`, {
           totalCount: responseDetails.length,
-          completeCount: responseDetails.filter(r => r.status === FieldStatus.COMPLETE).length,
+          completeCount: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.COMPLETE).length,
           byStatus: {
-            [FieldStatus.COMPLETE]: responseDetails.filter((r: any) => r.status === FieldStatus.COMPLETE).length,
-            [FieldStatus.INCOMPLETE]: responseDetails.filter((r: any) => r.status === FieldStatus.INCOMPLETE).length,
-            [FieldStatus.EMPTY]: responseDetails.filter((r: any) => r.status === FieldStatus.EMPTY).length,
-            [FieldStatus.INVALID]: responseDetails.filter((r: any) => r.status === FieldStatus.INVALID).length,
-            other: responseDetails.filter((r: any) => !Object.values(FieldStatus).includes(r.status as any)).length
+            [FieldStatus.COMPLETE]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.COMPLETE).length,
+            [FieldStatus.INCOMPLETE]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.INCOMPLETE).length,
+            [FieldStatus.EMPTY]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.EMPTY).length,
+            [FieldStatus.INVALID]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.INVALID).length,
+            other: responseDetails.filter((r: {status: string}) => !Object.values(FieldStatus).includes(r.status)).length
           },
           useFieldKey,
           byFieldKey: useFieldKey
             ? (() => {
                 // Create a simpler field key counter to avoid type issues
                 const fieldKeyCounter = new Map<string, number>();
-                for (const r: {field_key?: string} of responseDetails) {
+                // Use a properly typed iteration
+                const typedResponses = responseDetails as Array<{field_key?: string}>;
+                for (const r of typedResponses) {
                   const key = r.field_key || 'unknown';
                   fieldKeyCounter.set(key, (fieldKeyCounter.get(key) || 0) + 1);
                 }
@@ -287,8 +289,21 @@ export async function updateTaskProgressAndStatusFixed(
         logger.debug(`Broadcasting task update with object format`, { taskId, status: newStatus });
         
         // Get the WebSocket server instance - this reuses the singleton
-        const { getWebSocketServer } = await import('../services/websocket-manager');
-        const wss = await getWebSocketServer();
+        // Use dynamic import with proper error handling to avoid circular dependencies
+        let wss = null;
+        try {
+          // Try the unified websocket module first
+          const unifiedWebsocket = await import('../utils/unified-websocket');
+          wss = await unifiedWebsocket.getWebSocketServer();
+        } catch (importError) {
+          // Fall back to the standard websocket service
+          try {
+            const websocketService = await import('../services/websocket');
+            wss = websocketService.getWebSocketServer();
+          } catch (fallbackError) {
+            logger.warn(`Could not import websocket modules: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+          }
+        }
         
         if (wss) {
           logger.info(`Successfully retrieved unified WebSocket server for broadcast`);
