@@ -104,12 +104,20 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   // Connect to WebSocket with improved resilience
   const connect = () => {
     try {
-      // Clear any existing connection
+      // Clear any existing connection with improved state handling
       if (socket) {
-        try {
-          socket.close(1000, 'Reconnecting');
-        } catch (err) {
-          // Ignore errors on close
+        // Only attempt to close if socket is open or connecting
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          logger.info(`Closing existing WebSocket connection in readyState: ${socket.readyState}`);
+          try {
+            socket.close(1000, 'Reconnecting');
+          } catch (err) {
+            // Log but continue - this is non-critical
+            logger.warn('Error closing existing socket:', err);
+          }
+        } else {
+          // Just log if the socket is already closed or closing
+          logger.info(`Existing socket already in readyState: ${socket.readyState}, no need to close`);
         }
       }
       
@@ -132,18 +140,49 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Set connection timeout - if it doesn't connect in 5 seconds, try again
+      // This improved version checks connection state more thoroughly and
+      // ensures proper cleanup of failed connection attempts
       const connectionTimeout = setTimeout(() => {
+        // Check if connection is not yet open
         if (ws && ws.readyState !== WebSocket.OPEN) {
-          logger.warn('WebSocket connection timeout, attempting to reconnect');
+          logger.warn('WebSocket connection timeout', {
+            readyState: ws.readyState, 
+            attempt: connectAttempts.current + 1,
+            url: wsUrl
+          });
+          
+          // Always attempt to clean up the failed connection
           try {
-            ws.close();
+            // First remove all event handlers to prevent any callbacks
+            ws.onopen = null;
+            ws.onclose = null;
+            ws.onerror = null;
+            ws.onmessage = null;
+            
+            // Then attempt to close the connection
+            if (ws.readyState === WebSocket.CONNECTING) {
+              ws.close(1000, 'Connection timeout');
+            }
           } catch (err) {
-            // Ignore close errors
+            logger.warn('Error cleaning up timed-out WebSocket:', err);
           }
-          // Schedule reconnection
-          const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 5000);
+          
+          // Schedule reconnection with exponential backoff
+          const maxBackoffAttempt = 8; // Cap the exponent to avoid extremely long delays
+          const delay = Math.min(1000 * Math.pow(1.5, Math.min(connectAttempts.current, maxBackoffAttempt)), 10000);
           connectAttempts.current++;
-          reconnectTimeoutRef.current = setTimeout(connect, delay);
+          
+          logger.info(`Scheduling reconnection attempt ${connectAttempts.current} in ${delay/1000} seconds after timeout`);
+          
+          // Clear any existing reconnect timeout first
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            logger.info(`Executing reconnection attempt ${connectAttempts.current} after timeout`);
+            connect();
+          }, delay);
         }
       }, 5000);
       
@@ -278,8 +317,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         // Try reconnecting if it wasn't a normal closure
         if (event.code !== 1000 && event.code !== 1001) {
           // Increase reconnection attempts to improve resilience
-          if (connectAttempts.current < 10) { // Increased from 3 to 10 attempts
-            const delay = Math.min(1000 * Math.pow(1.5, connectAttempts.current), 10000);
+          if (connectAttempts.current < 20) { // Increased from 10 to 20 attempts for higher resilience
+            // Implement an exponential backoff with a minimum of 1s and cap at 30s
+            const delay = Math.min(1000 * Math.pow(1.5, Math.min(connectAttempts.current, 10)), 30000);
             connectAttempts.current++;
             
             // Clear any existing reconnect timeout
@@ -287,13 +327,28 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
               clearTimeout(reconnectTimeoutRef.current);
             }
             
-            logger.info(`Scheduling reconnection attempt in ${delay/1000} seconds...`);
-            reconnectTimeoutRef.current = setTimeout(connect, delay);
+            logger.info(`Scheduling reconnection attempt ${connectAttempts.current} in ${delay/1000} seconds...`);
+            reconnectTimeoutRef.current = setTimeout(() => {
+              logger.info(`Executing reconnection attempt ${connectAttempts.current}`);
+              connect();
+            }, delay);
           } else {
-            logger.warn('Maximum reconnection attempts reached', {
+            // Reset attempts after the max to allow eventual recovery after a break
+            logger.warn('Maximum reconnection attempts reached, will reset after 60 seconds', {
               connectionId,
+              attempts: connectAttempts.current,
               timestamp: new Date().toISOString()
             });
+            
+            // Set a longer timeout to try again after a longer break
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
+            }
+            reconnectTimeoutRef.current = setTimeout(() => {
+              logger.info('Resetting reconnection attempts counter after timeout');
+              connectAttempts.current = 0; 
+              connect();
+            }, 60000); // Try again after 1 minute
           }
         }
       };
@@ -382,10 +437,28 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             });
           }
           
-          // Store normalized message
+          // Store normalized message with improved nested payload handling
+          // This addresses the doubly-nested payload issue we're seeing in the logs
+          const normalizedPayload = (() => {
+            // First check if we're dealing with a doubly-nested payload structure
+            if (data.payload?.payload && typeof data.payload.payload === 'object') {
+              return data.payload.payload;
+            }
+            // Then check for standard payload structure
+            if (data.payload && typeof data.payload === 'object') {
+              return data.payload;
+            }
+            // Then check for data property as alternative payload location
+            if (data.data && typeof data.data === 'object') {
+              return data.data;
+            }
+            // Finally, use the whole message if no payload found
+            return data;
+          })();
+          
           setLastMessage({
             type: data.type,
-            payload: data.payload || data.data || data,
+            payload: normalizedPayload,
             timestamp: new Date().toISOString()
           });
         } catch (error) {
