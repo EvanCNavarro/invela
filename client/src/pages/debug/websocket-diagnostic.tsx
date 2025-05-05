@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, CheckCircle2, RefreshCw, Send, Wifi, WifiOff } from 'lucide-react';
+import { AlertCircle, CheckCircle2, RefreshCcw, RefreshCw, Send, Wifi, WifiOff } from 'lucide-react';
 
 export default function WebSocketDiagnosticPage() {
   const { isConnected, isConnecting, connectionId, send, subscribe, unsubscribe, connect, disconnect } = useWebSocketService();
@@ -348,7 +348,7 @@ export default function WebSocketDiagnosticPage() {
               size="sm"
               className="w-full"
             >
-              <RefreshCcw className="mr-2 h-4 w-4" /> Full Reset
+              <RefreshCw className="mr-2 h-4 w-4" /> Full Reset
             </Button>
           </CardFooter>
         </Card>
