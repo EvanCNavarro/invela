@@ -8,42 +8,13 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 
-// Single WebSocket server instance for the entire application
 let wss: WebSocketServer | null = null;
-
-// Client registry with metadata for each connection
-interface ClientData {
-  ws: WebSocket;
-  id: string;
-  userId?: number;
-  companyId?: number;
-  connectedAt: Date;
-  lastActivity: Date;
-  ip: string;
-  userAgent?: string;
-}
-
-// Map to track clients with their metadata
-let clients = new Map<string, ClientData>();
-
-// Server metadata
-let serverDetails = {
-  path: '/ws',
-  id: '',
-  startTime: new Date(),
-  messageCount: 0,
-  errors: 0,
-};
+let clients: Map<string, WebSocket> = new Map();
 
 /**
  * Initialize the WebSocket server
- * 
- * @param server HTTP server to attach the WebSocket server to
- * @param path WebSocket endpoint path (default: '/ws')
- * @returns The WebSocket server instance
  */
 export function initWebSocketServer(server: http.Server, path: string = '/ws') {
-  // Only initialize once
   if (wss) {
     console.log('[WebSocket] WebSocket server already initialized');
     return wss;
@@ -53,28 +24,15 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
   wss = new WebSocketServer({ 
     server, 
     path,
-    clientTracking: true,
-    // Skip Vite HMR websocket connections
-    verifyClient: (info: { req: { headers: Record<string, string | string[] | undefined> } }) => {
-      const protocol = info.req.headers['sec-websocket-protocol'];
-      return protocol !== 'vite-hmr';
-    }
+    clientTracking: true
   });
   
   // Generate a unique ID for the server instance
-  serverDetails = {
-    path,
-    id: `ws-${Math.random().toString(36).substring(2, 8)}`,
-    startTime: new Date(),
-    messageCount: 0,
-    errors: 0,
-  };
-  
-  // Log server initialization
+  const serverId = `${Math.random().toString(36).substring(2, 8)}`;
   console.log(`[INFO] Unified WebSocket server initialized successfully with details:`, {
     clients: wss.clients.size,
     path,
-    id: serverDetails.id,
+    id: serverId,
     timestamp: new Date().toISOString(),
   });
   
@@ -82,121 +40,93 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
   wss.on('connection', (ws, req) => {
     // Generate a unique client ID
     const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    clients.set(clientId, ws);
     
-    // Store client with metadata
-    clients.set(clientId, {
-      ws,
-      id: clientId,
-      connectedAt: new Date(),
-      lastActivity: new Date(),
-      ip: req.socket.remoteAddress || 'unknown',
-      userAgent: req.headers['user-agent'] as string,
-    });
-    
-    console.log(`[WebSocket] Client connected: ${clientId}`);
+    console.log(`[INFO] [WebSocket] Client connected: ${clientId}`);
     
     // Send a welcome message to confirm connection
-    sendToClient(ws, 'connection_established', {
-      message: 'Connection established',
-      clientId,
-      timestamp: new Date().toISOString(),
-    });
+    ws.send(JSON.stringify({
+      type: 'connection_established',
+      payload: {
+        message: 'Connection established',
+        clientId,
+        timestamp: new Date().toISOString(),
+      },
+      data: {
+        message: 'Connection established',
+        clientId,
+        timestamp: new Date().toISOString(),
+      }
+    }));
     
     // Listen for messages from this client
     ws.on('message', (message) => {
       try {
         const parsedMessage = JSON.parse(message.toString());
-        serverDetails.messageCount++;
-        
-        // Update last activity timestamp
-        const client = clients.get(clientId);
-        if (client) {
-          client.lastActivity = new Date();
-        }
+        console.log(`[INFO] [WebSocket] Received message from client ${clientId}:`, parsedMessage);
         
         // Handle authentication message
         if (parsedMessage.type === 'authenticate') {
-          const { userId, companyId } = parsedMessage.payload || parsedMessage;
-          
-          // Update client metadata with auth info
-          const client = clients.get(clientId);
-          if (client) {
-            client.userId = userId;
-            client.companyId = companyId;
-          }
-          
-          // Send authentication confirmation
-          sendToClient(ws, 'authenticated', {
+          const { userId, companyId } = parsedMessage;
+          console.log(`[INFO] [WebSocket] Authentication from client ${clientId}:`, {
             userId,
             companyId,
-            clientId,
-            timestamp: new Date().toISOString(),
+            hasToken: !!req.headers.cookie?.includes('connect.sid')
           });
+          
+          // Send authentication confirmation
+          ws.send(JSON.stringify({
+            type: 'authenticated',
+            payload: {
+              userId,
+              companyId,
+              clientId,
+              timestamp: new Date().toISOString(),
+            },
+            data: {
+              userId,
+              companyId,
+              clientId,
+              timestamp: new Date().toISOString(),
+            }
+          }));
         }
         
-        // Handle ping message for connectivity testing
+        // Handle ping message
         if (parsedMessage.type === 'ping') {
-          sendToClient(ws, 'pong', {
-            timestamp: new Date().toISOString(),
-            serverTime: Date.now(),
-          });
+          ws.send(JSON.stringify({
+            type: 'pong',
+            payload: {
+              timestamp: new Date().toISOString(),
+            },
+            data: {
+              timestamp: new Date().toISOString(),
+            }
+          }));
         }
       } catch (error) {
-        serverDetails.errors++;
-        console.error(`[WebSocket] Error processing message:`, error);
+        console.error(`[ERROR] [WebSocket] Error processing message:`, error);
       }
     });
     
     // Handle disconnections
-    ws.on('close', (code, reason) => {
-      console.log(`[WebSocket] Client disconnected: ${clientId} - Code: ${code}, Reason: ${reason}`);
+    ws.on('close', () => {
+      console.log(`[INFO] [WebSocket] Client disconnected: ${clientId}`);
       clients.delete(clientId);
     });
     
     // Handle errors
     ws.on('error', (error) => {
-      serverDetails.errors++;
-      console.error(`[WebSocket] Client error: ${clientId}`, error);
+      console.error(`[ERROR] [WebSocket] Client error: ${clientId}`, error);
     });
   });
   
   // Handle server errors
   wss.on('error', (error) => {
-    serverDetails.errors++;
-    console.error(`[WebSocket] Server error:`, error);
+    console.error(`[ERROR] [WebSocket] Server error:`, error);
   });
   
   return wss;
-}
-
-/**
- * Send a message to a specific client
- * 
- * @param ws WebSocket client to send to
- * @param type Message type
- * @param payload Message payload
- * @returns Success status
- */
-function sendToClient(ws: WebSocket, type: string, payload: any): boolean {
-  if (ws.readyState !== WebSocket.OPEN) {
-    return false;
-  }
-  
-  try {
-    // Format with both payload and data for backward compatibility
-    const message = JSON.stringify({
-      type,
-      payload,
-      data: payload, // For backward compatibility
-      timestamp: new Date().toISOString(),
-    });
-    
-    ws.send(message);
-    return true;
-  } catch (error) {
-    console.error(`[WebSocket] Error sending message:`, error);
-    return false;
-  }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,67 +10,15 @@ import { apiRequest } from '@/lib/queryClient';
 import { BellRing, Terminal, TerminalSquare } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useWebSocketService } from '@/providers/websocket-provider';
-import type { TaskUpdateEvent, ConnectionStatusEvent, SystemNotificationEvent } from '@/lib/websocket-types';
+import { useWebSocket } from '@/contexts/WebSocketContext';
 
 export default function WebsocketDebuggerPage() {
   const [taskId, setTaskId] = useState('');
   const [status, setStatus] = useState('in_progress');
   const [progress, setProgress] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
-  type ResultType = { success: boolean; message: string; details?: any };
-  
-  const [result, setResult] = useState<ResultType | null>(null);
-  const wsService = useWebSocketService();
-  const [connected, setConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<TaskUpdateEvent | ConnectionStatusEvent | SystemNotificationEvent | null>(null);
-  const [lastTaskUpdate, setLastTaskUpdate] = useState<TaskUpdateEvent['payload'] | null>(null);
-  
-  // Set up WebSocket subscribers
-  useEffect(() => {
-    // Track subscriptions to clean up
-    const subscriptions: (() => void)[] = [];
-    
-    // Connection status subscription
-    const connectionSub = wsService.subscribe('connection_status', (data: ConnectionStatusEvent) => {
-      if (data && typeof data === 'object') {
-        // Handle both payload or direct format
-        const status = data.status;
-        setConnected(status === 'connected');
-        
-        // Also track this for the last message panel
-        setLastMessage(data);
-      }
-    });
-    subscriptions.push(connectionSub);
-    
-    // Add a subscription for any task related events
-    const taskMessageSub = wsService.subscribe('task_update', (data: TaskUpdateEvent) => {
-      setLastMessage(data);
-    });
-    subscriptions.push(taskMessageSub);
-    
-    // Add a subscription for any system notifications
-    const systemNotificationSub = wsService.subscribe('system_notification', (data: SystemNotificationEvent) => {
-      setLastMessage(data);
-    });
-    subscriptions.push(systemNotificationSub);
-    
-    // Track task updates specifically
-    const taskUpdateSub = wsService.subscribe('task_update', (data: TaskUpdateEvent) => {
-      // Extract task data from the payload
-      setLastTaskUpdate(data.payload);
-    });
-    subscriptions.push(taskUpdateSub);
-    
-    // Set initial connection state
-    setConnected(wsService.isConnected);
-    
-    return () => {
-      // Clean up all subscriptions
-      subscriptions.forEach(unsub => unsub());
-    };
-  }, [wsService]);
+  const [result, setResult] = useState<any>(null);
+  const { connected, lastMessage, lastTaskUpdate } = useWebSocket();
   
   const sendTestNotification = async () => {
     if (!taskId) return;
