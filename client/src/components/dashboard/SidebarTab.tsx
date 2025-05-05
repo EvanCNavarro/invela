@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { LockIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -134,12 +135,27 @@ export function SidebarTab({
   // which is the single source of truth for tab access control.
   // 
   // File Vault tab access is controlled by the server based on form submissions.
-  // No special client-side handling is needed anymore, making the code much cleaner.
   const isFileVaultTab = (label === "File Vault");
   
-  if (isFileVaultTab) {
-    console.log(`[SidebarTab] File Vault tab state: isDisabled=${isDisabled}`);
-  }
+  // Use a ref to track previous state and only log on changes
+  const prevDisabledRef = useRef<boolean>(isDisabled);
+  
+  // Use effect to log only on state changes, not every render
+  useEffect(() => {
+    if (isFileVaultTab && prevDisabledRef.current !== isDisabled) {
+      // Import logger dynamically to avoid bundling it unnecessarily
+      import('@/lib/logger').then(({ logger }) => {
+        logger.info(`[SidebarTab] File Vault tab access changed`, { 
+          isLocked: isDisabled,
+          previousState: prevDisabledRef.current,
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      // Update ref with current state for next comparison
+      prevDisabledRef.current = isDisabled;
+    }
+  }, [isDisabled, isFileVaultTab]);
   
   return (
     <Link 
