@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KY3P Clear Fields Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1 {
+      color: #2563eb;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    button.button-clear {
+      background-color: #dc2626;
+    }
+    button.button-clear:hover {
+      background-color: #b91c1c;
+    }
+    button.button-preserve {
+      background-color: #059669;
+    }
+    button.button-preserve:hover {
+      background-color: #047857;
+    }
+    button.button-set {
+      background-color: #f59e0b;
+    }
+    button.button-set:hover {
+      background-color: #d97706;
+    }
+    pre {
+      background-color: #f3f4f6;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      font-size: 14px;
+    }
+    .success {
+      color: #059669;
+      font-weight: bold;
+    }
+    .error {
+      color: #dc2626;
+      font-weight: bold;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>KY3P Clear Fields Test</h1>
+  
+  <div class="section">
+    <h2>Test Setup</h2>
+    <p>This page helps test the KY3P form clearing functionality with both standard and preserve progress behavior.</p>
+    <p>Current configuration:</p>
+    <ul>
+      <li>Testing endpoint: <code>/api/ky3p/clear-fields/:taskId</code></li>
+      <li>Current task ID: <code>739</code> (KY3P task)</li>
+    </ul>
+  </div>
+  
+  <div class="section">
+    <h2>Test Controls</h2>
+    <button id="set-progress-button" class="button-set">Set Progress to 50%</button>
+    <button id="check-button" class="button">Check Task Status</button>
+    <button id="standard-clear-button" class="button-clear">Standard Clear (Reset to 0%)</button>
+    <button id="preserve-clear-button" class="button-preserve">Clear with preserveProgress=true</button>
+    <button id="run-all-button" class="button">Run All Tests</button>
+  </div>
+  
+  <div id="results">
+    <p>Results will appear here after running tests...</p>
+  </div>
+  
+  <script>
+    // Element references
+    const standardClearButton = document.getElementById('standard-clear-button');
+    const preserveClearButton = document.getElementById('preserve-clear-button');
+    const setProgressButton = document.getElementById('set-progress-button');
+    const checkButton = document.getElementById('check-button');
+    const runAllButton = document.getElementById('run-all-button');
+    const results = document.getElementById('results');
+    
+    // Task ID to test
+    const TASK_ID = 739;
+    
+    // Display results in the results div
+    function displayResults(html) {
+      results.innerHTML = html;
+    }
+    
+    // Helper function to get task progress
+    async function getTaskProgress() {
+      try {
+        const response = await fetch(`/api/tasks/${TASK_ID}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to get task: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error(`Error getting task ${TASK_ID}:`, error);
+        throw error;
+      }
+    }
+    
+    // Helper function to set task progress (for testing)
+    async function setTaskProgress(progress) {
+      try {
+        const response = await fetch(`/api/tasks/${TASK_ID}/progress`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ progress })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to set task progress: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error(`Error setting task ${TASK_ID} progress:`, error);
+        throw error;
+      }
+    }
+    
+    // Test standard clear fields functionality (should reset progress to 0%)
+    async function testStandardClear() {
+      try {
+        displayResults('<p>Testing standard KY3P clear fields (should reset progress to 0%)...</p>');
+        
+        // Check initial task progress
+        const initialTask = await getTaskProgress();
+        const initialProgress = initialTask.progress;
+        
+        const response = await fetch(`/api/ky3p/clear-fields/${TASK_ID}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Check task progress after clear
+        const afterTask = await getTaskProgress();
+        const afterProgress = afterTask.progress;
+        
+        const html = `
+          <p>Initial progress: ${initialProgress}%</p>
+          <p>Result from clear endpoint:</p>
+          <pre>${JSON.stringify(result, null, 2)}</pre>
+          <p>Progress after standard clear: ${afterProgress}%</p>
+          ${afterProgress === 0 
+            ? '<p class="success">✅ SUCCESS: Standard clear correctly reset progress to 0%</p>'
+            : `<p class="error">❌ ERROR: Standard clear did not reset progress to 0% (currently ${afterProgress}%)</p>`
+          }
+        `;
+        
+        displayResults(html);
+        return { success: afterProgress === 0, initialProgress, afterProgress, result };
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error during standard clear test:</p>
+          <pre>${error.message}</pre>
+        `);
+        return { success: false, error: error.message };
+      }
+    }
+    
+    // Test clear with preserveProgress=true (should maintain progress)
+    async function testPreserveProgressClear() {
+      try {
+        displayResults('<p>Testing KY3P clear with preserveProgress=true...</p>');
+        
+        // Set a known progress value first
+        await setTaskProgress(50);
+        
+        // Check initial task progress
+        const initialTask = await getTaskProgress();
+        const initialProgress = initialTask.progress;
+        
+        // Call the clear endpoint with preserveProgress=true
+        const response = await fetch(`/api/ky3p/clear-fields/${TASK_ID}?preserveProgress=true`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Check task progress after clear
+        const afterTask = await getTaskProgress();
+        const afterProgress = afterTask.progress;
+        
+        const html = `
+          <p>Initial progress: ${initialProgress}%</p>
+          <p>Result from clear endpoint with preserveProgress=true:</p>
+          <pre>${JSON.stringify(result, null, 2)}</pre>
+          <p>Progress after clear with preserveProgress=true: ${afterProgress}%</p>
+          ${afterProgress === initialProgress 
+            ? `<p class="success">✅ SUCCESS: Clear with preserveProgress correctly maintained progress at ${afterProgress}%</p>`
+            : `<p class="error">❌ ERROR: Clear with preserveProgress did not maintain progress (before: ${initialProgress}%, after: ${afterProgress}%)</p>`
+          }
+        `;
+        
+        displayResults(html);
+        return { success: afterProgress === initialProgress, initialProgress, afterProgress, result };
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error during preserveProgress clear test:</p>
+          <pre>${error.message}</pre>
+        `);
+        return { success: false, error: error.message };
+      }
+    }
+    
+    // Run all tests in sequence
+    async function runAllTests() {
+      try {
+        displayResults('<p>Running all KY3P clear fields tests...</p>');
+        
+        // Set progress to 50% to ensure we have a baseline
+        await setTaskProgress(50);
+        console.log('Set progress to 50%');
+        
+        // Run standard clear test
+        console.log('1. Testing standard clear (should reset progress to 0%)');
+        const standardResult = await testStandardClear();
+        
+        // Set progress back to 50% for next test
+        await setTaskProgress(50);
+        console.log('Reset progress to 50% for next test');
+        
+        // Run preserveProgress clear test
+        console.log('2. Testing clear with preserveProgress=true');
+        const preserveResult = await testPreserveProgressClear();
+        
+        // Display combined results
+        const html = `
+          <h3>Test Results Summary</h3>
+          <p>Standard clear test: ${standardResult.success ? '✅ PASS' : '❌ FAIL'}</p>
+          <p>Preserve progress test: ${preserveResult.success ? '✅ PASS' : '❌ FAIL'}</p>
+          <p>Overall result: ${standardResult.success && preserveResult.success ? '✅ ALL TESTS PASSED' : '❌ SOME TESTS FAILED'}</p>
+          
+          <h3>Details</h3>
+          <h4>Standard Clear Test:</h4>
+          <pre>${JSON.stringify(standardResult, null, 2)}</pre>
+          
+          <h4>Preserve Progress Test:</h4>
+          <pre>${JSON.stringify(preserveResult, null, 2)}</pre>
+        `;
+        
+        displayResults(html);
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error running tests:</p>
+          <pre>${error.message}</pre>
+        `);
+      }
+    }
+    
+    // Check current task progress
+    async function checkTaskProgress() {
+      try {
+        displayResults('<p>Checking current task progress...</p>');
+        
+        const task = await getTaskProgress();
+        
+        displayResults(`
+          <h3>Current Task Status</h3>
+          <pre>${JSON.stringify(task, null, 2)}</pre>
+          <p>Progress: ${task.progress}%</p>
+          <p>Status: ${task.status}</p>
+        `);
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error checking task progress:</p>
+          <pre>${error.message}</pre>
+        `);
+      }
+    }
+    
+    // Set task progress to 50%
+    async function setProgress50() {
+      try {
+        displayResults('<p>Setting task progress to 50%...</p>');
+        
+        const result = await setTaskProgress(50);
+        
+        displayResults(`
+          <p class="success">✅ Successfully set task progress to 50%</p>
+          <pre>${JSON.stringify(result, null, 2)}</pre>
+          <p>You can now run the clear tests to see their behavior.</p>
+        `);
+      } catch (error) {
+        displayResults(`
+          <p class="error">❌ Error setting task progress:</p>
+          <pre>${error.message}</pre>
+        `);
+      }
+    }
+    
+    // Event listeners
+    standardClearButton.addEventListener('click', testStandardClear);
+    preserveClearButton.addEventListener('click', testPreserveProgressClear);
+    setProgressButton.addEventListener('click', setProgress50);
+    checkButton.addEventListener('click', checkTaskProgress);
+    runAllButton.addEventListener('click', runAllTests);
+  </script>
+</body>
+</html>
