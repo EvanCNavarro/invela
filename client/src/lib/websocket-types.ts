@@ -151,6 +151,10 @@ export type WebSocketEventMap = {
   'system_notification': SystemNotificationEvent;
   'user_activity': UserActivityEvent;
   'connection_status': ConnectionStatusEvent;
+  'connection_established': WebSocketEvent;
+  'authenticated': WebSocketEvent;
+  'ping': WebSocketEvent;
+  'pong': WebSocketEvent;
 };
 
 // Helper type to get payload type from event type
