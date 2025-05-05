@@ -26,11 +26,25 @@ class EnhancedKybServiceFactory {
   private instances: Map<string, EnhancedKybFormService> = new Map();
   private defaultInstance: EnhancedKybFormService;
   private initialized = false;
+  private _userContextError = false;
   
   constructor() {
-    // Create a default instance for global use when context is missing
-    this.defaultInstance = new EnhancedKybFormService();
-    this.initialized = true;
+    try {
+      // Create a default instance for global use when context is missing
+      this.defaultInstance = new EnhancedKybFormService();
+      this.initialized = true;
+      
+      // Only report user context error once
+      this._userContextError = false;
+    } catch (error) {
+      // Handle initialization errors gracefully
+      logger.warn('Error initializing EnhancedKybServiceFactory, using minimal instance:', 
+        error instanceof Error ? error.message : String(error));
+      
+      // Create minimal default instance as fallback
+      this.defaultInstance = new EnhancedKybFormService();
+      this.initialized = true;
+    }
   }
   
   /**
@@ -42,43 +56,78 @@ class EnhancedKybServiceFactory {
    * @returns An instance of EnhancedKybFormService
    */
   public getInstance(companyId?: number | string, taskId?: number | string): EnhancedKybFormService {
+    // Ensure we return a valid instance even if errors occur during creation
+    if (!this.initialized || !this.defaultInstance) {
+      // Safety check to prevent usage before initialization
+      try {
+        this.defaultInstance = new EnhancedKybFormService();
+        this.initialized = true;
+      } catch (initError) {
+        logger.error('Critical initialization error in KYB service factory:', initError);
+        // Absolute last resort: create bare-bones implementation
+        this.defaultInstance = new EnhancedKybFormService();
+      }
+    }
+    
     try {
-      // OODA: Observe - Check what context we have available
-      const hasCompanyId = companyId !== undefined && companyId !== null;
-      const hasTaskId = taskId !== undefined && taskId !== null;
+      // OODA: Observe - Check what context we have available and sanitize inputs
+      // Convert any non-numeric string inputs to numbers
+      const normalizedCompanyId = typeof companyId === 'string' ? parseInt(companyId, 10) : companyId;
+      const normalizedTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+      
+      // Check for valid context after normalization
+      const hasCompanyId = normalizedCompanyId !== undefined && 
+                         normalizedCompanyId !== null && 
+                         !isNaN(Number(normalizedCompanyId));
+      const hasTaskId = normalizedTaskId !== undefined && 
+                     normalizedTaskId !== null && 
+                     !isNaN(Number(normalizedTaskId));
       
       // OODA: Orient - Use appropriate key based on available context
       let instanceKey: string;
       
       if (hasCompanyId && hasTaskId) {
         // Both company and task IDs available - full isolation
-        instanceKey = `company_${companyId}_task_${taskId}`;
-        logger.info(`Creating isolated KYB service for company ${companyId}, task ${taskId}`);
+        instanceKey = `company_${normalizedCompanyId}_task_${normalizedTaskId}`;
+        logger.info(`Creating isolated KYB service for company ${normalizedCompanyId}, task ${normalizedTaskId}`);
       } else if (hasCompanyId) {
         // Only company ID available - company-level isolation
-        instanceKey = `company_${companyId}`;
-        logger.info(`Creating company-level KYB service for company ${companyId}`);
+        instanceKey = `company_${normalizedCompanyId}`;
+        logger.info(`Creating company-level KYB service for company ${normalizedCompanyId}`);
       } else {
-        // No context available - use global instance with info level (not warning)
-        logger.info('No company context found, using global instance');
+        // No valid context available - use global instance with info level (not warning)
+        if (!this._userContextError) {
+          logger.info('No company context found, using global instance');
+          this._userContextError = true; // Only log once
+        }
         return this.defaultInstance;
       }
       
       // OODA: Decide - Check if we already have an instance for this context
       if (!this.instances.has(instanceKey)) {
         // OODA: Act - Create a new isolated instance for this context
-        const instance = new EnhancedKybFormService();
-        this.instances.set(instanceKey, instance);
-        logger.info(`Created new KYB service instance with key: ${instanceKey}`);
-        return instance;
+        try {
+          const instance = new EnhancedKybFormService();
+          this.instances.set(instanceKey, instance);
+          logger.info(`Created new KYB service instance with key: ${instanceKey}`);
+          return instance;
+        } catch (instanceError) {
+          // If instance creation fails, gracefully fall back to default
+          logger.warn(`Error creating instance for ${instanceKey}:`, instanceError);
+          return this.defaultInstance;
+        }
       }
       
-      // Return existing instance
-      return this.instances.get(instanceKey)!;
+      // Return existing instance with null safety
+      const instance = this.instances.get(instanceKey);
+      return instance || this.defaultInstance;
     } catch (error) {
       // KISS: Simple error handling with fallback to default instance
-      logger.info('Error creating isolated KYB service instance, using default:', 
-        error instanceof Error ? error.message : String(error));
+      if (!this._userContextError) {
+        logger.info('Error creating isolated KYB service instance, using default:', 
+          error instanceof Error ? error.message : String(error));
+        this._userContextError = true; // Only log once
+      }
       return this.defaultInstance;
     }
   }
