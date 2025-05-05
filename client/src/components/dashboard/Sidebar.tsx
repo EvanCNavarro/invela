@@ -20,14 +20,7 @@ import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
 import { wsService } from "@/lib/websocket";
-
-// Define the TaskCountData interface if it doesn't exist in @/lib/types
-interface TaskCountData {
-  count?: { total?: number };
-  taskId?: number;
-  companyId?: number;
-  status?: string;
-}
+import { TaskCountData, CompanyTabsUpdateEvent, FormSubmittedEvent, SidebarRefreshEvent } from "@/lib/websocket-types";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -93,7 +86,7 @@ export function Sidebar({
     if (!company?.id) return;
     
     // Define handler for company tabs updates from WebSocket
-    const handleTabsUpdate = (data: any) => {
+    const handleTabsUpdate = (data: CompanyTabsUpdateEvent['payload']) => {
       console.log('[Sidebar] 🔔 WebSocket company_tabs_update received:', data);
       
       // Only process if it's for our company
@@ -107,7 +100,7 @@ export function Sidebar({
     };
     
     // Define handler for special immediate sidebar refresh event
-    const handleSidebarRefresh = (data: any) => {
+    const handleSidebarRefresh = (data: SidebarRefreshEvent['payload']) => {
       console.log('[Sidebar] 🚀 WebSocket sidebar_refresh_tabs received:', data);
       
       // This is a critical path for IMMEDIATE visual updates
@@ -232,33 +225,34 @@ export function Sidebar({
 
     const setupWebSocketSubscriptions = async () => {
       try {
-        // Subscribe to task creation
-        const unsubTaskCreate = await wsService.subscribe('task_created', (data: TaskCountData) => {
+        // Set up task count update handler (reused across all task events)
+        const handleTaskCountUpdate = (data: TaskCountData) => {
           if (data.count?.total !== undefined) {
             setTaskCount(data.count.total);
           }
-        });
+          
+          // Also check if this is for our company and update as needed
+          if (company && data.companyId === company.id) {
+            // For major task changes in our company, we may need to refresh view
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          }
+        };
+        
+        // Subscribe to task creation
+        const unsubTaskCreate = await wsService.subscribe('task_created', handleTaskCountUpdate);
         subscriptions.push(unsubTaskCreate);
 
         // Subscribe to task deletion
-        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data: TaskCountData) => {
-          if (data.count?.total !== undefined) {
-            setTaskCount(data.count.total);
-          }
-        });
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', handleTaskCountUpdate);
         subscriptions.push(unsubTaskDelete);
 
         // Subscribe to task updates
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data: TaskCountData) => {
-          if (data.count?.total !== undefined) {
-            setTaskCount(data.count.total);
-          }
-        });
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', handleTaskCountUpdate);
         subscriptions.push(unsubTaskUpdate);
         
         // CRITICAL FIX: Enhanced WebSocket handling for sidebar updates
         // This function is shared between both event handlers to ensure consistent behavior
-        const handleCompanyTabsUpdate = (data: { companyId?: number; availableTabs?: string[] }, eventName: string) => {
+        const handleCompanyTabsUpdate = (data: CompanyTabsUpdateEvent['payload'], eventName: string) => {
           console.log(`[Sidebar] Received ${eventName} event:`, data);
           
           // First, check if this is for our company
@@ -302,19 +296,19 @@ export function Sidebar({
         };
         
         // Subscribe to company tabs updates - both event names for compatibility
-        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: { companyId?: number; availableTabs?: string[] }) => {
+        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: CompanyTabsUpdateEvent['payload']) => {
           handleCompanyTabsUpdate(data, 'company_tabs_update');
         });
         subscriptions.push(unsubCompanyTabsUpdate);
         
         // Also subscribe to the alternative event name
-        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: { companyId?: number; availableTabs?: string[] }) => {
+        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: CompanyTabsUpdateEvent['payload']) => {
           handleCompanyTabsUpdate(data, 'company_tabs_updated');
         });
         subscriptions.push(unsubCompanyTabsUpdated);
         
         // Listen for form submission events that may affect tab access
-        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: { companyId?: number; unlockedTabs?: string[] }) => {
+        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: FormSubmittedEvent['payload']) => {
           console.log(`[Sidebar] Received form_submitted event:`, data);
           
           // Only process events for our company
@@ -324,6 +318,19 @@ export function Sidebar({
             // Always refresh company data after a form submission
             // This ensures tab access rights are up-to-date
             queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+            
+            // Store form submission in localStorage for backup tab access verification
+            try {
+              localStorage.setItem('lastFormSubmission', JSON.stringify({
+                companyId: data.companyId,
+                taskId: data.taskId,
+                formType: data.formType,
+                unlockedTabs: data.unlockedTabs || [],
+                timestamp: new Date().toISOString()
+              }));
+            } catch (error) {
+              // Ignore storage errors
+            }
           }
         });
         subscriptions.push(unsubFormSubmitted);
