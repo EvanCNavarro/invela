@@ -160,23 +160,85 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           clearInterval(heartbeatIntervalRef.current);
         }
         
-        // Send initial authentication message
+        // Send initial authentication message using current user data from API
         try {
-          // Attempt to get user and company information from global store/context if available
-          const userId = window.__USER_ID || localStorage.getItem('userId') || null;
-          const companyId = window.__COMPANY_ID || localStorage.getItem('companyId') || null;
+          // First attempt to fetch current user data from API
+          logger.info('Fetching current user data for WebSocket authentication');
           
-          logger.info('Sending authentication message', { userId, companyId, connectionId });
-          
-          ws.send(JSON.stringify({
-            type: 'authenticate',
-            userId,
-            companyId,
-            clientId: connectionId,
-            timestamp: new Date().toISOString()
-          }));
+          // We'll use the credentials api to get user ID and company ID
+          fetch('/api/user', {
+            credentials: 'include', // Important: include cookies for authentication
+            headers: { 'Content-Type': 'application/json' }
+          })
+          .then(response => {
+            if (!response.ok) return null;
+            return response.json();
+          })
+          .then(userData => {
+            // Once we have the user data, get the company info
+            if (userData && userData.id) {
+              // Store for future reconnects
+              localStorage.setItem('userId', userData.id.toString());
+              
+              // Now get company info
+              return fetch('/api/companies/current', {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+              })
+              .then(response => {
+                if (!response.ok) return { userData, companyData: null };
+                return response.json().then(companyData => ({ userData, companyData }));
+              });
+            }
+            return { userData: null, companyData: null };
+          })
+          .then(({ userData, companyData }) => {
+            // Now we have both user and company data if available
+            const userId = userData?.id || localStorage.getItem('userId') || null;
+            const companyId = companyData?.id || localStorage.getItem('companyId') || null;
+            
+            if (companyId) {
+              localStorage.setItem('companyId', companyId.toString());
+            }
+            
+            logger.info('Sending authentication message', { 
+              userId, 
+              companyId, 
+              connectionId,
+              hasUserData: !!userData,
+              hasCompanyData: !!companyData
+            });
+            
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'authenticate',
+                userId,
+                companyId,
+                clientId: connectionId,
+                timestamp: new Date().toISOString()
+              }));
+            } else {
+              logger.warn('WebSocket not open when trying to send authentication');
+            }
+          })
+          .catch(error => {
+            logger.warn('Error fetching authentication data', error);
+            // Still try to authenticate with whatever we have in localStorage
+            const userId = localStorage.getItem('userId') || null;
+            const companyId = localStorage.getItem('companyId') || null;
+            
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'authenticate',
+                userId,
+                companyId, 
+                clientId: connectionId,
+                timestamp: new Date().toISOString()
+              }));
+            }
+          });
         } catch (authError) {
-          logger.warn('Error sending authentication message', authError);
+          logger.warn('Error initiating authentication process', authError);
         }
         
         // Setup regular heartbeat 
