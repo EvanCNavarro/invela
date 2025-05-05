@@ -6,10 +6,210 @@
  * formatting, and behavior.
  */
 
-import { toast } from '@/hooks/use-toast';
+import { toast, useToast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('UnifiedToast');
+
+// Standard duration for all toasts
+const STANDARD_DURATION = 3000;
+
+/**
+ * Hook for using the unified toast system
+ */
+export function useUnifiedToast() {
+  const { toast } = useToast();
+  
+  // Success Toasts
+  const success = (title: string, description?: string) => {
+    return toast({
+      variant: "success",
+      title,
+      description,
+      duration: STANDARD_DURATION,
+    });
+  };
+
+  // Info Toasts  
+  const info = (title: string, description?: string) => {
+    return toast({
+      variant: "info",
+      title,
+      description,
+      duration: STANDARD_DURATION,
+    });
+  };
+
+  // Warning Toasts
+  const warning = (title: string, description?: string) => {
+    return toast({
+      variant: "warning",
+      title,
+      description,
+      duration: STANDARD_DURATION,
+    });
+  };
+
+  // Error Toasts
+  const error = (title: string, description?: string) => {
+    return toast({
+      variant: "error",
+      title,
+      description,
+      duration: STANDARD_DURATION,
+    });
+  };
+
+  // File Upload Toasts
+  const fileUploadSuccess = (file: any) => {
+    const fileName = typeof file === 'string' ? file : file.name;
+    return toast({
+      variant: "success",
+      title: "File uploaded successfully",
+      description: `${fileName} has been uploaded.`,
+      duration: STANDARD_DURATION,
+    });
+  };
+  
+  const fileUploadError = (fileName: string, error?: string) => {
+    return toast({
+      variant: "error",
+      title: "Upload failed",
+      description: `Failed to upload ${fileName}. ${error || "Please try again."}`,
+      duration: STANDARD_DURATION,
+    });
+  };
+
+  // Clipboard Copy Toast
+  const clipboardCopy = (text: string) => {
+    return toast({
+      variant: "clipboard",
+      title: "Copied to clipboard",
+      description: text ? (text.length > 50 ? "Content copied to clipboard." : `"${text}" copied to clipboard.`) : "Content copied to clipboard.",
+      duration: STANDARD_DURATION,
+    });
+  };
+
+  return {
+    success,
+    info,
+    warning,
+    error,
+    fileUploadSuccess,
+    fileUploadError,
+    clipboardCopy,
+  };
+}
+
+// Export standalone functions for use without the hook
+export const unifiedToast = {
+  success: (titleOrOptions: string | { title: string; description?: string; id?: string }) => {
+    if (typeof titleOrOptions === 'string') {
+      return toast({
+        variant: "success",
+        title: titleOrOptions,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      return toast({
+        variant: "success",
+        title: titleOrOptions.title,
+        description: titleOrOptions.description,
+        duration: STANDARD_DURATION,
+        id: titleOrOptions.id,
+      });
+    }
+  },
+  
+  info: (title: string, description?: string) => {
+    return toast({
+      variant: "info",
+      title,
+      description,
+      duration: STANDARD_DURATION,
+    });
+  },
+  
+  warning: (title: string, description?: string) => {
+    return toast({
+      variant: "warning",
+      title,
+      description,
+      duration: STANDARD_DURATION,
+    });
+  },
+  
+  error: (titleOrOptions: string | { title: string; description?: string; id?: string }) => {
+    if (typeof titleOrOptions === 'string') {
+      return toast({
+        variant: "error",
+        title: titleOrOptions,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      return toast({
+        variant: "error",
+        title: titleOrOptions.title,
+        description: titleOrOptions.description,
+        duration: STANDARD_DURATION,
+        id: titleOrOptions.id,
+      });
+    }
+  },
+  
+  fileUploadSuccess: (file: any) => {
+    const fileName = typeof file === 'string' ? file : file.name;
+    
+    return toast({
+      variant: "success",
+      title: "File uploaded successfully",
+      description: `${fileName} has been uploaded.`,
+      duration: STANDARD_DURATION,
+    });
+  },
+  
+  fileUploadError: (fileName: string, error?: string) => {
+    return toast({
+      variant: "error",
+      title: "Upload failed",
+      description: `Failed to upload ${fileName}. ${error || "Please try again."}`,
+      duration: STANDARD_DURATION,
+    });
+  },
+  
+  clipboardCopy: (text: string) => {
+    return toast({
+      variant: "clipboard",
+      title: "Copied to clipboard",
+      description: text ? (text.length > 50 ? "Content copied to clipboard." : `"${text}" copied to clipboard.`) : "Content copied to clipboard.",
+      duration: STANDARD_DURATION,
+    });
+  },
+  
+  fileUploadProgress: (fileName: string) => {
+    return toast({
+      variant: "file-upload",
+      title: `Uploading '${fileName}'`,
+      description: "Please wait while we upload your file...",
+      duration: Infinity, // Stay open until explicitly closed
+    });
+  },
+  
+  uploadProgress: (options: {
+    id?: string;
+    fileName: string;
+  }) => {
+    const { id, fileName } = options;
+    
+    return toast({
+      id,
+      variant: "file-upload",
+      title: `Uploading '${fileName}'`,
+      description: "Please wait while we upload your file...",
+      duration: Infinity, // Stay open until explicitly closed
+    });
+  }
+};
 
 // Standard toast variants
 export type ToastVariant = 'default' | 'success' | 'info' | 'warning' | 'error' | 'destructive';
