@@ -11,15 +11,17 @@
  * In development, it will use 5000 as the default fallback
  */
 export function getDeploymentPort(): number {
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Always prioritize the PORT environment variable, which is essential for Autoscale deployments
+  // where PORT is typically set to 8080
   const envPort = process.env.PORT;
   
   if (envPort) {
     const parsedPort = parseInt(envPort, 10);
-    return isNaN(parsedPort) ? (isProduction ? 80 : 5000) : parsedPort;
+    return isNaN(parsedPort) ? 8080 : parsedPort;
   }
   
-  return isProduction ? 80 : 5000;
+  // For Autoscale deployments, always default to 8080 if PORT is not provided
+  return process.env.NODE_ENV === 'production' ? 8080 : 5000;
 }
 
 /**
@@ -47,7 +49,15 @@ export function logDeploymentInfo(port: number, host: string): void {
   
   console.log(`[Deployment] Server running on ${host}:${port}`);
   console.log(`[Deployment] Environment: ${environment}`);
-  console.log(`[Deployment] Port forwarding: ${port === 80 ? 'Using standard HTTP port' : `Custom port: ${port}`}`);
+  
+  // Log port information with Autoscale specific message for port 8080
+  if (port === 8080) {
+    console.log(`[Deployment] Port forwarding: Using Autoscale standard port (8080)`);
+  } else if (port === 80) {
+    console.log(`[Deployment] Port forwarding: Using standard HTTP port (80)`);
+  } else {
+    console.log(`[Deployment] Port forwarding: Custom port: ${port}`);
+  }
   
   if (isProduction) {
     console.log('[Deployment] Production mode: Optimized for deployment');
