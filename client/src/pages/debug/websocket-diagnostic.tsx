@@ -88,44 +88,64 @@ export default function WebSocketDiagnosticPage() {
     };
   }, [subscribe, unsubscribe, lastPingSent]);
   
-  // Handle testing ping
+  // Handle testing ping with additional diagnostic information
   const handlePing = () => {
-    setLastPingSent(Date.now());
+    const pingTimestamp = Date.now();
+    setLastPingSent(pingTimestamp);
     
-    // Check which send method is available - this is compatible with both implementations
-    if (typeof send === 'function') {
-      if (send.length >= 2) {
-        // Using the new API with separate type and payload parameters
-        send('ping', {
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        // Using the older API with a single message object
-        send({
+    // Create a detailed ping payload with diagnostic information
+    const pingPayload = {
+      timestamp: new Date(pingTimestamp).toISOString(),
+      clientId: connectionId || 'diagnostic-page',
+      browser: navigator.userAgent,
+      screen: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      },
+      url: window.location.href,
+      diagnostic: true
+    };
+    
+    // Use the unified send method with consistent parameters
+    try {
+      if (typeof send === 'function') {
+        // Always try the new API first
+        send('ping', pingPayload);
+      } else if (sendMessage && typeof sendMessage === 'function') {
+        // Fall back to alternative API if needed
+        sendMessage({
           type: 'ping',
-          payload: {
-            timestamp: new Date().toISOString()
-          }
+          payload: pingPayload
         });
       }
-    } else if (sendMessage && typeof sendMessage === 'function') {
-      // Alternative API if available
-      sendMessage({
-        type: 'ping',
-        payload: {
-          timestamp: new Date().toISOString()
-        }
-      });
+      
+      // Record the sent message
+      setMessages(prev => [
+        { 
+          type: 'SENT', 
+          payload: { 
+            type: 'ping',
+            ...pingPayload
+          }, 
+          timestamp: new Date(pingTimestamp).toISOString() 
+        },
+        ...prev
+      ]);
+    } catch (error) {
+      // Record the error
+      console.error('[WebSocket] Error sending ping:', error);
+      setMessages(prev => [
+        { 
+          type: 'ERROR', 
+          payload: { 
+            message: error instanceof Error ? error.message : String(error),
+            type: 'ping_error'
+          }, 
+          timestamp: new Date().toISOString() 
+        },
+        ...prev
+      ]);
     }
-    
-    setMessages(prev => [
-      { 
-        type: 'SENT', 
-        payload: { type: 'ping' }, 
-        timestamp: new Date().toISOString() 
-      },
-      ...prev
-    ]);
   };
   
   // Handle manual connection attempt
