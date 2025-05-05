@@ -133,7 +133,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       
       // Set connection timeout - if it doesn't connect in 5 seconds, try again
       const connectionTimeout = setTimeout(() => {
-        if (ws.readyState !== WebSocket.OPEN) {
+        if (ws && ws.readyState !== WebSocket.OPEN) {
           logger.warn('WebSocket connection timeout, attempting to reconnect');
           try {
             ws.close();
@@ -160,6 +160,26 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           clearInterval(heartbeatIntervalRef.current);
         }
         
+        // Send initial authentication message
+        try {
+          // Attempt to get user and company information from global store/context if available
+          const userId = window.__USER_ID || localStorage.getItem('userId') || null;
+          const companyId = window.__COMPANY_ID || localStorage.getItem('companyId') || null;
+          
+          logger.info('Sending authentication message', { userId, companyId, connectionId });
+          
+          ws.send(JSON.stringify({
+            type: 'authenticate',
+            userId,
+            companyId,
+            clientId: connectionId,
+            timestamp: new Date().toISOString()
+          }));
+        } catch (authError) {
+          logger.warn('Error sending authentication message', authError);
+        }
+        
+        // Setup regular heartbeat 
         heartbeatIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             try {
@@ -235,6 +255,21 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           // Don't log heartbeat messages to reduce console spam
           if (data.type !== 'ping' && data.type !== 'pong') {
             logger.info(`Received message of type: ${data.type}`);
+            
+            // Additional logging for specific important message types
+            if (data.type === 'task_update') {
+              const taskId = data.taskId || data.payload?.taskId || data.payload?.id || data.payload?.payload?.id;
+              const status = data.status || data.payload?.status || data.payload?.payload?.status;
+              const progress = data.progress || data.payload?.progress || data.payload?.payload?.progress;
+              
+              if (taskId && (status || progress !== undefined)) {
+                logger.info(`Task update received: Task #${taskId} - Status: ${status || 'unknown'}, Progress: ${progress !== undefined ? progress + '%' : 'unknown'}`);
+              }
+            } else if (data.type === 'authenticated') {
+              logger.info('WebSocket authentication confirmed for client: ' + (data.clientId || data.payload?.clientId || 'unknown'));
+            } else if (data.type === 'connection_established') {
+              logger.info('WebSocket server connection confirmed with ID: ' + (data.clientId || data.payload?.clientId || 'unknown'));
+            }
           }
           
           // Handle special message types
