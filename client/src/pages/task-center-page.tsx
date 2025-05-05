@@ -124,10 +124,11 @@ export default function TaskCenterPage() {
     refreshTasks();
   }, [queryClient]);
 
+  // Move the websocket service outside the useEffect to fix invalid hook call error
+  const wsService = useWebSocketService();
+  
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
-    // Get access to the WebSocket service
-    const wsService = useWebSocketService();
 
     const setupSubscriptions = () => {
       try {
@@ -403,7 +404,7 @@ export default function TaskCenterPage() {
         }
       });
     };
-  }, [queryClient]);
+  }, [queryClient, wsService]);
 
   const myTasksCount = !isLoading && currentCompany?.id
     ? tasks.filter(task => 
