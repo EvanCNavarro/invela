@@ -16,15 +16,14 @@ import {
   openBankingResponses, 
   openBankingFields
 } from '@db/schema';
-import { FieldStatus } from './field-status';
+import { FieldStatus, isValidFieldStatus } from './field-status';
 import { logger } from './logger';
 import { TaskStatus } from '../types';
 
 // Import the status determination utility
 import { determineTaskStatus } from './task-status-determiner';
 
-// Import WebSocket manager to avoid "cannot find module" error
-import { getWebSocketServer } from '../services/websocket-manager';
+// We'll use dynamic imports for WebSocketServer to avoid circular dependencies
 
 /**
  * Calculate progress for any task type using raw SQL for status comparison
@@ -129,7 +128,7 @@ export async function calculateTaskProgressFixed(
             [FieldStatus.INCOMPLETE]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.INCOMPLETE).length,
             [FieldStatus.EMPTY]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.EMPTY).length,
             [FieldStatus.INVALID]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.INVALID).length,
-            other: responseDetails.filter((r: {status: string}) => !Object.values(FieldStatus).includes(r.status)).length
+            other: responseDetails.filter((r: {status: string}) => !isValidFieldStatus(r.status)).length
           },
           useFieldKey,
           byFieldKey: useFieldKey
