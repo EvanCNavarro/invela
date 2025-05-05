@@ -1228,101 +1228,11 @@ router.post('/api/kyb/progress', async (req, res) => {
     
     console.log(`[SERVER DEBUG] Sending response with ${Object.keys(updatedFormData).length} fields, status: ${newStatus}, progress: ${calculatedProgress}%`);
     
-    // CRITICAL NEW FEATURE: If form is ready_for_submission, also unlock the file vault tab
-    // This ensures the tab is unlocked when the form is ready to submit, not just after submission
+    // File Vault unlocking has been moved to only occur during the formal submission process
+    // via the /api/kyb/submit/:taskId endpoint, not when a form just reaches ready_for_submission status
     if (newStatus === 'ready_for_submission') {
-      try {
-        console.log(`[KYB API] 🔑 PRE-UNLOCK: Unlocking File Vault tab for company during ready_for_submission`);
-        
-        // First, get the company ID from the task
-        const [task] = await db.select()
-          .from(tasks)
-          .where(eq(tasks.id, taskId));
-          
-        if (task && task.company_id) {
-          const companyId = task.company_id;
-          
-          // Get the company's current tabs
-          const [company] = await db.select()
-            .from(companies)
-            .where(eq(companies.id, companyId));
-            
-          if (company) {
-            const currentTabs = Array.isArray(company.available_tabs) ? company.available_tabs : ['task-center'];
-            
-            if (!currentTabs.includes('file-vault')) {
-              // Add file-vault to tabs
-              const updatedTabs = [...currentTabs, 'file-vault'];
-              
-              // Update database
-              await db.update(companies)
-                .set({
-                  available_tabs: updatedTabs,
-                  updated_at: new Date()
-                })
-                .where(eq(companies.id, companyId));
-                
-              console.log(`[KYB API] ✅ File vault tab unlocked in database when form reached ready_for_submission`);
-              
-              // Broadcast the update
-              try {
-                // Use the imported WebSocket functions directly instead of trying to re-require them
-                // First broadcast using the standard tab update function
-                WebSocketService.broadcast('company_tabs_update', {
-                  companyId, 
-                  availableTabs: updatedTabs,
-                  timestamp: new Date().toISOString(),
-                });
-                
-                // Then use the more comprehensive message with cache_invalidation flag
-                WebSocketService.broadcast('company_tabs_updated', {
-                  companyId, 
-                  availableTabs: updatedTabs,
-                  cache_invalidation: true,
-                  timestamp: new Date().toISOString(),
-                  source: 'kyb_progress_ready_for_submission'
-                });
-                
-                // Also broadcast a special immediate event to force UI refresh
-                WebSocketService.broadcast('sidebar_refresh_tabs', {
-                  companyId,
-                  availableTabs: updatedTabs,
-                  forceRefresh: true,
-                  timestamp: new Date().toISOString()
-                });
-                
-                console.log(`[KYB API] 📣 Successfully broadcasted tab update for ready_for_submission`);
-                
-                // Schedule a delayed broadcast for reliability
-                setTimeout(() => {
-                  try {
-                    WebSocketService.broadcast('company_tabs_updated', {
-                      companyId, 
-                      availableTabs: updatedTabs,
-                      cache_invalidation: true,
-                      timestamp: new Date().toISOString(),
-                      source: 'kyb_progress_ready_for_submission_delayed'
-                    });
-                  } catch (delayedError) {
-                    console.error(`[KYB API] Failed to send delayed broadcast:`, delayedError);
-                  }
-                }, 1000);
-              } catch (wsError) {
-                console.error(`[KYB API] Failed to broadcast tab update:`, wsError);
-              }
-            } else {
-              console.log(`[KYB API] File vault tab already unlocked for company ${companyId}`);
-            }
-          } else {
-            console.error(`[KYB API] Company ${companyId} not found`);
-          }
-        } else {
-          console.error(`[KYB API] Task ${taskId} not found or missing company_id`);
-        }
-      } catch (unlockError) {
-        console.error(`[KYB API] Error unlocking file vault during ready_for_submission:`, unlockError);
-        // Don't let this error block the main response
-      }
+      // Log that we're not prematurely unlocking the File Vault tab
+      console.log(`[KYB API] ℹ️ Form has reached ready_for_submission status but File Vault tab will only unlock after formal submission`);
     }
     
     // CRITICAL FIX: Also update the savedFormData in the task table
