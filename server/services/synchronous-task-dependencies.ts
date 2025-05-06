@@ -157,7 +157,7 @@ export async function unlockDependentTasks(
             // Broadcast WebSocket update
             broadcastTaskUpdate({
               id: taskId,
-              status: isKy3pTask ? 'in_progress' : 'not_started',
+              status: 'not_started', // Always start with not_started status for all task types
               progress: initialProgressForKy3p,
               metadata: {
                 locked: false,
