@@ -10,7 +10,7 @@ import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import processFormSubmission from '../services/transactional-form-handler';
+import { submitFormWithTransaction } from '../services/transactional-form-handler';
 import * as WebSocketService from '../services/websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
@@ -86,7 +86,7 @@ export function createTransactionalFormRouter(): Router {
     
     try {
       // Process the submission transactionally
-      const result = await processFormSubmission({
+      const result = await submitFormWithTransaction({
         taskId,
         formData,
         userId,

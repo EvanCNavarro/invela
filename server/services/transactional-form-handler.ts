@@ -63,6 +63,15 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
   });
   
   try {
+    logger.info('Starting form submission transaction', {
+      taskId,
+      userId,
+      companyId,
+      formType,
+      transactionId: `tx-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      logContext
+    });
+    
     // Use a transaction to ensure all operations succeed or fail together
     return await withTransaction(async (client) => {
       // 1. Update task status to submitted
@@ -136,15 +145,32 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       };
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
     logger.error('Error in transactional form submission', {
       taskId,
       formType,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      userId,
+      companyId,
+      error: errorMessage,
+      stack: errorStack,
+      timestamp: new Date().toISOString(),
+      requestPath: `/api/forms-tx/submit/${formType}/${taskId}`,
+      errorCode: error instanceof Error && 'code' in error ? (error as any).code : undefined,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
+      logContext
+    });
+    
+    // Log to console for immediate visibility during development
+    console.error(`[TransactionalFormHandler] Submission error for task ${taskId} (${formType}):`, {
+      message: errorMessage,
+      stack: errorStack?.split('\n').slice(0, 3).join('\n')
     });
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage
     };
   }
 }
