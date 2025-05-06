@@ -141,23 +141,41 @@ export async function createTaskFile(
     // First, organize data by sections and questions
     console.log(`[FileCreation] Processing data for form type ${normalizedFormType} with ${Object.keys(formData).length} fields`);
     
-    // SIMPLIFIED STANDARD CSV FORMAT
-    // Using KISS principle - standard spreadsheet-like format with field data in columns
-    
-    // Define the column headers that will appear in the CSV
-    const headers = ['id', 'field_name', 'field_key', 'response', 'submission_date'];
+    // PROPER CSV FORMAT - Parse each question from the form
+    // Define simple column headers - one question per row
+    const headers = ['id', 'question', 'response', 'field_key', 'timestamp'];
     
     // Create rows array starting with headers
     let rows = [headers.join(',')];
     
-    // Get all form fields and sort them for consistent output
-    const sortedFields = Object.entries(formData).sort((a, b) => a[0].localeCompare(b[0]));
-    
-    // Current date for consistent timestamp across all rows
+    // Extract actual question/answer pairs from the form data
+    // Extract raw formData from metadata if present
+    let actualFormData = formData;
     const submissionDate = new Date().toISOString();
     
-    // Add each form field as a row in the CSV
+    // Detect if we have actual form questions or just metadata
+    if (formData.formData && typeof formData.formData === 'string') {
+      try {
+        // Try to parse the JSON field if it exists
+        const parsedData = JSON.parse(formData.formData);
+        actualFormData = parsedData;
+        console.log(`[FileCreation] Successfully parsed JSON formData with ${Object.keys(parsedData).length} fields`);
+      } catch (e) {
+        console.error(`[FileCreation] Error parsing formData JSON:`, e);
+        // Keep using the original data if parsing fails
+      }
+    }
+    
+    // Get all the actual form fields and sort them alphabetically
+    const sortedFields = Object.entries(actualFormData).sort((a, b) => a[0].localeCompare(b[0]));
+    
+    // Add each form question as a separate row
     sortedFields.forEach(([key, value], index) => {
+      // Skip metadata fields if they exist in this format
+      if (key === 'formData' || key === 'formType' || key === 'taskId' || key === 'companyId') {
+        return;
+      }
+      
       // Format the value based on its type
       let formattedValue;
       if (typeof value === 'object' && value !== null) {
@@ -170,22 +188,23 @@ export async function createTaskFile(
         formattedValue = String(value);
       }
       
-      // Create a row with standard columns
+      // Create a row with proper question and answer columns
       const rowValues = [
-        index + 1,                                            // id (sequential number)
-        `"${key.replace(/"/g, '""')}"`,                   // field_name 
-        `"${key.replace(/"/g, '""')}"`,                   // field_key
-        `"${formattedValue.replace(/"/g, '""')}"`,        // response
-        `"${submissionDate}"`                               // submission_date
+        index + 1,                                          // id (sequential number)
+        `"${key.replace(/"/g, '""')}"`,                 // question name
+        `"${formattedValue.replace(/"/g, '""')}"`,      // response value
+        `"${key.replace(/"/g, '""')}"`,                 // field_key
+        `"${submissionDate}"`                             // timestamp
       ];
       
       rows.push(rowValues.join(','));
     });
     
-    // Add metadata as additional rows for completeness
-    rows.push([sortedFields.length + 1, '"Task ID"', '"task_id"', `"${taskId}"`, `"${submissionDate}"`].join(','));
-    rows.push([sortedFields.length + 2, '"Company ID"', '"company_id"', `"${companyId}"`, `"${submissionDate}"`].join(','));
-    rows.push([sortedFields.length + 3, '"Form Type"', '"form_type"', `"${normalizedFormType}"`, `"${submissionDate}"`].join(','));
+    // Add metadata as final rows
+    const metaStartIndex = sortedFields.length + 1;
+    rows.push([metaStartIndex, '"Task ID"', `"${taskId}"`, '"task_id"', `"${submissionDate}"`].join(','));
+    rows.push([metaStartIndex + 1, '"Company ID"', `"${companyId}"`, '"company_id"', `"${submissionDate}"`].join(','));
+    rows.push([metaStartIndex + 2, '"Form Type"', `"${normalizedFormType}"`, '"form_type"', `"${submissionDate}"`].join(','));
     
     // Join all rows to create the CSV content
     content = rows.join('\n');
