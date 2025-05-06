@@ -49,6 +49,16 @@ export async function createFile(options: FileCreationOptions): Promise<FileCrea
       fileSize: options.content ? Buffer.from(options.content).length : 0
     });
     
+    // Log the file creation attempt
+    console.log(`[FileCreation] Creating file for company ${options.companyId} by user ${options.userId}`, {
+      fileName: options.name,
+      fileType: options.type,
+      fileSize: options.content ? Buffer.from(options.content).length : 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    // CRITICAL FIX: Match DB schema column names
+    // The schema uses user_id, not created_by/updated_by
     const result = await db.insert(files)
       .values({
         name: options.name,
@@ -56,13 +66,12 @@ export async function createFile(options: FileCreationOptions): Promise<FileCrea
         type: options.type,
         status: options.status || 'uploaded',
         company_id: options.companyId,
-        created_by: options.userId,
-        updated_by: options.userId,
+        user_id: options.userId, // Changed from created_by to match schema
         created_at: new Date(),
         updated_at: new Date(),
         size: options.content ? Buffer.from(options.content).length : 0,
         version: 1,
-        metadata: options.metadata || null
+        metadata: options.metadata || {}
       })
       .returning({ id: files.id });
     
