@@ -364,13 +364,19 @@ export async function unlockAllTasks(companyId: number) {
       }
       
       // If task has any submission indicators, don't process it
-      if (hasSubmissionDate || hasSubmittedFlag || hasFileId || task.status === 'submitted') {
+      if (hasSubmissionDate || 
+          hasSubmittedFlag || 
+          hasFileId || 
+          task.status === 'submitted' || 
+          (task.status === 'ready_for_submission' && task.progress === 100)) {
+        
         console.log(`[TaskDependencies] Skipping task ${task.id} with submission indicators`, {
           hasSubmissionDate: !!hasSubmissionDate,
           hasSubmittedFlag: !!hasSubmittedFlag,
           hasFileId: !!hasFileId,
           status: task.status,
-          progress: task.progress
+          progress: task.progress,
+          isReadyForSubmission: task.status === 'ready_for_submission' && task.progress === 100
         });
         return false;
       }
