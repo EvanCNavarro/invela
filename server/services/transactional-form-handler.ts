@@ -15,7 +15,8 @@
 
 import { db } from '@db';
 import { sql } from 'drizzle-orm';
-import { tasks, task_status_history } from '@db/schema';
+import { tasks } from '@db/schema';
+import { task_status_history } from '../utils/schema/task-history';
 import { eq } from 'drizzle-orm';
 import { calculateKybProgress } from '../utils/progress-calculators/kyb-progress';
 import { calculateKy3pProgress } from '../utils/progress-calculators/ky3p-progress';
@@ -26,7 +27,7 @@ import { WebSocket } from 'ws';
 import { getWebSocketServer } from '../websocket';
 import { logger } from '../utils/logger';
 
-const moduleLogger = moduleLogger.child({ module: 'TransactionalFormHandler' });
+const moduleLogger = logger.child({ module: 'TransactionalFormHandler' });
 
 interface FormSubmissionResult {
   success: boolean;

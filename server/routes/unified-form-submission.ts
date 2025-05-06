@@ -11,7 +11,7 @@ import { submitFormWithTransaction, updateFormWithTransaction } from '../service
 import { calculateAndUpdateProgress } from '../utils/unified-progress-calculator';
 import { logger } from '../utils/logger';
 
-const log = log.child({ module: 'UnifiedFormSubmission' });
+const log = logger.child({ module: 'UnifiedFormSubmission' });
 const router = Router();
 
 /**
