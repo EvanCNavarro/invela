@@ -30,9 +30,11 @@ We implemented a comprehensive filter in the `unlockAllTasks` function that chec
   - `fileId`
   - `file_id`
 
-- Task status explicitly set to "submitted"
+- Terminal task states:
+  - Task status set to "submitted"
+  - Task status set to "ready_for_submission" with 100% progress
 
-If any of these indicators are present, the task is excluded from the unlocking process, preserving its submitted state.
+If any of these indicators are present, the task is excluded from the unlocking process, preserving its submitted or completed state.
 
 ### 2. User Onboarding Task Completion
 We added special handling for user onboarding tasks (New User Invitation) to mark them as completed with 100% progress when users log in:
