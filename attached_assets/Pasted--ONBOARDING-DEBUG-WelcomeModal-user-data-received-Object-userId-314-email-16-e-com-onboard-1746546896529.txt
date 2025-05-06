@@ -1,0 +1,51 @@
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 314, email: "16@e.com", onboardingCompleted: true, userObject: "{↵  "id": 314,↵  "email": "16@e.com",↵  "full_name": "John Doe",↵  "first_name":…"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[ONBOARDING DEBUG] User object in AuthProvider changed: 
+Object {userId: 314, onboardingCompleted: true, typeOfOnboardingFlag: "boolean", timestamp: "2025-05-06T15:54:44.667Z"}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=271, path=/, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 271
+[DashboardLayout] Tab "dashboard" is locked. Redirecting to task-center.
+[Router] Current location: /task-center
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=271, path=/task-center, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 271
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 314, email: "16@e.com", onboardingCompleted: true, userObject: "{↵  "id": 314,↵  "email": "16@e.com",↵  "full_name": "John Doe",↵  "first_name":…"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-06T15:54:44.871Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", payload: {…}, data: {…}}
+[WebSocket] Server connection confirmed: undefined
+API error 500: {"message":"Error fetching tasks","detail":"column \"locked\" does not exist"}...
+[TanStack Query] Error fetching /api/tasks: 
+Error {}
+
+[WebSocket] Received message: 
+Object {type: "authenticated", payload: {…}, data: {…}}
+[2025-05-06T15:54:45.051Z] [INFO] [SidebarTab] File Vault tab access changed 
+Object {isLocked: false, previousState: false, timestamp: "2025-05-06T15:54:45.051Z"}
+API error 500: {"message":"Error fetching tasks","detail":"column \"locked\" does not exist"}...
+[TanStack Query] Error fetching /api/tasks: 
+Error {}
+
+[2025-05-06T15:54:45.358Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-06T15:54:45.925Z] [WebSocket] WebSocket connection established 
+[2025-05-06T15:54:45.925Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-06T15:54:45.926Z] [WebSocket] Received message of type: connection_established 
+[2025-05-06T15:54:45.926Z] [WebSocket] WebSocket server connection confirmed with ID: client-1746546885884-txekpr7 
+[2025-05-06T15:54:46.441Z] [WebSocket] Sending authentication message 
+Object {userId: 314, companyId: 271, connectionId: "ws_1746546885358_211hkbjq0", hasUserData: true, hasCompanyData: true}
+[2025-05-06T15:54:46.559Z] [WebSocket] Received message of type: authenticated 
+[2025-05-06T15:54:46.559Z] [WebSocket] WebSocket authentication confirmed for client: client-1746546885884-txekpr7 
