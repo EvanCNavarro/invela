@@ -349,6 +349,20 @@ export async function unlockAllTasks(companyId: number) {
                               
       const hasFileId = task.metadata?.fileId || task.metadata?.file_id;
       
+      // Special handling for user_onboarding tasks
+      // These should be marked as completed after a user successfully logs in
+      if (task.task_type === 'user_onboarding') {
+        // If user has successfully logged in, we want to mark this as completed
+        // so we allow processing to continue - don't filter it out
+        logger.info('[TaskDependencies] Found user onboarding task that needs completion', {
+          taskId: task.id,
+          userEmail: task.user_email,
+          currentStatus: task.status,
+          currentProgress: task.progress
+        });
+        return true;
+      }
+      
       // If task has any submission indicators, don't process it
       if (hasSubmissionDate || hasSubmittedFlag || hasFileId || task.status === 'submitted') {
         console.log(`[TaskDependencies] Skipping task ${task.id} with submission indicators`, {
@@ -390,8 +404,9 @@ export async function unlockAllTasks(companyId: number) {
     
     // Unlock each task using the unified progress calculator
     for (const task of companyTasks) {
-      // CRITICAL FIX: Special handling for KY3P tasks to ensure their progress is preserved
+      // CRITICAL FIX: Special handling for different task types
       const isKy3pTask = task.task_type === 'ky3p' || task.task_type === 'sp_ky3p_assessment';
+      const isUserOnboardingTask = task.task_type === 'user_onboarding';
       
       // Create metadata for the task update
       const updateMetadata = {
@@ -401,8 +416,9 @@ export async function unlockAllTasks(companyId: number) {
         dependencyUnlockOperation: true,
         previousProgress: task.progress || 0,
         previousStatus: task.status || 'unknown',
-        // Add a flag to indicate this is a KY3P task if applicable
-        isKy3pTask: isKy3pTask
+        // Add flags to indicate special task types
+        isKy3pTask: isKy3pTask,
+        isUserOnboardingTask: isUserOnboardingTask
       };
       
       // For KY3P tasks, log detailed information before updating
@@ -416,7 +432,50 @@ export async function unlockAllTasks(companyId: number) {
         });
       }
       
-      // Use the unified progress calculator with preserveExisting=true
+      // Special handling for User Onboarding tasks - these should be marked as completed
+      if (isUserOnboardingTask) {
+        logger.info('[TaskDependencies] Setting User Onboarding task as completed', {
+          taskId: task.id,
+          userEmail: task.user_email,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Directly update the task in the database to mark it as completed with 100% progress
+        await db.update(tasks)
+          .set({
+            status: 'completed',
+            progress: 100,
+            metadata: sql`jsonb_set(
+              jsonb_set(
+                jsonb_set(
+                  COALESCE(metadata, '{}'::jsonb),
+                  '{completed}', 'true'
+                ),
+                '{submission_date}', to_jsonb(now())
+              ),
+              '{locked}', 'false'
+            )`,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, task.id));
+          
+        // Broadcast the update via WebSocket
+        broadcastTaskUpdate({
+          id: task.id,
+          status: 'completed',
+          progress: 100,
+          metadata: {
+            locked: false,
+            completed: true,
+            submission_date: new Date().toISOString()
+          }
+        });
+        
+        // Skip the regular update flow for user onboarding tasks
+        continue;
+      }
+      
+      // For all other task types, use the unified progress calculator with preserveExisting=true
       // This ensures we don't reset progress if it already exists
       // CRITICAL FIX: Force preserveExisting for KY3P tasks to prevent progress resets
       const taskProgress = await updateTaskProgressAndBroadcast(task.id, task.task_type, {
