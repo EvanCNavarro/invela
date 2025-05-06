@@ -815,12 +815,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.info(`Form submitted successfully: ${JSON.stringify(result)}`);
       
       // Force refresh task multiple times to catch eventual consistency lag
-      if (refreshTask) {
+      if (typeof refreshTask === 'function') {
         // Refresh immediately and then at intervals
         refreshTask();
         
-        setTimeout(() => refreshTask(), 1000);
-        setTimeout(() => refreshTask(), 3000);
+        setTimeout(() => refreshTask && refreshTask(), 1000);
+        setTimeout(() => refreshTask && refreshTask(), 3000);
       }
       
       // Note: The success feedback will be handled via WebSocket events now
@@ -862,7 +862,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Update the task in state
       logger.info('Updating task status to submitted');
-      setTask(updatedTask);
+      
+      // Instead of using setTask (which doesn't exist), we'll manually trigger a refetch
+      if (typeof refreshTask === 'function') {
+        refreshTask();
+      }
     }
     
     // Always show modal for successful submission
@@ -887,7 +891,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Show error toast
     toast({
       title: 'Submission Failed',
-      description: event.message || 'An error occurred during form submission.',
+      description: (event as any).message || 'An error occurred during form submission.',
       variant: 'destructive',
     });
   };
@@ -899,7 +903,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Show in progress toast
     toast({
       title: 'Submission In Progress',
-      description: event.message || 'Your form submission is being processed...',
+      description: (event as any).message || 'Your form submission is being processed...',
       variant: 'info',
     });
   };
