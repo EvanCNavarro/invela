@@ -18,7 +18,7 @@ import { synchronizeTasks } from '../services/synchronous-task-dependencies';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
 
 // Create a context object for logging
-const logContext = { service: 'UnifiedFormSubmissionService' };
+const baseLogContext = { service: 'UnifiedFormSubmissionService' };
 // Use this context for logging throughout the file
 
 // Define supported form types
@@ -45,7 +45,7 @@ export async function submitForm(
   fileName?: string
 ): Promise<FormSubmissionResult> {
   logger.info('Starting unified form submission process', {
-    ...logContext,
+    ...baseLogContext,
     taskId,
     formType,
     userId,
@@ -57,7 +57,7 @@ export async function submitForm(
     // Execute the entire submission process in a transaction
     const result = await TransactionManager.withTransaction(async (trx) => {
       logger.info('Starting form submission transaction', { 
-        ...logContext,
+        ...baseLogContext,
         taskId, 
         formType 
       });
@@ -72,7 +72,7 @@ export async function submitForm(
       }
       
       logger.info('Retrieved task for submission', { 
-        ...logContext,
+        ...baseLogContext,
         taskId, 
         companyId,
         currentStatus: task.status,
@@ -84,7 +84,7 @@ export async function submitForm(
       const fileResult = await createFormFile(trx, taskId, companyId, formData, mappedFormType, userId, fileName);
       
       logger.info('Created form file', { 
-        ...logContext,
+        ...baseLogContext,
         taskId, 
         fileId: fileResult.fileId,
         fileName: fileResult.fileName
@@ -115,7 +115,7 @@ export async function submitForm(
         .where(eq(tasks.id, taskId));
       
       logger.info('Updated task status to submitted', { 
-        ...logContext,
+        ...baseLogContext,
         taskId, 
         formType 
       });
@@ -124,7 +124,7 @@ export async function submitForm(
       await persistFormResponses(trx, taskId, formData, formType);
       
       logger.info('Persisted form responses', { 
-        ...logContext,
+        ...baseLogContext,
         taskId, 
         formType 
       });
@@ -140,14 +140,14 @@ export async function submitForm(
         unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData);
       } else {
         logger.warn(`Unsupported form type: ${formType}, no post-submission handlers will run`, {
-        ...logContext,
+        ...baseLogContext,
         formType,
         taskId
       });
       }
       
       logger.info('Executed form-specific post-submission logic', {
-        ...logContext,
+        ...baseLogContext,
         taskId,
         formType,
         unlockedTabs
@@ -169,7 +169,7 @@ export async function submitForm(
   } catch (error) {
     // Log the error with full context
     logger.error('Form submission failed', {
-      ...logContext,
+      ...baseLogContext,
       taskId,
       formType,
       error: error instanceof Error ? error.message : String(error),
