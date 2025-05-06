@@ -41,8 +41,17 @@ export function createTransactionalFormRouter(): Router {
     const taskId = parseInt(req.params.taskId);
     const formType = req.params.formType;
     const companyId = req.body.companyId || req.user.company_id;
-    const formData = req.body;
     const userId = req.user.id;
+
+    // Extract the actual form data from the request body
+    // The form data should be in the formData property, not the entire body
+    const formData = req.body.formData || {};
+    
+    // Log the extraction for debugging
+    console.log('[TransactionalFormRoutes] Extracted form data:', {
+      formDataSource: req.body.formData ? 'req.body.formData' : 'empty object',
+      formDataKeysCount: Object.keys(formData).length
+    });
     
     // Log the request parameters for debugging
     console.log('[TransactionalFormRoutes] Request parameters:',{
