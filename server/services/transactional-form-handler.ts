@@ -519,14 +519,45 @@ async function storeFormResponses(
         
         // Execute with enhanced type safety using the numeric field ID
         try {
-          await tx.execute(sql`
-            INSERT INTO kyb_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
-            ON CONFLICT (task_id, field_id) 
-            DO UPDATE SET response_value = ${serializedValue}, 
-              status = 'COMPLETE',
-              updated_at = NOW()
+          // First, check if a response already exists for this task and field
+          const existingResponse = await tx.execute(sql`
+            SELECT id FROM kyb_responses 
+            WHERE task_id = ${taskId} AND field_id = ${fieldId} LIMIT 1
           `);
+          
+          // Check if we got any results
+          let responseExists = false;
+          let responseId = null;
+          
+          if (Array.isArray(existingResponse) && existingResponse.length > 0) {
+            responseExists = true;
+            responseId = existingResponse[0].id;
+          } else if (existingResponse && typeof existingResponse === 'object') {
+            if ('rows' in existingResponse && Array.isArray(existingResponse.rows) && existingResponse.rows.length > 0) {
+              responseExists = true;
+              responseId = existingResponse.rows[0].id;
+            }
+          }
+          
+          moduleLogger.info(`Response existence check for task ${taskId}, field ${fieldId}: ${responseExists ? 'Exists with ID ' + responseId : 'Not found'}`);
+          
+          // If it exists, update it; otherwise insert a new one
+          if (responseExists && responseId) {
+            await tx.execute(sql`
+              UPDATE kyb_responses
+              SET response_value = ${serializedValue}, 
+                  status = 'COMPLETE',
+                  updated_at = NOW()
+              WHERE id = ${responseId}
+            `);
+            moduleLogger.info(`Updated existing response ID ${responseId} for field: ${field} (ID: ${fieldId})`);
+          } else {
+            await tx.execute(sql`
+              INSERT INTO kyb_responses (task_id, field_id, response_value, status) 
+              VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
+            `);
+            moduleLogger.info(`Inserted new response for field: ${field} (ID: ${fieldId})`);
+          }
           moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
           moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
