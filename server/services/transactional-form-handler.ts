@@ -111,13 +111,26 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             fileId = fileResult.fileId;
             
             // Update task metadata with file information
-            // UNIFIED FIX: Use properly parameterized query for the fileId
+            // UNIFIED FIX: Use properly parameterized query for the fileId and include fileName
             await client.query(
               `UPDATE tasks 
-               SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)) 
+               SET metadata = jsonb_set(
+                 jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)),
+                 '{fileName}', to_jsonb($3::text)
+               ) 
                WHERE id = $1`,
-              [taskId, fileId]
+              [taskId, fileId, fileResult.fileName || '']
             );
+            
+            // Also ensure the file is properly linked to the task as a form submission file
+            await client.query(
+              `UPDATE files
+               SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{formSubmission}', 'true')
+               WHERE id = $1`,
+              [fileId]
+            );
+            
+            console.log(`[FileCreation] File ${fileId} created for task ${taskId} and linked to file vault`);
           }
         } catch (fileError) {
           logger.error('Error creating file during transaction', {
