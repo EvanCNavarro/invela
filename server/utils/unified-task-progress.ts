@@ -388,34 +388,41 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
         timestamp: new Date().toISOString()
       });
       
-      // UNIFIED FIX: Use properly typed parameters without string interpolation or inline casting
-      // This ensures PostgreSQL can determine the proper parameter types
+      // SIMPLIFIED FIX: Use direct numeric values without complex SQL expressions
+      // This avoids the 'could not determine polymorphic type' error
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          // Cast progress to a number before setting
-          progress: sql`CAST(${Number(validatedProgress)} AS INTEGER)`,
+          // Use a pure numeric value instead of SQL expression
+          progress: validatedProgress,
           
-          // Cast status to the proper TaskStatus type for database compatibility
-          status: sql`${safeStatus}`,
+          // Use direct string value
+          status: safeStatus,
           
           // Use direct Date object
           updated_at: new Date(),
           
-          // Construct metadata as an SQL expression with properly typed parameters
-          metadata: sql`jsonb_set(
-            jsonb_set(
-              COALESCE(${tasks.metadata}, '{}'::jsonb),
-              '{lastProgressUpdate}',
-              to_jsonb(${new Date().toISOString()})
-            ),
-            '{progressHistory}',
-            COALESCE(${tasks.metadata} -> 'progressHistory', '[]'::jsonb) || 
-            jsonb_build_array(jsonb_build_object('value', ${Number(validatedProgress)}, 'timestamp', ${new Date().toISOString()}))
-          )`
+          // Keep existing metadata or initialize as empty object
+          metadata: {
+            ...task.metadata,
+            lastProgressUpdate: new Date().toISOString(),
+            progressHistory: [
+              ...(task.metadata?.progressHistory || []),
+              {
+                value: validatedProgress,
+                timestamp: new Date().toISOString()
+              }
+            ]
+          }
         })
         .where(eq(tasks.id, taskId))
         .returning();
+        
+      console.log(`[UnifiedProgress] Task ${taskId} update successful:`, {
+        taskId,
+        progress: validatedProgress,
+        status: safeStatus
+      });
         
       if (!updatedTask) {
         throw new Error('Task update failed');
