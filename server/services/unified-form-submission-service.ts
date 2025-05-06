@@ -147,11 +147,11 @@ export async function submitForm(
       let unlockedTabs: string[] = [];
       
       if (formType === 'kyb' || formType === 'company_kyb') {
-        unlockedTabs = await handleKybPostSubmission(trx, taskId, companyId, formData);
+        unlockedTabs = await handleKybPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
-        unlockedTabs = await handleKy3pPostSubmission(trx, taskId, companyId, formData);
+        unlockedTabs = await handleKy3pPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else if (formType === 'open_banking') {
-        unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData);
+        unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else {
         logger.warn(`Unsupported form type: ${formType}, no post-submission handlers will run`, {
         ...baseLogContext,
@@ -176,8 +176,8 @@ export async function submitForm(
       };
     });
     
-    // After successful transaction, broadcast WebSocket notifications
-    await broadcastFormSubmissionResult(result, taskId, formType, companyId);
+    // After successful transaction, broadcast WebSocket notifications with transaction ID
+    await broadcastFormSubmissionResult(result, taskId, formType, companyId, transactionId);
     
     return result;
   } catch (error) {
@@ -640,15 +640,18 @@ async function handleKybPostSubmission(
     const unlockedTabs = ['file-vault'];
     
     // Unlock File Vault tab
-    await unlockTabsForCompany(trx, companyId, unlockedTabs);
+    await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
     
     // Unlock dependent security tasks like KY3P
     const dependentTaskIds = await synchronizeTasks(companyId, taskId);
     
+    const endTime = performance.now();
     logger.info('KYB post-submission completed', { 
       ...kybPostLogContext,
       unlockedTabs,
-      dependentTasksUnlocked: dependentTaskIds.length
+      dependentTasksUnlocked: dependentTaskIds.length,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
     
     return unlockedTabs;
@@ -739,7 +742,7 @@ async function handleOpenBankingPostSubmission(
     const unlockedTabs = ['dashboard', 'insights'];
     
     // Unlock Dashboard and Insights tabs
-    await unlockTabsForCompany(trx, companyId, unlockedTabs);
+    await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
     
     // Mark company onboarding as completed
     await trx.update(companies)
