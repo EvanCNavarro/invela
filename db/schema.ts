@@ -72,9 +72,6 @@ export const tasks = pgTable("tasks", {
   files_requested: jsonb("files_requested").$type<string[]>().default([]), 
   files_uploaded: jsonb("files_uploaded").$type<string[]>().default([]), 
   metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
-  locked: boolean("locked").default(false),
-  prerequisite_completed: boolean("prerequisite_completed").default(false),
-  prerequisite_completed_at: timestamp("prerequisite_completed_at"),
   created_at: timestamp("created_at").defaultNow(), 
   updated_at: timestamp("updated_at").defaultNow(), 
 });
@@ -370,16 +367,7 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   logos: many(companyLogos)
 }));
 
-// Task dependencies table to track prerequisites for tasks
-export const task_dependencies = pgTable("task_dependencies", {
-  id: serial("id").primaryKey(),
-  task_id: integer("task_id").references(() => tasks.id).notNull(),
-  prerequisite_task_id: integer("prerequisite_task_id").references(() => tasks.id).notNull(),
-  created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
-});
-
-export const tasksRelations = relations(tasks, ({ one, many }) => ({
+export const tasksRelations = relations(tasks, ({ one }) => ({
   assignedUser: one(users, {
     fields: [tasks.assigned_to],
     references: [users.id],
