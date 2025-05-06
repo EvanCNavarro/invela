@@ -188,11 +188,14 @@ async function storeFormResponses(
     case 'company_kyb':
       // Store KYB responses
       for (const [field, value] of Object.entries(formData)) {
+        // Ensure proper JSON serialization for complex objects
+        const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
+        
         await tx.execute(sql`
           INSERT INTO kyb_responses (task_id, field_id, response_value, status) 
-          VALUES (${taskId}, ${field}, ${JSON.stringify(value)}, 'COMPLETE')
+          VALUES (${taskId}, ${field}, ${serializedValue}, 'COMPLETE')
           ON CONFLICT (task_id, field_id) 
-          DO UPDATE SET response_value = ${JSON.stringify(value)}, 
+          DO UPDATE SET response_value = ${serializedValue}, 
             status = 'COMPLETE',
             updated_at = NOW()
         `);
@@ -202,11 +205,14 @@ async function storeFormResponses(
     case 'ky3p':
       // Store KY3P responses
       for (const [field, value] of Object.entries(formData)) {
+        // Ensure proper JSON serialization for complex objects
+        const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
+        
         await tx.execute(sql`
           INSERT INTO ky3p_responses (task_id, field_id, response_value, status) 
-          VALUES (${taskId}, ${field}, ${JSON.stringify(value)}, 'COMPLETE')
+          VALUES (${taskId}, ${field}, ${serializedValue}, 'COMPLETE')
           ON CONFLICT (task_id, field_id) 
-          DO UPDATE SET response_value = ${JSON.stringify(value)}, 
+          DO UPDATE SET response_value = ${serializedValue}, 
             status = 'COMPLETE', 
             updated_at = NOW()
         `);
@@ -216,11 +222,14 @@ async function storeFormResponses(
     case 'open_banking':
       // Store Open Banking responses
       for (const [field, value] of Object.entries(formData)) {
+        // Ensure proper JSON serialization for complex objects
+        const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
+        
         await tx.execute(sql`
           INSERT INTO open_banking_responses (task_id, field_id, response_value, status) 
-          VALUES (${taskId}, ${field}, ${JSON.stringify(value)}, 'COMPLETE')
+          VALUES (${taskId}, ${field}, ${serializedValue}, 'COMPLETE')
           ON CONFLICT (task_id, field_id) 
-          DO UPDATE SET response_value = ${JSON.stringify(value)}, 
+          DO UPDATE SET response_value = ${serializedValue}, 
             status = 'COMPLETE',
             updated_at = NOW()
         `);
@@ -230,11 +239,14 @@ async function storeFormResponses(
     case 'user_kyb':
       // Store user KYB responses
       for (const [field, value] of Object.entries(formData)) {
+        // Ensure proper JSON serialization for complex objects
+        const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
+        
         await tx.execute(sql`
           INSERT INTO user_kyb_responses (task_id, field_id, response_value, status) 
-          VALUES (${taskId}, ${field}, ${JSON.stringify(value)}, 'COMPLETE')
+          VALUES (${taskId}, ${field}, ${serializedValue}, 'COMPLETE')
           ON CONFLICT (task_id, field_id) 
-          DO UPDATE SET response_value = ${JSON.stringify(value)}, 
+          DO UPDATE SET response_value = ${serializedValue}, 
             status = 'COMPLETE',
             updated_at = NOW()
         `);
