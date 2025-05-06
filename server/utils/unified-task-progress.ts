@@ -213,23 +213,52 @@ async function calculateTaskProgress(taskId: number, taskType: string, options: 
 
 /**
  * Determine task status based on progress and submission state
+ * 
+ * @param progress The task progress value (0-100)
+ * @param currentStatus The current task status
+ * @param options Additional options like metadata checks
+ * @returns The determined task status
  */
-function getStatusFromProgress(progress: number | undefined | null, currentStatus: string | null): string {
+function getStatusFromProgress(
+  progress: number | undefined | null, 
+  currentStatus: string | null,
+  options: {
+    metadata?: Record<string, any>;
+    checkSubmissionFlag?: boolean;
+    debug?: boolean;
+  } = {}
+): string {
+  const { metadata = {}, checkSubmissionFlag = true, debug = false } = options;
+  
   // First normalize the current status
   const normalizedStatus = normalizeTaskStatus(currentStatus);
   
   // Ensure progress is a valid number - default to 0 if undefined or null
   const safeProgress = typeof progress === 'number' && !isNaN(progress) ? progress : 0;
   
+  // Check for submission indicators in the metadata
+  const hasSubmissionDate = metadata?.submissionDate || metadata?.submittedAt || metadata?.submission_date;
+  const hasFileId = metadata?.fileId || metadata?.file_id;
+  const hasSubmittedFlag = metadata?.submitted === true || metadata?.isSubmitted === true;
+  const hasValidResponses = metadata?.responseCount && metadata?.responseCount > 0;
+  
   // Log debug information when determining status
   console.log(`[STATUS DETERMINATION] Calculating status for task with:`, {
     progress: safeProgress,
     currentStatus: normalizedStatus,
-    hasSubmissionDate: false, // These would be passed by the caller if needed
-    hasSubmittedFlag: false,
-    hasResponses: false,
+    hasSubmissionDate: !!hasSubmissionDate,
+    hasFileId: !!hasFileId,
+    hasSubmittedFlag: !!hasSubmittedFlag,
+    hasValidResponses: !!hasValidResponses,
     timestamp: new Date().toISOString()
   });
+  
+  // CRITICAL FIX: If the task has indicators of being submitted, always preserve that status
+  // This prevents the task from being incorrectly set to "not_started" during reconciliation
+  if (checkSubmissionFlag && (hasSubmissionDate || hasFileId || hasSubmittedFlag)) {
+    console.log(`[STATUS DETERMINATION] Task has submission indicators, preserving SUBMITTED status`);
+    return TaskStatus.SUBMITTED;
+  }
   
   // If the task is already in a terminal state, don't change it
   if (
@@ -240,6 +269,12 @@ function getStatusFromProgress(progress: number | undefined | null, currentStatu
   ) {
     console.log(`[STATUS DETERMINATION] Task is in terminal state, maintaining status: ${normalizedStatus}`);
     return normalizedStatus;
+  }
+  
+  // Special case: if progress is 100% and previous status was READY_FOR_SUBMISSION, keep it
+  if (safeProgress === 100 && normalizedStatus === TaskStatus.READY_FOR_SUBMISSION) {
+    console.log(`[STATUS DETERMINATION] Task has 100% progress and was ready for submission, preserving status`);
+    return TaskStatus.READY_FOR_SUBMISSION;
   }
   
   // Otherwise, set the status based on progress
@@ -307,8 +342,13 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
         };
       }
       
-      // Determine the correct status based on progress
-      const newStatus = getStatusFromProgress(progress, task.status);
+      // Determine the correct status based on progress and task metadata
+      // Pass the task metadata to getStatusFromProgress to check for submission indicators
+      const newStatus = getStatusFromProgress(progress, task.status, {
+        metadata: task.metadata || {},
+        checkSubmissionFlag: true,
+        debug: debug
+      });
       
       // Update the task with the new progress value
       // Ensure progress is a valid number
