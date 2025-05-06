@@ -173,10 +173,20 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
       try {
         const data = JSON.parse(event.data);
         
-        // Process both 'form_submission' and 'form_submitted' events
-        if (data.type !== 'form_submission' && data.type !== 'form_submitted') {
+        // Process form-related events including task update events which carry form submission status
+        if (data.type !== 'form_submission' && 
+            data.type !== 'form_submitted' && 
+            data.type !== 'task_update' &&
+            data.type !== 'task_updated') {
           return;
         }
+        
+        // Add debug logging to help troubleshoot WebSocket events
+        logger.debug(`Processing WebSocket message of type: ${data.type}`, {
+          messageType: data.type,
+          hasPayload: data.payload !== undefined,
+          hasData: data.data !== undefined
+        });
         
         // Enhanced payload extraction with improved compatibility
         // Handles multiple WebSocket message formats to ensure maximum compatibility
@@ -216,8 +226,18 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           });
         }
         
-        // Only process events for this task and form type
-        if (payload.taskId !== taskId || payload.formType !== formType) {
+        // Only process events for this task
+        if (payload.taskId !== taskId) {
+          return;
+        }
+        
+        // For task_update events, the formType might not be included
+        // In that case, we'll use the formType from the component props
+        if (!payload.formType && (data.type === 'task_update' || data.type === 'task_updated')) {
+          payload.formType = formType;
+          logger.debug(`Added formType to WebSocket payload: ${formType}`);
+        } else if (payload.formType !== formType) {
+          // If formType is specified but doesn't match, ignore the event
           return;
         }
         
@@ -226,27 +246,67 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           timestamp: payload.timestamp
         });
         
+        // Handle missing submissionDate field which might be in metadata or elsewhere
+        let submissionDate = payload.submissionDate;
+        if (!submissionDate && payload.metadata && payload.metadata.submission_date) {
+          submissionDate = payload.metadata.submission_date;
+          logger.debug('Using submission_date from metadata:', submissionDate);
+        } else if (!submissionDate && payload.metadata && payload.metadata.submissionDate) {
+          submissionDate = payload.metadata.submissionDate;
+          logger.debug('Using submissionDate from metadata:', submissionDate);
+        } else if (!submissionDate) {
+          // If no submission date is available, use the message timestamp
+          submissionDate = payload.timestamp;
+          logger.debug('Using timestamp as fallback for submission date:', submissionDate);
+        }
+
         // Create the submission event object
         const submissionEvent: FormSubmissionEvent = {
           taskId: payload.taskId,
           formType: payload.formType,
           status: payload.status,
-          companyId: payload.companyId,
-          fileName: payload.fileName,
-          fileId: payload.fileId,
-          unlockedTabs: payload.unlockedTabs,
-          error: payload.error,
-          submissionDate: payload.submissionDate,
-          message: payload.message,
+          companyId: payload.companyId || null,
+          fileName: payload.fileName || null,
+          fileId: payload.fileId || null,
+          unlockedTabs: payload.unlockedTabs || null,
+          error: payload.error || null,
+          submissionDate: submissionDate,
+          message: payload.message || null,
           timestamp: payload.timestamp,
           // Include completed actions array if it exists
           ...(payload.completedActions && { completedActions: payload.completedActions })
         };
         
-        // Handle the event based on status
-        const status = payload.status as 'success' | 'error' | 'in_progress';
+        // Map task status to form submission status if needed
+        let formStatus: 'success' | 'error' | 'in_progress';
         
-        if (status === 'success') {
+        // Convert task status to form submission status
+        if (data.type === 'task_update' || data.type === 'task_updated') {
+          // Map task status to form status
+          const taskStatus = payload.status;
+          if (taskStatus === 'submitted' || taskStatus === 'completed') {
+            formStatus = 'success';
+          } else if (taskStatus === 'failed' || taskStatus === 'error') {
+            formStatus = 'error';
+          } else if (taskStatus === 'in_progress' || taskStatus === 'ready_for_submission') {
+            formStatus = 'in_progress';
+          } else {
+            // Default to whatever was provided
+            formStatus = payload.status as 'success' | 'error' | 'in_progress';
+          }
+        } else {
+          // For form_submission events, use the status directly
+          formStatus = payload.status as 'success' | 'error' | 'in_progress';
+        }
+        
+        // Update the submission event with the mapped status
+        submissionEvent.status = formStatus;
+        
+        // Log the status mapping for debugging
+        logger.debug(`Mapped WebSocket event status: ${payload.status} → ${formStatus}`);
+        
+        // Handle the event based on the mapped status
+        if (formStatus === 'success') {
           // We've disabled toasts here to prevent duplication with parent components
           // Parent components can handle their own toast/modal UI
           // Only show toast if explicitly enabled (disabled by default for most cases)
@@ -262,7 +322,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           if (onSuccessRef.current) {
             onSuccessRef.current(submissionEvent);
           }
-        } else if (status === 'error') {
+        } else if (formStatus === 'error') {
           // Always show error toasts since errors need to be visible
           if (showToastsRef.current) {
             toast({
@@ -276,7 +336,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           if (onErrorRef.current) {
             onErrorRef.current(submissionEvent);
           }
-        } else if (status === 'in_progress') {
+        } else if (formStatus === 'in_progress') {
           // In-progress toasts are less important for duplicate UI
           if (showToastsRef.current) {
             toast({
