@@ -760,16 +760,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Update task status to in_progress immediately for better user feedback
     if (task) {
-      // Create an updated task with ready_for_submission status
-      const inProgressTask = {
-        ...task,
-        status: 'ready_for_submission', // This will soon change to submitted via WebSocket
-        progress: 100
-      };
+      // Log the desired state change - but we'll rely on API and refreshTask to update the actual state
+      logger.info('Task will be marked as ready_for_submission: progress=100%');
       
-      // Update the task in state immediately
-      logger.info('Updating task status to ready_for_submission');
-      setTask(inProgressTask);
+      // Instead of using setTask (which doesn't exist), trigger a refreshTask
+      if (typeof refreshTask === 'function') {
+        // Refresh task data to show latest status
+        refreshTask();
+      }
     }
     
     // Show submission in progress toast
