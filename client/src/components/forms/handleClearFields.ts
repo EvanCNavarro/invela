@@ -439,6 +439,10 @@ export async function handleClearFieldsUtil(
       skippedFieldCount,
       totalProcessed: clearedFieldCount + errorFieldCount + skippedFieldCount
     });
+    
+    // Show success toast
+    showClearFieldsToast('success', 'Form fields cleared successfully', { operationId });
+    
     return true;
   } catch (error) {
     logger.error(`[ClearFields][${operationId}] Error in handleClearFieldsUtil:`, error, {
@@ -447,6 +451,11 @@ export async function handleClearFieldsUtil(
       errorMessage: error?.message,
       stack: error?.stack
     });
+    
+    // Show error toast
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    showClearFieldsToast('error', errorMessage, { operationId });
+    
     return false;
   }
 }
