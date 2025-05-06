@@ -253,3 +253,160 @@ export const unifiedToast = {
     });
   }
 };
+
+// Toast status types
+export type ToastStatus = 'loading' | 'success' | 'error';
+export type DemoAutoFillStatus = 'loading' | 'progress' | 'success' | 'error';
+
+/**
+ * Toast configuration for form operations
+ */
+export interface UnifiedToastOptions {
+  /** Optional operation ID for tracking/debugging */
+  operationId?: string;
+  /** Skip showing toast for silent operations */
+  skipToast?: boolean;
+}
+
+/**
+ * Show a toast notification for form clearing operation
+ */
+export function showClearFieldsToast(status: ToastStatus, message?: string, options?: UnifiedToastOptions) {
+  if (options?.skipToast) {
+    console.debug(`Skipping clear fields toast (${status})`, { operationId: options.operationId });
+    return;
+  }
+  
+  switch (status) {
+    case 'loading':
+      baseToast({
+        title: 'Clear Fields',
+        description: message || 'Clearing all form fields...',
+        variant: 'info',
+      });
+      break;
+    case 'success':
+      baseToast({
+        title: 'Fields Cleared',
+        description: message || 'All form fields have been cleared successfully.',
+        variant: 'success',
+      });
+      break;
+    case 'error':
+      baseToast({
+        title: 'Clear Fields Failed',
+        description: message || 'There was an error clearing the form fields.',
+        variant: 'destructive',
+      });
+      break;
+  }
+}
+
+/**
+ * Show a toast notification for demo autofill operation
+ */
+export function showDemoAutoFillToast(status: DemoAutoFillStatus, message?: string, options?: UnifiedToastOptions) {
+  if (options?.skipToast) {
+    console.debug(`Skipping demo autofill toast (${status})`, { operationId: options.operationId });
+    return;
+  }
+  
+  switch (status) {
+    case 'loading':
+      baseToast({
+        title: 'Demo Auto-Fill',
+        description: message || 'Loading demo data...',
+        variant: 'info',
+      });
+      break;
+    case 'progress':
+      baseToast({
+        title: 'Demo Auto-Fill',
+        description: message || 'Populating fields with demo data...',
+        variant: 'info',
+      });
+      break;
+    case 'success':
+      baseToast({
+        title: 'Demo Auto-Fill Complete',
+        description: message || 'Successfully filled fields with demo data.',
+        variant: 'success',
+      });
+      break;
+    case 'error':
+      baseToast({
+        title: 'Demo Auto-Fill Error',
+        description: message || 'There was an error applying demo data.',
+        variant: 'destructive',
+      });
+      break;
+  }
+}
+
+/**
+ * Show a toast notification for form submission operation
+ */
+export function showFormSubmissionToast(status: ToastStatus, message?: string, options?: UnifiedToastOptions) {
+  if (options?.skipToast) {
+    console.debug(`Skipping form submission toast (${status})`, { operationId: options.operationId });
+    return;
+  }
+  
+  switch (status) {
+    case 'loading':
+      baseToast({
+        title: 'Submitting Form',
+        description: message || 'Submitting your form data...',
+        variant: 'info',
+      });
+      break;
+    case 'success':
+      baseToast({
+        title: 'Form Submitted',
+        description: message || 'Your form has been submitted successfully.',
+        variant: 'success',
+      });
+      break;
+    case 'error':
+      baseToast({
+        title: 'Submission Failed',
+        description: message || 'There was an error submitting your form.',
+        variant: 'destructive',
+      });
+      break;
+  }
+}
+
+/**
+ * Show a toast notification for form save/progress operation
+ */
+export function showSaveProgressToast(status: ToastStatus, message?: string, options?: UnifiedToastOptions) {
+  if (options?.skipToast) {
+    console.debug(`Skipping save progress toast (${status})`, { operationId: options.operationId });
+    return;
+  }
+  
+  switch (status) {
+    case 'loading':
+      baseToast({
+        title: 'Saving Progress',
+        description: message || 'Saving your form progress...',
+        variant: 'info',
+      });
+      break;
+    case 'success':
+      baseToast({
+        title: 'Progress Saved',
+        description: message || 'Your form progress has been saved.',
+        variant: 'success',
+      });
+      break;
+    case 'error':
+      baseToast({
+        title: 'Save Failed',
+        description: message || 'There was an error saving your form progress.',
+        variant: 'destructive',
+      });
+      break;
+  }
+}
