@@ -286,6 +286,23 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       stack: errorStack?.split('\n').slice(0, 3).join('\n')
     });
     
+    // Send error notification via WebSocket
+    try {
+      sendFormSubmissionError({
+        formType,
+        taskId,
+        companyId,
+        error: errorMessage,
+        message: `Form submission failed: ${errorMessage}`,
+        metadata: {
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (wsError) {
+      console.error('[TransactionalFormHandler] Failed to send error notification:', wsError);
+    }
+    
     return {
       success: false,
       error: errorMessage
