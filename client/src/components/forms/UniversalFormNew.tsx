@@ -341,7 +341,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const modalShownRef = useRef(false); // Ref to track if modal has been shown
   
   // Query for task data
-  const { data: task } = useQuery<Task>({
+  const { data: task, refetch: refreshTask } = useQuery<Task>({
     queryKey: [`/api/tasks/${taskId}`],
     enabled: !!taskId, // Only run when taskId is provided
   });
@@ -758,6 +758,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Set form into submitting state
     setIsSubmitting(true);
     
+    // Update task status to in_progress immediately for better user feedback
+    if (task) {
+      // Create an updated task with ready_for_submission status
+      const inProgressTask = {
+        ...task,
+        status: 'ready_for_submission', // This will soon change to submitted via WebSocket
+        progress: 100
+      };
+      
+      // Update the task in state immediately
+      logger.info('Updating task status to ready_for_submission');
+      setTask(inProgressTask);
+    }
+    
     // Show submission in progress toast
     toast({
       title: 'Submitting form...',
@@ -800,6 +814,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       logger.info(`Form submitted successfully: ${JSON.stringify(result)}`);
       
+      // Force refresh task multiple times to catch eventual consistency lag
+      if (refreshTask) {
+        // Refresh immediately and then at intervals
+        refreshTask();
+        
+        setTimeout(() => refreshTask(), 1000);
+        setTimeout(() => refreshTask(), 3000);
+      }
+      
       // Note: The success feedback will be handled via WebSocket events now
       
     } catch (err) {
@@ -822,19 +845,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const handleSubmissionSuccess = (event: FormSubmissionEvent) => {
     logger.info(`Submission success event received: ${JSON.stringify(event)}`);
     
-    // Only set submission result if it's not already set
-    if (!submissionResult) {
-      setSubmissionResult(event);
-    }
+    // Always set the submission result with the latest data from the server
+    setSubmissionResult(event);
     
     // Reset submission state
     setIsSubmitting(false);
     
-    // Show modal if it hasn't been shown yet
-    if (!modalShownRef.current) {
-      setShowSuccessModal(true);
-      modalShownRef.current = true;
+    // Force task status update to ensure read-only view appears
+    if (task && task.status !== 'submitted') {
+      // Create an updated task with submitted status
+      const updatedTask = {
+        ...task,
+        status: 'submitted',
+        progress: 100
+      };
+      
+      // Update the task in state
+      logger.info('Updating task status to submitted');
+      setTask(updatedTask);
     }
+    
+    // Always show modal for successful submission
+    setShowSuccessModal(true);
+    modalShownRef.current = true;
     
     // Show success toast
     toast({
