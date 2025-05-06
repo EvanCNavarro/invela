@@ -145,18 +145,37 @@ export async function createTaskFile(
       '1.0'
     );
     
-    // Create the file
+    // Add enhanced metadata for better file discovery and task integration
+    // These metadata fields are used by the status determination function
+    // to detect if a task has been submitted and preserve its status
+    const enhancedMetadata = {
+      taskId,
+      taskType: normalizedFormType,
+      submissionDate: new Date().toISOString(),
+      formType: normalizedFormType,
+      formSubmission: true,  // Flag to indicate this is a form submission file
+      fieldCount: Object.keys(formData).length,
+      fileName: fileName,
+      version: '1.0',
+      jsonBackup: jsonBackup  // Store JSON backup in metadata for recovery if needed
+    };
+
+    // Log metadata for debugging
+    console.log(`[FileCreation] Creating file with metadata for task ${taskId}:`, {
+      taskId,
+      formType: normalizedFormType,
+      fileName,
+      metadataFields: Object.keys(enhancedMetadata)
+    });
+    
+    // Create the file with enhanced metadata
     return await createFile({
       name: fileName,
       content,
       type: fileType,
       userId,
       companyId,
-      metadata: {
-        taskId,
-        taskType: normalizedFormType,
-        submissionDate: new Date().toISOString()
-      },
+      metadata: enhancedMetadata,
       status: 'uploaded'
     });
   } catch (error) {

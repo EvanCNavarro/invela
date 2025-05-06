@@ -99,8 +99,14 @@ export function validateProgress(
  */
 export function getProgressSqlValue(progress: number | string | undefined | null): SQL<unknown> {
   const validatedProgress = validateProgress(progress);
-  // Use explicit SQL CAST to INTEGER to ensure consistent type handling
-  return sql`CAST(${validatedProgress} AS INTEGER)`;
+  
+  // ENHANCED TYPE SAFETY: Use explicit SQL CAST to INTEGER to ensure consistent type handling
+  // This resolves the "could not determine polymorphic type because input has type unknown" error
+  // by providing an explicit type cast at the SQL level
+  
+  // We use the Number() function to ensure we're passing a number value to the SQL template
+  // Then we use CAST in SQL to guarantee the database treats it as an INTEGER
+  return sql`CAST(${Number(validatedProgress)} AS INTEGER)`;
 }
 
 /**
@@ -143,6 +149,25 @@ export function validateProgressForUpdate(
     log: debug
   });
   
+  // ENHANCED TYPE SAFETY: Ensure we always have a proper number, not a string or other type
+  // This prevents the "could not determine polymorphic type because input has type unknown" error
+  const numericValue = Number(validatedValue);
+  
+  if (isNaN(numericValue)) {
+    logger.error(`[Progress Validation] Invalid numeric conversion for task ${taskId}:`, {
+      taskId,
+      taskType,
+      source,
+      originalValue,
+      validatedValue,
+      numericValue,
+      errorType: 'NaN_CONVERSION',
+      ...context
+    });
+    // Fallback to 0 if conversion fails
+    return 0;
+  }
+  
   // Log detailed information if debug is enabled or values don't match
   if (debug || originalValue !== validatedValue) {
     logger.info(`[Progress Validation] Task ${taskId} progress value normalized:`, {
@@ -152,13 +177,14 @@ export function validateProgressForUpdate(
       originalValue,
       originalType: typeof originalValue,
       validatedValue,
+      numericValue,  // Log the numeric value for debugging
       wasChanged: originalValue !== validatedValue,
       biasAvoidance: useAvoidMidpointBias,
       ...context
     });
   }
   
-  return validatedValue;
+  return numericValue;
 }
 
 /**
