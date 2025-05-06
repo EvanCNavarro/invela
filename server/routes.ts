@@ -83,7 +83,7 @@ import broadcastRouter from './routes/broadcast';
 // Unified Form Update endpoint for all form types
 import unifiedFormUpdateRouter from './routes/unified-form-update';
 // Test routes have been removed
-import { createUnifiedFormSubmissionRouter } from './routes/index';
+import { createUnifiedFormSubmissionRouter } from './routes/unified-form-submission';
 import { createTransactionalFormRouter } from './routes/transactional-form-routes';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
@@ -440,14 +440,14 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/claims', claimsRouter);
   
   // Register our unified form submission router - centralized endpoint for all form types
-  // Since we're now using the global WebSocket functions directly, we don't need to pass the WSS instance
+  // Set up our transaction-based unified form submission router
   try {
-    console.log('[Routes] Setting up unified form submission router');
+    console.log('[Routes] Setting up transaction-based unified form submission router');
     const unifiedFormSubmissionRouter = createUnifiedFormSubmissionRouter();
-    app.use('/api/form-submission', unifiedFormSubmissionRouter);
-    console.log('[Routes] Successfully registered unified form submission router');
+    app.use('/api/unified-form', unifiedFormSubmissionRouter);
+    console.log('[Routes] Successfully registered transaction-based unified form submission router');
   } catch (error) {
-    console.error('[Routes] Error setting up unified form submission router:', error);
+    console.error('[Routes] Error setting up transaction-based unified form submission router:', error);
   }
   
   // Register our new transactional form submission router that ensures atomic operations
