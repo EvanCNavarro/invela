@@ -141,41 +141,67 @@ export async function createTaskFile(
     // First, organize data by sections and questions
     console.log(`[FileCreation] Processing data for form type ${normalizedFormType} with ${Object.keys(formData).length} fields`);
     
-    // Process the formData to ensure all field values are properly formatted
-    const processedData: Record<string, any> = {};
+    // RESTRUCTURED FORMAT: Create a tabular CSV with one field per row
+    // This format is more readable and easier to analyze
     
-    // Add task and form metadata first to make the file more readable
-    processedData['taskId'] = taskId;
-    processedData['formType'] = normalizedFormType;
-    processedData['companyId'] = companyId;
-    processedData['submissionDate'] = new Date().toISOString();
+    // First create metadata row for the task
+    const metadata = {
+      taskId,
+      formType: normalizedFormType,
+      companyId,
+      submissionDate: new Date().toISOString()
+    };
     
-    // Add all form fields with proper formatting
-    Object.entries(formData).forEach(([key, value]) => {
-      // Don't overwrite existing metadata fields
-      if (!processedData[key]) {
-        if (typeof value === 'object' && value !== null) {
-          // For object values, stringify them to preserve their data
-          processedData[key] = JSON.stringify(value);
-        } else if (value === undefined || value === null) {
-          // Make empty values explicit for better CSV output
-          processedData[key] = '';
-        } else {
-          processedData[key] = value;
-        }
-      }
+    // Define the CSV structure with headers
+    const headers = ['question', 'answer', 'id', 'fieldKey'];
+    
+    // Start building rows with the CSV header
+    let rows = [headers.join(',')];
+    
+    // First add form metadata as rows
+    Object.entries(metadata).forEach(([key, value]) => {
+      const rowValues = [
+        `"Form Metadata: ${key}"`,  // question column
+        `"${String(value).replace(/"/g, '""')}"`,  // answer column
+        `"meta_${key}"`,  // id column
+        `"${key}"`  // fieldKey column
+      ];
+      rows.push(rowValues.join(','));
     });
     
-    // Create properly formatted CSV with all field data
-    const csvHeader = Object.keys(processedData).join(',');
-    const csvValues = Object.values(processedData).map(value => 
-      typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
-    ).join(',');
-    content = `${csvHeader}\n${csvValues}`;
+    // Then add each form field as a row
+    Object.entries(formData).forEach(([key, value]) => {
+      // Format the value based on its type
+      let formattedValue;
+      if (typeof value === 'object' && value !== null) {
+        // For object values, stringify them to preserve their data
+        formattedValue = JSON.stringify(value);
+      } else if (value === undefined || value === null) {
+        // Make empty values explicit for better CSV output
+        formattedValue = '';
+      } else {
+        formattedValue = String(value);
+      }
+      
+      // Create a row with the field data
+      const rowValues = [
+        `"${key}"`,  // question column
+        `"${formattedValue.replace(/"/g, '""')}"`,  // answer column
+        `"field_${key}"`,  // id column
+        `"${key}"`  // fieldKey column
+      ];
+      rows.push(rowValues.join(','));
+    });
+    
+    // Join all rows to create the CSV content
+    content = rows.join('\n');
+    
+    console.log(`[FileCreation] Created tabular CSV file with ${rows.length - 1} rows for task ${taskId}`);
     
     // Log a sample of the data for debugging
-    console.log(`[FileCreation] CSV file created with ${Object.keys(processedData).length} fields:`, {
-      sampleFields: Object.keys(processedData).slice(0, 5),
+    console.log(`[FileCreation] CSV file created with ${rows.length - 1} fields:`, {
+      rowCount: rows.length,
+      headerRow: headers,
       contentLength: content.length,
       timestamp: new Date().toISOString()
     });
