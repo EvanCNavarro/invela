@@ -79,7 +79,7 @@ export const WebSocketTester: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           WebSocket Tester
-          <Badge variant={isConnected ? "success" : "destructive"}>
+          <Badge variant={isConnected ? "default" : "destructive"} className={isConnected ? "bg-green-500 hover:bg-green-600" : ""}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </Badge>
         </CardTitle>

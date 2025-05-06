@@ -112,10 +112,10 @@ export default function WebSocketTestPage() {
               <CardTitle className="flex items-center justify-between">
                 Last Received Event
                 {lastEvent && (
-                  <Badge variant={
-                    lastEvent.status === 'success' ? 'success' :
-                    lastEvent.status === 'error' ? 'destructive' : 'default'
-                  }>
+                  <Badge 
+                    variant={lastEvent.status === 'error' ? 'destructive' : 'default'}
+                    className={lastEvent.status === 'success' ? "bg-green-500 hover:bg-green-600" : ""}
+                  >
                     {lastEvent.status}
                   </Badge>
                 )}
