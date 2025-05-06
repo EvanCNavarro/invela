@@ -184,10 +184,26 @@ async function storeFormResponses(
   taskType: TaskType,
   formData: Record<string, any>
 ) {
+  console.log('[TransactionalFormHandler] Storing form responses:', {
+    taskId,
+    taskIdType: typeof taskId,
+    taskType,
+    formDataKeys: Object.keys(formData),
+    formDataSample: JSON.stringify(formData).substring(0, 200) + '...'
+  });
+  
   switch (taskType) {
     case 'company_kyb':
       // Store KYB responses
       for (const [field, value] of Object.entries(formData)) {
+        // Skip metadata fields like taskId, formType, etc.
+        if (field === 'taskId' || field === 'formType' || field === 'companyId' || field === 'userId') {
+          console.log(`[TransactionalFormHandler] Skipping metadata field: ${field} = ${value}`);
+          continue;
+        }
+        
+        console.log(`[TransactionalFormHandler] Processing KYB field: ${field}, type: ${typeof field}, value type: ${typeof value}`);
+        
         // Ensure proper JSON serialization for complex objects
         const serializedValue = typeof value === 'object' ? JSON.stringify(value) : value;
         
