@@ -48,6 +48,8 @@ import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import { manualKy3pFix } from './routes/manual-ky3p-fix';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
+// Import WebSocket notification test router
+import testWebSocketNotificationsRouter from './routes/test-websocket-notifications';
 import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
@@ -362,6 +364,8 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/debug', debugRoutesTs);
   // Register test submission state router
   app.use('/api/test-submission', createTestSubmissionStateRouter());
+  // Register test WebSocket notifications router
+  app.use('/api/test/websocket', testWebSocketNotificationsRouter);
   // Temporarily disabled until module compatibility is fixed
   // app.use('/api/debug', debugEndpoints);
   
