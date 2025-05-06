@@ -74,8 +74,8 @@ export async function submitFormWithWebSocketUpdates(options: FormSubmissionOpti
       onInProgress();
     }
     
-    // Submit the form data to the server
-    const result = await submitForm(taskId, formType, formData, companyId);
+    // Submit the form data to the server using the transactional endpoint
+    const result = await submitFormTransactional(taskId, formType, formData, companyId);
     
     logger.info(`Form submission completed successfully for task ${taskId}`, result);
     
