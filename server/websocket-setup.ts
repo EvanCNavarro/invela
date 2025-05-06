@@ -1,56 +1,27 @@
 /**
- * WebSocket Server Setup
+ * WebSocket Server Configuration
  * 
- * This file handles the setup of the WebSocket server for the application.
- * It provides WebSocket functionality for real-time updates, particularly
- * for form submission status updates and notifications.
+ * This module sets up a WebSocket server for real-time communication
+ * that doesn't conflict with Vite's HMR WebSocket.
  */
 
-import http from 'http';
 import { WebSocketServer } from 'ws';
-
-let wss: WebSocketServer | null = null;
-
-/**
- * Initialize WebSocket server with an HTTP server
- * 
- * @param server HTTP server to attach the WebSocket server to
- * @returns WebSocket server instance or null if initialization fails
- */
-export function initializeWebSocketServer(server: http.Server): WebSocketServer | null {
-  try {
-    // Create WebSocket server with a distinct path so it doesn't conflict with Vite's HMR
-    console.log('[WebSocket] Initializing WebSocket server on path /ws');
-    
-    wss = new WebSocketServer({ 
-      server,
-      path: '/ws'
-    });
-    
-    // Set up error handling on the server level
-    wss.on('error', (error) => {
-      console.error('[WebSocket] Server error:', error);
-    });
-    
-    console.log('[WebSocket] Server initialized successfully');
-    return wss;
-  } catch (error) {
-    console.error('[WebSocket] Failed to initialize WebSocket server:', error);
-    return null;
-  }
-}
+import { Server } from 'http';
+import { logger } from './utils/logger';
+import { initWebSocketServer } from './utils/unified-websocket';
 
 /**
- * Get the WebSocket server instance
- * This allows other parts of the application to access the WebSocket server
- * 
- * @returns WebSocket server instance or null if not initialized
+ * Initialize the WebSocket server on a specific path
+ * to avoid conflicts with Vite's HMR WebSocket
  */
-export function getWebSocketServer(): WebSocketServer | null {
+export function setupWebSocketServer(httpServer: Server): WebSocketServer {
+  logger.info('[WebSocket] Setting up WebSocket server on path /ws');
+  
+  // Initialize the WebSocket server on the /ws path
+  // This ensures it doesn't conflict with Vite's HMR WebSocket
+  const wss = initWebSocketServer(httpServer, '/ws');
+  
+  logger.info('[WebSocket] WebSocket server initialized successfully');
+  
   return wss;
 }
-
-export default {
-  initializeWebSocketServer,
-  getWebSocketServer
-};
