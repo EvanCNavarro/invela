@@ -1,268 +1,138 @@
 /**
  * Unified Form Submission Routes
  * 
- * This module provides a centralized endpoint for all form submissions,
- * supporting different form types (KYB, KY3P, Open Banking).
+ * This file provides transaction-based form submission routes that ensure atomic operations
+ * for form submissions across all form types. It uses the unified form submission service
+ * to handle the submission process with proper error handling and WebSocket notifications.
  */
 
-import { Request, Response, Router } from 'express';
-import * as WebSocketService from '../services/websocket';
-import { db } from '@db';
-import { tasks, TaskStatus } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth';
+import { Router, Request, Response } from 'express';
+import { logger } from '../utils/logger';
+import { submitForm, FormType } from '../services/unified-form-submission-service';
+
+// Create a context object for logging
+const logContext = { service: 'UnifiedFormSubmissionRoutes' };
 
 /**
- * Create the router for unified form submission
+ * Create and return the router for unified form submission endpoints
  */
 export function createUnifiedFormSubmissionRouter(): Router {
   const router = Router();
-
+  
   /**
-   * POST /api/form-submission
-   * POST /api/form-submission/submit/:formType/:taskId
+   * POST /api/unified-form/submit/:formType/:taskId
    * 
-   * Submit a form for processing
+   * Submit a form with transaction-based consistency
    */
-  router.post(['/', '/submit/:formType/:taskId'], requireAuth, async (req: Request, res: Response) => {
-    try {
-      // Set correct content-type for response
-      res.setHeader('Content-Type', 'application/json');
-      
-      // Get values from either URL params or request body
-      const taskId = req.params.taskId ? parseInt(req.params.taskId) : (req.body.taskId || 0);
-      const formType = req.params.formType || req.body.formType;
-      const { formData, metadata } = req.body;
-      
-      console.log(`[FormSubmission] Request received: path params:`, { 
-        pathTaskId: req.params.taskId,
-        pathFormType: req.params.formType
-      });
-      console.log(`[FormSubmission] Request body:`, {
-        bodyTaskId: req.body.taskId,
-        bodyFormType: req.body.formType,
-        formDataKeysCount: formData ? Object.keys(formData).length : 0
-      });
-      
-      if (!taskId || !formType || !formData) {
-        console.error(`[FormSubmission] Missing required fields: taskId=${taskId}, formType=${formType}, formData=${!!formData}`);
-        return res.status(400).json({
-          success: false,
-          message: 'Missing required fields: taskId, formType, or formData'
-        });
-      }
-      
-      console.log(`[FormSubmission] Received ${formType} submission for task ${taskId}`);
-      console.log(`[FormSubmission] Form data keys: ${Object.keys(formData).length} fields included`);
-      console.log(`[FormSubmission] Additional metadata: ${JSON.stringify(metadata || {})}`);
-      
-      // Check task status before processing
-      const [task] = await db.select({
-        id: tasks.id,
-        status: tasks.status,
-        company_id: tasks.company_id
-      })
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
-      
-      console.log(`[FormSubmission] Task found: ${task ? 'Yes' : 'No'}, Status: ${task?.status}, CompanyID: ${task?.company_id}`);
-      
-      if (!task) {
-        return res.status(404).json({
-          success: false,
-          message: 'Task not found'
-        });
-      }
-      
-      // Update task status to 'submitted'
-      await db.update(tasks)
-        .set({
-          status: 'submitted',
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, taskId));
-      
-      // Simulating file generation
-      const fileName = `${formType}-submission-${taskId}.csv`;
-      const fileId = Math.round(Math.random() * 10000) + 1; // Simulated file ID
-      
-      // Broadcast submission status update via WebSocket using standardized WebSocketService
-      WebSocketService.broadcast('form_submission', {
-        taskId,
-        formType,
-        status: 'success',
-        companyId: task.company_id || 0, // Ensure company_id is never null
-        payload: {
-          submissionDate: new Date().toISOString(),
-          unlockedTabs: ['file-vault', 'dashboard'],
-          fileName,
-          fileId
-        }
-      });
-      
-      // Return success response
-      res.json({
-        success: true,
-        message: 'Form submitted successfully',
-        taskId,
-        formType,
-        submissionDate: new Date().toISOString(),
-        status: 'submitted',
-        fileName,
-        fileId,
-        unlockedTabs: ['file-vault', 'dashboard']
-      });
-    } catch (error) {
-      console.error('[FormSubmission] Error processing submission:', error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      // Broadcast error event if we have the taskId and formType using standardized WebSocketService
-      if (req.body.taskId && req.body.formType) {
-        WebSocketService.broadcast('form_submission', {
-          taskId: req.body.taskId,
-          formType: req.body.formType,
-          status: 'error',
-          companyId: req.user?.company_id || 0,
-          payload: { error: errorMessage }
-        });
-      }
-      
-      res.status(500).json({
+  router.post('/submit/:formType/:taskId', async (req: Request, res: Response) => {
+    // User must be authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
         success: false,
-        message: 'Error processing form submission',
-        error: errorMessage
+        message: 'Authentication required'
       });
     }
-  });
-
-  /**
-   * GET /api/form-submission/status/:taskId
-   * GET /api/form-submission/status/:formType/:taskId
-   * 
-   * Check the status of a form submission
-   */
-  router.get(['/status/:taskId', '/status/:formType/:taskId'], requireAuth, async (req: Request, res: Response) => {
+    
+    const taskId = parseInt(req.params.taskId);
+    const formType = req.params.formType as FormType;
+    const userId = req.user.id;
+    const companyId = req.body.companyId || req.user.company_id;
+    const formData = req.body;
+    const fileName = req.body.fileName;
+    
+    // Validate parameters
+    if (isNaN(taskId) || taskId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID'
+      });
+    }
+    
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company ID is required'
+      });
+    }
+    
+    // Log starting the form submission
+    logger.info('Starting unified form submission', {
+      ...logContext,
+      taskId,
+      formType,
+      userId,
+      companyId,
+      fieldCount: Object.keys(formData).length
+    });
+    
     try {
-      // Set correct content-type for response
-      res.setHeader('Content-Type', 'application/json');
+      // Submit the form using the unified form submission service
+      const result = await submitForm(
+        taskId,
+        formData,
+        formType,
+        userId,
+        companyId,
+        fileName
+      );
       
-      const taskId = parseInt(req.params.taskId);
-      
-      if (isNaN(taskId)) {
-        return res.status(400).json({
+      if (!result.success) {
+        logger.error('Form submission failed', {
+          ...logContext,
+          taskId,
+          formType,
+          error: result.error
+        });
+        
+        return res.status(500).json({
           success: false,
-          message: 'Invalid task ID'
+          message: 'Error submitting form',
+          error: result.error
         });
       }
       
-      // Check if a submission is in progress
-      const [task] = await db.select({
-        id: tasks.id,
-        status: tasks.status
-      })
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+      // Generate a user-friendly message based on form type
+      let message = 'Form submitted successfully';
       
-      if (!task) {
-        return res.status(404).json({
-          success: false,
-          message: 'Task not found'
-        });
+      if (formType === 'kyb' || formType === 'company_kyb') {
+        message += ' and File Vault tab is now accessible.';
+      } else if (formType === 'open_banking') {
+        message += ' and Dashboard and Insights tabs are now accessible.';
       }
       
-      // Return task submission status
-      res.json({
+      logger.info('Form submitted successfully', {
+        ...logContext,
+        taskId,
+        formType,
+        fileId: result.fileId,
+        unlockedTabs: result.unlockedTabs
+      });
+      
+      return res.json({
         success: true,
-        inProgress: task.status === 'in_progress',
-        taskId
+        message,
+        fileId: result.fileId,
+        fileName: result.fileName,
+        unlockedTabs: result.unlockedTabs
       });
     } catch (error) {
-      console.error('[FormSubmission] Error checking submission status:', error);
-      res.status(500).json({
+      logger.error('Error in unified form submission', {
+        ...logContext,
+        taskId,
+        formType,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      return res.status(500).json({
         success: false,
-        message: 'Error checking submission status',
+        message: 'Error submitting form',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
-
-  /**
-   * POST /api/form-submission/retry/:taskId
-   * 
-   * Retry a failed form submission
-   */
-  router.post('/retry/:taskId', requireAuth, async (req: Request, res: Response) => {
-    try {
-      // Set correct content-type for response
-      res.setHeader('Content-Type', 'application/json');
-      
-      const taskId = parseInt(req.params.taskId);
-      const { formType } = req.body;
-      
-      if (isNaN(taskId) || !formType) {
-        return res.status(400).json({
-          success: false,
-          message: 'Missing required fields: taskId or formType'
-        });
-      }
-      
-      // Check if task exists
-      const [task] = await db.select({
-        id: tasks.id,
-        company_id: tasks.company_id
-      })
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
-      
-      if (!task) {
-        return res.status(404).json({
-          success: false,
-          message: 'Task not found'
-        });
-      }
-      
-      // Simulate retry success
-      const fileName = `${formType}-submission-${taskId}-retry.csv`;
-      const fileId = Math.round(Math.random() * 10000) + 1000; // Simulated file ID
-      
-      // Broadcast submission success event using standardized WebSocketService
-      WebSocketService.broadcast('form_submission', {
-        taskId,
-        formType,
-        status: 'success',
-        companyId: task.company_id || 0, // Ensure company_id is never null
-        payload: {
-          submissionDate: new Date().toISOString(),
-          unlockedTabs: ['file-vault', 'dashboard'],
-          fileName,
-          fileId
-        }
-      });
-      
-      // Return success response
-      res.json({
-        success: true,
-        message: 'Form submission retry successful',
-        taskId,
-        formType,
-        submissionDate: new Date().toISOString(),
-        fileName,
-        fileId,
-        unlockedTabs: ['file-vault', 'dashboard']
-      });
-    } catch (error) {
-      console.error('[FormSubmission] Error retrying submission:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error retrying form submission',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
+  
   return router;
 }
+
+export default createUnifiedFormSubmissionRouter;
