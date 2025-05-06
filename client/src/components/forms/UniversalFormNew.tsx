@@ -376,8 +376,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Determine if form should be in read-only mode (when submitted)
   const isReadOnlyMode = useMemo(() => {
-    return task?.status === 'submitted' || task?.status === 'completed';
-  }, [task?.status]);
+    // Check both task status and submissionResult to handle both initial load and after submission
+    return task?.status === 'submitted' || task?.status === 'completed' || !!submissionResult;
+  }, [task?.status, submissionResult]);
   
   // Determine if all data has loaded
   const hasLoaded = useMemo(() => {
