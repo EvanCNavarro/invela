@@ -60,6 +60,8 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
+// Import our test submission state router for testing submission state preservation
+import createTestSubmissionStateRouter from './routes/test-submission-state';
 // Manual KY3P fix route already imported above
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
@@ -358,6 +360,8 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/debug', debugRouter);
   // Register debug-routes.ts
   app.use('/api/debug', debugRoutesTs);
+  // Register test submission state router
+  app.use('/api/test-submission', createTestSubmissionStateRouter());
   // Temporarily disabled until module compatibility is fixed
   // app.use('/api/debug', debugEndpoints);
   
