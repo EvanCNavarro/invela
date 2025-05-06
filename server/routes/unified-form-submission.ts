@@ -1,226 +1,238 @@
 /**
  * Unified Form Submission Router
  * 
- * This router provides a consistent API endpoint for submitting all form types.
- * It uses the transactional form handler to ensure atomic operations and
- * proper error handling.
+ * This router handles form submissions for all form types (KYB, KY3P, Open Banking)
+ * using a unified approach with consistent error handling, transaction management,
+ * and WebSocket notifications.
  */
 
 import { Router } from 'express';
-import { submitFormWithTransaction, updateFormWithTransaction } from '../services/transactional-form-handler';
-import { calculateAndUpdateProgress } from '../utils/unified-progress-calculator';
+import { performance } from 'perf_hooks';
+import { v4 as uuidv4 } from 'uuid';
+import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { processFormSubmission, broadcastFormSubmissionEvent } from '../services/unified-form-submission-handler';
 
-const log = logger.child({ module: 'UnifiedFormSubmission' });
 const router = Router();
 
 /**
- * Submit a form with transactional integrity
- * 
- * POST /api/forms/submit
+ * POST /api/submit-form/:formType/:taskId
+ * Unified form submission endpoint for any form type
  */
-router.post('/api/forms/submit', async (req, res) => {
-  const { taskId, taskType, formData, options = {} } = req.body;
-  
-  // Validate required fields
-  if (!taskId || !taskType || !formData) {
-    return res.status(400).json({
-      success: false,
-      message: 'taskId, taskType, and formData are required',
-    });
-  }
+router.post('/api/submit-form/:formType/:taskId', requireAuth, async (req, res) => {
+  const startTime = performance.now();
+  const transactionId = uuidv4();
   
   try {
-    log.info(`Unified form submission endpoint called for task ${taskId} (${taskType})`, {
-      taskId,
-      taskType,
-      hasUserId: !!req.user?.id,
-      fieldsCount: Object.keys(formData).length,
-      options: Object.keys(options),
-    });
+    // Extract parameters
+    const { formType, taskId: taskIdParam } = req.params;
+    const { formData, fileName } = req.body;
+    const taskId = parseInt(taskIdParam);
     
-    // Add the user ID to options if available
-    const submissionOptions = {
-      ...options,
+    // Log submission attempt
+    logger.info(`[${formType.toUpperCase()} Submission] Processing form submission`, {
+      transactionId,
+      taskId,
+      formType,
       userId: req.user?.id,
-      source: 'api-unified',
-    };
+      hasFormData: !!formData,
+      timestamp: new Date().toISOString()
+    });
     
-    // Use the transactional form handler
-    const result = await submitFormWithTransaction(
+    // Validate form type
+    if (!['kyb', 'ky3p', 'open_banking'].includes(formType)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid form type',
+        message: `Form type must be one of: kyb, ky3p, open_banking. Received: ${formType}`
+      });
+    }
+    
+    // Verify user is authenticated before proceeding
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Unauthorized', 
+        message: 'You must be logged in to submit form data',
+        details: {
+          authenticated: req.isAuthenticated(),
+          hasUser: !!req.user,
+          hasSession: !!req.session,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
+    // Validate taskId
+    if (isNaN(taskId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid task ID',
+        message: 'The task ID must be a valid number'
+      });
+    }
+    
+    // Validate form data exists
+    if (!formData || Object.keys(formData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing form data',
+        message: 'Form data is required for submission'
+      });
+    }
+    
+    // Call the unified form submission handler
+    const submissionResult = await processFormSubmission({
+      formType: formType as 'kyb' | 'ky3p' | 'open_banking',
       taskId,
-      taskType,
       formData,
-      submissionOptions
-    );
-    
-    log.info(`Form submission result for task ${taskId}:`, {
-      taskId,
-      success: result.success,
-      fileId: result.fileId,
-      message: result.message,
-    });
-    
-    return res.json(result);
-  } catch (error) {
-    log.error(`Error in unified form submission for task ${taskId}:`, error);
-    return res.status(500).json({
-      success: false,
-      taskId,
-      message: error instanceof Error ? error.message : 'Unknown error during form submission',
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-/**
- * Update a form without submitting
- * 
- * PATCH /api/forms/update
- */
-router.patch('/api/forms/update', async (req, res) => {
-  const { taskId, taskType, formData, options = {} } = req.body;
-  
-  // Validate required fields
-  if (!taskId || !taskType || !formData) {
-    return res.status(400).json({
-      success: false,
-      message: 'taskId, taskType, and formData are required',
-    });
-  }
-  
-  try {
-    log.info(`Unified form update endpoint called for task ${taskId} (${taskType})`, {
-      taskId,
-      taskType,
-      hasUserId: !!req.user?.id,
-      fieldsCount: Object.keys(formData).length,
-      options: Object.keys(options),
-    });
-    
-    // Add the user ID to options if available
-    const updateOptions = {
-      ...options,
+      fileName,
       userId: req.user?.id,
-      source: 'api-unified-update',
-      preserveProgress: options.preserveProgress !== false, // Default to true
-    };
-    
-    // Use the transactional form handler
-    const result = await updateFormWithTransaction(
-      taskId,
-      taskType,
-      formData,
-      updateOptions
-    );
-    
-    log.info(`Form update result for task ${taskId}:`, {
-      taskId,
-      success: result.success,
-      message: result.message,
+      transactionId,
+      startTime
     });
     
-    return res.json(result);
+    // If submission was successful
+    if (submissionResult.success) {
+      logger.info(`[${formType.toUpperCase()} Submission] Submission successful`, {
+        transactionId,
+        taskId,
+        fileId: submissionResult.fileId,
+        elapsedMs: submissionResult.elapsedMs
+      });
+      
+      // Broadcast the submission to clients via WebSocket
+      try {
+        // Create metadata for the broadcast
+        const metadata = {
+          transactionId,
+          warnings: submissionResult.warnings?.length || 0,
+          ...getFormSpecificMetadata(formType, submissionResult)
+        };
+        
+        // Send the broadcast via WebSocket
+        const broadcasted = await broadcastFormSubmissionEvent(
+          taskId,
+          formType as 'kyb' | 'ky3p' | 'open_banking',
+          submissionResult.companyId as number,
+          submissionResult.fileId,
+          metadata
+        );
+        
+        logger.info(`[${formType.toUpperCase()} Submission] Broadcast results`, {
+          success: true, // broadcastFormSubmissionEvent doesn't return a boolean
+          taskId,
+          transactionId
+        });
+      } catch (error) {
+        logger.error(`[${formType.toUpperCase()} Submission] Broadcast error`, {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          taskId,
+          transactionId
+        });
+        // Continue processing even if broadcast fails
+      }
+      
+      // Return success response
+      return res.json({
+        success: true,
+        fileId: submissionResult.fileId,
+        warnings: submissionResult.warnings,
+        ...getFormSpecificResponse(formType, submissionResult),
+        elapsedMs: submissionResult.elapsedMs
+      });
+    } else {
+      // Transaction failed
+      logger.error(`[${formType.toUpperCase()} Submission] Transaction failed`, {
+        error: submissionResult.error,
+        taskId,
+        transactionId
+      });
+      
+      return res.status(500).json({
+        success: false,
+        error: `Failed to process ${formType} submission`,
+        details: submissionResult.error || 'Unknown error during transaction processing',
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (error) {
-    log.error(`Error in unified form update for task ${taskId}:`, error);
-    return res.status(500).json({
+    // Enhanced error logging
+    logger.error(`[Form Submission] Unhandled error`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      transactionId,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Set appropriate status code based on error type
+    const statusCode = 
+      error instanceof Error && error.message.includes('Unauthorized') ? 401 :
+      error instanceof Error && error.message.includes('not found') ? 404 : 
+      error instanceof Error && error.message.includes('duplicate key') ? 409 : 500;
+    
+    // Send detailed error response
+    res.status(statusCode).json({
       success: false,
-      taskId,
-      message: error instanceof Error ? error.message : 'Unknown error during form update',
-      error: error instanceof Error ? error.message : String(error),
+      error: 'Failed to submit form data',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      statusCode,
+      timestamp: new Date().toISOString()
     });
   }
 });
 
 /**
- * Calculate form progress
- * 
- * GET /api/forms/:taskId/progress
+ * Generate form-specific metadata for WebSocket broadcasts
  */
-router.get('/api/forms/:taskId/progress', async (req, res) => {
-  const taskId = parseInt(req.params.taskId, 10);
-  const { taskType } = req.query;
-  
-  if (isNaN(taskId) || !taskType) {
-    return res.status(400).json({
-      success: false,
-      message: 'taskId and taskType are required',
-    });
+function getFormSpecificMetadata(formType: string, result: any): Record<string, any> {
+  switch (formType) {
+    case 'kyb':
+      return {
+        securityTasksUnlocked: result.securityTasksUnlocked || 0
+      };
+    case 'ky3p':
+      return {
+        riskScoreUpdated: result.riskScoreUpdated || false
+      };
+    case 'open_banking':
+      return {
+        dashboardUnlocked: result.dashboardUnlocked || false
+      };
+    default:
+      return {};
   }
-  
-  try {
-    log.info(`Calculating progress for task ${taskId} (${taskType})`);
-    
-    // Calculate progress without updating the database
-    const result = await calculateAndUpdateProgress(
-      taskId,
-      taskType as any,
-      {
-        updateDatabase: false,
-        sendWebSocketUpdate: false,
-        source: 'api-progress-check',
-      }
-    );
-    
-    return res.json(result);
-  } catch (error) {
-    log.error(`Error calculating progress for task ${taskId}:`, error);
-    return res.status(500).json({
-      success: false,
-      taskId,
-      message: error instanceof Error ? error.message : 'Unknown error calculating progress',
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
+}
 
 /**
- * Recalculate and update form progress
- * 
- * POST /api/forms/:taskId/recalculate-progress
+ * Generate form-specific response data
  */
-router.post('/api/forms/:taskId/recalculate-progress', async (req, res) => {
-  const taskId = parseInt(req.params.taskId, 10);
-  const { taskType, preserveProgress = true } = req.body;
-  
-  if (isNaN(taskId) || !taskType) {
-    return res.status(400).json({
-      success: false,
-      message: 'taskId and taskType are required',
-    });
+function getFormSpecificResponse(formType: string, result: any): Record<string, any> {
+  switch (formType) {
+    case 'kyb':
+      return {
+        securityTasksUnlocked: result.securityTasksUnlocked || 0
+      };
+    case 'ky3p':
+      return {
+        riskScoreUpdated: result.riskScoreUpdated || false
+      };
+    case 'open_banking':
+      return {
+        dashboardUnlocked: result.dashboardUnlocked || false
+      };
+    default:
+      return {};
   }
-  
-  try {
-    log.info(`Recalculating progress for task ${taskId} (${taskType})`, {
-      preserveProgress,
-    });
-    
-    // Calculate and update progress
-    const result = await calculateAndUpdateProgress(
-      taskId,
-      taskType,
-      {
-        updateDatabase: true,
-        sendWebSocketUpdate: true,
-        preserveProgress,
-        source: 'api-progress-recalculate',
-        metadata: {
-          requestedBy: req.user?.id,
-          userTriggered: true,
-        },
-      }
-    );
-    
-    return res.json(result);
-  } catch (error) {
-    log.error(`Error recalculating progress for task ${taskId}:`, error);
-    return res.status(500).json({
-      success: false,
-      taskId,
-      message: error instanceof Error ? error.message : 'Unknown error recalculating progress',
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
+}
 
+// Export both the router and a function to create the router
 export default router;
+
+/**
+ * Create a new unified form submission router
+ * This function is used by the main routes file to register the router
+ */
+export function createUnifiedFormSubmissionRouter() {
+  return router;
+}
