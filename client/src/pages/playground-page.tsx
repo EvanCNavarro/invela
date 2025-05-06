@@ -24,7 +24,7 @@ import {
 import { Card } from "@/components/ui/card";
 import PageSideDrawerPlayground from "@/components/playground/PageSideDrawerPlayground";
 import FormPlayground from "@/components/playground/FormPlayground";
-import { UniversalForm } from "@/components/forms/UniversalForm";
+import { UniversalForm } from "@/components/forms";
 
 // Sample data for DataTable demo
 const sampleTableData = [
