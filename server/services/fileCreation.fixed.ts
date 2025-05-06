@@ -135,10 +135,9 @@ export async function createTaskFile(
     let content = '';
     let fileType = 'text/csv';
     
-    // Enhanced data processing for CSV to include all field data
-    console.log(`[FileCreation] Creating file for ${normalizedFormType} task ${taskId}`);
+    logger.info(`Creating file for ${normalizedFormType} task ${taskId}`, { taskId, normalizedFormType });
     
-    // Define simple column headers
+    // Define headers for our CSV
     const headers = ['id', 'question', 'response', 'field_key', 'timestamp'];
     
     // Create rows array starting with headers
@@ -147,72 +146,98 @@ export async function createTaskFile(
     // Create current date for all rows
     const submissionDate = new Date().toISOString();
     
-    // We need to look up actual field data from the database instead of relying on the provided formData
-    // This ensures we get all questions/answers from the form
-    let fieldDataFromDb = [];
+    // ─── STEP 1: FETCH RESPONSES ────────────────────────────────────────
+    // First, get all responses directly without JOIN to avoid complexity
+    const { pool } = require('../db');
     
-    try {
-      // Define query based on form type
-      let query;
-      const { pool } = require('../db');
-      
-      // Log form type for debugging
-      console.log(`[FileCreation] Looking up responses for form type: ${normalizedFormType}`);
-      
-      // Use the appropriate table based on form type
-      if (normalizedFormType === 'kyb' || normalizedFormType === 'company_kyb') {
-        query = `
-          SELECT r.id, r.field_id, r.response_value, r.status, 
-                 f.field_key, f.display_name, f.question
-          FROM kyb_responses r
-          JOIN kyb_fields f ON r.field_id = f.id
-          WHERE r.task_id = $1 AND r.status = 'COMPLETE'
-          ORDER BY f.field_key
-        `;
-      } else if (normalizedFormType === 'ky3p') {
-        query = `
-          SELECT r.id, r.field_id, r.response_value, r.status, 
-                 f.field_key, f.display_name, f.question
-          FROM ky3p_responses r
-          JOIN ky3p_fields f ON r.field_id = f.id
-          WHERE r.task_id = $1 AND r.status = 'COMPLETE'
-          ORDER BY f.field_key
-        `;
-      } else if (normalizedFormType === 'open_banking' || normalizedFormType === 'openbanking') {
-        query = `
-          SELECT r.id, r.field_id, r.response_value, r.status, 
-                 f.field_key, f.display_name, f.question
-          FROM open_banking_responses r
-          JOIN open_banking_fields f ON r.field_id = f.id
-          WHERE r.task_id = $1 AND r.status = 'COMPLETE'
-          ORDER BY f.field_key
-        `;
-      } else {
-        console.warn(`[FileCreation] Unknown form type: ${normalizedFormType}, defaulting to formData parsing`);
-      }
-      
-      // If we have a valid query, execute it
-      if (query) {
-        console.log(`[FileCreation] Executing query for ${normalizedFormType} responses`);
-        const result = await pool.query(query, [taskId]);
-        fieldDataFromDb = result.rows;
-        console.log(`[FileCreation] Found ${fieldDataFromDb.length} response records in database`);
-      }
-    } catch (dbError) {
-      console.error(`[FileCreation] Error fetching field data from database:`, dbError);
-      console.log(`[FileCreation] Will try to use formData as fallback`);
+    let responseQuery;
+    let fieldQuery;
+    let responseTable;
+    let fieldTable;
+    
+    // Set the right tables based on form type
+    if (normalizedFormType === 'kyb' || normalizedFormType === 'company_kyb') {
+      responseTable = 'kyb_responses';
+      fieldTable = 'kyb_fields';
+    } else if (normalizedFormType === 'ky3p') {
+      responseTable = 'ky3p_responses';
+      fieldTable = 'ky3p_fields';
+    } else if (normalizedFormType === 'open_banking' || normalizedFormType === 'openbanking') {
+      responseTable = 'open_banking_responses';
+      fieldTable = 'open_banking_fields';
+    } else {
+      logger.warn(`Unknown form type: ${normalizedFormType}, using fallback mechanism`, { taskId, normalizedFormType });
+      responseTable = null;
+      fieldTable = null;
     }
     
-    // If we have database records, use them to build the CSV
-    if (fieldDataFromDb.length > 0) {
-      console.log(`[FileCreation] Using ${fieldDataFromDb.length} records from database to build CSV`);
-      
-      // Map DB records to CSV rows
-      fieldDataFromDb.forEach((record, index) => {
-        const question = record.question || record.display_name || record.field_key || 'Unknown Question';
+    logger.info(`Using database tables for form data`, { responseTable, fieldTable });
+    
+    // If we have valid tables, fetch the data
+    let responses = [];
+    let fields = {};
+    
+    if (responseTable && fieldTable) {
+      try {
+        // Step 1: Get all responses
+        responseQuery = `
+          SELECT id, field_id, response_value, status 
+          FROM ${responseTable} 
+          WHERE task_id = $1 AND status = 'COMPLETE'
+        `;
         
-        // Format the value based on its type
-        let formattedValue = record.response_value;
+        const responseResult = await pool.query(responseQuery, [taskId]);
+        responses = responseResult.rows;
+        logger.info(`Found ${responses.length} form responses`, { taskId, responseTable });
+        
+        // Step 2: Get all field definitions for these responses
+        if (responses.length > 0) {
+          // Extract field IDs
+          const fieldIds = [...new Set(responses.map(r => r.field_id))];
+          
+          if (fieldIds.length > 0) {
+            // For SQL parameter placeholders
+            const placeholders = fieldIds.map((_, i) => `$${i + 1}`).join(',');
+            
+            fieldQuery = `
+              SELECT id, field_key, display_name, question, field_type
+              FROM ${fieldTable}
+              WHERE id IN (${placeholders})
+            `;
+            
+            const fieldResult = await pool.query(fieldQuery, fieldIds);
+            
+            // Convert to a map for easy lookup
+            fieldResult.rows.forEach(field => {
+              fields[field.id] = field;
+            });
+            
+            logger.info(`Found ${Object.keys(fields).length} field definitions`, { taskId, fieldTable });
+          }
+        }
+      } catch (dbError) {
+        logger.error(`Database error fetching form data`, {
+          error: dbError instanceof Error ? dbError.message : 'Unknown error',
+          stack: dbError instanceof Error ? dbError.stack : undefined,
+          taskId,
+          formType: normalizedFormType
+        });
+      }
+    }
+    
+    // ─── STEP 2: BUILD CSV ROWS ────────────────────────────────────────
+    if (responses.length > 0 && Object.keys(fields).length > 0) {
+      logger.info(`Building CSV from ${responses.length} responses`, { taskId });
+      
+      // Combine responses with field definitions
+      responses.forEach((response, index) => {
+        const field = fields[response.field_id] || { question: 'Unknown question', field_key: `field_${response.field_id}` };
+        
+        // Get the best available question text
+        const question = field.question || field.display_name || field.field_key || `Question ${response.field_id}`;
+        
+        // Format the response value
+        let formattedValue = response.response_value;
         if (typeof formattedValue === 'object' && formattedValue !== null) {
           formattedValue = JSON.stringify(formattedValue);
         } else if (formattedValue === undefined || formattedValue === null) {
@@ -221,53 +246,53 @@ export async function createTaskFile(
           formattedValue = String(formattedValue);
         }
         
-        // Create a row with proper columns
+        // Create a CSV row with proper escaping
         const rowValues = [
-          index + 1,                                          // id (sequential number)
-          `"${question.replace(/"/g, '""')}"`,             // question text
-          `"${formattedValue.replace(/"/g, '""')}"`,       // response value
-          `"${record.field_key || ''}"`,                     // field_key
-          `"${submissionDate}"`                              // timestamp
+          index + 1,                                       // id (sequential number)
+          `"${question.replace(/"/g, '""')}"`,          // question text
+          `"${formattedValue.replace(/"/g, '""')}"`,    // response value
+          `"${field.field_key || ''}"`,                  // field_key
+          `"${submissionDate}"`                           // timestamp
         ];
         
         rows.push(rowValues.join(','));
       });
       
-      console.log(`[FileCreation] Created ${rows.length - 1} data rows from database records`);
+      logger.info(`Created ${rows.length - 1} data rows from database`, { taskId });
     } else {
-      console.log(`[FileCreation] No database records found, using formData as fallback`);
-      console.log(`[FileCreation] Raw form data:`, JSON.stringify(formData, null, 2));
+      // Fallback if no database data is available
+      logger.warn(`No database responses found, using submitted formData as fallback`, { taskId });
       
-      // Fallback to parsing formData
+      // Extract fields from formData
       let formFields = {};
       
-      // If formData is a string containing JSON, parse it
+      // Handle case where formData might contain a JSON string
       if (formData.formData && typeof formData.formData === 'string') {
         try {
           formFields = JSON.parse(formData.formData);
-          console.log(`[FileCreation] Successfully parsed formData JSON with ${Object.keys(formFields).length} fields`);
+          logger.info(`Parsed formData JSON with ${Object.keys(formFields).length} fields`, { taskId });
         } catch (e) {
-          console.error(`[FileCreation] Error parsing formData JSON:`, e);
-          // Continue with empty object if parsing fails
+          logger.error(`Error parsing formData JSON`, {
+            error: e instanceof Error ? e.message : 'Unknown error',
+            taskId
+          });
         }
       }
       
-      // If no formData field or parsing failed, the form might be flat
+      // If we don't have fields from the formData string, use the whole object
       if (Object.keys(formFields).length === 0) {
-        // Try to use the raw form data and remove known metadata fields
-        formFields = {...formData};
-        // Delete known metadata fields
+        formFields = { ...formData };
+        // Remove metadata fields
         delete formFields.formData;
         delete formFields.formType;
         delete formFields.taskId;
         delete formFields.companyId;
         
-        console.log(`[FileCreation] Using flat form structure with ${Object.keys(formFields).length} fields`);
+        logger.info(`Using flat formData with ${Object.keys(formFields).length} fields`, { taskId });
       }
       
-      // Convert form fields to rows
+      // Convert form fields to CSV rows
       Object.entries(formFields).forEach(([key, value], index) => {
-        // Format the value based on its type
         let formattedValue;
         if (typeof value === 'object' && value !== null) {
           formattedValue = JSON.stringify(value);
@@ -277,30 +302,32 @@ export async function createTaskFile(
           formattedValue = String(value);
         }
         
-        // Create a row with proper columns
         const rowValues = [
-          index + 1,                                         // id (sequential number)
-          `"${key.replace(/"/g, '""')}"`,                // question name
-          `"${formattedValue.replace(/"/g, '""')}"`,     // response value
-          `"${key.replace(/"/g, '""')}"`,                // field_key
-          `"${submissionDate}"`                            // timestamp
+          index + 1,                                      // id
+          `"${key.replace(/"/g, '""')}"`,              // key as question
+          `"${formattedValue.replace(/"/g, '""')}"`,   // value
+          `"${key.replace(/"/g, '""')}"`,              // key as field_key
+          `"${submissionDate}"`                          // timestamp
         ];
         
         rows.push(rowValues.join(','));
       });
     }
     
-    // At the end, add basic task metadata rows
+    // ─── STEP 3: ADD METADATA ROWS ────────────────────────────────────
+    // Always add metadata rows at the end
     const metaStartIndex = rows.length;
+    
+    // Add task, company and form type info
     rows.push([metaStartIndex, '"Task ID"', `"${taskId}"`, '"task_id"', `"${submissionDate}"`].join(','));
     rows.push([metaStartIndex + 1, '"Company ID"', `"${companyId}"`, '"company_id"', `"${submissionDate}"`].join(','));
     rows.push([metaStartIndex + 2, '"Form Type"', `"${normalizedFormType}"`, '"form_type"', `"${submissionDate}"`].join(','));
     
-    console.log(`[FileCreation] Created CSV with ${rows.length - 1} rows (${rows.length - 4} form fields + 3 metadata rows)`);
-    
-    // Verify we have the expected number of rows to help with debugging
+    // Check if we have enough data
     if (rows.length <= 4) {
-      console.warn(`[FileCreation] WARNING: CSV only has ${rows.length - 1} rows. Expected more form fields.`);
+      logger.warn(`Warning: CSV only has ${rows.length - 1} rows. Expected more data.`, { taskId });      
+    } else {
+      logger.info(`Created CSV with ${rows.length - 1} rows (${rows.length - 4} form fields + 3 metadata rows)`, { taskId });  
     }
     
     // Join all rows to create the CSV content
