@@ -229,10 +229,14 @@ export function broadcast(type: string, payload: any) {
     return false;
   }
   
+  // Extract taskId if present to ensure it's available at the top level
+  const taskId = payload.taskId || payload.id || null;
+  
   const message = JSON.stringify({
     type,
     payload,
     data: payload, // For backward compatibility
+    taskId: taskId, // Include taskId at the top level for client compatibility
     timestamp: new Date().toISOString(),
   });
   
