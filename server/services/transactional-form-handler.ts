@@ -201,25 +201,90 @@ async function storeFormResponses(
     user_kyb: {}
   };
   
-  // Get field mappings based on the task type
-  if (taskType === 'company_kyb' || taskType === 'user_kyb') {
-    const kybFields = await tx.execute(sql`SELECT id, field_key FROM kyb_fields`);
-    for (const field of kybFields) {
-      fieldMappings.kyb[field.field_key] = field.id;
+  try {
+    // Get field mappings based on the task type
+    if (taskType === 'company_kyb' || taskType === 'user_kyb') {
+      // Add extra error handling and logging
+      const kybFieldsResult = await tx.execute(sql`SELECT id, field_key FROM kyb_fields`);
+      
+      // Check if we got a valid result
+      if (!kybFieldsResult || !Array.isArray(kybFieldsResult)) {
+        moduleLogger.error(`Invalid result when querying kyb_fields:`, { 
+          result: typeof kybFieldsResult,
+          isArray: Array.isArray(kybFieldsResult),
+          sample: kybFieldsResult ? JSON.stringify(kybFieldsResult).substring(0, 100) : 'null'
+        });
+        throw new Error('Failed to load KYB field mappings');
+      }
+      
+      // Log the result format for debugging
+      moduleLogger.info(`KYB fields query returned ${kybFieldsResult.length} rows`, {
+        firstRow: kybFieldsResult.length > 0 ? JSON.stringify(kybFieldsResult[0]) : 'none'
+      });
+      
+      // Process the results
+      for (const field of kybFieldsResult) {
+        if (field && field.field_key && field.id) {
+          fieldMappings.kyb[field.field_key] = field.id;
+        }
+      }
+      
+      moduleLogger.info(`Loaded ${kybFieldsResult.length} KYB field mappings`, { 
+        mappingCount: Object.keys(fieldMappings.kyb).length,
+        sampleMapping: Object.entries(fieldMappings.kyb).slice(0, 3) 
+      });
+    } else if (taskType === 'ky3p') {
+      // Add extra error handling and logging
+      const ky3pFieldsResult = await tx.execute(sql`SELECT id, field_key FROM ky3p_fields`);
+      
+      // Check if we got a valid result
+      if (!ky3pFieldsResult || !Array.isArray(ky3pFieldsResult)) {
+        moduleLogger.error(`Invalid result when querying ky3p_fields:`, { 
+          result: typeof ky3pFieldsResult,
+          isArray: Array.isArray(ky3pFieldsResult)
+        });
+        throw new Error('Failed to load KY3P field mappings');
+      }
+      
+      // Process the results
+      for (const field of ky3pFieldsResult) {
+        if (field && field.field_key && field.id) {
+          fieldMappings.ky3p[field.field_key] = field.id;
+        }
+      }
+      
+      moduleLogger.info(`Loaded ${ky3pFieldsResult.length} KY3P field mappings`, { 
+        mappingCount: Object.keys(fieldMappings.ky3p).length,
+        sampleMapping: Object.entries(fieldMappings.ky3p).slice(0, 3) 
+      });
+    } else if (taskType === 'open_banking') {
+      // Add extra error handling and logging
+      const obFieldsResult = await tx.execute(sql`SELECT id, field_key FROM open_banking_fields`);
+      
+      // Check if we got a valid result
+      if (!obFieldsResult || !Array.isArray(obFieldsResult)) {
+        moduleLogger.error(`Invalid result when querying open_banking_fields:`, { 
+          result: typeof obFieldsResult,
+          isArray: Array.isArray(obFieldsResult)
+        });
+        throw new Error('Failed to load Open Banking field mappings');
+      }
+      
+      // Process the results
+      for (const field of obFieldsResult) {
+        if (field && field.field_key && field.id) {
+          fieldMappings.open_banking[field.field_key] = field.id;
+        }
+      }
+      
+      moduleLogger.info(`Loaded ${obFieldsResult.length} Open Banking field mappings`, { 
+        mappingCount: Object.keys(fieldMappings.open_banking).length,
+        sampleMapping: Object.entries(fieldMappings.open_banking).slice(0, 3) 
+      });
     }
-    moduleLogger.info(`Loaded ${kybFields.length} KYB field mappings`, { sampleMapping: Object.entries(fieldMappings.kyb).slice(0, 3) });
-  } else if (taskType === 'ky3p') {
-    const ky3pFields = await tx.execute(sql`SELECT id, field_key FROM ky3p_fields`);
-    for (const field of ky3pFields) {
-      fieldMappings.ky3p[field.field_key] = field.id;
-    }
-    moduleLogger.info(`Loaded ${ky3pFields.length} KY3P field mappings`, { sampleMapping: Object.entries(fieldMappings.ky3p).slice(0, 3) });
-  } else if (taskType === 'open_banking') {
-    const obFields = await tx.execute(sql`SELECT id, field_key FROM open_banking_fields`);
-    for (const field of obFields) {
-      fieldMappings.open_banking[field.field_key] = field.id;
-    }
-    moduleLogger.info(`Loaded ${obFields.length} Open Banking field mappings`, { sampleMapping: Object.entries(fieldMappings.open_banking).slice(0, 3) });
+  } catch (error) {
+    moduleLogger.error(`Error loading field mappings:`, error);
+    throw new Error(`Failed to load field mappings: ${error.message}`);
   }
   
   switch (taskType) {
