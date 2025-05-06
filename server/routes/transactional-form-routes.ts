@@ -125,6 +125,8 @@ export function createTransactionalFormRouter(): Router {
         payload: {
           fileId: result.fileId,
           fileName: result.fileName,
+          fileUrl: `/api/files/${result.fileId}/download`,
+          fileType: 'text/csv',
           unlockedTabs: result.unlockedTabs,
           submissionTime: new Date().toISOString(),
           completedActions: [
