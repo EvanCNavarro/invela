@@ -68,13 +68,14 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       // 1. Update task status to submitted
       const now = new Date();
       
+      // UNIFIED FIX: Use parameterized query to avoid SQL injection and type issues
       await client.query(
         `UPDATE tasks 
          SET status = 'submitted', progress = 100, 
-             metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', '"${now.toISOString()}"'::jsonb), 
+             metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', to_jsonb($3::text)), 
              updated_at = $1 
          WHERE id = $2`,
-        [now, taskId]
+        [now, taskId, now.toISOString()]
       );
       
       // 2. Standardize file references in form data
@@ -100,11 +101,12 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             fileId = fileResult.fileId;
             
             // Update task metadata with file information
+            // UNIFIED FIX: Use properly parameterized query for the fileId
             await client.query(
               `UPDATE tasks 
-               SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', '${fileId}'::text::jsonb) 
+               SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)) 
                WHERE id = $1`,
-              [taskId]
+              [taskId, fileId]
             );
           }
         } catch (fileError) {
