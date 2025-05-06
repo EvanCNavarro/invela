@@ -11,8 +11,7 @@ import { performance } from 'perf_hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
-import { processFormSubmission } from '../services/unified-form-submission-handler';
-import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { processFormSubmission, broadcastFormSubmissionEvent } from '../services/unified-form-submission-handler';
 
 const router = Router();
 
@@ -112,15 +111,16 @@ router.post('/api/submit-form/:formType/:taskId', requireAuth, async (req, res) 
         };
         
         // Send the broadcast via WebSocket
-        const broadcasted = broadcastFormSubmission(
-          formType as 'kyb' | 'ky3p' | 'open_banking',
+        const broadcasted = await broadcastFormSubmissionEvent(
           taskId,
+          formType as 'kyb' | 'ky3p' | 'open_banking',
           submissionResult.companyId as number,
+          submissionResult.fileId,
           metadata
         );
         
         logger.info(`[${formType.toUpperCase()} Submission] Broadcast results`, {
-          success: broadcasted,
+          success: true, // broadcastFormSubmissionEvent doesn't return a boolean
           taskId,
           transactionId
         });
