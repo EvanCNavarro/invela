@@ -114,12 +114,20 @@ export async function submitForm(
         })
         .where(eq(tasks.id, taskId));
       
-      log.info('Updated task status to submitted', { taskId, formType });
+      logger.info('Updated task status to submitted', { 
+        ...logContext,
+        taskId, 
+        formType 
+      });
       
       // 4. Persist form responses (implementation varies by form type)
       await persistFormResponses(trx, taskId, formData, formType);
       
-      log.info('Persisted form responses', { taskId, formType });
+      logger.info('Persisted form responses', { 
+        ...logContext,
+        taskId, 
+        formType 
+      });
       
       // 5. Execute form-specific post-submission logic 
       let unlockedTabs: string[] = [];
@@ -131,10 +139,15 @@ export async function submitForm(
       } else if (formType === 'open_banking') {
         unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData);
       } else {
-        log.warn(`Unsupported form type: ${formType}, no post-submission handlers will run`);
+        logger.warn(`Unsupported form type: ${formType}, no post-submission handlers will run`, {
+        ...logContext,
+        formType,
+        taskId
+      });
       }
       
-      log.info('Executed form-specific post-submission logic', {
+      logger.info('Executed form-specific post-submission logic', {
+        ...logContext,
         taskId,
         formType,
         unlockedTabs
@@ -155,7 +168,8 @@ export async function submitForm(
     return result;
   } catch (error) {
     // Log the error with full context
-    log.error('Form submission failed', {
+    logger.error('Form submission failed', {
+      ...logContext,
       taskId,
       formType,
       error: error instanceof Error ? error.message : String(error),
@@ -189,9 +203,9 @@ async function createFormFile(
   error?: string;
 }> {
   try {
-    log.info('Creating file for form submission', {
-      taskId,
-      formType,
+    const fileLogContext = { namespace: 'FileCreation', taskId, formType };
+    logger.info('Creating file for form submission', {
+      ...fileLogContext,
       companyId,
       userId,
       formDataSize: JSON.stringify(formData).length
@@ -202,7 +216,8 @@ async function createFormFile(
     try {
       content = JSON.stringify(formData, null, 2);
     } catch (e) {
-      log.warn('Error stringifying form data, using simplified version', {
+      logger.warn('Error stringifying form data, using simplified version', {
+        ...fileLogContext,
         error: e instanceof Error ? e.message : String(e),
         taskId
       });
@@ -244,11 +259,10 @@ async function createFormFile(
 
     const fileId = result[0].id;
 
-    log.info('File created successfully within transaction', {
+    logger.info('File created successfully within transaction', {
+      ...fileLogContext,
       fileId,
-      fileName,
-      formType,
-      taskId
+      fileName
     });
 
     return {
@@ -257,9 +271,8 @@ async function createFormFile(
       fileName
     };
   } catch (error) {
-    log.error('Error creating file within transaction', {
-      taskId,
-      formType,
+    logger.error('Error creating file within transaction', {
+      ...fileLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -301,7 +314,8 @@ async function persistFormResponses(
   formData: Record<string, any>,
   formType: string
 ): Promise<void> {
-  log.info('Persisting form responses', { taskId, formType });
+  const persistLogContext = { namespace: 'FormPersistence', taskId, formType };
+  logger.info('Persisting form responses', persistLogContext);
   
   // Different implementation based on form type
   if (formType === 'kyb' || formType === 'company_kyb') {
