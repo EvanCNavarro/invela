@@ -348,23 +348,30 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
         timestamp: new Date().toISOString()
       });
       
+      // UNIFIED FIX: Use properly typed parameters without string interpolation or inline casting
+      // This ensures PostgreSQL can determine the proper parameter types
       const [updatedTask] = await tx
         .update(tasks)
         .set({
-          // Use consistent SQL type casting for all task types
-          progress: getProgressSqlValue(validatedProgress),
-          status: sql`${safeStatus}::text`, // Cast status to text to ensure proper type handling
+          // Cast progress to a number before setting
+          progress: sql`CAST(${Number(validatedProgress)} AS real)`,
+          
+          // Use direct string value for status without SQL template literal
+          status: safeStatus,
+          
+          // Use direct Date object
           updated_at: new Date(),
-          // Add more diagnostic info to metadata
+          
+          // Construct metadata as an SQL expression with properly typed parameters
           metadata: sql`jsonb_set(
             jsonb_set(
               COALESCE(${tasks.metadata}, '{}'::jsonb),
               '{lastProgressUpdate}',
-              to_jsonb(now()::text)
+              to_jsonb(${new Date().toISOString()})
             ),
             '{progressHistory}',
             COALESCE(${tasks.metadata} -> 'progressHistory', '[]'::jsonb) || 
-            jsonb_build_array(jsonb_build_object('value', ${validatedProgress}, 'timestamp', now()::text))
+            jsonb_build_array(jsonb_build_object('value', ${Number(validatedProgress)}, 'timestamp', ${new Date().toISOString()}))
           )`
         })
         .where(eq(tasks.id, taskId))
