@@ -41,29 +41,8 @@ export function createTransactionalFormRouter(): Router {
     const taskId = parseInt(req.params.taskId);
     const formType = req.params.formType;
     const companyId = req.body.companyId || req.user.company_id;
+    const formData = req.body;
     const userId = req.user.id;
-
-    // Extract the actual form data from the request body
-    // The form data should be in the formData property, not the entire body
-    const formData = req.body.formData || {};
-    
-    // Log the extraction for debugging
-    console.log('[TransactionalFormRoutes] Extracted form data:', {
-      formDataSource: req.body.formData ? 'req.body.formData' : 'empty object',
-      formDataKeysCount: Object.keys(formData).length
-    });
-    
-    // Log the request parameters for debugging
-    console.log('[TransactionalFormRoutes] Request parameters:',{
-      route: `/submit/${formType}/${taskId}`,
-      taskId,
-      formType,
-      userId,
-      companyId,
-      formDataKeys: Object.keys(formData),
-      bodyType: typeof req.body,
-      body: JSON.stringify(req.body).substring(0, 200) + '...' // Truncate for readability
-    });
     
     // Validate parameters
     if (isNaN(taskId) || taskId <= 0) {
@@ -107,22 +86,13 @@ export function createTransactionalFormRouter(): Router {
     
     try {
       // Process the submission transactionally
-      // Map formType to taskType for the handler function
-      const taskType = formType === 'kyb' ? 'company_kyb' : 
-                      formType === 'ky3p' ? 'ky3p' :
-                      formType === 'ob' ? 'open_banking' :
-                      formType === 'user-kyb' ? 'user_kyb' : formType;
-      
-      // Call with proper parameter order as defined in the function
-      const result = await submitFormWithTransaction(
+      const result = await submitFormWithTransaction({
         taskId,
-        taskType,
         formData,
-        {
-          userId,
-          source: 'forms-tx-api'
-        }
-      );
+        userId,
+        companyId,
+        formType
+      });
       
       // Handle the result
       if (!result.success) {

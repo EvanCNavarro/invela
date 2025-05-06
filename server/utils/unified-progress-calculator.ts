@@ -1,199 +1,90 @@
 /**
- * Unified Progress Calculator
+ * Unified Progress Calculator (Extension Helper)
  * 
- * This module provides a unified interface for calculating progress
- * across all form types, normalizing the calculation process
- * and ensuring consistent progress tracking.
+ * This utility provides additional helper functions that complement
+ * the existing unified-task-progress module. It serves as an expansion
+ * for specific use cases while maintaining compatibility with the
+ * existing unified approach.
+ * 
+ * NOTE: The core progress calculation functionality is already implemented
+ * in server/utils/unified-task-progress.ts. This file provides supplementary
+ * utilities that work alongside that implementation.
  */
 
-import { db } from '@db';
 import { eq } from 'drizzle-orm';
-import { tasks } from '@db/schema';
-import { calculateKybProgress } from './progress-calculators/kyb-progress';
-import { calculateKy3pProgress } from './progress-calculators/ky3p-progress';
-import { calculateOpenBankingProgress } from './progress-calculators/open-banking-progress';
 import { logger } from './logger';
+import { tasks } from '@db/schema';
+import { FormResponseType } from './unified-form-response-handler';
 
-const log = logger.child({ module: 'UnifiedProgressCalc' });
-
-// Types for task progress calculation
-type TaskType = 'company_kyb' | 'ky3p' | 'open_banking' | 'card';
-
-type ProgressOptions = {
-  updateDatabase?: boolean;
-  sendWebSocketUpdate?: boolean;
-  preserveProgress?: boolean;
-  source?: string;
-  diagnosticId?: string;
-  metadata?: Record<string, any>;
-};
-
-type ProgressResult = {
-  success: boolean;
-  taskId: number;
-  message: string;
-  progress: number;
-  status?: string;
-};
+// Re-export the core functionality from unified-task-progress.ts
+export { updateTaskProgress, updateTaskProgressAndBroadcast } from './unified-task-progress';
 
 /**
- * Calculate and optionally update task progress
+ * Format progress value for SQL storage (helper that matches existing implementation)
  * 
- * @param taskId The ID of the task to calculate progress for
- * @param taskType The type of the task
- * @param options Options for progress calculation and updating
- * @returns Progress calculation result
+ * This function ensures that progress values are properly formatted for
+ * database storage, avoiding issues with type conversion or validation.
  */
-export async function calculateAndUpdateProgress(
-  taskId: number,
-  taskType: TaskType,
-  options: ProgressOptions = {}
-): Promise<ProgressResult> {
-  const {
-    updateDatabase = true,
-    sendWebSocketUpdate = true,
-    preserveProgress = false,
-    source = 'api',
-    diagnosticId = `prog-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    metadata = {},
-  } = options;
+export function getProgressSqlValue(progress: number): number {
+  // Ensure progress is within valid range (0-100)
+  const validatedProgress = Math.max(0, Math.min(100, progress));
   
-  log.info(`Starting progress update for task ${taskId} (${taskType})`, {
-    taskId,
-    taskType,
-    diagnosticId,
-    metadata: Object.keys(metadata),
-  });
-  
-  try {
-    // Get current task state
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId),
-    });
-    
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
-    
-    // Don't update progress if task is already in a terminal state and we're preserving progress
-    if (preserveProgress && ['submitted', 'approved', 'rejected'].includes(task.status)) {
-      log.info(`Task ${taskId} is in terminal status (${task.status}), preserving progress`);
-      return {
-        success: true,
-        taskId,
-        message: `Task is in ${task.status} status, progress preserved`,
-        progress: task.progress,
-        status: task.status,
-      };
-    }
-    
-    // Calculate progress based on task type
-    log.info(`Calculating progress for task ${taskId} (${taskType})`);
-    let calculationResult: {
-      taskId: number;
-      taskType: string;
-      normalizedTaskType: string;
-      totalFields: number;
-      completedFields: number;
-      progress: number;
-      timeStamp: string;
-    };
-    
-    switch (taskType) {
-      case 'company_kyb':
-        calculationResult = await calculateKybProgress(taskId);
-        break;
-      case 'ky3p':
-        calculationResult = await calculateKy3pProgress(taskId);
-        break;
-      case 'open_banking':
-        calculationResult = await calculateOpenBankingProgress(taskId);
-        break;
-      case 'card':
-        // For future implementation
-        throw new Error('Card progress calculation not implemented yet');
-      default:
-        throw new Error(`Unsupported task type: ${taskType}`);
-    }
-    
-    // Log the calculated progress
-    log.info(`Task ${taskId} (${taskType}) progress: ${calculationResult.completedFields}/${calculationResult.totalFields} = ${calculationResult.progress}%`);
-    
-    // Update the database if requested
-    if (updateDatabase) {
-      // If preserveProgress is true, only update if the new progress is higher
-      const shouldUpdate = !preserveProgress || calculationResult.progress > task.progress;
-      
-      if (shouldUpdate) {
-        await db.update(tasks)
-          .set({ 
-            progress: calculationResult.progress, 
-            updated_at: new Date(),
-          })
-          .where(eq(tasks.id, taskId));
-        
-        log.info(`Updated progress for task ${taskId} to ${calculationResult.progress}%`);
-      } else {
-        log.info(`Preserved existing progress (${task.progress}%) for task ${taskId} (new calculated: ${calculationResult.progress}%)`);
-      }
-    }
-    
-    // Send WebSocket update if requested
-    if (sendWebSocketUpdate) {
-      try {
-        // Import WebSocketServer dynamically to avoid circular dependencies
-        const { getWebSocketServer } = await import('../websocket');
-        const wss = getWebSocketServer();
-        
-        if (wss) {
-          const message = {
-            type: 'task_updated',
-            payload: {
-              taskId,
-              progress: updateDatabase ? calculationResult.progress : task.progress,
-              status: task.status,
-              timestamp: new Date().toISOString(),
-            },
-            data: {
-              taskId,
-              progress: updateDatabase ? calculationResult.progress : task.progress,
-              status: task.status,
-              timestamp: new Date().toISOString(),
-            },
-            timestamp: new Date().toISOString(),
-          };
-          
-          // Broadcast to all connected clients
-          let clientCount = 0;
-          wss.clients.forEach(client => {
-            if (client.readyState === 1) { // WebSocket.OPEN
-              client.send(JSON.stringify(message));
-              clientCount++;
-            }
-          });
-          
-          log.info(`Broadcast task_updated to ${clientCount} clients`);
-        }
-      } catch (wsError) {
-        log.error('Error sending WebSocket update:', wsError);
-      }
-    }
-    
-    // Return success result
-    return {
-      success: true,
-      taskId,
-      message: updateDatabase && !preserveProgress ? 'Progress updated' : 'Progress unchanged',
-      progress: updateDatabase ? calculationResult.progress : task.progress,
-      status: task.status,
-    };
-  } catch (error) {
-    log.error(`Error calculating progress for task ${taskId}:`, error);
-    return {
-      success: false,
-      taskId,
-      message: error instanceof Error ? error.message : 'Unknown error calculating progress',
-      progress: 0,
-    };
+  // Round to nearest integer to avoid floating point issues
+  return Math.round(validatedProgress);
+}
+
+/**
+ * Preserve existing progress in certain scenarios
+ * 
+ * Some operations should preserve the existing progress rather than
+ * recalculating it. This function determines when to preserve progress.
+ */
+export function shouldPreserveProgress(
+  operation: string,
+  metadata: Record<string, any> | null | undefined
+): boolean {
+  // Preserve progress during edits if metadata indicates
+  if (operation === 'edit' && metadata?.preserveProgress === true) {
+    return true;
   }
+  
+  // Preserve progress during clear operations if indicated
+  if (operation === 'clear' && metadata?.preserveProgress === true) {
+    return true;
+  }
+  
+  // Don't preserve progress during submissions
+  if (operation === 'submit') {
+    return false;
+  }
+  
+  // Default to not preserving
+  return false;
+}
+
+/**
+ * Determine if a task is at 100% progress
+ * 
+ * This utility helps avoid the "midpoint bias" by ensuring that tasks are truly
+ * at 100% progress when all fields are completed and the submission is valid.
+ */
+export function isTaskComplete(
+  progress: number,
+  metadata: Record<string, any> | null | undefined
+): boolean {
+  // Task is complete if:
+  // 1. Progress is 100%
+  // 2. Has a submission flag or date
+  // 3. No validation errors are present
+  
+  const hasSubmissionFlag = metadata?.submitted === true;
+  const hasSubmissionDate = !!metadata?.submittedAt || !!metadata?.submission_date;
+  const hasValidationErrors = metadata?.validationErrors && 
+    (Array.isArray(metadata.validationErrors) ? 
+      metadata.validationErrors.length > 0 : 
+      Object.keys(metadata.validationErrors).length > 0);
+  
+  return progress === 100 && 
+    (hasSubmissionFlag || hasSubmissionDate) && 
+    !hasValidationErrors;
 }
