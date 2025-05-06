@@ -126,9 +126,16 @@ export async function createTaskFile(
     let content = '';
     let fileType = 'text/csv';
     
-    // Convert form data to CSV (will need specific implementations per form type)
-    // For now, just stringify the JSON
-    content = JSON.stringify(formData, null, 2);
+    // Convert form data to proper CSV format
+    const csvHeader = Object.keys(formData).join(',');
+    const csvValues = Object.values(formData).map(value => 
+      typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+    ).join(',');
+    content = `${csvHeader}\n${csvValues}`;
+    
+    // Also save JSON version as a backup
+    const jsonBackup = JSON.stringify(formData, null, 2);
+    console.log(`[FileCreation] Created CSV file for task ${taskId}`);
     
     // Generate file name
     const fileName = generateStandardFileName(

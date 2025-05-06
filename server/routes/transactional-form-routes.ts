@@ -145,6 +145,13 @@ export function createTransactionalFormRouter(): Router {
         }
       });
       
+      // Also broadcast a task update to ensure clients know the task status is "submitted"
+      WebSocketService.broadcastTaskUpdate(taskId, 100, 'submitted', {
+        fileId: result.fileId,
+        taskType: formType,
+        submissionTime: new Date().toISOString()
+      });
+      
       // Return success response
       return res.json({
         success: true,
