@@ -8,6 +8,7 @@
 
 import type { FormServiceInterface, FormField } from '@/services/formService';
 import getLogger from '@/utils/logger';
+import { showClearFieldsToast } from '@/hooks/use-unified-toast';
 
 const logger = getLogger('ClearFields');
 
@@ -462,6 +463,7 @@ export async function directClearFields(
     preserveProgress?: boolean;
     isFormEditing?: boolean;
     operationId?: string;
+    skipToasts?: boolean;
   } = {}
 ): Promise<{
   success: boolean;
@@ -481,6 +483,11 @@ export async function directClearFields(
       isFormEditing: options.isFormEditing,
       timestamp: new Date().toISOString()
     });
+    
+    // Show loading toast unless skipToasts is true
+    if (!options.skipToasts) {
+      showClearFieldsToast('loading', `Clearing fields for ${formType} task...`, { operationId });
+    }
     
     const normalizedFormType = formType.toLowerCase().replace('_', '-');
     let apiEndpoint: string;
@@ -618,6 +625,11 @@ export async function directClearFields(
         errorDetails,
         preserveProgress
       });
+      
+      // Show error toast unless skipToasts is true
+      if (!options.skipToasts) {
+        showClearFieldsToast('error', errorMessage, { operationId });
+      }
       
       throw new Error(errorMessage);
     }
