@@ -343,20 +343,15 @@ export async function createTaskFile(
       });
     }
     
-    // ─── STEP 3: ADD METADATA ROWS ────────────────────────────────────
-    // Always add metadata rows at the end
-    const metaStartIndex = rows.length;
-    
-    // Add task, company and form type info
-    rows.push([metaStartIndex, '"Task ID"', `"${taskId}"`, '"task_id"', `"${submissionDate}"`].join(','));
-    rows.push([metaStartIndex + 1, '"Company ID"', `"${companyId}"`, '"company_id"', `"${submissionDate}"`].join(','));
-    rows.push([metaStartIndex + 2, '"Form Type"', `"${normalizedFormType}"`, '"form_type"', `"${submissionDate}"`].join(','));
+    // ─── STEP 3: REMOVED METADATA ROWS ────────────────────────────────────
+    // We no longer add metadata rows at the end per user's request
+    // Instead we store this information only in the file metadata
     
     // Check if we have enough data
-    if (rows.length <= 4) {
+    if (rows.length <= 1) {
       logger.warn(`Warning: CSV only has ${rows.length - 1} rows. Expected more data.`, { taskId });
     } else {
-      logger.info(`Created CSV with ${rows.length - 1} rows (${rows.length - 4} form fields + 3 metadata rows)`, { taskId });
+      logger.info(`Created CSV with ${rows.length - 1} rows (form fields only, no metadata rows)`, { taskId });
     }
     
     // Join all rows to create the CSV content
