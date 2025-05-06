@@ -99,6 +99,15 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         const schemaTaskType = formType;
         
         try {
+          console.log(`[TransactionalFormHandler] Starting file creation for task ${taskId}`, {
+            taskId,
+            formType: schemaTaskType,
+            companyId,
+            userId,
+            formDataKeys: Object.keys(standardizedFormData).length,
+            timestamp: new Date().toISOString()
+          });
+          
           const fileResult = await fileCreationService.createTaskFile(
             taskId,
             schemaTaskType,
@@ -106,6 +115,15 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             companyId,
             userId
           );
+          
+          // Log more detailed file creation results for debugging
+          console.log(`[TransactionalFormHandler] File creation result for task ${taskId}:`, {
+            success: fileResult.success,
+            fileId: fileResult.fileId,
+            fileName: fileResult.fileName,
+            error: fileResult.error,
+            timestamp: new Date().toISOString()
+          });
           
           if (fileResult.success && fileResult.fileId) {
             fileId = fileResult.fileId;
@@ -130,13 +148,27 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
               [fileId]
             );
             
-            console.log(`[FileCreation] File ${fileId} created for task ${taskId} and linked to file vault`);
+            console.log(`[FileCreation] ✅ File ${fileId} created for task ${taskId} and linked to file vault`);
+          } else {
+            console.error(`[FileCreation] ❌ File creation failed for task ${taskId}:`, {
+              error: fileResult.error || 'No error details provided',
+              timestamp: new Date().toISOString()
+            });
           }
         } catch (fileError) {
+          console.error(`[TransactionalFormHandler] CRITICAL ERROR: File creation failed during transaction for task ${taskId}:`, {
+            taskId,
+            formType,
+            error: fileError instanceof Error ? fileError.message : 'Unknown error',
+            stack: fileError instanceof Error ? fileError.stack : undefined,
+            timestamp: new Date().toISOString()
+          });
+          
           logger.error('Error creating file during transaction', {
             taskId,
             formType,
-            error: fileError instanceof Error ? fileError.message : 'Unknown error'
+            error: fileError instanceof Error ? fileError.message : 'Unknown error',
+            stack: fileError instanceof Error ? fileError.stack : undefined
           });
           // Continue with submission even if file creation fails
         }
