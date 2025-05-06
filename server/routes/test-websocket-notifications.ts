@@ -162,4 +162,54 @@ router.post('/broadcast-form-in-progress', (req, res) => {
   }
 });
 
+/**
+ * Test form success notification using the new standardized system
+ */
+router.post('/broadcast-form-success', (req, res) => {
+  const { taskId, formType, companyId, fileId, fileName, unlockedTabs } = req.body;
+  
+  // Set defaults if not provided
+  const testTaskId = taskId || 620;
+  const testFormType = formType || 'kyb';
+  const testCompanyId = companyId || 272;
+  const testFileId = fileId || 9999;
+  const testFileName = fileName || 'Test_Form_Submission.pdf';
+  const testUnlockedTabs = unlockedTabs || ['file-vault', 'dashboard'];
+  
+  try {
+    // Use the standardized form success notification
+    const result = sendFormSubmissionSuccess({
+      taskId: testTaskId,
+      formType: testFormType,
+      companyId: testCompanyId,
+      fileId: testFileId,
+      fileName: testFileName,
+      submissionDate: new Date().toISOString(),
+      unlockedTabs: testUnlockedTabs,
+      metadata: {
+        submissionComplete: true,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    return res.json({
+      success: true,
+      message: 'Form success notification broadcasted',
+      result,
+      taskId: testTaskId,
+      formType: testFormType,
+      companyId: testCompanyId,
+      fileId: testFileId,
+      fileName: testFileName,
+      unlockedTabs: testUnlockedTabs
+    });
+  } catch (error) {
+    console.error('Error broadcasting form success notification:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to broadcast form success notification'
+    });
+  }
+});
+
 export default router;
