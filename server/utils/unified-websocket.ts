@@ -24,7 +24,24 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
   wss = new WebSocketServer({ 
     server, 
     path,
-    clientTracking: true
+    clientTracking: true,
+    // Configure for better reliability
+    perMessageDeflate: {
+      zlibDeflateOptions: {
+        chunkSize: 1024,
+        memLevel: 7,
+        level: 3
+      },
+      zlibInflateOptions: {
+        chunkSize: 10 * 1024
+      },
+      // Below options specified as default values
+      clientNoContextTakeover: true, // Defaults to negotiated value
+      serverNoContextTakeover: true, // Defaults to negotiated value
+      serverMaxWindowBits: 10, // Defaults to negotiated value
+      concurrencyLimit: 10, // Limits zlib concurrency for performance
+      threshold: 1024 // Size below which messages are not compressed
+    }
   });
   
   // Generate a unique ID for the server instance
@@ -36,31 +53,74 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
     timestamp: new Date().toISOString(),
   });
   
+  // Set up heartbeat interval to detect and clean up dead connections
+  const pingInterval = setInterval(() => {
+    if (!wss || wss.clients.size === 0) return;
+    
+    // Send a heartbeat ping to all clients at regular interval
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          // Send a ping to keep connection alive and detect dead clients
+          client.ping('', false, (error) => {
+            if (error) console.error('[WebSocket] Ping error:', error);
+          });
+        } catch (e) {
+          console.error('[WebSocket] Error sending ping:', e);
+        }
+      }
+    });
+  }, 30000); // Every 30 seconds
+  
   // Handle new connections
   wss.on('connection', (ws, req) => {
-    // Generate a unique client ID
+    // Generate a unique client ID with timestamp for tracking
     const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     clients.set(clientId, ws);
     
+    // Track connection health
+    const connectionData = {
+      id: clientId,
+      lastActivity: Date.now(),
+      isAlive: true,
+      hasIdentified: false,
+      userId: null as number | null,
+      companyId: null as number | null,
+      connectTime: new Date().toISOString(),
+    };
+    
     console.log(`[INFO] [WebSocket] Client connected: ${clientId}`);
     
+    // When a pong is received, mark the connection as alive
+    ws.on('pong', () => {
+      connectionData.isAlive = true;
+      connectionData.lastActivity = Date.now();
+    });
+    
     // Send a welcome message to confirm connection
-    ws.send(JSON.stringify({
-      type: 'connection_established',
-      payload: {
-        message: 'Connection established',
-        clientId,
-        timestamp: new Date().toISOString(),
-      },
-      data: {
-        message: 'Connection established',
-        clientId,
-        timestamp: new Date().toISOString(),
-      }
-    }));
+    try {
+      ws.send(JSON.stringify({
+        type: 'connection_established',
+        payload: {
+          message: 'Connection established',
+          clientId,
+          timestamp: new Date().toISOString(),
+        },
+        data: {
+          message: 'Connection established',
+          clientId,
+          timestamp: new Date().toISOString(),
+        }
+      }));
+    } catch (sendError) {
+      console.error(`[ERROR] [WebSocket] Error sending welcome message:`, sendError);
+    }
     
     // Listen for messages from this client
     ws.on('message', (message) => {
+      connectionData.lastActivity = Date.now();
+      connectionData.isAlive = true;
+      
       try {
         const parsedMessage = JSON.parse(message.toString());
         console.log(`[INFO] [WebSocket] Received message from client ${clientId}:`, parsedMessage);
@@ -68,6 +128,10 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
         // Handle authentication message
         if (parsedMessage.type === 'authenticate') {
           const { userId, companyId } = parsedMessage;
+          connectionData.userId = userId || null;
+          connectionData.companyId = companyId || null;
+          connectionData.hasIdentified = true;
+          
           console.log(`[INFO] [WebSocket] Authentication from client ${clientId}:`, {
             userId,
             companyId,
@@ -110,20 +174,47 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
     });
     
     // Handle disconnections
-    ws.on('close', () => {
-      console.log(`[INFO] [WebSocket] Client disconnected: ${clientId}`);
+    ws.on('close', (code, reason) => {
+      console.log(`[INFO] [WebSocket] Client disconnected: ${clientId}`, {
+        code,
+        reason: reason.toString() || 'No reason provided',
+        connectionDuration: `${Math.round((Date.now() - new Date(connectionData.connectTime).getTime()) / 1000)}s`
+      });
       clients.delete(clientId);
     });
     
     // Handle errors
     ws.on('error', (error) => {
-      console.error(`[ERROR] [WebSocket] Client error: ${clientId}`, error);
+      console.error(`[ERROR] [WebSocket] Client error: ${clientId}`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     });
   });
   
-  // Handle server errors
+  // Handle server errors with detailed logging
   wss.on('error', (error) => {
-    console.error(`[ERROR] [WebSocket] Server error:`, error);
+    console.error(`[ERROR] [WebSocket] Server error:`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+      clients: wss.clients.size
+    });
+  });
+  
+  // Handle server shutdown
+  process.on('SIGTERM', () => {
+    console.log('[INFO] [WebSocket] SIGTERM received, closing WebSocket server');
+    clearInterval(pingInterval);
+    
+    if (wss) {
+      try {
+        wss.close();
+        console.log('[INFO] [WebSocket] Server closed successfully');
+      } catch (error) {
+        console.error('[ERROR] [WebSocket] Error closing server:', error);
+      }
+    }
   });
   
   return wss;

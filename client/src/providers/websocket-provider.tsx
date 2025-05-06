@@ -18,6 +18,15 @@ export interface WebSocketContextType {
   isConnected: boolean;
   lastMessage: any | null;
   sendMessage: (message: any) => void;
+  status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'error';
+  connect: () => void;
+  disconnect: () => void;
+  connectionStats: {
+    attempts: number;
+    lastConnected: string | null;
+    disconnectReason: string | null;
+  };
+  forceReconnect: () => void;
 }
 
 // Create the WebSocket context
