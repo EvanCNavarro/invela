@@ -7,12 +7,12 @@
  * principles for form submission handling.
  */
 
-import { db } from '../db';
+import { db } from '../../db';
 import { companies, files, kybFields, kybResponses, tasks } from '../../db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import { FileCreationService } from './file-creation';
-import { TaskStatus } from '../types/task';
-import logger from '../utils/logger';
+import { TaskStatus } from '../../types/task';
+import { logger } from '../utils/logger';
 
 export interface KybSubmissionInput {
   taskId: number;
@@ -28,6 +28,7 @@ export interface KybSubmissionResult {
   fileId?: string | number;
   warnings?: string[];
   securityTasksUnlocked?: number;
+  companyId?: number;
   error?: string;
   stack?: string;
   elapsedMs?: number;
@@ -240,6 +241,7 @@ export async function processKybSubmission(
     return {
       success: true,
       fileId: fileCreationResult.fileId,
+      companyId: task.company_id,
       warnings: warnings.length > 0 ? warnings : undefined,
       securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
       elapsedMs: performance.now() - startTime
@@ -266,7 +268,19 @@ export async function processKybSubmission(
 /**
  * CSV conversion helper function
  */
-function convertResponsesToCSV(fields: any[], formData: any) {
+interface KybField {
+  id: number;
+  field_key: string;
+  field_type?: string;
+  group?: string;
+  display_name?: string;
+  label?: string;
+  question?: string;
+  validation_rules?: Record<string, any>;
+  order?: number;
+}
+
+function convertResponsesToCSV(fields: KybField[], formData: Record<string, any>) {
   logger.debug('[CSV Generation] Starting CSV conversion', { 
     fieldsCount: fields.length, 
     formDataKeyCount: Object.keys(formData).length 
@@ -365,7 +379,7 @@ async function unlockSecurityTasks(companyId: number, kybTaskId: number, userId?
           eq(tasks.company_id, companyId),
           sql`(${tasks.task_type} = 'security_assessment' OR ${tasks.task_type} = 'sp_ky3p_assessment')`
         )
-      );
+      ) as Array<typeof tasks.$inferSelect>;
       
     logger.info('Found potential security tasks to unlock', {
       count: securityTasks.length,
