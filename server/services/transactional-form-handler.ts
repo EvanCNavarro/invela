@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 import { withTransaction } from './transaction-manager';
 import { UnifiedTabService } from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
-import * as fileCreationService from './fileCreation.fixed';
+import * as fileCreationService from './fileCreation';
 import * as WebSocketService from './websocket';
 
 // Add namespace context to logs

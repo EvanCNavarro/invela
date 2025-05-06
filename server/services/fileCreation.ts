@@ -8,7 +8,8 @@
  */
 
 import { db } from '@db';
-import { files } from '@db/schema';
+import { files, tasks, kybResponses, kybFields, ky3pResponses, ky3pFields, openBankingResponses, openBankingFields } from '@db/schema';
+import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 
 /**
@@ -49,6 +50,16 @@ export async function createFile(options: FileCreationOptions): Promise<FileCrea
       fileSize: options.content ? Buffer.from(options.content).length : 0
     });
     
+    // Log the file creation attempt
+    console.log(`[FileCreation] Creating file for company ${options.companyId} by user ${options.userId}`, {
+      fileName: options.name,
+      fileType: options.type,
+      fileSize: options.content ? Buffer.from(options.content).length : 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    // CRITICAL FIX: Match DB schema column names
+    // The schema uses user_id, not created_by/updated_by
     const result = await db.insert(files)
       .values({
         name: options.name,
@@ -56,13 +67,12 @@ export async function createFile(options: FileCreationOptions): Promise<FileCrea
         type: options.type,
         status: options.status || 'uploaded',
         company_id: options.companyId,
-        created_by: options.userId,
-        updated_by: options.userId,
+        user_id: options.userId, // Changed from created_by to match schema
         created_at: new Date(),
         updated_at: new Date(),
         size: options.content ? Buffer.from(options.content).length : 0,
         version: 1,
-        metadata: options.metadata || null
+        metadata: options.metadata || {}
       })
       .returning({ id: files.id });
     
@@ -126,9 +136,214 @@ export async function createTaskFile(
     let content = '';
     let fileType = 'text/csv';
     
-    // Convert form data to CSV (will need specific implementations per form type)
-    // For now, just stringify the JSON
-    content = JSON.stringify(formData, null, 2);
+    logger.info(`Creating file for ${normalizedFormType} task ${taskId}`, { taskId, normalizedFormType });
+    
+    // Define headers for our CSV
+    const headers = ['id', 'question', 'response', 'field_key', 'timestamp'];
+    
+    // Create rows array starting with headers
+    let rows = [headers.join(',')];
+    
+    // Create current date for all rows
+    const submissionDate = new Date().toISOString();
+    
+    // ─── STEP 1: FETCH RESPONSES USING DRIZZLE ORM ─────────────────────────
+    let responseData: Array<{
+      fieldKey: string;
+      questionText: string;
+      responseValue: any;
+      status: string;
+    }> = [];
+    
+    // Determine which tables to use based on form type and fetch data using Drizzle ORM
+    if (normalizedFormType === 'kyb' || normalizedFormType === 'company_kyb') {
+      const responses = await db.select({
+        responseValue: kybResponses.response_value,
+        fieldKey: kybFields.field_key,
+        questionText: kybFields.question,
+        displayName: kybFields.display_name,
+        status: kybResponses.status
+      })
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, taskId));
+      
+      // Transform to our internal format
+      responseData = responses.map(r => ({
+        fieldKey: r.fieldKey,
+        questionText: r.questionText || r.displayName || r.fieldKey,
+        responseValue: r.responseValue,
+        status: r.status
+      }));
+      
+      console.log(`[FileCreation] Retrieved ${responses.length} KYB responses for task ${taskId}`);
+    } 
+    else if (normalizedFormType === 'ky3p') {
+      const responses = await db.select({
+        responseValue: ky3pResponses.response_value,
+        fieldKey: ky3pFields.field_key,
+        questionText: ky3pFields.question,
+        displayName: ky3pFields.display_name, 
+        status: ky3pResponses.status
+      })
+      .from(ky3pResponses)
+      .innerJoin(ky3pFields, eq(ky3pResponses.field_id, ky3pFields.id))
+      .where(eq(ky3pResponses.task_id, taskId));
+      
+      // Transform to our internal format
+      responseData = responses.map(r => ({
+        fieldKey: r.fieldKey,
+        questionText: r.questionText || r.displayName || r.fieldKey,
+        responseValue: r.responseValue,
+        status: r.status
+      }));
+      
+      console.log(`[FileCreation] Retrieved ${responses.length} KY3P responses for task ${taskId}`);
+    } 
+    else if (normalizedFormType === 'open_banking' || normalizedFormType === 'openbanking') {
+      const responses = await db.select({
+        responseValue: openBankingResponses.response_value,
+        fieldKey: openBankingFields.field_key,
+        questionText: openBankingFields.question,
+        displayName: openBankingFields.display_name,
+        status: openBankingResponses.status
+      })
+      .from(openBankingResponses)
+      .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
+      .where(eq(openBankingResponses.task_id, taskId));
+      
+      // Transform to our internal format
+      responseData = responses.map(r => ({
+        fieldKey: r.fieldKey,
+        questionText: r.questionText || r.displayName || r.fieldKey,
+        responseValue: r.responseValue,
+        status: r.status
+      }));
+      
+      console.log(`[FileCreation] Retrieved ${responses.length} Open Banking responses for task ${taskId}`);
+    } 
+    else {
+      logger.warn(`Unknown form type: ${normalizedFormType}, using fallback mechanism`, { taskId, normalizedFormType });
+    }
+    
+    // ─── STEP 2: BUILD CSV ROWS ────────────────────────────────────────
+    // Filter for only COMPLETE responses
+    const completeResponses = responseData.filter(r => r.status === 'COMPLETE');
+    
+    if (completeResponses.length > 0) {
+      logger.info(`Building CSV from ${completeResponses.length} complete responses`, { taskId });
+      
+      // Process each response into a CSV row
+      completeResponses.forEach((response, index) => {
+        // Format the response value
+        let formattedValue = response.responseValue;
+        if (typeof formattedValue === 'object' && formattedValue !== null) {
+          formattedValue = JSON.stringify(formattedValue);
+        } else if (formattedValue === undefined || formattedValue === null) {
+          formattedValue = '';
+        } else {
+          formattedValue = String(formattedValue);
+        }
+        
+        // Create a CSV row with proper escaping
+        const rowValues = [
+          index + 1,                                           // id (sequential number)
+          `"${(response.questionText || '').replace(/"/g, '""')}"`,  // question text
+          `"${formattedValue.replace(/"/g, '""')}"`,          // response value
+          `"${(response.fieldKey || '').replace(/"/g, '""')}"`,     // field_key
+          `"${submissionDate}"`                               // timestamp
+        ];
+        
+        rows.push(rowValues.join(','));
+      });
+      
+      logger.info(`Created ${rows.length - 1} data rows from database responses`, { taskId });
+    } else {
+      // Fallback if no database data is available
+      logger.warn(`No complete database responses found, using submitted formData as fallback`, { taskId });
+      
+      // Extract fields from formData
+      let formFields = {};
+      
+      // Handle case where formData might contain a JSON string
+      if (formData.formData && typeof formData.formData === 'string') {
+        try {
+          formFields = JSON.parse(formData.formData);
+          logger.info(`Parsed formData JSON with ${Object.keys(formFields).length} fields`, { taskId });
+        } catch (e) {
+          logger.error(`Error parsing formData JSON`, {
+            error: e instanceof Error ? e.message : 'Unknown error',
+            taskId
+          });
+        }
+      }
+      
+      // If we don't have fields from the formData string, use the whole object
+      if (Object.keys(formFields).length === 0) {
+        formFields = { ...formData };
+        // Remove metadata fields
+        delete formFields.formData;
+        delete formFields.formType;
+        delete formFields.taskId;
+        delete formFields.companyId;
+        
+        logger.info(`Using flat formData with ${Object.keys(formFields).length} fields`, { taskId });
+      }
+      
+      // Convert form fields to CSV rows
+      Object.entries(formFields).forEach(([key, value], index) => {
+        let formattedValue;
+        if (typeof value === 'object' && value !== null) {
+          formattedValue = JSON.stringify(value);
+        } else if (value === undefined || value === null) {
+          formattedValue = '';
+        } else {
+          formattedValue = String(value);
+        }
+        
+        const rowValues = [
+          index + 1,                                      // id
+          `"${key.replace(/"/g, '""')}"`,              // key as question
+          `"${formattedValue.replace(/"/g, '""')}"`,   // value
+          `"${key.replace(/"/g, '""')}"`,              // key as field_key
+          `"${submissionDate}"`                          // timestamp
+        ];
+        
+        rows.push(rowValues.join(','));
+      });
+    }
+    
+    // ─── STEP 3: ADD METADATA ROWS ────────────────────────────────────
+    // Always add metadata rows at the end
+    const metaStartIndex = rows.length;
+    
+    // Add task, company and form type info
+    rows.push([metaStartIndex, '"Task ID"', `"${taskId}"`, '"task_id"', `"${submissionDate}"`].join(','));
+    rows.push([metaStartIndex + 1, '"Company ID"', `"${companyId}"`, '"company_id"', `"${submissionDate}"`].join(','));
+    rows.push([metaStartIndex + 2, '"Form Type"', `"${normalizedFormType}"`, '"form_type"', `"${submissionDate}"`].join(','));
+    
+    // Check if we have enough data
+    if (rows.length <= 4) {
+      logger.warn(`Warning: CSV only has ${rows.length - 1} rows. Expected more data.`, { taskId });
+    } else {
+      logger.info(`Created CSV with ${rows.length - 1} rows (${rows.length - 4} form fields + 3 metadata rows)`, { taskId });
+    }
+    
+    // Join all rows to create the CSV content
+    content = rows.join('\n');
+    
+    console.log(`[FileCreation] Created standard CSV file with ${rows.length - 1} data rows for task ${taskId}`);
+    
+    // Log a sample of the data for debugging
+    console.log(`[FileCreation] CSV file created with ${rows.length - 1} fields:`, {
+      rowCount: rows.length,
+      headerRow: headers,
+      contentLength: content.length
+    });
+    
+    // Also save JSON version as a backup
+    const jsonBackup = JSON.stringify(formData, null, 2);
+    console.log(`[FileCreation] Created CSV file for task ${taskId}`);
     
     // Generate file name
     const fileName = generateStandardFileName(
@@ -138,18 +353,37 @@ export async function createTaskFile(
       '1.0'
     );
     
-    // Create the file
+    // Add enhanced metadata for better file discovery and task integration
+    // These metadata fields are used by the status determination function
+    // to detect if a task has been submitted and preserve its status
+    const enhancedMetadata = {
+      taskId,
+      taskType: normalizedFormType,
+      submissionDate: new Date().toISOString(),
+      formType: normalizedFormType,
+      formSubmission: true,  // Flag to indicate this is a form submission file
+      fieldCount: Object.keys(formData).length,
+      fileName: fileName,
+      version: '1.0',
+      jsonBackup: jsonBackup  // Store JSON backup in metadata for recovery if needed
+    };
+
+    // Log metadata for debugging
+    console.log(`[FileCreation] Creating file with metadata for task ${taskId}:`, {
+      taskId,
+      formType: normalizedFormType,
+      fileName,
+      metadataFields: Object.keys(enhancedMetadata)
+    });
+    
+    // Create the file with enhanced metadata
     return await createFile({
       name: fileName,
       content,
       type: fileType,
       userId,
       companyId,
-      metadata: {
-        taskId,
-        taskType: normalizedFormType,
-        submissionDate: new Date().toISOString()
-      },
+      metadata: enhancedMetadata,
       status: 'uploaded'
     });
   } catch (error) {
