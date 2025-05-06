@@ -1,201 +1,137 @@
 /**
- * NotificationProvider
+ * Notification Provider
  * 
- * A context provider for managing application-wide notifications.
- * This component provides a queue-based approach to ensure all
- * notifications are displayed, even if multiple notifications
- * are triggered in quick succession.
+ * This component manages a queue-based notification system for
+ * consistent toast messages and alerts across the application.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { toast, ToastActionElement, useToast } from '@/hooks/use-toast';
-import getLogger from '@/utils/logger';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { Check, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
-const logger = getLogger('NotificationProvider');
+type NotificationVariant = 'success' | 'error' | 'info' | 'warning';
 
-// Define notification types
-type NotificationVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
-
-export interface Notification {
-  id?: string;
+type Notification = {
+  id: string;
   title: string;
   description?: string;
-  variant?: NotificationVariant;
-  action?: ToastActionElement;
-  important?: boolean; // If true, will be shown even if there are many notifications
-  timestamp?: Date;
-  expiresAt?: Date;
-}
+  variant: NotificationVariant;
+  duration?: number;
+  priority: number; // Higher number = higher priority
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+};
 
-interface NotificationContextType {
-  addNotification: (notification: Notification) => string;
-  removeNotification: (id: string) => void;
-  clearNotifications: () => void;
-  notifications: Notification[];
-  errorCount: number;
-}
+type NotificationContextValue = {
+  showNotification: (notification: Omit<Notification, 'id'>) => string;
+  dismissNotification: (id: string) => void;
+  getActiveNotifications: () => Notification[];
+  clearAll: () => void;
+};
 
-// Create the context with default values
-const NotificationContext = createContext<NotificationContextType>({
-  addNotification: () => '',
-  removeNotification: () => {},
-  clearNotifications: () => {},
-  notifications: [],
-  errorCount: 0,
-});
+type NotifyFunctions = {
+  success: (title: string, description?: string, options?: Partial<Notification>) => string;
+  error: (title: string, description?: string, options?: Partial<Notification>) => string;
+  info: (title: string, description?: string, options?: Partial<Notification>) => string;
+  warning: (title: string, description?: string, options?: Partial<Notification>) => string;
+};
 
-// Hook for using notifications
-export const useNotification = () => useContext(NotificationContext);
-
-// Props interface
-interface NotificationProviderProps {
-  children: React.ReactNode;
-  maxQueueSize?: number;
-  throttleMs?: number;
-}
+const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 /**
- * NotificationProvider component
+ * Provider component that manages notification display
  */
-export function NotificationProvider({
-  children,
-  maxQueueSize = 10,
-  throttleMs = 500,
-}: NotificationProviderProps) {
-  // State for notification queue
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [errorCount, setErrorCount] = useState(0);
-  const [processingQueue, setProcessingQueue] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
   
-  // Access to toast API
-  const { toast: showToast } = useToast();
-  
-  // Generate unique ID for notifications
-  const generateId = useCallback(() => {
-    return `notification-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  }, []);
-  
-  // Add a notification to the queue
-  const addNotification = useCallback((notification: Notification) => {
-    const id = notification.id || generateId();
-    const timestamp = notification.timestamp || new Date();
-    const expiresAt = notification.expiresAt || new Date(timestamp.getTime() + 60000); // Default to 1 minute expiry
+  /**
+   * Add a notification to the queue
+   */
+  const showNotification = useCallback((notification: Omit<Notification, 'id'>) => {
+    const id = `notification-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const notificationWithId = { ...notification, id } as Notification;
     
-    const notificationWithId: Notification = {
-      ...notification,
-      id,
-      timestamp,
-      expiresAt,
-    };
-    
-    logger.info(`Adding notification to queue: ${id}`, {
-      title: notification.title,
-      variant: notification.variant,
-      timestamp: timestamp.toISOString(),
-    });
-    
-    // Track error count
-    if (notification.variant === 'destructive') {
-      setErrorCount(prev => prev + 1);
-    }
-    
-    // Add to queue
     setNotifications(prev => {
-      // If queue is getting too big, remove some non-important notifications
-      if (prev.length >= maxQueueSize) {
-        // Remove the oldest non-important notifications
-        const newQueue = [...prev];
-        let removed = 0;
-        for (let i = 0; i < newQueue.length && removed < 3; i++) {
-          if (!newQueue[i].important) {
-            newQueue.splice(i, 1);
-            removed++;
-            i--; // Adjust index after removal
-          }
-        }
-        
-        // If we can't remove any, just keep the newest ones
-        if (removed === 0) {
-          newQueue.splice(0, 3);
-        }
-        
-        return [...newQueue, notificationWithId];
-      }
-      
-      return [...prev, notificationWithId];
+      // Add the new notification and sort by priority (highest first)
+      return [...prev, notificationWithId].sort((a, b) => b.priority - a.priority);
     });
     
     return id;
-  }, [generateId, maxQueueSize]);
-  
-  // Remove a notification from the queue
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => {
-      const notification = prev.find(n => n.id === id);
-      if (notification && notification.variant === 'destructive') {
-        setErrorCount(prevCount => Math.max(0, prevCount - 1));
-      }
-      
-      return prev.filter(n => n.id !== id);
-    });
   }, []);
   
-  // Clear all notifications
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
-    setErrorCount(0);
-  }, []);
-  
-  // Process the notification queue
-  useEffect(() => {
-    if (notifications.length === 0 || processingQueue) {
-      return;
+  /**
+   * Remove a notification from the queue
+   */
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    
+    if (activeNotification?.id === id) {
+      setActiveNotification(null);
     }
-    
-    const processQueue = async () => {
-      setProcessingQueue(true);
-      
-      const notification = notifications[0];
-      
-      // Show the notification
-      if (notification) {
-        logger.info(`Showing notification: ${notification.id}`, {
-          title: notification.title,
-          variant: notification.variant,
-        });
-        
-        // Check if it's expired
-        if (notification.expiresAt && notification.expiresAt < new Date()) {
-          logger.info(`Notification ${notification.id} expired, skipping`);
-        } else {
-          // Show the toast
-          showToast({
-            title: notification.title,
-            description: notification.description,
-            variant: notification.variant as any,
-            action: notification.action,
-          });
-        }
-        
-        // Remove the notification from the queue
-        removeNotification(notification.id!);
-      }
-      
-      // Wait a short time before processing the next notification
-      await new Promise(resolve => setTimeout(resolve, throttleMs));
-      setProcessingQueue(false);
-    };
-    
-    processQueue();
-  }, [notifications, processingQueue, removeNotification, showToast, throttleMs]);
+  }, [activeNotification]);
   
-  // Context value
-  const contextValue = {
-    addNotification,
-    removeNotification,
-    clearNotifications,
-    notifications,
-    errorCount,
+  /**
+   * Get all active notifications
+   */
+  const getActiveNotifications = useCallback(() => {
+    return [...notifications];
+  }, [notifications]);
+  
+  /**
+   * Clear all notifications
+   */
+  const clearAll = useCallback(() => {
+    setNotifications([]);
+    setActiveNotification(null);
+  }, []);
+  
+  /**
+   * Process the notification queue
+   */
+  useEffect(() => {
+    if (!activeNotification && notifications.length > 0) {
+      // Get the highest priority notification
+      const nextNotification = notifications[0];
+      setActiveNotification(nextNotification);
+      
+      // Display the toast
+      toast({
+        title: nextNotification.title,
+        description: nextNotification.description,
+        variant: nextNotification.variant,
+        duration: nextNotification.duration || 5000,
+        action: nextNotification.action ? {
+          label: nextNotification.action.label,
+          onClick: () => {
+            nextNotification.action?.onClick();
+            dismissNotification(nextNotification.id);
+          }
+        } : undefined,
+      });
+      
+      // Remove from queue after display
+      setNotifications(prev => prev.filter(n => n.id !== nextNotification.id));
+      
+      // Clear active notification after duration
+      const timer = setTimeout(() => {
+        setActiveNotification(null);
+      }, nextNotification.duration || 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeNotification, notifications, dismissNotification, toast]);
+  
+  // Create context value
+  const contextValue: NotificationContextValue = {
+    showNotification,
+    dismissNotification,
+    getActiveNotifications,
+    clearAll,
   };
   
   return (
@@ -206,35 +142,59 @@ export function NotificationProvider({
 }
 
 /**
- * Shorthand function to show a notification
+ * Hook to use the notification context
  */
-export function showNotification(notification: Notification) {
-  // If we're in a React component, use the hook
-  try {
-    const { addNotification } = useNotification();
-    return addNotification(notification);
-  } catch (error) {
-    // If we're outside a React component (or provider not available), fall back to toast
-    logger.warn('NotificationProvider not available, falling back to direct toast');
-    toast({
-      title: notification.title,
-      description: notification.description,
-      variant: notification.variant as any,
-      action: notification.action,
-    });
-    return generateId();
+export function useNotification() {
+  const context = useContext(NotificationContext);
+  
+  if (!context) {
+    throw new Error('useNotification must be used within a NotificationProvider');
   }
+  
+  return context;
 }
 
-// Helper to generate IDs for notifications outside of React component
-function generateId() {
-  return `notification-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-// Helper functions for common notification types
-export const notify = {
-  success: (title: string, description?: string) => showNotification({ title, description, variant: 'success' }),
-  error: (title: string, description?: string) => showNotification({ title, description, variant: 'destructive', important: true }),
-  warning: (title: string, description?: string) => showNotification({ title, description, variant: 'warning' }),
-  info: (title: string, description?: string) => showNotification({ title, description, variant: 'info' }),
+/**
+ * Helper to show notifications without using the hook
+ */
+export const notify: NotifyFunctions = {
+  success: (title, description, options = {}) => {
+    return toast({
+      title,
+      description,
+      variant: 'default',
+      duration: options.duration || 5000,
+      action: options.action,
+    });
+  },
+  
+  error: (title, description, options = {}) => {
+    return toast({
+      title,
+      description,
+      variant: 'destructive',
+      duration: options.duration || 7000, // Errors stay longer
+      action: options.action,
+    });
+  },
+  
+  info: (title, description, options = {}) => {
+    return toast({
+      title,
+      description,
+      variant: 'default',
+      duration: options.duration || 5000,
+      action: options.action,
+    });
+  },
+  
+  warning: (title, description, options = {}) => {
+    return toast({
+      title,
+      description,
+      variant: 'destructive',
+      duration: options.duration || 6000,
+      action: options.action,
+    });
+  },
 };

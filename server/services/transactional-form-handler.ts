@@ -22,10 +22,11 @@ import { calculateKy3pProgress } from '../utils/progress-calculators/ky3p-progre
 import { calculateOpenBankingProgress } from '../utils/progress-calculators/open-banking-progress';
 import { createFormOutputFile } from '../utils/form-output-generator';
 import { unlockCompanyTabs } from './companyTabsService';
-import { WebSocketServer } from '../websocket';
-import getLogger from '../utils/logger';
+import { WebSocket } from 'ws';
+import { getWebSocketServer } from '../websocket';
+import { logger } from '../utils/logger';
 
-const logger = getLogger('TransactionalFormHandler');
+const moduleLogger = moduleLogger.child({ module: 'TransactionalFormHandler' });
 
 interface FormSubmissionResult {
   success: boolean;
@@ -68,7 +69,7 @@ export async function submitFormWithTransaction(
     userId,
   } = options;
   
-  logger.info(`Starting transactional form submission for task ${taskId} (${taskType})`, {
+  moduleLogger.info(`Starting transactional form submission for task ${taskId} (${taskType})`, {
     taskId,
     taskType,
     preserveProgress,
@@ -95,7 +96,7 @@ export async function submitFormWithTransaction(
         throw new Error(`Task ${taskId} not found`);
       }
       
-      logger.info(`Found task ${taskId} with company ${task.company_id}`, {
+      moduleLogger.info(`Found task ${taskId} with company ${task.company_id}`, {
         taskId,
         companyId: task.company_id,
         currentStatus: task.status,
@@ -118,7 +119,7 @@ export async function submitFormWithTransaction(
       let fileId: number | undefined;
       if (!skipFileCreation && progress === 100) {
         fileId = await createFormFile(tx, taskId, taskType, formData, task.company_id);
-        logger.info(`Created file for task ${taskId}`, { fileId });
+        moduleLogger.info(`Created file for task ${taskId}`, { fileId });
       }
       
       // 5. Update the task progress and status
@@ -127,10 +128,10 @@ export async function submitFormWithTransaction(
       // 6. Unlock company tabs if needed (KYB unlocks file vault, etc.)
       if (!skipTabUnlocking && progress === 100) {
         if (taskType === 'company_kyb') {
-          logger.info(`Unlocking tabs for company ${task.company_id} after KYB completion`);
+          moduleLogger.info(`Unlocking tabs for company ${task.company_id} after KYB completion`);
           await unlockCompanyTabs(task.company_id, ['file-vault']);
         } else if (taskType === 'open_banking') {
-          logger.info(`Unlocking tabs for company ${task.company_id} after Open Banking completion`);
+          moduleLogger.info(`Unlocking tabs for company ${task.company_id} after Open Banking completion`);
           await unlockCompanyTabs(task.company_id, ['dashboard']);
         }
       }
@@ -144,7 +145,7 @@ export async function submitFormWithTransaction(
       );
       
       // 8. Log the successful submission
-      logger.info(`Successfully submitted form for task ${taskId}`, {
+      moduleLogger.info(`Successfully submitted form for task ${taskId}`, {
         taskId,
         taskType,
         progress,
@@ -160,7 +161,7 @@ export async function submitFormWithTransaction(
         message: 'Form submitted successfully'
       };
     } catch (error) {
-      logger.error(`Error submitting form for task ${taskId}:`, error);
+      moduleLogger.error(`Error submitting form for task ${taskId}:`, error);
       
       // Transaction will automatically roll back on error
       return {
@@ -303,18 +304,23 @@ async function updateTaskStatus(
     // so we schedule it to be sent after the transaction commits
     setTimeout(() => {
       try {
-        WebSocketServer.broadcast('task_updated', {
-          taskId,
-          progress,
-          status,
-          timestamp: new Date().toISOString(),
-        });
+        const wss = getWebSocketServer();
+        if (wss) {
+          // Use the broadcast method from websocket service
+          const { broadcastMessage } = require('../websocket');
+          broadcastMessage('task_updated', {
+            taskId,
+            progress,
+            status,
+            timestamp: new Date().toISOString(),
+          });
+        }
       } catch (error) {
-        logger.error(`Error broadcasting task update for task ${taskId}:`, error);
+        moduleLogger.error(`Error broadcasting task update for task ${taskId}:`, error);
       }
     }, 0);
   } catch (error) {
-    logger.error(`Error scheduling WebSocket notification for task ${taskId}:`, error);
+    moduleLogger.error(`Error scheduling WebSocket notification for task ${taskId}:`, error);
   }
 }
 
@@ -411,7 +417,7 @@ export async function updateFormWithTransaction(
 ): Promise<FormSubmissionResult> {
   const { preserveProgress = true, source = 'api', userId } = options;
   
-  logger.info(`Starting form update for task ${taskId} (${taskType})`, {
+  moduleLogger.info(`Starting form update for task ${taskId} (${taskType})`, {
     taskId,
     taskType,
     preserveProgress,
@@ -471,18 +477,23 @@ export async function updateFormWithTransaction(
         // Send WebSocket notification
         setTimeout(() => {
           try {
-            WebSocketServer.broadcast('task_updated', {
-              taskId,
-              progress: newProgress,
-              status: newProgress > 0 ? 'in_progress' : 'not_started',
-              timestamp: new Date().toISOString(),
-            });
+            const wss = getWebSocketServer();
+            if (wss) {
+              // Use the broadcast method from websocket service
+              const { broadcastMessage } = require('../websocket');
+              broadcastMessage('task_updated', {
+                taskId,
+                progress: newProgress,
+                status: newProgress > 0 ? 'in_progress' : 'not_started',
+                timestamp: new Date().toISOString(),
+              });
+            }
           } catch (error) {
-            logger.error(`Error broadcasting task update for task ${taskId}:`, error);
+            moduleLogger.error(`Error broadcasting task update for task ${taskId}:`, error);
           }
         }, 0);
       } else {
-        logger.info(`Progress unchanged for task ${taskId}: ${newProgress}%`);
+        moduleLogger.info(`Progress unchanged for task ${taskId}: ${newProgress}%`);
       }
       
       // Return the result
@@ -492,7 +503,7 @@ export async function updateFormWithTransaction(
         message: 'Form updated successfully',
       };
     } catch (error) {
-      logger.error(`Error updating form for task ${taskId}:`, error);
+      moduleLogger.error(`Error updating form for task ${taskId}:`, error);
       
       // Transaction will automatically roll back on error
       return {
