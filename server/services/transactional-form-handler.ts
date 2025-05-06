@@ -184,7 +184,7 @@ async function storeFormResponses(
   taskType: TaskType,
   formData: Record<string, any>
 ) {
-  console.log('[TransactionalFormHandler] Storing form responses:', {
+  moduleLogger.info(`Storing form responses for task ${taskId} (${taskType})`, {
     taskId,
     taskIdType: typeof taskId,
     taskType,
@@ -192,17 +192,54 @@ async function storeFormResponses(
     formDataSample: JSON.stringify(formData).substring(0, 200) + '...'
   });
   
+  // Preload the field ID mappings for all form types to avoid repeating this lookup
+  // in each case statement
+  const fieldMappings = {
+    kyb: {},
+    ky3p: {},
+    open_banking: {},
+    user_kyb: {}
+  };
+  
+  // Get field mappings based on the task type
+  if (taskType === 'company_kyb' || taskType === 'user_kyb') {
+    const kybFields = await tx.execute(sql`SELECT id, field_key FROM kyb_fields`);
+    for (const field of kybFields) {
+      fieldMappings.kyb[field.field_key] = field.id;
+    }
+    moduleLogger.info(`Loaded ${kybFields.length} KYB field mappings`, { sampleMapping: Object.entries(fieldMappings.kyb).slice(0, 3) });
+  } else if (taskType === 'ky3p') {
+    const ky3pFields = await tx.execute(sql`SELECT id, field_key FROM ky3p_fields`);
+    for (const field of ky3pFields) {
+      fieldMappings.ky3p[field.field_key] = field.id;
+    }
+    moduleLogger.info(`Loaded ${ky3pFields.length} KY3P field mappings`, { sampleMapping: Object.entries(fieldMappings.ky3p).slice(0, 3) });
+  } else if (taskType === 'open_banking') {
+    const obFields = await tx.execute(sql`SELECT id, field_key FROM open_banking_fields`);
+    for (const field of obFields) {
+      fieldMappings.open_banking[field.field_key] = field.id;
+    }
+    moduleLogger.info(`Loaded ${obFields.length} Open Banking field mappings`, { sampleMapping: Object.entries(fieldMappings.open_banking).slice(0, 3) });
+  }
+  
   switch (taskType) {
     case 'company_kyb':
       // Store KYB responses
       for (const [field, value] of Object.entries(formData)) {
         // Skip metadata fields like taskId, formType, etc.
         if (field === 'taskId' || field === 'formType' || field === 'companyId' || field === 'userId') {
-          console.log(`[TransactionalFormHandler] Skipping metadata field: ${field} = ${value}`);
+          moduleLogger.info(`Skipping metadata field: ${field}`);
           continue;
         }
         
-        console.log(`[TransactionalFormHandler] Processing KYB field: ${field}, type: ${typeof field}, value type: ${typeof value}`);
+        // Get the numeric field ID from the map
+        const fieldId = fieldMappings.kyb[field];
+        if (!fieldId) {
+          moduleLogger.warn(`Field key '${field}' not found in kyb_fields table, skipping`);
+          continue;
+        }
+        
+        moduleLogger.info(`Processing KYB field: ${field} (ID: ${fieldId})`, { valueType: typeof value });
         
         // Ensure proper JSON serialization for complex objects and safer SQL parameters
         let serializedValue;
@@ -211,39 +248,38 @@ async function storeFormResponses(
           // For objects, we need to ensure proper JSON serialization
           try {
             serializedValue = JSON.stringify(value);
-            console.log(`[TransactionalFormHandler] Serialized object: ${field} = ${serializedValue.substring(0, 50)}...`);
+            moduleLogger.debug(`Serialized object for field ${field}`, {
+              preview: serializedValue.substring(0, 50) + '...'
+            });
           } catch (error) {
-            console.error(`[TransactionalFormHandler] Error serializing field ${field}:`, error);
+            moduleLogger.error(`Error serializing field ${field}:`, error as Error);
             // In case of serialization error, store as string representation
             serializedValue = String(value);
           }
         } else if (value === null || value === undefined) {
           // Handle null/undefined values safely
           serializedValue = null;
-          console.log(`[TransactionalFormHandler] Null/undefined value for field: ${field}`);
+          moduleLogger.debug(`Null/undefined value for field: ${field}`);
         } else {
           // For primitive types, convert to string to avoid type issues
           serializedValue = String(value);
-          console.log(`[TransactionalFormHandler] Primitive value: ${field} = ${serializedValue}`);
+          moduleLogger.debug(`Set primitive value for field: ${field}`);
         }
         
-        // Cast field to string to ensure it's handled as a string parameter
-        const fieldAsString = String(field);
-        
-        // Execute with enhanced type safety
+        // Execute with enhanced type safety using the numeric field ID
         try {
           await tx.execute(sql`
             INSERT INTO kyb_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldAsString}, ${serializedValue}, 'COMPLETE')
+            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
             ON CONFLICT (task_id, field_id) 
             DO UPDATE SET response_value = ${serializedValue}, 
               status = 'COMPLETE',
               updated_at = NOW()
           `);
-          console.log(`[TransactionalFormHandler] Successfully stored response for field: ${field}`);
+          moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
-          console.error(`[TransactionalFormHandler] Database error for field ${field}:`, error);
-          throw new Error(`Error storing field ${field}: ${error.message}`);
+          moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
+          throw new Error(`Error storing field ${field}: ${(error as Error).message}`);
         }
       }
       break;
@@ -253,11 +289,18 @@ async function storeFormResponses(
       for (const [field, value] of Object.entries(formData)) {
         // Skip metadata fields like taskId, formType, etc.
         if (field === 'taskId' || field === 'formType' || field === 'companyId' || field === 'userId') {
-          console.log(`[TransactionalFormHandler] Skipping metadata field: ${field} = ${value}`);
+          moduleLogger.info(`Skipping metadata field: ${field}`);
           continue;
         }
         
-        console.log(`[TransactionalFormHandler] Processing KY3P field: ${field}, type: ${typeof field}, value type: ${typeof value}`);
+        // Get the numeric field ID from the map
+        const fieldId = fieldMappings.ky3p[field];
+        if (!fieldId) {
+          moduleLogger.warn(`Field key '${field}' not found in ky3p_fields table, skipping`);
+          continue;
+        }
+        
+        moduleLogger.info(`Processing KY3P field: ${field} (ID: ${fieldId})`, { valueType: typeof value });
         
         // Ensure proper JSON serialization for complex objects and safer SQL parameters
         let serializedValue;
@@ -266,39 +309,38 @@ async function storeFormResponses(
           // For objects, we need to ensure proper JSON serialization
           try {
             serializedValue = JSON.stringify(value);
-            console.log(`[TransactionalFormHandler] Serialized object: ${field} = ${serializedValue.substring(0, 50)}...`);
+            moduleLogger.debug(`Serialized object for field ${field}`, {
+              preview: serializedValue.substring(0, 50) + '...'
+            });
           } catch (error) {
-            console.error(`[TransactionalFormHandler] Error serializing field ${field}:`, error);
+            moduleLogger.error(`Error serializing field ${field}:`, error as Error);
             // In case of serialization error, store as string representation
             serializedValue = String(value);
           }
         } else if (value === null || value === undefined) {
           // Handle null/undefined values safely
           serializedValue = null;
-          console.log(`[TransactionalFormHandler] Null/undefined value for field: ${field}`);
+          moduleLogger.debug(`Null/undefined value for field: ${field}`);
         } else {
           // For primitive types, convert to string to avoid type issues
           serializedValue = String(value);
-          console.log(`[TransactionalFormHandler] Primitive value: ${field} = ${serializedValue}`);
+          moduleLogger.debug(`Set primitive value for field: ${field}`);
         }
         
-        // Cast field to string to ensure it's handled as a string parameter
-        const fieldAsString = String(field);
-        
-        // Execute with enhanced type safety
+        // Execute with enhanced type safety using the numeric field ID
         try {
           await tx.execute(sql`
             INSERT INTO ky3p_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldAsString}, ${serializedValue}, 'COMPLETE')
+            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
             ON CONFLICT (task_id, field_id) 
             DO UPDATE SET response_value = ${serializedValue}, 
               status = 'COMPLETE', 
               updated_at = NOW()
           `);
-          console.log(`[TransactionalFormHandler] Successfully stored response for field: ${field}`);
+          moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
-          console.error(`[TransactionalFormHandler] Database error for field ${field}:`, error);
-          throw new Error(`Error storing field ${field}: ${error.message}`);
+          moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
+          throw new Error(`Error storing field ${field}: ${(error as Error).message}`);
         }
       }
       break;
@@ -308,11 +350,18 @@ async function storeFormResponses(
       for (const [field, value] of Object.entries(formData)) {
         // Skip metadata fields like taskId, formType, etc.
         if (field === 'taskId' || field === 'formType' || field === 'companyId' || field === 'userId') {
-          console.log(`[TransactionalFormHandler] Skipping metadata field: ${field} = ${value}`);
+          moduleLogger.info(`Skipping metadata field: ${field}`);
           continue;
         }
         
-        console.log(`[TransactionalFormHandler] Processing Open Banking field: ${field}, type: ${typeof field}, value type: ${typeof value}`);
+        // Get the numeric field ID from the map
+        const fieldId = fieldMappings.open_banking[field];
+        if (!fieldId) {
+          moduleLogger.warn(`Field key '${field}' not found in open_banking_fields table, skipping`);
+          continue;
+        }
+        
+        moduleLogger.info(`Processing Open Banking field: ${field} (ID: ${fieldId})`, { valueType: typeof value });
         
         // Ensure proper JSON serialization for complex objects and safer SQL parameters
         let serializedValue;
@@ -321,39 +370,38 @@ async function storeFormResponses(
           // For objects, we need to ensure proper JSON serialization
           try {
             serializedValue = JSON.stringify(value);
-            console.log(`[TransactionalFormHandler] Serialized object: ${field} = ${serializedValue.substring(0, 50)}...`);
+            moduleLogger.debug(`Serialized object for field ${field}`, {
+              preview: serializedValue.substring(0, 50) + '...'
+            });
           } catch (error) {
-            console.error(`[TransactionalFormHandler] Error serializing field ${field}:`, error);
+            moduleLogger.error(`Error serializing field ${field}:`, error as Error);
             // In case of serialization error, store as string representation
             serializedValue = String(value);
           }
         } else if (value === null || value === undefined) {
           // Handle null/undefined values safely
           serializedValue = null;
-          console.log(`[TransactionalFormHandler] Null/undefined value for field: ${field}`);
+          moduleLogger.debug(`Null/undefined value for field: ${field}`);
         } else {
           // For primitive types, convert to string to avoid type issues
           serializedValue = String(value);
-          console.log(`[TransactionalFormHandler] Primitive value: ${field} = ${serializedValue}`);
+          moduleLogger.debug(`Set primitive value for field: ${field}`);
         }
         
-        // Cast field to string to ensure it's handled as a string parameter
-        const fieldAsString = String(field);
-        
-        // Execute with enhanced type safety
+        // Execute with enhanced type safety using the numeric field ID
         try {
           await tx.execute(sql`
             INSERT INTO open_banking_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldAsString}, ${serializedValue}, 'COMPLETE')
+            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
             ON CONFLICT (task_id, field_id) 
             DO UPDATE SET response_value = ${serializedValue}, 
               status = 'COMPLETE',
               updated_at = NOW()
           `);
-          console.log(`[TransactionalFormHandler] Successfully stored response for field: ${field}`);
+          moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
-          console.error(`[TransactionalFormHandler] Database error for field ${field}:`, error);
-          throw new Error(`Error storing field ${field}: ${error.message}`);
+          moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
+          throw new Error(`Error storing field ${field}: ${(error as Error).message}`);
         }
       }
       break;
@@ -363,11 +411,18 @@ async function storeFormResponses(
       for (const [field, value] of Object.entries(formData)) {
         // Skip metadata fields like taskId, formType, etc.
         if (field === 'taskId' || field === 'formType' || field === 'companyId' || field === 'userId') {
-          console.log(`[TransactionalFormHandler] Skipping metadata field: ${field} = ${value}`);
+          moduleLogger.info(`Skipping metadata field: ${field}`);
           continue;
         }
         
-        console.log(`[TransactionalFormHandler] Processing User KYB field: ${field}, type: ${typeof field}, value type: ${typeof value}`);
+        // Get the numeric field ID from the map
+        const fieldId = fieldMappings.kyb[field]; // User KYB uses the same fields as company KYB
+        if (!fieldId) {
+          moduleLogger.warn(`Field key '${field}' not found in kyb_fields table, skipping`);
+          continue;
+        }
+        
+        moduleLogger.info(`Processing User KYB field: ${field} (ID: ${fieldId})`, { valueType: typeof value });
         
         // Ensure proper JSON serialization for complex objects and safer SQL parameters
         let serializedValue;
@@ -376,39 +431,38 @@ async function storeFormResponses(
           // For objects, we need to ensure proper JSON serialization
           try {
             serializedValue = JSON.stringify(value);
-            console.log(`[TransactionalFormHandler] Serialized object: ${field} = ${serializedValue.substring(0, 50)}...`);
+            moduleLogger.debug(`Serialized object for field ${field}`, {
+              preview: serializedValue.substring(0, 50) + '...'
+            });
           } catch (error) {
-            console.error(`[TransactionalFormHandler] Error serializing field ${field}:`, error);
+            moduleLogger.error(`Error serializing field ${field}:`, error as Error);
             // In case of serialization error, store as string representation
             serializedValue = String(value);
           }
         } else if (value === null || value === undefined) {
           // Handle null/undefined values safely
           serializedValue = null;
-          console.log(`[TransactionalFormHandler] Null/undefined value for field: ${field}`);
+          moduleLogger.debug(`Null/undefined value for field: ${field}`);
         } else {
           // For primitive types, convert to string to avoid type issues
           serializedValue = String(value);
-          console.log(`[TransactionalFormHandler] Primitive value: ${field} = ${serializedValue}`);
+          moduleLogger.debug(`Set primitive value for field: ${field}`);
         }
         
-        // Cast field to string to ensure it's handled as a string parameter
-        const fieldAsString = String(field);
-        
-        // Execute with enhanced type safety
+        // Execute with enhanced type safety using the numeric field ID
         try {
           await tx.execute(sql`
             INSERT INTO user_kyb_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldAsString}, ${serializedValue}, 'COMPLETE')
+            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
             ON CONFLICT (task_id, field_id) 
             DO UPDATE SET response_value = ${serializedValue}, 
               status = 'COMPLETE',
               updated_at = NOW()
           `);
-          console.log(`[TransactionalFormHandler] Successfully stored response for field: ${field}`);
+          moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
-          console.error(`[TransactionalFormHandler] Database error for field ${field}:`, error);
-          throw new Error(`Error storing field ${field}: ${error.message}`);
+          moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
+          throw new Error(`Error storing field ${field}: ${(error as Error).message}`);
         }
       }
       break;
