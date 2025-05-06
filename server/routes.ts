@@ -83,7 +83,7 @@ import broadcastRouter from './routes/broadcast';
 // Unified Form Update endpoint for all form types
 import unifiedFormUpdateRouter from './routes/unified-form-update';
 // Test routes have been removed
-import { createUnifiedFormSubmissionRouter } from './routes/unified-form-submission';
+import unifiedFormSubmissionRouter from './routes/unified-form-submission';
 import { createTransactionalFormRouter } from './routes/transactional-form-routes';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
@@ -440,10 +440,8 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/claims', claimsRouter);
   
   // Register our unified form submission router - centralized endpoint for all form types
-  // Set up our transaction-based unified form submission router
   try {
     console.log('[Routes] Setting up transaction-based unified form submission router');
-    const unifiedFormSubmissionRouter = createUnifiedFormSubmissionRouter();
     app.use('/api/unified-form', unifiedFormSubmissionRouter);
     console.log('[Routes] Successfully registered transaction-based unified form submission router');
   } catch (error) {
@@ -454,9 +452,7 @@ export function registerRoutes(app: Express): Express {
   try {
     console.log('[Routes] Setting up unified form submission router');
     // Use previously imported module
-    // We already imported createUnifiedFormSubmissionRouter at the top of the file
-    const newUnifiedRouter = createUnifiedFormSubmissionRouter();
-    app.use('/api/submit-form', newUnifiedRouter);
+    app.use('/api/submit-form', unifiedFormSubmissionRouter);
     console.log('[Routes] Successfully registered unified form submission router');
   } catch (error) {
     console.error('[Routes] Error setting up unified form submission router:', error);

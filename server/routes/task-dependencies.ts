@@ -13,7 +13,7 @@ import { tasks, task_dependencies } from '@db/schema';
 import { calculateAndUpdateProgress } from '../utils/unified-progress-calculator';
 import { logger } from '../utils/logger';
 
-const log = log.child({ module: 'TaskDependencies' });
+const log = logger.child({ module: 'TaskDependencies' });
 const router = Router();
 
 /**
