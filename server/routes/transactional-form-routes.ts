@@ -86,13 +86,22 @@ export function createTransactionalFormRouter(): Router {
     
     try {
       // Process the submission transactionally
-      const result = await submitFormWithTransaction({
+      // Map formType to taskType for the handler function
+      const taskType = formType === 'kyb' ? 'company_kyb' : 
+                      formType === 'ky3p' ? 'ky3p' :
+                      formType === 'ob' ? 'open_banking' :
+                      formType === 'user-kyb' ? 'user_kyb' : formType;
+      
+      // Call with proper parameter order as defined in the function
+      const result = await submitFormWithTransaction(
         taskId,
+        taskType,
         formData,
-        userId,
-        companyId,
-        formType
-      });
+        {
+          userId,
+          source: 'forms-tx-api'
+        }
+      );
       
       // Handle the result
       if (!result.success) {
