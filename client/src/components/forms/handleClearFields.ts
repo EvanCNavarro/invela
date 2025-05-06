@@ -6,7 +6,22 @@
  * with robust error handling and fallback mechanisms.
  */
 
-import type { FormServiceInterface, FormField } from '@/services/formService';
+import type { FormField } from '@/services/formService';
+
+// Extended interface that includes additional properties we need
+interface ExtendedFormService {
+  taskId?: number;
+  formType?: string;
+  originalService?: {
+    taskId?: number;
+    formType?: string;
+  };
+}
+
+// Combined interface that includes both the original FormServiceInterface and our extensions
+type FormServiceInterface = ExtendedFormService & {
+  // Add any other required methods from FormServiceInterface here
+};
 import getLogger from '@/utils/logger';
 import { showClearFieldsToast } from '@/hooks/use-unified-toast';
 
@@ -440,11 +455,14 @@ export async function handleClearFieldsUtil(
       totalProcessed: clearedFieldCount + errorFieldCount + skippedFieldCount
     });
     
-    // Show success toast
-    showClearFieldsToast('success', 'Form fields cleared successfully', { operationId });
+    // Show success toast using the current operation ID
+    showClearFieldsToast('success', 'Form fields cleared successfully', { operationId: operationId });
     
     return true;
-  } catch (error) {
+  } catch (e) {
+    // Properly type the error
+    const error = e as Error;
+    
     logger.error(`[ClearFields][${operationId}] Error in handleClearFieldsUtil:`, error, {
       operationId,
       errorName: error?.name,
@@ -454,7 +472,7 @@ export async function handleClearFieldsUtil(
     
     // Show error toast
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    showClearFieldsToast('error', errorMessage, { operationId });
+    showClearFieldsToast('error', errorMessage, { operationId: operationId });
     
     return false;
   }
@@ -498,7 +516,7 @@ export async function directClearFields(
     
     // Show loading toast unless skipToasts is true
     if (!options.skipToasts) {
-      showClearFieldsToast('loading', `Clearing fields for ${formType} task...`, { operationId });
+      showClearFieldsToast('loading', `Clearing fields for ${formType} task...`, { operationId: operationId });
     }
     
     const normalizedFormType = formType.toLowerCase().replace('_', '-');
@@ -640,7 +658,7 @@ export async function directClearFields(
       
       // Show error toast unless skipToasts is true
       if (!options.skipToasts) {
-        showClearFieldsToast('error', errorMessage, { operationId });
+        showClearFieldsToast('error', errorMessage, { operationId: operationId });
       }
       
       throw new Error(errorMessage);
@@ -665,7 +683,7 @@ export async function directClearFields(
       
       // Show success toast unless skipToasts is true
       if (!options.skipToasts) {
-        showClearFieldsToast('success', `Successfully cleared ${formType} fields`, { operationId });
+        showClearFieldsToast('success', `Successfully cleared ${formType} fields`, { operationId: operationId });
       }
     } catch (jsonError) {
       logger.warn(`[DirectClearFields][${operationId}] Could not parse JSON response:`, jsonError, {
@@ -712,7 +730,7 @@ export async function directClearFields(
     // Show error toast unless skipToasts is true
     if (!options.skipToasts) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      showClearFieldsToast('error', errorMessage, { operationId });
+      showClearFieldsToast('error', errorMessage, { operationId: operationId });
     }
     
     throw error;
