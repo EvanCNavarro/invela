@@ -208,13 +208,39 @@ function convertResponsesToCSV(fields: any[], formData: any) {
     // Just use the number itself (1, 2, 3, etc.) instead of fraction format
     const formattedNumber = `${questionNumber}`;
     
-    const answer = formData[field.field_key] || '';
+    // Improved answer handling with type safety
+    const rawAnswer = formData[field.field_key];
+    let answer = '';
+    
+    // Handle different data types properly
+    if (rawAnswer !== undefined && rawAnswer !== null) {
+      if (typeof rawAnswer === 'object') {
+        try {
+          answer = JSON.stringify(rawAnswer);
+        } catch (e) {
+          answer = String(rawAnswer);
+        }
+      } else {
+        answer = String(rawAnswer); // Convert numbers, booleans, etc. to strings
+      }
+    }
+    
+    // Log potentially problematic fields for debugging
+    if (answer.includes('\n') || answer.includes(',') || answer.includes('"')) {
+      logger.debug('[CSV Generation] Special character detection', {
+        fieldKey: field.field_key,
+        hasNewline: answer.includes('\n'),
+        hasComma: answer.includes(','),
+        hasQuote: answer.includes('"'),
+        length: answer.length
+      });
+    }
     
     rows.push([
       formattedNumber,
       field.group || 'Uncategorized',
       field.display_name || field.label || field.question || field.field_key,
-      answer,
+      answer, // Now safely handled
       field.field_type || 'text'
     ]);
     
@@ -2170,6 +2196,17 @@ router.get('/api/kyb/progress/:taskId', requireAuth, async (req, res) => {
 
 // Add the /api/kyb/submit/:taskId endpoint that the client is expecting to use
 router.post('/api/kyb/submit/:taskId', async (req, res) => {
+  // Generate a unique transaction ID for complete traceability
+  const transactionId = `kyb-submit-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const startTime = performance.now();
+
+  logger.info('Starting KYB form submission process', {
+    transactionId,
+    taskId: req.params.taskId,
+    endpoint: '/api/kyb/submit',
+    timestamp: new Date().toISOString()
+  });
+
   try {
     console.log('[KYB API Debug] KYB submit endpoint triggered:', {
       endpoint: '/api/kyb/submit/:taskId',
