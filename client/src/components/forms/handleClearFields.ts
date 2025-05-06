@@ -6,7 +6,8 @@
  * with robust error handling and fallback mechanisms.
  */
 
-import type { FormField } from '@/services/formService';
+import type { FormField as ServiceFormField } from '@/services/formService';
+import type { FormField as ComponentFormField } from './types';
 
 // Extended interface that includes additional properties we need
 interface ExtendedFormService {
@@ -45,7 +46,7 @@ const logger = getLogger('ClearFields');
  */
 export async function handleClearFieldsUtil(
   formService: FormServiceInterface,
-  fields: FormField[],
+  fields: ServiceFormField[],
   updateCallback: (fieldId: string, value: any) => void
 ): Promise<boolean> {
   // Generate a unique operation ID for tracking this operation
@@ -413,11 +414,12 @@ export async function handleClearFieldsUtil(
     const uiUpdateStartTime = Date.now();
     
     for (const field of fields) {
-      // Get the field ID in the most reliable way
-      const fieldId = field.key || 
-                     (field as any).name || 
+      // Get the field ID in the most reliable way using FormField interface
+      const fieldId = (field as any).key || 
+                     (field as FormField).name || 
                      String((field as any).id) || 
                      (field as any).field_key || 
+                     (field as any).fieldId || 
                      '';
       
       if (!fieldId) {
