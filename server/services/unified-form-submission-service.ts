@@ -802,10 +802,20 @@ async function handleOpenBankingPostSubmission(
 async function generateRiskScore(
   trx: any,
   taskId: number,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  transactionId?: string
 ): Promise<number> {
-  const riskScoreLogContext = { namespace: 'RiskScoreCalculation', taskId };
-  logger.info('Calculating risk score for Open Banking task', riskScoreLogContext);
+  const startTime = performance.now();
+  const riskScoreLogContext = { 
+    namespace: 'RiskScoreCalculation', 
+    taskId,
+    transactionId 
+  };
+  
+  logger.info('Calculating risk score for Open Banking task', {
+    ...riskScoreLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     // Get all Open Banking responses for this task
@@ -819,7 +829,11 @@ async function generateRiskScore(
       return 50; // Default risk score if no responses
     }
     
-    logger.info(`Found ${responses.length} responses for risk score calculation`, riskScoreLogContext);
+    logger.info(`Found ${responses.length} responses for risk score calculation`, {
+      ...riskScoreLogContext,
+      responseCount: responses.length,
+      timestamp: new Date().toISOString()
+    });
     
     // Get the field definitions to determine importance weights
     const fields = await trx
@@ -916,19 +930,25 @@ async function generateRiskScore(
     // Ensure risk score is within valid range
     const normalizedRiskScore = Math.max(0, Math.min(100, riskScore));
     
+    const endTime = performance.now();
     logger.info(`Calculated risk score: ${normalizedRiskScore}`, {
       ...riskScoreLogContext,
       responseCount: responses.length,
       originalScore: riskScore,
-      normalizedScore: normalizedRiskScore
+      normalizedScore: normalizedRiskScore,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
     
     return normalizedRiskScore;
   } catch (error) {
+    const endTime = performance.now();
     logger.error('Error calculating risk score', {
       ...riskScoreLogContext,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
     
     // Return default score in case of error
@@ -939,15 +959,27 @@ async function generateRiskScore(
 /**
  * Unlock tabs for a company within a transaction
  */
-async function unlockTabsForCompany(trx: any, companyId: number, tabNames: string[]): Promise<void> {
-  const tabsLogContext = { namespace: 'UnlockTabs', companyId };
+async function unlockTabsForCompany(trx: any, companyId: number, tabNames: string[], transactionId?: string): Promise<void> {
+  const startTime = performance.now();
+  const tabsLogContext = { 
+    namespace: 'UnlockTabs', 
+    companyId,
+    transactionId 
+  };
   
   if (!tabNames || tabNames.length === 0) {
-    logger.info('No tabs to unlock', tabsLogContext);
+    logger.info('No tabs to unlock', {
+      ...tabsLogContext,
+      timestamp: new Date().toISOString()
+    });
     return;
   }
   
-  logger.info('Unlocking tabs for company', { ...tabsLogContext, tabNames });
+  logger.info('Unlocking tabs for company', { 
+    ...tabsLogContext, 
+    tabNames,
+    timestamp: new Date().toISOString() 
+  });
   
   try {
     // Get current company tabs from database
@@ -976,17 +1008,23 @@ async function unlockTabsForCompany(trx: any, companyId: number, tabNames: strin
       })
       .where(eq(companies.id, companyId));
     
+    const endTime = performance.now();
     logger.info('Successfully unlocked tabs', {
       ...tabsLogContext,
       unlockedTabs: tabNames,
-      allTabs: updatedTabs
+      allTabs: updatedTabs,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
+    const endTime = performance.now();
     logger.error('Error unlocking tabs', {
       ...tabsLogContext,
       tabNames,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
     throw error; // Re-throw to trigger transaction rollback
   }
@@ -999,15 +1037,24 @@ export async function broadcastFormSubmissionResult(
   result: FormSubmissionResult, 
   taskId: number, 
   formType: FormType, 
-  companyId: number
+  companyId: number,
+  transactionId?: string
 ): Promise<void> {
-  const broadcastLogContext = { namespace: 'BroadcastSubmission', taskId, formType, companyId };
+  const startTime = performance.now();
+  const broadcastLogContext = { 
+    namespace: 'BroadcastSubmission', 
+    taskId, 
+    formType, 
+    companyId,
+    transactionId 
+  };
   
   if (result.success) {
     logger.info('Broadcasting successful form submission', {
       ...broadcastLogContext,
       fileId: result.fileId,
-      unlockedTabs: result.unlockedTabs
+      unlockedTabs: result.unlockedTabs,
+      timestamp: new Date().toISOString()
     });
     
     // Broadcast task update
@@ -1041,10 +1088,19 @@ export async function broadcastFormSubmissionResult(
         timestamp: new Date().toISOString()
       });
     }
+    
+    const endTime = performance.now();
+    logger.info('Form submission broadcast completed', {
+      ...broadcastLogContext,
+      success: true,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
+    });
   } else {
     logger.error('Broadcasting form submission failure', {
       ...broadcastLogContext,
-      error: result.error
+      error: result.error,
+      timestamp: new Date().toISOString()
     });
     
     // Broadcast form submission failed
@@ -1054,6 +1110,14 @@ export async function broadcastFormSubmissionResult(
       status: 'error',
       companyId,
       error: result.error
+    });
+    
+    const endTime = performance.now();
+    logger.error('Form submission error broadcast completed', {
+      ...broadcastLogContext,
+      success: false,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
   }
 }
