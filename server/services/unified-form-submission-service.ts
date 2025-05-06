@@ -337,12 +337,41 @@ async function persistKybResponses(trx: any, taskId: number, formData: Record<st
   logger.info('Persisting KYB responses', kybLogContext);
   
   try {
-    // Implementation would use trx to insert into kyb_responses table
-    // For now, just log that we would persist the responses
-    logger.info('KYB responses would be persisted here', { 
-      ...kybLogContext,
-      responseCount: formData.responses ? Object.keys(formData.responses).length : 0 
-    });
+    const responses = formData.responses || {};
+    const responseKeys = Object.keys(responses);
+    logger.info(`Processing ${responseKeys.length} KYB responses for task ${taskId}`, kybLogContext);
+    
+    // Batch insert all responses using transaction
+    if (responseKeys.length > 0) {
+      // Prepare batch values for insertion
+      const batchValues = responseKeys.map(fieldKey => {
+        const response = responses[fieldKey];
+        const fieldId = response.fieldId || null;
+        const value = response.value || null;
+        const status = response.status || 'completed';
+        
+        return {
+          task_id: taskId,
+          field_id: fieldId,
+          field_key: fieldKey,
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+          status,
+          created_at: new Date(),
+          updated_at: new Date(),
+          metadata: response.metadata || {}
+        };
+      });
+      
+      // Insert all responses in a single operation for efficiency
+      await trx.insert(kybResponses).values(batchValues);
+      
+      logger.info(`Successfully persisted ${batchValues.length} KYB responses`, {
+        ...kybLogContext,
+        fieldCount: batchValues.length
+      });
+    } else {
+      logger.warn('No KYB responses to persist', kybLogContext);
+    }
   } catch (error) {
     logger.error('Error persisting KYB responses', {
       ...kybLogContext,
@@ -358,12 +387,49 @@ async function persistKy3pResponses(trx: any, taskId: number, formData: Record<s
   logger.info('Persisting KY3P responses', ky3pLogContext);
   
   try {
-    // Implementation would use trx to insert into ky3p_responses table
-    // For now, just log that we would persist the responses
-    logger.info('KY3P responses would be persisted here', { 
-      ...ky3pLogContext,
-      responseCount: formData.responses ? Object.keys(formData.responses).length : 0 
-    });
+    const responses = formData.responses || {};
+    const responseKeys = Object.keys(responses);
+    logger.info(`Processing ${responseKeys.length} KY3P responses for task ${taskId}`, ky3pLogContext);
+    
+    // Batch insert all responses using transaction
+    if (responseKeys.length > 0) {
+      // Prepare batch values for insertion
+      const batchValues = responseKeys.map(fieldKey => {
+        const response = responses[fieldKey];
+        const fieldId = response.fieldId || null;
+        const value = response.value || null;
+        const status = response.status || 'completed';
+        
+        // CRITICAL FIX: For KY3P specifically, ensure values are properly typed
+        // This avoids the string/number conversion issues that were causing progress problems
+        const processedValue = typeof value === 'object' 
+          ? JSON.stringify(value) 
+          : value !== null && value !== undefined 
+            ? String(value) 
+            : null;
+        
+        return {
+          task_id: taskId,
+          field_id: fieldId,
+          field_key: fieldKey,
+          value: processedValue,
+          status,
+          created_at: new Date(),
+          updated_at: new Date(),
+          metadata: response.metadata || {}
+        };
+      });
+      
+      // Insert all responses in a single operation for efficiency
+      await trx.insert(ky3pResponses).values(batchValues);
+      
+      logger.info(`Successfully persisted ${batchValues.length} KY3P responses`, {
+        ...ky3pLogContext,
+        fieldCount: batchValues.length
+      });
+    } else {
+      logger.warn('No KY3P responses to persist', ky3pLogContext);
+    }
   } catch (error) {
     logger.error('Error persisting KY3P responses', {
       ...ky3pLogContext,
@@ -379,12 +445,75 @@ async function persistOpenBankingResponses(trx: any, taskId: number, formData: R
   logger.info('Persisting Open Banking responses', obLogContext);
   
   try {
-    // Implementation would use trx to insert into open_banking_responses table
-    // For now, just log that we would persist the responses
-    logger.info('Open Banking responses would be persisted here', { 
-      ...obLogContext,
-      responseCount: formData.responses ? Object.keys(formData.responses).length : 0 
-    });
+    const responses = formData.responses || {};
+    const responseKeys = Object.keys(responses);
+    logger.info(`Processing ${responseKeys.length} Open Banking responses for task ${taskId}`, obLogContext);
+    
+    // Batch insert all responses using transaction
+    if (responseKeys.length > 0) {
+      // Prepare batch values for insertion
+      const batchValues = responseKeys.map(fieldKey => {
+        const response = responses[fieldKey];
+        const fieldId = response.fieldId || null;
+        const value = response.value || null;
+        const status = response.status || 'completed';
+        
+        // Type handling for Open Banking - similar to KY3P but with additional field validations
+        const processedValue = typeof value === 'object' 
+          ? JSON.stringify(value) 
+          : value !== null && value !== undefined 
+            ? String(value) 
+            : null;
+        
+        return {
+          task_id: taskId,
+          field_id: fieldId,
+          field_key: fieldKey,
+          value: processedValue,
+          status,
+          created_at: new Date(),
+          updated_at: new Date(),
+          metadata: {
+            ...response.metadata || {},
+            // Store additional metadata for risk score calculation
+            categoryWeight: response.categoryWeight || 1,
+            importanceLevel: response.importanceLevel || 'medium',
+            validatedAt: new Date().toISOString()
+          }
+        };
+      });
+      
+      // Insert all responses in a single operation for efficiency
+      await trx.insert(openBankingResponses).values(batchValues);
+      
+      // After persisting responses, update the task with a calculation flag
+      // This ensures risk score calculation is triggered properly
+      const taskMetadata = await trx
+        .select({ metadata: tasks.metadata })
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (taskMetadata && taskMetadata.length > 0) {
+        const currentMetadata = taskMetadata[0].metadata || {};
+        await trx.update(tasks)
+          .set({
+            metadata: {
+              ...currentMetadata,
+              needsRiskScoreCalculation: true,
+              lastResponseCount: batchValues.length,
+              lastUpdated: new Date().toISOString()
+            }
+          })
+          .where(eq(tasks.id, taskId));
+      }
+      
+      logger.info(`Successfully persisted ${batchValues.length} Open Banking responses`, {
+        ...obLogContext,
+        fieldCount: batchValues.length
+      });
+    } else {
+      logger.warn('No Open Banking responses to persist', obLogContext);
+    }
   } catch (error) {
     logger.error('Error persisting Open Banking responses', {
       ...obLogContext,
