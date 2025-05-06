@@ -141,70 +141,85 @@ export async function createTaskFile(
     // First, organize data by sections and questions
     console.log(`[FileCreation] Processing data for form type ${normalizedFormType} with ${Object.keys(formData).length} fields`);
     
-    // PROPER CSV FORMAT - Parse each question from the form
-    // Define simple column headers - one question per row
+    // ULTRA SIMPLE CSV FORMAT
+    // We need to be sure we extract ALL form data fields
+    console.log(`[FileCreation] Raw form data:`, JSON.stringify(formData, null, 2));
+    
+    // Define simple column headers
     const headers = ['id', 'question', 'response', 'field_key', 'timestamp'];
     
     // Create rows array starting with headers
     let rows = [headers.join(',')];
     
-    // Extract actual question/answer pairs from the form data
-    // Extract raw formData from metadata if present
-    let actualFormData = formData;
+    // Create current date for all rows
     const submissionDate = new Date().toISOString();
     
-    // Detect if we have actual form questions or just metadata
+    // First, check if we need to extract data from formData field
+    let formFields = {};
+    
+    // If formData is a string containing JSON, parse it
     if (formData.formData && typeof formData.formData === 'string') {
       try {
-        // Try to parse the JSON field if it exists
-        const parsedData = JSON.parse(formData.formData);
-        actualFormData = parsedData;
-        console.log(`[FileCreation] Successfully parsed JSON formData with ${Object.keys(parsedData).length} fields`);
+        formFields = JSON.parse(formData.formData);
+        console.log(`[FileCreation] Successfully parsed formData JSON with ${Object.keys(formFields).length} fields`);
+        console.log(`[FileCreation] Form fields found:`, Object.keys(formFields));
       } catch (e) {
         console.error(`[FileCreation] Error parsing formData JSON:`, e);
-        // Keep using the original data if parsing fails
+        // Continue with empty object if parsing fails
       }
     }
     
-    // Get all the actual form fields and sort them alphabetically
-    const sortedFields = Object.entries(actualFormData).sort((a, b) => a[0].localeCompare(b[0]));
-    
-    // Add each form question as a separate row
-    sortedFields.forEach(([key, value], index) => {
-      // Skip metadata fields if they exist in this format
-      if (key === 'formData' || key === 'formType' || key === 'taskId' || key === 'companyId') {
-        return;
-      }
+    // If no formData field or parsing failed, the form might be flat
+    if (Object.keys(formFields).length === 0) {
+      // Try to use the raw form data and remove known metadata fields
+      formFields = {...formData};
+      // Delete known metadata fields
+      delete formFields.formData;
+      delete formFields.formType;
+      delete formFields.taskId;
+      delete formFields.companyId;
       
+      console.log(`[FileCreation] Using flat form structure with ${Object.keys(formFields).length} fields`);
+    }
+    
+    console.log(`[FileCreation] Final form fields to process: ${Object.keys(formFields).length}`);
+    
+    // Convert form fields to rows
+    Object.entries(formFields).forEach(([key, value], index) => {
       // Format the value based on its type
       let formattedValue;
       if (typeof value === 'object' && value !== null) {
-        // For object values, format them clearly
         formattedValue = JSON.stringify(value);
       } else if (value === undefined || value === null) {
-        // Empty values should be explicit
         formattedValue = '';
       } else {
         formattedValue = String(value);
       }
       
-      // Create a row with proper question and answer columns
+      // Create a row with proper columns
       const rowValues = [
-        index + 1,                                          // id (sequential number)
-        `"${key.replace(/"/g, '""')}"`,                 // question name
-        `"${formattedValue.replace(/"/g, '""')}"`,      // response value
-        `"${key.replace(/"/g, '""')}"`,                 // field_key
-        `"${submissionDate}"`                             // timestamp
+        index + 1,                                         // id (sequential number)
+        `"${key.replace(/"/g, '""')}"`,                // question name
+        `"${formattedValue.replace(/"/g, '""')}"`,     // response value
+        `"${key.replace(/"/g, '""')}"`,                // field_key
+        `"${submissionDate}"`                            // timestamp
       ];
       
       rows.push(rowValues.join(','));
     });
     
-    // Add metadata as final rows
-    const metaStartIndex = sortedFields.length + 1;
+    // At the end, add basic task metadata rows
+    const metaStartIndex = Object.keys(formFields).length + 1;
     rows.push([metaStartIndex, '"Task ID"', `"${taskId}"`, '"task_id"', `"${submissionDate}"`].join(','));
     rows.push([metaStartIndex + 1, '"Company ID"', `"${companyId}"`, '"company_id"', `"${submissionDate}"`].join(','));
     rows.push([metaStartIndex + 2, '"Form Type"', `"${normalizedFormType}"`, '"form_type"', `"${submissionDate}"`].join(','));
+    
+    console.log(`[FileCreation] Created CSV with ${rows.length - 1} rows (${rows.length - 4} form fields + 3 metadata rows)`);
+    
+    // Verify we have the expected number of rows to help with debugging
+    if (rows.length <= 4) {
+      console.warn(`[FileCreation] WARNING: CSV only has ${rows.length - 1} rows. Expected many more form fields.`);
+    }
     
     // Join all rows to create the CSV content
     content = rows.join('\n');
