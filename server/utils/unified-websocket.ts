@@ -208,3 +208,36 @@ export function broadcastTaskUpdate(
   
   return broadcast('task_update', payload);
 }
+
+/**
+ * Broadcast a form submission event to all connected clients
+ * 
+ * @param formType The type of form that was submitted ('kyb', 'ky3p', 'open_banking')
+ * @param taskId The ID of the task associated with the submission
+ * @param companyId The ID of the company associated with the submission
+ * @param metadata Additional metadata to include in the message
+ * @returns Boolean indicating whether the broadcast was successful
+ */
+export function broadcastFormSubmission(
+  formType: string,
+  taskId: number,
+  companyId: number,
+  metadata: Record<string, any> = {}
+) {
+  // Create timestamp once for consistent messaging
+  const timestamp = new Date().toISOString();
+  
+  // Create a standardized message payload structure
+  const payload = {
+    formType,
+    taskId,
+    companyId,
+    metadata: {
+      ...metadata,
+      timestamp
+    },
+    timestamp
+  };
+  
+  return broadcast('form_submitted', payload);
+}

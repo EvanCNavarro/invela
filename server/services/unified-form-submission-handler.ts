@@ -16,7 +16,7 @@ import { eq, and } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
 import { logger } from '../utils/logger';
 import * as FileCreationService from './fileCreation';
-import { broadcastFormSubmission, scheduleDelayedBroadcast } from './form-submission-broadcaster';
+import { broadcastFormSubmission } from '../utils/unified-websocket';
 
 // Define common form submission input interface
 export interface FormSubmissionInput {
@@ -158,6 +158,17 @@ export async function processFormSubmission(
       taskId,
       elapsedMs: performance.now() - startTime
     });
+    
+    // Broadcast form submission event via WebSocket
+    const metadata = {
+      formType,
+      fileName: result.fileId ? `${formType.toUpperCase()}-${taskId}.csv` : undefined,
+      securityTasksUnlocked: result.securityTasksUnlocked,
+      riskScoreUpdated: result.riskScoreUpdated,
+      dashboardUnlocked: result.dashboardUnlocked,
+    };
+    
+    broadcastFormSubmission(formType, taskId, result.companyId || 0, metadata);
     
     return {
       ...result,
