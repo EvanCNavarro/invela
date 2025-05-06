@@ -12,7 +12,7 @@
 
 import getLogger from '@/utils/logger';
 import { toast } from '@/hooks/use-toast';
-import { submitForm } from '@/api/form-submission-api';
+import { submitFormTransactional } from '@/api/form-submission-api';
 
 const logger = getLogger('FormSubmissionService');
 
