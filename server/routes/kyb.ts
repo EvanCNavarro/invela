@@ -2208,6 +2208,9 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
   });
 
   try {
+    // Import the required modules with proper error handling
+    const { processKybSubmission } = require('../services/transactional-kyb-handler');
+    const { broadcastFormSubmission, scheduleDelayedBroadcast } = require('../services/form-submission-broadcaster');
     console.log('[KYB API Debug] KYB submit endpoint triggered:', {
       endpoint: '/api/kyb/submit/:taskId',
       taskId: req.params.taskId,
@@ -2508,21 +2511,41 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       source: 'kyb-submit-endpoint'
     });
     
-    // Use the standardized websocket broadcast from websocket.ts
-    // instead of the deprecated broadcastSubmissionStatus function
+    // Use the new standardized form submission broadcaster
     try {
-      // First broadcast attempt using the standard websocket service
-      const { broadcast } = require('../services/websocket');
-      broadcast('form_submission', {
+      // Import the form submission broadcaster
+      const { broadcastFormSubmission, scheduleDelayedBroadcast } = require('../services/form-submission-broadcaster');
+      
+      // Send immediate broadcast
+      const broadcastResult = await broadcastFormSubmission({
         taskId,
         formType: 'kyb',
         status: 'submitted',
         companyId: task.company_id,
-        timestamp: new Date().toISOString(),
-        submissionDate: new Date().toISOString()
+        fileId: submissionResult.fileId,
+        progress: 100,
+        submissionDate: new Date().toISOString(),
+        source: 'kyb-submit-endpoint'
       });
       
-      logger.debug('[KYB Submission] Successfully broadcast through the websocket service');
+      logger.info('[KYB Submission] Broadcast result', {
+        success: broadcastResult.success,
+        channels: broadcastResult.channels,
+        taskId,
+        transactionId
+      });
+      
+      // Schedule delayed broadcasts to ensure clients receive the update
+      // even if they reconnect after a brief disconnection
+      scheduleDelayedBroadcast({
+        taskId,
+        formType: 'kyb',
+        status: 'submitted',
+        companyId: task.company_id,
+        fileId: submissionResult.fileId,
+        progress: 100,
+        submissionDate: new Date().toISOString()
+      }, 2000); // 2 second delay
     } catch (wsError) {
       logger.error('[KYB Submission] Error broadcasting through websocket service:', {
         error: wsError instanceof Error ? wsError.message : 'Unknown error',
@@ -2646,12 +2669,128 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       }
     }
 
-    res.json({
-      success: true,
-      fileId: fileCreationResult.fileId,
-      warnings: warnings.length ? warnings : undefined,
-      securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0
-    });
+    // Verify user is authenticated before proceeding
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'You must be logged in to submit KYB data',
+        details: {
+          authenticated: req.isAuthenticated(),
+          hasUser: !!req.user,
+          hasSession: !!req.session,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
+    // Extract taskId from params and data from the request body
+    // (reusing the ones from the try block's outer scope)
+    if (isNaN(taskId)) {
+      return res.status(400).json({
+        error: 'Invalid task ID',
+        message: 'The task ID must be a valid number'
+      });
+    }
+    
+    // Check if formData exists and is not empty
+    if (!formData || Object.keys(formData).length === 0) {
+      return res.status(400).json({
+        error: 'Missing form data',
+        message: 'Form data is required for submission'
+      });
+    }
+    
+    // Reusing the imported modules from above
+
+    // Use the transaction-based KYB submission handler
+    const submissionInput = {
+      taskId,
+      formData,
+      fileName,
+      userId: req.user?.id,
+      transactionId,
+      startTime
+    };
+    
+    // Call the transactional KYB handler
+    const submissionResult = await processKybSubmission(submissionInput);
+    
+    // If the transaction was successful
+    if (submissionResult.success) {
+      logger.info('[KYB Submission] Transaction-based submission successful', {
+        transactionId,
+        taskId,
+        fileId: submissionResult.fileId,
+        elapsedMs: submissionResult.elapsedMs
+      });
+      
+      // Broadcast the submission to all clients
+      try {
+        const broadcastResult = await broadcastFormSubmission({
+          taskId,
+          formType: 'kyb',
+          status: 'submitted',
+          companyId: submissionResult.companyId as number,
+          fileId: submissionResult.fileId,
+          progress: 100,
+          submissionDate: new Date().toISOString(),
+          source: 'kyb-submit-endpoint',
+          metadata: {
+            transactionId,
+            warnings: submissionResult.warnings?.length || 0,
+            securityTasksUnlocked: submissionResult.securityTasksUnlocked || 0
+          }
+        });
+        
+        logger.info('[KYB Submission] Broadcast results', {
+          success: broadcastResult.success,
+          channels: broadcastResult.channels,
+          taskId,
+          transactionId
+        });
+        
+        // Schedule a delayed broadcast to ensure clients receive the update
+        scheduleDelayedBroadcast({
+          taskId,
+          formType: 'kyb',
+          status: 'submitted',
+          companyId: submissionResult.companyId as number,
+          fileId: submissionResult.fileId,
+          progress: 100,
+          submissionDate: new Date().toISOString()
+        }, 2000);
+      } catch (error) {
+        logger.error('[KYB Submission] Broadcast error', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          taskId,
+          transactionId
+        });
+        // Continue processing even if broadcast fails
+      }
+      
+      // Return the success response
+      return res.json({
+        success: true,
+        fileId: submissionResult.fileId,
+        warnings: submissionResult.warnings,
+        securityTasksUnlocked: submissionResult.securityTasksUnlocked || 0,
+        elapsedMs: submissionResult.elapsedMs
+      });
+    } else {
+      // Transaction failed, return an appropriate error response
+      logger.error('[KYB Submission] Transaction failed', {
+        error: submissionResult.error,
+        taskId,
+        transactionId
+      });
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to process KYB submission',
+        details: submissionResult.error || 'Unknown error during transaction processing',
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (error) {
     // Enhanced detailed error logging
     console.error('[KYB API Debug] Error submitting KYB form', {
