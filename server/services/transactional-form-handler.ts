@@ -202,88 +202,274 @@ async function storeFormResponses(
   };
   
   try {
-    // Get field mappings based on the task type
+    // Get field mappings based on the task type - enhanced with more comprehensive error handling
+    // and support for different result structures from transaction queries
     if (taskType === 'company_kyb' || taskType === 'user_kyb') {
-      // Add extra error handling and logging
-      const kybFieldsResult = await tx.execute(sql`SELECT id, field_key FROM kyb_fields`);
-      
-      // Check if we got a valid result
-      if (!kybFieldsResult || !Array.isArray(kybFieldsResult)) {
-        moduleLogger.error(`Invalid result when querying kyb_fields:`, { 
-          result: typeof kybFieldsResult,
+      try {
+        // Log before executing the query
+        moduleLogger.info(`Executing KYB fields query for taskType: ${taskType}`);
+        
+        // Execute the query with enhanced error handling
+        const kybFieldsResult = await tx.execute(sql`SELECT id, field_key FROM kyb_fields`);
+        
+        // Comprehensive logging of the query result structure
+        moduleLogger.info(`KYB fields query execution complete`, {
+          resultType: typeof kybFieldsResult,
+          isNull: kybFieldsResult === null,
+          isUndefined: kybFieldsResult === undefined,
           isArray: Array.isArray(kybFieldsResult),
-          sample: kybFieldsResult ? JSON.stringify(kybFieldsResult).substring(0, 100) : 'null'
+          hasRows: kybFieldsResult && typeof kybFieldsResult === 'object' && 'rows' in kybFieldsResult,
+          ownProperties: kybFieldsResult ? Object.getOwnPropertyNames(kybFieldsResult).join(',') : 'none',
+          prototype: kybFieldsResult ? Object.getPrototypeOf(kybFieldsResult)?.constructor?.name : 'none',
+          sampleData: kybFieldsResult ? JSON.stringify(kybFieldsResult).substring(0, 200) : 'null'
         });
-        throw new Error('Failed to load KYB field mappings');
-      }
-      
-      // Log the result format for debugging
-      moduleLogger.info(`KYB fields query returned ${kybFieldsResult.length} rows`, {
-        firstRow: kybFieldsResult.length > 0 ? JSON.stringify(kybFieldsResult[0]) : 'none'
-      });
-      
-      // Process the results
-      for (const field of kybFieldsResult) {
-        if (field && field.field_key && field.id) {
-          fieldMappings.kyb[field.field_key] = field.id;
+        
+        // Handle different result structures that might come back from tx.execute
+        let fieldsToProcess = [];
+        
+        if (Array.isArray(kybFieldsResult)) {
+          // Case 1: Result is already an array
+          fieldsToProcess = kybFieldsResult;
+          moduleLogger.info(`KYB fields direct array with ${fieldsToProcess.length} elements`);
+        } else if (kybFieldsResult && typeof kybFieldsResult === 'object') {
+          if ('rows' in kybFieldsResult && Array.isArray(kybFieldsResult.rows)) {
+            // Case 2: Result has a rows property that's an array
+            fieldsToProcess = kybFieldsResult.rows;
+            moduleLogger.info(`KYB fields from .rows with ${fieldsToProcess.length} elements`);
+          } else {
+            // Case 3: Result is an object but not in expected format - try to extract
+            // We'll check if it has properties that look like rows
+            const possibleRows = Object.values(kybFieldsResult);
+            if (possibleRows.length > 0 && Array.isArray(possibleRows[0])) {
+              fieldsToProcess = possibleRows[0];
+              moduleLogger.info(`KYB fields extracted from object values with ${fieldsToProcess.length} elements`);
+            } else if (possibleRows.length > 0) {
+              // Maybe it's a single row result?
+              fieldsToProcess = [kybFieldsResult];
+              moduleLogger.info(`Using the object itself as a single KYB field row`);
+            }
+          }
         }
+        
+        // Fallback to direct database query if we couldn't get fields from transaction
+        if (fieldsToProcess.length === 0) {
+          moduleLogger.warn(`No KYB fields found in transaction result, using direct database query as fallback`);
+          
+          // This uses the global pool instead of the transaction
+          const { db } = await import('../db/database');
+          const fallbackResult = await db.query('SELECT id, field_key FROM kyb_fields');
+          
+          if (fallbackResult && fallbackResult.rows && Array.isArray(fallbackResult.rows)) {
+            fieldsToProcess = fallbackResult.rows;
+            moduleLogger.info(`Fallback KYB query returned ${fieldsToProcess.length} fields`);
+          } else {
+            throw new Error('Failed to retrieve KYB fields using fallback query');
+          }
+        }
+        
+        // Process the results with careful property access
+        let mappingCount = 0;
+        for (const field of fieldsToProcess) {
+          if (!field) continue;
+          
+          // Access properties safely with explicit type checking
+          const fieldId = field.id !== undefined ? field.id : 
+                         (field.ID !== undefined ? field.ID : null);
+                         
+          const fieldKey = field.field_key !== undefined ? field.field_key : 
+                          (field.fieldKey !== undefined ? field.fieldKey : 
+                          (field.FIELD_KEY !== undefined ? field.FIELD_KEY : null));
+          
+          if (fieldId !== null && fieldKey && typeof fieldKey === 'string') {
+            fieldMappings.kyb[fieldKey] = fieldId;
+            mappingCount++;
+          }
+        }
+        
+        if (mappingCount === 0) {
+          throw new Error(`No valid field mappings found in ${fieldsToProcess.length} KYB fields`);
+        }
+        
+        moduleLogger.info(`Successfully loaded ${mappingCount} KYB field mappings`, { 
+          sampleMapping: Object.entries(fieldMappings.kyb).slice(0, 3) 
+        });
+      } catch (kybError) {
+        moduleLogger.error(`Error loading KYB field mappings:`, { 
+          error: kybError, 
+          message: kybError.message, 
+          stack: kybError.stack 
+        });
+        throw new Error(`Failed to load KYB field mappings: ${kybError.message}`);
       }
-      
-      moduleLogger.info(`Loaded ${kybFieldsResult.length} KYB field mappings`, { 
-        mappingCount: Object.keys(fieldMappings.kyb).length,
-        sampleMapping: Object.entries(fieldMappings.kyb).slice(0, 3) 
-      });
     } else if (taskType === 'ky3p') {
-      // Add extra error handling and logging
-      const ky3pFieldsResult = await tx.execute(sql`SELECT id, field_key FROM ky3p_fields`);
-      
-      // Check if we got a valid result
-      if (!ky3pFieldsResult || !Array.isArray(ky3pFieldsResult)) {
-        moduleLogger.error(`Invalid result when querying ky3p_fields:`, { 
-          result: typeof ky3pFieldsResult,
-          isArray: Array.isArray(ky3pFieldsResult)
-        });
-        throw new Error('Failed to load KY3P field mappings');
-      }
-      
-      // Process the results
-      for (const field of ky3pFieldsResult) {
-        if (field && field.field_key && field.id) {
-          fieldMappings.ky3p[field.field_key] = field.id;
+      try {
+        // Log before executing the query
+        moduleLogger.info(`Executing KY3P fields query for taskType: ${taskType}`);
+        
+        // Execute the query with enhanced error handling
+        const ky3pFieldsResult = await tx.execute(sql`SELECT id, field_key FROM ky3p_fields`);
+        
+        // Handle different result structures that might come back from tx.execute
+        let fieldsToProcess = [];
+        
+        if (Array.isArray(ky3pFieldsResult)) {
+          // Case 1: Result is already an array
+          fieldsToProcess = ky3pFieldsResult;
+        } else if (ky3pFieldsResult && typeof ky3pFieldsResult === 'object') {
+          if ('rows' in ky3pFieldsResult && Array.isArray(ky3pFieldsResult.rows)) {
+            // Case 2: Result has a rows property that's an array
+            fieldsToProcess = ky3pFieldsResult.rows;
+          } else {
+            // Case 3: Result is an object but not in expected format - try to extract
+            // We'll check if it has properties that look like rows
+            const possibleRows = Object.values(ky3pFieldsResult);
+            if (possibleRows.length > 0 && Array.isArray(possibleRows[0])) {
+              fieldsToProcess = possibleRows[0];
+            } else if (possibleRows.length > 0) {
+              // Maybe it's a single row result?
+              fieldsToProcess = [ky3pFieldsResult];
+            }
+          }
         }
+        
+        // Fallback to direct database query if we couldn't get fields from transaction
+        if (fieldsToProcess.length === 0) {
+          moduleLogger.warn(`No KY3P fields found in transaction result, using direct database query as fallback`);
+          
+          // This uses the global pool instead of the transaction
+          const { db } = await import('../db/database');
+          const fallbackResult = await db.query('SELECT id, field_key FROM ky3p_fields');
+          
+          if (fallbackResult && fallbackResult.rows && Array.isArray(fallbackResult.rows)) {
+            fieldsToProcess = fallbackResult.rows;
+          } else {
+            throw new Error('Failed to retrieve KY3P fields using fallback query');
+          }
+        }
+        
+        // Process the results with careful property access
+        let mappingCount = 0;
+        for (const field of fieldsToProcess) {
+          if (!field) continue;
+          
+          // Access properties safely with explicit type checking
+          const fieldId = field.id !== undefined ? field.id : 
+                         (field.ID !== undefined ? field.ID : null);
+                         
+          const fieldKey = field.field_key !== undefined ? field.field_key : 
+                          (field.fieldKey !== undefined ? field.fieldKey : 
+                          (field.FIELD_KEY !== undefined ? field.FIELD_KEY : null));
+          
+          if (fieldId !== null && fieldKey && typeof fieldKey === 'string') {
+            fieldMappings.ky3p[fieldKey] = fieldId;
+            mappingCount++;
+          }
+        }
+        
+        if (mappingCount === 0) {
+          throw new Error(`No valid field mappings found in ${fieldsToProcess.length} KY3P fields`);
+        }
+        
+        moduleLogger.info(`Successfully loaded ${mappingCount} KY3P field mappings`, { 
+          sampleMapping: Object.entries(fieldMappings.ky3p).slice(0, 3) 
+        });
+      } catch (ky3pError) {
+        moduleLogger.error(`Error loading KY3P field mappings:`, { 
+          error: ky3pError, 
+          message: ky3pError.message, 
+          stack: ky3pError.stack 
+        });
+        throw new Error(`Failed to load KY3P field mappings: ${ky3pError.message}`);
       }
-      
-      moduleLogger.info(`Loaded ${ky3pFieldsResult.length} KY3P field mappings`, { 
-        mappingCount: Object.keys(fieldMappings.ky3p).length,
-        sampleMapping: Object.entries(fieldMappings.ky3p).slice(0, 3) 
-      });
     } else if (taskType === 'open_banking') {
-      // Add extra error handling and logging
-      const obFieldsResult = await tx.execute(sql`SELECT id, field_key FROM open_banking_fields`);
-      
-      // Check if we got a valid result
-      if (!obFieldsResult || !Array.isArray(obFieldsResult)) {
-        moduleLogger.error(`Invalid result when querying open_banking_fields:`, { 
-          result: typeof obFieldsResult,
-          isArray: Array.isArray(obFieldsResult)
-        });
-        throw new Error('Failed to load Open Banking field mappings');
-      }
-      
-      // Process the results
-      for (const field of obFieldsResult) {
-        if (field && field.field_key && field.id) {
-          fieldMappings.open_banking[field.field_key] = field.id;
+      try {
+        // Log before executing the query
+        moduleLogger.info(`Executing Open Banking fields query for taskType: ${taskType}`);
+        
+        // Execute the query with enhanced error handling
+        const obFieldsResult = await tx.execute(sql`SELECT id, field_key FROM open_banking_fields`);
+        
+        // Handle different result structures that might come back from tx.execute
+        let fieldsToProcess = [];
+        
+        if (Array.isArray(obFieldsResult)) {
+          // Case 1: Result is already an array
+          fieldsToProcess = obFieldsResult;
+        } else if (obFieldsResult && typeof obFieldsResult === 'object') {
+          if ('rows' in obFieldsResult && Array.isArray(obFieldsResult.rows)) {
+            // Case 2: Result has a rows property that's an array
+            fieldsToProcess = obFieldsResult.rows;
+          } else {
+            // Case 3: Result is an object but not in expected format - try to extract
+            // We'll check if it has properties that look like rows
+            const possibleRows = Object.values(obFieldsResult);
+            if (possibleRows.length > 0 && Array.isArray(possibleRows[0])) {
+              fieldsToProcess = possibleRows[0];
+            } else if (possibleRows.length > 0) {
+              // Maybe it's a single row result?
+              fieldsToProcess = [obFieldsResult];
+            }
+          }
         }
+        
+        // Fallback to direct database query if we couldn't get fields from transaction
+        if (fieldsToProcess.length === 0) {
+          moduleLogger.warn(`No Open Banking fields found in transaction result, using direct database query as fallback`);
+          
+          // This uses the global pool instead of the transaction
+          const { db } = await import('../db/database');
+          const fallbackResult = await db.query('SELECT id, field_key FROM open_banking_fields');
+          
+          if (fallbackResult && fallbackResult.rows && Array.isArray(fallbackResult.rows)) {
+            fieldsToProcess = fallbackResult.rows;
+          } else {
+            throw new Error('Failed to retrieve Open Banking fields using fallback query');
+          }
+        }
+        
+        // Process the results with careful property access
+        let mappingCount = 0;
+        for (const field of fieldsToProcess) {
+          if (!field) continue;
+          
+          // Access properties safely with explicit type checking
+          const fieldId = field.id !== undefined ? field.id : 
+                         (field.ID !== undefined ? field.ID : null);
+                         
+          const fieldKey = field.field_key !== undefined ? field.field_key : 
+                          (field.fieldKey !== undefined ? field.fieldKey : 
+                          (field.FIELD_KEY !== undefined ? field.FIELD_KEY : null));
+          
+          if (fieldId !== null && fieldKey && typeof fieldKey === 'string') {
+            fieldMappings.open_banking[fieldKey] = fieldId;
+            mappingCount++;
+          }
+        }
+        
+        if (mappingCount === 0) {
+          throw new Error(`No valid field mappings found in ${fieldsToProcess.length} Open Banking fields`);
+        }
+        
+        moduleLogger.info(`Successfully loaded ${mappingCount} Open Banking field mappings`, { 
+          sampleMapping: Object.entries(fieldMappings.open_banking).slice(0, 3) 
+        });
+      } catch (obError) {
+        moduleLogger.error(`Error loading Open Banking field mappings:`, { 
+          error: obError, 
+          message: obError.message, 
+          stack: obError.stack 
+        });
+        throw new Error(`Failed to load Open Banking field mappings: ${obError.message}`);
       }
-      
-      moduleLogger.info(`Loaded ${obFieldsResult.length} Open Banking field mappings`, { 
-        mappingCount: Object.keys(fieldMappings.open_banking).length,
-        sampleMapping: Object.entries(fieldMappings.open_banking).slice(0, 3) 
-      });
     }
   } catch (error) {
-    moduleLogger.error(`Error loading field mappings:`, error);
+    // Handle any unexpected errors in the field mapping process
+    moduleLogger.error(`Unexpected error loading field mappings:`, { 
+      error, 
+      message: error.message, 
+      stack: error.stack,
+      taskType
+    });
     throw new Error(`Failed to load field mappings: ${error.message}`);
   }
   
