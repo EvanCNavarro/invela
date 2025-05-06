@@ -619,11 +619,21 @@ async function handleKybPostSubmission(
   trx: any,
   taskId: number,
   companyId: number,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  transactionId?: string
 ): Promise<string[]> {
-  const kybPostLogContext = { namespace: 'KybPostSubmission', taskId, companyId };
+  const startTime = performance.now();
+  const kybPostLogContext = { 
+    namespace: 'KybPostSubmission', 
+    taskId, 
+    companyId,
+    transactionId 
+  };
   
-  logger.info('Processing KYB post-submission logic', kybPostLogContext);
+  logger.info('Processing KYB post-submission logic', {
+    ...kybPostLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     // KYB unlocks only the File Vault tab
