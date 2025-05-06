@@ -25,7 +25,7 @@ import { UniversalSuccessModal } from '@/components/forms/UniversalSuccessModal'
 import { fireEnhancedConfetti } from '@/utils/confetti';
 import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { submitForm } from '@/api/form-submission-api';
+import { submitFormTransactional } from '@/api/form-submission-api';
 import { userContext } from '@/lib/user-context';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import getLogger from '@/utils/logger';
