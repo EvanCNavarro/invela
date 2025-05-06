@@ -331,27 +331,43 @@ export async function unlockAllTasks(companyId: number) {
     // Find all tasks for this company
     // CRITICAL FIX: Ensure we don't have any task type restrictions
     // This ensures KY3P tasks are properly included in the unlocking process
-    // FIXED: Exclude tasks that are already submitted - we don't want to reset them
-    const companyTasks = await db.select()
+    
+    // Get all tasks to check for submission metadata
+    const allCompanyTasks = await db.select()
       .from(tasks)
-      .where(
-        and(
-          eq(tasks.company_id, companyId),
-          or(
-            eq(tasks.status, 'locked'),
-            eq(tasks.status, 'not_started'),
-            eq(tasks.status, 'ready_for_submission'), 
-            eq(tasks.status, 'in_progress'),         
-            isNull(tasks.status)
-          ),
-          // CRITICAL: Don't process tasks that are already in a terminal state
-          // This prevents submitted tasks from being reset to 'not_started'
-          sql`tasks.status != 'submitted'`,
-          sql`tasks.status != 'approved'`,
-          sql`tasks.status != 'rejected'`,
-          sql`tasks.status != 'archived'`
-        )
-      );
+      .where(eq(tasks.company_id, companyId));
+      
+    // Filter out tasks with submission indicators in their metadata
+    const companyTasks = allCompanyTasks.filter(task => {
+      // Check for submission indicators in metadata
+      const hasSubmissionDate = task.metadata?.submissionDate || 
+                               task.metadata?.submittedAt || 
+                               task.metadata?.submission_date;
+                               
+      const hasSubmittedFlag = task.metadata?.submitted === true || 
+                              task.metadata?.isSubmitted === true;
+                              
+      const hasFileId = task.metadata?.fileId || task.metadata?.file_id;
+      
+      // If task has any submission indicators, don't process it
+      if (hasSubmissionDate || hasSubmittedFlag || hasFileId || task.status === 'submitted') {
+        console.log(`[TaskDependencies] Skipping task ${task.id} with submission indicators`, {
+          hasSubmissionDate: !!hasSubmissionDate,
+          hasSubmittedFlag: !!hasSubmittedFlag,
+          hasFileId: !!hasFileId,
+          status: task.status,
+          progress: task.progress
+        });
+        return false;
+      }
+      
+      // Also exclude tasks with other terminal states
+      if (['approved', 'rejected', 'archived'].includes(task.status || '')) {
+        return false;
+      }
+      
+      return true;
+    });
     
     if (companyTasks.length === 0) {
       logger.info('[TaskDependencies] No tasks found to unlock', { companyId });
