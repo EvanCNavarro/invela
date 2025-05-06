@@ -11,6 +11,7 @@ import { UnifiedTabService } from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
 import * as fileCreationService from './fileCreation';
 import * as WebSocketService from './websocket';
+import { sendFormSubmissionSuccess, sendFormSubmissionError, sendFormSubmissionInProgress } from '../utils/form-submission-notifications';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
@@ -228,21 +229,21 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           timestamp: new Date().toISOString()
         });
         
-        // Use the enhanced broadcastFormSubmission from unified-websocket
-        WebSocketService.broadcastFormSubmission(
+        // Use the standardized form submission notification system
+        sendFormSubmissionSuccess({
           formType,
           taskId,
           companyId,
-          {
-            fileId,
-            fileName: standardizedFormData.fileName || undefined,
-            status: 'submitted',
-            progress: 100,
+          fileId: fileId as number | undefined,
+          fileName: standardizedFormData.fileName || undefined,
+          submissionDate: new Date().toISOString(),
+          unlockedTabs: tabResult.availableTabs,
+          metadata: {
             formSubmission: true,
-            submissionDate: new Date().toISOString(),
-            availableTabs: tabResult.availableTabs
+            availableTabs: tabResult.availableTabs,
+            submissionComplete: true
           }
-        );
+        });
       } catch (wsError) {
         // Log error but don't fail the transaction
         logger.error('WebSocket broadcast error', {
