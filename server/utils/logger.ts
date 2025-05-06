@@ -10,6 +10,10 @@
  * 
  * logger.info('User logged in', { userId: 123 });
  * logger.error('Failed to process payment', { error: err.message, orderId: 456 });
+ * 
+ * // Create a child logger with context
+ * const userLogger = logger.child({ module: 'UserService' });
+ * userLogger.info('User profile updated', { userId: 123 });
  */
 
 // Log levels in order of verbosity
@@ -34,17 +38,33 @@ const currentLogLevel = (() => {
   }
 })();
 
+// The Logger interface type definition
+export interface Logger {
+  trace: (message: string, data?: any) => void;
+  debug: (message: string, data?: any) => void;
+  info: (message: string, data?: any) => void;
+  warn: (message: string, data?: any) => void;
+  error: (message: string, data?: any) => void;
+  child: (context: Record<string, any>) => Logger;
+}
+
 /**
  * Format a log message with timestamp, level, and structured data
  * 
  * @param level The log level as a string
  * @param message The main log message
+ * @param context Context data to attach to all logs
  * @param data Optional structured data to include
  * @returns Formatted log entry
  */
-function formatLogEntry(level: string, message: string, data?: any): string {
+function formatLogEntry(level: string, message: string, context: Record<string, any> = {}, data?: any): string {
   const timestamp = new Date().toISOString();
-  return `[${timestamp}] [${level}] ${message}${data ? ` ${JSON.stringify(data)}` : ''}`;
+  const contextData = Object.keys(context).length > 0 ? { context, ...data } : data;
+  
+  // Add module name to log prefix if available
+  const modulePrefix = context.module ? `[${context.module}] ` : '';
+  
+  return `[${timestamp}] [${level}] ${modulePrefix}${message}${contextData ? ` ${JSON.stringify(contextData)}` : ''}`;
 }
 
 /**
@@ -56,54 +76,50 @@ function shouldLog(level: LogLevel): boolean {
 }
 
 /**
- * The logger interface with methods for each log level
+ * Create a logger instance with optional context
+ * 
+ * @param context Context data to attach to all logs from this logger
+ * @returns A logger instance
  */
-export const logger = {
-  /**
-   * Trace level logging - most verbose, for detailed debugging
-   * Only enabled when LOG_LEVEL is set to TRACE
-   */
-  trace: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.TRACE)) {
-      console.log(formatLogEntry('TRACE', message, data));
-    }
-  },
+function createLogger(context: Record<string, any> = {}): Logger {
+  return {
+    trace: (message: string, data?: any) => {
+      if (shouldLog(LogLevel.TRACE)) {
+        console.log(formatLogEntry('TRACE', message, context, data));
+      }
+    },
 
-  /**
-   * Debug level logging - for development information
-   * Only enabled when LOG_LEVEL is set to DEBUG or TRACE
-   */
-  debug: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.DEBUG)) {
-      console.log(formatLogEntry('DEBUG', message, data));
-    }
-  },
+    debug: (message: string, data?: any) => {
+      if (shouldLog(LogLevel.DEBUG)) {
+        console.log(formatLogEntry('DEBUG', message, context, data));
+      }
+    },
 
-  /**
-   * Info level logging - for general operational information
-   * This is the default level
-   */
-  info: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.INFO)) {
-      console.log(formatLogEntry('INFO', message, data));
-    }
-  },
+    info: (message: string, data?: any) => {
+      if (shouldLog(LogLevel.INFO)) {
+        console.log(formatLogEntry('INFO', message, context, data));
+      }
+    },
 
-  /**
-   * Warning level logging - for potential issues that aren't errors
-   */
-  warn: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.WARN)) {
-      console.warn(formatLogEntry('WARN', message, data));
-    }
-  },
+    warn: (message: string, data?: any) => {
+      if (shouldLog(LogLevel.WARN)) {
+        console.warn(formatLogEntry('WARN', message, context, data));
+      }
+    },
 
-  /**
-   * Error level logging - for actual errors that need attention
-   */
-  error: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.ERROR)) {
-      console.error(formatLogEntry('ERROR', message, data));
+    error: (message: string, data?: any) => {
+      if (shouldLog(LogLevel.ERROR)) {
+        console.error(formatLogEntry('ERROR', message, context, data));
+      }
+    },
+    
+    child: (childContext: Record<string, any>) => {
+      return createLogger({ ...context, ...childContext });
     }
-  },
-};
+  };
+}
+
+/**
+ * The root logger instance
+ */
+export const logger = createLogger();

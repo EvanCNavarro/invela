@@ -11,9 +11,9 @@ import { db } from '@db';
 import { eq, and, inArray, or } from 'drizzle-orm';
 import { tasks, task_dependencies } from '@db/schema';
 import { calculateAndUpdateProgress } from '../utils/unified-progress-calculator';
-import { getLogger } from '../utils/logger';
+import { logger } from '../utils/logger';
 
-const logger = getLogger('TaskDependencies');
+const log = log.child({ module: 'TaskDependencies' });
 const router = Router();
 
 /**
@@ -36,7 +36,7 @@ router.post('/api/task-dependencies/update', async (req, res) => {
     const result = await updateTaskDependencies(taskId, companyId);
     return res.json(result);
   } catch (error) {
-    logger.error('Error updating task dependencies:', error);
+    log.error('Error updating task dependencies:', error);
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error updating task dependencies',
@@ -64,7 +64,7 @@ router.post('/api/task-dependencies/process-company', async (req, res) => {
     const result = await processCompanyDependencies(companyId);
     return res.json(result);
   } catch (error) {
-    logger.error('Error processing company task dependencies:', error);
+    log.error('Error processing company task dependencies:', error);
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error processing company task dependencies',
@@ -74,9 +74,10 @@ router.post('/api/task-dependencies/process-company', async (req, res) => {
 
 /**
  * Update dependent tasks when a task is completed
+ * @export
  */
-async function updateTaskDependencies(taskId: number, companyId: number) {
-  logger.info(`Updating task dependencies for task ${taskId} in company ${companyId}`);
+export async function updateTaskDependencies(taskId: number, companyId: number) {
+  log.info(`Updating task dependencies for task ${taskId} in company ${companyId}`);
   
   try {
     // Find tasks that depend on this task
@@ -89,7 +90,7 @@ async function updateTaskDependencies(taskId: number, companyId: number) {
     });
     
     if (dependencies.length === 0) {
-      logger.info(`No dependent tasks found for task ${taskId}`);
+      log.info(`No dependent tasks found for task ${taskId}`);
       return {
         success: true,
         message: 'No dependent tasks found',
@@ -97,7 +98,7 @@ async function updateTaskDependencies(taskId: number, companyId: number) {
       };
     }
     
-    logger.info(`Found ${dependencies.length} dependent tasks for task ${taskId}`);
+    log.info(`Found ${dependencies.length} dependent tasks for task ${taskId}`);
     
     // Get all dependent task IDs
     const dependentTaskIds = dependencies.map(dep => dep.task_id);
@@ -127,7 +128,7 @@ async function updateTaskDependencies(taskId: number, companyId: number) {
         
         if (allPrerequisitesMet) {
           // Unlock the task
-          logger.info(`Unlocking task ${task.id} (${task.task_type})`);
+          log.info(`Unlocking task ${task.id} (${task.task_type})`);
           await unlockTask(task.id, task.task_type, companyId);
           unlockedTasks.push(task.id);
         }
@@ -140,16 +141,17 @@ async function updateTaskDependencies(taskId: number, companyId: number) {
       unlockedTasks,
     };
   } catch (error) {
-    logger.error(`Error updating task dependencies for task ${taskId}:`, error);
+    log.error(`Error updating task dependencies for task ${taskId}:`, error);
     throw error;
   }
 }
 
 /**
  * Process all task dependencies for a company
+ * @export
  */
-async function processCompanyDependencies(companyId: number) {
-  logger.info(`Processing all task dependencies for company ${companyId}`);
+export async function processCompanyDependencies(companyId: number) {
+  log.info(`Processing all task dependencies for company ${companyId}`);
   
   try {
     // Find all locked tasks for the company
@@ -170,7 +172,7 @@ async function processCompanyDependencies(companyId: number) {
     });
     
     if (lockedTasks.length === 0) {
-      logger.info(`No locked tasks found for company ${companyId}`);
+      log.info(`No locked tasks found for company ${companyId}`);
       return {
         success: true,
         message: 'No locked tasks found',
@@ -178,7 +180,7 @@ async function processCompanyDependencies(companyId: number) {
       };
     }
     
-    logger.info(`Found ${lockedTasks.length} locked tasks for company ${companyId}`);
+    log.info(`Found ${lockedTasks.length} locked tasks for company ${companyId}`);
     
     // Process each locked task
     const unlockedTasks = [];
@@ -188,7 +190,7 @@ async function processCompanyDependencies(companyId: number) {
       
       if (allPrerequisitesMet) {
         // Unlock the task
-        logger.info(`Unlocking task ${task.id} (${task.task_type})`);
+        log.info(`Unlocking task ${task.id} (${task.task_type})`);
         await unlockTask(task.id, task.task_type, companyId);
         unlockedTasks.push(task.id);
       }
@@ -200,7 +202,7 @@ async function processCompanyDependencies(companyId: number) {
       unlockedTasks,
     };
   } catch (error) {
-    logger.error(`Error processing task dependencies for company ${companyId}:`, error);
+    log.error(`Error processing task dependencies for company ${companyId}:`, error);
     throw error;
   }
 }
@@ -247,7 +249,7 @@ async function checkAllPrerequisites(taskId: number): Promise<boolean> {
     // All prerequisites must be completed
     return completedPrerequisites.length === prerequisiteTaskIds.length;
   } catch (error) {
-    logger.error(`Error checking prerequisites for task ${taskId}:`, error);
+    log.error(`Error checking prerequisites for task ${taskId}:`, error);
     return false;
   }
 }
@@ -290,7 +292,7 @@ async function unlockTask(taskId: number, taskType: string, companyId: number): 
       }
     );
     
-    logger.info('Unlocked task using unified progress calculator', {
+    log.info('Unlocked task using unified progress calculator', {
       companyId,
       taskId,
       taskType: normalizedTaskType,
@@ -302,7 +304,7 @@ async function unlockTask(taskId: number, taskType: string, companyId: number): 
     
     return true;
   } catch (error) {
-    logger.error(`Error unlocking task ${taskId}:`, error);
+    log.error(`Error unlocking task ${taskId}:`, error);
     return false;
   }
 }
@@ -322,5 +324,63 @@ function mapTaskType(taskType: string): string {
   
   return taskTypeMap[taskType.toLowerCase()] || taskType.toLowerCase();
 }
+
+/**
+ * Specifically unlock Open Banking tasks for a company
+ * This is used when other form types are completed to ensure
+ * that Open Banking tasks are unlocked appropriately.
+ *
+ * @export
+ */
+export async function unlockOpenBankingTasks(companyId: number) {
+  log.info(`Unlocking Open Banking tasks for company ${companyId}`);
+  
+  try {
+    // Find all Open Banking tasks for the company
+    const openBankingTasks = await db.query.tasks.findMany({
+      where: and(
+        eq(tasks.company_id, companyId),
+        eq(tasks.task_type, 'open_banking'),
+        eq(tasks.locked, true)
+      ),
+      columns: {
+        id: true,
+        status: true,
+      },
+    });
+    
+    if (openBankingTasks.length === 0) {
+      log.info(`No locked Open Banking tasks found for company ${companyId}`);
+      return {
+        success: true,
+        message: 'No locked Open Banking tasks found',
+        unlockedTasks: [],
+      };
+    }
+    
+    log.info(`Found ${openBankingTasks.length} locked Open Banking tasks for company ${companyId}`);
+    
+    // Process each locked Open Banking task
+    const unlockedTasks = [];
+    for (const task of openBankingTasks) {
+      // Unlock the task
+      log.info(`Unlocking Open Banking task ${task.id}`);
+      await unlockTask(task.id, 'open_banking', companyId);
+      unlockedTasks.push(task.id);
+    }
+    
+    return {
+      success: true,
+      message: `Unlocked ${unlockedTasks.length} Open Banking tasks`,
+      unlockedTasks,
+    };
+  } catch (error) {
+    log.error(`Error unlocking Open Banking tasks for company ${companyId}:`, error);
+    throw error;
+  }
+}
+
+// For backwards compatibility, also export processDependencies as processCompanyDependencies
+export const processDependencies = processCompanyDependencies;
 
 export default router;
