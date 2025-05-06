@@ -409,7 +409,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   const companyId = task.company_id || task.metadata?.company?.id;
                   
                   // Use the submitForm API function to submit the form
-                  const result = await submitForm(task.id, 'kyb', data, companyId);
+                  const result = await submitFormTransactional(task.id, 'kyb', data, companyId);
                   
                   // We no longer immediately show the success modal here.
                   // Instead, we now wait for the WebSocket event in FormSubmissionListener
@@ -502,7 +502,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   const companyId = task.company_id || task.metadata?.company?.id;
                   
                   // Use the submitForm API function to submit the form
-                  const result = await submitForm(task.id, 'card', data, companyId);
+                  const result = await submitFormTransactional(task.id, 'card', data, companyId);
                   
                   // Dispatch a custom event to notify the form submission listener
                   const event = new CustomEvent('form-submission-success', {
@@ -601,7 +601,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   const companyId = task.company_id || task.metadata?.company?.id;
                   
                   // Use the submitForm API function to submit the form
-                  const result = await submitForm(task.id, 'ky3p', data, companyId);
+                  const result = await submitFormTransactional(task.id, 'ky3p', data, companyId);
                   
                   // Dispatch a custom event to notify the form submission listener
                   const event = new CustomEvent('form-submission-success', {
@@ -700,7 +700,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   const companyId = task.company_id || task.metadata?.company?.id;
                   
                   // Use the submitForm API function to submit the form
-                  const result = await submitForm(task.id, 'open_banking', data, companyId);
+                  const result = await submitFormTransactional(task.id, 'open_banking', data, companyId);
                   
                   // Dispatch a custom event to notify the form submission listener
                   const event = new CustomEvent('form-submission-success', {
