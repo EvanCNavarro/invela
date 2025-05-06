@@ -356,8 +356,8 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
           // Cast progress to a number before setting
           progress: sql`CAST(${Number(validatedProgress)} AS real)`,
           
-          // Use direct string value for status without SQL template literal
-          status: safeStatus,
+          // Cast status to the proper TaskStatus type for database compatibility
+          status: sql`${safeStatus}`,
           
           // Use direct Date object
           updated_at: new Date(),

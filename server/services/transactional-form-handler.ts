@@ -7,7 +7,7 @@
 
 import { logger } from '../utils/logger';
 import { withTransaction } from './transaction-manager';
-import * as UnifiedTabService from './unified-tab-service';
+import { UnifiedTabService } from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
 import * as fileCreationService from './fileCreation.fixed';
 import * as WebSocketService from './websocket';
@@ -83,7 +83,8 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       const existingFileId = StandardizedFileReference.getStandardizedFileId(standardizedFormData, formType);
       
       // 3. Create a file if needed
-      let fileId: string | number | null = existingFileId || null;
+      // UNIFIED FIX: Use undefined instead of null to match return type interface
+      let fileId: string | number | undefined = existingFileId || undefined;
       
       if (!existingFileId && formType !== 'empty_form') {
         const schemaTaskType = formType;
