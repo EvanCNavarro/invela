@@ -11,7 +11,7 @@ import { eq, and, or, isNull } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { broadcastTaskUpdate } from '../services/websocket';
 import { logger } from '../utils/logger';
-import { calculateTaskProgress, updateAndBroadcastProgress } from '../utils/unified-progress-calculator';
+import { updateTaskProgressAndBroadcast } from '../utils/unified-progress-calculator';
 
 // Logger is already initialized in the imported module
 
@@ -396,7 +396,7 @@ export async function unlockAllTasks(companyId: number) {
       // Use the unified progress calculator with preserveExisting=true
       // This ensures we don't reset progress if it already exists
       // CRITICAL FIX: Force preserveExisting for KY3P tasks to prevent progress resets
-      const taskProgress = await updateAndBroadcastProgress(task.id, task.task_type, {
+      const taskProgress = await updateTaskProgressAndBroadcast(task.id, task.task_type, {
         debug: true,
         preserveExisting: true, // Critical flag to prevent progress resets
         forcePreserve: isKy3pTask, // Force preservation for KY3P tasks
@@ -414,7 +414,7 @@ export async function unlockAllTasks(companyId: number) {
         wasPreserved: (task.progress || 0) > 0 && taskProgress === (task.progress || 0)
       });
       
-      // Note: We don't need to broadcast the update here because updateAndBroadcastProgress already does it
+      // Note: We don't need to broadcast the update here because updateTaskProgressAndBroadcast already does it
     }
     
     logger.info('[TaskDependencies] Successfully unlocked all tasks', { 

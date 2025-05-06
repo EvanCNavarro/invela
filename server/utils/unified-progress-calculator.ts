@@ -1,341 +1,90 @@
 /**
- * Unified Progress Calculator
+ * Unified Progress Calculator (Extension Helper)
  * 
- * This module provides a single source of truth for calculating task progress
- * across all task types, ensuring consistency throughout the application.
+ * This utility provides additional helper functions that complement
+ * the existing unified-task-progress module. It serves as an expansion
+ * for specific use cases while maintaining compatibility with the
+ * existing unified approach.
  * 
- * It follows DRY and KISS principles, making progress calculation simple and reliable.
+ * NOTE: The core progress calculation functionality is already implemented
+ * in server/utils/unified-task-progress.ts. This file provides supplementary
+ * utilities that work alongside that implementation.
  */
 
-import { db } from '@db';
-import { 
-  tasks, 
-  kybResponses, 
-  kybFields, 
-  ky3pResponses, 
-  ky3pFields, 
-  openBankingResponses, 
-  openBankingFields,
-  KYBFieldStatus
-} from '@db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { logger } from './logger';
+import { tasks } from '@db/schema';
+import { FormResponseType } from './unified-form-response-handler';
+
+// Re-export the core functionality from unified-task-progress.ts
+export { updateTaskProgress, updateTaskProgressAndBroadcast } from './unified-task-progress';
 
 /**
- * Single source of truth for task progress calculation
+ * Format progress value for SQL storage (helper that matches existing implementation)
  * 
- * This function provides a consistent way to calculate progress for all task types,
- * supporting both field_id and field_key approaches for backward compatibility.
- * 
- * @param taskId Task ID to calculate progress for
- * @param taskType Type of task (company_kyb, ky3p, open_banking, etc.)
- * @param options Optional configuration (transaction, debug mode, etc.)
- * @returns Promise<number> Progress percentage (0-100)
+ * This function ensures that progress values are properly formatted for
+ * database storage, avoiding issues with type conversion or validation.
  */
-export async function calculateTaskProgress(
-  taskId: number,
-  taskType: string,
-  options: { tx?: any; debug?: boolean; preserveExisting?: boolean } = {}
-): Promise<number> {
-  const logPrefix = '[UnifiedProgressCalc]';
-  const debug = options.debug || false;
-  const preserveExisting = options.preserveExisting || false;
-  let totalFields = 0;
-  let completedFields = 0;
+export function getProgressSqlValue(progress: number): number {
+  // Ensure progress is within valid range (0-100)
+  const validatedProgress = Math.max(0, Math.min(100, progress));
   
-  // Use the passed transaction context or the global db instance
-  const dbContext = options.tx || db;
-
-  try {
-    // If preserveExisting is true, first check if the task already has progress
-    if (preserveExisting) {
-      const existingTask = await dbContext
-        .select({ progress: tasks.progress, metadata: tasks.metadata })
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
-      
-      if (existingTask.length > 0 && existingTask[0].progress > 0) {
-        const existingProgress = existingTask[0].progress;
-        const metadata = existingTask[0].metadata || {};
-        
-        // CRITICAL FIX: Don't preserve progress for KY3P tasks when they've been unlocked via task dependencies
-        // This ensures form progress is always calculated based on actual field completion
-        // and isn't stuck at the artificial 60% value set during task unlocking
-        const isTaskUnlocked = metadata.dependencyUnlockOperation === true;
-        const isKy3pTask = taskType === 'ky3p' || taskType === 'sp_ky3p_assessment';
-        
-        // Only preserve progress if it's not a KY3P task that was unlocked via dependencies
-        if (!(isKy3pTask && isTaskUnlocked)) {
-          logger.info(`${logPrefix} Preserving existing progress for task ${taskId} (${taskType}): ${existingProgress}%`, {
-            taskId,
-            taskType,
-            existingProgress,
-            operation: 'preserve-existing'
-          });
-          
-          return existingProgress;
-        } else {
-          logger.info(`${logPrefix} Not preserving progress for KY3P task that was unlocked via dependencies: ${taskId}`, {
-            taskId,
-            taskType,
-            existingProgress,
-            operation: 'recalculate-ky3p-progress'
-          });
-        }
-      }
-    }
-    
-    // Calculate progress based on task type
-    if (taskType === 'open_banking' || taskType === 'open_banking_survey') {
-      // Count total Open Banking fields
-      const totalFieldsResult = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(openBankingFields);
-      totalFields = totalFieldsResult[0].count;
-      
-      // Count completed Open Banking responses for this task
-      const completedResultQuery = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(openBankingResponses)
-        .where(
-          and(
-            eq(openBankingResponses.task_id, taskId),
-            sql`${openBankingResponses.status} = ${KYBFieldStatus.COMPLETE}`
-          )
-        );
-      completedFields = completedResultQuery[0].count;
-    } 
-    else if (taskType === 'ky3p' || taskType === 'security' || taskType === 'sp_ky3p_assessment') {
-      // IMPORTANT CHANGE: For KY3P, only count fields that have responses for this specific task
-      // This aligns KY3P with other task types and prevents the "divide by total fields" issue
-      
-      // First, get all fields with responses for this task
-      const fieldsWithResponses = await dbContext
-        .select({ 
-          field_id: ky3pResponses.field_id,
-          field_key: ky3pResponses.field_key 
-        })
-        .from(ky3pResponses)
-        .where(eq(ky3pResponses.task_id, taskId));
-      
-      // Total fields is the number of unique fields with responses
-      totalFields = fieldsWithResponses.length;
-      
-      // Count completed responses for this task
-      const completedResultQuery = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(ky3pResponses)
-        .where(
-          and(
-            eq(ky3pResponses.task_id, taskId),
-            sql`${ky3pResponses.status} = ${KYBFieldStatus.COMPLETE}`
-          )
-        );
-      completedFields = completedResultQuery[0].count;
-
-      // Enhanced logging for KY3P progress calculation
-      if (debug) {
-        logger.debug(`${logPrefix} KY3P progress calculation details:`, {
-          taskId,
-          totalFields,
-          completedFields,
-          fieldsWithResponses: fieldsWithResponses.length,
-          calculationMethod: 'fields-with-responses'
-        });
-      }
-    }
-    else if (taskType === 'company_kyb' || taskType === 'kyb') {
-      // Count total KYB fields
-      const totalFieldsResult = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(kybFields);
-      totalFields = totalFieldsResult[0].count;
-      
-      // Count completed KYB responses for this task
-      const completedResultQuery = await dbContext
-        .select({ count: sql<number>`count(*)` })
-        .from(kybResponses)
-        .where(
-          and(
-            eq(kybResponses.task_id, taskId),
-            sql`${kybResponses.status} = ${KYBFieldStatus.COMPLETE}`
-          )
-        );
-      completedFields = completedResultQuery[0].count;
-    }
-    else {
-      // Unknown task type
-      logger.warn(`${logPrefix} Unknown task type for progress calculation: ${taskType}`, {
-        taskId,
-        taskType
-      });
-      return 0;
-    }
-    
-    // Calculate progress percentage using Math.round for consistency
-    const progress = totalFields > 0 
-      ? Math.min(100, Math.round((completedFields / totalFields) * 100))
-      : 0;
-    
-    if (debug || totalFields > 0) {
-      logger.info(`${logPrefix} Calculated progress for task ${taskId} (${taskType}): ${completedFields}/${totalFields} = ${progress}%`, {
-        taskId,
-        taskType,
-        totalFields,
-        completedFields,
-        progress
-      });
-    }
-    
-    return progress;
-  } catch (error) {
-    logger.error(`${logPrefix} Error calculating progress for task ${taskId} (${taskType}):`, {
-      taskId,
-      taskType,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
-    // Return 0 for safety in case of errors
-    return 0;
-  }
+  // Round to nearest integer to avoid floating point issues
+  return Math.round(validatedProgress);
 }
 
 /**
- * Update task progress and broadcast the update
+ * Preserve existing progress in certain scenarios
  * 
- * This function updates a task's progress in the database and broadcasts the change.
- * It uses the unified progress calculation to ensure consistency.
- * 
- * @param taskId Task ID to update
- * @param taskType Type of task
- * @param options Optional configuration
- * @returns Promise<number> The updated progress value
+ * Some operations should preserve the existing progress rather than
+ * recalculating it. This function determines when to preserve progress.
  */
-export async function updateAndBroadcastProgress(
-  taskId: number,
-  taskType: string,
-  options: { 
-    tx?: any; 
-    debug?: boolean; 
-    preserveExisting?: boolean;
-    forceProgress?: number;
-    metadata?: Record<string, any>;
-  } = {}
-): Promise<number> {
-  const logPrefix = '[ProgressUpdate]';
-  const debug = options.debug || false;
-  
-  try {
-    // Use the provided transaction or start a new one
-    const dbContext = options.tx || db;
-    
-    // Use forced progress value if provided, otherwise calculate
-    const progress = options.forceProgress !== undefined
-      ? options.forceProgress
-      : await calculateTaskProgress(taskId, taskType, {
-          tx: dbContext,
-          debug,
-          preserveExisting: options.preserveExisting
-        });
-    
-    // Get the current task to determine the appropriate status
-    const currentTask = await dbContext
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-    
-    if (currentTask.length === 0) {
-      logger.warn(`${logPrefix} Task not found for progress update: ${taskId}`, {
-        taskId,
-        taskType
-      });
-      return 0;
-    }
-    
-    // Import determineStatusFromProgress to ensure consistent status determination
-    const { determineStatusFromProgress } = await import('./progress');
-    
-    // Determine the correct status based on progress
-    const currentStatus = currentTask[0].status as any;
-    const newStatus = determineStatusFromProgress(
-      progress,
-      currentStatus,
-      [], // No form responses needed for basic status determination
-      currentTask[0].metadata || {}
-    );
-    
-    // Update task with new progress and status
-    await dbContext
-      .update(tasks)
-      .set({
-        progress,
-        status: newStatus,
-        updated_at: new Date(),
-        // Update metadata if provided
-        ...(options.metadata ? {
-          metadata: {
-            ...currentTask[0].metadata,
-            ...options.metadata,
-            lastProgressUpdate: new Date().toISOString(),
-            progressHistoryEntry: {
-              value: progress, 
-              timestamp: new Date().toISOString()
-            }
-          }
-        } : {})
-      })
-      .where(eq(tasks.id, taskId));
-    
-    logger.info(`${logPrefix} Updated task ${taskId} progress to ${progress}% and status to ${newStatus}`, {
-      taskId,
-      taskType,
-      progress,
-      status: newStatus,
-      previousStatus: currentStatus
-    });
-    
-    // Broadcast the update via WebSocket
-    try {
-      const { broadcastTaskUpdate } = await import('../services/websocket');
-      broadcastTaskUpdate({
-        id: taskId,
-        status: newStatus,
-        progress,
-        metadata: {
-          ...(options.metadata || {}),
-          lastProgressUpdate: new Date().toISOString()
-        }
-      });
-      
-      logger.info(`${logPrefix} Broadcasted progress update for task ${taskId}`, {
-        taskId,
-        progress,
-        status: newStatus
-      });
-    } catch (broadcastError) {
-      logger.error(`${logPrefix} Error broadcasting progress update:`, {
-        taskId,
-        error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError)
-      });
-    }
-    
-    return progress;
-  } catch (error) {
-    logger.error(`${logPrefix} Error updating and broadcasting progress:`, {
-      taskId,
-      taskType,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
-    // Return 0 for safety in case of errors
-    return 0;
+export function shouldPreserveProgress(
+  operation: string,
+  metadata: Record<string, any> | null | undefined
+): boolean {
+  // Preserve progress during edits if metadata indicates
+  if (operation === 'edit' && metadata?.preserveProgress === true) {
+    return true;
   }
+  
+  // Preserve progress during clear operations if indicated
+  if (operation === 'clear' && metadata?.preserveProgress === true) {
+    return true;
+  }
+  
+  // Don't preserve progress during submissions
+  if (operation === 'submit') {
+    return false;
+  }
+  
+  // Default to not preserving
+  return false;
 }
 
-// Export the unified progress calculator functions
-export default {
-  calculateTaskProgress,
-  updateAndBroadcastProgress
-};
+/**
+ * Determine if a task is at 100% progress
+ * 
+ * This utility helps avoid the "midpoint bias" by ensuring that tasks are truly
+ * at 100% progress when all fields are completed and the submission is valid.
+ */
+export function isTaskComplete(
+  progress: number,
+  metadata: Record<string, any> | null | undefined
+): boolean {
+  // Task is complete if:
+  // 1. Progress is 100%
+  // 2. Has a submission flag or date
+  // 3. No validation errors are present
+  
+  const hasSubmissionFlag = metadata?.submitted === true;
+  const hasSubmissionDate = !!metadata?.submittedAt || !!metadata?.submission_date;
+  const hasValidationErrors = metadata?.validationErrors && 
+    (Array.isArray(metadata.validationErrors) ? 
+      metadata.validationErrors.length > 0 : 
+      Object.keys(metadata.validationErrors).length > 0);
+  
+  return progress === 100 && 
+    (hasSubmissionFlag || hasSubmissionDate) && 
+    !hasValidationErrors;
+}
