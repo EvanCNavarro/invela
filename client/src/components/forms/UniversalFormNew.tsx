@@ -65,8 +65,7 @@ import { useCurrentCompany } from '@/hooks/use-current-company';
 import { userContext } from '@/lib/user-context';
 
 // Import WebSocket-based form submission listener and related components
-import FormSubmissionListener from './FormSubmissionListener';
-import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
+import { FormSubmissionListener, FormSubmissionEvent } from './FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 
 import SectionContent from './SectionContent';
