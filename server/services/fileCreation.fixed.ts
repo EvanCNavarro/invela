@@ -148,7 +148,7 @@ export async function createTaskFile(
     
     // ─── STEP 1: FETCH RESPONSES ────────────────────────────────────────
     // First, get all responses directly without JOIN to avoid complexity
-    const { pool } = require('../db');
+    const { pool } = db;
     
     let responseQuery;
     let fieldQuery;
