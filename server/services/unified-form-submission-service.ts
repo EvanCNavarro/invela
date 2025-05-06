@@ -44,22 +44,33 @@ export async function submitForm(
   companyId: number,
   fileName?: string
 ): Promise<FormSubmissionResult> {
+  // Generate unique transaction ID for complete traceability
+  const transactionId = `form-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const startTime = performance.now();
+  
   logger.info('Starting unified form submission process', {
     ...baseLogContext,
+    transactionId,
     taskId,
     formType,
     userId,
     companyId,
-    fieldCount: Object.keys(formData).length
+    fieldCount: Object.keys(formData).length,
+    timestamp: new Date().toISOString()
   });
   
   try {
     // Execute the entire submission process in a transaction
+    const transactionStartTime = performance.now();
+    
     const result = await TransactionManager.withTransaction(async (trx) => {
       logger.info('Starting form submission transaction', { 
         ...baseLogContext,
-        taskId, 
-        formType 
+        transactionId,
+        taskId,
+        formType,
+        elapsedTime: `${(performance.now() - startTime).toFixed(2)}ms`,
+        timestamp: new Date().toISOString()
       });
       
       // 1. Retrieve task and validate
@@ -121,12 +132,15 @@ export async function submitForm(
       });
       
       // 4. Persist form responses (implementation varies by form type)
-      await persistFormResponses(trx, taskId, formData, formType);
+      await persistFormResponses(trx, taskId, formData, formType, transactionId);
       
       logger.info('Persisted form responses', { 
         ...baseLogContext,
         taskId, 
-        formType 
+        formType,
+        transactionId,
+        elapsedTime: `${(performance.now() - startTime).toFixed(2)}ms`,
+        timestamp: new Date().toISOString()
       });
       
       // 5. Execute form-specific post-submission logic 
@@ -195,20 +209,29 @@ async function createFormFile(
   formData: Record<string, any>, 
   formType: string,
   userId: number,
-  customFileName?: string
+  customFileName?: string,
+  transactionId?: string
 ): Promise<{
   success: boolean;
   fileId?: number;
   fileName?: string;
   error?: string;
 }> {
-  const fileLogContext = { namespace: 'FileCreation', taskId, formType };
+  const fileCreateStartTime = performance.now();
+  const fileLogContext = { 
+    namespace: 'FileCreation', 
+    taskId, 
+    formType,
+    transactionId
+  };
+  
   try {
     logger.info('Creating file for form submission', {
       ...fileLogContext,
       companyId,
       userId,
-      formDataSize: JSON.stringify(formData).length
+      formDataSize: JSON.stringify(formData).length,
+      timestamp: new Date().toISOString()
     });
 
     // Generate CSV content from form data
@@ -312,34 +335,68 @@ async function persistFormResponses(
   trx: any,
   taskId: number,
   formData: Record<string, any>,
-  formType: string
+  formType: string,
+  transactionId?: string
 ): Promise<void> {
-  const persistLogContext = { namespace: 'FormPersistence', taskId, formType };
-  logger.info('Persisting form responses', persistLogContext);
+  const startTime = performance.now();
+  const persistLogContext = { 
+    namespace: 'FormPersistence', 
+    taskId, 
+    formType,
+    transactionId 
+  };
+  
+  logger.info('Persisting form responses', {
+    ...persistLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   // Different implementation based on form type
   if (formType === 'kyb' || formType === 'company_kyb') {
     // Persist KYB responses
-    await persistKybResponses(trx, taskId, formData);
+    await persistKybResponses(trx, taskId, formData, transactionId);
   } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
     // Persist KY3P responses
-    await persistKy3pResponses(trx, taskId, formData);
+    await persistKy3pResponses(trx, taskId, formData, transactionId);
   } else if (formType === 'open_banking') {
     // Persist Open Banking responses
-    await persistOpenBankingResponses(trx, taskId, formData);
+    await persistOpenBankingResponses(trx, taskId, formData, transactionId);
   } else {
-    logger.warn(`Unsupported form type: ${formType}, responses will not be persisted`, persistLogContext);
+    logger.warn(`Unsupported form type: ${formType}, responses will not be persisted`, {
+      ...persistLogContext,
+      timestamp: new Date().toISOString()
+    });
   }
+  
+  const endTime = performance.now();
+  logger.info('Completed form response persistence', {
+    ...persistLogContext,
+    duration: `${(endTime - startTime).toFixed(2)}ms`,
+    timestamp: new Date().toISOString()
+  });
 }
 
-async function persistKybResponses(trx: any, taskId: number, formData: Record<string, any>): Promise<void> {
-  const kybLogContext = { namespace: 'KybPersistence', taskId };
-  logger.info('Persisting KYB responses', kybLogContext);
+async function persistKybResponses(trx: any, taskId: number, formData: Record<string, any>, transactionId?: string): Promise<void> {
+  const startTime = performance.now();
+  const kybLogContext = { 
+    namespace: 'KybPersistence', 
+    taskId,
+    transactionId 
+  };
+  
+  logger.info('Persisting KYB responses', {
+    ...kybLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     const responses = formData.responses || {};
     const responseKeys = Object.keys(responses);
-    logger.info(`Processing ${responseKeys.length} KYB responses for task ${taskId}`, kybLogContext);
+    logger.info(`Processing ${responseKeys.length} KYB responses for task ${taskId}`, {
+      ...kybLogContext,
+      fieldCount: responseKeys.length,
+      timestamp: new Date().toISOString()
+    });
     
     // Batch insert all responses using transaction
     if (responseKeys.length > 0) {
@@ -383,14 +440,27 @@ async function persistKybResponses(trx: any, taskId: number, formData: Record<st
   }
 }
 
-async function persistKy3pResponses(trx: any, taskId: number, formData: Record<string, any>): Promise<void> {
-  const ky3pLogContext = { namespace: 'Ky3pPersistence', taskId };
-  logger.info('Persisting KY3P responses', ky3pLogContext);
+async function persistKy3pResponses(trx: any, taskId: number, formData: Record<string, any>, transactionId?: string): Promise<void> {
+  const startTime = performance.now();
+  const ky3pLogContext = { 
+    namespace: 'Ky3pPersistence', 
+    taskId,
+    transactionId
+  };
+  
+  logger.info('Persisting KY3P responses', {
+    ...ky3pLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     const responses = formData.responses || {};
     const responseKeys = Object.keys(responses);
-    logger.info(`Processing ${responseKeys.length} KY3P responses for task ${taskId}`, ky3pLogContext);
+    logger.info(`Processing ${responseKeys.length} KY3P responses for task ${taskId}`, {
+      ...ky3pLogContext,
+      fieldCount: responseKeys.length,
+      timestamp: new Date().toISOString()
+    });
     
     // Batch insert all responses using transaction
     if (responseKeys.length > 0) {
@@ -442,14 +512,27 @@ async function persistKy3pResponses(trx: any, taskId: number, formData: Record<s
   }
 }
 
-async function persistOpenBankingResponses(trx: any, taskId: number, formData: Record<string, any>): Promise<void> {
-  const obLogContext = { namespace: 'OpenBankingPersistence', taskId };
-  logger.info('Persisting Open Banking responses', obLogContext);
+async function persistOpenBankingResponses(trx: any, taskId: number, formData: Record<string, any>, transactionId?: string): Promise<void> {
+  const startTime = performance.now();
+  const obLogContext = { 
+    namespace: 'OpenBankingPersistence',
+    taskId,
+    transactionId 
+  };
+  
+  logger.info('Persisting Open Banking responses', {
+    ...obLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     const responses = formData.responses || {};
     const responseKeys = Object.keys(responses);
-    logger.info(`Processing ${responseKeys.length} Open Banking responses for task ${taskId}`, obLogContext);
+    logger.info(`Processing ${responseKeys.length} Open Banking responses for task ${taskId}`, {
+      ...obLogContext,
+      fieldCount: responseKeys.length,
+      timestamp: new Date().toISOString()
+    });
     
     // Batch insert all responses using transaction
     if (responseKeys.length > 0) {
@@ -577,15 +660,29 @@ async function handleKy3pPostSubmission(
   trx: any,
   taskId: number,
   companyId: number,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  transactionId?: string
 ): Promise<string[]> {
-  const ky3pPostLogContext = { namespace: 'Ky3pPostSubmission', taskId, companyId };
+  const startTime = performance.now();
+  const ky3pPostLogContext = { 
+    namespace: 'Ky3pPostSubmission', 
+    taskId, 
+    companyId,
+    transactionId 
+  };
   
-  logger.info('Processing KY3P post-submission logic', ky3pPostLogContext);
+  logger.info('Processing KY3P post-submission logic', {
+    ...ky3pPostLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     // KY3P doesn't unlock any tabs
-    logger.info('KY3P post-submission completed (no tabs to unlock)', ky3pPostLogContext);
+    logger.info('KY3P post-submission completed (no tabs to unlock)', {
+      ...ky3pPostLogContext,
+      duration: `${(performance.now() - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
+    });
     
     // Return empty array since no tabs are unlocked
     return [];
@@ -593,7 +690,8 @@ async function handleKy3pPostSubmission(
     logger.error('Error in KY3P post-submission processing', {
       ...ky3pPostLogContext,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     });
     throw error; // Re-throw to trigger transaction rollback
   }
@@ -610,11 +708,21 @@ async function handleOpenBankingPostSubmission(
   trx: any,
   taskId: number,
   companyId: number,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  transactionId?: string
 ): Promise<string[]> {
-  const obPostLogContext = { namespace: 'OpenBankingPostSubmission', taskId, companyId };
+  const startTime = performance.now();
+  const obPostLogContext = { 
+    namespace: 'OpenBankingPostSubmission', 
+    taskId, 
+    companyId,
+    transactionId 
+  };
   
-  logger.info('Processing Open Banking post-submission logic', obPostLogContext);
+  logger.info('Processing Open Banking post-submission logic', {
+    ...obPostLogContext,
+    timestamp: new Date().toISOString()
+  });
   
   try {
     // Open Banking unlocks Dashboard and Insights tabs
@@ -631,12 +739,19 @@ async function handleOpenBankingPostSubmission(
       })
       .where(eq(companies.id, companyId));
     
-    logger.info('Updated company onboarding status', { ...obPostLogContext });
+    logger.info('Updated company onboarding status', { 
+      ...obPostLogContext,
+      timestamp: new Date().toISOString()
+    });
     
     // Generate risk score based on survey responses
-    const riskScore = await generateRiskScore(trx, taskId, formData);
+    const riskScore = await generateRiskScore(trx, taskId, formData, transactionId);
     
-    logger.info('Generated risk score', { ...obPostLogContext, riskScore });
+    logger.info('Generated risk score', { 
+      ...obPostLogContext, 
+      riskScore,
+      timestamp: new Date().toISOString()
+    });
     
     // Update accreditation status
     await trx.update(companies)
@@ -646,11 +761,17 @@ async function handleOpenBankingPostSubmission(
       })
       .where(eq(companies.id, companyId));
     
-    logger.info('Updated accreditation status', { ...obPostLogContext });
+    logger.info('Updated accreditation status', { 
+      ...obPostLogContext,
+      timestamp: new Date().toISOString()
+    });
     
+    const endTime = performance.now();
     logger.info('Open Banking post-submission completed successfully', {
       ...obPostLogContext,
-      unlockedTabs
+      unlockedTabs,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
     
     return unlockedTabs;
@@ -658,7 +779,8 @@ async function handleOpenBankingPostSubmission(
     logger.error('Error in Open Banking post-submission processing', {
       ...obPostLogContext,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     });
     throw error; // Re-throw to trigger transaction rollback
   }
