@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { CompanyTabsService } from '../services/companyTabsService';
+import { CompanyTabsService, unlockCompanyTabs } from '../services/companyTabsService';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
