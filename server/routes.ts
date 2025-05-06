@@ -450,6 +450,18 @@ export function registerRoutes(app: Express): Express {
     console.error('[Routes] Error setting up transaction-based unified form submission router:', error);
   }
   
+  // Register our new truly unified form submission endpoint that works for all form types
+  try {
+    console.log('[Routes] Setting up unified form submission router');
+    // Use previously imported module
+    // We already imported createUnifiedFormSubmissionRouter at the top of the file
+    const newUnifiedRouter = createUnifiedFormSubmissionRouter();
+    app.use('/api/submit-form', newUnifiedRouter);
+    console.log('[Routes] Successfully registered unified form submission router');
+  } catch (error) {
+    console.error('[Routes] Error setting up unified form submission router:', error);
+  }
+  
   // Register our new transactional form submission router that ensures atomic operations
   try {
     console.log('[Routes] Setting up transactional form submission router');

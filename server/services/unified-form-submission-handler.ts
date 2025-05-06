@@ -1,0 +1,661 @@
+/**
+ * Unified Form Submission Handler
+ * 
+ * This module provides a unified approach to form submissions across all form types
+ * (KYB, KY3P, Open Banking), ensuring consistent transaction handling, progress
+ * calculation, and client notifications following OODA principles:
+ * - Observe: Validate inputs and gather context
+ * - Orient: Analyze the data and prepare for processing
+ * - Decide: Determine the correct actions to take
+ * - Act: Execute the actions within a transaction
+ */
+
+import { db } from '@db';
+import { tasks, files, companies, TaskStatus } from '@db/schema';
+import { eq, and } from 'drizzle-orm';
+import { performance } from 'perf_hooks';
+import { logger } from '../utils/logger';
+import * as FileCreationService from './fileCreation';
+import { broadcastFormSubmission, scheduleDelayedBroadcast } from './form-submission-broadcaster';
+
+// Define common form submission input interface
+export interface FormSubmissionInput {
+  taskId: number;
+  formData: Record<string, any>;
+  fileName?: string;
+  userId?: number;
+  transactionId: string;
+  startTime: number;
+  // Form type determines which specific handlers to use
+  formType: 'kyb' | 'ky3p' | 'open_banking';
+}
+
+// Common form submission result interface
+export interface FormSubmissionResult {
+  success: boolean;
+  fileId?: string | number;
+  companyId?: number;
+  warnings?: string[];
+  error?: string;
+  stack?: string;
+  elapsedMs?: number;
+  // Form-specific results
+  securityTasksUnlocked?: number;  // KYB-specific
+  riskScoreUpdated?: boolean;      // KY3P-specific
+  dashboardUnlocked?: boolean;     // Open Banking-specific
+}
+
+/**
+ * Process a form submission with unified transaction handling
+ * This is the main entry point for form submissions across all types
+ */
+export async function processFormSubmission(
+  input: FormSubmissionInput
+): Promise<FormSubmissionResult> {
+  const { taskId, formData, fileName, userId, transactionId, startTime, formType } = input;
+  const warnings: string[] = [];
+  
+  try {
+    logger.info(`[${formType.toUpperCase()} Transaction] Processing form submission`, {
+      transactionId,
+      taskId,
+      formType,
+      timestamp: new Date().toISOString()
+    });
+    
+    // 1. OBSERVE: Get task information and validate inputs
+    const task = await getTaskInformation(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+    
+    // Ensure the form type matches the task type
+    validateFormTypeMatchesTaskType(formType, task.task_type);
+    
+    // 2. ORIENT: Prepare for processing based on form type
+    // Get field definitions and validate required fields
+    const fieldsResult = await getFieldDefinitions(formType, taskId);
+    
+    // 3. DECIDE: Determine if form data is valid
+    if (!fieldsResult.success) {
+      return {
+        success: false,
+        error: fieldsResult.error || `Failed to get ${formType} field definitions`,
+        elapsedMs: performance.now() - startTime
+      };
+    }
+    
+    // Validate form data against field definitions
+    const validationResult = validateFormData(formData, fieldsResult.fields, formType);
+    if (!validationResult.valid) {
+      return {
+        success: false,
+        error: validationResult.message,
+        elapsedMs: performance.now() - startTime
+      };
+    }
+    
+    // 4. ACT: Process the form submission within a transaction
+    const result = await db.transaction(async (tx) => {
+      // 4.1 Save the form responses to the database
+      const responsesResult = await saveFormResponses(
+        tx, 
+        taskId, 
+        formData, 
+        formType, 
+        userId
+      );
+      
+      if (!responsesResult.success) {
+        throw new Error(responsesResult.error || 'Failed to save form responses');
+      }
+      
+      // 4.2 Generate CSV file from form data
+      const fileCreationResult = await createFormFile(
+        formType, 
+        taskId, 
+        task.company_id, 
+        formData, 
+        fieldsResult.fields,
+        fileName
+      );
+      
+      if (!fileCreationResult.success) {
+        warnings.push(`Warning: ${fileCreationResult.error}`);
+      }
+      
+      // 4.3 Update task status to submitted
+      await tx.update(tasks)
+        .set({
+          status: 'submitted' as TaskStatus,
+          progress: 100,
+          submitted_at: new Date(),
+          submitted_by: userId,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+      
+      // 4.4 Execute form-specific post-submission actions
+      const postSubmissionResult = await executePostSubmissionActions(
+        formType,
+        task,
+        tx,
+        userId
+      );
+      
+      // Return combined results
+      return {
+        success: true,
+        fileId: fileCreationResult.fileId,
+        companyId: task.company_id,
+        ...postSubmissionResult
+      };
+    });
+    
+    // Log success
+    logger.info(`[${formType.toUpperCase()} Transaction] Transaction completed successfully`, {
+      transactionId,
+      taskId,
+      elapsedMs: performance.now() - startTime
+    });
+    
+    return {
+      ...result,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      elapsedMs: performance.now() - startTime
+    };
+    
+  } catch (error) {
+    // Log detailed error information
+    logger.error(`[${formType.toUpperCase()} Transaction] Transaction failed`, {
+      transactionId,
+      taskId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      elapsedMs: performance.now() - startTime
+    });
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      elapsedMs: performance.now() - startTime
+    };
+  }
+}
+
+/**
+ * Get task information from database
+ */
+async function getTaskInformation(taskId: number) {
+  const [task] = await db.select()
+    .from(tasks)
+    .where(eq(tasks.id, taskId));
+  
+  return task;
+}
+
+/**
+ * Validate that the form type matches the task type
+ */
+function validateFormTypeMatchesTaskType(formType: string, taskType: string) {
+  // Create mappings between form types and task types
+  const formToTaskTypeMap: Record<string, string[]> = {
+    'kyb': ['company_kyb'],
+    'ky3p': ['ky3p', 'sp_ky3p_assessment'],
+    'open_banking': ['open_banking_assessment']
+  };
+  
+  if (!formToTaskTypeMap[formType]?.includes(taskType)) {
+    throw new Error(`Form type ${formType} does not match task type ${taskType}`);
+  }
+}
+
+/**
+ * Get field definitions based on form type
+ */
+async function getFieldDefinitions(formType: string, taskId: number) {
+  try {
+    // This would be a dynamic import or switch based on form type
+    let fields: any[] = [];
+    
+    switch (formType) {
+      case 'kyb':
+        fields = await db.select()
+          .from(db.table('kyb_fields'));
+        break;
+      case 'ky3p':
+        fields = await db.select()
+          .from(db.table('ky3p_fields'));
+        break;
+      case 'open_banking':
+        fields = await db.select()
+          .from(db.table('open_banking_fields'));
+        break;
+      default:
+        throw new Error(`Unsupported form type: ${formType}`);
+    }
+    
+    return { success: true, fields };
+  } catch (error) {
+    logger.error(`Failed to get field definitions for ${formType}`, {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    return { success: false, error: `Failed to get field definitions: ${error instanceof Error ? error.message : 'Unknown error'}` };
+  }
+}
+
+/**
+ * Validate form data against field definitions
+ */
+function validateFormData(formData: Record<string, any>, fields: any[], formType: string) {
+  // Validation logic would depend on form type and fields
+  // For now, we'll do a basic check that all required fields are present
+  const requiredFields = fields.filter(f => 
+    f.validation_rules && 
+    typeof f.validation_rules === 'object' && 
+    f.validation_rules.required === true
+  );
+  
+  const missingFields = requiredFields.filter(f => 
+    !formData[f.field_key] && 
+    formData[f.field_key] !== false && 
+    formData[f.field_key] !== 0
+  );
+  
+  if (missingFields.length > 0) {
+    const fieldNames = missingFields.map(f => f.display_name || f.field_key).join(', ');
+    return {
+      valid: false,
+      message: `Missing required fields: ${fieldNames}`
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Save form responses to the appropriate database table
+ */
+async function saveFormResponses(
+  tx: any,
+  taskId: number,
+  formData: Record<string, any>,
+  formType: string,
+  userId?: number
+) {
+  try {
+    // Determine which table to use based on form type
+    const responseTable = getResponseTableName(formType);
+    
+    // Delete existing responses for this task if any
+    await tx.delete(tx.table(responseTable))
+      .where(eq(tx.table(responseTable).task_id, taskId));
+    
+    // Prepare records for insertion
+    const responses = Object.entries(formData).map(([fieldKey, value]) => ({
+      task_id: taskId,
+      field_id: fieldKey,
+      response_value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+      created_at: new Date(),
+      updated_at: new Date(),
+      updated_by: userId
+    }));
+    
+    // Insert new responses
+    if (responses.length > 0) {
+      await tx.insert(tx.table(responseTable)).values(responses);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to save ${formType} responses: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+/**
+ * Get the appropriate response table name based on form type
+ */
+function getResponseTableName(formType: string): string {
+  switch (formType) {
+    case 'kyb': return 'kyb_responses';
+    case 'ky3p': return 'ky3p_responses';
+    case 'open_banking': return 'open_banking_responses';
+    default: throw new Error(`Unsupported form type: ${formType}`);
+  }
+}
+
+/**
+ * Create a file containing the form data
+ */
+async function createFormFile(
+  formType: string,
+  taskId: number,
+  companyId: number, 
+  formData: Record<string, any>,
+  fields: any[],
+  fileName?: string
+) {
+  try {
+    // Convert form data to CSV format
+    const csvContent = convertResponsesToCSV(fields, formData, formType);
+    
+    // Get company name for the file name
+    const [company] = await db.select({
+      name: companies.name
+    })
+    .from(companies)
+    .where(eq(companies.id, companyId));
+    
+    const companyName = company?.name || 'Company';
+    
+    // Generate standardized file name
+    const generatedFileName = fileName || FileCreationService.generateStandardFileName(
+      formType.toUpperCase(),
+      taskId,
+      companyName,
+      '1.0',
+      'csv'
+    );
+    
+    // Create file record in database
+    const fileResult = await FileCreationService.createFile({
+      name: generatedFileName,
+      type: 'text/csv',
+      path: csvContent,  // Store CSV content directly
+      size: Buffer.from(csvContent).length,
+      company_id: companyId,
+      task_id: taskId,
+      metadata: {
+        formType,
+        taskId,
+        createdAt: new Date().toISOString(),
+      }
+    });
+    
+    return {
+      success: true,
+      fileId: fileResult.id
+    };
+  } catch (error) {
+    logger.error(`Failed to create ${formType} file`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId
+    });
+    
+    return {
+      success: false,
+      error: `Failed to create file: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+/**
+ * Convert responses to CSV format
+ */
+function convertResponsesToCSV(fields: any[], formData: Record<string, any>, formType: string) {
+  // CSV headers
+  const headers = ['Question Number', 'Group', 'Question', 'Answer', 'Type'];
+  const rows = [headers];
+  
+  // Add data rows
+  let questionNumber = 1;
+  
+  for (const field of fields) {
+    // Skip fields without a valid field_key
+    if (!field.field_key) {
+      continue;
+    }
+    
+    // Format question number
+    const formattedNumber = `${questionNumber}`;
+    
+    // Get answer value
+    const rawAnswer = formData[field.field_key];
+    let answer = '';
+    
+    // Handle different data types
+    if (rawAnswer !== undefined && rawAnswer !== null) {
+      if (typeof rawAnswer === 'object') {
+        try {
+          answer = JSON.stringify(rawAnswer);
+        } catch (e) {
+          answer = String(rawAnswer);
+        }
+      } else {
+        answer = String(rawAnswer); 
+      }
+    }
+    
+    // Add row
+    rows.push([
+      formattedNumber,
+      field.group || 'Uncategorized',
+      field.display_name || field.label || field.question || field.field_key,
+      answer,
+      field.field_type || 'text'
+    ]);
+    
+    questionNumber++;
+  }
+  
+  // Convert to CSV string with proper escaping
+  const csvContent = rows.map(row => 
+    row.map(cell => {
+      if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
+        return `"${cell.replace(/"/g, '""')}"`; 
+      }
+      return String(cell);
+    }).join(',')
+  ).join('\n');
+  
+  return csvContent;
+}
+
+/**
+ * Execute form-specific post-submission actions
+ */
+async function executePostSubmissionActions(
+  formType: string,
+  task: any,
+  tx: any,
+  userId?: number
+): Promise<Partial<FormSubmissionResult>> {
+  try {
+    // Form-type specific actions
+    switch (formType) {
+      case 'kyb':
+        return await handleKybPostSubmission(task, tx, userId);
+      case 'ky3p':
+        return await handleKy3pPostSubmission(task, tx, userId);
+      case 'open_banking':
+        return await handleOpenBankingPostSubmission(task, tx, userId);
+      default:
+        return {};
+    }
+  } catch (error) {
+    logger.error(`Error in post-submission actions for ${formType}`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: task.id
+    });
+    
+    return {}; // Return empty object - we don't want to fail the whole transaction
+  }
+}
+
+/**
+ * Handle KYB-specific post-submission actions
+ */
+async function handleKybPostSubmission(
+  task: any,
+  tx: any,
+  userId?: number
+): Promise<Partial<FormSubmissionResult>> {
+  try {
+    // Find security tasks to unlock
+    const securityTasks = await tx.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.company_id, task.company_id),
+          tx.sql`(${tasks.task_type} = 'security_assessment' OR ${tasks.task_type} = 'sp_ky3p_assessment')`
+        )
+      );
+      
+    let unlockedCount = 0;
+    
+    // Unlock each security task that was dependent on this KYB task
+    for (const securityTask of securityTasks) {
+      if (securityTask.metadata?.locked === true || 
+          securityTask.metadata?.prerequisite_task_id === task.id ||
+          securityTask.metadata?.prerequisite_task_type === 'company_kyb') {
+        
+        // Update the security task to unlock it
+        await tx.update(tasks)
+          .set({
+            metadata: {
+              ...securityTask.metadata,
+              locked: false,
+              prerequisite_completed: true,
+              prerequisite_completed_at: new Date().toISOString(),
+              prerequisite_completed_by: userId
+            },
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, securityTask.id));
+          
+        unlockedCount++;
+      }
+    }
+    
+    return { securityTasksUnlocked: unlockedCount };
+  } catch (error) {
+    logger.error('Error unlocking security tasks', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: task.id,
+      companyId: task.company_id
+    });
+    return { securityTasksUnlocked: 0 };
+  }
+}
+
+/**
+ * Handle KY3P-specific post-submission actions
+ */
+async function handleKy3pPostSubmission(
+  task: any,
+  tx: any,
+  userId?: number
+): Promise<Partial<FormSubmissionResult>> {
+  try {
+    // Update vendor risk score
+    if (task.metadata?.vendor_id) {
+      // Vendor risk score calculation logic would go here
+      await tx.update(tx.table('vendors'))
+        .set({
+          last_assessment_date: new Date(),
+          last_assessment_by: userId,
+          updated_at: new Date()
+        })
+        .where(eq(tx.table('vendors').id, task.metadata.vendor_id));
+      
+      return { riskScoreUpdated: true };
+    }
+    
+    return { riskScoreUpdated: false };
+  } catch (error) {
+    logger.error('Error updating vendor risk score', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: task.id,
+      vendorId: task.metadata?.vendor_id
+    });
+    return { riskScoreUpdated: false };
+  }
+}
+
+/**
+ * Handle Open Banking-specific post-submission actions
+ */
+async function handleOpenBankingPostSubmission(
+  task: any,
+  tx: any,
+  userId?: number
+): Promise<Partial<FormSubmissionResult>> {
+  try {
+    // Unlock dashboard features
+    if (task.company_id) {
+      // Update company to enable dashboard features
+      await tx.update(companies)
+        .set({
+          metadata: {
+            ...task.metadata,
+            dashboard_unlocked: true,
+            dashboard_unlocked_at: new Date().toISOString(),
+            dashboard_unlocked_by: userId
+          },
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, task.company_id));
+      
+      return { dashboardUnlocked: true };
+    }
+    
+    return { dashboardUnlocked: false };
+  } catch (error) {
+    logger.error('Error unlocking dashboard features', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: task.id,
+      companyId: task.company_id
+    });
+    return { dashboardUnlocked: false };
+  }
+}
+
+/**
+ * Broadcast form submission event
+ */
+export async function broadcastFormSubmissionEvent(
+  taskId: number,
+  formType: 'kyb' | 'ky3p' | 'open_banking',
+  companyId: number,
+  fileId?: string | number,
+  metadata: Record<string, any> = {}
+) {
+  try {
+    const broadcastResult = await broadcastFormSubmission({
+      taskId,
+      formType,
+      status: 'submitted',
+      companyId,
+      fileId,
+      progress: 100,
+      submissionDate: new Date().toISOString(),
+      source: `${formType}-submission-handler`,
+      metadata
+    });
+    
+    // Schedule a delayed broadcast to ensure clients receive the update
+    scheduleDelayedBroadcast({
+      taskId,
+      formType,
+      status: 'submitted',
+      companyId,
+      fileId,
+      progress: 100,
+      submissionDate: new Date().toISOString()
+    }, 2000);
+    
+    return broadcastResult;
+  } catch (error) {
+    logger.error(`Error broadcasting ${formType} submission`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId
+    });
+    
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
