@@ -1,0 +1,620 @@
+> rest-express@1.0.0 dev
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[Auth] Setting up authentication...
+[Auth] Setting up PostgreSQL session store
+[Auth] PostgreSQL session store initialized successfully
+[Auth] Authentication setup completed
+[2025-05-06T15:56:37.800Z] [INFO] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes
+[2025-05-06T15:56:37.801Z] [INFO] Registering KY3P batch update routes
+[2025-05-06T15:56:37.801Z] [INFO] [UnifiedKY3P] Registering unified KY3P update routes
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-06T15:56:37.801Z] [INFO] Registering KY3P field update routes
+[2025-05-06T15:56:37.802Z] [INFO] [OpenBankingRoutes] Setting up routes...
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-06T15:56:37.804Z] [INFO] [WebSocket] Setting up WebSocket server on path /ws
+[INFO] Unified WebSocket server initialized successfully with details: {
+  clients: 0,
+  path: '/ws',
+  id: 'kjc8fo',
+  timestamp: '2025-05-06T15:56:37.805Z'
+}
+[2025-05-06T15:56:37.807Z] [INFO] [WebSocket] WebSocket server initialized successfully
+[2025-05-06T15:56:37.807Z] [INFO] [ServerStartup] WebSocket server initialized with unified implementation
+[2025-05-06T15:56:37.808Z] [INFO] [TaskWebSocket] WebSocket server registered with unified implementation
+[2025-05-06T15:56:37.808Z] [INFO] [ServerStartup] WebSocket server registered with task-update utility
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-06T15:56:37.808Z] [INFO] [ServerStartup] WebSocket server registered with task-broadcast utility
+[2025-05-06T15:56:37.808Z] [INFO] Setting up Vite development server
+[ENV] Using PORT=5000 from environment (override: yes)
+[ENV] Environment=development (production: no)
+[2025-05-06T15:56:37.822Z] [INFO] Server running on 0.0.0.0:5000
+[2025-05-06T15:56:37.822Z] [INFO] Environment: development
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-06T15:56:37.822Z] [INFO] Starting periodic task reconciliation system...
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-06T15:56:37.822Z] [INFO] Task reconciliation system initialized successfully
+[INFO] [WebSocket] Client connected: client-1746546998771-m50xgkl
+[2025-05-06T15:56:38.808Z] [INFO] [ServerStartup] WebSocket server active with 1 connected clients
+[INFO] [WebSocket] Received message from client client-1746546998771-m50xgkl: {
+  type: 'authenticate',
+  data: { timestamp: '2025-05-06T15:56:38.812Z' }
+}
+[INFO] [WebSocket] Authentication from client client-1746546998771-m50xgkl: { userId: undefined, companyId: undefined, hasToken: true }
+[INFO] [WebSocket] Client connected: client-1746546999748-e3965ho
+[INFO] [WebSocket] Received message from client client-1746546999748-e3965ho: {
+  type: 'authenticate',
+  userId: null,
+  companyId: null,
+  clientId: 'ws_1746546884317_mykopif9l',
+  timestamp: '2025-05-06T15:56:39.792Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746546999748-e3965ho: { userId: null, companyId: null, hasToken: true }
+[INFO] [WebSocket] Client connected: client-1746547000266-j67jkw0
+[2025-05-06T15:56:40.346Z] New client connected to the pool (1/3)
+[Current Company] Fetching company for user: { userId: 314, companyId: 271 }
+[2025-05-06T15:56:40.479Z] New client connected to the pool (2/3)
+[Current Company] Found company: {
+  id: 271,
+  name: 'DevTest16',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Auth] Returning user session data
+[2025-05-06T15:56:40.529Z] [INFO] GET /api/companies/current 200 in 70ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:56:40.760Z] [INFO] GET /api/companies/current 304 in 39ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[INFO] [WebSocket] Received message from client client-1746547000266-j67jkw0: {
+  type: 'authenticate',
+  userId: 314,
+  companyId: 271,
+  clientId: 'ws_1746546999305_6hyhljoki',
+  timestamp: '2025-05-06T15:56:40.807Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746547000266-j67jkw0: { userId: 314, companyId: 271, hasToken: true }
+[2025-05-06T15:56:43.305Z] [INFO] GET /api/companies/current 304 in 32ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[INFO] [WebSocket] Client disconnected: client-1746546998771-m50xgkl { code: 1001, reason: 'No reason provided', connectionDuration: '6s' }
+[INFO] [WebSocket] Client disconnected: client-1746547000266-j67jkw0 { code: 1001, reason: 'No reason provided', connectionDuration: '4s' }
+[INFO] [WebSocket] Client disconnected: client-1746546999748-e3965ho { code: 1001, reason: 'No reason provided', connectionDuration: '5s' }
+[2025-05-06T15:56:50.858Z] New client connected to the pool (3/3)
+[INFO] [WebSocket] Client connected: client-1746547011740-i2tqkxh
+[Auth] Unauthenticated user session
+[INFO] [WebSocket] Received message from client client-1746547011740-i2tqkxh: {
+  type: 'authenticate',
+  data: { timestamp: '2025-05-06T15:56:51.840Z' }
+}
+[INFO] [WebSocket] Authentication from client client-1746547011740-i2tqkxh: { userId: undefined, companyId: undefined, hasToken: false }
+[INFO] [WebSocket] Client connected: client-1746547012806-pvu2a89
+[Auth] Unauthenticated user session
+[INFO] [WebSocket] Received message from client client-1746547012806-pvu2a89: {
+  type: 'authenticate',
+  userId: null,
+  companyId: null,
+  clientId: 'ws_1746547012791_6b7einsmm',
+  timestamp: '2025-05-06T15:56:52.822Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746547012806-pvu2a89: { userId: null, companyId: null, hasToken: false }
+[INFO] [WebSocket] Client disconnected: client-1746547012806-pvu2a89 { code: 1001, reason: 'No reason provided', connectionDuration: '0s' }
+[INFO] [WebSocket] Client disconnected: client-1746547011740-i2tqkxh { code: 1001, reason: 'No reason provided', connectionDuration: '1s' }
+[Auth] Returning user session data
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 314, company_id: 271, email: '16@e.com' }
+[2025-05-06T15:56:59.907Z] [INFO] Performing dynamic task unlocking check for company {"companyId":271,"userId":314}
+[2025-05-06T15:56:59.937Z] [INFO] GET /api/companies/current 304 in 31ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:56:59.960Z] [ERROR] Error in dynamic security task unlock check {"error":"column \"prerequisite_completed\" does not exist","stack":"error: column \"prerequisite_completed\" does not exist\n    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)\n    at async checkAndUnlockSecurityTasks (/home/runner/workspace/server/routes/kyb.ts:352:22)\n    at async <anonymous> (/home/runner/workspace/server/routes.ts:1388:30)","companyId":271}
+[Tasks] Automatically unlocking all tasks for company { userId: 314, companyId: 271, requestedBy: 'automatic_task_unlock' }
+[Tasks] Error unlocking all tasks: {
+  userId: 314,
+  companyId: 271,
+  error: 'unlockAllTasks is not a function'
+}
+[Tasks] Error details: {
+  message: 'column "prerequisite_completed" does not exist',
+  code: '42703',
+  detail: undefined,
+  position: '246',
+  hint: undefined
+}
+[Tasks] Full error: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1435:24) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[2025-05-06T15:57:00.033Z] [ERROR] GET /api/tasks 500 in 127ms :: {"message":"Error fetching tasks","detail":"column \"prerequisite_completed\"...
+[INFO] [WebSocket] Client connected: client-1746547020098-8b6m3y0
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 314, company_id: 271, email: '16@e.com' }
+[2025-05-06T15:57:00.187Z] [INFO] Performing dynamic task unlocking check for company {"companyId":271,"userId":314}
+[INFO] [WebSocket] Received message from client client-1746547020098-8b6m3y0: {
+  type: 'authenticate',
+  data: { timestamp: '2025-05-06T15:57:00.142Z' }
+}
+[INFO] [WebSocket] Authentication from client client-1746547020098-8b6m3y0: { userId: undefined, companyId: undefined, hasToken: true }
+[2025-05-06T15:57:00.224Z] [ERROR] Error in dynamic security task unlock check {"error":"column \"prerequisite_completed\" does not exist","stack":"error: column \"prerequisite_completed\" does not exist\n    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)\n    at async checkAndUnlockSecurityTasks (/home/runner/workspace/server/routes/kyb.ts:352:22)\n    at async <anonymous> (/home/runner/workspace/server/routes.ts:1388:30)","companyId":271}
+[Tasks] Automatically unlocking all tasks for company { userId: 314, companyId: 271, requestedBy: 'automatic_task_unlock' }
+[Tasks] Error unlocking all tasks: {
+  userId: 314,
+  companyId: 271,
+  error: 'unlockAllTasks is not a function'
+}
+Suppressing further connection logs. Pool size: 3
+[Tasks] Error details: {
+  message: 'column "prerequisite_completed" does not exist',
+  code: '42703',
+  detail: undefined,
+  position: '246',
+  hint: undefined
+}
+[Tasks] Full error: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1435:24) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[2025-05-06T15:57:00.533Z] [ERROR] GET /api/tasks 500 in 347ms :: {"message":"Error fetching tasks","detail":"column \"prerequisite_completed\"...
+[INFO] [WebSocket] Client connected: client-1746547020599-48ct5w1
+[INFO] [WebSocket] Received message from client client-1746547020599-48ct5w1: {
+  type: 'authenticate',
+  userId: null,
+  companyId: null,
+  clientId: 'ws_1746547019555_euwtwbgg2',
+  timestamp: '2025-05-06T15:57:00.641Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746547020599-48ct5w1: { userId: null, companyId: null, hasToken: true }
+[INFO] [WebSocket] Client connected: client-1746547021086-tsu36qx
+[Auth] Returning user session data
+[2025-05-06T15:57:01.485Z] [INFO] GET /api/companies/current 304 in 37ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[INFO] [WebSocket] Received message from client client-1746547021086-tsu36qx: {
+  type: 'authenticate',
+  userId: 314,
+  companyId: 271,
+  clientId: 'ws_1746547020600_82ip4a902',
+  timestamp: '2025-05-06T15:57:01.531Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746547021086-tsu36qx: { userId: 314, companyId: 271, hasToken: true }
+[2025-05-06T15:57:03.127Z] [INFO] GET /api/companies/current 304 in 32ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:57:06.125Z] [INFO] GET /api/companies/current 304 in 31ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  679, 685, 699, 697,
+  751, 691, 758, 714,
+  707, 759
+]
+[PeriodicTaskReconciliation] Error reconciling task 679: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 685: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 699: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 697: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 751: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 691: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 758: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 714: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 707: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[PeriodicTaskReconciliation] Error reconciling task 759: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async Timeout.reconcileBatch (/home/runner/workspace/server/utils/periodic-task-reconciliation.ts:100:22) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[2025-05-06T15:57:09.233Z] [INFO] GET /api/companies/current 304 in 34ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:57:12.126Z] [INFO] GET /api/companies/current 304 in 31ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:57:15.226Z] [INFO] GET /api/companies/current 304 in 47ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 314, company_id: 271, email: '16@e.com' }
+[2025-05-06T15:57:15.483Z] [INFO] Performing dynamic task unlocking check for company {"companyId":271,"userId":314}
+[2025-05-06T15:57:15.529Z] [ERROR] Error in dynamic security task unlock check {"error":"column \"prerequisite_completed\" does not exist","stack":"error: column \"prerequisite_completed\" does not exist\n    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)\n    at async checkAndUnlockSecurityTasks (/home/runner/workspace/server/routes/kyb.ts:352:22)\n    at async <anonymous> (/home/runner/workspace/server/routes.ts:1388:30)","companyId":271}
+[Tasks] Automatically unlocking all tasks for company { userId: 314, companyId: 271, requestedBy: 'automatic_task_unlock' }
+[Tasks] Error unlocking all tasks: {
+  userId: 314,
+  companyId: 271,
+  error: 'unlockAllTasks is not a function'
+}
+[Tasks] Error details: {
+  message: 'column "prerequisite_completed" does not exist',
+  code: '42703',
+  detail: undefined,
+  position: '246',
+  hint: undefined
+}
+[Tasks] Full error: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1435:24) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[2025-05-06T15:57:15.746Z] [ERROR] GET /api/tasks 500 in 263ms :: {"message":"Error fetching tasks","detail":"column \"prerequisite_completed\"...
+[INFO] [WebSocket] Client disconnected: client-1746547021086-tsu36qx { code: 1001, reason: 'No reason provided', connectionDuration: '16s' }
+[INFO] [WebSocket] Client disconnected: client-1746547020098-8b6m3y0 { code: 1001, reason: 'No reason provided', connectionDuration: '17s' }
+[INFO] [WebSocket] Client disconnected: client-1746547020599-48ct5w1 { code: 1001, reason: 'No reason provided', connectionDuration: '17s' }
+[Auth] Returning user session data
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 314, company_id: 271, email: '16@e.com' }
+[2025-05-06T15:57:27.325Z] [INFO] Performing dynamic task unlocking check for company {"companyId":271,"userId":314}
+[2025-05-06T15:57:27.351Z] [INFO] GET /api/companies/current 304 in 30ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:57:27.354Z] [ERROR] Error in dynamic security task unlock check {"error":"column \"prerequisite_completed\" does not exist","stack":"error: column \"prerequisite_completed\" does not exist\n    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)\n    at async checkAndUnlockSecurityTasks (/home/runner/workspace/server/routes/kyb.ts:352:22)\n    at async <anonymous> (/home/runner/workspace/server/routes.ts:1388:30)","companyId":271}
+[Tasks] Automatically unlocking all tasks for company { userId: 314, companyId: 271, requestedBy: 'automatic_task_unlock' }
+[Tasks] Error unlocking all tasks: {
+  userId: 314,
+  companyId: 271,
+  error: 'unlockAllTasks is not a function'
+}
+[Tasks] Error details: {
+  message: 'column "prerequisite_completed" does not exist',
+  code: '42703',
+  detail: undefined,
+  position: '246',
+  hint: undefined
+}
+[Tasks] Full error: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1435:24) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[2025-05-06T15:57:27.419Z] [ERROR] GET /api/tasks 500 in 94ms :: {"message":"Error fetching tasks","detail":"column \"prerequisite_completed\"...
+[INFO] [WebSocket] Client connected: client-1746547047445-nxsyipt
+[INFO] [WebSocket] Received message from client client-1746547047445-nxsyipt: {
+  type: 'authenticate',
+  data: { timestamp: '2025-05-06T15:57:27.487Z' }
+}
+[INFO] [WebSocket] Authentication from client client-1746547047445-nxsyipt: { userId: undefined, companyId: undefined, hasToken: true }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 314, company_id: 271, email: '16@e.com' }
+[2025-05-06T15:57:27.591Z] [INFO] Performing dynamic task unlocking check for company {"companyId":271,"userId":314}
+[2025-05-06T15:57:27.623Z] [ERROR] Error in dynamic security task unlock check {"error":"column \"prerequisite_completed\" does not exist","stack":"error: column \"prerequisite_completed\" does not exist\n    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)\n    at async checkAndUnlockSecurityTasks (/home/runner/workspace/server/routes/kyb.ts:352:22)\n    at async <anonymous> (/home/runner/workspace/server/routes.ts:1388:30)","companyId":271}
+[Tasks] Automatically unlocking all tasks for company { userId: 314, companyId: 271, requestedBy: 'automatic_task_unlock' }
+[Tasks] Error unlocking all tasks: {
+  userId: 314,
+  companyId: 271,
+  error: 'unlockAllTasks is not a function'
+}
+[Tasks] Error details: {
+  message: 'column "prerequisite_completed" does not exist',
+  code: '42703',
+  detail: undefined,
+  position: '246',
+  hint: undefined
+}
+[Tasks] Full error: error: column "prerequisite_completed" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1435:24) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '246',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+[2025-05-06T15:57:27.895Z] [ERROR] GET /api/tasks 500 in 304ms :: {"message":"Error fetching tasks","detail":"column \"prerequisite_completed\"...
+[INFO] [WebSocket] Client connected: client-1746547047976-db0kloc
+[INFO] [WebSocket] Received message from client client-1746547047976-db0kloc: {
+  type: 'authenticate',
+  userId: null,
+  companyId: null,
+  clientId: 'ws_1746547046980_2wi4sw1f6',
+  timestamp: '2025-05-06T15:57:28.020Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746547047976-db0kloc: { userId: null, companyId: null, hasToken: true }
+[INFO] [WebSocket] Client connected: client-1746547048485-j5m9xks
+[Auth] Returning user session data
+[2025-05-06T15:57:28.867Z] [INFO] GET /api/companies/current 304 in 31ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[INFO] [WebSocket] Received message from client client-1746547048485-j5m9xks: {
+  type: 'authenticate',
+  userId: 314,
+  companyId: 271,
+  clientId: 'ws_1746547048010_mws4ip3yd',
+  timestamp: '2025-05-06T15:57:28.909Z'
+}
+[INFO] [WebSocket] Authentication from client client-1746547048485-j5m9xks: { userId: 314, companyId: 271, hasToken: true }
+[2025-05-06T15:57:30.551Z] [INFO] GET /api/companies/current 304 in 31ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
+[2025-05-06T15:57:33.539Z] [INFO] GET /api/companies/current 304 in 30ms :: {"id":271,"name":"DevTest16","category":"FinTech","is_demo":true,"revenue_tie...
