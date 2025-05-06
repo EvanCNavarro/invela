@@ -1,226 +1,325 @@
 /**
- * FormStateManager Component
+ * Form State Manager
  * 
- * A centralized component for managing form state transitions across the application.
- * This component handles:
- * 1. Proper read-only state implementation for submitted forms
- * 2. Clear visual indicators of form submission state
- * 3. Consistent form field rendering across different submission states
- * 4. Coordination with the StandardizedUniversalForm for state transitions
+ * Manages the state transitions of a form throughout its lifecycle:
+ * - Editing
+ * - Submitting
+ * - Submitted (read-only)
+ * - Error states
+ * 
+ * Provides clear visual indicators for each state and handles form
+ * submission with proper UI feedback.
  */
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { toast } from '@/hooks/use-toast';
-import getLogger from '@/utils/logger';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle, Lock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader2, Check, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { SubmissionSuccessModal } from '../modals/SubmissionSuccessModal';
+import { notify } from '@/providers/notification-provider';
+import submissionTracker from '@/utils/submission-tracker';
+import rollbackManager from '@/utils/rollback-manager';
 
-const logger = getLogger('FormStateManager');
-
-// Define the possible form states
 export type FormState = 
-  | 'editable'   // Form can be edited (default state)
-  | 'submitting' // Form is in the process of being submitted
-  | 'read-only'  // Form has been submitted and is now read-only
-  | 'error'      // Form has encountered an error during submission
-  | 'disabled';  // Form is temporarily disabled for other reasons
+  | 'idle'
+  | 'editing'
+  | 'validating'
+  | 'submitting'
+  | 'submitted'
+  | 'error'
+  | 'read-only';
 
-// Context interface
-interface FormStateContextType {
-  formState: FormState;
-  setFormState: (state: FormState) => void;
-  setReadOnly: (isReadOnly: boolean) => void;
-  isReadOnly: boolean;
-  submissionTimestamp: Date | null;
-  submittedBy: string | null;
-  taskId: number | null;
-  setSubmissionData: (data: {
-    timestamp?: Date;
-    submittedBy?: string;
-    taskId?: number;
-  }) => void;
-}
-
-// Create the context with default values
-const FormStateContext = createContext<FormStateContextType>({
-  formState: 'editable',
-  setFormState: () => {},
-  setReadOnly: () => {},
-  isReadOnly: false,
-  submissionTimestamp: null,
-  submittedBy: null,
-  taskId: null,
-  setSubmissionData: () => {}
-});
-
-// Hook for components to use the form state
-export const useFormState = () => useContext(FormStateContext);
-
-// Props interface
-interface FormStateManagerProps {
+type FormStateManagerProps = {
+  taskId: number;
+  taskType: string;
   children: React.ReactNode;
+  onSubmit: (formData: any) => Promise<{success: boolean; message: string; fileId?: string;}>;
+  onReset?: () => void;
   initialState?: FormState;
-  taskId?: number;
-  submittedBy?: string;
-  submissionTimestamp?: Date | string;
-  showStatusBar?: boolean;
-}
+  formData: any;
+  isValid: boolean;
+  showSuccessModal?: boolean;
+  successModalProps?: Record<string, any>;
+  preventSubmitWhenErrors?: boolean;
+  disabled?: boolean;
+  showSubmitButton?: boolean;
+  customButtons?: React.ReactNode;
+  readOnly?: boolean;
+  className?: string;
+};
 
-/**
- * FormStateManager component that provides form state context to its children
- */
 export function FormStateManager({
+  taskId,
+  taskType,
   children,
-  initialState = 'editable',
-  taskId = null,
-  submittedBy = null,
-  submissionTimestamp = null,
-  showStatusBar = true
+  onSubmit,
+  onReset,
+  initialState = 'idle',
+  formData,
+  isValid,
+  showSuccessModal = true,
+  successModalProps = {},
+  preventSubmitWhenErrors = true,
+  disabled = false,
+  showSubmitButton = true,
+  customButtons,
+  readOnly = false,
+  className = '',
 }: FormStateManagerProps) {
-  // Convert string timestamp to Date if needed
-  const initialTimestamp = typeof submissionTimestamp === 'string'
-    ? new Date(submissionTimestamp)
-    : submissionTimestamp as Date | null;
-
-  // State for form state and metadata
   const [formState, setFormState] = useState<FormState>(initialState);
-  const [timestamp, setTimestamp] = useState<Date | null>(initialTimestamp);
-  const [submitter, setSubmitter] = useState<string | null>(submittedBy);
-  const [task, setTask] = useState<number | null>(taskId);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<{
+    fileId: number | null;
+    message: string | null;
+    timestamp: string | Date | null;
+  }>({ fileId: null, message: null, timestamp: null });
+  const [showSuccessModalState, setShowSuccessModalState] = useState(false);
+  const { toast } = useToast();
+  const hasBeenMounted = useRef(false);
   
-  // Derived state for read-only
-  const isReadOnly = useMemo(() => {
-    return formState === 'read-only' || formState === 'submitting';
-  }, [formState]);
-
-  // Set read-only state as a convenience method
-  const setReadOnly = (isReadOnly: boolean) => {
-    setFormState(isReadOnly ? 'read-only' : 'editable');
-  };
-
-  // Set submission data
-  const setSubmissionData = (data: {
-    timestamp?: Date;
-    submittedBy?: string;
-    taskId?: number;
-  }) => {
-    if (data.timestamp) setTimestamp(data.timestamp);
-    if (data.submittedBy) setSubmitter(data.submittedBy);
-    if (data.taskId) setTask(data.taskId);
-  };
-
-  // Log state changes for debugging
+  // Handle initial state based on props
   useEffect(() => {
-    logger.info(`Form state changed to: ${formState}`, {
-      formState,
-      isReadOnly,
-      taskId: task,
-      timestamp: timestamp?.toISOString() || null
-    });
-  }, [formState, isReadOnly, task, timestamp]);
-
-  // Create context value
-  const contextValue = useMemo(() => ({
-    formState,
-    setFormState,
-    setReadOnly,
-    isReadOnly,
-    submissionTimestamp: timestamp,
-    submittedBy: submitter,
-    taskId: task,
-    setSubmissionData
-  }), [formState, isReadOnly, timestamp, submitter, task]);
-
-  return (
-    <FormStateContext.Provider value={contextValue}>
-      {showStatusBar && formState !== 'editable' && (
-        <FormStatusBar />
-      )}
-      {children}
-    </FormStateContext.Provider>
-  );
-}
-
-/**
- * Form status bar component for showing the current form state
- */
-function FormStatusBar() {
-  const { formState, submissionTimestamp, submittedBy } = useFormState();
-
-  // Format the submission timestamp
-  const formattedTimestamp = submissionTimestamp
-    ? new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(submissionTimestamp)
-    : null;
-
-  // Status bar components based on state
-  const statusComponents = {
-    'read-only': (
-      <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertTitle className="text-green-700">Form Submitted</AlertTitle>
-        <AlertDescription className="text-green-700">
-          This form was submitted {formattedTimestamp && <>on <strong>{formattedTimestamp}</strong></>}
-          {submittedBy && <> by <strong>{submittedBy}</strong></>}. It is now read-only.
-        </AlertDescription>
-      </Alert>
-    ),
-    'submitting': (
-      <Alert variant="info" className="mb-4 bg-blue-50 border-blue-200">
-        <div className="animate-spin mr-2">
-          <div className="h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent" />
-        </div>
-        <AlertTitle className="text-blue-700">Submitting Form</AlertTitle>
-        <AlertDescription className="text-blue-700">
-          Your form is being submitted. Please wait...
-        </AlertDescription>
-      </Alert>
-    ),
-    'error': (
-      <Alert variant="destructive" className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Submission Error</AlertTitle>
-        <AlertDescription>
-          There was an error submitting the form. Please try again or contact support.
-        </AlertDescription>
-      </Alert>
-    ),
-    'disabled': (
-      <Alert variant="warning" className="mb-4 bg-yellow-50 border-yellow-200">
-        <Lock className="h-4 w-4 text-yellow-600" />
-        <AlertTitle className="text-yellow-700">Form Disabled</AlertTitle>
-        <AlertDescription className="text-yellow-700">
-          This form is currently disabled. Please try again later.
-        </AlertDescription>
-      </Alert>
-    )
+    if (!hasBeenMounted.current) {
+      hasBeenMounted.current = true;
+      
+      if (readOnly) {
+        setFormState('read-only');
+      } else if (initialState !== 'idle') {
+        setFormState(initialState);
+      } else {
+        setFormState('editing');
+      }
+    }
+  }, [initialState, readOnly]);
+  
+  // Handle submission
+  const handleSubmit = async () => {
+    // Don't allow submission if already submitting
+    if (formState === 'submitting') {
+      return;
+    }
+    
+    // Don't allow submission if there are validation errors
+    if (preventSubmitWhenErrors && !isValid) {
+      notify.error('Validation Failed', 'Please correct errors before submitting');
+      setFormState('error');
+      return;
+    }
+    
+    try {
+      // Start tracking the submission
+      submissionTracker.startTracking(taskId, taskType);
+      submissionTracker.trackEvent('Starting form submission process');
+      
+      // Update state
+      setFormState('submitting');
+      setError(null);
+      
+      // Submit the form
+      submissionTracker.trackEvent('Calling onSubmit handler');
+      const result = await onSubmit(formData);
+      
+      // Handle success
+      if (result.success) {
+        submissionTracker.trackEvent('Submission succeeded', {
+          fileId: result.fileId,
+          message: result.message,
+        });
+        
+        setFormState('submitted');
+        setSuccess(true);
+        setSubmissionResult({
+          fileId: result.fileId ? Number(result.fileId) : null,
+          message: result.message || 'Submission successful',
+          timestamp: new Date(),
+        });
+        
+        // Show success notification
+        toast({
+          title: 'Form Submitted Successfully',
+          description: result.message || 'Your form has been submitted successfully.',
+          variant: 'success',
+        });
+        
+        // Show success modal if enabled
+        if (showSuccessModal) {
+          setShowSuccessModalState(true);
+        }
+        
+        // Cancel any pending rollbacks since submission succeeded
+        if (rollbackManager.hasPendingRollbacks(taskId)) {
+          rollbackManager.cancelAllForTask(taskId);
+        }
+        
+        // Stop tracking with success status
+        submissionTracker.stopTracking();
+      } else {
+        // Handle failed submission
+        submissionTracker.trackEvent('Submission returned error', {
+          message: result.message,
+        }, true);
+        
+        // Set error state
+        setFormState('error');
+        setError(result.message || 'An unknown error occurred');
+        
+        // Show error notification
+        toast({
+          title: 'Submission Failed',
+          description: result.message || 'An error occurred while submitting the form.',
+          variant: 'info',
+        });
+        
+        // Stop tracking with error code
+        submissionTracker.stopTracking(1, result.message);
+        
+        // Check if we need to execute rollbacks
+        if (rollbackManager.hasPendingRollbacks(taskId)) {
+          await rollbackManager.executeRollbackForTask(taskId);
+        }
+      }
+    } catch (err) {
+      // Handle exception
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      submissionTracker.trackEvent('Exception during submission', {
+        error: errorMessage,
+      }, true);
+      
+      // Update state
+      setFormState('error');
+      setError(errorMessage);
+      
+      // Show error notification
+      toast({
+        title: 'Submission Error',
+        description: errorMessage,
+        variant: 'warning',
+      });
+      
+      // Stop tracking with error code
+      submissionTracker.stopTracking(2, errorMessage);
+      
+      // Execute rollbacks if any
+      if (rollbackManager.hasPendingRollbacks(taskId)) {
+        await rollbackManager.executeRollbackForTask(taskId);
+      }
+    }
   };
-
-  // Return the appropriate status bar or null
-  return (
-    <div className="form-status-container">
-      {statusComponents[formState as keyof typeof statusComponents] || null}
-    </div>
-  );
-}
-
-/**
- * HOC to wrap a form with the FormStateManager
- */
-export function withFormStateManager<P extends object>(
-  Component: React.ComponentType<P>,
-  options: Omit<FormStateManagerProps, 'children'> = {}
-) {
-  return function WithFormStateManager(props: P) {
+  
+  // Handle reset
+  const handleReset = () => {
+    // Reset form state
+    setFormState('editing');
+    setError(null);
+    setSuccess(false);
+    
+    // Call onReset if provided
+    if (onReset) {
+      onReset();
+    }
+  };
+  
+  // Render submit button based on form state
+  const renderSubmitButton = () => {
+    if (!showSubmitButton) {
+      return null;
+    }
+    
+    if (formState === 'read-only' || formState === 'submitted') {
+      return null;
+    }
+    
+    if (formState === 'submitting') {
+      return (
+        <Button disabled className="relative">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Submitting...
+        </Button>
+      );
+    }
+    
     return (
-      <FormStateManager {...options}>
-        <Component {...props} />
-      </FormStateManager>
+      <Button 
+        onClick={handleSubmit} 
+        disabled={disabled || (preventSubmitWhenErrors && !isValid)}
+        className="relative"
+      >
+        {formState === 'error' ? 'Try Again' : 'Submit'}
+        {formState === 'error' && <AlertCircle className="ml-2 h-4 w-4" />}
+      </Button>
     );
   };
+  
+  // Render cancel button
+  const renderCancelButton = () => {
+    if (formState === 'read-only' || formState === 'submitted') {
+      return null;
+    }
+    
+    return (
+      <Button 
+        variant="outline" 
+        onClick={handleReset} 
+        disabled={formState === 'submitting' || disabled}
+        className="ml-2"
+      >
+        Cancel
+      </Button>
+    );
+  };
+  
+  // Handle success modal close
+  const handleSuccessModalClose = () => {
+    setShowSuccessModalState(false);
+  };
+  
+  return (
+    <div className={`form-state-manager form-state-${formState} ${className}`}>
+      {/* Apply read-only class to children if in read-only or submitted state */}
+      <div className={`form-content ${
+        (formState === 'read-only' || formState === 'submitted') ? 'form-read-only' : ''
+      }`}>
+        {children}
+      </div>
+      
+      {/* Error message */}
+      {error && (
+        <Card className="bg-red-50 border-red-200 p-3 my-4">
+          <div className="flex">
+            <AlertCircle className="text-red-600 h-5 w-5 mr-2 flex-shrink-0" />
+            <div>
+              <div className="text-red-800 font-medium">Error</div>
+              <div className="text-red-700 text-sm">{error}</div>
+            </div>
+          </div>
+        </Card>
+      )}
+      
+      {/* Form actions */}
+      <div className="form-actions mt-6 flex justify-end">
+        {customButtons || (
+          <>
+            {renderSubmitButton()}
+            {renderCancelButton()}
+          </>
+        )}
+      </div>
+      
+      {/* Success modal */}
+      {showSuccessModal && showSuccessModalState && (
+        <SubmissionSuccessModal
+          open={showSuccessModalState}
+          onClose={handleSuccessModalClose}
+          taskId={taskId}
+          taskType={taskType}
+          fileId={submissionResult.fileId}
+          message={submissionResult.message || 'Your form has been submitted successfully.'}
+          timestamp={submissionResult.timestamp}
+          {...successModalProps}
+        />
+      )}
+    </div>
+  );
 }

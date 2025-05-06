@@ -1,360 +1,306 @@
 /**
- * WebSocketEventBridge Hook
+ * WebSocket Event Bridge
  * 
- * This hook provides a reliable bridge for WebSocket events, ensuring
- * that components can subscribe to and receive WebSocket events
- * even if there are connection interruptions or race conditions.
- * 
- * It implements:
- * - Automatic reconnection with exponential backoff
- * - Event buffering during disconnection
- * - Deduplication of redundant messages
- * - Consistent event format across different event types
+ * This hook manages a reliable WebSocket connection with automatic
+ * reconnection, message deduplication, and structured event handling.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import getLogger from '@/utils/logger';
+import { notify } from '@/providers/notification-provider';
 
-const logger = getLogger('WebSocketEventBridge');
+type WebSocketReadyState = 0 | 1 | 2 | 3;
 
-// Define the WebSocket message types
-export type WebSocketMessage = {
-  type: string;
-  payload?: any;
-  data?: any; // Some legacy messages use 'data' instead of 'payload'
-  timestamp?: string;
+type WebSocketEventHandler = (data: any) => void;
+
+type WebSocketEventSubscription = {
+  eventType: string;
+  handler: WebSocketEventHandler;
+  id: string;
 };
 
-// Define the WebSocket event handler type
-export type WebSocketEventHandler = (message: WebSocketMessage) => void;
-
-// Define the supported event types
-export type WebSocketEventType = 
-  | 'task_updated'
-  | 'company_tabs_updated'
-  | 'file_created'
-  | 'form_submitted'
-  | 'pong';
+type MessageCache = {
+  [messageId: string]: {
+    timestamp: number;
+    processed: boolean;
+  };
+};
 
 /**
- * Hook for subscribing to WebSocket events
+ * Hook to manage WebSocket connections and events
  */
-export function useWebSocketEventBridge() {
-  // Reference to the WebSocket instance
-  const socketRef = useRef<WebSocket | null>(null);
+export function useWebSocketEventBridge(options: {
+  reconnectDelay?: number;
+  pingInterval?: number;
+  showNotifications?: boolean;
+  messageExpirationTime?: number;
+} = {}) {
+  const {
+    reconnectDelay = 3000,
+    pingInterval = 20000,
+    showNotifications = true,
+    messageExpirationTime = 30000, // 30 seconds
+  } = options;
   
-  // State for connection status and event handlers
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionId, setConnectionId] = useState<string | null>(null);
-  const eventHandlersRef = useRef<Map<string, Set<WebSocketEventHandler>>>(new Map());
-  
-  // Queue for messages received while disconnected
-  const messageQueueRef = useRef<WebSocketMessage[]>([]);
-  
-  // Track seen message IDs for deduplication
-  const seenMessageIdsRef = useRef<Set<string>>(new Set());
-  
-  // Generate message ID for deduplication
-  const getMessageId = useCallback((message: WebSocketMessage): string => {
-    const { type, timestamp } = message;
-    let idParts = [type];
-    
-    // For task updates, include the task ID
-    if (type === 'task_updated' && (message.payload?.taskId || message.data?.taskId)) {
-      idParts.push(String(message.payload?.taskId || message.data?.taskId));
+  const [readyState, setReadyState] = useState<WebSocketReadyState>(3); // 3 = CLOSED
+  const socket = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const eventHandlers = useRef<WebSocketEventSubscription[]>([]);
+  const messageCache = useRef<MessageCache>({});
+  const connectionId = useRef<string>(`ws_${Date.now()}_${Math.random().toString(36).substring(2)}`);
+
+  /**
+   * Setup a new WebSocket connection
+   */
+  const setupWebSocket = useCallback(() => {
+    // Clean up any existing connection
+    if (socket.current) {
+      console.info('Closing existing WebSocket connection before creating a new one');
+      socket.current.close();
     }
     
-    // For company_tabs_updated, include the company ID
-    if (type === 'company_tabs_updated' && (message.payload?.companyId || message.data?.companyId)) {
-      idParts.push(String(message.payload?.companyId || message.data?.companyId));
+    // Clear existing timeouts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
     
-    // Add timestamp if available
-    if (timestamp) {
-      idParts.push(timestamp);
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
     }
     
-    return idParts.join('-');
-  }, []);
-  
-  // Initialize WebSocket connection
-  const initWebSocket = useCallback(() => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      logger.info('WebSocket connection already open');
-      return;
-    }
+    // Determine WebSocket URL (handle both http and https)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     
     try {
-      // Set up WebSocket connection
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      logger.info(`Connecting to WebSocket: ${wsUrl}`);
+      // Create new WebSocket
+      console.info('Setting up WebSocket connection to', wsUrl);
+      const newSocket = new WebSocket(wsUrl);
+      socket.current = newSocket;
       
-      const socket = new WebSocket(wsUrl);
-      socketRef.current = socket;
-      
-      // Handle WebSocket events
-      socket.onopen = () => {
-        logger.info('WebSocket connection established');
+      // Setup event handlers
+      newSocket.onopen = () => {
+        console.info('[WebSocket] Connected');
         setIsConnected(true);
+        setReadyState(1); // 1 = OPEN
         
-        // Process any queued messages
-        if (messageQueueRef.current.length > 0) {
-          logger.info(`Processing ${messageQueueRef.current.length} queued messages`);
-          messageQueueRef.current.forEach(message => {
-            processMessage(message);
-          });
-          messageQueueRef.current = [];
+        // Start ping interval
+        pingIntervalRef.current = setInterval(() => {
+          if (newSocket.readyState === WebSocket.OPEN) {
+            // Send ping with timestamp
+            newSocket.send(JSON.stringify({
+              type: 'ping',
+              timestamp: new Date().toISOString(),
+              connectionId: connectionId.current,
+            }));
+          }
+        }, pingInterval);
+        
+        if (showNotifications) {
+          notify.success('Connected', 'Real-time connection established');
         }
-        
-        // Send authentication message
-        fetchUserDataAndAuthenticate();
       };
       
-      socket.onmessage = (event) => {
+      newSocket.onclose = (event) => {
+        console.info(`[WebSocket] Disconnected: ${event.code} - ${event.reason}`);
+        setIsConnected(false);
+        setReadyState(3); // 3 = CLOSED
+        
+        // Clear ping interval
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
+        }
+        
+        // Schedule reconnect
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.info('[WebSocket] Attempting to reconnect...');
+          setupWebSocket();
+        }, reconnectDelay);
+        
+        if (showNotifications) {
+          notify.warning('Disconnected', 'Real-time connection lost. Reconnecting...');
+        }
+      };
+      
+      newSocket.onerror = (error) => {
+        console.error('[WebSocket] Error:', error);
+      };
+      
+      newSocket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          const messageId = message.id || `${message.type}-${message.timestamp || Date.now()}`;
           
-          // Handle connection established message
-          if (message.type === 'connection_established') {
-            logger.info('WebSocket server connection confirmed with ID:', message.payload?.clientId || null);
-            setConnectionId(message.payload?.clientId || null);
+          // Log the received message
+          console.info('[WebSocket] Received message:', message);
+          console.log(`[${new Date().toISOString()}] [WebSocket] Received message of type: ${message.type}`);
+          
+          // Check for duplicates
+          if (messageCache.current[messageId]) {
+            if (messageCache.current[messageId].processed) {
+              console.log(`[WebSocket] Ignoring duplicate message: ${messageId}`);
+              return;
+            }
           }
           
-          // Handle authentication confirmation
-          if (message.type === 'authenticated') {
-            logger.info('WebSocket authentication confirmed for client:', message.payload?.clientId || null);
+          // Add to message cache
+          messageCache.current[messageId] = {
+            timestamp: Date.now(),
+            processed: true,
+          };
+          
+          // Special handling for pong messages
+          if (message.type === 'pong') {
+            return;
           }
           
-          // Log message type without full payload to reduce log volume
-          logger.debug(`Received message of type: ${message.type}`);
+          // Process the message - handle both legacy and new payload formats
+          const data = message.payload || message.data || message;
           
-          // Process the message (includes deduplication)
-          processMessage(message);
-        } catch (error) {
-          logger.error('Error processing WebSocket message:', error);
+          // Dispatch to handlers for this event type
+          const matchingHandlers = eventHandlers.current.filter(
+            (sub) => sub.eventType === message.type || sub.eventType === '*'
+          );
+          
+          matchingHandlers.forEach((subscription) => {
+            try {
+              subscription.handler(data);
+            } catch (err) {
+              console.error(
+                `[WebSocket] Error in handler for ${message.type}:`,
+                err
+              );
+            }
+          });
+        } catch (err) {
+          console.error('[WebSocket] Error processing message:', err, event.data);
         }
       };
-      
-      socket.onclose = (event) => {
-        logger.info('WebSocket connection closed', { code: event.code, reason: event.reason });
-        setIsConnected(false);
-        setConnectionId(null);
-        
-        // Schedule reconnection attempt
-        scheduleReconnect();
-      };
-      
-      socket.onerror = (error) => {
-        logger.error('WebSocket error:', error);
-      };
     } catch (error) {
-      logger.error('Error initializing WebSocket:', error);
-      scheduleReconnect();
-    }
-  }, []);
-  
-  // Fetch user data and send authentication message
-  const fetchUserDataAndAuthenticate = useCallback(async () => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      logger.warn('Cannot authenticate - WebSocket not open');
-      return;
-    }
-    
-    try {
-      logger.info('Fetching current user data for WebSocket authentication');
+      console.error('[WebSocket] Setup error:', error);
       
-      // Try to fetch current user data
-      const userResponse = await fetch('/api/me');
-      let userId = null;
-      let companyId = null;
+      // Schedule reconnect
+      reconnectTimeoutRef.current = setTimeout(() => {
+        console.info('[WebSocket] Attempting to reconnect after setup error...');
+        setupWebSocket();
+      }, reconnectDelay);
       
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        userId = userData.id;
-        companyId = userData.companyId;
+      if (showNotifications) {
+        notify.error('Connection Error', 'Failed to establish real-time connection');
       }
-      
-      // Send authentication message
-      const authMessage = {
-        type: 'authenticate',
-        userId,
-        companyId,
-        connectionId: `ws_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
-        timestamp: new Date().toISOString()
-      };
-      
-      logger.info('Sending authentication message', {
-        userId,
-        companyId,
-        connectionId: authMessage.connectionId,
-        hasUserData: !!userId,
-        hasCompanyData: !!companyId
-      });
-      
-      socketRef.current.send(JSON.stringify(authMessage));
-    } catch (error) {
-      logger.error('Error authenticating WebSocket:', error);
     }
-  }, []);
+  }, [reconnectDelay, pingInterval, showNotifications]);
   
-  // Schedule WebSocket reconnection with exponential backoff
-  const scheduleReconnect = useCallback(() => {
-    const reconnectDelay = 1000; // Start with 1 second
-    logger.info(`Scheduling reconnection attempt in ${reconnectDelay / 1000} seconds...`);
+  /**
+   * Subscribe to a specific event type
+   */
+  const subscribe = useCallback((eventType: string, handler: WebSocketEventHandler) => {
+    const id = `sub-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
     
-    setTimeout(() => {
-      logger.info('Attempting to reconnect WebSocket...');
-      initWebSocket();
-    }, reconnectDelay);
-  }, [initWebSocket]);
-  
-  // Process a WebSocket message (with deduplication)
-  const processMessage = useCallback((message: WebSocketMessage) => {
-    // Extract the message type and ensure it exists
-    const { type } = message;
-    if (!type) {
-      logger.warn('Received message without type', message);
-      return;
-    }
-    
-    // Generate a message ID for deduplication
-    const messageId = getMessageId(message);
-    
-    // Skip if we've already seen this message (deduplication)
-    if (seenMessageIdsRef.current.has(messageId)) {
-      logger.debug(`Skipping duplicate message: ${messageId}`);
-      return;
-    }
-    
-    // Mark this message as seen
-    seenMessageIdsRef.current.add(messageId);
-    
-    // If we have too many seen message IDs, clear old ones
-    if (seenMessageIdsRef.current.size > 1000) {
-      logger.debug('Clearing old message IDs from deduplication cache');
-      seenMessageIdsRef.current.clear();
-    }
-    
-    // If we don't have handlers for this message type, queue it
-    if (!isConnected || !eventHandlersRef.current.has(type)) {
-      messageQueueRef.current.push(message);
-      return;
-    }
-    
-    // Get handlers for this message type
-    const handlers = eventHandlersRef.current.get(type);
-    if (!handlers || handlers.size === 0) return;
-    
-    // Normalize payload - some messages use 'data' instead of 'payload'
-    const normalizedMessage = {
-      ...message,
-      payload: message.payload || message.data
+    // Add to event handlers
+    const subscription: WebSocketEventSubscription = {
+      eventType,
+      handler,
+      id,
     };
     
-    // Call all handlers for this message type
-    handlers.forEach(handler => {
-      try {
-        handler(normalizedMessage);
-      } catch (error) {
-        logger.error(`Error in handler for message type ${type}:`, error);
-      }
-    });
-  }, [isConnected, getMessageId]);
-  
-  // Subscribe to WebSocket events
-  const subscribe = useCallback((type: WebSocketEventType, handler: WebSocketEventHandler) => {
-    if (!eventHandlersRef.current.has(type)) {
-      eventHandlersRef.current.set(type, new Set());
-    }
+    eventHandlers.current = [...eventHandlers.current, subscription];
+    console.info(`[WebSocket] Subscribed to ${eventType} events (${id})`);
     
-    eventHandlersRef.current.get(type)!.add(handler);
-    logger.info(`Subscribed to WebSocket event type: ${type}`);
-    
-    // Process any queued messages of this type immediately
-    const queuedMessages = messageQueueRef.current.filter(m => m.type === type);
-    if (queuedMessages.length > 0) {
-      logger.info(`Processing ${queuedMessages.length} queued messages of type ${type}`);
-      queuedMessages.forEach(message => {
-        try {
-          handler(message);
-        } catch (error) {
-          logger.error(`Error in handler for queued message of type ${type}:`, error);
-        }
-      });
-      
-      // Remove processed messages from the queue
-      messageQueueRef.current = messageQueueRef.current.filter(m => m.type !== type);
-    }
-    
-    // Return unsubscribe function
+    // Return an unsubscribe function
     return () => {
-      if (eventHandlersRef.current.has(type)) {
-        eventHandlersRef.current.get(type)!.delete(handler);
-        
-        // If no handlers left, remove the entry
-        if (eventHandlersRef.current.get(type)!.size === 0) {
-          eventHandlersRef.current.delete(type);
-        }
-      }
+      eventHandlers.current = eventHandlers.current.filter((sub) => sub.id !== id);
+      console.info(`[WebSocket] Unsubscribed from ${eventType} events (${id})`);
     };
   }, []);
   
-  // Send a WebSocket message
-  const send = useCallback((message: any) => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      logger.warn('Cannot send message - WebSocket not open', message);
+  /**
+   * Send a message over the WebSocket
+   */
+  const sendMessage = useCallback((type: string, data: any) => {
+    if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
+      console.warn('[WebSocket] Cannot send message, socket not open');
       return false;
     }
     
     try {
-      socketRef.current.send(JSON.stringify(message));
+      const message = {
+        type,
+        data,
+        timestamp: new Date().toISOString(),
+        clientId: connectionId.current,
+      };
+      
+      socket.current.send(JSON.stringify(message));
       return true;
-    } catch (error) {
-      logger.error('Error sending WebSocket message:', error);
+    } catch (err) {
+      console.error('[WebSocket] Error sending message:', err);
       return false;
     }
   }, []);
   
-  // Send a ping message
-  const sendPing = useCallback(() => {
-    return send({
-      type: 'ping',
-      timestamp: new Date().toISOString(),
-      connectionId: connectionId
+  /**
+   * Clean up message cache by removing expired messages
+   */
+  const cleanupMessageCache = useCallback(() => {
+    const now = Date.now();
+    const expiredIds = Object.keys(messageCache.current).filter(
+      (id) => now - messageCache.current[id].timestamp > messageExpirationTime
+    );
+    
+    expiredIds.forEach((id) => {
+      delete messageCache.current[id];
     });
-  }, [send, connectionId]);
+    
+    if (expiredIds.length > 0) {
+      console.info(`[WebSocket] Cleaned up ${expiredIds.length} expired messages`);
+    }
+  }, [messageExpirationTime]);
   
-  // Initialize WebSocket when component mounts
+  /**
+   * Force reconnect the WebSocket
+   */
+  const reconnect = useCallback(() => {
+    console.info('[WebSocket] Manual reconnect triggered');
+    setupWebSocket();
+  }, [setupWebSocket]);
+  
+  // Setup WebSocket on mount and clean up on unmount
   useEffect(() => {
-    logger.info('WebSocketEventBridge initializing');
-    initWebSocket();
+    setupWebSocket();
     
-    // Set up periodic pings to keep connection alive
-    const pingInterval = setInterval(() => {
-      if (isConnected) {
-        sendPing();
-      }
-    }, 20000); // 20 seconds
+    // Setup message cache cleanup interval
+    const cacheCleanupInterval = setInterval(cleanupMessageCache, messageExpirationTime / 2);
     
-    // Clean up when component unmounts
     return () => {
-      logger.info('Cleaning up event bridge');
-      clearInterval(pingInterval);
-      
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
+      // Clean up WebSocket
+      if (socket.current) {
+        socket.current.close();
+        socket.current = null;
       }
+      
+      // Clean up timeouts and intervals
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+      }
+      
+      clearInterval(cacheCleanupInterval);
     };
-  }, [initWebSocket, isConnected, sendPing]);
+  }, [setupWebSocket, messageExpirationTime, cleanupMessageCache]);
   
-  // Return the API
   return {
     isConnected,
-    connectionId,
+    readyState,
     subscribe,
-    send,
-    sendPing
+    sendMessage,
+    reconnect,
   };
 }

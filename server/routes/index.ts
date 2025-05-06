@@ -1,26 +1,34 @@
 /**
- * Routes Index
+ * Main Routes File
  * 
- * This file exports route functions to be used in the main server setup.
+ * This file registers all application routes, ensuring that form submission
+ * and related endpoints are properly integrated.
  */
 
-import { Router } from 'express';
-import { createUnifiedFormSubmissionRouter } from './unified-form-submission';
-import taskProgressRouter from './task-progress';
+import { Express } from 'express';
+import taskDependenciesRouter from './task-dependencies';
+import unifiedFormSubmissionRouter from './unified-form-submission';
+import { logger } from '../utils/logger';
+
+const log = logger.child({ module: 'Routes' });
 
 /**
- * Create unified form submission router
+ * Register all application routes
+ * 
+ * @param app Express application instance
  */
-export { createUnifiedFormSubmissionRouter };
-
-/**
- * Register API routes
- */
-export function registerApiRoutes(app: any) {
-  console.log('[Routes] Setting up task progress API routes');
-  app.use('/api/tasks', taskProgressRouter);
-  console.log('[Routes] Successfully registered task progress API routes');
+export function registerRoutes(app: Express): void {
+  logger.info('Registering application routes');
+  
+  // Register task dependencies router
+  app.use(taskDependenciesRouter);
+  logger.info('Registered task dependencies router');
+  
+  // Register unified form submission router
+  app.use(unifiedFormSubmissionRouter);
+  logger.info('Successfully registered unified form submission router');
+  
+  // Add more routers here as needed
+  
+  logger.info('Routes setup completed');
 }
-
-// Test routes have been removed
-// They have been replaced with standardized implementations
