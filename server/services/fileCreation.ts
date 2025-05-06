@@ -164,7 +164,7 @@ export async function createTaskFile(
         displayName: kybFields.display_name,
         status: kybResponses.status,
         stepIndex: kybFields.step_index,
-        displayOrder: kybFields.display_order,
+        displayOrder: kybFields.order,
         group: kybFields.group
       })
       .from(kybResponses)
@@ -172,7 +172,7 @@ export async function createTaskFile(
       .where(eq(kybResponses.task_id, taskId))
       .orderBy(
         kybFields.step_index, 
-        kybFields.display_order
+        kybFields.order
       );
       
       // Transform to our internal format
@@ -196,7 +196,7 @@ export async function createTaskFile(
         displayName: ky3pFields.display_name, 
         status: ky3pResponses.status,
         stepIndex: ky3pFields.step_index,
-        displayOrder: ky3pFields.display_order,
+        displayOrder: ky3pFields.order,
         group: ky3pFields.group
       })
       .from(ky3pResponses)
@@ -204,7 +204,7 @@ export async function createTaskFile(
       .where(eq(ky3pResponses.task_id, taskId))
       .orderBy(
         ky3pFields.step_index, 
-        ky3pFields.display_order
+        ky3pFields.order
       );
       
       // Transform to our internal format
@@ -228,7 +228,7 @@ export async function createTaskFile(
         displayName: openBankingFields.display_name,
         status: openBankingResponses.status,
         stepIndex: openBankingFields.step_index,
-        displayOrder: openBankingFields.display_order,
+        displayOrder: openBankingFields.order,
         group: openBankingFields.group
       })
       .from(openBankingResponses)
@@ -236,7 +236,7 @@ export async function createTaskFile(
       .where(eq(openBankingResponses.task_id, taskId))
       .orderBy(
         openBankingFields.step_index, 
-        openBankingFields.display_order
+        openBankingFields.order
       );
       
       // Transform to our internal format
