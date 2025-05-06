@@ -29,12 +29,21 @@ export interface WebSocketContextType {
   forceReconnect: () => void;
 }
 
-// Create the WebSocket context
+// Create the WebSocket context with enhanced interface 
 export const WebSocketContext = createContext<WebSocketContextType>({
   socket: null,
   isConnected: false,
   lastMessage: null,
-  sendMessage: () => {}
+  sendMessage: () => {},
+  status: 'disconnected',
+  connect: () => {},
+  disconnect: () => {},
+  connectionStats: {
+    attempts: 0,
+    lastConnected: null,
+    disconnectReason: null
+  },
+  forceReconnect: () => {}
 });
 
 interface WebSocketProviderProps {
@@ -45,6 +54,17 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<any | null>(null);
+  const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'error'>('disconnected');
+  const [connectionStats, setConnectionStats] = useState<{
+    attempts: number;
+    lastConnected: string | null;
+    disconnectReason: string | null;
+  }>({
+    attempts: 0,
+    lastConnected: null,
+    disconnectReason: null
+  });
+  
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const connectAttempts = useRef(0);
@@ -110,9 +130,83 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
   };
   
+  // Disconnect WebSocket manually (for user-initiated disconnections)
+  const disconnect = () => {
+    if (socket) {
+      try {
+        // Set status before closing to notify UI
+        setStatus('disconnected');
+        setIsConnected(false);
+        
+        // Update connection stats with reason
+        setConnectionStats(prev => ({
+          ...prev,
+          disconnectReason: 'User initiated disconnect'
+        }));
+        
+        // Stop heartbeat
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
+        }
+        
+        // Cancel any pending reconnection
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+        
+        socket.close(1000, 'User disconnected');
+        logger.info('User manually disconnected WebSocket');
+      } catch (err) {
+        logger.warn('Error during manual disconnect:', err);
+      }
+    }
+  };
+  
+  // Force reconnect (for manual reconnection when needed)
+  const forceReconnect = () => {
+    logger.info('Manual reconnection requested');
+    
+    // Reset connection attempts counter to avoid long backoff times
+    connectAttempts.current = 0;
+    
+    // Update connection stats
+    setConnectionStats(prev => ({
+      ...prev,
+      attempts: prev.attempts + 1,
+      disconnectReason: 'Manual reconnection requested'
+    }));
+    
+    // Set status to reconnecting
+    setStatus('reconnecting');
+    
+    // Disconnect and reconnect
+    if (socket) {
+      try {
+        socket.close(1000, 'Manual reconnection');
+      } catch (err) {
+        // Non-critical error, we'll create a new connection anyway
+        logger.warn('Error closing socket during manual reconnection:', err);
+      }
+    }
+    
+    // Connect after a short delay to ensure clean closure
+    setTimeout(connect, 250);
+  };
+  
   // Connect to WebSocket with improved resilience
   const connect = () => {
     try {
+      // Update status to connecting
+      setStatus('connecting');
+      
+      // Update connection stats
+      setConnectionStats(prev => ({
+        ...prev,
+        attempts: prev.attempts + 1
+      }));
+      
       // Clear any existing connection with improved state handling
       if (socket) {
         // Only attempt to close if socket is open or connecting
@@ -199,7 +293,17 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         // Clear the connection timeout since we successfully connected
         clearTimeout(connectionTimeout);
         
+        // Update connection state
         setIsConnected(true);
+        setStatus('connected');
+        
+        // Update connection stats
+        setConnectionStats(prev => ({
+          ...prev,
+          lastConnected: new Date().toISOString(),
+          disconnectReason: null
+        }));
+        
         connectAttempts.current = 0;
         logger.info('WebSocket connection established');
         
@@ -314,7 +418,16 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         // Clear the connection timeout in case we're closing before it fired
         clearTimeout(connectionTimeout);
         
+        // Update connection state
         setIsConnected(false);
+        setStatus('disconnected');
+        
+        // Update connection stats
+        setConnectionStats(prev => ({
+          ...prev,
+          disconnectReason: event.reason || `Closed with code ${event.code}`
+        }));
+        
         logger.info('WebSocket connection closed', { code: event.code, reason: event.reason || 'No reason provided' });
         
         // Stop heartbeat
@@ -369,6 +482,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           connectionId,
           timestamp: new Date().toISOString()
         };
+        
+        // Update connection status
+        setStatus('error');
+        
+        // Update connection stats
+        setConnectionStats(prev => ({
+          ...prev,
+          disconnectReason: 'WebSocket error occurred'
+        }));
         
         // Pass the data and valid log options separately
         logger.error('WebSocket error', errorData, { tags: ['error', 'websocket'] });
@@ -541,7 +663,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     socket,
     isConnected,
     lastMessage,
-    sendMessage
+    sendMessage,
+    status,
+    connect,
+    disconnect,
+    connectionStats,
+    forceReconnect
   };
   
   return (
