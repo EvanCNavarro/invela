@@ -1,7 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
+import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
 import { initWebSocketServer } from "./utils/unified-websocket";
 import cors from "cors";
@@ -63,8 +64,8 @@ app.use((req, res, next) => {
 
   // Debug request body for specific endpoints
   if (path === '/api/users/invite' && req.method === 'POST') {
-    log(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
-    log(`Request body (raw): ${JSON.stringify(req.body)}`, 'debug');
+    logger.debug(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`);
+    logger.debug(`Request body (raw): ${JSON.stringify(req.body)}`);
   }
 
   const originalResJson = res.json;
@@ -75,7 +76,7 @@ app.use((req, res, next) => {
 
   res.on('error', (error) => {
     errorCaptured = error;
-    log(`Response error: ${error.message}`, 'error');
+    logger.error(`Response error: ${error.message}`);
   });
 
   res.on("finish", () => {
@@ -99,7 +100,13 @@ app.use((req, res, next) => {
         }
       }
 
-      log(logLine, logLevel);
+      if (logLevel === 'error') {
+        logger.error(logLine);
+      } else if (logLevel === 'warn') {
+        logger.warn(logLine);
+      } else {
+        logger.info(logLine);
+      }
     }
   });
 
@@ -112,7 +119,7 @@ registerRoutes(app);
 // Setup WebSocket server with error handling - using unified implementation
 // Initialize once and store the instance for all modules to access
 const wssInstance = initWebSocketServer(server);
-log('[ServerStartup] WebSocket server initialized with unified implementation', 'info');
+logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
 
 // Ensure old-style handlers can still access the WebSocket server
 // by importing functions from the utilities that need access
@@ -121,24 +128,24 @@ import { setWebSocketServer } from './utils/task-broadcast';
 
 // Register WebSocket server with task-update utility for backward compatibility
 registerWebSocketServer(wssInstance);
-log('[ServerStartup] WebSocket server registered with task-update utility', 'info');
+logger.info('[ServerStartup] WebSocket server registered with task-update utility');
 
 // Set WebSocket server reference for task-broadcast utility
 setWebSocketServer(wssInstance);
-log('[ServerStartup] WebSocket server registered with task-broadcast utility', 'info');
+logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
 
 // Log WebSocket server initialization details for debugging
 setTimeout(() => {
   if (wssInstance && wssInstance.clients) {
-    log(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`, 'info');
+    logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
   } else {
-    log('[ServerStartup] Warning: WebSocket server not properly initialized', 'warn');
+    logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
   }
 }, 1000);
 
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
-  log("Setting up Vite development server", "info");
+  logger.info("Setting up Vite development server");
   setupVite(app, server);
 } else {
   // Serve static files only in production, after API routes
@@ -220,16 +227,16 @@ console.log(`[ENV] Using PORT=${FORCE_USE_ENV_PORT} from environment (override: 
 console.log(`[ENV] Environment=${process.env.NODE_ENV || 'development'} (production: ${FORCE_PRODUCTION ? 'yes' : 'no'})`);
 
 server.listen(FORCE_USE_ENV_PORT, FORCE_USE_ENV_HOST, () => {
-  log(`Server running on ${FORCE_USE_ENV_HOST}:${FORCE_USE_ENV_PORT}`);
-  log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Server running on ${FORCE_USE_ENV_HOST}:${FORCE_USE_ENV_PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Log additional deployment information
   logDeploymentInfo(FORCE_USE_ENV_PORT, FORCE_USE_ENV_HOST);
   
   // Start the periodic task reconciliation system
   if (process.env.NODE_ENV !== 'test') {
-    log('Starting periodic task reconciliation system...');
+    logger.info('Starting periodic task reconciliation system...');
     startPeriodicTaskReconciliation();
-    log('Task reconciliation system initialized successfully');
+    logger.info('Task reconciliation system initialized successfully');
   }
 });
