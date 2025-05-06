@@ -44,6 +44,18 @@ export function createTransactionalFormRouter(): Router {
     const formData = req.body;
     const userId = req.user.id;
     
+    // Log the request parameters for debugging
+    console.log('[TransactionalFormRoutes] Request parameters:',{
+      route: `/submit/${formType}/${taskId}`,
+      taskId,
+      formType,
+      userId,
+      companyId,
+      formDataKeys: Object.keys(formData),
+      bodyType: typeof req.body,
+      body: JSON.stringify(req.body).substring(0, 200) + '...' // Truncate for readability
+    });
+    
     // Validate parameters
     if (isNaN(taskId) || taskId <= 0) {
       return res.status(400).json({
