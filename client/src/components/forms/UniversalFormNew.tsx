@@ -813,11 +813,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Force refresh task multiple times to catch eventual consistency lag
       if (typeof refreshTask === 'function') {
-        // Refresh immediately and then at intervals
+        // Refresh immediately and then at intervals with more frequent refreshes
         refreshTask();
         
+        // More frequent refreshes to ensure we catch the submitted state
+        setTimeout(() => refreshTask && refreshTask(), 500);
         setTimeout(() => refreshTask && refreshTask(), 1000);
+        setTimeout(() => refreshTask && refreshTask(), 2000);
         setTimeout(() => refreshTask && refreshTask(), 3000);
+        setTimeout(() => refreshTask && refreshTask(), 5000);
       }
       
       // Note: The success feedback will be handled via WebSocket events now
@@ -947,7 +951,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           onSuccess={handleSubmissionSuccess}
           onError={handleSubmissionError}
           onInProgress={handleSubmissionInProgress}
-          showToasts={false} // We handle toasts manually above
+          showToasts={true} // Enable toasts to fix form submission notification
         />
       )}
       
@@ -961,7 +965,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           }}
           title="Form Submitted Successfully"
           message={`Your ${taskType} form has been successfully submitted.`}
-          actions={submissionResult.actions || []}
+          actions={submissionResult.completedActions || []}
           fileName={submissionResult.fileName}
           fileId={submissionResult.fileId}
           returnPath="/task-center"
