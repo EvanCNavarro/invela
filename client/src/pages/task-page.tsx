@@ -15,7 +15,7 @@ import { ArrowLeft } from 'lucide-react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
 import { BreadcrumbNav } from '@/components/dashboard/BreadcrumbNav';
-import { UniversalForm } from '@/components/forms/UniversalForm';
+import { UniversalForm } from '@/components/forms';
 import { DocumentUploadWizard } from '@/components/documents/DocumentUploadWizard';
 import { CardMethodChoice } from '@/components/card/CardMethodChoice';
 import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';

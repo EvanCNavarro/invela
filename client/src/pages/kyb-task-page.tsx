@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { UniversalForm } from "@/components/forms/UniversalForm";
+import { UniversalForm } from "@/components/forms";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";

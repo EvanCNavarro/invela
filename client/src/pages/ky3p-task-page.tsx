@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { UniversalForm } from '@/components/forms/UniversalForm';
+import { UniversalForm } from '@/components/forms';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 import getLogger from '@/utils/logger';
 import submissionTracker from '@/utils/submission-tracker';

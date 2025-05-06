@@ -7,7 +7,7 @@ import useEnhancedFormSubmission from '@/hooks/use-enhanced-form-submission';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { UniversalForm } from '@/components/forms/UniversalForm';
+import { UniversalForm } from '@/components/forms';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 import ConnectionIssueModal from '@/components/modals/ConnectionIssueModal';
 

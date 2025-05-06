@@ -36,7 +36,7 @@ import {
 import confetti from 'canvas-confetti';
 import { useLocation } from "wouter";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
-import { UniversalForm } from "@/components/forms/UniversalForm";
+import { UniversalForm } from "@/components/forms";
 
 interface OpenBankingPlaygroundProps {
   taskId: number;

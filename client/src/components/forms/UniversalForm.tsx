@@ -79,6 +79,194 @@ interface Task {
   submissionDate?: string;
 }
 
+// Interface for the ReadOnlyFormView component
+interface ReadOnlyFormViewProps {
+  taskId?: number;
+  taskType: string;
+  task?: Task;
+  formData: FormData;
+  fields: ServiceFormField[];
+  sections: FormSection[];
+  company?: any;
+}
+
+/**
+ * ReadOnlyFormView - A component for displaying a read-only version of a form after submission
+ * 
+ * This displays:
+ * 1. Download options in top-right (CSV, TXT, JSON)
+ * 2. Submission details at the top
+ * 3. All questions and answers in accordion format
+ * 4. Back to Task Center and Scroll to Top buttons at bottom
+ */
+const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
+  taskId,
+  taskType,
+  task,
+  formData,
+  fields,
+  sections,
+  company
+}) => {
+  const [, navigate] = useLocation();
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Format the submission date
+  const formattedSubmissionDate = useMemo(() => {
+    if (task?.submissionDate) {
+      try {
+        return new Date(task.submissionDate).toLocaleString();
+      } catch (e) {
+        return task.submissionDate;
+      }
+    }
+    return 'Unknown';
+  }, [task?.submissionDate]);
+
+  // Helper function to scroll to top
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Helper function to handle downloads
+  const handleDownload = (format: 'json' | 'csv' | 'txt') => {
+    if (!taskId) return;
+    
+    // Format filename based on task type
+    const formattedTaskType = taskType.replace(/_/g, '-');
+    const filename = `${formattedTaskType}-form-${taskId}.${format}`;
+    
+    // Construct the download URL
+    window.open(`/api/forms/${taskType}/${taskId}/download?format=${format}&filename=${filename}`, '_blank');
+  };
+
+  // Get formatted heading based on task type
+  const getFormHeading = () => {
+    const taskTypeMap: Record<string, string> = {
+      'kyb': 'Know Your Business (KYB)',
+      'ky3p': 'Know Your Third Party (KY3P)',
+      'open_banking': 'Open Banking Assessment',
+      'card': 'Card Assessment',
+      'company_kyb': 'Know Your Business (KYB)',
+      'security': 'Security Assessment'
+    };
+    
+    return taskTypeMap[taskType] || taskType.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  return (
+    <div className="w-full mx-auto" ref={topRef}>
+      <div className="bg-white border rounded-md shadow-sm">
+        {/* Header with submission info and download options */}
+        <div className="flex justify-between items-center p-6 border-b">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-600">
+                SUBMITTED
+              </div>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">{getFormHeading()}</h1>
+            <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+              <Clock className="h-4 w-4" />
+              <span>Submitted on {formattedSubmissionDate}</span>
+            </div>
+          </div>
+          
+          {/* Download dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDownload('json')}>
+                <FileJson className="mr-2 h-4 w-4" />
+                Download as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Download as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                <FileText className="mr-2 h-4 w-4" />
+                Download as Text
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        
+        {/* Form content as read-only accordions */}
+        <div className="p-6">
+          <Accordion type="multiple" defaultValue={sections.map(s => s.id.toString())} className="space-y-4">
+            {sections.map((section, sectionIndex) => {
+              // Get fields for this section
+              const sectionFields = fields.filter(f => f.section === section.id);
+              
+              if (sectionFields.length === 0) return null;
+              
+              return (
+                <AccordionItem 
+                  key={`section-${sectionIndex}`} 
+                  value={section.id.toString()}
+                  className="border border-gray-200 rounded-md overflow-hidden"
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 font-medium">
+                    {section.title}
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 py-2">
+                    <div className="space-y-4">
+                      {sectionFields.map((field, fieldIndex) => {
+                        const fieldValue = formData[`field_${field.id}`];
+                        const displayValue = fieldValue !== undefined && fieldValue !== null && fieldValue !== '' 
+                          ? String(fieldValue) 
+                          : 'Not provided';
+                        
+                        return (
+                          <div key={`field-${fieldIndex}`} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                            <p className="text-sm font-medium text-gray-700">
+                              {field.question || field.label || field.description}
+                            </p>
+                            <p className="text-sm mt-1 text-gray-600">
+                              {displayValue}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </div>
+        
+        {/* Footer with navigation buttons */}
+        <div className="flex justify-between p-6 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/task-center')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Task Center
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scrollToTop}
+          >
+            <ChevronUp className="mr-2 h-4 w-4" />
+            Scroll to Top
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Import utility functions
 import UnifiedDemoAutoFill from './UnifiedDemoAutoFill';
 import { handleClearFieldsUtil } from './handleClearFields';
@@ -170,6 +358,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const isReadOnlyMode = useMemo(() => {
     return task?.status === 'submitted' || task?.status === 'completed';
   }, [task?.status]);
+  
+  // Determine if all data has loaded
+  const hasLoaded = useMemo(() => {
+    return dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
+  }, [dataHasLoaded, isDataLoading, loading, fields.length, sections.length]);
   
   // Use our new form data manager hook to handle form data
   const {
@@ -964,7 +1157,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     });
   };
 
-  // Render main form
+  // Helper function to format form title and description
+  const getFormTitle = useCallback(() => {
+    const taskTypeMap: Record<string, string> = {
+      'kyb': 'Know Your Business (KYB) Assessment',
+      'ky3p': 'Know Your Third Party (KY3P) Assessment',
+      'open_banking': 'Open Banking Assessment',
+      'card': 'Card Assessment',
+      'company_kyb': 'Know Your Business (KYB) Assessment',
+      'security': 'Security Assessment',
+    };
+    
+    return taskTypeMap[taskType] || taskType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }, [taskType]);
+  
+  const getFormDescription = useCallback(() => {
+    const descriptionMap: Record<string, string> = {
+      'kyb': 'Complete this form to provide essential information about your business.',
+      'ky3p': 'Provide details about your organization to evaluate third-party risks.',
+      'open_banking': 'Answer questions about your open banking implementation and security practices.',
+      'card': 'Complete this assessment for card payment processing compliance.',
+      'company_kyb': 'Complete this form to provide essential information about your business.',
+      'security': 'Evaluate your security posture by completing this assessment.'
+    };
+    
+    return descriptionMap[taskType] || `Complete the ${taskType.replace(/_/g, ' ')} form below.`;
+  }, [taskType]);
+
+  // Render main form or read-only view based on submission status
   return (
     <div className="w-full mx-auto">
       {/* WebSocket-based Form Submission Listener */}
@@ -1003,6 +1223,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           }}
         />
       )}
+      
+      {/* Conditionally render read-only view for submitted forms */}
+      {isReadOnlyMode && hasLoaded ? (
+        <ReadOnlyFormView
+          taskId={taskId}
+          taskType={taskType}
+          task={task}
+          formData={formData}
+          fields={fields}
+          sections={sections}
+          company={company}
+        />
+      ) : (
       
       {/* Form title and subtitle */}
       <div className="bg-gray-50 p-6 rounded-t-md mb-6">
