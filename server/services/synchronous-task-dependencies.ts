@@ -130,15 +130,16 @@ export async function unlockDependentTasks(
           const normalizedTaskType = taskType.toLowerCase();
           const isKy3pTask = normalizedTaskType === 'ky3p' || normalizedTaskType === 'sp_ky3p_assessment';
           
-          // For KY3P tasks, set a temporary initial progress that will be recalculated 
-          // when the form is viewed to ensure consistency
-          const initialProgressForKy3p = isKy3pTask ? 60 : 0;
+          // For KY3P tasks, we used to set a temporary initial progress of 60%
+          // But this caused inconsistencies between Task Center and form view
+          // Now we always set initial progress to 0 for all task types
+          const initialProgressForKy3p = 0;
           
           const [updated] = await db
             .update(tasks)
             .set({
               progress: initialProgressForKy3p, // Set initial progress for KY3P tasks
-              status: isKy3pTask ? 'in_progress' : 'not_started',
+              status: 'not_started', // Always start with not_started status
               metadata: {
                 locked: false,
                 prerequisite_completed: true,
