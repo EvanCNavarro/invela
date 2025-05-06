@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { tabLogger } from '../utils/tab-access-logger';
 import { broadcast } from '../utils/websocket';
 
+
 /**
  * Unified Tab Service
  * 
@@ -227,5 +228,60 @@ export class UnifiedTabService {
       availableTabs,
       source
     });
+  }
+  
+  /**
+   * Unlocks appropriate tabs based on form submission type
+   * @param companyId Company ID
+   * @param formType Type of form being submitted
+   * @param options Additional options
+   * @returns Object with unlocked tabs information
+   */
+  static async unlockTabsForFormSubmission(
+    companyId: number,
+    formType: string,
+    options: { broadcast?: boolean } = {}
+  ): Promise<{ availableTabs: string[] }> {
+    tabLogger.info('Unlocking tabs for form submission', { companyId, formType });
+    
+    try {
+      // Determine which tabs to unlock based on form type
+      let tabsToUnlock: string[] = [];
+      
+      if (formType === 'kyb' || formType === 'company_kyb') {
+        // KYB unlocks the File Vault tab
+        tabsToUnlock = ['file-vault'];
+      } else if (formType === 'open_banking' || formType === 'open_banking_survey') {
+        // Open Banking unlocks dashboard and insights
+        tabsToUnlock = ['dashboard', 'insights'];
+      } else if (formType === 'card' || formType === 'company_card') {
+        // Card industry forms unlock dashboard
+        tabsToUnlock = ['dashboard'];
+      }
+      // KY3P doesn't unlock any tabs
+      
+      // Only proceed if there are tabs to unlock
+      if (tabsToUnlock.length > 0) {
+        const updatedTabs = await this.addTabsToCompany(companyId, tabsToUnlock, 'form_submission');
+        return { availableTabs: updatedTabs };
+      }
+      
+      // Return current tabs if no changes needed
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      const currentTabs = company?.available_tabs || [];
+      return { availableTabs: currentTabs };
+    } catch (error) {
+      tabLogger.error('Error unlocking tabs for form submission', {
+        companyId,
+        formType,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
   }
 }
