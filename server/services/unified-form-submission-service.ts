@@ -656,10 +656,13 @@ async function handleKybPostSubmission(
     
     return unlockedTabs;
   } catch (error) {
+    const endTime = performance.now();
     logger.error('Error in KYB post-submission processing', {
       ...kybPostLogContext,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
     });
     throw error; // Re-throw to trigger transaction rollback
   }
@@ -700,10 +703,12 @@ async function handleKy3pPostSubmission(
     // Return empty array since no tabs are unlocked
     return [];
   } catch (error) {
+    const endTime = performance.now();
     logger.error('Error in KY3P post-submission processing', {
       ...ky3pPostLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
     throw error; // Re-throw to trigger transaction rollback
@@ -789,10 +794,12 @@ async function handleOpenBankingPostSubmission(
     
     return unlockedTabs;
   } catch (error) {
+    const endTime = performance.now();
     logger.error('Error in Open Banking post-submission processing', {
       ...obPostLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
     throw error; // Re-throw to trigger transaction rollback
@@ -1110,9 +1117,11 @@ export async function broadcastFormSubmissionResult(
       timestamp: new Date().toISOString()
     });
   } else {
+    const startErrorLogTime = performance.now();
     logger.error('Broadcasting form submission failure', {
       ...broadcastLogContext,
       error: result.error,
+      initDuration: `${(startErrorLogTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
     
@@ -1129,7 +1138,8 @@ export async function broadcastFormSubmissionResult(
     logger.error('Form submission error broadcast completed', {
       ...broadcastLogContext,
       success: false,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      initialErrorDuration: `${(endTime - startErrorLogTime).toFixed(2)}ms`,
+      totalDuration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
   }
