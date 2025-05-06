@@ -4,7 +4,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
-import { initWebSocketServer } from "./utils/unified-websocket";
+import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
@@ -118,7 +118,8 @@ registerRoutes(app);
 
 // Setup WebSocket server with error handling - using unified implementation
 // Initialize once and store the instance for all modules to access
-const wssInstance = initWebSocketServer(server);
+// This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
+const wssInstance = setupWebSocketServer(server);
 logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
 
 // Ensure old-style handlers can still access the WebSocket server
