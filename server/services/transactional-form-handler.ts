@@ -174,14 +174,50 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         }
       }
       
-      // 4. Unlock tabs based on form type
+      // 4. Update task status to 'submitted' with 100% progress
+      console.log(`[TransactionalFormHandler] Updating task ${taskId} status to 'submitted' with 100% progress`);
+      
+      try {
+        // CRITICAL FIX: Explicitly update the task status and progress in the database
+        // This ensures the task is marked as submitted even if WebSocket broadcast fails
+        const submissionDate = new Date().toISOString();
+        
+        await client.query(
+          `UPDATE tasks 
+           SET status = 'submitted', 
+               progress = 100, 
+               metadata = jsonb_set(
+                 jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'),
+                 '{submissionDate}', to_jsonb($2::text)
+               ),
+               updated_at = NOW()
+           WHERE id = $1`,
+          [taskId, submissionDate]
+        );
+        
+        console.log(`[TransactionalFormHandler] ✅ Successfully updated task ${taskId} status to 'submitted'`);
+      } catch (statusError) {
+        // Log the error but continue with the transaction
+        console.error(`[TransactionalFormHandler] ❌ Error updating task status for task ${taskId}:`, {
+          error: statusError instanceof Error ? statusError.message : 'Unknown error',
+          stack: statusError instanceof Error ? statusError.stack : undefined
+        });
+        
+        logger.error('Error updating task status during transaction', {
+          taskId,
+          formType,
+          error: statusError instanceof Error ? statusError.message : 'Unknown error'
+        });
+      }
+      
+      // 5. Unlock tabs based on form type
       const tabResult = await UnifiedTabService.unlockTabsForFormSubmission(
         companyId, 
         formType,
         { broadcast: true }
       );
       
-      // 5. Broadcast form submission events with comprehensive information
+      // 6. Broadcast form submission events with comprehensive information
       try {
         console.log(`[TransactionalFormHandler] Broadcasting form submission for task ${taskId}:`, {
           formType,
