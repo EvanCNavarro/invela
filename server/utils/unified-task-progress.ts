@@ -354,7 +354,7 @@ export async function updateTaskProgress(taskId: number, taskType: string, optio
         .update(tasks)
         .set({
           // Cast progress to a number before setting
-          progress: sql`CAST(${Number(validatedProgress)} AS real)`,
+          progress: sql`CAST(${Number(validatedProgress)} AS INTEGER)`,
           
           // Cast status to the proper TaskStatus type for database compatibility
           status: sql`${safeStatus}`,
