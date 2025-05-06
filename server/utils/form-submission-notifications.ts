@@ -7,6 +7,14 @@
 
 import { broadcastFormSubmission, broadcastTaskUpdate } from './unified-websocket';
 
+// Define the action item interface to properly include the metadata field
+interface ActionItem {
+  type: string;
+  description: string;
+  icon: string;
+  metadata?: Record<string, any>;
+}
+
 interface SubmissionNotificationOptions {
   formType: string;
   taskId: number;
@@ -32,7 +40,7 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
   const submissionTimestamp = submissionDate || now;
   
   // Create actions array for the notification
-  const actions = [
+  const actions: ActionItem[] = [
     {
       type: 'form_submission',
       description: 'Form submitted successfully',
