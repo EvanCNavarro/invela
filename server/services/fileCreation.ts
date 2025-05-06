@@ -162,21 +162,31 @@ export async function createTaskFile(
         fieldKey: kybFields.field_key,
         questionText: kybFields.question,
         displayName: kybFields.display_name,
-        status: kybResponses.status
+        status: kybResponses.status,
+        stepIndex: kybFields.step_index,
+        displayOrder: kybFields.display_order,
+        group: kybFields.group
       })
       .from(kybResponses)
       .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, taskId));
+      .where(eq(kybResponses.task_id, taskId))
+      .orderBy(
+        kybFields.step_index, 
+        kybFields.display_order
+      );
       
       // Transform to our internal format
       responseData = responses.map(r => ({
         fieldKey: r.fieldKey,
         questionText: r.questionText || r.displayName || r.fieldKey,
         responseValue: r.responseValue,
-        status: r.status
+        status: r.status,
+        stepIndex: r.stepIndex || 0,
+        displayOrder: r.displayOrder || 0,
+        group: r.group || 'Other'
       }));
       
-      console.log(`[FileCreation] Retrieved ${responses.length} KYB responses for task ${taskId}`);
+      console.log(`[FileCreation] Retrieved ${responses.length} KYB responses for task ${taskId} ordered by UI form order`);
     } 
     else if (normalizedFormType === 'ky3p') {
       const responses = await db.select({
@@ -184,21 +194,31 @@ export async function createTaskFile(
         fieldKey: ky3pFields.field_key,
         questionText: ky3pFields.question,
         displayName: ky3pFields.display_name, 
-        status: ky3pResponses.status
+        status: ky3pResponses.status,
+        stepIndex: ky3pFields.step_index,
+        displayOrder: ky3pFields.display_order,
+        group: ky3pFields.group
       })
       .from(ky3pResponses)
       .innerJoin(ky3pFields, eq(ky3pResponses.field_id, ky3pFields.id))
-      .where(eq(ky3pResponses.task_id, taskId));
+      .where(eq(ky3pResponses.task_id, taskId))
+      .orderBy(
+        ky3pFields.step_index, 
+        ky3pFields.display_order
+      );
       
       // Transform to our internal format
       responseData = responses.map(r => ({
         fieldKey: r.fieldKey,
         questionText: r.questionText || r.displayName || r.fieldKey,
         responseValue: r.responseValue,
-        status: r.status
+        status: r.status,
+        stepIndex: r.stepIndex || 0,
+        displayOrder: r.displayOrder || 0,
+        group: r.group || 'Other'
       }));
       
-      console.log(`[FileCreation] Retrieved ${responses.length} KY3P responses for task ${taskId}`);
+      console.log(`[FileCreation] Retrieved ${responses.length} KY3P responses for task ${taskId} ordered by UI form order`);
     } 
     else if (normalizedFormType === 'open_banking' || normalizedFormType === 'openbanking') {
       const responses = await db.select({
@@ -206,21 +226,31 @@ export async function createTaskFile(
         fieldKey: openBankingFields.field_key,
         questionText: openBankingFields.question,
         displayName: openBankingFields.display_name,
-        status: openBankingResponses.status
+        status: openBankingResponses.status,
+        stepIndex: openBankingFields.step_index,
+        displayOrder: openBankingFields.display_order,
+        group: openBankingFields.group
       })
       .from(openBankingResponses)
       .innerJoin(openBankingFields, eq(openBankingResponses.field_id, openBankingFields.id))
-      .where(eq(openBankingResponses.task_id, taskId));
+      .where(eq(openBankingResponses.task_id, taskId))
+      .orderBy(
+        openBankingFields.step_index, 
+        openBankingFields.display_order
+      );
       
       // Transform to our internal format
       responseData = responses.map(r => ({
         fieldKey: r.fieldKey,
         questionText: r.questionText || r.displayName || r.fieldKey,
         responseValue: r.responseValue,
-        status: r.status
+        status: r.status,
+        stepIndex: r.stepIndex || 0,
+        displayOrder: r.displayOrder || 0,
+        group: r.group || 'Other'
       }));
       
-      console.log(`[FileCreation] Retrieved ${responses.length} Open Banking responses for task ${taskId}`);
+      console.log(`[FileCreation] Retrieved ${responses.length} Open Banking responses for task ${taskId} ordered by UI form order`);
     } 
     else {
       logger.warn(`Unknown form type: ${normalizedFormType}, using fallback mechanism`, { taskId, normalizedFormType });
