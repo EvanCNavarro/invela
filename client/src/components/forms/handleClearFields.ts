@@ -48,9 +48,10 @@ export async function handleClearFieldsUtil(
   fields: FormField[],
   updateCallback: (fieldId: string, value: any) => void
 ): Promise<boolean> {
+  // Generate a unique operation ID for tracking this operation
+  const operationId = `clear_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   try {
     const startTime = Date.now();
-    const operationId = `clear_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
     logger.info(`[ClearFields][${operationId}] Starting universal clear operation`, {
       operationId,
@@ -60,7 +61,7 @@ export async function handleClearFieldsUtil(
     });
     
     // Show loading toast
-    showClearFieldsToast('loading', 'Clearing form fields...', { operationId });
+    showClearFieldsToast('loading', 'Clearing form fields...', { operationId: operationId });
     
     // Get task ID in the most reliable way
     const taskId = formService.taskId || (formService as any)?.originalService?.taskId;
@@ -197,7 +198,10 @@ export async function handleClearFieldsUtil(
             durationMs: bulkDuration
           });
         }
-      } catch (bulkError) {
+      } catch (e) {
+        // Properly type the error
+        const bulkError = e as Error;
+        
         logger.warn(`[ClearFields][${operationId}] Error using standardized bulk update:`, bulkError, {
           operationId,
           taskId,
@@ -284,7 +288,10 @@ export async function handleClearFieldsUtil(
               errorDetails
             });
           }
-        } catch (clearError) {
+        } catch (e) {
+          // Properly type the error
+          const clearError = e as Error;
+          
           logger.warn(`[ClearFields][${operationId}] Error calling KY3P clear endpoint:`, clearError, {
             operationId,
             taskId,
@@ -366,7 +373,10 @@ export async function handleClearFieldsUtil(
               errorDetails
             });
           }
-        } catch (altError) {
+        } catch (e) {
+          // Properly type the error
+          const altError = e as Error;
+          
           logger.warn(`[ClearFields][${operationId}] Error calling alternative clear endpoint:`, altError, {
             operationId,
             taskId, 
@@ -717,7 +727,10 @@ export async function directClearFields(
     });
     
     return successResult;
-  } catch (error) {
+  } catch (e) {
+    // Properly type the error
+    const error = e as Error;
+    
     logger.error(`[DirectClearFields][${operationId}] Error clearing task ${taskId}:`, error, {
       operationId,
       taskId,
