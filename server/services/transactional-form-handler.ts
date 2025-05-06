@@ -611,14 +611,45 @@ async function storeFormResponses(
         
         // Execute with enhanced type safety using the numeric field ID
         try {
-          await tx.execute(sql`
-            INSERT INTO ky3p_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
-            ON CONFLICT (task_id, field_id) 
-            DO UPDATE SET response_value = ${serializedValue}, 
-              status = 'COMPLETE', 
-              updated_at = NOW()
+          // First, check if a response already exists for this task and field
+          const existingResponse = await tx.execute(sql`
+            SELECT id FROM ky3p_responses 
+            WHERE task_id = ${taskId} AND field_id = ${fieldId} LIMIT 1
           `);
+          
+          // Check if we got any results
+          let responseExists = false;
+          let responseId = null;
+          
+          if (Array.isArray(existingResponse) && existingResponse.length > 0) {
+            responseExists = true;
+            responseId = existingResponse[0].id;
+          } else if (existingResponse && typeof existingResponse === 'object') {
+            if ('rows' in existingResponse && Array.isArray(existingResponse.rows) && existingResponse.rows.length > 0) {
+              responseExists = true;
+              responseId = existingResponse.rows[0].id;
+            }
+          }
+          
+          moduleLogger.info(`KY3P response existence check for task ${taskId}, field ${fieldId}: ${responseExists ? 'Exists with ID ' + responseId : 'Not found'}`);
+          
+          // If it exists, update it; otherwise insert a new one
+          if (responseExists && responseId) {
+            await tx.execute(sql`
+              UPDATE ky3p_responses
+              SET response_value = ${serializedValue}, 
+                  status = 'COMPLETE',
+                  updated_at = NOW()
+              WHERE id = ${responseId}
+            `);
+            moduleLogger.info(`Updated existing KY3P response ID ${responseId} for field: ${field} (ID: ${fieldId})`);
+          } else {
+            await tx.execute(sql`
+              INSERT INTO ky3p_responses (task_id, field_id, response_value, status) 
+              VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
+            `);
+            moduleLogger.info(`Inserted new KY3P response for field: ${field} (ID: ${fieldId})`);
+          }
           moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
           moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
@@ -672,14 +703,45 @@ async function storeFormResponses(
         
         // Execute with enhanced type safety using the numeric field ID
         try {
-          await tx.execute(sql`
-            INSERT INTO open_banking_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
-            ON CONFLICT (task_id, field_id) 
-            DO UPDATE SET response_value = ${serializedValue}, 
-              status = 'COMPLETE',
-              updated_at = NOW()
+          // First, check if a response already exists for this task and field
+          const existingResponse = await tx.execute(sql`
+            SELECT id FROM open_banking_responses 
+            WHERE task_id = ${taskId} AND field_id = ${fieldId} LIMIT 1
           `);
+          
+          // Check if we got any results
+          let responseExists = false;
+          let responseId = null;
+          
+          if (Array.isArray(existingResponse) && existingResponse.length > 0) {
+            responseExists = true;
+            responseId = existingResponse[0].id;
+          } else if (existingResponse && typeof existingResponse === 'object') {
+            if ('rows' in existingResponse && Array.isArray(existingResponse.rows) && existingResponse.rows.length > 0) {
+              responseExists = true;
+              responseId = existingResponse.rows[0].id;
+            }
+          }
+          
+          moduleLogger.info(`Open Banking response existence check for task ${taskId}, field ${fieldId}: ${responseExists ? 'Exists with ID ' + responseId : 'Not found'}`);
+          
+          // If it exists, update it; otherwise insert a new one
+          if (responseExists && responseId) {
+            await tx.execute(sql`
+              UPDATE open_banking_responses
+              SET response_value = ${serializedValue}, 
+                  status = 'COMPLETE',
+                  updated_at = NOW()
+              WHERE id = ${responseId}
+            `);
+            moduleLogger.info(`Updated existing Open Banking response ID ${responseId} for field: ${field} (ID: ${fieldId})`);
+          } else {
+            await tx.execute(sql`
+              INSERT INTO open_banking_responses (task_id, field_id, response_value, status) 
+              VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
+            `);
+            moduleLogger.info(`Inserted new Open Banking response for field: ${field} (ID: ${fieldId})`);
+          }
           moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
           moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
@@ -733,14 +795,45 @@ async function storeFormResponses(
         
         // Execute with enhanced type safety using the numeric field ID
         try {
-          await tx.execute(sql`
-            INSERT INTO user_kyb_responses (task_id, field_id, response_value, status) 
-            VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
-            ON CONFLICT (task_id, field_id) 
-            DO UPDATE SET response_value = ${serializedValue}, 
-              status = 'COMPLETE',
-              updated_at = NOW()
+          // First, check if a response already exists for this task and field
+          const existingResponse = await tx.execute(sql`
+            SELECT id FROM user_kyb_responses 
+            WHERE task_id = ${taskId} AND field_id = ${fieldId} LIMIT 1
           `);
+          
+          // Check if we got any results
+          let responseExists = false;
+          let responseId = null;
+          
+          if (Array.isArray(existingResponse) && existingResponse.length > 0) {
+            responseExists = true;
+            responseId = existingResponse[0].id;
+          } else if (existingResponse && typeof existingResponse === 'object') {
+            if ('rows' in existingResponse && Array.isArray(existingResponse.rows) && existingResponse.rows.length > 0) {
+              responseExists = true;
+              responseId = existingResponse.rows[0].id;
+            }
+          }
+          
+          moduleLogger.info(`User KYB response existence check for task ${taskId}, field ${fieldId}: ${responseExists ? 'Exists with ID ' + responseId : 'Not found'}`);
+          
+          // If it exists, update it; otherwise insert a new one
+          if (responseExists && responseId) {
+            await tx.execute(sql`
+              UPDATE user_kyb_responses
+              SET response_value = ${serializedValue}, 
+                  status = 'COMPLETE',
+                  updated_at = NOW()
+              WHERE id = ${responseId}
+            `);
+            moduleLogger.info(`Updated existing User KYB response ID ${responseId} for field: ${field} (ID: ${fieldId})`);
+          } else {
+            await tx.execute(sql`
+              INSERT INTO user_kyb_responses (task_id, field_id, response_value, status) 
+              VALUES (${taskId}, ${fieldId}, ${serializedValue}, 'COMPLETE')
+            `);
+            moduleLogger.info(`Inserted new User KYB response for field: ${field} (ID: ${fieldId})`);
+          }
           moduleLogger.info(`Successfully stored response for field: ${field} (ID: ${fieldId})`);
         } catch (error) {
           moduleLogger.error(`Database error for field ${field} (ID: ${fieldId}):`, error as Error);
