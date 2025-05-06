@@ -160,6 +160,9 @@ export function broadcast(type: string, payload: any) {
   return sent > 0;
 }
 
+// Alias for broadcast to maintain backward compatibility with existing code
+export const broadcastMessage = broadcast;
+
 /**
  * Get the active WebSocket server instance
  */
@@ -173,6 +176,79 @@ export function getWebSocketServer() {
 export function getConnectedClientCount() {
   if (!wss) return 0;
   return wss.clients.size;
+}
+
+/**
+ * Broadcast a company tabs update message to all connected clients
+ * 
+ * This is a critical function for ensuring clients see the file-vault tab
+ * immediately after form submission and file creation.
+ * 
+ * @param companyId The ID of the company whose tabs were updated
+ * @param availableTabs The updated array of available tabs
+ * @param metadata Additional metadata to include in the message
+ * @returns Boolean indicating whether the broadcast was successful
+ */
+export function broadcastCompanyTabsUpdate(
+  companyId: number,
+  availableTabs: string[],
+  metadata: Record<string, any> = {}
+) {
+  // Create timestamp once for consistent messaging
+  const timestamp = new Date().toISOString();
+  
+  // Log detailed information
+  console.log(`[WebSocket] Broadcasting company tabs update:`, {
+    companyId,
+    availableTabs,
+    hasFileVault: availableTabs.includes('file-vault'),
+    timestamp
+  });
+  
+  // Create a standardized message payload structure
+  const payload = {
+    companyId,
+    availableTabs,
+    metadata: {
+      ...metadata,
+      cache_invalidation: true, // Always force cache invalidation
+      timestamp
+    },
+    timestamp
+  };
+  
+  // Send both specific and general broadcasts for maximum compatibility
+  // 1. First send the specific 'company_tabs_updated' event
+  const tabsUpdateResult = broadcast('company_tabs_updated', payload);
+  
+  // 2. Send a general company_updated event as well for clients that listen for that
+  const companyUpdateResult = broadcast('company_updated', {
+    ...payload,
+    company: {
+      id: companyId,
+      available_tabs: availableTabs
+    }
+  });
+  
+  // 3. Schedule additional delayed broadcasts to ensure clients receive updates
+  // This is critical for clients that might reconnect after network issues
+  const delayTimes = [1000, 2500]; // 1s, 2.5s delays
+  delayTimes.forEach(delay => {
+    setTimeout(() => {
+      try {
+        console.log(`[WebSocket] Sending delayed (${delay}ms) company tabs broadcast for company ${companyId}`);
+        broadcast('company_tabs_updated', {
+          ...payload,
+          delayed: true,
+          delayMs: delay
+        });
+      } catch (e) {
+        console.error(`[WebSocket] Error in delayed tabs broadcast:`, e);
+      }
+    }, delay);
+  });
+  
+  return tabsUpdateResult || companyUpdateResult;
 }
 
 /**
@@ -227,17 +303,68 @@ export function broadcastFormSubmission(
   // Create timestamp once for consistent messaging
   const timestamp = new Date().toISOString();
   
-  // Create a standardized message payload structure
+  // Extract file information from metadata if present
+  const fileId = metadata.fileId;
+  const fileName = metadata.fileName;
+  
+  // Log detailed information about file references included in broadcast
+  console.log(`[WebSocket] Broadcasting form submission with file details:`, {
+    taskId,
+    formType,
+    companyId,
+    hasFileId: !!fileId,
+    hasFileName: !!fileName,
+    timestamp
+  });
+  
+  // Create a standardized message payload structure with enhanced file information
   const payload = {
     formType,
     taskId,
     companyId,
+    fileId, // Include file ID directly in the root payload for easier access
+    fileName, // Include file name directly in the root payload for easier access
+    status: 'submitted', // Always include status for consistency
     metadata: {
       ...metadata,
-      timestamp
+      fileIncluded: !!fileId,
+      timestamp,
+      // File vault related information
+      downloadUrl: fileId ? `/api/files/${fileId}/download` : undefined,
+      previewUrl: fileId ? `/api/files/${fileId}/preview` : undefined,
     },
     timestamp
   };
   
-  return broadcast('form_submitted', payload);
+  // First broadcast the form submission event
+  const formSubmittedResult = broadcast('form_submitted', payload);
+  
+  // Additionally broadcast a task update to ensure clients have multiple ways to receive the update
+  // This helps with client synchronization even if they missed the form_submitted event
+  const taskUpdateResult = broadcastTaskUpdate(taskId, 100, 'submitted', {
+    ...metadata,
+    fileId,
+    fileName,
+    formType,
+    formSubmission: true,
+    submissionComplete: true
+  });
+  
+  // Also broadcast a specific file_vault_update event to notify file vault components
+  if (fileId) {
+    const fileUpdateResult = broadcast('file_vault_update', {
+      fileId,
+      fileName,
+      taskId,
+      companyId,
+      formType,
+      action: 'added',
+      timestamp
+    });
+    
+    // Return true if any of the broadcasts were successful
+    return formSubmittedResult || taskUpdateResult || fileUpdateResult;
+  }
+  
+  return formSubmittedResult || taskUpdateResult;
 }

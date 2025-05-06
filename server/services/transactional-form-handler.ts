@@ -149,7 +149,43 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         { broadcast: true }
       );
       
-      // 5. Return success result
+      // 5. Broadcast form submission events with comprehensive information
+      try {
+        console.log(`[TransactionalFormHandler] Broadcasting form submission for task ${taskId}:`, {
+          formType,
+          taskId,
+          companyId,
+          hasFileId: !!fileId,
+          hasUnlockedTabs: tabResult.availableTabs.includes('file-vault'),
+          timestamp: new Date().toISOString()
+        });
+        
+        // Use the enhanced broadcastFormSubmission from unified-websocket
+        WebSocketService.broadcastFormSubmission(
+          formType,
+          taskId,
+          companyId,
+          {
+            fileId,
+            fileName: standardizedFormData.fileName || undefined,
+            status: 'submitted',
+            progress: 100,
+            formSubmission: true,
+            submissionDate: new Date().toISOString(),
+            availableTabs: tabResult.availableTabs
+          }
+        );
+      } catch (wsError) {
+        // Log error but don't fail the transaction
+        logger.error('WebSocket broadcast error', {
+          taskId,
+          formType,
+          error: wsError instanceof Error ? wsError.message : 'Unknown error',
+          stack: wsError instanceof Error ? wsError.stack : undefined
+        });
+      }
+      
+      // 6. Return success result
       return {
         success: true,
         fileId,
