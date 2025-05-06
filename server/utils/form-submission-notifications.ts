@@ -46,7 +46,7 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
       type: 'file_generation',
       description: 'PDF file generated',
       icon: 'file-text',
-      data: { fileId }
+      metadata: { fileId } // Use metadata instead of data
     });
   }
   

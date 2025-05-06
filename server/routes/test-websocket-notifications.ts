@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { broadcastFormSubmission, broadcastTaskUpdate } from '../utils/unified-websocket';
+import { sendFormSubmissionSuccess, sendFormSubmissionError, sendFormSubmissionInProgress } from '../utils/form-submission-notifications';
 
 const router = Router();
 
@@ -82,25 +83,24 @@ router.post('/broadcast-form-submission', (req, res) => {
  * Test form submission error notification
  */
 router.post('/broadcast-form-error', (req, res) => {
-  const { taskId, formType, companyId } = req.body;
+  const { taskId, formType, companyId, error } = req.body;
   
   // Set defaults if not provided
   const testTaskId = taskId || 620;
   const testFormType = formType || 'kyb';
   const testCompanyId = companyId || 272;
+  const errorMessage = error || 'Test form submission error';
   
   try {
-    // Broadcast a task update with error status
-    const result = broadcastTaskUpdate(
-      testTaskId,
-      0,
-      'error',
-      {
-        formType: testFormType,
-        error: 'Test form submission error',
-        submissionDate: new Date().toISOString()
-      }
-    );
+    // Use the standardized form error notification
+    const result = sendFormSubmissionError({
+      taskId: testTaskId,
+      formType: testFormType,
+      companyId: testCompanyId,
+      error: errorMessage,
+      message: errorMessage,
+      progress: 0
+    });
     
     return res.json({
       success: true,
@@ -115,6 +115,49 @@ router.post('/broadcast-form-error', (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to broadcast form error notification'
+    });
+  }
+});
+
+/**
+ * Test form in-progress notification
+ */
+router.post('/broadcast-form-in-progress', (req, res) => {
+  const { taskId, formType, companyId, progress } = req.body;
+  
+  // Set defaults if not provided
+  const testTaskId = taskId || 620;
+  const testFormType = formType || 'kyb';
+  const testCompanyId = companyId || 272;
+  const progressValue = progress || 50;
+  
+  try {
+    // Use the standardized form in-progress notification
+    const result = sendFormSubmissionInProgress({
+      taskId: testTaskId,
+      formType: testFormType,
+      companyId: testCompanyId,
+      progress: progressValue,
+      message: `Form submission in progress (${progressValue}%)`,
+      metadata: {
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    return res.json({
+      success: true,
+      message: 'Form in-progress notification broadcasted',
+      result,
+      taskId: testTaskId,
+      formType: testFormType,
+      companyId: testCompanyId,
+      progress: progressValue
+    });
+  } catch (error) {
+    console.error('Error broadcasting form in-progress notification:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to broadcast form in-progress notification'
     });
   }
 });
