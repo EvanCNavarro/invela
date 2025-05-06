@@ -7,8 +7,8 @@
  */
 
 import { db } from '@db';
-import { tasks, files, companies } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+import { tasks, files, companies, kybResponses, ky3pResponses, openBankingResponses, openBankingFields, kybFields, ky3pFields } from '@db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
 import * as FileCreationService from '../services/fileCreation.fixed';
@@ -202,8 +202,8 @@ async function createFormFile(
   fileName?: string;
   error?: string;
 }> {
+  const fileLogContext = { namespace: 'FileCreation', taskId, formType };
   try {
-    const fileLogContext = { namespace: 'FileCreation', taskId, formType };
     logger.info('Creating file for form submission', {
       ...fileLogContext,
       companyId,
@@ -363,7 +363,8 @@ async function persistKybResponses(trx: any, taskId: number, formData: Record<st
       });
       
       // Insert all responses in a single operation for efficiency
-      await trx.insert(kybResponses).values(batchValues);
+      const insertQuery = trx.insert(kybResponses).values(batchValues);
+      await insertQuery;
       
       logger.info(`Successfully persisted ${batchValues.length} KYB responses`, {
         ...kybLogContext,
@@ -421,7 +422,8 @@ async function persistKy3pResponses(trx: any, taskId: number, formData: Record<s
       });
       
       // Insert all responses in a single operation for efficiency
-      await trx.insert(ky3pResponses).values(batchValues);
+      const insertQuery = trx.insert(ky3pResponses).values(batchValues);
+      await insertQuery;
       
       logger.info(`Successfully persisted ${batchValues.length} KY3P responses`, {
         ...ky3pLogContext,
@@ -484,7 +486,8 @@ async function persistOpenBankingResponses(trx: any, taskId: number, formData: R
       });
       
       // Insert all responses in a single operation for efficiency
-      await trx.insert(openBankingResponses).values(batchValues);
+      const insertQuery = trx.insert(openBankingResponses).values(batchValues);
+      await insertQuery;
       
       // After persisting responses, update the task with a calculation flag
       // This ensures risk score calculation is triggered properly
@@ -662,17 +665,153 @@ async function handleOpenBankingPostSubmission(
 }
 
 /**
- * Generate a risk score based on survey responses
- * This would be replaced with actual risk score calculation logic
+ * Generate a risk score based on Open Banking survey responses
+ * 
+ * This function calculates a risk score by analyzing the Open Banking responses
+ * for a specific task. It considers various factors such as response values, 
+ * metadata weights, and importance levels to produce a comprehensive risk score.
+ * 
+ * The score calculation follows these principles:
+ * 1. A weighted average of response values is calculated
+ * 2. Critical fields have higher impact on the final score
+ * 3. Importance levels are used as multipliers
+ * 4. The risk score is normalized to a 0-100 scale
  */
 async function generateRiskScore(
   trx: any,
   taskId: number,
   formData: Record<string, any>
 ): Promise<number> {
-  // For now, just return a default risk score of 50
-  // In a real implementation, this would analyze the form responses
-  return 50;
+  const riskScoreLogContext = { namespace: 'RiskScoreCalculation', taskId };
+  logger.info('Calculating risk score for Open Banking task', riskScoreLogContext);
+  
+  try {
+    // Get all Open Banking responses for this task
+    const responses = await trx
+      .select()
+      .from(openBankingResponses)
+      .where(eq(openBankingResponses.task_id, taskId));
+    
+    if (!responses || responses.length === 0) {
+      logger.warn('No responses found for risk score calculation', riskScoreLogContext);
+      return 50; // Default risk score if no responses
+    }
+    
+    logger.info(`Found ${responses.length} responses for risk score calculation`, riskScoreLogContext);
+    
+    // Get the field definitions to determine importance weights
+    const fields = await trx
+      .select()
+      .from(openBankingFields);
+    
+    // Create a map of field keys to field definitions for quick lookup
+    const fieldMap = fields.reduce((map: Record<string, any>, field: any) => {
+      map[field.field_key] = field;
+      return map;
+    }, {} as Record<string, any>);
+    
+    // Calculate weighted risk score
+    let totalWeight = 0;
+    let weightedSum = 0;
+    
+    // Process each response
+    for (const response of responses) {
+      // Skip incomplete responses
+      if (response.status !== 'completed') continue;
+      
+      // Get field definition
+      const fieldKey = response.field_key;
+      const field = fieldMap[fieldKey];
+      
+      if (!field) {
+        logger.warn(`Field definition not found for ${fieldKey}`, riskScoreLogContext);
+        continue;
+      }
+      
+      // Determine field importance weight (higher for critical fields)
+      const importance = (field.metadata?.importance || 'medium').toLowerCase();
+      let importanceWeight = 1;
+      
+      // Assign weights based on importance
+      switch (importance) {
+        case 'critical':
+          importanceWeight = 4;
+          break;
+        case 'high':
+          importanceWeight = 2;
+          break;
+        case 'medium':
+          importanceWeight = 1;
+          break;
+        case 'low':
+          importanceWeight = 0.5;
+          break;
+        default:
+          importanceWeight = 1;
+      }
+      
+      // Get response value and category weight
+      const responseValue = response.value;
+      let value = 0;
+      
+      // Convert different response types to numeric values
+      if (responseValue === 'yes' || responseValue === 'true') {
+        value = 100;
+      } else if (responseValue === 'no' || responseValue === 'false') {
+        value = 0;
+      } else if (typeof responseValue === 'string' && responseValue.includes('%')) {
+        // Extract percentage value
+        value = parseFloat(responseValue.replace('%', ''));
+      } else if (!isNaN(Number(responseValue))) {
+        // Direct numeric value
+        value = Number(responseValue);
+      }
+      
+      // Get category weight from field or response metadata
+      const categoryWeight = field.metadata?.categoryWeight || response.metadata?.categoryWeight || 1;
+      
+      // Calculate weighted value and add to totals
+      const weight = importanceWeight * categoryWeight;
+      totalWeight += weight;
+      weightedSum += value * weight;
+      
+      if (field.metadata?.isDebugField) {
+        logger.debug(`Field ${fieldKey} calculation details:`, {
+          ...riskScoreLogContext,
+          fieldKey,
+          responseValue,
+          numericValue: value,
+          importanceWeight,
+          categoryWeight,
+          finalWeight: weight
+        });
+      }
+    }
+    
+    // Calculate final risk score
+    const riskScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 50;
+    
+    // Ensure risk score is within valid range
+    const normalizedRiskScore = Math.max(0, Math.min(100, riskScore));
+    
+    logger.info(`Calculated risk score: ${normalizedRiskScore}`, {
+      ...riskScoreLogContext,
+      responseCount: responses.length,
+      originalScore: riskScore,
+      normalizedScore: normalizedRiskScore
+    });
+    
+    return normalizedRiskScore;
+  } catch (error) {
+    logger.error('Error calculating risk score', {
+      ...riskScoreLogContext,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Return default score in case of error
+    return 50;
+  }
 }
 
 /**
