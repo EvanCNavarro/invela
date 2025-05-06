@@ -331,6 +331,7 @@ export async function unlockAllTasks(companyId: number) {
     // Find all tasks for this company
     // CRITICAL FIX: Ensure we don't have any task type restrictions
     // This ensures KY3P tasks are properly included in the unlocking process
+    // FIXED: Exclude tasks that are already submitted - we don't want to reset them
     const companyTasks = await db.select()
       .from(tasks)
       .where(
@@ -339,10 +340,16 @@ export async function unlockAllTasks(companyId: number) {
           or(
             eq(tasks.status, 'locked'),
             eq(tasks.status, 'not_started'),
-            eq(tasks.status, 'ready_for_submission'), // Also check for tasks with incorrect status
-            eq(tasks.status, 'in_progress'),         // Include in_progress tasks to ensure KY3P tasks are processed
+            eq(tasks.status, 'ready_for_submission'), 
+            eq(tasks.status, 'in_progress'),         
             isNull(tasks.status)
-          )
+          ),
+          // CRITICAL: Don't process tasks that are already in a terminal state
+          // This prevents submitted tasks from being reset to 'not_started'
+          sql`tasks.status != 'submitted'`,
+          sql`tasks.status != 'approved'`,
+          sql`tasks.status != 'rejected'`,
+          sql`tasks.status != 'archived'`
         )
       );
     

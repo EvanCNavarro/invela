@@ -256,7 +256,14 @@ function getStatusFromProgress(
   // CRITICAL FIX: If the task has indicators of being submitted, always preserve that status
   // This prevents the task from being incorrectly set to "not_started" during reconciliation
   if (checkSubmissionFlag && (hasSubmissionDate || hasFileId || hasSubmittedFlag)) {
-    console.log(`[STATUS DETERMINATION] Task has submission indicators, preserving SUBMITTED status`);
+    console.log(`[STATUS DETERMINATION] Task has submission indicators, preserving SUBMITTED status`, {
+      hasSubmissionDate: !!hasSubmissionDate,
+      submissionDate: hasSubmissionDate,
+      hasFileId: !!hasFileId,
+      fileId: hasFileId,
+      hasSubmittedFlag: !!hasSubmittedFlag,
+      metadata: JSON.stringify(metadata).substring(0, 200) // Truncate for logging
+    });
     return TaskStatus.SUBMITTED;
   }
   
