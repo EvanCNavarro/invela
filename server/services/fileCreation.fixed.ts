@@ -141,69 +141,62 @@ export async function createTaskFile(
     // First, organize data by sections and questions
     console.log(`[FileCreation] Processing data for form type ${normalizedFormType} with ${Object.keys(formData).length} fields`);
     
-    // RESTRUCTURED FORMAT: Create a tabular CSV with one field per row
-    // This format is more readable and easier to analyze
+    // SIMPLIFIED STANDARD CSV FORMAT
+    // Using KISS principle - standard spreadsheet-like format with field data in columns
     
-    // First create metadata row for the task
-    const metadata = {
-      taskId,
-      formType: normalizedFormType,
-      companyId,
-      submissionDate: new Date().toISOString()
-    };
+    // Define the column headers that will appear in the CSV
+    const headers = ['id', 'field_name', 'field_key', 'response', 'submission_date'];
     
-    // Define the CSV structure with headers
-    const headers = ['question', 'answer', 'id', 'fieldKey'];
-    
-    // Start building rows with the CSV header
+    // Create rows array starting with headers
     let rows = [headers.join(',')];
     
-    // First add form metadata as rows
-    Object.entries(metadata).forEach(([key, value]) => {
-      const rowValues = [
-        `"Form Metadata: ${key}"`,  // question column
-        `"${String(value).replace(/"/g, '""')}"`,  // answer column
-        `"meta_${key}"`,  // id column
-        `"${key}"`  // fieldKey column
-      ];
-      rows.push(rowValues.join(','));
-    });
+    // Get all form fields and sort them for consistent output
+    const sortedFields = Object.entries(formData).sort((a, b) => a[0].localeCompare(b[0]));
     
-    // Then add each form field as a row
-    Object.entries(formData).forEach(([key, value]) => {
+    // Current date for consistent timestamp across all rows
+    const submissionDate = new Date().toISOString();
+    
+    // Add each form field as a row in the CSV
+    sortedFields.forEach(([key, value], index) => {
       // Format the value based on its type
       let formattedValue;
       if (typeof value === 'object' && value !== null) {
-        // For object values, stringify them to preserve their data
+        // For object values, format them clearly
         formattedValue = JSON.stringify(value);
       } else if (value === undefined || value === null) {
-        // Make empty values explicit for better CSV output
+        // Empty values should be explicit
         formattedValue = '';
       } else {
         formattedValue = String(value);
       }
       
-      // Create a row with the field data
+      // Create a row with standard columns
       const rowValues = [
-        `"${key}"`,  // question column
-        `"${formattedValue.replace(/"/g, '""')}"`,  // answer column
-        `"field_${key}"`,  // id column
-        `"${key}"`  // fieldKey column
+        index + 1,                                            // id (sequential number)
+        `"${key.replace(/"/g, '""')}"`,                   // field_name 
+        `"${key.replace(/"/g, '""')}"`,                   // field_key
+        `"${formattedValue.replace(/"/g, '""')}"`,        // response
+        `"${submissionDate}"`                               // submission_date
       ];
+      
       rows.push(rowValues.join(','));
     });
+    
+    // Add metadata as additional rows for completeness
+    rows.push([sortedFields.length + 1, '"Task ID"', '"task_id"', `"${taskId}"`, `"${submissionDate}"`].join(','));
+    rows.push([sortedFields.length + 2, '"Company ID"', '"company_id"', `"${companyId}"`, `"${submissionDate}"`].join(','));
+    rows.push([sortedFields.length + 3, '"Form Type"', '"form_type"', `"${normalizedFormType}"`, `"${submissionDate}"`].join(','));
     
     // Join all rows to create the CSV content
     content = rows.join('\n');
     
-    console.log(`[FileCreation] Created tabular CSV file with ${rows.length - 1} rows for task ${taskId}`);
+    console.log(`[FileCreation] Created standard CSV file with ${rows.length - 1} data rows for task ${taskId}`);
     
     // Log a sample of the data for debugging
     console.log(`[FileCreation] CSV file created with ${rows.length - 1} fields:`, {
       rowCount: rows.length,
       headerRow: headers,
-      contentLength: content.length,
-      timestamp: new Date().toISOString()
+      contentLength: content.length
     });
     
     // Also save JSON version as a backup
