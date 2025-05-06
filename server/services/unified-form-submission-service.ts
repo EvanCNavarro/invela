@@ -328,23 +328,24 @@ async function persistFormResponses(
     // Persist Open Banking responses
     await persistOpenBankingResponses(trx, taskId, formData);
   } else {
-    log.warn(`Unsupported form type: ${formType}, responses will not be persisted`);
+    logger.warn(`Unsupported form type: ${formType}, responses will not be persisted`, persistLogContext);
   }
 }
 
 async function persistKybResponses(trx: any, taskId: number, formData: Record<string, any>): Promise<void> {
-  log.info('Persisting KYB responses', { taskId });
+  const kybLogContext = { namespace: 'KybPersistence', taskId };
+  logger.info('Persisting KYB responses', kybLogContext);
   
   try {
     // Implementation would use trx to insert into kyb_responses table
     // For now, just log that we would persist the responses
-    log.info('KYB responses would be persisted here', { 
-      taskId, 
+    logger.info('KYB responses would be persisted here', { 
+      ...kybLogContext,
       responseCount: formData.responses ? Object.keys(formData.responses).length : 0 
     });
   } catch (error) {
-    log.error('Error persisting KYB responses', {
-      taskId,
+    logger.error('Error persisting KYB responses', {
+      ...kybLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -353,18 +354,19 @@ async function persistKybResponses(trx: any, taskId: number, formData: Record<st
 }
 
 async function persistKy3pResponses(trx: any, taskId: number, formData: Record<string, any>): Promise<void> {
-  log.info('Persisting KY3P responses', { taskId });
+  const ky3pLogContext = { namespace: 'Ky3pPersistence', taskId };
+  logger.info('Persisting KY3P responses', ky3pLogContext);
   
   try {
     // Implementation would use trx to insert into ky3p_responses table
     // For now, just log that we would persist the responses
-    log.info('KY3P responses would be persisted here', { 
-      taskId, 
+    logger.info('KY3P responses would be persisted here', { 
+      ...ky3pLogContext,
       responseCount: formData.responses ? Object.keys(formData.responses).length : 0 
     });
   } catch (error) {
-    log.error('Error persisting KY3P responses', {
-      taskId,
+    logger.error('Error persisting KY3P responses', {
+      ...ky3pLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -373,18 +375,19 @@ async function persistKy3pResponses(trx: any, taskId: number, formData: Record<s
 }
 
 async function persistOpenBankingResponses(trx: any, taskId: number, formData: Record<string, any>): Promise<void> {
-  log.info('Persisting Open Banking responses', { taskId });
+  const obLogContext = { namespace: 'OpenBankingPersistence', taskId };
+  logger.info('Persisting Open Banking responses', obLogContext);
   
   try {
     // Implementation would use trx to insert into open_banking_responses table
     // For now, just log that we would persist the responses
-    log.info('Open Banking responses would be persisted here', { 
-      taskId, 
+    logger.info('Open Banking responses would be persisted here', { 
+      ...obLogContext,
       responseCount: formData.responses ? Object.keys(formData.responses).length : 0 
     });
   } catch (error) {
-    log.error('Error persisting Open Banking responses', {
-      taskId,
+    logger.error('Error persisting Open Banking responses', {
+      ...obLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -403,9 +406,9 @@ async function handleKybPostSubmission(
   companyId: number,
   formData: Record<string, any>
 ): Promise<string[]> {
-  const log = logger.child({ namespace: 'KybPostSubmission' });
+  const kybPostLogContext = { namespace: 'KybPostSubmission', taskId, companyId };
   
-  log.info('Processing KYB post-submission logic', { taskId, companyId });
+  logger.info('Processing KYB post-submission logic', kybPostLogContext);
   
   try {
     // KYB unlocks only the File Vault tab
@@ -417,18 +420,16 @@ async function handleKybPostSubmission(
     // Unlock dependent security tasks like KY3P
     const dependentTaskIds = await synchronizeTasks(companyId, taskId);
     
-    log.info('KYB post-submission completed', { 
-      taskId, 
-      companyId,
+    logger.info('KYB post-submission completed', { 
+      ...kybPostLogContext,
       unlockedTabs,
       dependentTasksUnlocked: dependentTaskIds.length
     });
     
     return unlockedTabs;
   } catch (error) {
-    log.error('Error in KYB post-submission processing', {
-      taskId,
-      companyId,
+    logger.error('Error in KYB post-submission processing', {
+      ...kybPostLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -446,20 +447,19 @@ async function handleKy3pPostSubmission(
   companyId: number,
   formData: Record<string, any>
 ): Promise<string[]> {
-  const log = logger.child({ namespace: 'Ky3pPostSubmission' });
+  const ky3pPostLogContext = { namespace: 'Ky3pPostSubmission', taskId, companyId };
   
-  log.info('Processing KY3P post-submission logic', { taskId, companyId });
+  logger.info('Processing KY3P post-submission logic', ky3pPostLogContext);
   
   try {
     // KY3P doesn't unlock any tabs
-    log.info('KY3P post-submission completed (no tabs to unlock)', { taskId });
+    logger.info('KY3P post-submission completed (no tabs to unlock)', ky3pPostLogContext);
     
     // Return empty array since no tabs are unlocked
     return [];
   } catch (error) {
-    log.error('Error in KY3P post-submission processing', {
-      taskId,
-      companyId,
+    logger.error('Error in KY3P post-submission processing', {
+      ...ky3pPostLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -480,9 +480,9 @@ async function handleOpenBankingPostSubmission(
   companyId: number,
   formData: Record<string, any>
 ): Promise<string[]> {
-  const log = logger.child({ namespace: 'OpenBankingPostSubmission' });
+  const obPostLogContext = { namespace: 'OpenBankingPostSubmission', taskId, companyId };
   
-  log.info('Processing Open Banking post-submission logic', { taskId, companyId });
+  logger.info('Processing Open Banking post-submission logic', obPostLogContext);
   
   try {
     // Open Banking unlocks Dashboard and Insights tabs
@@ -499,12 +499,12 @@ async function handleOpenBankingPostSubmission(
       })
       .where(eq(companies.id, companyId));
     
-    log.info('Updated company onboarding status', { companyId });
+    logger.info('Updated company onboarding status', { ...obPostLogContext });
     
     // Generate risk score based on survey responses
     const riskScore = await generateRiskScore(trx, taskId, formData);
     
-    log.info('Generated risk score', { taskId, companyId, riskScore });
+    logger.info('Generated risk score', { ...obPostLogContext, riskScore });
     
     // Update accreditation status
     await trx.update(companies)
@@ -514,19 +514,17 @@ async function handleOpenBankingPostSubmission(
       })
       .where(eq(companies.id, companyId));
     
-    log.info('Updated accreditation status', { companyId });
+    logger.info('Updated accreditation status', { ...obPostLogContext });
     
-    log.info('Open Banking post-submission completed successfully', {
-      taskId,
-      companyId,
+    logger.info('Open Banking post-submission completed successfully', {
+      ...obPostLogContext,
       unlockedTabs
     });
     
     return unlockedTabs;
   } catch (error) {
-    log.error('Error in Open Banking post-submission processing', {
-      taskId,
-      companyId,
+    logger.error('Error in Open Banking post-submission processing', {
+      ...obPostLogContext,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -552,14 +550,14 @@ async function generateRiskScore(
  * Unlock tabs for a company within a transaction
  */
 async function unlockTabsForCompany(trx: any, companyId: number, tabNames: string[]): Promise<void> {
-  const log = logger.child({ namespace: 'UnlockTabs' });
+  const tabsLogContext = { namespace: 'UnlockTabs', companyId };
   
   if (!tabNames || tabNames.length === 0) {
-    log.info('No tabs to unlock', { companyId });
+    logger.info('No tabs to unlock', tabsLogContext);
     return;
   }
   
-  log.info('Unlocking tabs for company', { companyId, tabNames });
+  logger.info('Unlocking tabs for company', { ...tabsLogContext, tabNames });
   
   try {
     // Get current company tabs from database
@@ -568,7 +566,7 @@ async function unlockTabsForCompany(trx: any, companyId: number, tabNames: strin
       .where(eq(companies.id, companyId));
     
     if (!company) {
-      log.error('Company not found when unlocking tabs', { companyId });
+      logger.error('Company not found when unlocking tabs', tabsLogContext);
       throw new Error(`Company ${companyId} not found`);
     }
     
@@ -588,14 +586,14 @@ async function unlockTabsForCompany(trx: any, companyId: number, tabNames: strin
       })
       .where(eq(companies.id, companyId));
     
-    log.info('Successfully unlocked tabs', {
-      companyId,
+    logger.info('Successfully unlocked tabs', {
+      ...tabsLogContext,
       unlockedTabs: tabNames,
       allTabs: updatedTabs
     });
   } catch (error) {
-    log.error('Error unlocking tabs', {
-      companyId,
+    logger.error('Error unlocking tabs', {
+      ...tabsLogContext,
       tabNames,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
@@ -613,12 +611,11 @@ export async function broadcastFormSubmissionResult(
   formType: FormType, 
   companyId: number
 ): Promise<void> {
-  const log = logger.child({ namespace: 'BroadcastSubmission' });
+  const broadcastLogContext = { namespace: 'BroadcastSubmission', taskId, formType, companyId };
   
   if (result.success) {
-    log.info('Broadcasting successful form submission', {
-      taskId,
-      formType,
+    logger.info('Broadcasting successful form submission', {
+      ...broadcastLogContext,
       fileId: result.fileId,
       unlockedTabs: result.unlockedTabs
     });
@@ -655,9 +652,8 @@ export async function broadcastFormSubmissionResult(
       });
     }
   } else {
-    log.error('Broadcasting form submission failure', {
-      taskId,
-      formType,
+    logger.error('Broadcasting form submission failure', {
+      ...broadcastLogContext,
       error: result.error
     });
     
