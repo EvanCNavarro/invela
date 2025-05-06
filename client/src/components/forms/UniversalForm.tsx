@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -32,7 +33,13 @@ import {
   Eye,
   Check,
   Lightbulb,
-  CheckCircle
+  CheckCircle,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
+  ChevronUp,
+  Clock
 } from 'lucide-react';
 import {
   Tooltip,
@@ -40,6 +47,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Import our new improved hooks and components
 import { useFormDataManager } from '@/hooks/form/use-form-data-manager';
@@ -152,6 +165,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       setIsSubmitting(false);
     }
   }, [task?.status, isSubmitting]);
+  
+  // Determine if form should be in read-only mode (when submitted)
+  const isReadOnlyMode = useMemo(() => {
+    return task?.status === 'submitted' || task?.status === 'completed';
+  }, [task?.status]);
   
   // Use our new form data manager hook to handle form data
   const {
