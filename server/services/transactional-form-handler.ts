@@ -11,7 +11,11 @@ import { UnifiedTabService } from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
 import * as fileCreationService from './fileCreation';
 import * as WebSocketService from './websocket';
-import { sendFormSubmissionSuccess, sendFormSubmissionError, sendFormSubmissionInProgress } from '../utils/form-submission-notifications';
+import { 
+  sendFormSubmissionSuccess, 
+  sendFormSubmissionError, 
+  sendFormSubmissionInProgress 
+} from '../utils/form-submission-notifications';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
@@ -64,14 +68,35 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
   });
   
   try {
+    const transactionId = `tx-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    
     logger.info('Starting form submission transaction', {
       taskId,
       userId,
       companyId,
       formType,
-      transactionId: `tx-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      transactionId,
       logContext
     });
+    
+    // Send an in-progress notification to inform the client
+    try {
+      sendFormSubmissionInProgress({
+        taskId,
+        formType,
+        companyId,
+        progress: 25, // Starting progress
+        message: 'Processing form submission...',
+        metadata: {
+          transactionId,
+          step: 'transaction_start',
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (wsError) {
+      // Log but don't stop the process if notification fails
+      console.warn('[TransactionalFormHandler] Failed to send in-progress notification:', wsError);
+    }
     
     // Use a transaction to ensure all operations succeed or fail together
     return await withTransaction(async (client) => {
@@ -108,6 +133,24 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             formDataKeys: Object.keys(standardizedFormData).length,
             timestamp: new Date().toISOString()
           });
+          
+          // Send a progress update before starting file creation
+          try {
+            sendFormSubmissionInProgress({
+              taskId,
+              formType,
+              companyId,
+              progress: 50, // Update progress during file creation
+              message: 'Generating file for form submission...',
+              metadata: {
+                step: 'file_creation_start',
+                timestamp: new Date().toISOString()
+              }
+            });
+          } catch (wsError) {
+            // Log but don't stop the process if notification fails
+            console.warn('[TransactionalFormHandler] Failed to send file creation progress notification:', wsError);
+          }
           
           const fileResult = await fileCreationService.createTaskFile(
             taskId,
@@ -228,6 +271,26 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           hasUnlockedTabs: tabResult.availableTabs.includes('file-vault'),
           timestamp: new Date().toISOString()
         });
+        
+        // Send a final in-progress notification with nearly complete status
+        // This helps clients prepare for the completion state
+        try {
+          sendFormSubmissionInProgress({
+            taskId,
+            formType,
+            companyId,
+            progress: 90, // Almost complete
+            message: 'Finalizing form submission...',
+            metadata: {
+              step: 'pre_completion',
+              timestamp: new Date().toISOString(),
+              unlockedTabs: tabResult.availableTabs
+            }
+          });
+        } catch (wsError) {
+          // Log but don't stop the process if notification fails
+          console.warn('[TransactionalFormHandler] Failed to send final progress notification:', wsError);
+        }
         
         // Use the standardized form submission notification system
         sendFormSubmissionSuccess({
