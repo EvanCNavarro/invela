@@ -555,7 +555,7 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
 
 // Import utility functions
 import UnifiedDemoAutoFill from './UnifiedDemoAutoFill';
-import { handleClearFieldsUtil } from './handleClearFields';
+import { ClearFieldsButton } from './ClearFieldsButton';
 
 // Create a type alias for form sections
 type FormSection = NavigationFormSection;
@@ -1001,9 +1001,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     setActiveSection
   ]);
   
-  // Helpers for UI-level operations
-  const handleClearFields = async () => {
-    logger.info('Clear fields requested');
+  // Handle clearing form fields with proper logging and error handling
+  const handleClearFieldsAction = async () => {
+    logger.info('Executing clear fields operation');
     
     if (!taskId) {
       logger.warn('Cannot clear fields - no task ID provided');
@@ -1013,11 +1013,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Verify that fields have loaded before attempting to clear them
     if (!Array.isArray(fields) || fields.length === 0) {
       logger.warn('Cannot clear fields - fields have not been loaded yet');
-      toast({
-        title: "Cannot Clear Fields",
-        description: "Please wait until form fields have fully loaded.",
-        variant: "destructive"
-      });
       return;
     }
     
@@ -1025,15 +1020,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     setIsLoading(true);
     
     try {
-      // Show loading toast first using the standard toast until we fix the unified toast
-      toast({
-        title: 'Clearing Fields',
-        description: 'Clearing all form fields...',
-        variant: 'default',
-      });
-      
       // Get form type - prefer the standard taskType over formService for reliability
-      // We've seen issues with formService not being properly initialized
       const formType = taskType === 'company_kyb' ? 'kyb' : taskType;
       const formTaskId = taskId;
       
@@ -1118,22 +1105,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Force UI update
       setForceRerender(prev => !prev);
       
-      // Show success message with standard toast
-      toast({
-        title: 'Fields Cleared',
-        description: 'All form fields have been cleared successfully.',
-        variant: 'success',
-      });
+      return true;
     } catch (clearError) {
       // Properly handle any errors during the clear operation
       logger.error('Error clearing form fields:', clearError);
-      
-      // Show error message with standard toast
-      toast({
-        title: 'Clear Fields Failed',
-        description: clearError instanceof Error ? clearError.message : 'An unknown error occurred',
-        variant: 'destructive',
-      });
+      throw clearError;
     } finally {
       // Always reset loading state
       setIsLoading(false);
@@ -1497,31 +1473,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 />
                 
                 {/* Clear Fields button is now visible */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800 flex items-center gap-2"
-                  onClick={handleClearFields}
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="18" 
-                    height="18" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 6H3"></path>
-                    <path d="M17 6V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2"></path>
-                    <path d="M6 10v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                  Clear Fields
-                </Button>
+                <ClearFieldsButton
+                  taskId={taskId || 0}
+                  taskType={taskType}
+                  onClear={handleClearFieldsAction}
+                  className="ml-2"
+                />
               </div>
             )}
           </div>
