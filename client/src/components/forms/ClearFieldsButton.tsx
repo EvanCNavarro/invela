@@ -110,6 +110,24 @@ export function ClearFieldsButton({
       lastClearOperation.timestamp = now;
       lastClearOperation.operationId = operationId;
       
+      // CRITICAL FIX: Set window._lastClearOperation to prevent race conditions
+      try {
+        window._lastClearOperation = {
+          taskId,
+          timestamp: now,
+          formType: taskType
+        };
+        logger.info(`[ClearFieldsButton][${operationId}] Set window._lastClearOperation to prevent race condition`, {
+          taskId,
+          formType: taskType,
+          timestamp: new Date().toISOString()
+        });
+      } catch (winError) {
+        logger.warn(`[ClearFieldsButton][${operationId}] Error setting window._lastClearOperation:`, {
+          error: winError instanceof Error ? winError.message : String(winError)
+        });
+      }
+      
       // Show in-progress toast for better user feedback
       toast({
         title: 'Clearing...',

@@ -1,6 +1,17 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+
+// Define window property for tracking clear operations
+declare global {
+  interface Window {
+    _lastClearOperation?: {
+      taskId: number;
+      timestamp: number;
+      formType: string;
+    } | null;
+  }
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -819,8 +830,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         refreshStatus();
       }
       
-      // Only refresh task data if we're not skipping server refresh
-      if (!skipServerRefresh && refreshTask) {
+      // CRITICAL FIX: Only refresh task data if we're not skipping server refresh AND
+      // we haven't just performed a clear operation
+      const recentClearOperation = window._lastClearOperation && 
+                                  window._lastClearOperation.taskId === taskId &&
+                                  (Date.now() - window._lastClearOperation.timestamp) < 10000; // Within 10 seconds
+      
+      if (recentClearOperation) {
+        logger.info(`[DIAGNOSTIC][${operationId}] Detected recent clear operation, blocking task refresh`);
+        // Clear the operation info after blocking the refresh
+        setTimeout(() => {
+          if (window._lastClearOperation && window._lastClearOperation.taskId === taskId) {
+            logger.info(`[DIAGNOSTIC][${operationId}] Clearing cached clear operation info after timeout`);
+            window._lastClearOperation = null;
+          }
+        }, 5000); // Clear after 5 seconds
+      } else if (!skipServerRefresh && refreshTask) {
         logger.info(`[DIAGNOSTIC][${operationId}] Refreshing task data from server`);
         await refreshTask();
       } else {
@@ -1297,22 +1322,67 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Build the clear URL
       const clearUrl = `/api/${formType}/clear/${formTaskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
-      logger.info(`Calling clear fields API: ${clearUrl}`);
+      logger.info(`[DIAGNOSTIC][${clearOpId}] Calling clear fields API: ${clearUrl}`);
       
       // Force a layout refresh before making the request
       // This helps ensure that React doesn't batch updates and miss changes
       document.body.offsetHeight;
+      
+      // ENHANCEMENT: Track that we've just done a clear operation to prevent reload racing condition
+      window._lastClearOperation = {
+        taskId: formTaskId,
+        timestamp: Date.now(),
+        formType
+      };
+      
+      // CRITICAL FIX: Reset the form's values on the client side FIRST
+      try {
+        form.reset({});
+        logger.info(`[DIAGNOSTIC][${clearOpId}] Pre-emptively reset form values on client side`);
+        
+        // CRITICAL FIX: Reset section statuses BEFORE server call
+        if (typeof setSectionStatuses === 'function') {
+          const resetSectionStatuses = sections.map(section => ({
+            id: section.id,
+            title: section.title,
+            totalFields: 0,
+            filledFields: 0,
+            remainingFields: 0,
+            progress: 0,
+            status: 'not-started' as const
+          }));
+          setSectionStatuses(resetSectionStatuses);
+          logger.info(`[DIAGNOSTIC][${clearOpId}] Pre-emptively reset section statuses on client side`);
+        }
+      } catch (preResetError) {
+        logger.error(`[DIAGNOSTIC][${clearOpId}] Error in pre-emptive reset: ${preResetError instanceof Error ? preResetError.message : String(preResetError)}`);
+      }
       
       try {
         // Use direct fetch with timeout and better error capturing
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        const response = await fetch(clearUrl, {
+        // CRITICAL FIX: Add a cache-busting parameter to prevent stale data
+        const cacheBuster = `&cacheBuster=${Date.now()}`;
+        const clearUrlWithCacheBuster = `${clearUrl}${clearUrl.includes('?') ? cacheBuster.replace('&', '&') : `?${cacheBuster.substring(1)}`}`;
+        
+        logger.info(`[DIAGNOSTIC][${clearOpId}] Sending clear request with cache busting: ${clearUrlWithCacheBuster}`);
+        
+        const response = await fetch(clearUrlWithCacheBuster, {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ preserveProgress }),
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+          body: JSON.stringify({ 
+            preserveProgress,
+            timestamp: Date.now(),
+            clearOperation: clearOpId
+          }),
           signal: controller.signal
         });
         
@@ -1326,7 +1396,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         const result = await response.json();
         
         // Log success with detailed information for debugging
-        logger.info(`Successfully cleared fields via API for ${formType} task ${formTaskId}`, {
+        logger.info(`[DIAGNOSTIC][${clearOpId}] Successfully cleared fields via API for ${formType} task ${formTaskId}`, {
           taskId: formTaskId,
           formType,
           status: result.status || 'unknown',
@@ -1337,7 +1407,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         });
       } catch (apiError) {
         // Log API errors but continue with client-side clearing as fallback
-        logger.error(`API error when clearing fields: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+        logger.error(`[DIAGNOSTIC][${clearOpId}] API error when clearing fields: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
       }
       
       // Reset form to empty values - client-side fallback
