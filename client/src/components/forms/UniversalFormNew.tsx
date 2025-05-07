@@ -958,13 +958,53 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const formTitle = getFormTitle();
   const formDescription = getFormDescription();
 
+  // Determine read-only mode first, before any other rendering logic
+  // This is critical to prevent the editable form from flashing before the read-only view
+  const isFormReadOnly = useMemo(() => {
+    return (
+      isReadOnly || 
+      task?.status === 'submitted' || 
+      task?.status === 'completed'
+    );
+  }, [isReadOnly, task?.status]);
+  
   // Early loading state - show skeleton loaders while determining form state
   const formStateLoading = useMemo(() => {
     // Show skeleton if we're loading task data or waiting for field/section data
     return !task || loading || fields.length === 0;
   }, [task, loading, fields.length]);
   
-  // Render main form
+  // CRITICAL: If the form is determined to be read-only and data is loaded,
+  // render the read-only view immediately without any other checks
+  if (isFormReadOnly && hasLoaded && !formStateLoading) {
+    return (
+      <div className="w-full mx-auto">
+        {/* WebSocket listener is still needed for potential updates */}
+        {taskId && (
+          <FormSubmissionListener
+            taskId={taskId}
+            formType={taskType}
+            onSuccess={handleSubmissionSuccess}
+            onError={handleSubmissionError}
+            onInProgress={handleSubmissionInProgress}
+            showToasts={true}
+          />
+        )}
+        
+        <ReadOnlyFormView
+          taskId={taskId}
+          taskType={taskType}
+          task={task}
+          formData={formData}
+          fields={fields}
+          sections={sections}
+          company={company}
+        />
+      </div>
+    );
+  }
+  
+  // Render main form (for loading state or editable form)
   return (
     <div className="w-full mx-auto">
       {/* WebSocket-based Form Submission Listener */}
@@ -1004,9 +1044,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         />
       )}
       
-      {/* IMPROVEMENT: Show skeleton loader while determining form state */}
+      {/* Show skeleton loader while determining form state */}
       {formStateLoading ? (
-        <FormSkeletonWithMode readOnly={isReadOnly || task?.status === 'submitted' || task?.status === 'completed'} />
+        <FormSkeletonWithMode readOnly={isFormReadOnly} />
       ) : isReadOnlyMode && hasLoaded ? (
         <ReadOnlyFormView
           taskId={taskId}
