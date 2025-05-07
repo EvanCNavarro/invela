@@ -557,10 +557,116 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   companyName,
   isReadOnly
 }) => {
-  // Rest of the component...
-  // ... (this is a placeholder for the rest of the UniversalForm component)
+  // Get user and company data for the consent section
+  const { user } = useUser();
+  const { company } = useCurrentCompany();
   
-  return <div>Form Component</div>;
+  // Core state for form initialization
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [template, setTemplate] = useState<TaskTemplateWithConfigs | null>(null);
+  const [formService, setFormService] = useState<FormServiceInterface | null>(null);
+  const [sections, setSections] = useState<FormSection[]>([]);
+  const [fields, setFields] = useState<ServiceFormField[]>([]);
+  const [forceRerender, setForceRerender] = useState(false);
+  const [agreementChecked, setAgreementChecked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for WebSocket-based form submission
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
+  const modalShownRef = useRef(false); // Ref to track if modal has been shown
+  
+  // Query for task data
+  const { data: task, refetch: refreshTask } = useQuery<Task>({
+    queryKey: [`/api/tasks/${taskId}`],
+    enabled: !!taskId, // Only run when taskId is provided
+  });
+  
+  // CRITICAL IMPROVEMENT: Determine if form should be in read-only mode based on task status
+  // This calculation is done at the very start to ensure we NEVER render editable UI for submitted forms
+  const isReadOnlyMode = useMemo(() => {
+    // This is our primary gate to prevent flashing of editable forms when form should be read-only
+    const isSubmittedOrReadOnly = isReadOnly || 
+          task?.status === 'submitted' || 
+          task?.status === 'completed' || 
+          !!submissionResult;
+    
+    if (isSubmittedOrReadOnly) {
+      // Log that we're in read-only mode to help with debugging
+      logger.info(`[UniversalFormNew] Form is in read-only mode: isReadOnly=${isReadOnly}, taskStatus=${task?.status}, hasSubmissionResult=${!!submissionResult}`);
+    }
+    
+    return isSubmittedOrReadOnly;
+  }, [isReadOnly, task?.status, submissionResult]);
+  
+  // Use our new form data manager hook to handle form data
+  const {
+    form,
+    formData,
+    isLoading: isDataLoading,
+    hasLoaded: dataHasLoaded,
+    error: dataError,
+    updateField,
+    saveProgress,
+    resetForm
+  } = useFormDataManager({
+    formService,
+    taskId,
+    initialData,
+    fields,
+    onDataChange: (data) => {
+      logger.debug(`Form data changed: ${Object.keys(data).length} fields`);
+    }
+  });
+  
+  // If the task is in read-only mode and we have all the data we need, render the read-only view
+  if (isReadOnlyMode && dataHasLoaded && fields.length > 0 && sections.length > 0) {
+    return (
+      <ReadOnlyFormView
+        taskId={taskId}
+        taskType={taskType}
+        task={task}
+        formData={formData}
+        fields={fields}
+        sections={sections}
+        company={company}
+      />
+    );
+  }
+  
+  // If we're still loading or have an error, show appropriate content
+  if (loading || error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 h-[calc(100vh-200px)]">
+        {loading && (
+          <div className="text-center">
+            <LoadingSpinner className="mx-auto h-12 w-12" variant="primary" />
+            <p className="mt-4 text-gray-600">Loading form...</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="text-center">
+            <p className="text-red-500 font-medium">Error loading form</p>
+            <p className="mt-2 text-gray-600 max-w-md">{error}</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => window.location.href = '/task-center'}
+            >
+              Back to Task Center
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // Otherwise, render the loading skeleton
+  return (
+    <FormSkeletonWithMode />
+  );
 };
 
 export default UniversalForm;
