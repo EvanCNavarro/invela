@@ -557,6 +557,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="ky3p"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
+          showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
         {/* Success modal */}
@@ -656,6 +657,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="open_banking"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
+          showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
         {/* Success modal */}
