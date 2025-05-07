@@ -19,6 +19,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { toast } from '@/hooks/use-toast';
+import { showClearFieldsToast } from '@/hooks/use-unified-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
 import { componentFactory } from '@/services/componentFactory';
@@ -1024,14 +1025,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     setIsLoading(true);
     
     try {
-      // Get task type and ID
-      const taskType = formService.formType || taskType || 'kyb';
-      const taskId = formService.taskId || taskId;
+      // Show loading toast first
+      showClearFieldsToast('loading');
       
-      logger.info(`Clearing all fields for ${taskType} task ${taskId}`);
+      // Get task type and ID from formService for clarity
+      const formType = formService.formType || taskType;
+      const formTaskId = formService.taskId || taskId;
+      
+      logger.info(`Clearing all fields for ${formType} task ${formTaskId}`);
       
       // Direct API call to backend
-      const clearUrl = `/api/${taskType}/clear/${taskId}`;
+      const clearUrl = `/api/${formType}/clear/${formTaskId}`;
       logger.info(`Calling clear fields API: ${clearUrl}`);
       
       const response = await fetch(clearUrl, {
@@ -1077,12 +1081,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Force UI update
       setForceRerender(prev => !prev);
       
-      // Show success message
-      toast({
-        title: 'Form cleared',
-        description: 'All fields have been reset to their default values.',
-        variant: 'success',
-      });
+      // Show success message with the unified toast system
+      showClearFieldsToast('success');
     } catch (clearError) {
       // Properly handle any errors during the clear operation
       logger.error('Error clearing form fields:', clearError);
