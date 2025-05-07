@@ -59,7 +59,7 @@ export async function submitForm(
   // Use the correct signature for apiRequest: (method, url, data)
   // apiRequest already returns the parsed JSON response
   try {
-    const response = await apiRequest('POST', url, payload);
+    const response = await apiRequest('POST', url, payload) as FormSubmissionResponse;
     console.log('[FormSubmissionAPI] Submission successful:', response);
     return response;
   } catch (error) {
@@ -105,7 +105,7 @@ export async function submitFormTransactional(
   });
 
   try {
-    const response = await apiRequest('POST', url, payload);
+    const response = await apiRequest('POST', url, payload) as FormSubmissionResponse;
     console.log('[FormSubmissionAPI] Transactional submission successful:', response);
     return response;
   } catch (error) {
