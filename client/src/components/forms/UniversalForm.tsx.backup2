@@ -1240,15 +1240,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       ) : (
         <div>
           {/* Form title and subtitle */}
-          <div className="bg-gray-50 p-6 rounded-t-md mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
-            <p className="text-gray-600 mt-1">{formDescription}</p>
-            
-            {/* Demo buttons - Only show for demo companies */}
-            {company?.isDemo && (
-              <div className="flex gap-3 mt-4">
-                {/* Use unified demo auto-fill component for all form types */}
-                <UnifiedDemoAutoFill
+      <div className="bg-gray-50 p-6 rounded-t-md mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
+        <p className="text-gray-600 mt-1">{formDescription}</p>
+        
+        {/* Demo buttons - Only show for demo companies */}
+        {company?.isDemo && (
+          <div className="flex gap-3 mt-4">
+            {/* Use unified demo auto-fill component for all form types */}
+            <UnifiedDemoAutoFill
               taskId={taskId}
               taskType={taskType}
               form={form}
