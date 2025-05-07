@@ -23,7 +23,7 @@ type FormServiceInterface = ExtendedFormService & {
   // Add any other required methods from FormServiceInterface here
 };
 import getLogger from '@/utils/logger';
-import { showClearFieldsToast } from '@/hooks/use-unified-toast';
+import { unifiedToast } from '@/hooks/use-unified-toast';
 
 const logger = getLogger('ClearFields');
 
@@ -61,7 +61,7 @@ export async function handleClearFieldsUtil(
     });
     
     // Show loading toast
-    showClearFieldsToast('loading', 'Clearing form fields...', { operationId: operationId });
+    unifiedToast.info('Clearing Form Fields', 'Please wait while the form is cleared...');
     
     // Get task ID in the most reliable way
     const taskId = formService.taskId || (formService as any)?.originalService?.taskId;
@@ -504,7 +504,7 @@ export async function handleClearFieldsUtil(
         fieldsType: typeof fields,
         fieldsValue: fields
       });
-      showClearFieldsToast('error', 'Failed to clear fields: fields is not an array', { operationId });
+      unifiedToast.error('Failed to Clear Fields', 'Fields is not an array, cannot clear form.');
       return false;
     }
     
@@ -562,8 +562,8 @@ export async function handleClearFieldsUtil(
       totalProcessed: clearedFieldCount + errorFieldCount + skippedFieldCount
     });
     
-    // Show success toast using the current operation ID
-    showClearFieldsToast('success', 'Form fields cleared successfully', { operationId: operationId });
+    // Show success toast using the standard toast component
+    unifiedToast.success('Fields Cleared', 'All form fields have been cleared successfully.');
     
     return true;
   } catch (e) {
@@ -579,7 +579,7 @@ export async function handleClearFieldsUtil(
     
     // Show error toast
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    showClearFieldsToast('error', errorMessage, { operationId: operationId });
+    unifiedToast.error('Error Clearing Fields', errorMessage);
     
     return false;
   }
