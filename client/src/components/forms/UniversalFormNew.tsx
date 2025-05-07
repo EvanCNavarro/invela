@@ -40,6 +40,7 @@ import {
   FileSpreadsheet,
   FileText,
   ChevronUp,
+  ChevronDown,
   Clock,
   Info,
   CalendarClock,
@@ -49,7 +50,9 @@ import {
   User2,
   Building2,
   Users,
-  Flag
+  Flag,
+  ChartBar,
+  Hash
 } from 'lucide-react';
 import {
   Tooltip,
@@ -237,108 +240,169 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
               )}
             </div>
             <h1 className="text-xl font-bold text-gray-900">{getFormHeading()}</h1>
-            {/* Primary metadata - always visible */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-2 flex-wrap">
-              <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
-                <Clock className="h-4 w-4 text-blue-500" />
-                <span>Submitted on <span className="font-medium">{formattedSubmissionDate}</span></span>
-              </div>
-              {task?.status && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm mt-1 sm:mt-0">
-                  <CheckCircle className="h-4 w-4 text-emerald-500" />
-                  <span>Status: <span className="font-medium capitalize">{task.status}</span></span>
+            {/* All metadata in expandable section */}
+            <details className="mt-2 bg-gray-50 rounded-md border border-gray-200 overflow-hidden group">
+              <summary className="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-medium text-gray-700 hover:bg-gray-100">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">VIEW SUBMISSION DETAILS</span>
                 </div>
-              )}
-              {task?.progress !== undefined && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm mt-1 sm:mt-0">
-                  <span className="text-xs font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
-                    {task.progress}%
-                  </span>
-                  <span>Complete</span>
-                </div>
-              )}
-              {task?.priority && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm mt-1 sm:mt-0">
-                  <Flag className={`h-4 w-4 ${
-                    task.priority === 'high' ? 'text-red-500' : 
-                    task.priority === 'medium' ? 'text-orange-500' : 'text-blue-500'
-                  }`} />
-                  <span>Priority: <span className="font-medium capitalize">{task.priority}</span></span>
-                </div>
-              )}
-            </div>
-            
-            {/* Additional metadata - expandable section */}
-            <details className="mt-2 bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
-              <summary className="flex items-center gap-2 px-3 py-2 cursor-pointer text-sm font-medium text-gray-700 hover:bg-gray-100">
-                <Info className="h-4 w-4 text-gray-500" />
-                View additional task details
+                <ChevronDown className="h-4 w-4 text-gray-500 group-open:rotate-180 transition-transform duration-200" />
               </summary>
               
-              <div className="p-3 bg-white border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {task?.created_at && (
-                  <div className="flex items-center gap-1.5">
-                    <CalendarClock className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-gray-500">Created:</span>
-                    <span className="font-medium text-gray-700">{new Date(task.created_at).toLocaleString()}</span>
+              <div className="p-4 bg-white border-t border-gray-200 text-sm">
+                {/* Main submission info */}
+                <div className="mb-4 pb-3 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Submission Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <div>
+                        <span className="text-gray-500 text-xs">Submitted on:</span>
+                        <p className="font-medium text-gray-700">{formattedSubmissionDate}</p>
+                      </div>
+                    </div>
+                  
+                    {task?.status && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Status:</span>
+                          <p className="font-medium text-gray-700 capitalize">{task.status}</p>
+                        </div>
+                      </div>
+                    )}
+                  
+                    {task?.progress !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <ChartBar className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Progress:</span>
+                          <p className="font-medium">
+                            <span className="text-xs font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                              {task.progress}% Complete
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  
+                    {task?.priority && (
+                      <div className="flex items-center gap-2">
+                        <Flag className={`h-4 w-4 flex-shrink-0 ${
+                          task.priority === 'high' ? 'text-red-500' : 
+                          task.priority === 'medium' ? 'text-orange-500' : 'text-blue-500'
+                        }`} />
+                        <div>
+                          <span className="text-gray-500 text-xs">Priority:</span>
+                          <p className="font-medium text-gray-700 capitalize">{task.priority}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
                 
-                {task?.completed_at && (
-                  <div className="flex items-center gap-1.5">
-                    <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />
-                    <span className="text-gray-500">Completed:</span>
-                    <span className="font-medium text-gray-700">{new Date(task.completed_at).toLocaleString()}</span>
+                {/* Task information */}
+                <div className="mb-4 pb-3 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Task Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {task?.created_at && (
+                      <div className="flex items-center gap-2">
+                        <CalendarClock className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Created:</span>
+                          <p className="font-medium text-gray-700">{new Date(task.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.completed_at && (
+                      <div className="flex items-center gap-2">
+                        <CheckSquare className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Completed:</span>
+                          <p className="font-medium text-gray-700">{new Date(task.completed_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.due_date && (
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Due date:</span>
+                          <p className="font-medium text-gray-700">{new Date(task.due_date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.id && (
+                      <div className="flex items-center gap-2">
+                        <Hash className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Task ID:</span>
+                          <p className="font-medium text-gray-700">#{task.id}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
                 
-                {task?.due_date && (
-                  <div className="flex items-center gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5 text-orange-500" />
-                    <span className="text-gray-500">Due date:</span>
-                    <span className="font-medium text-gray-700">{new Date(task.due_date).toLocaleDateString()}</span>
+                {/* Assignment & Organization */}
+                <div>
+                  <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Assignment & Organization</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {task?.created_by && (
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Created by:</span>
+                          <p className="font-medium text-gray-700">User #{task.created_by}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.assigned_to && (
+                      <div className="flex items-center gap-2">
+                        <User2 className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Assigned to:</span>
+                          <p className="font-medium text-gray-700">User #{task.assigned_to}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.company_id && company?.name && (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Company:</span>
+                          <p className="font-medium text-gray-700">{company.name} (#{task.company_id})</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.template_id && (
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Template ID:</span>
+                          <p className="font-medium text-gray-700">#{task.template_id}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {task?.task_scope && (
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <div>
+                          <span className="text-gray-500 text-xs">Scope:</span>
+                          <p className="font-medium text-gray-700 capitalize">{task.task_scope}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {task?.created_by && (
-                  <div className="flex items-center gap-1.5">
-                    <UserPlus className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-gray-500">Created by:</span>
-                    <span className="font-medium text-gray-700">User #{task.created_by}</span>
-                  </div>
-                )}
-                
-                {task?.assigned_to && (
-                  <div className="flex items-center gap-1.5">
-                    <User2 className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-gray-500">Assigned to:</span>
-                    <span className="font-medium text-gray-700">User #{task.assigned_to}</span>
-                  </div>
-                )}
-                
-                {task?.company_id && company?.name && (
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                    <span className="text-gray-500">Company:</span>
-                    <span className="font-medium text-gray-700">{company.name} (#{task.company_id})</span>
-                  </div>
-                )}
-                
-                {task?.template_id && (
-                  <div className="flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-purple-500" />
-                    <span className="text-gray-500">Template ID:</span>
-                    <span className="font-medium text-gray-700">#{task.template_id}</span>
-                  </div>
-                )}
-                
-                {task?.task_scope && (
-                  <div className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-gray-500">Scope:</span>
-                    <span className="font-medium text-gray-700 capitalize">{task.task_scope}</span>
-                  </div>
-                )}
+                </div>
               </div>
             </details>
           </div>
