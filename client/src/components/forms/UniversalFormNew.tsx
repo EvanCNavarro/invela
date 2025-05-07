@@ -593,6 +593,7 @@ interface UniversalFormProps {
   onProgress?: (progress: number) => void;
   companyName?: string; // Optional company name to display in the form title
   isReadOnly?: boolean; // Flag to force read-only mode (for completed/submitted forms)
+  refreshData?: () => Promise<void>; // Function to refresh form data after clearing fields
 }
 
 /**
@@ -606,7 +607,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onCancel,
   onProgress,
   companyName,
-  isReadOnly
+  isReadOnly,
+  refreshData
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
