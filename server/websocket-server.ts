@@ -228,3 +228,30 @@ export function broadcastCompanyTabs(companyId: number): void {
 export function broadcastFormSubmission(submissionData: FormSubmissionPayload): void {
   WebSocketService.broadcastFormSubmission(submissionData);
 }
+
+/**
+ * Import and re-export the broadcastFormSubmissionCompleted function as part of WebSocketService
+ * to fix the "WebSocketService.broadcastFormSubmissionCompleted is not a function" error
+ */
+import { broadcastFormSubmissionCompleted as unifiedBroadcastFormSubmissionCompleted } from './utils/unified-websocket';
+
+// Add the method to the WebSocketService class
+WebSocketService.broadcastFormSubmissionCompleted = (
+  formType: string,
+  taskId: number, 
+  companyId: number,
+  options = {}
+) => {
+  // Call the actual implementation from unified-websocket
+  return unifiedBroadcastFormSubmissionCompleted(formType, taskId, companyId, options);
+};
+
+// Also export as a standalone function for backward compatibility
+export function broadcastFormSubmissionCompleted(
+  formType: string,
+  taskId: number, 
+  companyId: number,
+  options = {}
+): void {
+  WebSocketService.broadcastFormSubmissionCompleted(formType, taskId, companyId, options);
+}
