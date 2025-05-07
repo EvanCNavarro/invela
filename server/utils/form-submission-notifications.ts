@@ -67,6 +67,12 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
     });
   }
   
+  // Ensure metadata has submission_date for UI display
+  const enhancedMetadata = {
+    ...metadata,
+    submission_date: submissionTimestamp,
+  };
+
   // Send the form submission notification
   broadcastFormSubmission(
     formType,
@@ -80,7 +86,7 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
       status: 'submitted',
       message: 'Form submitted successfully',
       completedActions: actions,
-      ...metadata
+      ...enhancedMetadata
     }
   );
   
@@ -96,7 +102,7 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
       fileName,
       submissionDate: submissionTimestamp,
       unlockedTabs,
-      ...metadata
+      ...enhancedMetadata // Use the enhanced metadata with submission_date
     }
   );
   
@@ -112,6 +118,13 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
   const { formType, taskId, companyId, error, message, metadata = {} } = options;
   
   const errorMessage = message || error || 'An error occurred during form submission';
+  const submissionTimestamp = new Date().toISOString();
+  
+  // Ensure metadata has submission_date for UI display
+  const enhancedMetadata = {
+    ...metadata,
+    submission_date: submissionTimestamp,
+  };
   
   // Send the task update notification with error status
   broadcastTaskUpdate(
@@ -121,8 +134,9 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
     {
       formType,
       error: errorMessage,
-      submissionDate: new Date().toISOString(),
-      ...metadata
+      submissionDate: submissionTimestamp,
+      submission_date: submissionTimestamp, // Include both formats for UI consistency
+      ...enhancedMetadata
     }
   );
   
