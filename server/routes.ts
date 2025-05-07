@@ -56,8 +56,8 @@ import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
 import taskProgressRouter from './routes/task-progress';
-import kybClearRouter from './routes/kyb-clear';
-import openBankingClearRouter from './routes/open-banking-clear';
+// Import the unified clear fields router that handles all form types
+import unifiedClearFieldsRouter from './routes/unified-clear-fields';
 import fixKy3pFilesRouter from './routes/fix-ky3p-files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
@@ -407,8 +407,10 @@ export function registerRoutes(app: Express): Express {
   // Register the standardized KY3P field update routes
   const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
   app.use(ky3pFieldUpdateRouter);
-  app.use(kybClearRouter);
-  app.use(openBankingClearRouter);
+  // Register the unified clear fields router for all form types
+  console.log('[Routes] Setting up unified clear fields router');
+  app.use(unifiedClearFieldsRouter);
+  console.log('[Routes] Successfully registered unified clear fields router');
   app.use(openBankingDemoAutofillRouter);
   // Register the KY3P files fix router
   app.use(fixKy3pFilesRouter);
