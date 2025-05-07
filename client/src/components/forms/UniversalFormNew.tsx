@@ -748,14 +748,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   });
   
   // Function to refresh form data after clearing fields
-  // This ensures the form is properly reloaded with empty data
-  const refreshFormData = useCallback(async (): Promise<void> => {
+  // This ensures the form is properly reloaded with empty data but WITHOUT fetching from server
+  const refreshFormData = useCallback(async (options: { skipServerRefresh?: boolean } = {}): Promise<void> => {
+    const skipServerRefresh = options.skipServerRefresh ?? true; // Default to skipping server refresh
     try {
-      logger.info('Refreshing form data after clearing fields');
+      logger.info(`Refreshing form data after clearing fields (skipServerRefresh: ${skipServerRefresh})`);
       
-      // Reset form to empty state
-      if (resetForm) {
+      // Only reset form state if we're not skipping server refresh
+      // This is critical because resetForm() calls the API and refetches data
+      if (!skipServerRefresh && resetForm) {
+        logger.info('Calling resetForm() to reload form data from server');
         await resetForm();
+      } else {
+        logger.info('Skipping resetForm() to prevent reloading data from server');
+        
+        // Instead of reloading from server, manually reset the form state
+        if (form) {
+          // Reset form UI state directly without server call
+          form.reset({});
+          logger.info('Reset form UI state directly without server API call');
+        }
       }
       
       // Reset to first section
@@ -763,17 +775,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         setActiveSection(0);
       }
       
-      // Refresh form status to recalculate progress
+      // Local status recalculation without server call
       if (refreshStatus) {
         refreshStatus();
       }
       
-      // Refresh task data if available
-      if (refreshTask) {
+      // Only refresh task data if we're not skipping server refresh
+      if (!skipServerRefresh && refreshTask) {
+        logger.info('Refreshing task data from server');
         await refreshTask();
+      } else {
+        logger.info('Skipping task data refresh to prevent reloading data from server');
       }
       
-      // Force rerender to update UI
+      // Force rerender to update UI state
       setForceRerender(prev => !prev);
       
       logger.info('Form data refresh completed successfully');
@@ -781,7 +796,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.error(`Error refreshing form data: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
-  }, [resetForm, setActiveSection, refreshStatus, refreshTask]);
+  }, [resetForm, form, setActiveSection, refreshStatus, refreshTask]);
   
   // Handle fields cleared via WebSocket event
   const handleFieldsCleared = useCallback((event: FieldsEvent) => {
@@ -800,7 +815,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     });
     
     // Refresh form data after fields are cleared
-    refreshFormData().catch(error => {
+    // IMPORTANT: Use skipServerRefresh=true to prevent auto-reloading of data from server
+    refreshFormData({ skipServerRefresh: true }).catch(error => {
       logger.error(`Error refreshing form data after fields cleared: ${error instanceof Error ? error.message : String(error)}`);
       
       toast({
