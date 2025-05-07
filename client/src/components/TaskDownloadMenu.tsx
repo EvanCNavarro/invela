@@ -9,23 +9,41 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText, FileJson, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import FixMissingFileButton from './FixMissingFileButton';
+import getLogger from '@/utils/logger';
+
+const logger = getLogger('TaskDownloadMenu');
 
 interface TaskDownloadMenuProps {
   onDownload: (format: 'csv' | 'txt' | 'json') => Promise<void>;
   taskType?: string;
   disabled?: boolean;
   fileId?: number;  // Add fileId prop to support direct file access
+  taskId: number;  // Add taskId prop for file repair functionality
+  onFileIdUpdate?: (fileId: number) => void; // Callback for when file is regenerated
 }
 
 export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
   onDownload,
   taskType = 'form',
   disabled = false,
-  fileId  // Include fileId in destructuring but we won't use it directly in this component
+  fileId,  // Now we will use this for checking if we need repair
+  taskId,  // Task ID for repair functionality
+  onFileIdUpdate // Callback for when file is regenerated
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentFormat, setCurrentFormat] = useState<'csv' | 'txt' | 'json' | null>(null);
   const { toast } = useToast();
+  
+  // Handle file regeneration
+  const handleFileRegenerated = (newFileId: number) => {
+    logger.info(`File regenerated successfully: ID ${newFileId} for task ${taskId}`);
+    
+    // Call the parent callback if provided
+    if (onFileIdUpdate) {
+      onFileIdUpdate(newFileId);
+    }
+  };
 
   const handleDownload = async (format: 'csv' | 'txt' | 'json') => {
     if (isDownloading) return;
@@ -148,6 +166,18 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
             <DropdownMenuItem disabled className="flex items-center text-amber-500">
               <AlertCircle className="mr-2 h-4 w-4" />
               No file available
+            </DropdownMenuItem>
+            
+            {/* Add Fix Missing File option when file is missing */}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="p-0">
+              <FixMissingFileButton 
+                taskId={taskId}
+                variant="ghost"
+                className="w-full justify-start px-2 py-1.5 text-left"
+                buttonText="Fix Missing File"
+                onFileRepaired={handleFileRegenerated}
+              />
             </DropdownMenuItem>
           </>
         )}
