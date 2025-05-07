@@ -74,7 +74,7 @@ export interface FormSubmissionEvent {
   completedActions?: SubmissionAction[] | null; // Optional list of actions that were completed during form submission
   
   // Additional fields for debugging and enhanced compatibility
-  source?: string;                            // Source of the message (e.g., 'server-broadcast')
+  source?: string;                            // Source of the message (e.g., 'server-broadcast', 'final_completion')
   serverVersion?: string;                     // Version of the server that sent the message
   reason?: string;                            // Optional reason for the status (mostly for errors)
   warnings?: string[];                        // Optional warnings that occurred during submission
@@ -377,11 +377,39 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         // Log the status mapping for debugging
         logger.debug(`Mapped WebSocket event status: ${payload.status} → ${formStatus}`);
         
-        // Handle the event based on the mapped status
+        // Special handling for form_submission_completed message type
+        // This is our new comprehensive message sent after ALL server-side operations are complete
+        if (data.type === 'form_submission_completed') {
+          logger.info(`Received final form submission completion event for task ${taskId}`, {
+            hasCompletedActions: payload.completedActions?.length || 0,
+            hasFileInfo: !!payload.fileId,
+            hasUnlockedTabs: payload.unlockedTabs?.length || 0
+          });
+          
+          // Ensure the submission status is success
+          submissionEvent.status = 'success';
+          
+          if (showToastsRef.current) {
+            toast({
+              title: 'Form submitted successfully',
+              description: 'Your form has been successfully processed.',
+              variant: 'success',
+              duration: 5000,
+            });
+          }
+          
+          // Call success callback with the complete information
+          if (onSuccessRef.current) {
+            onSuccessRef.current(submissionEvent);
+          }
+          return; // Don't process further, we've handled this special message type
+        }
+        
+        // Standard handling for other message types based on status
         if (formStatus === 'success') {
-          // We've disabled toasts here to prevent duplication with parent components
-          // Parent components can handle their own toast/modal UI
-          // Only show toast if explicitly enabled (disabled by default for most cases)
+          // For regular success messages, only show a toast if showToasts is enabled
+          // But do NOT trigger the modal display yet (unless it's form_submission_completed)
+          // This prevents showing the modal with incomplete information
           if (showToastsRef.current) {
             toast({
               title: 'Form submitted successfully',
@@ -391,12 +419,13 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             });
           }
           
-          if (onSuccessRef.current) {
+          // For backward compatibility, still call the success callback 
+          // but we'll rely on form_submission_completed for the final modal
+          if (onSuccessRef.current && data.type !== 'task_update' && data.type !== 'task_updated') {
             onSuccessRef.current(submissionEvent);
           }
         } else if (formStatus === 'error') {
-          // Only show error toasts if explicitly enabled
-          // This prevents duplicate error messages when parent component handles errors
+          // Error handling remains unchanged
           if (showToastsRef.current) {
             toast({
               title: 'Form submission failed',
@@ -410,10 +439,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             onErrorRef.current(submissionEvent);
           }
         } else if (formStatus === 'in_progress') {
-          // Do not show toast for in-progress status to avoid redundancy
-          // The form already shows a loading indicator and we have the "Submitting form..." modal
-          
-          // Still call the event handler if provided
+          // In-progress handling remains unchanged
           if (onInProgressRef.current) {
             onInProgressRef.current(submissionEvent);
           }

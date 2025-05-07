@@ -307,6 +307,74 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             submissionComplete: true
           }
         });
+        
+        // Define completed actions for the form submission
+        const completedActions = [
+          {
+            type: "task_completion",
+            description: "Task marked as complete",
+            data: {
+              details: "Your form has been successfully submitted and the task is marked as complete."
+            }
+          }
+        ];
+        
+        // Add file generation action if a file was created
+        if (fileId) {
+          completedActions.push({
+            type: "file_generation",
+            description: "File generated",
+            fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId,
+            data: {
+              details: `A ${formType} file has been generated and saved to your file vault.`,
+              fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId
+            }
+          });
+        }
+        
+        // Add tab unlocking action if file-vault was unlocked
+        if (tabResult.availableTabs.includes('file-vault')) {
+          completedActions.push({
+            type: "tab_unlocked",
+            description: "File Vault access unlocked",
+            data: {
+              details: "You now have access to the File Vault where all your documents are stored.",
+              buttonText: "Go to File Vault",
+              url: "/file-vault"
+            }
+          });
+        }
+        
+        // Send the new comprehensive completion message with all information needed for the modal
+        console.log(`[TransactionalFormHandler] Sending FINAL completion message for task ${taskId}:`, {
+          formType,
+          taskId,
+          companyId,
+          hasCompletedActions: completedActions.length,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Use the new broadcastFormSubmissionCompleted function from unified-websocket
+        const { broadcastFormSubmissionCompleted } = require('../utils/unified-websocket');
+        
+        broadcastFormSubmissionCompleted(
+          formType,
+          taskId,
+          companyId,
+          {
+            fileId: fileId as number | undefined,
+            fileName: standardizedFormData.fileName || undefined,
+            unlockedTabs: tabResult.availableTabs,
+            completedActions,
+            metadata: {
+              formSubmission: true,
+              availableTabs: tabResult.availableTabs,
+              submissionComplete: true,
+              finalCompletion: true,
+              timestamp: new Date().toISOString()
+            }
+          }
+        );
       } catch (wsError) {
         // Log error but don't fail the transaction
         logger.error('WebSocket broadcast error', {
