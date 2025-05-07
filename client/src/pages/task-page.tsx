@@ -446,6 +446,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
               onSubmit={async (data) => {
                 console.log('[TaskPage] KYB form submission handler called', { taskId: task.id });
                 try {
@@ -540,6 +541,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
               onSubmit={async (data) => {
                 console.log('[TaskPage] Card form submission handler called', { taskId: task.id });
                 try {
@@ -640,6 +642,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
               onSubmit={async (data) => {
                 console.log('[TaskPage] KY3P form submission handler called', { taskId: task.id });
                 try {
@@ -740,6 +743,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               initialData={{}}
               onProgress={updateTaskProgress}
               companyName={displayName}
+              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
               onSubmit={async (data) => {
                 console.log('[TaskPage] Open Banking form submission handler called', { taskId: task.id });
                 try {
