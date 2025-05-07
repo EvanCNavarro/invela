@@ -266,6 +266,14 @@ export interface UnifiedToastOptions {
   operationId?: string;
   /** Skip showing toast for silent operations */
   skipToast?: boolean;
+  /** Task ID for context awareness */
+  taskId?: number;
+  /** Task type for context awareness */
+  taskType?: string;
+  /** Time taken for operation in milliseconds */
+  durationMs?: number;
+  /** Flag indicating if the operation was debounced */
+  wasDebounced?: boolean;
 }
 
 /**
@@ -273,29 +281,79 @@ export interface UnifiedToastOptions {
  */
 export function showClearFieldsToast(status: ToastStatus, message?: string, options?: UnifiedToastOptions) {
   if (options?.skipToast) {
-    console.debug(`Skipping clear fields toast (${status})`, { operationId: options.operationId });
+    console.debug(`Skipping clear fields toast (${status})`, { 
+      operationId: options.operationId,
+      taskId: options.taskId,
+      taskType: options.taskType
+    });
     return;
   }
+  
+  // Generate enhanced description that includes context when available
+  let description = message;
+  if (!description) {
+    // If no specific message was provided, create a context-aware one
+    let contextMessage = '';
+    
+    if (options?.taskType) {
+      const formattedTaskType = options.taskType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      contextMessage = `${formattedTaskType} form`;
+      
+      if (options.taskId) {
+        contextMessage += ` (ID: ${options.taskId})`;
+      }
+    }
+    
+    // Add duration info if available
+    const durationText = options?.durationMs ? ` in ${(options.durationMs / 1000).toFixed(1)}s` : '';
+    
+    // Add "was debounced" note if applicable
+    const debouncedText = options?.wasDebounced ? ' (debounced)' : '';
+    
+    switch (status) {
+      case 'loading':
+        description = contextMessage 
+          ? `Clearing all fields in ${contextMessage}...`
+          : 'Clearing all form fields...';
+        break;
+      case 'success':
+        description = contextMessage 
+          ? `All fields in ${contextMessage} have been cleared successfully${durationText}${debouncedText}.`
+          : `All form fields have been cleared successfully${durationText}${debouncedText}.`;
+        break;
+      case 'error':
+        description = contextMessage 
+          ? `There was an error clearing fields in ${contextMessage}.`
+          : 'There was an error clearing the form fields.';
+        break;
+    }
+  }
+  
+  // Use operation ID as toast ID if available for deduplication
+  const toastId = options?.operationId || undefined;
   
   switch (status) {
     case 'loading':
       baseToast({
+        id: toastId,
         title: 'Clear Fields',
-        description: message || 'Clearing all form fields...',
+        description,
         variant: 'info',
       });
       break;
     case 'success':
       baseToast({
+        id: toastId,
         title: 'Fields Cleared',
-        description: message || 'All form fields have been cleared successfully.',
+        description,
         variant: 'success',
       });
       break;
     case 'error':
       baseToast({
+        id: toastId,
         title: 'Clear Fields Failed',
-        description: message || 'There was an error clearing the form fields.',
+        description,
         variant: 'destructive',
       });
       break;
@@ -307,36 +365,89 @@ export function showClearFieldsToast(status: ToastStatus, message?: string, opti
  */
 export function showDemoAutoFillToast(status: DemoAutoFillStatus, message?: string, options?: UnifiedToastOptions) {
   if (options?.skipToast) {
-    console.debug(`Skipping demo autofill toast (${status})`, { operationId: options.operationId });
+    console.debug(`Skipping demo autofill toast (${status})`, { 
+      operationId: options.operationId,
+      taskId: options.taskId,
+      taskType: options.taskType
+    });
     return;
   }
+  
+  // Generate enhanced description that includes context when available
+  let description = message;
+  if (!description) {
+    // If no specific message was provided, create a context-aware one
+    let contextMessage = '';
+    
+    if (options?.taskType) {
+      const formattedTaskType = options.taskType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      contextMessage = `${formattedTaskType} form`;
+      
+      if (options.taskId) {
+        contextMessage += ` (ID: ${options.taskId})`;
+      }
+    }
+    
+    // Add duration info if available
+    const durationText = options?.durationMs ? ` in ${(options.durationMs / 1000).toFixed(1)}s` : '';
+    
+    switch (status) {
+      case 'loading':
+        description = contextMessage 
+          ? `Loading demo data for ${contextMessage}...`
+          : 'Loading demo data...';
+        break;
+      case 'progress':
+        description = contextMessage 
+          ? `Populating ${contextMessage} with demo data...`
+          : 'Populating fields with demo data...';
+        break;
+      case 'success':
+        description = contextMessage 
+          ? `Successfully filled ${contextMessage} with demo data${durationText}.`
+          : `Successfully filled fields with demo data${durationText}.`;
+        break;
+      case 'error':
+        description = contextMessage 
+          ? `There was an error applying demo data to ${contextMessage}.`
+          : 'There was an error applying demo data.';
+        break;
+    }
+  }
+  
+  // Use operation ID as toast ID if available for deduplication
+  const toastId = options?.operationId || undefined;
   
   switch (status) {
     case 'loading':
       baseToast({
+        id: toastId,
         title: 'Demo Auto-Fill',
-        description: message || 'Loading demo data...',
+        description,
         variant: 'info',
       });
       break;
     case 'progress':
       baseToast({
+        id: toastId,
         title: 'Demo Auto-Fill',
-        description: message || 'Populating fields with demo data...',
+        description,
         variant: 'info',
       });
       break;
     case 'success':
       baseToast({
+        id: toastId,
         title: 'Demo Auto-Fill Complete',
-        description: message || 'Successfully filled fields with demo data.',
+        description,
         variant: 'success',
       });
       break;
     case 'error':
       baseToast({
+        id: toastId,
         title: 'Demo Auto-Fill Error',
-        description: message || 'There was an error applying demo data.',
+        description,
         variant: 'destructive',
       });
       break;
@@ -348,29 +459,76 @@ export function showDemoAutoFillToast(status: DemoAutoFillStatus, message?: stri
  */
 export function showFormSubmissionToast(status: ToastStatus, message?: string, options?: UnifiedToastOptions) {
   if (options?.skipToast) {
-    console.debug(`Skipping form submission toast (${status})`, { operationId: options.operationId });
+    console.debug(`Skipping form submission toast (${status})`, { 
+      operationId: options.operationId,
+      taskId: options.taskId,
+      taskType: options.taskType
+    });
     return;
   }
+  
+  // Generate enhanced description that includes context when available
+  let description = message;
+  if (!description) {
+    // If no specific message was provided, create a context-aware one
+    let contextMessage = '';
+    
+    if (options?.taskType) {
+      const formattedTaskType = options.taskType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      contextMessage = `${formattedTaskType} form`;
+      
+      if (options.taskId) {
+        contextMessage += ` (ID: ${options.taskId})`;
+      }
+    }
+    
+    // Add duration info if available
+    const durationText = options?.durationMs ? ` in ${(options.durationMs / 1000).toFixed(1)}s` : '';
+    
+    switch (status) {
+      case 'loading':
+        description = contextMessage 
+          ? `Submitting ${contextMessage}...`
+          : 'Submitting your form data...';
+        break;
+      case 'success':
+        description = contextMessage 
+          ? `Successfully submitted ${contextMessage}${durationText}.`
+          : `Your form has been submitted successfully${durationText}.`;
+        break;
+      case 'error':
+        description = contextMessage 
+          ? `There was an error submitting ${contextMessage}.`
+          : 'There was an error submitting your form.';
+        break;
+    }
+  }
+  
+  // Use operation ID as toast ID if available for deduplication
+  const toastId = options?.operationId || undefined;
   
   switch (status) {
     case 'loading':
       baseToast({
+        id: toastId,
         title: 'Submitting Form',
-        description: message || 'Submitting your form data...',
+        description,
         variant: 'info',
       });
       break;
     case 'success':
       baseToast({
+        id: toastId,
         title: 'Form Submitted',
-        description: message || 'Your form has been submitted successfully.',
+        description,
         variant: 'success',
       });
       break;
     case 'error':
       baseToast({
+        id: toastId,
         title: 'Submission Failed',
-        description: message || 'There was an error submitting your form.',
+        description,
         variant: 'destructive',
       });
       break;
@@ -382,29 +540,76 @@ export function showFormSubmissionToast(status: ToastStatus, message?: string, o
  */
 export function showSaveProgressToast(status: ToastStatus, message?: string, options?: UnifiedToastOptions) {
   if (options?.skipToast) {
-    console.debug(`Skipping save progress toast (${status})`, { operationId: options.operationId });
+    console.debug(`Skipping save progress toast (${status})`, { 
+      operationId: options.operationId,
+      taskId: options.taskId,
+      taskType: options.taskType
+    });
     return;
   }
+  
+  // Generate enhanced description that includes context when available
+  let description = message;
+  if (!description) {
+    // If no specific message was provided, create a context-aware one
+    let contextMessage = '';
+    
+    if (options?.taskType) {
+      const formattedTaskType = options.taskType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      contextMessage = `${formattedTaskType} form`;
+      
+      if (options.taskId) {
+        contextMessage += ` (ID: ${options.taskId})`;
+      }
+    }
+    
+    // Add duration info if available
+    const durationText = options?.durationMs ? ` in ${(options.durationMs / 1000).toFixed(1)}s` : '';
+    
+    switch (status) {
+      case 'loading':
+        description = contextMessage 
+          ? `Saving progress for ${contextMessage}...`
+          : 'Saving your form progress...';
+        break;
+      case 'success':
+        description = contextMessage 
+          ? `Progress for ${contextMessage} has been saved${durationText}.`
+          : `Your form progress has been saved${durationText}.`;
+        break;
+      case 'error':
+        description = contextMessage 
+          ? `There was an error saving progress for ${contextMessage}.`
+          : 'There was an error saving your form progress.';
+        break;
+    }
+  }
+  
+  // Use operation ID as toast ID if available for deduplication
+  const toastId = options?.operationId || undefined;
   
   switch (status) {
     case 'loading':
       baseToast({
+        id: toastId,
         title: 'Saving Progress',
-        description: message || 'Saving your form progress...',
+        description,
         variant: 'info',
       });
       break;
     case 'success':
       baseToast({
+        id: toastId,
         title: 'Progress Saved',
-        description: message || 'Your form progress has been saved.',
+        description,
         variant: 'success',
       });
       break;
     case 'error':
       baseToast({
+        id: toastId,
         title: 'Save Failed',
-        description: message || 'There was an error saving your form progress.',
+        description,
         variant: 'destructive',
       });
       break;
