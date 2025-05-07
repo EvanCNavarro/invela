@@ -12,6 +12,7 @@ import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { submitFormWithTransaction } from '../services/transactional-form-handler';
 import * as WebSocketService from '../services/websocket';
+import { broadcastFormSubmissionCompleted } from '../utils/unified-websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
 // Add namespace context to logs

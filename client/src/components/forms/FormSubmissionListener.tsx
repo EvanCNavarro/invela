@@ -379,45 +379,54 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         // Log the status mapping for debugging
         logger.debug(`Mapped WebSocket event status: ${payload.status} → ${formStatus}`);
         
-        // Special handling for form_submission_completed message type
-        // This is our new comprehensive message sent after ALL server-side operations are complete
-        if (data.type === 'form_submission_completed') {
-          // CRITICAL FIX: The 'source' property must be explicitly set for task-page.tsx to recognize this as a final completion message
+        // IMPROVED: Special handling for form_submission_completed message type
+        // This is our comprehensive message sent after ALL server-side operations are complete
+        if (data.type === 'form_submission_completed' || 
+            (payload.source === 'final_completion' || payload.metadata?.source === 'final_completion')) {
+            
+          // CRITICAL FIX: The 'source' property must be explicitly set to match what task-page.tsx expects
           submissionEvent.source = 'final_completion';
 
-          logger.info(`Received final form submission completion event for task ${taskId}`, {
+          // Add more detailed logging to help with debugging
+          logger.info(`Received FINAL form submission completion event for task ${taskId}`, {
             hasCompletedActions: payload.completedActions?.length || 0,
             hasFileInfo: !!payload.fileId,
             hasUnlockedTabs: payload.unlockedTabs?.length || 0,
-            source: payload.source || 'not_set',
-            payloadSource: payload.source,
+            originalSource: payload.source || payload.metadata?.source || 'not_set',
+            messageType: data.type,
             finalSource: submissionEvent.source,
-            explicit: true,
-            dataType: data.type
+            timestamp: new Date().toISOString()
           });
           
-          // Ensure the submission status is success
+          // Always ensure the submission status is success for the final completion message
           submissionEvent.status = 'success';
           
+          // Show a single toast notification for the completed submission
           if (showToastsRef.current) {
+            // Only show one toast with the most informative message
             toast({
-              title: 'Form submitted successfully',
-              description: 'Your form has been successfully processed.',
+              title: 'Form Submission Complete',
+              description: 'Your form has been successfully processed and all related actions completed.',
               variant: 'success',
               duration: 5000,
             });
           }
           
-          // Call success callback with the complete information
+          // Call success callback with the complete information that includes all completedActions
           if (onSuccessRef.current) {
-            logger.info('Calling success callback with final completion source', {
-              source: submissionEvent.source,
+            logger.info('Calling success callback with final completion source and all actions', {
+              source: submissionEvent.source, 
               taskId: submissionEvent.taskId,
-              hasCompletedActions: (submissionEvent.completedActions?.length || 0) > 0
+              hasCompletedActions: (submissionEvent.completedActions?.length || 0) > 0,
+              actionCount: submissionEvent.completedActions?.length || 0
             });
+            
+            // Since this is the final completion message, pass it to the success handler
             onSuccessRef.current(submissionEvent);
           }
-          return; // Don't process further, we've handled this special message type
+          
+          // Don't process further as we've handled this special message type completely
+          return;
         }
         
         // Standard handling for other message types based on status
