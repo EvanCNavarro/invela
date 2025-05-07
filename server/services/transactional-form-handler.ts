@@ -221,12 +221,32 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       
       // 4. Update task status to 'submitted' with 100% progress
       console.log(`[TransactionalFormHandler] Updating task ${taskId} status to 'submitted' with 100% progress`);
+      logger.info(`[TransactionalFormHandler] Starting task status update to 'submitted' for task ${taskId}`, {
+        taskId,
+        formType,
+        companyId,
+        transactionId: `tx-${new Date().getTime()}-${Math.random().toString(36).substring(2, 7)}`
+      });
       
       try {
         // CRITICAL FIX: Explicitly update the task status and progress in the database
         // This ensures the task is marked as submitted even if WebSocket broadcast fails
         const submissionDate = new Date().toISOString();
         
+        // DEBUG: Get current task state before update for validation
+        const preUpdateCheck = await client.query(
+          `SELECT id, status, progress FROM tasks WHERE id = $1`,
+          [taskId]
+        );
+        
+        logger.info(`[TransactionalFormHandler] Pre-update task state:`, {
+          taskId,
+          status: preUpdateCheck.rows[0]?.status,
+          progress: preUpdateCheck.rows[0]?.progress,
+          timestamp: new Date().toISOString()
+        });
+        
+        // ENHANCED DEBUG: Added more detailed logging and improved error capture
         // FIXED: Use proper jsonb_set with 'true' as JSON value, not string
         const updateResult = await client.query(
           `UPDATE tasks 
@@ -238,11 +258,22 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
                ),
                updated_at = NOW()
            WHERE id = $1
-           RETURNING id, status, progress`,
+           RETURNING id, status, progress, metadata`,
           [taskId, submissionDate]
         );
         
-        // Log the update result for debugging
+        // Log the update result with detailed diagnostics
+        logger.info(`[TransactionalFormHandler] Task status update result:`, {
+          taskId,
+          formType,
+          rowCount: updateResult.rowCount,
+          success: updateResult.rowCount > 0,
+          returnedStatus: updateResult.rows[0]?.status,
+          returnedProgress: updateResult.rows[0]?.progress,
+          hasMetadata: updateResult.rows[0]?.metadata ? true : false,
+          submissionDate,
+          timestamp: new Date().toISOString()
+        });
         const updatedTask = updateResult.rows[0];
         console.log(`[TransactionalFormHandler] ✅ Successfully updated task ${taskId} status:`, {
           updatedStatus: updatedTask?.status,
