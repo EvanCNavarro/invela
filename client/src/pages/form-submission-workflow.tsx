@@ -475,6 +475,10 @@ export default function FormSubmissionWorkflowPage() {
           returnPath="/task-center"
           returnLabel="Return to Task Center"
           taskType={formType}
+          // Add File Vault button if we have a file
+          showFileVaultButton={Boolean(lastEvent.fileName && lastEvent.fileId)}
+          fileVaultPath="/file-vault"
+          fileVaultLabel="View in File Vault"
           actions={[
             {
               type: 'form_submitted',
