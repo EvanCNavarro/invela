@@ -358,6 +358,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="kyb"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
+          showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
         {/* Success modal - Using enhanced UniversalSuccessModal for better dynamic content */}
@@ -456,6 +457,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="card"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
+          showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
         {/* Success modal */}
