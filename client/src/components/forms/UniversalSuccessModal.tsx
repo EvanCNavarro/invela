@@ -314,10 +314,22 @@ export function UniversalSuccessModal({
         );
       }
       
-      // Add any other action cards
+      // FIXED: Skip rendering additional action cards that could cause duplicates
+      // We only need to show additional actions that aren't already handled by the main sections
+      const mainActionTypes = ['form_submitted', 'file_generated', 'tabs_unlocked', 
+                              'task_completion', 'file_generation', 'file_vault_unlocked',
+                              'tab_unlocked'];
+      
+      // Apply deduplication for the completedActions to avoid duplicate notifications
+      const processedActionTypes = new Set();
+      
       submissionResult.completedActions.forEach((action, index) => {
-        // Skip actions that we've already handled
-        if (action.type === 'form_submitted' || action.type === 'file_generated' || action.type === 'tabs_unlocked') return;
+        // Skip actions we've already handled or that would create duplicates of the main sections
+        if (mainActionTypes.includes(action.type)) return;
+        
+        // Skip duplicates of the same action type (we've already seen this type)
+        if (processedActionTypes.has(action.type)) return;
+        processedActionTypes.add(action.type);
         
         // Select icon based on action type
         let ActionIcon = FileText;
@@ -341,13 +353,6 @@ export function UniversalSuccessModal({
             borderClass = "border-purple-200";
             iconColor = "text-purple-600";
             title = "Risk Assessment Updated";
-            break;
-          case "file_vault_unlocked":
-            ActionIcon = Archive;
-            bgClass = "bg-blue-50";
-            borderClass = "border-blue-200";
-            iconColor = "text-blue-600";
-            title = "File Vault Access";
             break;
           case "dashboard_unlocked":
             ActionIcon = BarChart2;

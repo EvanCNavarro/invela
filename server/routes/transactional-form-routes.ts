@@ -116,42 +116,63 @@ export function createTransactionalFormRouter(): Router {
         });
       }
       
-      // Broadcast success status via WebSocket with file and tab info
-      WebSocketService.broadcast('form_submission', {
+      // UPDATED: Only send a single consolidated notification via form_submission_completed
+      // This replaces the multiple broadcasts that were causing duplicate notifications
+      
+      // Define all completed actions in a single place
+      const completedActions = [
+        {
+          type: 'form_submitted',
+          description: `${formType.toUpperCase()} form submitted successfully`
+        }
+      ];
+      
+      // Add file generation action if a file was created
+      if (result.fileId) {
+        completedActions.push({
+          type: 'file_generated',
+          description: `Generated ${result.fileName || 'file'}`,
+          fileId: result.fileId
+        });
+      }
+      
+      // Add tab unlocking action if tabs were unlocked
+      if (result.unlockedTabs && result.unlockedTabs.length > 0) {
+        completedActions.push({
+          type: 'tabs_unlocked',
+          description: `New Access Granted: ${result.unlockedTabs.join(', ')}`
+        });
+      }
+      
+      // Create a single timestamp for consistency
+      const submissionTimestamp = new Date().toISOString();
+      
+      // Log detailed information to help with debugging
+      logger.info(`Sending form submission completion event`, {
         taskId,
         formType,
-        status: 'success',
         companyId,
-        payload: {
-          fileId: result.fileId,
-          fileName: result.fileName,
-          fileUrl: `/api/files/${result.fileId}/download`,
-          fileType: 'text/csv',
-          unlockedTabs: result.unlockedTabs,
-          submissionTime: new Date().toISOString(),
-          completedActions: [
-            {
-              type: 'form_submitted',
-              description: `${formType.toUpperCase()} form submitted successfully`
-            },
-            {
-              type: 'file_generated',
-              description: `Generated ${result.fileName}`,
-              fileId: result.fileId
-            },
-            ...(result.unlockedTabs && result.unlockedTabs.length > 0 ? [{
-              type: 'tabs_unlocked',
-              description: `Unlocked tabs: ${result.unlockedTabs.join(', ')}`
-            }] : [])
-          ]
-        }
+        fileId: result.fileId,
+        hasUnlockedTabs: result.unlockedTabs && result.unlockedTabs.length > 0,
+        actionCount: completedActions.length,
+        timestamp: submissionTimestamp
       });
       
-      // Also broadcast a task update to ensure clients know the task status is "submitted"
-      WebSocketService.broadcastTaskUpdate(taskId, 100, 'submitted', {
+      // Use the imported broadcastFormSubmissionCompleted function with source='final_completion'
+      // This is now the single source of truth for form submission notifications
+      WebSocketService.broadcastFormSubmissionCompleted(formType, taskId, companyId, {
         fileId: result.fileId,
-        taskType: formType,
-        submissionTime: new Date().toISOString()
+        fileName: result.fileName,
+        unlockedTabs: result.unlockedTabs,
+        completedActions,
+        metadata: {
+          formSubmission: true,
+          availableTabs: result.unlockedTabs,
+          submissionComplete: true,
+          finalCompletion: true,
+          timestamp: submissionTimestamp,
+          source: 'final_completion' // Explicitly mark this as the final message
+        }
       });
       
       // Return success response
