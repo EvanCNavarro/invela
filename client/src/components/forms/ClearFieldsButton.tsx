@@ -112,15 +112,22 @@ export function ClearFieldsButton({
       
       // CRITICAL FIX: Set window._lastClearOperation to prevent race conditions
       try {
+        // Calculate a block expiration 30 seconds in the future
+        const blockExpiration = now + 30000; // 30 seconds
+        
         window._lastClearOperation = {
           taskId,
           timestamp: now,
-          formType: taskType
+          formType: taskType,
+          blockExpiration // Add explicit expiration timestamp
         };
+        
         logger.info(`[ClearFieldsButton][${operationId}] Set window._lastClearOperation to prevent race condition`, {
           taskId,
           formType: taskType,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          blockExpiresAt: new Date(blockExpiration).toISOString(),
+          blockDurationMs: 30000
         });
       } catch (winError) {
         logger.warn(`[ClearFieldsButton][${operationId}] Error setting window._lastClearOperation:`, {
