@@ -25,14 +25,30 @@ interface ExtendedWebSocket extends WebSocket {
  * @param wss WebSocket server instance
  */
 export function setWebSocketServer(wss: WebSocketServer): void {
+  if (!wss) {
+    console.warn('[TaskBroadcast] Attempt to set null WebSocket server reference');
+    return;
+  }
+  
   wssRef = wss;
   console.log('[TaskBroadcast] WebSocket server reference set up');
   
-  // Verify that the WebSocket server is active
-  if (wss && wss.clients) {
-    console.log(`[TaskBroadcast] WebSocket server active with ${wss.clients.size} connected clients`);
-  } else {
-    console.warn('[TaskBroadcast] WebSocket server reference set, but clients property is missing');
+  // Verify that the WebSocket server is active and has clients property
+  // Some WebSocket servers might not expose clients until a connection is made
+  try {
+    if (wss.clients) {
+      console.log(`[TaskBroadcast] WebSocket server active with ${wss.clients.size} connected clients`);
+    } else {
+      // Create a dummy Set to prevent errors later
+      Object.defineProperty(wss, 'clients', {
+        value: new Set<WebSocket>(),
+        writable: false,
+        configurable: true
+      });
+      console.log('[TaskBroadcast] Added clients property to WebSocket server');
+    }
+  } catch (error) {
+    console.warn('[TaskBroadcast] Error accessing WebSocket server clients:', error);
   }
 }
 
