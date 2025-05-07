@@ -81,6 +81,7 @@ import { userContext } from '@/lib/user-context';
 // Import WebSocket-based form submission and fields listeners and related components
 import { FormSubmissionListener, FormSubmissionEvent } from './FormSubmissionListener';
 import FormFieldsListener, { FieldsEvent } from './FormFieldsListener';
+import FormFieldsListener, { FieldsEvent } from './FormFieldsListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 
 import SectionContent from './SectionContent';
@@ -782,6 +783,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       throw error;
     }
   }, [resetForm, setActiveSection, refreshStatus, refreshTask]);
+  
+  // Handle fields cleared via WebSocket event
+  const handleFieldsCleared = useCallback((event: FieldsEvent) => {
+    logger.info(`Fields cleared event received: ${JSON.stringify(event.type)}`);
+    
+    // Only process if this is for our task ID
+    if (event.payload.taskId !== taskId) {
+      return;
+    }
+    
+    // Show toast notification for remote clearing
+    toast({
+      title: 'Form Fields Cleared',
+      description: 'The form fields have been cleared by another user.',
+      variant: 'info',
+    });
+    
+    // Refresh form data after fields are cleared
+    refreshFormData().catch(error => {
+      logger.error(`Error refreshing form data after fields cleared: ${error instanceof Error ? error.message : String(error)}`);
+      
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to refresh form after fields were cleared. Please reload the page.',
+        variant: 'destructive',
+      });
+    });
+  }, [taskId, refreshFormData]);
   
   // Create and manage the Review & Submit section
   const [allSections, setAllSections] = useState<FormSection[]>([]);
