@@ -37,6 +37,7 @@ const clients: Map<string, ConnectedClient> = new Map();
 type MessageType = 
   | 'authenticate'
   | 'ping'
+  | 'pong'
   | 'task_updated'
   | 'task_reconciled'
   | 'form_submission_completed'
@@ -57,11 +58,24 @@ interface AuthMessage extends WebSocketMessage {
   clientId: string;
 }
 
+// Ping message for connection keepalive
+interface PingMessage extends WebSocketMessage {
+  type: 'ping';
+}
+
+// Pong response message
+interface PongMessage extends WebSocketMessage {
+  type: 'pong';
+  echo?: any;
+}
+
 // Task update message
 interface TaskUpdateMessage extends WebSocketMessage {
   type: 'task_updated';
   taskId: number;
   message?: string;
+  progress?: number;
+  status?: string;
   metadata?: Record<string, any>;
 }
 
@@ -80,6 +94,12 @@ interface FormSubmissionCompletedMessage extends WebSocketMessage {
   taskId: number;
   formType: string;
   status: string;
+  companyId?: number;
+  fileName?: string;
+  fileId?: number | string;
+  unlockedTabs?: string[];
+  message?: string;
+  progress?: number;
   metadata?: Record<string, any>;
 }
 
@@ -103,6 +123,8 @@ interface NotificationMessage extends WebSocketMessage {
 // Union type of all message types
 type WebSocketPayload = 
   | AuthMessage
+  | PingMessage
+  | PongMessage
   | TaskUpdateMessage
   | TaskReconciledMessage
   | FormSubmissionCompletedMessage
@@ -273,10 +295,9 @@ export function broadcast<T extends WebSocketPayload>(
     return;
   }
   
-  if (wss.readyState !== WebSocket.OPEN) {
-    wsLogger.warn(`Cannot broadcast: WebSocket server not in OPEN state (state: ${wss.readyState})`);
-    return;
-  }
+  // WebSocketServer does not have readyState property - we can only check if it exists
+  // The individual client connections will have their own readyState
+  // which we check before sending messages to each client
   
   // Create full message with type and timestamp
   const message = {
