@@ -622,6 +622,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [forceRerender, setForceRerender] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // State for WebSocket-based form submission
   const [showSuccessModal, setShowSuccessModal] = useState(false);
