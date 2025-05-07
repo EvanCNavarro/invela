@@ -59,7 +59,7 @@ export async function handleDemoAutoFill({
     if (!skipToasts) {
       showDemoAutoFillToast('error', 'Form service not available');
     }
-    return;
+    return { success: false };
   }
 
   if (!taskId) {
@@ -67,7 +67,7 @@ export async function handleDemoAutoFill({
     if (!skipToasts) {
       showDemoAutoFillToast('error', 'Task ID not provided');
     }
-    return;
+    return { success: false };
   }
 
   logger.info(`Starting demo auto-fill for ${taskType} task ${taskId}`);
@@ -94,7 +94,7 @@ export async function handleDemoAutoFill({
       
       // Exit early to prevent any duplicate service calls
       logger.info('Blocking generic demo auto-fill handler for KY3P form to prevent duplicate calls');
-      return;
+      return { success: false };
     }
     
     // Generic approach for all form types as fallback
@@ -107,7 +107,7 @@ export async function handleDemoAutoFill({
         if (!skipToasts) {
           showDemoAutoFillToast('error', 'This form service does not support demo data');
         }
-        return;
+        return { success: false };
       }
       
       // Get the demo data from the form service
@@ -118,7 +118,7 @@ export async function handleDemoAutoFill({
         if (!skipToasts) {
           showDemoAutoFillToast('error', 'No demo data available for this form');
         }
-        return;
+        return { success: false };
       }
       
       const fieldCount = Object.keys(demoData).length;
@@ -187,16 +187,24 @@ export async function handleDemoAutoFill({
         showDemoAutoFillToast('success', `Successfully filled ${fieldCount} fields with demo data`);
       }
       
+      // Return success and field count for consumers like UnifiedDemoAutoFill component
+      return { success: true, fieldCount };
+      
     } catch (error) {
       logger.error(`Error in demo auto-fill for ${taskType}:`, error);
       if (!skipToasts) {
         showDemoAutoFillToast('error', error instanceof Error ? error.message : 'Failed to apply demo data');
       }
+      return { success: false };
     }
   } catch (error) {
     logger.error('Unexpected error in handleDemoAutoFill:', error);
     if (!skipToasts) {
       showDemoAutoFillToast('error', 'An unexpected error occurred');
     };
+    return { success: false };
   }
+  
+  // Add a default return for TypeScript completeness
+  return { success: false };
 }
