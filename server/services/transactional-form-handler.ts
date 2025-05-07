@@ -293,23 +293,7 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           console.warn('[TransactionalFormHandler] Failed to send final progress notification:', wsError);
         }
         
-        // Use the standardized form submission notification system
-        sendFormSubmissionSuccess({
-          formType,
-          taskId,
-          companyId,
-          fileId: fileId as number | undefined,
-          fileName: standardizedFormData.fileName || undefined,
-          submissionDate: new Date().toISOString(),
-          unlockedTabs: tabResult.availableTabs,
-          metadata: {
-            formSubmission: true,
-            availableTabs: tabResult.availableTabs,
-            submissionComplete: true
-          }
-        });
-        
-        // Define completed actions for the form submission
+        // UPDATED: Define single source of truth for completed actions
         const completedActions = [
           {
             type: "task_completion",
@@ -323,12 +307,11 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // Add file generation action if a file was created
         if (fileId) {
           completedActions.push({
-            type: "file_generation",
+            type: "file_generation", 
             description: "File generated",
             fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId,
             data: {
               details: `A ${formType} file has been generated and saved to your file vault.`,
-              // TypeScript expects fileId to be part of the data interface
               fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId
             } as any // Use 'any' to bypass TypeScript validation for this known property
           });
@@ -337,27 +320,30 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // Add tab unlocking action if file-vault was unlocked
         if (tabResult.availableTabs.includes('file-vault')) {
           completedActions.push({
-            type: "tab_unlocked",
-            description: "File Vault access unlocked",
+            type: "tabs_unlocked", // NOTE: Changed to 'tabs_unlocked' to match UniversalSuccessModal expectation
+            description: "New Access Granted",
             data: {
-              details: "You now have access to the File Vault where all your documents are stored.",
-              // TypeScript expects these properties to be part of the data interface
+              details: `Unlocked tabs: ${tabResult.availableTabs.join(', ')}`,
               buttonText: "Go to File Vault",
               url: "/file-vault"
             } as any // Use 'any' to bypass TypeScript validation for these known properties
           });
         }
         
-        // Send the new comprehensive completion message with all information needed for the modal
+        // Create a single timestamp for consistency
+        const submissionTimestamp = new Date().toISOString();
+        
+        // Log intent to send final message
         console.log(`[TransactionalFormHandler] Sending FINAL completion message for task ${taskId}:`, {
           formType,
           taskId,
           companyId,
           hasCompletedActions: completedActions.length,
-          timestamp: new Date().toISOString()
+          timestamp: submissionTimestamp
         });
         
-        // Use the imported broadcastFormSubmissionCompleted function from unified-websocket
+        // IMPORTANT: Use ONLY broadcastFormSubmissionCompleted with a 'final_completion' source
+        // We no longer need sendFormSubmissionSuccess which was causing duplicate notifications
         broadcastFormSubmissionCompleted(
           formType,
           taskId,
@@ -366,13 +352,14 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             fileId: fileId as number | undefined,
             fileName: standardizedFormData.fileName || undefined,
             unlockedTabs: tabResult.availableTabs,
-            completedActions,
+            completedActions, // Pass the single source of truth for actions
             metadata: {
               formSubmission: true,
               availableTabs: tabResult.availableTabs,
               submissionComplete: true,
               finalCompletion: true,
-              timestamp: new Date().toISOString()
+              timestamp: submissionTimestamp,
+              source: 'final_completion' // Add source to metadata as well for redundancy
             }
           }
         );
