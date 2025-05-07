@@ -492,8 +492,55 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
         <div className="p-6">
           <Accordion type="multiple" defaultValue={sections.map(s => s.id.toString())} className="space-y-4">
             {sections.map((section, sectionIndex) => {
-              // Get fields for this section
-              const sectionFields = fields.filter(f => f.section === section.id);
+              // Get fields for this section with robust section matching (multiple formats support)
+              // IMPORTANT: Add diagnostic logging for section-field mapping issues
+              if (sectionIndex === 0) {
+                // Only log for first section to avoid excessive logging
+                logger.info(`[SectionMapping] Form type: ${taskType}`);
+                logger.info(`[SectionMapping] Fields total: ${fields.length}`);
+                logger.info(`[SectionMapping] Sections total: ${sections.length}`);
+                logger.info(`[SectionMapping] Sample field section properties:`, 
+                  fields.slice(0, 3).map(f => ({
+                    key: f.key,
+                    question: f.question?.substring(0, 20) + '...',
+                    section: f.section,
+                    sectionId: f.sectionId,
+                    section_id: (f as any).section_id,
+                    group: f.group
+                  }))
+                );
+                logger.info(`[SectionMapping] Sample section properties:`, 
+                  sections.slice(0, 3).map(s => ({
+                    id: s.id,
+                    title: s.title,
+                    order: s.order
+                  }))
+                );
+              }
+              
+              const sectionFields = fields.filter(f => {
+                // Direct match to section.id as string (most common)
+                if (f.section !== undefined) {
+                  return String(f.section) === String(section.id);
+                }
+                
+                // Try alternative property names for section
+                if (f.sectionId !== undefined) {
+                  return String(f.sectionId) === String(section.id);
+                }
+                
+                if ((f as any).section_id !== undefined) {
+                  return String((f as any).section_id) === String(section.id);
+                }
+                
+                // Try matching by group name (used in some KY3P implementations)
+                if (f.group !== undefined && section.title !== undefined) {
+                  return String(f.group) === String(section.title);
+                }
+                
+                // Default fallback to avoid completely empty UI
+                return false;
+              });
               
               if (sectionFields.length === 0) return null;
               
@@ -2272,14 +2319,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               // Count fields in previous sections
                               let fieldCount = 1; // Start from 1
                               for (const prevSection of previousSections) {
-                                // Count fields that belong to this section
+                                // Count fields that belong to this section using the same enhanced matching logic
                                 const sectionFields = fields.filter(field => {
+                                  // Direct match to section.id as string (most common)
+                                  if (field.section !== undefined) {
+                                    return String(field.section) === String(prevSection.id);
+                                  }
+                                  
+                                  // Try alternative property names for section
                                   if (field.sectionId !== undefined) {
                                     return String(field.sectionId) === String(prevSection.id);
                                   }
+                                  
                                   if ((field as any).section_id !== undefined) {
                                     return String((field as any).section_id) === String(prevSection.id);
                                   }
+                                  
+                                  // Try matching by group name (used in some KY3P implementations)
+                                  if (field.group !== undefined && prevSection.title !== undefined) {
+                                    return String(field.group) === String(prevSection.title);
+                                  }
+                                  
                                   return false;
                                 });
                                 
@@ -2289,14 +2349,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               return fieldCount;
                             })()}
                             fields={fields.filter(field => {
-                              // If field has a sectionId property, filter by it
+                              // Use consistent field-to-section matching logic
+                              // Direct match to section.id as string (most common)
+                              if (field.section !== undefined) {
+                                return String(field.section) === String(section.id);
+                              }
+                              
+                              // Try alternative property names for section
                               if (field.sectionId !== undefined) {
                                 return String(field.sectionId) === String(section.id);
                               }
                               
-                              // Fallback: Try to match with section_id for backward compatibility
                               if ((field as any).section_id !== undefined) {
                                 return String((field as any).section_id) === String(section.id);
+                              }
+                              
+                              // Try matching by group name (used in some KY3P implementations)
+                              if (field.group !== undefined && section.title !== undefined) {
+                                return String(field.group) === String(section.title);
                               }
                               
                               // If no section info in field, assign to first section as fallback
