@@ -100,6 +100,7 @@ export function useFormStatus({
 
   // The core calculation function that updates all status information
   const calculateStatus = useCallback(() => {
+    const diagId = `diag_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const formValues = getFormValues();
     const fieldsMap = sectionFieldsMap();
     const sectionStatuses: SectionStatus[] = [];
@@ -107,31 +108,51 @@ export function useFormStatus({
     let totalFields = 0;
     let totalFilledFields = 0;
     
+    logger.info(`[DIAGNOSTIC][${diagId}] Starting section status calculation`, {
+      timestamp: new Date().toISOString(),
+      sectionCount: sections.length,
+      hasValues: Object.keys(formValues).length > 0,
+      valueCount: Object.keys(formValues).length
+    });
+    
     // Process each section
     sections.forEach(section => {
       const sectionFields = fieldsMap[section.id] || [];
       
-      // Log for debugging
-      logger.debug(`Processing section "${section.title}" with ${sectionFields.length} fields`);
+      // Log for diagnostic tracking
+      logger.info(`[DIAGNOSTIC][${diagId}] Processing section "${section.title}"`, {
+        sectionId: section.id,
+        fieldCount: sectionFields.length,
+        hasFields: sectionFields.length > 0
+      });
       
       // For MVP, count all fields regardless of required status since validation isn't fully implemented
       // We'll temporarily ignore the requiredOnly flag to ensure field counts appear
       const relevantFields = sectionFields;
       
-      // Add debugging for relevant fields
-      logger.debug(`Section "${section.title}" has ${relevantFields.length} relevant fields`);
+      // Add diagnostics for relevant fields
+      logger.info(`[DIAGNOSTIC][${diagId}] Section "${section.title}" fields`, {
+        fieldCount: relevantFields.length,
+        fields: relevantFields.map(f => f.key || String(f.id))
+      });
       
       // Skip truly empty sections
       if (relevantFields.length === 0) {
-        sectionStatuses.push({
+        const emptyStatus = {
           id: section.id,
           title: section.title,
           totalFields: 0,
           filledFields: 0,
           remainingFields: 0,
           progress: 0,
-          status: 'not-started'
+          status: 'not-started' as const
+        };
+        
+        logger.info(`[DIAGNOSTIC][${diagId}] Empty section "${section.title}"`, {
+          status: emptyStatus
         });
+        
+        sectionStatuses.push(emptyStatus);
         return;
       }
       
@@ -335,9 +356,19 @@ export function useFormStatus({
 
   // The publicly exposed refresh function
   const refreshStatus = useCallback(() => {
-    logger.debug('Manual refresh of form status triggered');
+    const refreshId = `refresh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    logger.info(`[DIAGNOSTIC][${refreshId}] Manual refresh of form status triggered`, {
+      timestamp: new Date().toISOString(),
+      currentSectionStatuses: statusState.sectionStatuses.map(s => ({
+        id: s.id,
+        title: s.title,
+        status: s.status,
+        progress: s.progress
+      })),
+      currentOverallProgress: statusState.overallProgress
+    });
     calculateStatus();
-  }, [calculateStatus]);
+  }, [calculateStatus, statusState]);
 
   // Initial calculation and recalculation when dependencies change
   useEffect(() => {
@@ -347,7 +378,17 @@ export function useFormStatus({
 
   // Create a dedicated section statuses setter to fix the KY3P form reset issue
   const setSectionStatuses = useCallback((newSectionStatuses: SectionStatus[]) => {
-    logger.info(`Manually setting section statuses for ${newSectionStatuses.length} sections`);
+    const setId = `set_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    logger.info(`[DIAGNOSTIC][${setId}] Manually setting section statuses`, {
+      sectionCount: newSectionStatuses.length,
+      sections: newSectionStatuses.map(s => ({
+        id: s.id,
+        title: s.title,
+        status: s.status,
+        progress: s.progress
+      })),
+      timestamp: new Date().toISOString()
+    });
     
     // Create a new completedSections object based on the provided statuses
     const newCompletedSections: Record<string | number, boolean> = {};
@@ -355,6 +396,7 @@ export function useFormStatus({
     // Mark any 'completed' sections in the new statuses
     newSectionStatuses.forEach(section => {
       newCompletedSections[section.id] = section.status === 'completed';
+      logger.debug(`[DIAGNOSTIC][${setId}] Section "${section.title}" completed status: ${section.status === 'completed'}`);
     });
     
     // Calculate the overall progress based on the new section statuses
