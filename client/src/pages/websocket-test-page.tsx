@@ -1,148 +1,203 @@
 /**
  * WebSocket Test Page
  * 
- * This page is used to test WebSocket functionality, specifically for
- * form submission and task update events. It demonstrates how the
- * FormSubmissionListener responds to various event types.
+ * This page provides a simple UI for testing WebSocket events,
+ * particularly form submission events. It allows testing the 
+ * global deduplication mechanism across components.
  */
 
 import React, { useState } from 'react';
-import { Container } from '@/components/ui/container';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import WebSocketTester from '@/components/WebSocketTester';
-import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
+import { useParams } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { FormSubmissionListener } from '@/components/forms/FormSubmissionListener';
+import { useFormSubmissionEvents } from '@/hooks/use-form-submission-events';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  testFormSubmissionSuccess,
+  testFormSubmissionError,
+  testFormSubmissionInProgress
+} from '@/utils/test-form-submission';
 
-// WebSocket test page
 export default function WebSocketTestPage() {
-  const [lastEvent, setLastEvent] = useState<FormSubmissionEvent | null>(null);
-  const [showListener, setShowListener] = useState(true);
-
-  // Handle different form submission events
-  const handleSuccess = (event: FormSubmissionEvent) => {
-    setLastEvent(event);
-    toast({
-      title: 'Form submission successful',
-      description: 'The form was submitted successfully',
-      variant: 'success',
-    });
+  const [taskId, setTaskId] = useState<number>(690);
+  const [formType, setFormType] = useState<string>('kyb');
+  const [progress, setProgress] = useState<number>(50);
+  const [errorMessage, setErrorMessage] = useState<string>('Test form submission error');
+  
+  // Setup form submission events listener
+  const { lastEvent: hookEvent } = useFormSubmissionEvents({
+    taskId,
+    formType,
+    onSuccess: (event) => {
+      console.log('useFormSubmissionEvents onSuccess called with:', event);
+    },
+    onError: (event) => {
+      console.log('useFormSubmissionEvents onError called with:', event);
+    },
+    onInProgress: (event) => {
+      console.log('useFormSubmissionEvents onInProgress called with:', event);
+    }
+  });
+  
+  // Component event handlers for FormSubmissionListener
+  const handleSuccess = (event: any) => {
+    console.log('FormSubmissionListener onSuccess called with:', event);
   };
-
-  const handleError = (event: FormSubmissionEvent) => {
-    setLastEvent(event);
-    toast({
-      title: 'Form submission failed',
-      description: event.error || 'Unknown error',
-      variant: 'destructive',
-    });
+  
+  const handleError = (event: any) => {
+    console.log('FormSubmissionListener onError called with:', event);
   };
-
-  const handleInProgress = (event: FormSubmissionEvent) => {
-    setLastEvent(event);
-    toast({
-      title: 'Form submission in progress',
-      description: 'Please wait while the form is being processed',
-      variant: 'default',
-    });
+  
+  const handleInProgress = (event: any) => {
+    console.log('FormSubmissionListener onInProgress called with:', event);
   };
-
-  // Toggle the listener component for testing
-  const toggleListener = () => {
-    setShowListener(prev => !prev);
-  };
-
-  // Reset the last event
-  const resetLastEvent = () => {
-    setLastEvent(null);
-  };
-
+  
   return (
-    <Container className="py-8">
-      <div className="flex flex-col space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">WebSocket Testing</h1>
-          <p className="text-muted-foreground mb-4">
-            This page demonstrates WebSocket functionality, focusing on form submission and task update events.
+    <div className="container py-8">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>WebSocket Form Submission Test</CardTitle>
+          <CardDescription>
+            Test WebSocket form submission events and verify deduplication
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label htmlFor="taskId">Task ID</Label>
+              <Input 
+                id="taskId" 
+                type="number" 
+                value={taskId} 
+                onChange={(e) => setTaskId(parseInt(e.target.value))} 
+              />
+            </div>
+            <div>
+              <Label htmlFor="formType">Form Type</Label>
+              <Input 
+                id="formType" 
+                value={formType} 
+                onChange={(e) => setFormType(e.target.value)} 
+              />
+            </div>
+          </div>
+          
+          <Tabs defaultValue="success">
+            <TabsList className="mb-4">
+              <TabsTrigger value="success">Success</TabsTrigger>
+              <TabsTrigger value="error">Error</TabsTrigger>
+              <TabsTrigger value="progress">In Progress</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="success">
+              <Button 
+                onClick={() => testFormSubmissionSuccess(taskId, formType)}
+                className="w-full"
+              >
+                Test Success Event
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="error">
+              <div className="mb-4">
+                <Label htmlFor="errorMessage">Error Message</Label>
+                <Input 
+                  id="errorMessage" 
+                  value={errorMessage} 
+                  onChange={(e) => setErrorMessage(e.target.value)} 
+                />
+              </div>
+              <Button 
+                onClick={() => testFormSubmissionError(taskId, formType, errorMessage)}
+                className="w-full"
+                variant="destructive"
+              >
+                Test Error Event
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="progress">
+              <div className="mb-4">
+                <Label htmlFor="progress">Progress (0-100)</Label>
+                <Input 
+                  id="progress" 
+                  type="number" 
+                  min="0"
+                  max="100"
+                  value={progress} 
+                  onChange={(e) => setProgress(parseInt(e.target.value))} 
+                />
+              </div>
+              <Button 
+                onClick={() => testFormSubmissionInProgress(taskId, formType, progress)}
+                className="w-full"
+                variant="secondary"
+              >
+                Test In-Progress Event
+              </Button>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        <CardFooter>
+          <p className="text-sm text-gray-500">
+            This page includes both FormSubmissionListener and useFormSubmissionEvents to verify that
+            events are not duplicated between these components. Check the console for logs.
           </p>
-
-          <Alert>
-            <AlertTitle>Testing Instructions</AlertTitle>
-            <AlertDescription>
-              <ol className="list-decimal list-inside space-y-1 mt-2">
-                <li>Use the WebSocket Tester below to send test messages</li>
-                <li>The FormSubmissionListener will intercept messages for task ID 999</li>
-                <li>Watch for toast notifications when events are received</li>
-                <li>The Last Received Event card will show event details</li>
-              </ol>
-            </AlertDescription>
-          </Alert>
-        </div>
-
-        <div className="flex gap-4 flex-wrap">
-          <Button variant={showListener ? "default" : "outline"} onClick={toggleListener}>
-            {showListener ? 'Disable Listener' : 'Enable Listener'}
-          </Button>
-          <Button variant="outline" onClick={resetLastEvent} disabled={!lastEvent}>
-            Clear Last Event
-          </Button>
-        </div>
-
-        {showListener && (
-          <FormSubmissionListener
-            taskId={999}
-            formType="kyb"
-            onSuccess={handleSuccess}
-            onError={handleError}
-            onInProgress={handleInProgress}
-            showToasts={false}
-          />
-        )}
-
-        <Separator />
+        </CardFooter>
+      </Card>
+      
+      <div className="grid grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Form Submission Listener</CardTitle>
+            <CardDescription>
+              Using FormSubmissionListener component
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm mb-2">
+              Listening for events for task {taskId} ({formType})
+            </p>
+            <FormSubmissionListener
+              taskId={taskId}
+              formType={formType}
+              onSuccess={handleSuccess}
+              onError={handleError}
+              onInProgress={handleInProgress}
+              showToasts={false}
+            />
+          </CardContent>
+        </Card>
         
-        <div className="grid gap-8 md:grid-cols-2">
-          <WebSocketTester />
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Last Received Event
-                {lastEvent && (
-                  <Badge 
-                    variant={lastEvent.status === 'error' ? 'destructive' : 'default'}
-                    className={lastEvent.status === 'success' ? "bg-green-500 hover:bg-green-600" : ""}
-                  >
-                    {lastEvent.status}
-                  </Badge>
-                )}
-              </CardTitle>
-              <CardDescription>
-                The last event received by the FormSubmissionListener
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {lastEvent ? (
-                <pre className="bg-muted p-4 rounded-md text-xs overflow-auto h-80">
-                  {JSON.stringify(lastEvent, null, 2)}
-                </pre>
-              ) : (
-                <div className="text-center text-muted-foreground py-8 h-80 flex items-center justify-center">
-                  No events received yet
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="text-xs text-muted-foreground">
-              {lastEvent && (
-                <span>Received at: {new Date().toLocaleTimeString()}</span>
-              )}
-            </CardFooter>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Form Submission Hook</CardTitle>
+            <CardDescription>
+              Using useFormSubmissionEvents hook
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm mb-2">
+              Listening for events for task {taskId} ({formType})
+            </p>
+            {hookEvent ? (
+              <div className="text-sm bg-gray-100 p-3 rounded-md">
+                <div><strong>Status:</strong> {hookEvent.status}</div>
+                <div><strong>TaskID:</strong> {hookEvent.taskId}</div>
+                <div><strong>FormType:</strong> {hookEvent.formType}</div>
+                <div><strong>Time:</strong> {new Date(hookEvent.timestamp).toLocaleTimeString()}</div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">
+                No events received yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </Container>
+    </div>
   );
 }
