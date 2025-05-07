@@ -236,7 +236,8 @@ export function UniversalSuccessModal({
       }
       
       // File generation card with improved visibility and File Vault link
-      // CRITICAL FIX: Also show file card if fileId is available in submissionResult even if no explicit fileGeneratedAction
+      // CRITICAL FIX: Show only one file generation card, properly prioritizing the completedActions version
+      // This resolves the issue with duplicate "File generated" cards appearing
       if (fileGeneratedAction || submissionResult.fileId) {
         cards.push(
           <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200 relative overflow-hidden">
@@ -474,14 +475,17 @@ export function UniversalSuccessModal({
       }
     }
     
-    // Add any additional cards from completedActions
-    if (submissionResult.completedActions && submissionResult.completedActions.length > 0) {
+    // FIXED: No longer need to add additional cards from completedActions 
+    // since we've handled them in the main completedActions block above
+    // This further prevents any possible duplicates
+    if (false && submissionResult.completedActions && submissionResult.completedActions.length > 0) {
       submissionResult.completedActions.forEach((action, index) => {
         // Skip actions that we've already covered with our custom cards
         if (action.type === 'form_submitted') return;
         if (action.type === 'file_generated') return;
         if (action.type === 'tabs_unlocked') return;
         if (action.type === 'task_completion') return; // Already have a default task completion card
+        if (action.type === 'file_generation') return; // Skip legacy action type
         
         // Select icon based on action type
         let ActionIcon = FileText;
