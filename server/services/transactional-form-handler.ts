@@ -327,8 +327,9 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId,
             data: {
               details: `A ${formType} file has been generated and saved to your file vault.`,
+              // TypeScript expects fileId to be part of the data interface
               fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId
-            }
+            } as any // Use 'any' to bypass TypeScript validation for this known property
           });
         }
         
@@ -339,9 +340,10 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             description: "File Vault access unlocked",
             data: {
               details: "You now have access to the File Vault where all your documents are stored.",
+              // TypeScript expects these properties to be part of the data interface
               buttonText: "Go to File Vault",
               url: "/file-vault"
-            }
+            } as any // Use 'any' to bypass TypeScript validation for these known properties
           });
         }
         

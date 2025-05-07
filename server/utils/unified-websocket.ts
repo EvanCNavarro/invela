@@ -241,12 +241,15 @@ export function broadcast(type: string, payload: any) {
   });
   
   let sent = 0;
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-      sent++;
-    }
-  });
+  // Add null check to satisfy TypeScript
+  if (wss && wss.clients) {
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+        sent++;
+      }
+    });
+  }
   
   if (sent > 0) {
     console.log(`[INFO] [WebSocket] Broadcast ${type} to ${sent} clients`);

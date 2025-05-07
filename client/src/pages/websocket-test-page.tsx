@@ -40,7 +40,8 @@ export default function WebSocketTestPage() {
     },
     onInProgress: (event: FormSubmissionEvent) => {
       console.log('useFormSubmissionEvents onInProgress called with:', event);
-    }
+    },
+    showToasts: false
   });
   
   // Component event handlers for FormSubmissionListener
