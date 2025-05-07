@@ -161,7 +161,7 @@ export function createTransactionalFormRouter(): Router {
       
       // Use the imported broadcastFormSubmissionCompleted function with source='final_completion'
       // This is now the single source of truth for form submission notifications
-      WebSocketService.broadcastFormSubmissionCompleted(formType, taskId, companyId, {
+      broadcastFormSubmissionCompleted(formType, taskId, companyId, {
         fileId: result.fileId,
         fileName: result.fileName,
         unlockedTabs: result.unlockedTabs,
