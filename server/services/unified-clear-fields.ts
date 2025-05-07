@@ -14,11 +14,17 @@ import { broadcastTaskUpdate } from '../utils/unified-websocket';
 // Form type definitions for type safety
 export type FormType = 'company_kyb' | 'ky3p' | 'open_banking';
 
-// Map form types to database tables
+// Map form types to their respective database tables
 const responseTableMap: Record<FormType, string> = {
   'company_kyb': 'kyb_responses',
   'ky3p': 'ky3p_responses',
   'open_banking': 'open_banking_responses'
+};
+
+// Map form types to their timestamp tables (if applicable)
+const timestampTableMap: Partial<Record<FormType, string>> = {
+  'company_kyb': 'kyb_field_timestamps',
+  // Other form types may not have timestamp tables
 };
 
 /**
@@ -102,8 +108,35 @@ export async function clearFormFields(
     logger.info(`[UnifiedClear] Deleted responses`, {
       taskId,
       formType,
+      responseTable,
       count: deleteResult.rowCount
     });
+    
+    // Also clear the timestamp table if it exists for this form type
+    const timestampTable = timestampTableMap[formType];
+    if (timestampTable) {
+      try {
+        const timestampDeleteResult = await client.query(
+          `DELETE FROM ${timestampTable} WHERE task_id = $1`,
+          [taskId]
+        );
+        
+        logger.info(`[UnifiedClear] Deleted field timestamps`, {
+          taskId,
+          formType,
+          timestampTable,
+          count: timestampDeleteResult.rowCount
+        });
+      } catch (timestampError) {
+        // Log but continue with the operation - timestamp table errors shouldn't block the main operation
+        logger.warn(`[UnifiedClear] Error clearing timestamp table`, {
+          taskId,
+          formType,
+          timestampTable,
+          error: timestampError instanceof Error ? timestampError.message : String(timestampError)
+        });
+      }
+    }
     
     // Prepare status update based on preserveProgress flag
     const newStatus = preserveProgress ? currentStatus : 'not_started';
