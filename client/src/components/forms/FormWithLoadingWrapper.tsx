@@ -46,6 +46,7 @@ export const FormWithLoadingWrapper: React.FC<FormWithLoadingWrapperProps> = ({
 }) => {
   // A ref to track initialization of form service (signal from child component)
   const formServiceInitializedRef = useRef(false);
+  const initCallCountRef = useRef(0);
   
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -77,17 +78,24 @@ export const FormWithLoadingWrapper: React.FC<FormWithLoadingWrapperProps> = ({
   });
   
   // Event handler for when the form service is initialized
-  // We use a ref to prevent duplicate signal handling
+  // We track the call count to prevent duplicate signal handling
   const handleFormServiceInitialized = () => {
     // Only process this signal once to prevent re-rendering loops
+    initCallCountRef.current += 1;
+    
+    logger.info(`Form service initialization signal received (call #${initCallCountRef.current})`);
+    
+    // Only process the first call
     if (!formServiceInitializedRef.current) {
-      logger.info('Form service initialization signal received');
       formServiceInitializedRef.current = true;
+      logger.info('Processing form service initialization (first call only)');
       
       setDataLoadingState(prev => ({
         ...prev,
         formServiceInitialized: true
       }));
+    } else {
+      logger.info('Ignoring duplicate form service initialization call');
     }
   };
   
