@@ -57,10 +57,19 @@ export function ClearFieldsButton({
     const operationId = generateOperationId();
     
     try {
+      // Map taskType to URL-friendly form type for API consistency
+      let formTypeForApi = taskType;
+      if (taskType === 'company_kyb') {
+        formTypeForApi = 'kyb';
+      } else if (taskType === 'open_banking') {
+        formTypeForApi = 'open-banking';
+      }
+      
       // Log the start of the operation
       logger.info(`[ClearFieldsButton] Starting clear operation for ${taskType} task ${taskId}`, {
         taskId,
         taskType,
+        formTypeForApi,
         operationId,
         preserveProgress,
         isFormEditing,
@@ -106,25 +115,92 @@ export function ClearFieldsButton({
         taskType 
       });
       
-      // Call parent's onClear function
-      const startTime = Date.now();
-      await onClear();
-      const duration = Date.now() - startTime;
-      
-      logger.info(`[ClearFieldsButton] Successfully cleared fields for task ${taskId} in ${duration}ms`, {
-        taskId,
-        taskType,
-        operationId,
-        durationMs: duration
-      });
-      
-      // Show success toast using the unified toast system
-      showClearFieldsToast('success', 'Form fields cleared successfully', { 
-        operationId, 
-        taskId, 
-        taskType,
-        durationMs: duration
-      });
+      try {
+        // Make direct API call to the unified clear fields endpoint
+        // This provides better error handling and diagnostics
+        const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
+        
+        logger.info(`[ClearFieldsButton] Making direct API call to: ${clearUrl}`, {
+          taskId,
+          formTypeForApi,
+          preserveProgress,
+          operationId
+        });
+        
+        const response = await fetch(clearUrl, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preserveProgress })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to clear fields. Server responded with: ${response.status}. ${errorText}`);
+        }
+        
+        // Parse the response
+        const result = await response.json();
+        
+        logger.info(`[ClearFieldsButton] Server response:`, {
+          taskId,
+          success: result.success,
+          status: result.status,
+          progress: result.progress,
+          operationId
+        });
+        
+        // Still call parent's onClear for UI reset and consistency
+        const startTime = Date.now();
+        await onClear();
+        const duration = Date.now() - startTime;
+        
+        logger.info(`[ClearFieldsButton] Successfully cleared fields for task ${taskId} in ${duration}ms`, {
+          taskId,
+          taskType,
+          operationId,
+          durationMs: duration,
+          serverResponse: result
+        });
+        
+        // Show success toast using the unified toast system
+        showClearFieldsToast('success', 'Form fields cleared successfully', { 
+          operationId, 
+          taskId, 
+          taskType,
+          durationMs: duration
+        });
+      } catch (apiError) {
+        // Log the API error but still call onClear as fallback
+        logger.error(`[ClearFieldsButton] API error when clearing fields:`, {
+          error: apiError instanceof Error ? apiError.message : String(apiError),
+          taskId,
+          taskType,
+          operationId
+        });
+        
+        // Show API error toast but continue with client-side clearing
+        showClearFieldsToast('warning', 'Server error, attempting client-side clear...', {
+          operationId,
+          taskId,
+          taskType
+        });
+        
+        // Still try client-side clearing as fallback
+        try {
+          await onClear();
+          
+          // Show partial success toast
+          showClearFieldsToast('info', 'Form cleared on client-side only. Some data may persist.', {
+            operationId,
+            taskId,
+            taskType
+          });
+        } catch (fallbackError) {
+          // Complete failure if both server and client clear fail
+          throw new Error(`Failed to clear fields: ${apiError.message}. Client fallback also failed.`);
+        }
+      }
     } catch (error) {
       // Log error with detailed information
       logger.error(`[ClearFieldsButton] Error clearing fields for task ${taskId}:`, error, {
