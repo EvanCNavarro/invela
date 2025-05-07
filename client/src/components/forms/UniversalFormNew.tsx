@@ -1059,14 +1059,33 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     try {
       // Get form type - prefer the standard taskType over formService for reliability
-      const formType = taskType === 'company_kyb' ? 'kyb' : taskType;
+      // Make sure to use the correct URL format that matches our backend routes
+      let formType = taskType;
+      
+      // Map taskType to URL-friendly form type
+      if (taskType === 'company_kyb') {
+        formType = 'kyb';
+      } else if (taskType === 'open_banking') {
+        formType = 'open-banking';
+      }
+      
       const formTaskId = taskId;
+      const preserveProgress = taskType === 'ky3p'; // Only preserve progress for KY3P forms
       
-      logger.info(`Clearing all fields for ${formType} task ${formTaskId}`);
+      logger.info(`Clearing all fields for ${formType} task ${formTaskId}`, {
+        taskId: formTaskId,
+        formType,
+        preserveProgress,
+        taskType
+      });
       
-      // Direct API call to backend with proper error handling
-      const clearUrl = `/api/${formType}/clear/${formTaskId}`;
+      // Build the clear URL
+      const clearUrl = `/api/${formType}/clear/${formTaskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
       logger.info(`Calling clear fields API: ${clearUrl}`);
+      
+      // Force a layout refresh before making the request
+      // This helps ensure that React doesn't batch updates and miss changes
+      document.body.offsetHeight;
       
       try {
         // Use direct fetch with timeout and better error capturing
@@ -1077,7 +1096,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ preserveProgress }),
           signal: controller.signal
         });
         
@@ -1088,8 +1107,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           throw new Error(`Failed to clear fields. Server responded with: ${response.status}. ${errorText}`);
         }
         
-        // Log success
-        logger.info(`Successfully cleared fields via API for ${formType} task ${formTaskId}`);
+        const result = await response.json();
+        
+        // Log success with detailed information for debugging
+        logger.info(`Successfully cleared fields via API for ${formType} task ${formTaskId}`, {
+          taskId: formTaskId,
+          formType,
+          status: result.status || 'unknown',
+          progress: result.progress !== undefined ? result.progress : 'unknown',
+          preserveProgress,
+          apiSuccess: result.success,
+          timestamp: new Date().toISOString()
+        });
       } catch (apiError) {
         // Log API errors but continue with client-side clearing as fallback
         logger.error(`API error when clearing fields: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
@@ -1115,6 +1144,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         }
         
         logger.info('Client-side form reset completed');
+        
+        // Force section status recalculation
+        if (typeof calculateSectionStatuses === 'function') {
+          try {
+            const newSectionStatuses = calculateSectionStatuses();
+            setSectionStatuses(newSectionStatuses);
+            logger.info('Section statuses recalculated after clearing fields', {
+              sections: Object.keys(newSectionStatuses).length,
+              allCompleted: Object.values(newSectionStatuses).every(status => status === 'completed')
+            });
+          } catch (calcError) {
+            logger.error(`Error recalculating section statuses: ${calcError instanceof Error ? calcError.message : String(calcError)}`);
+          }
+        }
       } catch (resetError) {
         logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
       }
