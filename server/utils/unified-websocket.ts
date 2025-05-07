@@ -224,38 +224,86 @@ export function initWebSocketServer(server: http.Server, path: string = '/ws') {
  * Broadcast a message to all connected clients
  */
 export function broadcast(type: string, payload: any) {
+  // Generate a trace ID for debugging
+  const traceId = `brc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  
   if (!wss) {
-    console.warn('[WARN] [WebSocket] Cannot broadcast, WebSocket server not initialized');
+    console.warn(`[WARN] [WebSocket] Cannot broadcast, WebSocket server not initialized (trace: ${traceId})`);
     return false;
   }
   
   // Extract taskId if present to ensure it's available at the top level
   const taskId = payload.taskId || payload.id || null;
   
-  const message = JSON.stringify({
+  // Log detailed information about broadcast attempt with task and trace IDs
+  console.log(`[INFO] [WebSocket] Preparing to broadcast ${type} message:`, {
     type,
-    payload,
-    data: payload, // For backward compatibility
-    taskId: taskId, // Include taskId at the top level for client compatibility
+    taskId,
+    traceId,
+    clientCount: wss?.clients?.size || 0,
     timestamp: new Date().toISOString(),
   });
   
-  let sent = 0;
-  // Add null check to satisfy TypeScript
-  if (wss && wss.clients) {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-        sent++;
-      }
+  try {
+    const message = JSON.stringify({
+      type,
+      payload,
+      data: payload, // For backward compatibility
+      taskId: taskId, // Include taskId at the top level for client compatibility
+      timestamp: new Date().toISOString(),
+      traceId // Include traceId for debugging
     });
+    
+    let sent = 0;
+    // Add null check to satisfy TypeScript
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        try {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+            sent++;
+          } else {
+            console.log(`[WebSocket] Skip client with readyState: ${client.readyState}`, {
+              traceId, 
+              isOpen: client.readyState === WebSocket.OPEN,
+              readyState: client.readyState
+            });
+          }
+        } catch (sendError) {
+          console.error(`[ERROR] [WebSocket] Error sending to client:`, {
+            error: sendError instanceof Error ? sendError.message : String(sendError),
+            traceId
+          });
+        }
+      });
+    }
+    
+    // Log detailed results
+    if (sent > 0) {
+      console.log(`[INFO] [WebSocket] Successfully broadcast ${type} to ${sent} clients`, {
+        traceId,
+        taskId,
+        sent,
+        total: wss?.clients?.size || 0
+      });
+    } else {
+      console.warn(`[WARN] [WebSocket] No clients received ${type} broadcast`, {
+        traceId,
+        taskId,
+        clientCount: wss?.clients?.size || 0
+      });
+    }
+    
+    return sent > 0;
+  } catch (error) {
+    console.error(`[ERROR] [WebSocket] Failed to broadcast ${type}:`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      traceId,
+      taskId
+    });
+    return false;
   }
-  
-  if (sent > 0) {
-    console.log(`[INFO] [WebSocket] Broadcast ${type} to ${sent} clients`);
-  }
-  
-  return sent > 0;
 }
 
 // Alias for broadcast to maintain backward compatibility with existing code
@@ -503,11 +551,15 @@ export function broadcastFormSubmissionCompleted(
   // Extract options
   const { fileId, fileName, unlockedTabs, completedActions, metadata = {} } = options;
   
+  // Create a trace ID for cross-log correlation
+  const traceId = `wsbc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  
   // Log detailed information about the comprehensive completion message
   console.log(`[WebSocket] Broadcasting form submission COMPLETED event:`, {
     taskId,
     formType,
     companyId,
+    traceId,
     hasFileId: !!fileId,
     hasFileName: !!fileName,
     hasUnlockedTabs: !!unlockedTabs && unlockedTabs.length > 0,
