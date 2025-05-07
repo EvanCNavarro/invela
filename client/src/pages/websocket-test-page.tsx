@@ -6,12 +6,13 @@
  * global deduplication mechanism across components.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FormSubmissionListener } from '@/components/forms/FormSubmissionListener';
 import { useFormSubmissionEvents } from '@/hooks/use-form-submission-events';
+import { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,27 +32,27 @@ export default function WebSocketTestPage() {
   const { lastEvent: hookEvent } = useFormSubmissionEvents({
     taskId,
     formType,
-    onSuccess: (event) => {
+    onSuccess: (event: FormSubmissionEvent) => {
       console.log('useFormSubmissionEvents onSuccess called with:', event);
     },
-    onError: (event) => {
+    onError: (event: FormSubmissionEvent) => {
       console.log('useFormSubmissionEvents onError called with:', event);
     },
-    onInProgress: (event) => {
+    onInProgress: (event: FormSubmissionEvent) => {
       console.log('useFormSubmissionEvents onInProgress called with:', event);
     }
   });
   
   // Component event handlers for FormSubmissionListener
-  const handleSuccess = (event: any) => {
+  const handleSuccess = (event: FormSubmissionEvent) => {
     console.log('FormSubmissionListener onSuccess called with:', event);
   };
   
-  const handleError = (event: any) => {
+  const handleError = (event: FormSubmissionEvent) => {
     console.log('FormSubmissionListener onError called with:', event);
   };
   
-  const handleInProgress = (event: any) => {
+  const handleInProgress = (event: FormSubmissionEvent) => {
     console.log('FormSubmissionListener onInProgress called with:', event);
   };
   
