@@ -203,10 +203,12 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         const data = JSON.parse(event.data);
         
         // Process form-related events including task update events which carry form submission status
+        // Added support for form_submission_completed which indicates all operations are complete
         if (data.type !== 'form_submission' && 
             data.type !== 'form_submitted' && 
             data.type !== 'task_update' &&
-            data.type !== 'task_updated') {
+            data.type !== 'task_updated' &&
+            data.type !== 'form_submission_completed') {
           return;
         }
         
