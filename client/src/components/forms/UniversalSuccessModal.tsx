@@ -196,9 +196,15 @@ export function UniversalSuccessModal({
   // Helper function to get the appropriate action cards based on completed actions
   const getActionCards = () => {
     const cards: React.ReactNode[] = [];
+    const logger = getLogger('UniversalSuccessModal');
+    
+    // Log the entire submission result to help with debugging
+    logger.debug('Processing submission result:', submissionResult);
     
     // Always check completedActions first
     if (submissionResult.completedActions && submissionResult.completedActions.length > 0) {
+      logger.info('Processing completedActions:', submissionResult.completedActions);
+      
       // Look for specific action types in completedActions
       const formSubmittedAction = submissionResult.completedActions.find(a => a.type === 'form_submitted');
       const fileGeneratedAction = submissionResult.completedActions.find(a => a.type === 'file_generated');
@@ -229,7 +235,8 @@ export function UniversalSuccessModal({
       }
       
       // File generation card with improved visibility and File Vault link
-      if (fileGeneratedAction) {
+      // CRITICAL FIX: Also show file card if fileId is available in submissionResult even if no explicit fileGeneratedAction
+      if (fileGeneratedAction || submissionResult.fileId) {
         cards.push(
           <div key="file-generated" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200 relative overflow-hidden">
             <div className="absolute top-0 right-0 h-12 w-12 -mt-4 -mr-4 bg-blue-100 rounded-full opacity-50"></div>
@@ -241,7 +248,9 @@ export function UniversalSuccessModal({
                   {submissionResult.fileId ? `File #${submissionResult.fileId}` : 'New File'}
                 </Badge>
               </div>
-              <p className="text-gray-600 mb-2">{fileGeneratedAction.description}</p>
+              <p className="text-gray-600 mb-2">
+                {fileGeneratedAction?.description || `Generated ${submissionResult.fileName || 'report file'}`}
+              </p>
               
               {/* CRITICAL FIX: Clear instructions for accessing files in File Vault */}
               <p className="text-sm text-gray-500 mb-1">
@@ -249,16 +258,23 @@ export function UniversalSuccessModal({
               </p>
               
               <div className="flex gap-2 mt-2">
-                {/* Direct download if URL is available */}
-                {submissionResult.downloadUrl && (
+                {/* Support multiple ways of accessing file download URLs */}
+                {(submissionResult.fileId || submissionResult.downloadUrl) && (
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => window.open(submissionResult.downloadUrl, '_blank')}
-                    className="text-xs h-8"
+                    asChild
+                    className="text-xs h-8 border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100"
                   >
-                    <Download className="h-3.5 w-3.5 mr-1" />
-                    Download File
+                    <a 
+                      href={submissionResult.downloadUrl || `/api/files/${submissionResult.fileId}/download`} 
+                      download={submissionResult.fileName || 'report.csv'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Download className="h-3.5 w-3.5 mr-1" />
+                      Download File
+                    </a>
                   </Button>
                 )}
                 
@@ -281,13 +297,17 @@ export function UniversalSuccessModal({
       }
       
       // Tabs unlocked card
-      if (tabsUnlockedAction) {
+      // CRITICAL FIX: Also show tabs card if unlockedTabs array is available in submissionResult
+      if (tabsUnlockedAction || (submissionResult.unlockedTabs && submissionResult.unlockedTabs.length > 0)) {
         cards.push(
           <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
             <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-gray-900">New Access Granted</p>
-              <p className="text-gray-600">{tabsUnlockedAction.description}</p>
+              <p className="text-gray-600">
+                {tabsUnlockedAction?.description || 
+                 `Unlocked tabs: ${submissionResult.unlockedTabs?.join(', ') || 'additional features'}`}
+              </p>
             </div>
           </div>
         );
@@ -303,6 +323,7 @@ export function UniversalSuccessModal({
         let bgClass = "bg-white";
         let borderClass = "border-gray-200";
         let iconColor = "text-gray-600";
+        let title = "Action Completed";
         
         // Customize appearance based on action type
         switch(action.type) {
@@ -311,18 +332,36 @@ export function UniversalSuccessModal({
             bgClass = "bg-indigo-50";
             borderClass = "border-indigo-200";
             iconColor = "text-indigo-600";
+            title = "Next Task Ready";
             break;
           case "risk_assessment":
             ActionIcon = Shield;
-            bgClass = "bg-white";
-            borderClass = "border-gray-200";
-            iconColor = "text-gray-600";
+            bgClass = "bg-purple-50";
+            borderClass = "border-purple-200";
+            iconColor = "text-purple-600";
+            title = "Risk Assessment Updated";
             break;
           case "file_vault_unlocked":
             ActionIcon = Archive;
             bgClass = "bg-blue-50";
             borderClass = "border-blue-200";
             iconColor = "text-blue-600";
+            title = "File Vault Access";
+            break;
+          case "dashboard_unlocked":
+            ActionIcon = BarChart2;
+            bgClass = "bg-indigo-50";
+            borderClass = "border-indigo-200";
+            iconColor = "text-indigo-600";
+            title = "Dashboard Access";
+            break;
+          default:
+            // Generic style for unknown action types
+            ActionIcon = CheckCircle;
+            bgClass = "bg-white";
+            borderClass = "border-gray-200";
+            iconColor = "text-gray-600";
+            title = "Action Completed";
             break;
         }
         
