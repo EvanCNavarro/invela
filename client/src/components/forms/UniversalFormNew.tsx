@@ -305,8 +305,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Task ID */}
                   {task?.id && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <Hash className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-50 rounded-md">
+                        <Hash className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Task ID</span>
@@ -317,8 +317,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Submission date */}
                   <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                    <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                      <Clock className="h-4 w-4 text-gray-600" />
+                    <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-md">
+                      <Clock className="h-4 w-4 text-blue-500" />
                     </div>
                     <div>
                       <span className="text-xs font-medium text-gray-500 block mb-0.5">Submitted</span>
@@ -329,8 +329,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Company */}
                   {task?.company_id && company?.name && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <Building2 className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-200 rounded-md">
+                        <Building2 className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Company</span>
@@ -342,8 +342,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Status */}
                   {task?.status && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-green-50 rounded-md">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-300 rounded-md">
+                        <CheckCircle className="h-4 w-4 text-blue-700" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Status</span>
@@ -355,8 +355,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Created date */}
                   {task?.created_at && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <CalendarClock className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-md">
+                        <CalendarClock className="h-4 w-4 text-blue-500" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Created</span>
@@ -368,8 +368,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Scope */}
                   {task?.task_scope && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <Users className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-200 rounded-md">
+                        <Users className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Scope</span>
@@ -381,8 +381,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Progress */}
                   {task?.progress !== undefined && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-emerald-50 rounded-md">
-                        <ChartBar className="h-4 w-4 text-emerald-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-300 rounded-md">
+                        <ChartBar className="h-4 w-4 text-blue-700" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Progress</span>
@@ -394,8 +394,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Due date */}
                   {task?.due_date && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <CalendarDays className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-md">
+                        <CalendarDays className="h-4 w-4 text-blue-500" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Due date</span>
@@ -407,8 +407,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Created by */}
                   {task?.created_by && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <UserPlus className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-200 rounded-md">
+                        <UserPlus className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Created by</span>
@@ -420,8 +420,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Priority */}
                   {task?.priority && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-50 rounded-md">
-                        <Flag className="h-4 w-4 text-blue-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-300 rounded-md">
+                        <Flag className="h-4 w-4 text-blue-700" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Priority</span>
@@ -433,8 +433,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Completed date */}
                   {task?.completed_at && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <CheckSquare className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-md">
+                        <CheckSquare className="h-4 w-4 text-blue-500" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Completed</span>
@@ -446,8 +446,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Assigned to */}
                   {task?.assigned_to && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <User2 className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-200 rounded-md">
+                        <User2 className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Assigned to</span>
@@ -459,8 +459,8 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   {/* Template ID */}
                   {task?.template_id && (
                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
-                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
-                        <FileText className="h-4 w-4 text-gray-600" />
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-md">
+                        <FileText className="h-4 w-4 text-blue-500" />
                       </div>
                       <div>
                         <span className="text-xs font-medium text-gray-500 block mb-0.5">Template ID</span>
