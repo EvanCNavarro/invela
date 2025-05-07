@@ -34,6 +34,8 @@ export interface FormStatusState {
   activeSection: number;
   setActiveSection: (sectionIndex: number) => void;
   refreshStatus: () => void;
+  // Adding explicit setter for section statuses
+  setSectionStatuses: (statuses: SectionStatus[]) => void;
 }
 
 /**
@@ -135,7 +137,7 @@ export function useFormStatus({
       
       // Count filled fields directly without caching
       let filledCount = 0;
-      let unfilledFields = [];
+      let unfilledFields: Array<{key: string; value: any; type: string}> = [];
       
       relevantFields.forEach(field => {
         const value = formValues[field.key];
@@ -343,11 +345,53 @@ export function useFormStatus({
     calculateStatus();
   }, [calculateStatus]);
 
+  // Create a dedicated section statuses setter to fix the KY3P form reset issue
+  const setSectionStatuses = useCallback((newSectionStatuses: SectionStatus[]) => {
+    logger.info(`Manually setting section statuses for ${newSectionStatuses.length} sections`);
+    
+    // Create a new completedSections object based on the provided statuses
+    const newCompletedSections: Record<string | number, boolean> = {};
+    
+    // Mark any 'completed' sections in the new statuses
+    newSectionStatuses.forEach(section => {
+      newCompletedSections[section.id] = section.status === 'completed';
+    });
+    
+    // Calculate the overall progress based on the new section statuses
+    let totalFields = 0;
+    let totalFilledFields = 0;
+    
+    newSectionStatuses.forEach(section => {
+      totalFields += section.totalFields;
+      totalFilledFields += section.filledFields;
+    });
+    
+    const newOverallProgress = totalFields > 0 
+      ? Math.round((totalFilledFields / totalFields) * 100) 
+      : 0;
+    
+    // Update the full status state
+    setStatusState({
+      sectionStatuses: newSectionStatuses,
+      completedSections: newCompletedSections,
+      overallProgress: newOverallProgress
+    });
+    
+    // Notify parent component of progress change if callback exists
+    if (onChange) {
+      onChange(newOverallProgress);
+    }
+    
+    // Log the change for debugging
+    logger.info(`Section statuses manually set, overall progress: ${newOverallProgress}%`);
+  }, [onChange]);
+
   // Return all the status state and controls
   return {
     ...statusState,
     activeSection,
     setActiveSection,
-    refreshStatus
+    refreshStatus,
+    setSectionStatuses
   };
 }
