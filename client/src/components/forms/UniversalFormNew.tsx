@@ -751,47 +751,113 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // This ensures the form is properly reloaded with empty data but WITHOUT fetching from server
   const refreshFormData = useCallback(async (options: { skipServerRefresh?: boolean } = {}): Promise<void> => {
     const skipServerRefresh = options.skipServerRefresh ?? true; // Default to skipping server refresh
+    const operationId = `refresh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    
     try {
-      logger.info(`Refreshing form data after clearing fields (skipServerRefresh: ${skipServerRefresh})`);
+      logger.info(`[DIAGNOSTIC][${operationId}] Refreshing form data after clearing fields`, {
+        skipServerRefresh,
+        taskId,
+        taskType,
+        hasForm: !!form,
+        hasResetForm: !!resetForm,
+        hasRefreshStatus: !!refreshStatus,
+        hasRefreshTask: !!refreshTask,
+        sections: sections?.length || 0,
+        timestamp: new Date().toISOString()
+      });
       
       // Only reset form state if we're not skipping server refresh
       // This is critical because resetForm() calls the API and refetches data
       if (!skipServerRefresh && resetForm) {
-        logger.info('Calling resetForm() to reload form data from server');
+        logger.info(`[DIAGNOSTIC][${operationId}] Calling resetForm() to reload form data from server`);
         await resetForm();
       } else {
-        logger.info('Skipping resetForm() to prevent reloading data from server');
+        logger.info(`[DIAGNOSTIC][${operationId}] Skipping resetForm() to prevent reloading data from server`);
         
         // Instead of reloading from server, manually reset the form state
         if (form) {
+          // Check form state before reset
+          logger.info(`[DIAGNOSTIC][${operationId}] Form state before reset:`, {
+            isDirty: form.formState.isDirty,
+            fieldCount: Object.keys(form.getValues()).length,
+            timestamp: new Date().toISOString()
+          });
+          
           // Reset form UI state directly without server call
           form.reset({});
-          logger.info('Reset form UI state directly without server API call');
+          
+          // Check form state after reset
+          logger.info(`[DIAGNOSTIC][${operationId}] Form state after reset:`, {
+            isDirty: form.formState.isDirty,
+            fieldCount: Object.keys(form.getValues()).length,
+            timestamp: new Date().toISOString()
+          });
         }
       }
       
       // Reset to first section
       if (typeof setActiveSection === 'function') {
+        logger.info(`[DIAGNOSTIC][${operationId}] Setting active section to 0 (was: ${activeSection})`);
         setActiveSection(0);
+      }
+      
+      // Log section statuses before refresh
+      if (sectionStatuses && sectionStatuses.length > 0) {
+        logger.info(`[DIAGNOSTIC][${operationId}] Section statuses BEFORE refresh:`, {
+          sections: sectionStatuses.map(s => ({
+            id: s.id,
+            title: s.title,
+            progress: s.progress,
+            status: s.status
+          }))
+        });
       }
       
       // Local status recalculation without server call
       if (refreshStatus) {
+        logger.info(`[DIAGNOSTIC][${operationId}] Calling refreshStatus to recalculate form progress`);
         refreshStatus();
       }
       
       // Only refresh task data if we're not skipping server refresh
       if (!skipServerRefresh && refreshTask) {
-        logger.info('Refreshing task data from server');
+        logger.info(`[DIAGNOSTIC][${operationId}] Refreshing task data from server`);
         await refreshTask();
       } else {
-        logger.info('Skipping task data refresh to prevent reloading data from server');
+        logger.info(`[DIAGNOSTIC][${operationId}] Skipping task data refresh to prevent reloading data from server`);
+      }
+      
+      // Log section statuses after refresh (CRITICAL DIAGNOSTIC)
+      if (sectionStatuses && sectionStatuses.length > 0) {
+        logger.info(`[DIAGNOSTIC][${operationId}] Section statuses AFTER refresh:`, {
+          sections: sectionStatuses.map(s => ({
+            id: s.id,
+            title: s.title,
+            progress: s.progress,
+            status: s.status
+          }))
+        });
       }
       
       // Force rerender to update UI state
+      logger.info(`[DIAGNOSTIC][${operationId}] Forcing component rerender`);
       setForceRerender(prev => !prev);
       
-      logger.info('Form data refresh completed successfully');
+      logger.info(`[DIAGNOSTIC][${operationId}] Form data refresh completed successfully`);
+      
+      // Add a final check after a small delay to verify the changes persisted
+      setTimeout(() => {
+        if (sectionStatuses && sectionStatuses.length > 0) {
+          logger.info(`[DIAGNOSTIC][${operationId}] Section statuses AFTER TIMEOUT (500ms):`, {
+            sections: sectionStatuses.map(s => ({
+              id: s.id,
+              title: s.title,
+              progress: s.progress,
+              status: s.status
+            }))
+          });
+        }
+      }, 500);
     } catch (error) {
       logger.error(`Error refreshing form data: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
@@ -1091,20 +1157,41 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Handle clearing form fields with proper logging and error handling
   const handleClearFieldsAction = async (): Promise<void> => {
-    logger.info('Executing clear fields operation');
+    const clearOpId = `clear_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    logger.info(`[DIAGNOSTIC][${clearOpId}] Starting clear fields operation`, {
+      taskId,
+      taskType,
+      timestamp: new Date().toISOString()
+    });
     
     if (!taskId) {
-      logger.warn('Cannot clear fields - no task ID provided');
+      logger.warn(`[DIAGNOSTIC][${clearOpId}] Cannot clear fields - no task ID provided`);
       return;
     }
     
     // Verify that fields have loaded before attempting to clear them
     if (!Array.isArray(fields) || fields.length === 0) {
-      logger.warn('Cannot clear fields - fields have not been loaded yet');
+      logger.warn(`[DIAGNOSTIC][${clearOpId}] Cannot clear fields - fields have not been loaded yet`, {
+        fieldsType: typeof fields,
+        isArray: Array.isArray(fields),
+        length: fields?.length || 0
+      });
       return;
     }
     
     // No need to set loading state here as ClearFieldsButton manages its own loading state
+    
+    // Log section statuses before clearing (for comparison)
+    if (sectionStatuses && sectionStatuses.length > 0) {
+      logger.info(`[DIAGNOSTIC][${clearOpId}] Section statuses BEFORE clearing:`, {
+        sections: sectionStatuses.map(s => ({
+          id: s.id,
+          title: s.title,
+          progress: s.progress,
+          status: s.status
+        }))
+      });
+    }
     
     try {
       // Get form type - prefer the standard taskType over formService for reliability
@@ -1123,11 +1210,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Only preserve progress in special cases like KY3P editing mode, which is determined elsewhere
       const preserveProgress = false;
       
-      logger.info(`Clearing all fields for ${formType} task ${formTaskId}`, {
+      logger.info(`[DIAGNOSTIC][${clearOpId}] Clearing all fields for ${formType} task ${formTaskId}`, {
         taskId: formTaskId,
         formType,
         preserveProgress,
-        taskType
+        taskType,
+        fieldCount: fields.length,
+        sectionCount: sections.length,
+        formState: form ? {
+          isDirty: form.formState.isDirty,
+          isSubmitted: form.formState.isSubmitted,
+          isValid: form.formState.isValid
+        } : 'no form'
       });
       
       // Build the clear URL
