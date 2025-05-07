@@ -42,6 +42,13 @@ import {
  * @param options Additional options for the update
  * @returns The updated progress value
  */
+// Define the result type for progress updates to fix type errors
+interface ProgressUpdateResult {
+  progress: number;
+  status: string;
+  [key: string]: any;
+}
+
 export async function updateTaskProgressAndBroadcast(
   taskId: number,
   taskType: string,
