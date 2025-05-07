@@ -146,6 +146,16 @@ export default function TaskPage({ params }: TaskPageProps) {
   const handleFormSubmissionSuccess = useCallback((event: FormSubmissionEvent) => {
     console.log('[TaskPage] Form submission success:', event);
     
+    // Check if this is from the final completed message or an intermediate one
+    const isCompletedMessage = event.source === 'final_completion' || 
+                              (event.completedActions && event.completedActions.length > 0);
+    
+    console.log('[TaskPage] Processing form submission event:', {
+      isCompletedMessage,
+      hasCompletedActions: event.completedActions?.length || 0,
+      messageSource: event.source
+    });
+    
     if (event.fileId) {
       // Convert to number if it's a string to fix TypeScript error
       const fileIdValue = typeof event.fileId === 'string' ? parseInt(event.fileId, 10) : event.fileId;
@@ -162,19 +172,26 @@ export default function TaskPage({ params }: TaskPageProps) {
       completedActions: event.completedActions || []
     });
     
-    // Set state to update UI
+    // Set task as submitted regardless of which message type it is
     setIsSubmitted(true);
-    setShowSuccessModal(true);
     
-    // Track which form type triggered the success event
-    // This helps avoid showing duplicate modals across different form sections
-    setSubmittedFormType(taskContentType);
+    // Only show the modal and fire confetti if this is the final completion message
+    // This ensures we only show the modal with complete information
+    if (isCompletedMessage) {
+      console.log('[TaskPage] Showing success modal with complete information:', event);
+      
+      // Show the modal with the complete information
+      setShowSuccessModal(true);
+      
+      // Track which form type triggered the success event
+      setSubmittedFormType(taskContentType);
+      
+      // Show confetti effect for the final completion
+      fireEnhancedConfetti();
+    }
     
-    // Invalidate queries to refresh task list
+    // Always invalidate queries to refresh task list
     queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-    
-    // Show confetti effect
-    fireEnhancedConfetti();
   }, [queryClient, taskContentType]);
   
   // Handle form submission error
