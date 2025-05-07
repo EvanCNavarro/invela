@@ -219,6 +219,20 @@ export default function KY3PTaskPage() {
         returnPath="/task-center"
         returnLabel="Return to Task Center"
         taskType="ky3p"
+        // Enable File Vault button for better file access
+        showFileVaultButton={true}
+        fileVaultPath="/file-vault"
+        fileVaultLabel="Access Files in Vault"
+        actions={[
+          {
+            type: 'form_submitted',
+            description: 'KY3P assessment successfully submitted'
+          },
+          {
+            type: 'tabs_unlocked',
+            description: 'Files are now accessible in the File Vault'
+          }
+        ]}
       />
     </DashboardLayout>
   );

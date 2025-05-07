@@ -26,8 +26,7 @@ import { toast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { FormSubmissionEvent } from '@/hooks/use-form-submission-events';
-import FormSubmissionListener from '@/components/forms/FormSubmissionListener';
+import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 import FormSubmissionService from '@/services/form-submission-service';
 
@@ -94,11 +93,12 @@ export default function FormSubmissionWorkflowPage() {
       };
       
       // Use the form submission service to submit the form
-      await FormSubmissionService.submitForm(
+      await FormSubmissionService.submitFormWithWebSocketUpdates({
         taskId,
         formType,
-        submissionData
-      );
+        companyId,
+        formData: submissionData
+      });
       
       // Note: We don't need to manually update UI state here as the WebSocket events
       // will trigger the appropriate state changes via FormSubmissionListener
@@ -121,7 +121,7 @@ export default function FormSubmissionWorkflowPage() {
   }, [taskId, formType, companyId, formData]);
   
   // Handle submission success event from WebSocket
-  const handleSubmissionSuccess = useCallback((event: FormSubmissionEvent) => {
+  const handleSubmissionSuccess = useCallback((event: any) => {
     console.log('Submission success event received:', event);
     
     // Update state
@@ -134,7 +134,7 @@ export default function FormSubmissionWorkflowPage() {
   }, []);
   
   // Handle submission error event from WebSocket
-  const handleSubmissionError = useCallback((event: FormSubmissionEvent) => {
+  const handleSubmissionError = useCallback((event: any) => {
     console.log('Submission error event received:', event);
     
     // Update state
@@ -146,7 +146,7 @@ export default function FormSubmissionWorkflowPage() {
   }, []);
   
   // Handle submission in-progress event from WebSocket
-  const handleSubmissionInProgress = useCallback((event: FormSubmissionEvent) => {
+  const handleSubmissionInProgress = useCallback((event: any) => {
     console.log('Submission in-progress event received:', event);
     
     // Update state
@@ -470,8 +470,8 @@ export default function FormSubmissionWorkflowPage() {
           onClose={() => setShowSuccessModal(false)}
           title="Form Submission Successful"
           message={`Your ${formType} form has been successfully submitted.`}
-          fileName={lastEvent.fileName}
-          fileId={lastEvent.fileId}
+          fileName={lastEvent.fileName as string | undefined}
+          fileId={Number(lastEvent.fileId) || undefined}
           returnPath="/task-center"
           returnLabel="Return to Task Center"
           taskType={formType}
@@ -484,7 +484,7 @@ export default function FormSubmissionWorkflowPage() {
               type: 'form_submitted',
               description: `${formType.toUpperCase()} form submitted successfully`
             },
-            ...(lastEvent.unlockedTabs ? [
+            ...(lastEvent.unlockedTabs && Array.isArray(lastEvent.unlockedTabs) && lastEvent.unlockedTabs.length > 0 ? [
               {
                 type: 'tabs_unlocked',
                 description: `Unlocked tabs: ${lastEvent.unlockedTabs.join(', ')}`
@@ -493,8 +493,8 @@ export default function FormSubmissionWorkflowPage() {
             ...(lastEvent.fileName ? [
               {
                 type: 'file_generated',
-                description: `Generated submission file: ${lastEvent.fileName}`,
-                fileId: lastEvent.fileId
+                description: `Generated submission file: ${lastEvent.fileName as string}`,
+                fileId: Number(lastEvent.fileId) || undefined
               }
             ] : [])
           ]}
