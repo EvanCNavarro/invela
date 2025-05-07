@@ -761,7 +761,17 @@ export function UniversalSuccessModal({
           </div>
         </div>
         <div className="flex justify-between gap-4 mt-2">
-          {getActionButtons()}
+          {/* CRITICAL FIX: Only display the "Go to Task Center" button and remove all others */}
+          <Button
+            onClick={() => {
+              navigate('/task-center');
+              onOpenChange(false);
+            }}
+            className="w-full bg-primary hover:bg-primary/90"
+          >
+            Go to Task Center
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
