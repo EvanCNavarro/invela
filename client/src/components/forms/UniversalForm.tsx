@@ -839,31 +839,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
    * properly handles different field identifiers across form types.
    */
   const handleClearFields = useCallback(async () => {
-    // Make sure fields is properly initialized before proceeding
-    if (!formService) {
+    if (!formService || !fields.length) {
       toast({
         title: 'Clear Fields Error',
-        description: 'Cannot clear fields: form service not available',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Check if fields is an array and has length
-    if (!Array.isArray(fields)) {
-      toast({
-        title: 'Clear Fields Error',
-        description: 'Cannot clear fields: fields is not an array',
-        variant: 'destructive',
-      });
-      logger.error('[ClearFields] Fields is not an array:', fields);
-      return;
-    }
-    
-    if (!fields.length) {
-      toast({
-        title: 'Clear Fields Error',
-        description: 'Cannot clear fields: no fields available',
+        description: 'Cannot clear fields: form service or fields not available',
         variant: 'destructive',
       });
       return;
