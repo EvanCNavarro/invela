@@ -3,8 +3,10 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db } from '@db';
 import { ky3pResponses, tasks, TaskStatus } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-// Import the console directly since we don't have a Logger import
+// Import both WebSocket broadcasting implementations
 import { broadcastTaskUpdate } from '../services/websocket';
+import { broadcastTaskUpdate as unifiedBroadcastTaskUpdate } from '../utils/unified-websocket';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -25,7 +27,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       return res.status(400).send('Invalid task ID');
     }
 
-    console.log('[KY3P Clear] Clearing fields for task', { 
+    logger.info('[KY3P Clear] Clearing fields for task', { 
       taskId, 
       userId, 
       companyId,
@@ -42,7 +44,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
     ).limit(1);
 
     if (taskResult.length === 0) {
-      console.warn('[KY3P Clear] Task not found or not authorized', { taskId, companyId });
+      logger.warn('[KY3P Clear] Task not found or not authorized', { taskId, companyId });
       return res.status(404).send('Task not found or not authorized');
     }
 
@@ -57,7 +59,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       eq(ky3pResponses.task_id, taskId)
     );
 
-    console.log('[KY3P Clear] Deleted responses', { taskId, deleteResult });
+    logger.info('[KY3P Clear] Deleted responses', { taskId, deleteResult });
 
     // Update task status and progress based on preserveProgress flag
     const updateData = preserveProgress 
@@ -94,19 +96,48 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
     // Broadcast the task update to all clients
     if (updateResult.length > 0) {
       const updatedTask = updateResult[0];
-      console.log('[KY3P Clear] Updated task status', { 
+      logger.info('[KY3P Clear] Updated task status', { 
         taskId, 
         status: updatedTask.status,
         progress: updatedTask.progress 
       });
 
-      // Broadcast the update to all WebSocket clients using the proper format
-      broadcastTaskUpdate({
+      // Create payload for broadcasting
+      const taskUpdatePayload = {
         id: taskId,
         status: updatedTask.status,
         progress: updatedTask.progress,
         metadata: updatedTask.metadata || { locked: false }
-      });
+      };
+
+      // First attempt using standard WebSocket broadcast
+      try {
+        logger.info('[KY3P Clear] Broadcasting via standard WebSocket service');
+        broadcastTaskUpdate(taskUpdatePayload);
+      } catch (broadcastError) {
+        logger.warn('[KY3P Clear] Standard WebSocket broadcast failed', {
+          error: broadcastError instanceof Error ? broadcastError.message : 'Unknown error',
+          taskId
+        });
+      }
+
+      // Also attempt using unified WebSocket broadcast for redundancy
+      try {
+        logger.info('[KY3P Clear] Broadcasting via unified WebSocket service');
+        // Unified WebSocket broadcast expects taskId (not id)
+        unifiedBroadcastTaskUpdate({
+          taskId,
+          status: updatedTask.status,
+          progress: updatedTask.progress,
+          metadata: updatedTask.metadata || { locked: false }
+        });
+        logger.info('[KY3P Clear] Unified WebSocket broadcast successful');
+      } catch (unifiedBroadcastError) {
+        logger.warn('[KY3P Clear] Unified WebSocket broadcast failed', {
+          error: unifiedBroadcastError instanceof Error ? unifiedBroadcastError.message : 'Unknown error',
+          taskId
+        });
+      }
     }
 
     // Return success response
@@ -116,7 +147,12 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       taskId
     });
   } catch (error) {
-    console.error('[KY3P Clear] Error clearing fields:', error);
+    const errorTaskId = taskId;
+    logger.error('[KY3P Clear] Error clearing fields:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      taskId: errorTaskId
+    });
     return res.status(500).send('Error clearing fields');
   }
 });
@@ -157,7 +193,11 @@ router.get('/api/ky3p/clear-test/:taskId', requireAuth, async (req, res) => {
       clear_url: `/api/ky3p/clear/${taskId}?preserveProgress=${preserveProgress}`
     });
   } catch (error) {
-    console.error('[KY3P Clear Test] Error:', error);
+    logger.error('[KY3P Clear Test] Error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      taskId: taskId
+    });
     res.status(500).send('Error testing clear functionality');
   }
 });
