@@ -77,14 +77,18 @@ export const FormWithLoadingWrapper: React.FC<FormWithLoadingWrapperProps> = ({
   });
   
   // Event handler for when the form service is initialized
+  // We use a ref to prevent duplicate signal handling
   const handleFormServiceInitialized = () => {
-    logger.info('Form service initialization signal received');
-    formServiceInitializedRef.current = true;
-    
-    setDataLoadingState(prev => ({
-      ...prev,
-      formServiceInitialized: true
-    }));
+    // Only process this signal once to prevent re-rendering loops
+    if (!formServiceInitializedRef.current) {
+      logger.info('Form service initialization signal received');
+      formServiceInitializedRef.current = true;
+      
+      setDataLoadingState(prev => ({
+        ...prev,
+        formServiceInitialized: true
+      }));
+    }
   };
   
   // Update loading state when task data is loaded
