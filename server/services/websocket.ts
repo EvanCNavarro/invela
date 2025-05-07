@@ -11,8 +11,11 @@ import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
 import { broadcastMessage as wsBroadcastMessage, setupWebSocketServerHandlers, hasConnectedClients } from '../utils/websocketBroadcast';
 
-// Import the unified WebSocket server instance
-import { getWebSocketServer as getUnifiedWebSocketServer } from '../utils/unified-websocket';
+// Import the unified WebSocket server instance and functions
+import { 
+  getWebSocketServer as getUnifiedWebSocketServer,
+  broadcastTaskUpdate as unifiedBroadcastTaskUpdate
+} from '../utils/unified-websocket';
 
 // Store for active WebSocket connections - use the unified websocket server
 let wss: WebSocketServer | null = null;
@@ -34,6 +37,9 @@ export function getWebSocketServer(): WebSocketServer | null {
     // Store the reference for future use
     wss = unifiedWss;
     logger.info('Using unified WebSocket server from now on');
+  } else {
+    // Log warning but don't throw an error - we'll attempt initialization later
+    logger.warn('WebSocket server not available from unified implementation');
   }
   
   return wss;
@@ -150,6 +156,11 @@ export async function broadcast(type: string, payload: any): Promise<void> {
 /**
  * Broadcast a task update to all connected clients
  * 
+ * This enhanced version first tries to use our own websocket service, but
+ * falls back to the unified implementation if our service is not available.
+ * This ensures that task updates are always broadcast, even if our
+ * websocket service is not initialized correctly.
+ * 
  * @param taskIdOrTask Either a task ID number or an object containing task properties
  * @param status Optional status string (only used if taskIdOrTask is a number)
  * @param metadata Optional metadata object (only used if taskIdOrTask is a number)
@@ -160,6 +171,49 @@ export async function broadcastTaskUpdate(
   metadata?: any
 ): Promise<void> {
   try {
+    // First check if our WebSocket server is initialized
+    const isOurWssAvailable = !!wss && wss.clients && hasConnectedClients(wss);
+    
+    if (!isOurWssAvailable) {
+      // If our WebSocket server is not available, fall back to unified implementation
+      logger.info('Our WebSocket server not initialized, falling back to unified implementation');
+      
+      try {
+        // Try to use unified implementation
+        if (typeof taskIdOrTask === 'number') {
+          // Convert to object format for unified implementation
+          unifiedBroadcastTaskUpdate({
+            id: taskIdOrTask,
+            status: status || 'not_started',
+            progress: 0,
+            metadata: metadata || {}
+          });
+          
+          logger.info('Successfully broadcast task update using unified implementation', {
+            taskId: taskIdOrTask,
+            status
+          });
+          
+          return;
+        } else {
+          // Use object format directly
+          unifiedBroadcastTaskUpdate(taskIdOrTask);
+          
+          logger.info('Successfully broadcast task update using unified implementation', {
+            taskId: taskIdOrTask.id,
+            status: taskIdOrTask.status
+          });
+          
+          return;
+        }
+      } catch (unifiedError) {
+        logger.warn('Failed to use unified implementation, will attempt broadcast with our WSS anyway', {
+          error: unifiedError instanceof Error ? unifiedError.message : 'Unknown error'
+        });
+      }
+    }
+    
+    // If we get here, either our WebSocket server is available or the unified implementation failed
     if (typeof taskIdOrTask === 'number') {
       // Handle the signature: broadcastTaskUpdate(taskId, status, metadata)
       logger.debug('Broadcasting task update with numeric ID', {
