@@ -1243,6 +1243,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       try {
         await refreshFormData({ skipServerRefresh: true });
         logger.info('UI refresh completed without server data reload');
+        
+        // CRITICAL FIX: Force recalculation of form progress after clearing fields
+        // This will update the progress bar and section tabs correctly
+        setTimeout(() => {
+          // First refresh the status to recalculate progress
+          if (refreshStatus) {
+            logger.info('Explicitly forcing form status recalculation');
+            refreshStatus();
+          }
+          
+          // Then refresh the task to get the updated status from server
+          if (typeof refreshTask === 'function') {
+            logger.info('Explicitly refreshing task data from server');
+            refreshTask();
+          }
+        }, 500); // Small delay to ensure other updates have completed
       } catch (refreshError) {
         logger.error(`Error during UI refresh: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
       }
