@@ -123,7 +123,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <FieldRenderer 
               field={{
                 ...field,
-                questionNumber: startingQuestionNumber + index // Use the starting number plus index for sequential numbering
+                questionNumber: index + 1 // CRITICAL FIX: Always reset numbering to 1 for each section
               }}
               template={safeTemplate}
               form={formContext || {
