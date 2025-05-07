@@ -1238,8 +1238,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           company={company}
         />
       ) : (
-      
-      {/* Form title and subtitle */}
+        <div>
+          {/* Form title and subtitle */}
       <div className="bg-gray-50 p-6 rounded-t-md mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{formTitle}</h1>
         <p className="text-gray-600 mt-1">{formDescription}</p>
@@ -1655,6 +1655,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           </div>
         </form>
       </Form>
+        </div>
+      )}
     </div>
   );
 };
