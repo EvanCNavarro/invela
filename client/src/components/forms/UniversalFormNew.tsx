@@ -1236,15 +1236,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
       }
       
-      // Use our internal refreshFormData function to ensure all state is properly refreshed
+      // Use our internal refreshFormData function to refresh UI without loading data from server
+      // CRITICAL FIX: Use skipServerRefresh=true to prevent auto-reloading of data
       try {
-        await refreshFormData();
-        logger.info('Data refresh completed');
+        await refreshFormData({ skipServerRefresh: true });
+        logger.info('UI refresh completed without server data reload');
       } catch (refreshError) {
-        logger.error(`Error during data refresh: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
+        logger.error(`Error during UI refresh: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
       }
       
-      // Force UI update
+      // Force UI update to ensure cleared state is visible
       setForceRerender(prev => !prev);
     } catch (clearError) {
       // Properly handle any errors during the clear operation
