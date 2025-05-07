@@ -152,42 +152,10 @@ export function UnifiedDemoAutoFill(props: UnifiedDemoAutoFillProps) {
           }
         };
         
-        // Call generic handler with adapted types and skip toasts (we'll show them here)
-        const result = await handleDemoAutoFill({
+        // Call generic handler with adapted types and skip toasts (we already show them here)
+        await handleDemoAutoFill({
           ...adaptedProps,
           skipToasts: true // Skip toasts in the handler since we show them here
-        });
-        
-        // Get the field count for showing in the success message
-        // This matches behavior with KY3P path for consistency
-        const formService = props.formService;
-        let fieldCount = 0;
-        
-        // Try to determine how many fields were filled
-        if (result && typeof result.fieldCount === 'number') {
-          fieldCount = result.fieldCount;
-        } else if (formService && formService.getFieldCount) {
-          try {
-            fieldCount = await formService.getFieldCount();
-          } catch (e) {
-            // Fall back to the form's field count
-            fieldCount = Object.keys(props.form || {}).length;
-          }
-        } else {
-          // Default fallback
-          fieldCount = Object.keys(props.form || {}).length;
-        }
-        
-        // Force a refresh to ensure consistent UI state
-        if (props.refreshStatus) {
-          await props.refreshStatus();
-        }
-        
-        // Show success toast - critical for UX consistency across form types
-        toast({
-          title: 'Demo Auto-Fill Complete',
-          description: `Successfully populated ${fieldCount} fields with demo data`,
-          variant: 'success'
         });
       }
     } catch (error) {

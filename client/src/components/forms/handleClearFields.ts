@@ -45,7 +45,7 @@ const logger = getLogger('ClearFields');
  */
 export async function handleClearFieldsUtil(
   formService: FormServiceInterface,
-  fields: FormField[] | undefined | null,
+  fields: FormField[],
   updateCallback: (fieldId: string, value: any) => void
 ): Promise<boolean> {
   // Generate a unique operation ID for tracking this operation
@@ -53,14 +53,10 @@ export async function handleClearFieldsUtil(
   try {
     const startTime = Date.now();
     
-    // Validate fields parameter is an array
-    const validFields = Array.isArray(fields) ? fields : [];
-    
     logger.info(`[ClearFields][${operationId}] Starting universal clear operation`, {
       operationId,
       timestamp: new Date().toISOString(),
-      fieldsCount: validFields.length,
-      originalFieldsValid: Array.isArray(fields),
+      fieldsCount: fields?.length || 0,
       formServiceType: formService?.constructor?.name || 'unknown'
     });
     
@@ -146,32 +142,24 @@ export async function handleClearFieldsUtil(
         let invalidFieldCount = 0;
         
         // Populate with empty values for each field
-        if (Array.isArray(fields)) {
-          for (const field of fields) {
-            // Get field identifier in most reliable way
-            const fieldId = field.key || 
-                        (field as any).name || 
-                        String((field as any).id) || 
-                        (field as any).field_key || 
-                        '';
+        for (const field of fields) {
+          // Get field identifier in most reliable way
+          const fieldId = field.key || 
+                      (field as any).name || 
+                      String((field as any).id) || 
+                      (field as any).field_key || 
+                      '';
+          
+          if (fieldId) {
+            // Choose appropriate empty value based on field type
+            const emptyValue = field.type === 'boolean' ? false : 
+                              field.type === 'number' ? null : '';
             
-            if (fieldId) {
-              // Choose appropriate empty value based on field type
-              const emptyValue = field.type === 'boolean' ? false : 
-                                field.type === 'number' ? null : '';
-              
-              emptyData[fieldId] = emptyValue;
-              validFieldCount++;
-            } else {
-              invalidFieldCount++;
-            }
+            emptyData[fieldId] = emptyValue;
+            validFieldCount++;
+          } else {
+            invalidFieldCount++;
           }
-        } else {
-          logger.warn(`[ClearFields][${operationId}] Fields parameter is not an array`, {
-            operationId,
-            fieldsType: typeof fields,
-            fieldsValue: fields
-          });
         }
         
         logger.info(`[ClearFields][${operationId}] Prepared empty data for ${validFieldCount} fields (${invalidFieldCount} invalid fields skipped)`, {
@@ -424,55 +412,43 @@ export async function handleClearFieldsUtil(
     
     const uiUpdateStartTime = Date.now();
     
-    // Make sure fields is an array before iterating
-    if (Array.isArray(fields)) {
-      for (const field of fields) {
-        // Get the field ID in the most reliable way using FormField interface
-        const fieldId = field.key || 
-                      (field as any).name || 
-                      String((field as any).id) || 
-                      (field as any).field_key || 
-                      (field as any).fieldId || 
-                      '';
-        
-        if (!fieldId) {
-          logger.warn(`[ClearFields][${operationId}] Field with no valid identifier found, skipping`, {
-            operationId,
-            fieldType: field.type,
-            fieldLabel: field.label,
-            fieldObject: field
-          });
-          skippedFieldCount++;
-          continue;
-        }
-        
-        try {
-          // Choose appropriate empty value based on field type
-          const emptyValue = field.type === 'boolean' ? false : 
-                            field.type === 'number' ? null : '';
-                            
-          // Update the field using callback
-          updateCallback(fieldId, emptyValue);
-          clearedFieldCount++;
-        } catch (error) {
-          logger.warn(`[ClearFields][${operationId}] Error clearing field ${fieldId}:`, error, {
-            operationId,
-            fieldId,
-            fieldType: field.type,
-            error: String(error)
-          });
-          errorFieldCount++;
-        }
+    for (const field of fields) {
+      // Get the field ID in the most reliable way using FormField interface
+      const fieldId = field.key || 
+                     (field as any).name || 
+                     String((field as any).id) || 
+                     (field as any).field_key || 
+                     (field as any).fieldId || 
+                     '';
+      
+      if (!fieldId) {
+        logger.warn(`[ClearFields][${operationId}] Field with no valid identifier found, skipping`, {
+          operationId,
+          fieldType: field.type,
+          fieldLabel: field.label,
+          fieldObject: field
+        });
+        skippedFieldCount++;
+        continue;
       }
-    } else {
-      logger.error(`[ClearFields][${operationId}] Cannot clear fields - fields parameter is not an array`, {
-        operationId,
-        fieldsType: typeof fields,
-        fieldsValue: fields
-      });
-      // Show an error toast with specific error message
-      showClearFieldsToast('error', 'Failed to clear fields. Form field data is not available.', { operationId });
-      return false;
+      
+      try {
+        // Choose appropriate empty value based on field type
+        const emptyValue = field.type === 'boolean' ? false : 
+                          field.type === 'number' ? null : '';
+                          
+        // Update the field using callback
+        updateCallback(fieldId, emptyValue);
+        clearedFieldCount++;
+      } catch (error) {
+        logger.warn(`[ClearFields][${operationId}] Error clearing field ${fieldId}:`, error, {
+          operationId,
+          fieldId,
+          fieldType: field.type,
+          error: String(error)
+        });
+        errorFieldCount++;
+      }
     }
     
     const uiUpdateDuration = Date.now() - uiUpdateStartTime;
