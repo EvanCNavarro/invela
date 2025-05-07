@@ -20,8 +20,7 @@ import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
 import { FormWithLoadingWrapper } from '@/components/forms/FormWithLoadingWrapper';
 import { DocumentUploadWizard } from '@/components/documents/DocumentUploadWizard';
 import { CardMethodChoice } from '@/components/card/CardMethodChoice';
-// TaskDownloadMenu is wrapped by EnhancedTaskDownloadMenu
-// import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';
+import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';
 import { FixMissingFileButton } from '@/components/FixMissingFileButton';
 import { EnhancedTaskDownloadMenu } from '@/components/EnhancedTaskDownloadMenu';
 import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
@@ -469,7 +468,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   Back to Task Center
                 </Button>
                 {isSubmitted && fileId && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
             </div>
@@ -564,7 +563,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   Back to Task Center
                 </Button>
                 {isSubmitted && fileId && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
             </div>
@@ -665,7 +664,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   Back to Task Center
                 </Button>
                 {isSubmitted && fileId && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
             </div>
@@ -766,7 +765,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   Back to Task Center
                 </Button>
                 {isSubmitted && fileId && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
+                  <TaskDownloadMenu fileId={fileId} onDownload={handleDownload} />
                 )}
               </div>
             </div>
