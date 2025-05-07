@@ -306,19 +306,20 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         
         // Add file generation action if a file was created
         if (fileId) {
+          // Updated to use proper TypeScript type for file action
           completedActions.push({
             type: "file_generation", 
             description: "File generated",
-            fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId,
             data: {
               details: `A ${formType} file has been generated and saved to your file vault.`,
               fileId: typeof fileId === 'string' ? parseInt(fileId, 10) : fileId
-            } as any // Use 'any' to bypass TypeScript validation for this known property
+            }
           });
         }
         
         // Add tab unlocking action if file-vault was unlocked
         if (tabResult.availableTabs.includes('file-vault')) {
+          // Updated to use proper TypeScript structure without 'any' assertion
           completedActions.push({
             type: "tabs_unlocked", // NOTE: Changed to 'tabs_unlocked' to match UniversalSuccessModal expectation
             description: "New Access Granted",
@@ -326,7 +327,7 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
               details: `Unlocked tabs: ${tabResult.availableTabs.join(', ')}`,
               buttonText: "Go to File Vault",
               url: "/file-vault"
-            } as any // Use 'any' to bypass TypeScript validation for these known properties
+            }
           });
         }
         
