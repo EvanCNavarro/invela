@@ -178,7 +178,7 @@ export async function updateTaskProgressAndBroadcast(
       });
     }
     
-    return result.progress;
+    return result.progress || 0;
   } catch (error) {
     logger.error('[UnifiedProgressCalc] Error in progress update and broadcast:', {
       taskId,
@@ -225,7 +225,7 @@ export async function updateAndBroadcastProgress(
     try {
       const { updateTaskProgress } = await import('./unified-task-progress');
       const result = await updateTaskProgress(taskId, taskType, options);
-      return result.progress;
+      return result.progress || 0;
     } catch (dbError) {
       logger.error(`[KY3P] Critical error: Failed even basic progress update for task ${taskId}:`, {
         error: dbError instanceof Error ? dbError.message : String(dbError)
