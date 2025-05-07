@@ -67,7 +67,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   onSuccess,
   onError,
   onInProgress,
-  showToasts = true
+  showToasts = false
 }) => {
   const { socket, isConnected } = useContext(WebSocketContext);
   
@@ -90,9 +90,10 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     showToastsRef.current = showToasts;
   }, [onSuccess, onError, onInProgress, showToasts]);
 
-  // Track reconnection attempts
+  // Track reconnection attempts and message processing
   const reconnectionAttemptsRef = useRef<number>(0);
   const lastProcessedMessageIdRef = useRef<string | null>(null);
+  const processedMessagesRef = useRef<Set<string>>(new Set());
   
   // Process messages after reconnection
   useEffect(() => {
@@ -181,6 +182,28 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           return;
         }
         
+        // Message deduplication: check if we've already processed this message
+        const messageId = data.messageId || (data.payload?.messageId) || 
+                          `${data.type}_${data.taskId || data.payload?.taskId}_${data.timestamp || data.payload?.timestamp}`;
+        
+        // Skip if we've already processed this message
+        if (messageId && processedMessagesRef.current.has(messageId)) {
+          logger.debug(`Skipping duplicate message: ${messageId}`);
+          return;
+        }
+        
+        // Add to processed messages set
+        if (messageId) {
+          processedMessagesRef.current.add(messageId);
+          
+          // Limit size of processed messages set to avoid memory leaks
+          if (processedMessagesRef.current.size > 100) {
+            // Keep only the most recent 50 messages
+            const messagesToKeep = Array.from(processedMessagesRef.current).slice(-50);
+            processedMessagesRef.current = new Set(messagesToKeep);
+          }
+        }
+        
         // Add debug logging to help troubleshoot WebSocket events
         logger.debug(`Processing WebSocket message of type: ${data.type}`, {
           messageType: data.type,
@@ -258,6 +281,21 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           // If no submission date is available, use the message timestamp
           submissionDate = payload.timestamp;
           logger.debug('Using timestamp as fallback for submission date:', submissionDate);
+        }
+        
+        // Format date consistently if it's a valid date
+        try {
+          if (submissionDate) {
+            // Make sure it's a properly formatted ISO string
+            const dateObj = new Date(submissionDate);
+            if (!isNaN(dateObj.getTime())) {
+              submissionDate = dateObj.toISOString();
+              logger.debug('Normalized submission date format:', submissionDate);
+            }
+          }
+        } catch (error) {
+          logger.warn('Error normalizing submission date:', error);
+          // Keep using the original value if conversion fails
         }
 
         // Create the submission event object
