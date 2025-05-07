@@ -81,7 +81,6 @@ import { userContext } from '@/lib/user-context';
 // Import WebSocket-based form submission and fields listeners and related components
 import { FormSubmissionListener, FormSubmissionEvent } from './FormSubmissionListener';
 import FormFieldsListener, { FieldsEvent } from './FormFieldsListener';
-import FormFieldsListener, { FieldsEvent } from './FormFieldsListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 
 import SectionContent from './SectionContent';
@@ -1526,14 +1525,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     <div className="w-full mx-auto">
       {/* WebSocket-based Form Submission Listener */}
       {taskId && (
-        <FormSubmissionListener
-          taskId={taskId}
-          formType={taskType}
-          onSuccess={handleSubmissionSuccess}
-          onError={handleSubmissionError}
-          onInProgress={handleSubmissionInProgress}
-          showToasts={true} // Enable toasts to fix form submission notification
-        />
+        <>
+          <FormSubmissionListener
+            taskId={taskId}
+            formType={taskType}
+            onSuccess={handleSubmissionSuccess}
+            onError={handleSubmissionError}
+            onInProgress={handleSubmissionInProgress}
+            showToasts={true} // Enable toasts to fix form submission notification
+          />
+          <FormFieldsListener
+            taskId={taskId}
+            formType={taskType}
+            onFieldsCleared={handleFieldsCleared}
+            showToasts={false} // We'll handle toasts in the callback
+          />
+        </>
       )}
       
       {/* Submission Success Modal - shown via WebSocket events */}
