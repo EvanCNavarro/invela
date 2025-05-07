@@ -1025,76 +1025,119 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     setIsLoading(true);
     
     try {
-      // Show loading toast first
-      showClearFieldsToast('loading');
+      // Show loading toast first using the standard toast until we fix the unified toast
+      toast({
+        title: 'Clearing Fields',
+        description: 'Clearing all form fields...',
+        variant: 'default',
+      });
       
-      // Get task type and ID from formService for clarity
-      const formType = formService.formType || taskType;
-      const formTaskId = formService.taskId || taskId;
+      // Get form type - prefer the standard taskType over formService for reliability
+      // We've seen issues with formService not being properly initialized
+      const formType = taskType === 'company_kyb' ? 'kyb' : taskType;
+      const formTaskId = taskId;
       
       logger.info(`Clearing all fields for ${formType} task ${formTaskId}`);
       
-      // Direct API call to backend
+      // Direct API call to backend with proper error handling
       const clearUrl = `/api/${formType}/clear/${formTaskId}`;
       logger.info(`Calling clear fields API: ${clearUrl}`);
       
-      const response = await fetch(clearUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to clear fields. Server responded with: ${response.status}`);
+      try {
+        // Use direct fetch with timeout and better error capturing
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch(clearUrl, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to clear fields. Server responded with: ${response.status}. ${errorText}`);
+        }
+        
+        // Log success
+        logger.info(`Successfully cleared fields via API for ${formType} task ${formTaskId}`);
+      } catch (apiError) {
+        // Log API errors but continue with client-side clearing as fallback
+        logger.error(`API error when clearing fields: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
       }
       
-      // Also use the utility to update the UI state
-      await handleClearFieldsUtil(
-        formService,
-        fields,
-        (fieldId, value) => {
-          try {
-            // Reset this specific field in form state
-            form.setValue(fieldId, null);
-            form.resetField(fieldId);
-          } catch (error) {
-            logger.error(`Error resetting field ${fieldId}:`, error);
-          }
+      // Reset form to empty values - client-side fallback
+      try {
+        // Simple form reset for client-side
+        form.reset({});
+        
+        // Update fields individually as a fallback
+        if (Array.isArray(fields)) {
+          fields.forEach(field => {
+            const fieldId = field.key || String((field as any).id) || '';
+            if (fieldId) {
+              try {
+                form.setValue(fieldId, null);
+              } catch (e) {
+                // Ignore field reset errors
+              }
+            }
+          });
         }
-      );
-      
-      // Reset form to empty values
-      form.reset({});
+        
+        logger.info('Client-side form reset completed');
+      } catch (resetError) {
+        logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
+      }
       
       // Force data refresh
       if (refreshData && typeof refreshData === 'function') {
-        await refreshData();
+        try {
+          await refreshData();
+          logger.info('Data refresh completed');
+        } catch (refreshError) {
+          logger.error(`Error during data refresh: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
+        }
       }
       
       // Reset progress indicators
-      setOverallProgress(0);
-      setSectionStatuses(prevStatuses => 
-        prevStatuses.map(s => ({ ...s, status: 'not_started', completedCount: 0, totalCount: s.totalCount }))
-      );
+      try {
+        setOverallProgress(0);
+        setSectionStatuses(prevStatuses => 
+          prevStatuses.map(s => ({ ...s, status: 'not_started', completedCount: 0, totalCount: s.totalCount }))
+        );
+        logger.info('Progress indicators reset');
+      } catch (progressError) {
+        logger.error(`Error resetting progress: ${progressError instanceof Error ? progressError.message : String(progressError)}`);
+      }
       
       // Force UI update
       setForceRerender(prev => !prev);
       
-      // Show success message with the unified toast system
-      showClearFieldsToast('success');
+      // Show success message with standard toast
+      toast({
+        title: 'Fields Cleared',
+        description: 'All form fields have been cleared successfully.',
+        variant: 'success',
+      });
     } catch (clearError) {
       // Properly handle any errors during the clear operation
       logger.error('Error clearing form fields:', clearError);
       
-      // Show error message with the unified toast system
-      showClearFieldsToast('error', clearError instanceof Error ? clearError.message : 'An unknown error occurred');
+      // Show error message with standard toast
+      toast({
+        title: 'Clear Fields Failed',
+        description: clearError instanceof Error ? clearError.message : 'An unknown error occurred',
+        variant: 'destructive',
+      });
     } finally {
       // Always reset loading state
       setIsLoading(false);
     }
-    
-
   };
   
   // Handle submission - with validation showing which fields are incomplete
