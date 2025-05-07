@@ -1119,7 +1119,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
       
       const formTaskId = taskId;
-      const preserveProgress = taskType === 'ky3p'; // Only preserve progress for KY3P forms
+      // CRITICAL FIX: Don't preserve progress by default for any form type
+      // Only preserve progress in special cases like KY3P editing mode, which is determined elsewhere
+      const preserveProgress = false;
       
       logger.info(`Clearing all fields for ${formType} task ${formTaskId}`, {
         taskId: formTaskId,
