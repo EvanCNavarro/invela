@@ -147,9 +147,13 @@ export default function TaskPage({ params }: TaskPageProps) {
   const handleFormSubmissionSuccess = useCallback((event: FormSubmissionEvent) => {
     console.log('[TaskPage] Form submission success:', event);
     
-    // Check if this is from the final completed message or an intermediate one
-    const isCompletedMessage = event.source === 'final_completion' || 
-                              (event.completedActions && event.completedActions.length > 0);
+    // ENHANCED SOURCE DETECTION: Check if this is from the final completed message or an intermediate one
+    // Looking both at event.source property AND in metadata.source for maximum compatibility
+    const isCompletedMessage = 
+      event.source === 'final_completion' || 
+      (event.metadata && event.metadata.source === 'final_completion') ||
+      (event.metadata && event.metadata.finalCompletion === true) ||
+      (event.completedActions && event.completedActions.length > 0);
     
     console.log('[TaskPage] Processing form submission event:', {
       isCompletedMessage,
@@ -158,7 +162,9 @@ export default function TaskPage({ params }: TaskPageProps) {
       messageSourceType: typeof event.source,
       eventKeys: Object.keys(event),
       eventHasSourceProperty: 'source' in event,
-      source: event.source
+      source: event.source,
+      timestamp: new Date().toISOString(),
+      metadata: event.metadata
     });
     
     if (event.fileId) {

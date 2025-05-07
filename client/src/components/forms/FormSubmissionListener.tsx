@@ -78,6 +78,14 @@ export interface FormSubmissionEvent {
   serverVersion?: string;                     // Version of the server that sent the message
   reason?: string;                            // Optional reason for the status (mostly for errors)
   warnings?: string[];                        // Optional warnings that occurred during submission
+  
+  // ADDED: Metadata field for enhanced compatibility and additional information
+  metadata?: {
+    source?: string;                          // Source of the message in metadata
+    finalCompletion?: boolean;                // Indicates if this is the final completion message
+    submissionDate?: string;                  // Submission date in metadata
+    [key: string]: any;                       // Allow for any other metadata properties
+  };
 }
 
 interface FormSubmissionListenerProps {
@@ -379,13 +387,23 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         // Log the status mapping for debugging
         logger.debug(`Mapped WebSocket event status: ${payload.status} → ${formStatus}`);
         
-        // IMPROVED: Special handling for form_submission_completed message type
+        // ENHANCED DETECTION: Special handling for form_submission_completed message type
         // This is our comprehensive message sent after ALL server-side operations are complete
+        // Check multiple possible locations for source = 'final_completion' for max compatibility
         if (data.type === 'form_submission_completed' || 
-            (payload.source === 'final_completion' || payload.metadata?.source === 'final_completion')) {
+            payload.source === 'final_completion' || 
+            payload.metadata?.source === 'final_completion' ||
+            payload.metadata?.finalCompletion === true) {
             
           // CRITICAL FIX: The 'source' property must be explicitly set to match what task-page.tsx expects
           submissionEvent.source = 'final_completion';
+          
+          // Also ensure the metadata has the source field for maximum compatibility
+          if (!submissionEvent.metadata) {
+            submissionEvent.metadata = {};
+          }
+          submissionEvent.metadata.source = 'final_completion';
+          submissionEvent.metadata.finalCompletion = true;
 
           // Add more detailed logging to help with debugging
           logger.info(`Received FINAL form submission completion event for task ${taskId}`, {
