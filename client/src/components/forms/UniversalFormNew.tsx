@@ -2259,11 +2259,35 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           key={section.id}
                           className={index === activeSection ? 'block' : 'hidden'}
                         >
-                          {/* CRITICAL FIX: Filter fields by section ID to prevent showing all fields in each section */}
+                          {/* CRITICAL FIX: Filter fields by section ID and calculate starting question number */}
                           <SectionContent
                             section={section}
                             sectionIndex={index}
                             form={form}
+                            // Calculate starting question number based on fields in previous sections
+                            startingQuestionNumber={(() => {
+                              // Get all previous sections
+                              const previousSections = allSections.slice(0, index);
+                              
+                              // Count fields in previous sections
+                              let fieldCount = 1; // Start from 1
+                              for (const prevSection of previousSections) {
+                                // Count fields that belong to this section
+                                const sectionFields = fields.filter(field => {
+                                  if (field.sectionId !== undefined) {
+                                    return String(field.sectionId) === String(prevSection.id);
+                                  }
+                                  if ((field as any).section_id !== undefined) {
+                                    return String((field as any).section_id) === String(prevSection.id);
+                                  }
+                                  return false;
+                                });
+                                
+                                fieldCount += sectionFields.length;
+                              }
+                              
+                              return fieldCount;
+                            })()}
                             fields={fields.filter(field => {
                               // If field has a sectionId property, filter by it
                               if (field.sectionId !== undefined) {
