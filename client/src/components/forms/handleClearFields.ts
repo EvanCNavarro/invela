@@ -82,6 +82,13 @@ export async function handleClearFieldsUtil(
       (formService as any)?.constructor?.name === 'EnhancedKY3PFormService'
     );
     
+    // Check if this is a KYB form
+    const isKybForm = formService && (
+      formService.formType === 'kyb' ||
+      formService.formType === 'company_kyb' ||
+      (formService as any)?.constructor?.name === 'KYBFormService'
+    );
+    
     let serverClearSuccess = false;
     
     // Get information about whether this is a form edit session
@@ -102,6 +109,74 @@ export async function handleClearFieldsUtil(
       formType: formService.formType || 'unknown'
     });
                        
+    // Add KYB form to log for better debugging
+    logger.info(`[ClearFields][${operationId}] Form context analysis extended`, {
+      operationId,
+      taskId,
+      isKy3pForm,
+      isKybForm,
+      formType: formService.formType || 'unknown'
+    });
+    
+    // If it's a KYB form with a task ID, use the KYB clear endpoint
+    if (isKybForm && taskId) {
+      logger.info(`[ClearFields][${operationId}] Detected KYB form with task ID ${taskId}, using KYB clear endpoint`, {
+        operationId,
+        taskId,
+        formType: 'kyb'
+      });
+      
+      try {
+        // Call the KYB clear endpoint
+        const clearUrl = `/api/kyb/clear/${taskId}`;
+        logger.info(`[ClearFields][${operationId}] Calling KYB clear endpoint: ${clearUrl}`, {
+          operationId,
+          taskId
+        });
+        
+        const response = await fetch(clearUrl, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        if (response.ok) {
+          logger.info(`[ClearFields][${operationId}] KYB clear endpoint successful`, {
+            operationId,
+            taskId,
+            status: response.status
+          });
+          
+          serverClearSuccess = true;
+        } else {
+          let errorDetails;
+          try {
+            errorDetails = await response.text();
+          } catch (e) {
+            errorDetails = 'Could not extract error details';
+          }
+          
+          logger.warn(`[ClearFields][${operationId}] KYB clear endpoint failed with status ${response.status}`, {
+            operationId,
+            taskId,
+            statusCode: response.status,
+            statusText: response.statusText,
+            errorDetails
+          });
+        }
+      } catch (e) {
+        const clearError = e as Error;
+        
+        logger.warn(`[ClearFields][${operationId}] Error calling KYB clear endpoint:`, clearError, {
+          operationId,
+          taskId,
+          errorName: clearError?.name,
+          errorMessage: clearError?.message
+        });
+      }
+    }
+    
     // If it's a KY3P form with a task ID, try server-side clearing first
     if (isKy3pForm && taskId) {
       logger.info(`[ClearFields][${operationId}] Detected KY3P form with task ID ${taskId}, using dedicated clear approaches`, {
