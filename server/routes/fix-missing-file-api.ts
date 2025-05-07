@@ -4,20 +4,24 @@
  * This API provides endpoints for checking and repairing missing form files.
  * It integrates with the standardized file reference service to detect issues
  * and regenerate files when needed.
+ * 
+ * Features:
+ * - Comprehensive error handling with consistent response formats
+ * - Detailed logging for all operations
+ * - Transaction-based file repair operations
+ * - Integration with WebSocket notifications
  */
 
-import express, { Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
+import * as standardizedFileService from '../services/standardized-file-reference';
+import * as fileGenerator from '../services/file-generator';
+import * as transactionManager from '../services/transaction-manager';
+import { broadcast } from '../utils/unified-websocket';
+import { handleErrorResponse, handleNotFoundError } from '../utils/error-handlers';
 import { logger } from '../utils/logger';
-import * as StandardizedFileReference from '../services/standardized-file-reference';
-import * as fileCreationService from '../services/fileCreation';
-import * as WebSocketService from '../utils/unified-websocket';
-import { handleErrorResponse } from '../utils/error-handlers';
 
-// Create router
-const router = express.Router();
-
-// Add namespace context to logs
-const LOG_CONTEXT = { service: 'FixMissingFileAPI' };
+const router = Router();
+const routeLogger = logger.child({ module: 'FixMissingFileApi' });
 
 /**
  * Check if a task has a missing file and provide repair options
@@ -25,31 +29,51 @@ const LOG_CONTEXT = { service: 'FixMissingFileAPI' };
  */
 router.get('/fix-missing-file/:taskId/check', async (req: Request, res: Response) => {
   const taskId = parseInt(req.params.taskId, 10);
-  const operationId = `check-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   
-  logger.info(`[${operationId}] Checking file status for task ${taskId}`, LOG_CONTEXT);
+  if (isNaN(taskId)) {
+    return handleErrorResponse(res, "Invalid task ID", new Error("Task ID must be a number"));
+  }
+
+  routeLogger.info(`Checking file status for task ${taskId}`);
   
   try {
-    // Check file status using the standardized service
-    const fileCheck = await StandardizedFileReference.checkAndPrepareFileRepair(taskId);
+    // Use the standardized file reference service to check file status
+    const checkResult = await standardizedFileService.checkAndPrepareFileRepair(taskId);
     
-    // Return the check results
+    // Log detailed results for debugging
+    routeLogger.debug(`File check results for task ${taskId}`, {
+      taskId,
+      hasReference: checkResult.hasReference,
+      fileExists: checkResult.fileExists,
+      fileId: checkResult.fileId,
+      needsRepair: checkResult.needsRepair,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return the check results to the client
     return res.json({
       success: true,
       taskId,
-      ...fileCheck,
-      operationId
+      fileStatus: {
+        hasReference: checkResult.hasReference,
+        fileExists: checkResult.fileExists,
+        fileId: checkResult.fileId,
+        needsRepair: checkResult.needsRepair,
+        details: checkResult.details
+      }
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
-    logger.error(`[${operationId}] Error checking file status for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: errorMessage,
+    routeLogger.error(`Error checking file status for task ${taskId}`, { 
+      error: error instanceof Error ? error.message : String(error),
+      taskId,
       stack: error instanceof Error ? error.stack : undefined
     });
     
-    return handleErrorResponse(res, 'Error checking file status', error);
+    return handleErrorResponse(
+      res, 
+      "Failed to check file status", 
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 });
 
@@ -59,138 +83,129 @@ router.get('/fix-missing-file/:taskId/check', async (req: Request, res: Response
  */
 router.post('/fix-missing-file/:taskId', async (req: Request, res: Response) => {
   const taskId = parseInt(req.params.taskId, 10);
-  const operationId = `fix-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   
-  // Get user ID from session (if available)
-  const userId = req.user?.id || 0;
+  if (isNaN(taskId)) {
+    return handleErrorResponse(res, "Invalid task ID", new Error("Task ID must be a number"));
+  }
+
+  routeLogger.info(`Repairing file for task ${taskId}`);
   
-  logger.info(`[${operationId}] Attempting to fix missing file for task ${taskId}`, {
-    ...LOG_CONTEXT,
-    taskId,
-    userId,
-    hasSession: !!req.user
-  });
+  // Start a database transaction to ensure atomic file repair operation
+  const transaction = await transactionManager.startTransaction();
   
   try {
     // Check file status first
-    const fileCheck = await StandardizedFileReference.checkAndPrepareFileRepair(taskId);
+    const checkResult = await standardizedFileService.checkAndPrepareFileRepair(taskId);
     
-    if (!fileCheck.needsRepair) {
-      logger.info(`[${operationId}] Task ${taskId} doesn't need file repair`, {
-        ...LOG_CONTEXT,
-        verificationResult: fileCheck.verificationResult
+    if (!checkResult.needsRepair) {
+      routeLogger.info(`Task ${taskId} does not need file repair`, {
+        taskId,
+        fileId: checkResult.fileId,
+        hasReference: checkResult.hasReference,
+        fileExists: checkResult.fileExists
       });
+      
+      // If there's no repair needed, just return the current file info
+      await transactionManager.rollbackTransaction(transaction);
       
       return res.json({
         success: true,
+        message: "File is already available, no repair needed",
         taskId,
-        message: "File check passed, no repair needed",
-        wasRepaired: false,
-        alreadyValid: true,
-        fileId: fileCheck.verificationResult.fileId
+        fileId: checkResult.fileId,
+        needsRepair: false,
+        details: checkResult.details
       });
     }
     
-    // If no task type was determined, we can't proceed
-    if (!fileCheck.taskType) {
-      return res.status(400).json({
-        success: false,
-        taskId,
-        error: "Unable to determine task type for regeneration"
-      });
+    // Retrieve task type to determine which file generator to use
+    const taskInfo = await fileGenerator.getTaskInfo(taskId, transaction);
+    
+    if (!taskInfo) {
+      await transactionManager.rollbackTransaction(transaction);
+      return handleNotFoundError(res, "Task", taskId);
     }
     
-    logger.info(`[${operationId}] Regenerating file for task ${taskId}`, {
-      ...LOG_CONTEXT,
+    // Generate a new file based on task type
+    routeLogger.info(`Generating new file for task ${taskId} (${taskInfo.taskType})`);
+    
+    const generationResult = await fileGenerator.generateFileForTask(
       taskId,
-      taskType: fileCheck.taskType,
-      companyId: fileCheck.companyId
+      taskInfo.taskType,
+      transaction
+    );
+    
+    if (!generationResult.success) {
+      throw new Error(`File generation failed: ${generationResult.error}`);
+    }
+    
+    // Store the file reference using the standardized service
+    const storeResult = await standardizedFileService.repairFileReference(
+      taskId,
+      generationResult.fileId!,
+      generationResult.fileName || `task_${taskId}_file.json`,
+      taskInfo.taskType,
+      transaction
+    );
+    
+    // Commit the transaction
+    await transactionManager.commitTransaction(transaction);
+    
+    // Log the successful repair
+    routeLogger.info(`File repair successful for task ${taskId}`, {
+      taskId,
+      newFileId: generationResult.fileId,
+      taskType: taskInfo.taskType,
+      timestamp: new Date().toISOString()
     });
     
-    // Generate the file using the file creation service
-    const fileResult = await fileCreationService.createTaskFile(
-      taskId,
-      fileCheck.taskType,
-      {}, // Empty form data - the service will fetch the existing responses
-      fileCheck.companyId || 0,
-      userId
-    );
-    
-    if (!fileResult.success) {
-      logger.error(`[${operationId}] Failed to regenerate file for task ${taskId}`, {
-        ...LOG_CONTEXT,
-        taskId,
-        error: fileResult.error
-      });
-      
-      return res.status(500).json({
-        success: false,
-        taskId,
-        error: fileResult.error || "Failed to regenerate file"
-      });
-    }
-    
-    // Update file reference using standardized service
-    await StandardizedFileReference.repairFileReference(
-      taskId,
-      fileResult.fileId as number,
-      fileResult.fileName || `task-${taskId}-form.pdf`,
-      fileCheck.taskType
-    );
-    
-    // Send WebSocket notification about file regeneration
+    // Notify clients about the file update via WebSocket
     try {
-      WebSocketService.broadcastFileVaultUpdate({
-        companyId: fileCheck.companyId || 0,
-        fileId: fileResult.fileId as number,
-        fileName: fileResult.fileName || `task-${taskId}-form.pdf`,
-        action: 'regenerated',
-        source: 'fix_missing_file_api'
-      });
-      
-      // Also broadcast task update to refresh UI
-      WebSocketService.broadcastTaskUpdate({
+      broadcast('task_updated', {
         taskId,
-        message: 'File regenerated and task updated',
+        message: `File regenerated (ID: ${generationResult.fileId})`,
         metadata: {
-          fileId: fileResult.fileId,
-          fileRegenerated: true,
-          regenerationTime: new Date().toISOString()
+          fileId: generationResult.fileId,
+          fileRepaired: true,
+          timestamp: new Date().toISOString()
         }
       });
+      
+      routeLogger.debug(`WebSocket notification sent for task ${taskId} file repair`);
     } catch (wsError) {
-      // Log WebSocket error but don't fail the request
-      logger.warn(`[${operationId}] Error sending WebSocket notification`, {
-        ...LOG_CONTEXT,
-        error: wsError instanceof Error ? wsError.message : 'Unknown WebSocket error'
+      // Just log WebSocket errors, don't fail the whole request
+      routeLogger.warn(`Failed to send WebSocket notification for file repair`, {
+        taskId,
+        error: wsError instanceof Error ? wsError.message : String(wsError)
       });
     }
     
-    logger.info(`[${operationId}] Successfully regenerated file for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      taskId,
-      fileId: fileResult.fileId,
-      fileName: fileResult.fileName
-    });
-    
+    // Return success response with file details
     return res.json({
       success: true,
-      taskId,
       message: "File successfully regenerated",
-      wasRepaired: true,
-      fileId: fileResult.fileId,
-      fileName: fileResult.fileName
+      taskId,
+      fileId: generationResult.fileId,
+      fileName: generationResult.fileName,
+      taskType: taskInfo.taskType,
+      details: "The missing file has been regenerated. You can now download it."
     });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
-    logger.error(`[${operationId}] Error fixing missing file for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: errorMessage,
+  } catch (error) {
+    // Rollback the transaction if anything fails
+    await transactionManager.rollbackTransaction(transaction);
+    
+    routeLogger.error(`Error repairing file for task ${taskId}`, { 
+      error: error instanceof Error ? error.message : String(error),
+      taskId,
       stack: error instanceof Error ? error.stack : undefined
     });
     
-    return handleErrorResponse(res, 'Error fixing missing file', error);
+    return handleErrorResponse(
+      res, 
+      "Failed to repair file", 
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 });
 

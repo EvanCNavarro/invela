@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { submitFormWithTransaction } from '../services/transactional-form-handler';
 import * as WebSocketService from '../services/websocket';
-import { broadcastFormSubmissionCompleted } from '../utils/unified-websocket';
+import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
 // Add namespace context to logs
@@ -180,14 +180,18 @@ export function createTransactionalFormRouter(): Router {
         timestamp: submissionTimestamp
       });
       
-      // Use the imported broadcastFormSubmissionCompleted function with source='final_completion'
+      // Use the imported broadcastFormSubmission function with type='form_submission_completed'
       // This is now the single source of truth for form submission notifications
-      broadcastFormSubmissionCompleted(formType, taskId, companyId, {
-        fileId: result.fileId,
-        fileName: result.fileName,
-        unlockedTabs: result.unlockedTabs,
-        completedActions,
+      broadcastFormSubmission({
+        taskId,
+        formType,
+        status: 'completed',
+        companyId,
         metadata: {
+          fileId: result.fileId,
+          fileName: result.fileName,
+          unlockedTabs: result.unlockedTabs,
+          completedActions,
           formSubmission: true,
           availableTabs: result.unlockedTabs,
           submissionComplete: true,

@@ -73,40 +73,39 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
     submission_date: submissionTimestamp,
   };
 
-  // Send the form submission notification
-  broadcastFormSubmission(
-    formType,
+  // Send the form submission notification with updated API
+  broadcastFormSubmission({
     taskId,
+    formType,
+    status: 'submitted',
     companyId,
-    {
+    metadata: {
       fileName,
       fileId,
       submissionDate: submissionTimestamp,
       unlockedTabs,
-      status: 'submitted',
       message: 'Form submitted successfully',
       completedActions: actions,
       ...enhancedMetadata
     }
-  );
+  });
   
-  // Also send a task update notification for redundancy
-  broadcastTaskUpdate(
+  // Also send a task update notification for redundancy with updated API
+  broadcastTaskUpdate({
     taskId,
-    100, // 100% progress for successful submission
-    'submitted',
-    {
+    progress: 100, // 100% progress for successful submission
+    status: 'submitted',
+    metadata: {
       formType,
       submissionComplete: true,
       fileId,
       fileName,
-      // Include submissionDate as a separate property, but don't include submission_date directly
-      // as it's already in enhancedMetadata
+      // Include submissionDate as a separate property
       submissionDate: submissionTimestamp,
       unlockedTabs,
       ...enhancedMetadata // Use the enhanced metadata with submission_date
     }
-  );
+  });
   
   console.log(`[FormNotifications] Sent success notification for ${formType} task ${taskId}`);
   
@@ -128,20 +127,19 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
     submission_date: submissionTimestamp,
   };
   
-  // Send the task update notification with error status
-  broadcastTaskUpdate(
+  // Send the task update notification with error status using updated API
+  broadcastTaskUpdate({
     taskId,
-    options.progress || 0, // Keep current progress or reset to 0
-    'error',
-    {
+    progress: options.progress || 0, // Keep current progress or reset to 0
+    status: 'error',
+    metadata: {
       formType,
       error: errorMessage,
-      // Include submissionDate as a separate property, but don't include submission_date directly
-      // as it's already in enhancedMetadata
+      // Include submissionDate as a separate property
       submissionDate: submissionTimestamp,
       ...enhancedMetadata
     }
-  );
+  });
   
   console.log(`[FormNotifications] Sent error notification for ${formType} task ${taskId}: ${errorMessage}`);
   
@@ -162,20 +160,19 @@ export function sendFormSubmissionInProgress(options: SubmissionNotificationOpti
     submission_date: submissionTimestamp,
   };
   
-  // Send the task update notification with in_progress status
-  broadcastTaskUpdate(
+  // Send the task update notification with in_progress status using updated API
+  broadcastTaskUpdate({
     taskId,
     progress,
-    'in_progress',
-    {
+    status: 'in_progress',
+    metadata: {
       formType,
-      // Include submissionDate as a separate property, but don't include submission_date directly
-      // as it's already in enhancedMetadata
+      // Include submissionDate as a separate property
       submissionDate: submissionTimestamp,
       message: message || 'Form submission in progress',
       ...enhancedMetadata
     }
-  );
+  });
   
   console.log(`[FormNotifications] Sent in-progress notification for ${formType} task ${taskId} (${progress}%)`);
   

@@ -1,145 +1,108 @@
 /**
  * Fix Missing File Button Component
  * 
- * This component provides a UI for checking and repairing missing files.
- * It integrates with the fix-missing-file API to diagnose issues and regenerate
- * files when needed.
+ * This component provides a user interface for checking and fixing missing files.
+ * It integrates with the standardized file reference API to detect file issues
+ * and trigger repair operations when needed.
+ * 
+ * Features:
+ * - Automatically checks for missing files
+ * - Provides clear feedback on file status
+ * - Handles file repair with loading states
+ * - Triggers callback when file is repaired successfully
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import { AlertTriangle, CheckCircle2, FileText, Loader2, RefreshCw } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-
-import { Separator } from '@/components/ui/separator';
+import { Loader2, FileX, FileCheck, RefreshCcw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('FixMissingFileButton');
 
-interface FileRepairState {
-  isChecking: boolean;
-  isReparing: boolean;
-  needsRepair: boolean;
-  fileExists: boolean;
-  hasReference: boolean;
-  checkCompleted: boolean;
-  repairCompleted: boolean;
-  fileId?: number;
-  taskType?: string;
-  error?: string;
-  details?: string;
-}
-
 interface FixMissingFileButtonProps {
   taskId: number;
-  disabled?: boolean;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon' | null;
-  className?: string;
   onFileRepaired?: (fileId: number) => void;
-  showAlways?: boolean;
-  buttonText?: string;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  className?: string;
+  autoCheck?: boolean;
 }
 
-/**
- * Button component that allows users to fix missing form files
- */
+interface FileStatus {
+  hasReference: boolean;
+  fileExists: boolean;
+  fileId?: number;
+  needsRepair: boolean;
+  details: string;
+}
+
 export const FixMissingFileButton: React.FC<FixMissingFileButtonProps> = ({
   taskId,
-  disabled = false,
-  variant = 'outline',
-  size = 'default',
-  className = '',
   onFileRepaired,
-  showAlways = false,
-  buttonText = 'Fix Missing File',
+  variant = 'secondary',
+  size = 'sm',
+  className = '',
+  autoCheck = true
 }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [repairState, setRepairState] = useState<FileRepairState>({
-    isChecking: false,
-    isReparing: false,
-    needsRepair: false,
-    fileExists: false,
-    hasReference: false,
-    checkCompleted: false,
-    repairCompleted: false
-  });
-  
-  /**
-   * Check the file status
-   */
-  const checkFileStatus = async () => {
-    setRepairState(prev => ({ ...prev, isChecking: true, error: undefined }));
+  const [isChecking, setIsChecking] = useState(false);
+  const [isRepairing, setIsRepairing] = useState(false);
+  const [fileStatus, setFileStatus] = useState<FileStatus | null>(null);
+  const { toast } = useToast();
+
+  // Check file status
+  const checkFileStatus = useCallback(async () => {
+    if (!taskId) {
+      logger.warn('Cannot check file status: No task ID provided');
+      return;
+    }
+
+    setIsChecking(true);
     
     try {
-      // Fetch the file status from the API
+      logger.info(`Checking file status for task ${taskId}`);
+      
       const response = await fetch(`/api/fix-missing-file/${taskId}/check`);
-      
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
-      }
-      
       const data = await response.json();
       
-      logger.info('File status check result:', data);
-      
-      if (data.success) {
-        setRepairState(prev => ({
-          ...prev,
-          isChecking: false,
-          checkCompleted: true,
-          needsRepair: data.needsRepair,
-          hasReference: data.verificationResult?.hasReference || false,
-          fileExists: data.verificationResult?.fileExists || false, 
-          fileId: data.verificationResult?.fileId,
-          taskType: data.taskType,
-          details: data.verificationResult?.details
-        }));
-      } else {
-        setRepairState(prev => ({
-          ...prev,
-          isChecking: false,
-          checkCompleted: true,
-          error: data.error || 'Unknown error checking file status'
-        }));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to check file status');
       }
-    } catch (error) {
-      logger.error('Error checking file status:', error);
       
-      setRepairState(prev => ({
-        ...prev,
-        isChecking: false,
-        checkCompleted: true,
-        error: error instanceof Error ? error.message : 'Unknown error checking file status'
-      }));
+      logger.debug(`File status check result for task ${taskId}`, data.fileStatus);
+      setFileStatus(data.fileStatus);
+      
+      return data.fileStatus;
+    } catch (error) {
+      logger.error(`Error checking file status for task ${taskId}`, {
+        error: error instanceof Error ? error.message : String(error),
+        taskId
+      });
+      
+      toast({
+        title: 'Failed to check file status',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
+      
+      return null;
+    } finally {
+      setIsChecking(false);
     }
-  };
-  
-  /**
-   * Repair the missing file
-   */
-  const repairFile = async () => {
-    setRepairState(prev => ({ ...prev, isReparing: true, error: undefined }));
+  }, [taskId, toast]);
+
+  // Repair missing file
+  const repairFile = useCallback(async () => {
+    if (!taskId) {
+      logger.warn('Cannot repair file: No task ID provided');
+      return;
+    }
+
+    setIsRepairing(true);
     
     try {
-      // Call the API to repair the file
+      logger.info(`Repairing file for task ${taskId}`);
+      
       const response = await fetch(`/api/fix-missing-file/${taskId}`, {
         method: 'POST',
         headers: {
@@ -147,265 +110,152 @@ export const FixMissingFileButton: React.FC<FixMissingFileButtonProps> = ({
         }
       });
       
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
-      }
-      
       const data = await response.json();
       
-      logger.info('File repair result:', data);
-      
-      if (data.success) {
-        // Update the state with repair results
-        setRepairState(prev => ({
-          ...prev,
-          isReparing: false,
-          repairCompleted: true,
-          needsRepair: false,
-          fileExists: true,
-          hasReference: true,
-          fileId: data.fileId
-        }));
-        
-        // Notify parent component of successful repair if callback exists
-        if (onFileRepaired && data.fileId) {
-          onFileRepaired(data.fileId);
-        }
-        
-        toast({
-          title: "File Regenerated",
-          description: "The form file was successfully regenerated. You can now download it.",
-          variant: "default",
-        });
-      } else {
-        setRepairState(prev => ({
-          ...prev,
-          isReparing: false,
-          repairCompleted: true,
-          error: data.error || 'Unknown error repairing file'
-        }));
-        
-        toast({
-          title: "File Repair Failed",
-          description: data.error || "Could not regenerate the form file. Please try again.",
-          variant: "destructive",
-        });
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to repair file');
       }
-    } catch (error) {
-      logger.error('Error repairing file:', error);
       
-      setRepairState(prev => ({
-        ...prev,
-        isReparing: false,
-        repairCompleted: true,
-        error: error instanceof Error ? error.message : 'Unknown error repairing file'
-      }));
+      logger.info(`File repair successful for task ${taskId}`, {
+        fileId: data.fileId,
+        taskId
+      });
+      
+      // Update local state
+      setFileStatus({
+        hasReference: true,
+        fileExists: true,
+        fileId: data.fileId,
+        needsRepair: false,
+        details: data.details || 'File has been repaired successfully'
+      });
+      
+      // Notify parent component
+      if (onFileRepaired && data.fileId) {
+        onFileRepaired(data.fileId);
+      }
       
       toast({
-        title: "File Repair Failed",
-        description: "Could not connect to the server. Please try again later.",
-        variant: "destructive",
+        title: 'File Repaired',
+        description: 'The file has been successfully regenerated and is now available for download.',
+        variant: 'default'
       });
+      
+      return data.fileId;
+    } catch (error) {
+      logger.error(`Error repairing file for task ${taskId}`, {
+        error: error instanceof Error ? error.message : String(error),
+        taskId
+      });
+      
+      toast({
+        title: 'Failed to repair file',
+        description: error instanceof Error ? error.message : String(error),
+        variant: 'destructive'
+      });
+      
+      return null;
+    } finally {
+      setIsRepairing(false);
     }
-  };
-  
-  /**
-   * Reset the repair state and close the dialog
-   */
-  const resetAndClose = () => {
-    setRepairState({
-      isChecking: false,
-      isReparing: false,
-      needsRepair: false,
-      fileExists: false,
-      hasReference: false,
-      checkCompleted: false,
-      repairCompleted: false
-    });
-    setDialogOpen(false);
-  };
-  
-  /**
-   * Handle dialog open
-   */
-  const handleDialogOpen = (isOpen: boolean) => {
-    setDialogOpen(isOpen);
-    
-    // Automatically start checking when dialog opens
-    if (isOpen && !repairState.checkCompleted) {
+  }, [taskId, toast, onFileRepaired]);
+
+  // Automatically check file status on mount
+  useEffect(() => {
+    if (autoCheck && taskId) {
       checkFileStatus();
     }
-    
-    // Reset state when dialog closes
-    if (!isOpen && repairState.checkCompleted) {
-      // Wait for animation to complete
-      setTimeout(() => {
-        resetAndClose();
-      }, 300);
+  }, [autoCheck, taskId, checkFileStatus]);
+
+  // Determine button state and appearance
+  const getButtonContent = () => {
+    if (isChecking) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Checking...
+        </>
+      );
+    }
+
+    if (isRepairing) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Repairing...
+        </>
+      );
+    }
+
+    // File needs repair
+    if (fileStatus?.needsRepair) {
+      return (
+        <>
+          <FileX className="mr-2 h-4 w-4" />
+          Repair File
+        </>
+      );
+    }
+
+    // File status has been checked and file is OK
+    if (fileStatus && !fileStatus.needsRepair) {
+      return (
+        <>
+          <FileCheck className="mr-2 h-4 w-4" />
+          File OK
+        </>
+      );
+    }
+
+    // Default - Check file status
+    return (
+      <>
+        <RefreshCcw className="mr-2 h-4 w-4" />
+        Check File
+      </>
+    );
+  };
+
+  // Determine button action
+  const handleClick = () => {
+    if (isChecking || isRepairing) {
+      return; // Do nothing if already processing
+    }
+
+    if (fileStatus?.needsRepair) {
+      repairFile();
+    } else {
+      checkFileStatus();
     }
   };
-  
+
+  // Determine button variant based on file status
+  const getButtonVariant = () => {
+    if (fileStatus?.needsRepair) {
+      return 'destructive';
+    }
+    
+    if (fileStatus && !fileStatus.needsRepair) {
+      return 'secondary';
+    }
+    
+    return variant;
+  };
+
+  // Determine disabled state
+  const isDisabled = isChecking || isRepairing || (fileStatus && !fileStatus.needsRepair && !isChecking);
+
   return (
-    <Dialog open={dialogOpen} onOpenChange={handleDialogOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          disabled={disabled}
-          className={className}
-        >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          {buttonText}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Check and Repair Form File</DialogTitle>
-          <DialogDescription>
-            This tool will check if the form file exists and allows you to regenerate it if needed.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="py-4">
-          {/* File Check Section */}
-          <Card className="mb-4">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center">
-                <FileText className="mr-2 h-4 w-4" />
-                File Status Check
-              </CardTitle>
-              <CardDescription>
-                Checking if the form file exists and is correctly linked
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {repairState.isChecking ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                  <span className="ml-2">Checking file status...</span>
-                </div>
-              ) : repairState.error && !repairState.checkCompleted ? (
-                <div className="flex items-center text-red-500 py-3">
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  <span>Error: {repairState.error}</span>
-                </div>
-              ) : repairState.checkCompleted ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">File reference exists:</span>
-                    <Badge variant={repairState.hasReference ? "outline" : "destructive"}>
-                      {repairState.hasReference ? "Yes" : "No"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">File exists in database:</span>
-                    <Badge variant={repairState.fileExists ? "outline" : "destructive"}>
-                      {repairState.fileExists ? "Yes" : "No"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Needs repair:</span>
-                    <Badge variant={repairState.needsRepair ? "destructive" : "outline"}>
-                      {repairState.needsRepair ? "Yes" : "No"}
-                    </Badge>
-                  </div>
-                  
-                  {repairState.details && (
-                    <div className="mt-3 text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                      {repairState.details}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-          
-          {/* Repair Section - Only show if check is completed and repair is needed */}
-          {repairState.checkCompleted && repairState.needsRepair && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  File Repair
-                </CardTitle>
-                <CardDescription>
-                  Regenerate the form file from saved form data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {repairState.isReparing ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    <span className="ml-2">Regenerating form file...</span>
-                  </div>
-                ) : repairState.error && repairState.checkCompleted ? (
-                  <div className="flex items-center text-red-500 py-3">
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    <span>Error: {repairState.error}</span>
-                  </div>
-                ) : repairState.repairCompleted ? (
-                  <div className="flex items-center text-green-500 py-3">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    <span>File successfully regenerated!</span>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-600">
-                    The form file is missing or needs to be regenerated. Click the button below to fix it.
-                  </p>
-                )}
-              </CardContent>
-              {!repairState.repairCompleted && (
-                <CardFooter className="pt-0">
-                  <Button
-                    onClick={repairFile}
-                    disabled={repairState.isReparing}
-                    className="w-full"
-                  >
-                    {repairState.isReparing && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Regenerate Form File
-                  </Button>
-                </CardFooter>
-              )}
-            </Card>
-          )}
-          
-          {/* Success Message - Show when repair is not needed or completed successfully */}
-          {repairState.checkCompleted && (!repairState.needsRepair || repairState.repairCompleted) && !repairState.error && (
-            <div className="rounded-md bg-green-50 p-4 mt-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <CheckCircle2 className="h-5 w-5 text-green-400" aria-hidden="true" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-green-800">Form file is valid</h3>
-                  <div className="mt-2 text-sm text-green-700">
-                    <p>
-                      The form file exists and is correctly linked to this task. You can download it using the download button.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <Separator />
-        
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={resetAndClose}>
-            Close
-          </Button>
-          {repairState.checkCompleted && repairState.error && (
-            <Button onClick={checkFileStatus} disabled={repairState.isChecking}>
-              {repairState.isChecking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Try Again
-            </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Button
+      variant={getButtonVariant()}
+      size={size}
+      onClick={handleClick}
+      disabled={isDisabled}
+      className={className}
+      title={fileStatus?.details || 'Check if the file reference is valid'}
+    >
+      {getButtonContent()}
+    </Button>
   );
 };
 
