@@ -307,6 +307,7 @@ interface UniversalFormProps {
   onProgress?: (progress: number) => void;
   companyName?: string; // Optional company name to display in the form title
   isReadOnly?: boolean; // Flag to force read-only mode (for completed/submitted forms)
+  onFormServiceInitialized?: () => void; // Callback fired when form service is initialized
 }
 
 /**
@@ -320,7 +321,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onCancel,
   onProgress,
   companyName,
-  isReadOnly
+  isReadOnly,
+  onFormServiceInitialized
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
@@ -564,6 +566,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             
             // Set the service in state
             setFormService(service);
+            
+            // Signal to parent component that form service is initialized
+            if (onFormServiceInitialized) {
+              logger.info('Signaling form service initialization to parent component');
+              onFormServiceInitialized();
+            }
           } else {
             logger.error(`No form service found for ${taskType} or ${dbTaskType}`);
             throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
@@ -582,7 +590,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     };
     
     fetchTemplate();
-  }, [taskType, taskId, company]);
+  }, [taskType, taskId, company, onFormServiceInitialized]);
   
   // Step 2: Initialize form with fields and sections from template or service
   useEffect(() => {
@@ -655,6 +663,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Mark loading as complete when we have both fields and sections
         setLoading(false);
         
+        // Send another signal after sections and fields are loaded
+        // This ensures the parent knows the form is FULLY initialized
+        if (onFormServiceInitialized) {
+          logger.info('Form fields and sections loaded - form service fully initialized');
+          onFormServiceInitialized();
+        }
+        
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to initialize form';
         logger.error('Form initialization error:', message);
@@ -664,7 +679,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     };
     
     initializeForm();
-  }, [formService, template]);
+  }, [formService, template, onFormServiceInitialized]);
   
   // Track first load state to only auto-navigate once
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
