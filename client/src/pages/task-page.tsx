@@ -16,6 +16,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
 import { BreadcrumbNav } from '@/components/dashboard/BreadcrumbNav';
 import { UniversalForm } from '@/components/forms';
+import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
 import { DocumentUploadWizard } from '@/components/documents/DocumentUploadWizard';
 import { CardMethodChoice } from '@/components/card/CardMethodChoice';
 import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';
@@ -334,17 +335,40 @@ export default function TaskPage({ params }: TaskPageProps) {
       });
   }, [params.taskSlug, processTaskData]);
   
-  // Show loading state
+  // Advanced loading state - determine if we're loading task info or form content
   if (loading) {
+    // Check if we can determine early that the task is submitted/read-only
+    const isTaskReadOnly = task?.status === 'submitted' || task?.status === 'completed' || isReadOnly;
+    
     return (
       <DashboardLayout>
         <PageTemplate>
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent mx-auto mb-4"></div>
-              <h3 className="text-lg font-medium">Loading task...</h3>
+          {task ? (
+            // If we have the task data but still loading form, show appropriate skeleton
+            <div className="w-full mx-auto">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex items-start py-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+              </div>
+              <FormSkeletonWithMode readOnly={isTaskReadOnly} />
             </div>
-          </div>
+          ) : (
+            // If we don't have task data yet, show simpler loading spinner
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent mx-auto mb-4"></div>
+                <h3 className="text-lg font-medium">Loading task...</h3>
+              </div>
+            </div>
+          )}
         </PageTemplate>
       </DashboardLayout>
     );
