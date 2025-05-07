@@ -496,10 +496,9 @@ export function UniversalSuccessModal({
       }
     }
     
-    // FIXED: No longer need to add additional cards from completedActions 
-    // since we've handled them in the main completedActions block above
-    // This further prevents any possible duplicates
-    if (false && submissionResult.completedActions && submissionResult.completedActions.length > 0) {
+    // COMPLETELY DISABLED: Permanently remove this code block
+    // This was causing duplicate buttons in the success modal
+    if (false) {
       submissionResult.completedActions.forEach((action, index) => {
         // Skip actions that we've already covered with our custom cards
         if (action.type === 'form_submitted') return;
