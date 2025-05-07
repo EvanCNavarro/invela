@@ -121,10 +121,33 @@ export function useUnifiedToast() {
 
 // Standalone progress bar no longer needed
 
+/**
+ * Interface for toast options when using object format
+ */
+interface ToastOptions {
+  /** Title text for the toast */
+  title: string;
+  /** Optional description or message body for the toast */
+  description?: string;
+  /** Optional unique ID to prevent duplicate toasts */
+  id?: string;
+  /** Optional custom duration in milliseconds */
+  duration?: number;
+}
+
+/**
+ * Type for parameters that can be either a string title or a toast options object
+ */
+type ToastParameter = string | ToastOptions;
+
 // Export standalone functions for use without the hook
 export const unifiedToast = {
-  // Enhanced success toast with support for both string and object params
-  success: (titleOrOptions: string | { title: string; description?: string; id?: string }) => {
+  /**
+   * Display a success toast notification
+   * @param titleOrOptions - Either a string title or an options object
+   * @returns Toast reference
+   */
+  success: (titleOrOptions: ToastParameter) => {
     if (typeof titleOrOptions === 'string') {
       return baseToast({
         variant: "success",
@@ -136,46 +159,76 @@ export const unifiedToast = {
         variant: "success",
         title: titleOrOptions.title,
         description: titleOrOptions.description,
-        duration: STANDARD_DURATION,
+        duration: titleOrOptions.duration || STANDARD_DURATION,
         id: titleOrOptions.id,
       });
     }
   },
   
-  // Info toast
-  info: (title: string, description?: string) => {
-    return baseToast({
-      variant: "info",
-      title,
-      description,
-      duration: STANDARD_DURATION,
-    });
+  /**
+   * Display an info toast notification
+   * @param titleOrOptions - Either a string title or an options object
+   * @returns Toast reference
+   */
+  info: (titleOrOptions: ToastParameter) => {
+    if (typeof titleOrOptions === 'string') {
+      return baseToast({
+        variant: "info",
+        title: titleOrOptions,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      return baseToast({
+        variant: "info",
+        title: titleOrOptions.title,
+        description: titleOrOptions.description,
+        duration: titleOrOptions.duration || STANDARD_DURATION,
+        id: titleOrOptions.id,
+      });
+    }
   },
   
-  // Warning toast
-  warning: (title: string, description?: string) => {
-    return baseToast({
-      variant: "warning",
-      title,
-      description,
-      duration: STANDARD_DURATION,
-    });
+  /**
+   * Display a warning toast notification
+   * @param titleOrOptions - Either a string title or an options object
+   * @returns Toast reference
+   */
+  warning: (titleOrOptions: ToastParameter) => {
+    if (typeof titleOrOptions === 'string') {
+      return baseToast({
+        variant: "warning",
+        title: titleOrOptions,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      return baseToast({
+        variant: "warning",
+        title: titleOrOptions.title,
+        description: titleOrOptions.description,
+        duration: titleOrOptions.duration || STANDARD_DURATION,
+        id: titleOrOptions.id,
+      });
+    }
   },
   
-  // Enhanced error toast with support for both string and object params
-  error: (titleOrOptions: string | { title: string; description?: string; id?: string }) => {
+  /**
+   * Display an error toast notification
+   * @param titleOrOptions - Either a string title or an options object
+   * @returns Toast reference
+   */
+  error: (titleOrOptions: ToastParameter) => {
     if (typeof titleOrOptions === 'string') {
       return baseToast({
         variant: "error",
         title: titleOrOptions,
-        duration: STANDARD_DURATION,
+        duration: STANDARD_DURATION * 1.5, // Longer duration for errors
       });
     } else {
       return baseToast({
         variant: "error",
         title: titleOrOptions.title,
         description: titleOrOptions.description,
-        duration: STANDARD_DURATION,
+        duration: titleOrOptions.duration || STANDARD_DURATION * 1.5, // Longer duration for errors
         id: titleOrOptions.id,
       });
     }
