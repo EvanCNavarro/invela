@@ -382,10 +382,18 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         // Special handling for form_submission_completed message type
         // This is our new comprehensive message sent after ALL server-side operations are complete
         if (data.type === 'form_submission_completed') {
+          // CRITICAL FIX: The 'source' property must be explicitly set for task-page.tsx to recognize this as a final completion message
+          submissionEvent.source = 'final_completion';
+
           logger.info(`Received final form submission completion event for task ${taskId}`, {
             hasCompletedActions: payload.completedActions?.length || 0,
             hasFileInfo: !!payload.fileId,
-            hasUnlockedTabs: payload.unlockedTabs?.length || 0
+            hasUnlockedTabs: payload.unlockedTabs?.length || 0,
+            source: payload.source || 'not_set',
+            payloadSource: payload.source,
+            finalSource: submissionEvent.source,
+            explicit: true,
+            dataType: data.type
           });
           
           // Ensure the submission status is success
@@ -402,6 +410,11 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           
           // Call success callback with the complete information
           if (onSuccessRef.current) {
+            logger.info('Calling success callback with final completion source', {
+              source: submissionEvent.source,
+              taskId: submissionEvent.taskId,
+              hasCompletedActions: (submissionEvent.completedActions?.length || 0) > 0
+            });
             onSuccessRef.current(submissionEvent);
           }
           return; // Don't process further, we've handled this special message type

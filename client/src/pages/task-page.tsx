@@ -153,7 +153,11 @@ export default function TaskPage({ params }: TaskPageProps) {
     console.log('[TaskPage] Processing form submission event:', {
       isCompletedMessage,
       hasCompletedActions: event.completedActions?.length || 0,
-      messageSource: event.source
+      messageSource: event.source,
+      messageSourceType: typeof event.source,
+      eventKeys: Object.keys(event),
+      eventHasSourceProperty: 'source' in event,
+      source: event.source
     });
     
     if (event.fileId) {
