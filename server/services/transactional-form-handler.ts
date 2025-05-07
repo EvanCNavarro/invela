@@ -227,20 +227,28 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // This ensures the task is marked as submitted even if WebSocket broadcast fails
         const submissionDate = new Date().toISOString();
         
-        await client.query(
+        // FIXED: Use proper jsonb_set with 'true' as JSON value, not string
+        const updateResult = await client.query(
           `UPDATE tasks 
            SET status = 'submitted', 
                progress = 100, 
                metadata = jsonb_set(
-                 jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'),
+                 jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'::jsonb),
                  '{submissionDate}', to_jsonb($2::text)
                ),
                updated_at = NOW()
-           WHERE id = $1`,
+           WHERE id = $1
+           RETURNING id, status, progress`,
           [taskId, submissionDate]
         );
         
-        console.log(`[TransactionalFormHandler] ✅ Successfully updated task ${taskId} status to 'submitted'`);
+        // Log the update result for debugging
+        const updatedTask = updateResult.rows[0];
+        console.log(`[TransactionalFormHandler] ✅ Successfully updated task ${taskId} status:`, {
+          updatedStatus: updatedTask?.status,
+          updatedProgress: updatedTask?.progress,
+          timestamp: new Date().toISOString()
+        });
       } catch (statusError) {
         // Log the error but continue with the transaction
         console.error(`[TransactionalFormHandler] ❌ Error updating task status for task ${taskId}:`, {
