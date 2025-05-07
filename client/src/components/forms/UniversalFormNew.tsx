@@ -305,6 +305,7 @@ interface UniversalFormProps {
   onCancel?: () => void;
   onProgress?: (progress: number) => void;
   companyName?: string; // Optional company name to display in the form title
+  isReadOnly?: boolean; // Flag to force read-only mode (for completed/submitted forms)
 }
 
 /**
@@ -317,7 +318,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onSubmit,
   onCancel,
   onProgress,
-  companyName
+  companyName,
+  isReadOnly
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
@@ -376,9 +378,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // IMPROVEMENT: Determine if form should be in read-only mode based on task status
   // This calculation is now done earlier to avoid showing editable UI for submitted forms
   const isReadOnlyMode = useMemo(() => {
-    // Check both task status and submissionResult to handle both initial load and after submission
-    return task?.status === 'submitted' || task?.status === 'completed' || !!submissionResult;
-  }, [task?.status, submissionResult]);
+    // Check task status, submissionResult, and the isReadOnly prop
+    // This allows external control of read-only mode from parent components
+    return isReadOnly || 
+           task?.status === 'submitted' || 
+           task?.status === 'completed' || 
+           !!submissionResult;
+  }, [isReadOnly, task?.status, submissionResult]);
   
   // IMPROVEMENT: Split the loading states for read-only vs editable forms
   // This prevents showing editable UI elements during read-only form loading
