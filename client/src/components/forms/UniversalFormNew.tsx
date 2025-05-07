@@ -733,7 +733,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     overallProgress,
     activeSection,
     setActiveSection,
-    refreshStatus
+    refreshStatus,
+    setSectionStatuses // Added missing setSectionStatuses function
   } = useFormStatus({
     sections,
     getFormValues,
@@ -1147,13 +1148,30 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Force section status recalculation by resetting the active section
         try {
-          // Reset section completion status
-          const resetSectionStatuses = sections.map(() => ({ status: 'not_started' as const }));
+          // Create properly formatted section statuses for reset
+          const resetSectionStatuses = sections.map(section => ({
+            id: section.id,
+            title: section.title,
+            totalFields: 0,
+            filledFields: 0,
+            remainingFields: 0,
+            progress: 0,
+            status: 'not-started' as const
+          }));
+          
           // Check that sectionStatuses state setter exists
           if (typeof setSectionStatuses === 'function') {
+            logger.info('Resetting section statuses using setter function', {
+              sectionCount: resetSectionStatuses.length
+            });
             setSectionStatuses(resetSectionStatuses);
           } else {
             logger.warn('setSectionStatuses function not available, cannot reset section statuses');
+            // Fallback to just refreshing the status
+            if (refreshStatus) {
+              logger.info('Falling back to refreshStatus call');
+              refreshStatus();
+            }
           }
           
           // Reset active section to the first one
@@ -1161,7 +1179,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           logger.info('Section statuses reset after clearing fields', {
             sections: sections.length,
-            resetTo: 'not_started'
+            resetTo: 'not-started'
           });
         } catch (calcError) {
           logger.error(`Error resetting section statuses: ${calcError instanceof Error ? calcError.message : String(calcError)}`);
