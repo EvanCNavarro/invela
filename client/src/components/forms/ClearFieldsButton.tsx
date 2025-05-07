@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eraser, Loader2 } from 'lucide-react';
 import {
@@ -9,8 +9,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { showClearFieldsToast } from '@/hooks/use-unified-toast';
 import getLogger from '@/utils/logger';
@@ -20,7 +19,8 @@ const logger = getLogger('ClearFieldsButton');
 // Track the last clear operation to prevent duplicates
 const lastClearOperation = {
   taskId: 0,
-  timestamp: 0
+  timestamp: 0,
+  operationId: ''
 };
 
 interface ClearFieldsButtonProps {
@@ -28,23 +28,45 @@ interface ClearFieldsButtonProps {
   taskType: string;
   onClear: () => Promise<void>;
   className?: string;
+  preserveProgress?: boolean; // For KY3P editing mode
+  isFormEditing?: boolean;
 }
 
 /**
- * A reusable button component for clearing form fields
- * with confirmation dialog and loading state.
+ * An enhanced reusable button component for clearing form fields
+ * with confirmation dialog, loading state, and operation tracking.
  */
 export function ClearFieldsButton({ 
   taskId, 
   taskType, 
   onClear,
-  className = ''
+  className = '',
+  preserveProgress = false,
+  isFormEditing = false
 }: ClearFieldsButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   
+  // Generate operation ID outside handler to ensure consistency
+  const generateOperationId = useCallback(() => {
+    return `clear_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }, []);
+  
   const handleClearFields = async () => {
+    // Generate a unique operation ID for tracking
+    const operationId = generateOperationId();
+    
     try {
+      // Log the start of the operation
+      logger.info(`[ClearFieldsButton] Starting clear operation for ${taskType} task ${taskId}`, {
+        taskId,
+        taskType,
+        operationId,
+        preserveProgress,
+        isFormEditing,
+        timestamp: new Date().toISOString()
+      });
+      
       // Close dialog and show loading state
       setIsOpen(false);
       setIsClearing(true);
@@ -53,26 +75,76 @@ export function ClearFieldsButton({
       const now = Date.now();
       // Debounce within 3 seconds and same task
       if (lastClearOperation.taskId === taskId && now - lastClearOperation.timestamp < 3000) {
-        logger.warn(`[ClearFieldsButton] Debouncing duplicate clear operation for task ${taskId}`);
+        logger.warn(`[ClearFieldsButton] Debouncing duplicate clear operation for task ${taskId}`, {
+          taskId,
+          operationId,
+          lastOperationId: lastClearOperation.operationId,
+          timeSinceLastClear: now - lastClearOperation.timestamp
+        });
+        
         // No need to actually clear again, just act like we did
         await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
         setIsClearing(false);
+        
+        // Show success toast even though we debounced
+        showClearFieldsToast('success', 'Form fields cleared successfully', {
+          operationId,
+          wasDebounced: true
+        });
         return;
       }
       
-      // Update the last clear operation
+      // Update the last clear operation tracking
       lastClearOperation.taskId = taskId;
       lastClearOperation.timestamp = now;
+      lastClearOperation.operationId = operationId;
+      
+      // Show in-progress toast for better user feedback
+      showClearFieldsToast('loading', 'Clearing form fields...', { 
+        operationId, 
+        taskId, 
+        taskType 
+      });
       
       // Call parent's onClear function
+      const startTime = Date.now();
       await onClear();
+      const duration = Date.now() - startTime;
+      
+      logger.info(`[ClearFieldsButton] Successfully cleared fields for task ${taskId} in ${duration}ms`, {
+        taskId,
+        taskType,
+        operationId,
+        durationMs: duration
+      });
       
       // Show success toast using the unified toast system
-      showClearFieldsToast('success');
+      showClearFieldsToast('success', 'Form fields cleared successfully', { 
+        operationId, 
+        taskId, 
+        taskType,
+        durationMs: duration
+      });
     } catch (error) {
-      logger.error('[ClearFieldsButton] Error clearing fields:', error);
-      showClearFieldsToast('error', error instanceof Error ? error.message : "There was an error clearing the form fields");
+      // Log error with detailed information
+      logger.error(`[ClearFieldsButton] Error clearing fields for task ${taskId}:`, error, {
+        taskId,
+        taskType,
+        operationId,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorName: error instanceof Error ? error.name : 'UnknownError'
+      });
+      
+      // Show error toast with helpful message
+      showClearFieldsToast(
+        'error', 
+        error instanceof Error 
+          ? error.message 
+          : "There was an error clearing the form fields. Please try again.",
+        { operationId, taskId, taskType }
+      );
     } finally {
+      // Always reset the clearing state
       setIsClearing(false);
     }
   };
