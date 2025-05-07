@@ -827,6 +827,51 @@ export async function directClearFields(
     // Extract the preserved progress if available
     const preservedProgress = result?.preservedProgress || undefined;
     
+    // Send WebSocket notification to update other clients
+    try {
+      logger.info(`[DirectClearFields][${operationId}] Broadcasting task update via WebSocket`, {
+        operationId,
+        taskId,
+        action: 'fields_cleared',
+        formType
+      });
+      
+      // Use the /api/tasks/{taskId}/broadcast endpoint to trigger a WebSocket broadcast
+      // This will notify all connected clients that the form has been cleared
+      fetch(`/api/tasks/${taskId}/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'fields_cleared',
+          status: 'in_progress', // Maintain task status
+          progress: preserveProgress ? result?.preservedProgress || 0 : 0, // Use preserved progress or reset to 0
+          metadata: {
+            operationId,
+            formType,
+            timestamp: new Date().toISOString(),
+            action: 'fields_cleared'
+          }
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          logger.info(`[DirectClearFields][${operationId}] WebSocket broadcast successful`, {
+            operationId,
+            taskId,
+            statusCode: response.status
+          });
+        } else {
+          logger.warn(`[DirectClearFields][${operationId}] WebSocket broadcast failed: ${response.status} ${response.statusText}`);
+        }
+      })
+      .catch(broadcastError => {
+        logger.warn(`[DirectClearFields][${operationId}] WebSocket broadcast error:`, broadcastError);
+      });
+    } catch (broadcastError) {
+      // Log but don't block on broadcast errors
+      logger.warn(`[DirectClearFields][${operationId}] Error broadcasting task update:`, broadcastError);
+    }
+    
     const successResult = {
       success: true,
       message: `Successfully cleared ${formType} fields for task ${taskId}${preserveProgress ? ' (preserved progress)' : ''}`,
