@@ -48,6 +48,8 @@ import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import { manualKy3pFix } from './routes/manual-ky3p-fix';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
+// Import the fix-missing-file API route
+import fixMissingFileRouter from './routes/fix-missing-file-api';
 // Import WebSocket notification test router
 import testWebSocketNotificationsRouter from './routes/test-websocket-notifications';
 import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
