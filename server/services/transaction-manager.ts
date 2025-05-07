@@ -1,204 +1,185 @@
 /**
  * Transaction Manager Service
  * 
- * This module provides functions for managing database transactions to ensure atomic operations.
- * It ensures that form submissions either completely succeed or completely fail,
- * preventing inconsistent states like submitted forms with missing files.
+ * This service provides a standardized approach to working with database transactions,
+ * ensuring consistent transaction handling across the application.
  * 
- * @module transaction-manager
+ * Features:
+ * - Unified transaction management for all database operations
+ * - Comprehensive logging for transaction lifecycle
+ * - Proper error handling for transactions
+ * - Utility methods for transaction-aware database operations
  */
 
-import { Pool } from 'pg';
+import { PoolClient } from 'pg';
+import { db } from '@db';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { logger } from '../utils/logger';
-// Import the database connection - FIX to use proper import from db/index.ts
-import { pool } from '../../db';
 
-// Explicitly log the database connection info for debugging
-console.log('[TransactionManager] 🔌 Database connection status:', {
-  poolAvailable: !!pool,
-  poolConfig: {
-    max: pool.options.max,
-    idleTimeoutMillis: pool.options.idleTimeoutMillis,
-    connectionTimeoutMillis: pool.options.connectionTimeoutMillis
-  },
-  timestamp: new Date().toISOString()
-});
-
-// Replace unreliable require with direct pool reference
-const db = {
-  query: async (sql: string, params?: any[]) => {
-    return pool.query(sql, params);
-  },
-  connect: async () => {
-    return pool.connect();
-  }
-};
-
-// Add namespace context to logs
-const logContext = { service: 'TransactionManager' };
+const transactionLogger = logger.child({ module: 'TransactionManager' });
 
 /**
- * Options for transaction execution
+ * Start a new database transaction
+ * 
+ * @returns A transaction client to be used for operations within the transaction
  */
-interface TransactionOptions {
-  /** Maximum number of retries for a transaction */
-  maxRetries?: number;
-  /** Initial delay in milliseconds between retries */
-  initialRetryDelay?: number;
-  /** Multiplier for retry delay for each subsequent retry */
-  retryBackoffMultiplier?: number;
-  /** Callback for logging or handling retry attempts */
-  onRetry?: (error: Error, attempt: number) => void;
+export async function startTransaction(): Promise<PoolClient> {
+  try {
+    transactionLogger.debug('Starting new transaction');
+    
+    // Get a client from the pool
+    const client = await db.runtime.client.connect();
+    
+    // Begin transaction
+    await client.query('BEGIN');
+    
+    transactionLogger.debug('Transaction started successfully');
+    
+    return client;
+  } catch (error) {
+    transactionLogger.error('Failed to start transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    throw error;
+  }
 }
 
 /**
- * Default transaction options
- */
-const defaultTransactionOptions: Required<TransactionOptions> = {
-  maxRetries: 3,
-  initialRetryDelay: 100, // 100ms
-  retryBackoffMultiplier: 2,
-  onRetry: (error, attempt) => {
-    logger.warn(`Transaction retry attempt ${attempt}`, { error: error.message });
-  }
-};
-
-/**
- * Execute a function within a database transaction
+ * Commit a database transaction
  * 
- * This function wraps the provided callback in a database transaction,
- * automatically handling commits, rollbacks, and retries in case of conflicts.
- * 
- * @param callback Function to execute within the transaction
- * @param options Transaction execution options
- * @returns The result of the callback function
- * @throws Any errors that occur during transaction execution (after retries)
+ * @param client The transaction client to commit
  */
-export async function withTransaction<T>(
-  callback: (client: Pool) => Promise<T>,
-  options: TransactionOptions = {}
-): Promise<T> {
-  // Merge options with defaults
-  const opts: Required<TransactionOptions> = { ...defaultTransactionOptions, ...options };
-  
-  // Get a client from the pool
-  const client = await db.connect();
-  
+export async function commitTransaction(client: PoolClient): Promise<void> {
   try {
-    let attempt = 0;
-    let lastError: Error | null = null;
+    transactionLogger.debug('Committing transaction');
     
-    // Try the transaction up to maxRetries times
-    while (attempt <= opts.maxRetries) {
-      try {
-        // Start transaction
-        await client.query('BEGIN');
-        
-        // Execute callback with transaction client
-        const result = await callback(client as unknown as Pool);
-        
-        // Commit transaction
-        await client.query('COMMIT');
-        
-        // Return result
-        return result;
-      } catch (error: any) {
-        // Rollback transaction
-        try {
-          await client.query('ROLLBACK');
-        } catch (rollbackError) {
-          logger.error('Error rolling back transaction', { 
-            originalError: error.message,
-            rollbackError
-          });
-        }
-        
-        // Store last error
-        lastError = error;
-        
-        // Check if we should retry
-        if (attempt >= opts.maxRetries) {
-          // No more retries
-          break;
-        }
-        
-        // Call retry callback
-        opts.onRetry(error, attempt + 1);
-        
-        // Calculate delay with exponential backoff
-        const delay = opts.initialRetryDelay * Math.pow(opts.retryBackoffMultiplier, attempt);
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-        // Increment attempt counter
-        attempt++;
-      }
-    }
+    // Commit transaction
+    await client.query('COMMIT');
     
-    // If we get here, all retry attempts failed
-    throw lastError || new Error('Transaction failed after retries');
-  } finally {
     // Release client back to pool
     client.release();
+    
+    transactionLogger.debug('Transaction committed successfully');
+  } catch (error) {
+    transactionLogger.error('Failed to commit transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Try to rollback on commit failure
+    try {
+      await client.query('ROLLBACK');
+      client.release();
+      transactionLogger.debug('Transaction rolled back after commit failure');
+    } catch (rollbackError) {
+      transactionLogger.error('Failed to rollback after commit failure', {
+        error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+        originalError: error instanceof Error ? error.message : String(error)
+      });
+      
+      client.release(true); // Release with error
+    }
+    
+    throw error;
   }
 }
 
 /**
- * Execute a database query with automatic retries
+ * Rollback a database transaction
  * 
- * This function executes the provided query with automatic retries,
- * useful for non-transactional operations that still need retry logic.
- * 
- * @param queryFn Function that executes the query
- * @param options Retry options
- * @returns The result of the query
- * @throws Any errors that occur during query execution (after retries)
+ * @param client The transaction client to rollback
  */
-export async function withRetry<T>(
-  queryFn: () => Promise<T>,
-  options: TransactionOptions = {}
-): Promise<T> {
-  // Merge options with defaults
-  const opts: Required<TransactionOptions> = { ...defaultTransactionOptions, ...options };
-  
-  let attempt = 0;
-  let lastError: Error | null = null;
-  
-  // Try the query up to maxRetries times
-  while (attempt <= opts.maxRetries) {
-    try {
-      // Execute the query
-      return await queryFn();
-    } catch (error: any) {
-      // Store last error
-      lastError = error;
-      
-      // Check if we should retry
-      if (attempt >= opts.maxRetries) {
-        // No more retries
-        break;
-      }
-      
-      // Call retry callback
-      opts.onRetry(error, attempt + 1);
-      
-      // Calculate delay with exponential backoff
-      const delay = opts.initialRetryDelay * Math.pow(opts.retryBackoffMultiplier, attempt);
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Increment attempt counter
-      attempt++;
-    }
+export async function rollbackTransaction(client: PoolClient): Promise<void> {
+  try {
+    transactionLogger.debug('Rolling back transaction');
+    
+    // Rollback transaction
+    await client.query('ROLLBACK');
+    
+    // Release client back to pool
+    client.release();
+    
+    transactionLogger.debug('Transaction rolled back successfully');
+  } catch (error) {
+    transactionLogger.error('Failed to rollback transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Force release client on rollback failure
+    client.release(true);
+    
+    throw error;
   }
-  
-  // If we get here, all retry attempts failed
-  throw lastError || new Error('Query failed after retries');
 }
 
-export default {
-  withTransaction,
-  withRetry
-};
+/**
+ * Execute a database query within a transaction
+ * 
+ * @param client The transaction client to use
+ * @param query The SQL query to execute
+ * @param params The parameters for the query
+ * @returns The query result
+ */
+export async function executeInTransaction(
+  client: PoolClient,
+  query: string,
+  params: any[] = []
+): Promise<any> {
+  try {
+    transactionLogger.debug('Executing query in transaction', {
+      query,
+      paramCount: params.length
+    });
+    
+    const result = await client.query(query, params);
+    
+    transactionLogger.debug('Query executed successfully', {
+      rowCount: result.rowCount
+    });
+    
+    return result;
+  } catch (error) {
+    transactionLogger.error('Error executing query in transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      query,
+      paramCount: params.length,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    throw error;
+  }
+}
+
+/**
+ * Create a transaction-aware Drizzle instance
+ * 
+ * @param client The transaction client to use
+ * @returns A Drizzle instance bound to the transaction
+ */
+export function withTransaction(client: PoolClient) {
+  return drizzle(client);
+}
+
+/**
+ * Execute a function within a transaction and handle committing or rolling back
+ * 
+ * @param fn The function to execute within the transaction
+ * @returns The result of the function
+ */
+export async function withTransactionContext<T>(
+  fn: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await startTransaction();
+  
+  try {
+    const result = await fn(client);
+    await commitTransaction(client);
+    return result;
+  } catch (error) {
+    await rollbackTransaction(client);
+    throw error;
+  }
+}

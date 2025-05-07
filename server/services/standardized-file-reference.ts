@@ -11,13 +11,36 @@
  * - Implements atomic operations for data integrity
  */
 
+import { PoolClient } from 'pg';
 import { db } from '@db';
 import { tasks, files } from '@db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull, desc, not } from 'drizzle-orm';
+import * as transactionManager from './transaction-manager';
 import { logger } from '../utils/logger';
 
-// Add namespace context to logs
-const LOG_CONTEXT = { service: 'StandardizedFileReference' };
+const moduleLogger = logger.child({ module: 'StandardizedFileReference' });
+
+// Form type to file metadata field mapping for backward compatibility
+const formTypeToFieldMap = {
+  kyb: 'kybFormFile',
+  ky3p: 'securityFormFile',
+  security: 'securityFormFile',
+  open_banking: 'openBankingFormFile',
+  card: 'cardFormFile',
+  default: 'fileId'
+};
+
+/**
+ * Get the appropriate metadata field name based on form type
+ * 
+ * @param formType Form type identifier
+ * @returns The metadata field name used for storing file references
+ */
+function getMetadataFieldForFormType(formType: string): string {
+  const normalizedType = formType.toLowerCase().trim();
+  return formTypeToFieldMap[normalizedType as keyof typeof formTypeToFieldMap] || 
+         formTypeToFieldMap.default;
+}
 
 /**
  * Store a file reference for a task using a standardized approach
@@ -33,116 +56,84 @@ export async function storeFileReference(
   taskId: number,
   fileId: number,
   fileName: string,
-  formType?: string,
-  transaction?: any
+  formType: string,
+  transaction?: PoolClient
 ): Promise<boolean> {
-  const operationId = `store-file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
-  logger.info(`[${operationId}] Storing file reference for task ${taskId}`, {
-    ...LOG_CONTEXT,
-    taskId,
-    fileId,
-    fileName,
-    formType
-  });
+  const trx = transaction || (await transactionManager.startTransaction());
+  const dbClient = transaction ? db.withTransaction(trx) : db;
+  const startTime = Date.now();
   
   try {
-    // Get current task
-    const task = await db.query.tasks.findFirst({
+    moduleLogger.info(`Storing file reference for task ${taskId}`, {
+      taskId,
+      fileId,
+      fileName,
+      formType,
+      operation: 'storeFileReference',
+    });
+
+    // First update the unified fileId field in the database
+    const metadataFieldName = getMetadataFieldForFormType(formType);
+    
+    // Get current task data
+    const taskData = await dbClient.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
     
-    if (!task) {
-      logger.error(`[${operationId}] Task ${taskId} not found when storing file reference`, LOG_CONTEXT);
-      return false;
+    if (!taskData) {
+      throw new Error(`Task not found: ${taskId}`);
     }
     
-    // Determine form type from task if not provided
-    const normalizedFormType = formType || task.task_type || 'unknown';
-    
-    // Create standardized metadata with universal 'fileId' field
-    // and also maintain backward compatibility with specific fields
-    const metadata = {
-      ...task.metadata || {},
-      
-      // Universal field used by all components
+    // Update task metadata with file ID
+    const currentMetadata = taskData.metadata || {};
+    const updatedMetadata = {
+      ...currentMetadata,
+      // Standard fileId field for uniformity across all form types
       fileId: fileId,
-      
-      // Add file tracking metadata for searching/filtering
-      fileCreatedAt: new Date().toISOString(),
-      fileName: fileName,
-      
-      // Store in type-specific fields for backward compatibility with existing code
-      ...(normalizedFormType.includes('kyb') ? { kybFormFile: fileId } : {}),
-      ...(normalizedFormType.includes('ky3p') || normalizedFormType.includes('security') ? {
-        ky3pFormFile: fileId,
-        securityFormFile: fileId
-      } : {}),
-      ...(normalizedFormType.includes('open_banking') ? { openBankingFormFile: fileId } : {}),
-      ...(normalizedFormType.includes('card') ? { cardFormFile: fileId } : {})
+      // Legacy field for backward compatibility
+      [metadataFieldName]: fileId
     };
+
+    // Update the task with the new metadata
+    await dbClient.update(tasks).set({
+      metadata: updatedMetadata
+    }).where(eq(tasks.id, taskId));
     
-    // Log the file metadata structure for debugging
-    logger.debug(`[${operationId}] File reference metadata structure`, {
-      ...LOG_CONTEXT,
+    // Log success with timing information
+    const duration = Date.now() - startTime;
+    moduleLogger.info(`File reference stored successfully for task ${taskId}`, {
       taskId,
-      formType: normalizedFormType,
-      metadataFields: Object.keys(metadata),
-      standardField: 'fileId',
-      legacyFields: [
-        normalizedFormType.includes('kyb') ? 'kybFormFile' : null,
-        normalizedFormType.includes('ky3p') ? 'ky3pFormFile/securityFormFile' : null,
-        normalizedFormType.includes('open_banking') ? 'openBankingFormFile' : null,
-        normalizedFormType.includes('card') ? 'cardFormFile' : null
-      ].filter(Boolean)
+      fileId,
+      fileName,
+      formType,
+      metadataFieldName,
+      durationMs: duration,
+      operation: 'storeFileReference',
     });
     
-    // Update task metadata - use transaction if provided, otherwise direct DB update
-    if (transaction) {
-      // Within transaction
-      await transaction.query(
-        `UPDATE tasks 
-         SET metadata = $1::jsonb,
-             updated_at = NOW()
-         WHERE id = $2`,
-        [JSON.stringify(metadata), taskId]
-      );
-      
-      logger.info(`[${operationId}] File reference stored within transaction for task ${taskId}`, {
-        ...LOG_CONTEXT,
-        taskId,
-        fileId,
-        formType: normalizedFormType,
-        transactional: true
-      });
-    } else {
-      // Direct update
-      await db.update(tasks)
-        .set({ 
-          metadata,
-          updated_at: new Date()
-        })
-        .where(eq(tasks.id, taskId));
-      
-      logger.info(`[${operationId}] File reference stored directly for task ${taskId}`, {
-        ...LOG_CONTEXT,
-        taskId,
-        fileId,
-        formType: normalizedFormType,
-        transactional: false
-      });
+    // Commit the transaction if we created it internally
+    if (!transaction) {
+      await transactionManager.commitTransaction(trx);
     }
     
     return true;
   } catch (error) {
-    logger.error(`[${operationId}] Error storing file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+    // Log the error
+    moduleLogger.error(`Error storing file reference for task ${taskId}`, {
       taskId,
-      fileId
+      fileId,
+      formType,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      operation: 'storeFileReference',
     });
-    return false;
+    
+    // Rollback the transaction if we created it internally
+    if (!transaction) {
+      await transactionManager.rollbackTransaction(trx);
+    }
+    
+    throw error;
   }
 }
 
@@ -154,62 +145,62 @@ export async function storeFileReference(
  */
 export async function getFileReference(
   taskId: number
-): Promise<{ fileId: number; fileName?: string } | undefined> {
-  const operationId = `get-file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
+): Promise<{ fileId: number; fileName: string; fileExists: boolean } | undefined> {
   try {
-    logger.info(`[${operationId}] Getting file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      taskId
-    });
+    moduleLogger.debug(`Getting file reference for task ${taskId}`);
     
-    const task = await db.query.tasks.findFirst({
+    // Get task data
+    const taskData = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
     
-    if (!task || !task.metadata) {
-      logger.info(`[${operationId}] No metadata found for task ${taskId}`, LOG_CONTEXT);
+    if (!taskData || !taskData.metadata) {
+      moduleLogger.info(`No metadata found for task ${taskId}`);
       return undefined;
     }
     
-    // Try to get fileId from standard field first, then fall back to type-specific fields
-    const fileId = task.metadata.fileId ||
-                  task.metadata.kybFormFile ||
-                  task.metadata.ky3pFormFile ||
-                  task.metadata.securityFormFile ||
-                  task.metadata.openBankingFormFile ||
-                  task.metadata.cardFormFile;
+    // Extract file ID from task metadata using standardized field
+    // Fall back to legacy fields if standard field is not found
+    const fileId = taskData.metadata.fileId || 
+                  taskData.metadata.kybFormFile || 
+                  taskData.metadata.securityFormFile || 
+                  taskData.metadata.openBankingFormFile || 
+                  taskData.metadata.cardFormFile;
     
     if (!fileId) {
-      logger.info(`[${operationId}] No file ID found in task ${taskId} metadata`, {
-        ...LOG_CONTEXT,
-        availableFields: Object.keys(task.metadata)
+      moduleLogger.info(`No file ID found in metadata for task ${taskId}`, {
+        metadataKeys: Object.keys(taskData.metadata),
       });
       return undefined;
     }
     
-    // Get the fileName if available from metadata
-    const fileName = task.metadata.fileName;
-    
-    logger.info(`[${operationId}] Found file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      fileId,
-      fileName: fileName || 'Not available in metadata',
-      source: task.metadata.fileId ? 'standardized' : 'legacy'
+    // Verify file exists
+    const fileData = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
     });
+    
+    if (!fileData) {
+      moduleLogger.warn(`File ${fileId} referenced by task ${taskId} not found in database`);
+      return {
+        fileId: fileId as number,
+        fileName: `missing_file_${fileId}.json`,
+        fileExists: false
+      };
+    }
     
     return {
-      fileId: typeof fileId === 'number' ? fileId : Number(fileId),
-      fileName
+      fileId: fileData.id,
+      fileName: fileData.original_name || `file_${fileData.id}.json`,
+      fileExists: true
     };
   } catch (error) {
-    logger.error(`[${operationId}] Error getting file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: error instanceof Error ? error.message : 'Unknown error',
+    moduleLogger.error(`Error getting file reference for task ${taskId}`, {
+      taskId,
+      error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      taskId
     });
-    return undefined;
+    
+    throw error;
   }
 }
 
@@ -221,65 +212,36 @@ export async function getFileReference(
  */
 export async function verifyFileReference(
   taskId: number
-): Promise<{
-  hasReference: boolean;
-  fileExists: boolean;
-  fileId?: number;
-  fileName?: string;
-  needsRepair: boolean;
-  details: string;
-}> {
-  const operationId = `verify-file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
+): Promise<{ hasReference: boolean; fileExists: boolean; fileId?: number; fileName?: string }> {
   try {
-    logger.info(`[${operationId}] Verifying file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      taskId
-    });
+    moduleLogger.debug(`Verifying file reference for task ${taskId}`);
     
-    // Get the file reference
-    const reference = await getFileReference(taskId);
-    const hasReference = !!reference;
+    const fileReference = await getFileReference(taskId);
     
-    if (!hasReference) {
+    if (!fileReference) {
       return {
         hasReference: false,
-        fileExists: false,
-        needsRepair: true,
-        details: 'No file reference found in task metadata'
+        fileExists: false
       };
     }
     
-    // Check if the file exists in the database
-    const file = await db.query.files.findFirst({
-      where: eq(files.id, reference.fileId)
-    });
-    
-    const fileExists = !!file;
-    
     return {
-      hasReference,
-      fileExists,
-      fileId: reference.fileId,
-      fileName: reference.fileName || file?.name,
-      needsRepair: !fileExists,
-      details: fileExists 
-        ? `Valid file reference found (ID: ${reference.fileId})` 
-        : `File reference exists (ID: ${reference.fileId}) but file not found in database`
+      hasReference: true,
+      fileExists: fileReference.fileExists,
+      fileId: fileReference.fileId,
+      fileName: fileReference.fileName
     };
   } catch (error) {
-    logger.error(`[${operationId}] Error verifying file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: error instanceof Error ? error.message : 'Unknown error',
+    moduleLogger.error(`Error verifying file reference for task ${taskId}`, {
+      taskId,
+      error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      taskId
     });
     
+    // Return a safe default
     return {
       hasReference: false,
-      fileExists: false,
-      needsRepair: true,
-      details: `Error checking file reference: ${error instanceof Error ? error.message : 'Unknown error'}`
+      fileExists: false
     };
   }
 }
@@ -300,47 +262,30 @@ export async function repairFileReference(
   taskId: number,
   fileId: number,
   fileName: string,
-  formType: string
+  formType: string,
+  transaction?: PoolClient
 ): Promise<boolean> {
-  const operationId = `repair-file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
   try {
-    logger.info(`[${operationId}] Repairing file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
+    moduleLogger.info(`Repairing file reference for task ${taskId}`, {
       taskId,
       fileId,
       fileName,
       formType
     });
     
-    // Store the new file reference 
-    const result = await storeFileReference(taskId, fileId, fileName, formType);
-    
-    if (result) {
-      logger.info(`[${operationId}] Successfully repaired file reference for task ${taskId}`, {
-        ...LOG_CONTEXT,
-        taskId,
-        fileId,
-        fileName
-      });
-    } else {
-      logger.error(`[${operationId}] Failed to repair file reference for task ${taskId}`, {
-        ...LOG_CONTEXT,
-        taskId,
-        fileId
-      });
-    }
-    
-    return result;
+    // Store the file reference using our standard method
+    return await storeFileReference(taskId, fileId, fileName, formType, transaction);
   } catch (error) {
-    logger.error(`[${operationId}] Error repairing file reference for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+    moduleLogger.error(`Error repairing file reference for task ${taskId}`, {
       taskId,
-      fileId
+      fileId,
+      fileName,
+      formType,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
-    return false;
+    
+    throw error;
   }
 }
 
@@ -355,77 +300,64 @@ export async function repairFileReference(
  */
 export async function checkAndPrepareFileRepair(
   taskId: number
-): Promise<{
-  needsRepair: boolean;
-  verificationResult: ReturnType<typeof verifyFileReference>;
-  taskType?: string;
-  taskStatus?: string;
-  companyId?: number;
+): Promise<{ 
+  hasReference: boolean; 
+  fileExists: boolean; 
+  fileId?: number; 
+  fileName?: string; 
+  needsRepair: boolean; 
+  details: string;
 }> {
-  const operationId = `prepare-repair-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
   try {
-    logger.info(`[${operationId}] Checking if task ${taskId} needs file repair`, LOG_CONTEXT);
+    moduleLogger.info(`Checking if task ${taskId} needs file repair`);
     
-    // Get task information
-    const task = await db.query.tasks.findFirst({
+    // Get task to verify it exists and determine type
+    const taskData = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId)
     });
     
-    if (!task) {
-      logger.error(`[${operationId}] Task ${taskId} not found`, LOG_CONTEXT);
-      return {
-        needsRepair: false,
-        verificationResult: {
-          hasReference: false,
-          fileExists: false,
-          needsRepair: false,
-          details: 'Task not found'
-        }
-      };
+    if (!taskData) {
+      throw new Error(`Task not found: ${taskId}`);
     }
     
     // Verify file reference
-    const verificationResult = await verifyFileReference(taskId);
+    const fileStatus = await verifyFileReference(taskId);
     
-    // Determine if repair is needed based on task status and file verification
-    // Only submit/completed tasks with missing files need repair
-    const isSubmittedTask = task.status === 'submitted' || task.status === 'completed';
-    const needsRepair = isSubmittedTask && verificationResult.needsRepair;
+    // Determine if repair is needed and provide details
+    let needsRepair = false;
+    let details = '';
     
-    logger.info(`[${operationId}] File repair check for task ${taskId}`, {
-      ...LOG_CONTEXT,
+    if (!fileStatus.hasReference) {
+      needsRepair = true;
+      details = `No file reference found for task ${taskId}. A new file needs to be generated.`;
+    } else if (!fileStatus.fileExists) {
+      needsRepair = true;
+      details = `File reference exists (ID: ${fileStatus.fileId}) but the actual file is missing. A new file needs to be generated.`;
+    } else {
+      details = `File reference is valid and the file exists (ID: ${fileStatus.fileId}).`;
+    }
+    
+    moduleLogger.info(`File repair check for task ${taskId}`, {
       taskId,
-      taskType: task.task_type,
-      taskStatus: task.status,
-      isSubmittedTask,
+      hasReference: fileStatus.hasReference,
+      fileExists: fileStatus.fileExists,
+      fileId: fileStatus.fileId,
       needsRepair,
-      verificationDetails: verificationResult.details
+      details
     });
     
     return {
+      ...fileStatus,
       needsRepair,
-      verificationResult,
-      taskType: task.task_type,
-      taskStatus: task.status,
-      companyId: task.company_id
+      details
     };
   } catch (error) {
-    logger.error(`[${operationId}] Error checking file repair status for task ${taskId}`, {
-      ...LOG_CONTEXT,
-      error: error instanceof Error ? error.message : 'Unknown error',
+    moduleLogger.error(`Error checking file repair status for task ${taskId}`, {
+      taskId,
+      error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      taskId
     });
     
-    return {
-      needsRepair: false,
-      verificationResult: {
-        hasReference: false,
-        fileExists: false,
-        needsRepair: false,
-        details: `Error during check: ${error instanceof Error ? error.message : 'Unknown error'}`
-      }
-    };
+    throw error;
   }
 }

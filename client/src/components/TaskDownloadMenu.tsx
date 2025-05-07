@@ -175,7 +175,6 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
                 taskId={taskId}
                 variant="ghost"
                 className="w-full justify-start px-2 py-1.5 text-left"
-                buttonText="Fix Missing File"
                 onFileRepaired={handleFileRegenerated}
               />
             </DropdownMenuItem>

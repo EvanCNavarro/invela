@@ -468,7 +468,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Task Center
                 </Button>
-                {isSubmitted && fileId && (
+                {isSubmitted && (
                   <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
                 )}
               </div>
@@ -563,7 +563,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Task Center
                 </Button>
-                {isSubmitted && fileId && (
+                {isSubmitted && (
                   <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
                 )}
               </div>
@@ -664,7 +664,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Task Center
                 </Button>
-                {isSubmitted && fileId && (
+                {isSubmitted && (
                   <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
                 )}
               </div>
@@ -765,7 +765,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Task Center
                 </Button>
-                {isSubmitted && fileId && (
+                {isSubmitted && (
                   <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
                 )}
               </div>
