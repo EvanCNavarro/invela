@@ -742,6 +742,42 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     onChange: onProgress
   });
   
+  // Function to refresh form data after clearing fields
+  // This ensures the form is properly reloaded with empty data
+  const refreshFormData = useCallback(async (): Promise<void> => {
+    try {
+      logger.info('Refreshing form data after clearing fields');
+      
+      // Reset form to empty state
+      if (resetForm) {
+        await resetForm();
+      }
+      
+      // Reset to first section
+      if (typeof setActiveSection === 'function') {
+        setActiveSection(0);
+      }
+      
+      // Refresh form status to recalculate progress
+      if (refreshStatus) {
+        refreshStatus();
+      }
+      
+      // Refresh task data if available
+      if (refreshTask) {
+        await refreshTask();
+      }
+      
+      // Force rerender to update UI
+      setForceRerender(prev => !prev);
+      
+      logger.info('Form data refresh completed successfully');
+    } catch (error) {
+      logger.error(`Error refreshing form data: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }, [resetForm, setActiveSection, refreshStatus, refreshTask]);
+  
   // Create and manage the Review & Submit section
   const [allSections, setAllSections] = useState<FormSection[]>([]);
   
@@ -1083,25 +1119,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
       }
       
-      // Force data refresh
-      if (refreshData && typeof refreshData === 'function') {
-        try {
-          await refreshData();
-          logger.info('Data refresh completed');
-        } catch (refreshError) {
-          logger.error(`Error during data refresh: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
-        }
-      }
-      
-      // Reset progress indicators
+      // Use our internal refreshFormData function
       try {
-        setOverallProgress(0);
-        setSectionStatuses(prevStatuses => 
-          prevStatuses.map(s => ({ ...s, status: 'not_started', completedCount: 0, totalCount: s.totalCount }))
-        );
-        logger.info('Progress indicators reset');
-      } catch (progressError) {
-        logger.error(`Error resetting progress: ${progressError instanceof Error ? progressError.message : String(progressError)}`);
+        await refreshFormData();
+        logger.info('Data refresh completed');
+      } catch (refreshError) {
+        logger.error(`Error during data refresh: ${refreshError instanceof Error ? refreshError.message : String(refreshError)}`);
       }
       
       // Force UI update
