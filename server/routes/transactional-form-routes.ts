@@ -30,8 +30,20 @@ export function createTransactionalFormRouter(): Router {
    * Transactional endpoint for form submissions across all form types
    */
   router.post('/submit/:formType/:taskId', async (req: Request, res: Response) => {
+    // ENHANCED LOGGING - Log every form submission attempt with request details
+    console.log(`[TransactionalFormRoutes] 📬 FORM SUBMISSION START - ${new Date().toISOString()}`, {
+      path: req.path,
+      method: req.method,
+      params: req.params,
+      userPresent: !!req.user,
+      userIdPresent: !!(req.user?.id),
+      bodyKeys: Object.keys(req.body),
+      timestamp: new Date().toISOString()
+    });
+    
     // Require valid user authentication
     if (!req.user || !req.user.id) {
+      console.log(`[TransactionalFormRoutes] ❌ Authentication missing for submission`);
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -44,6 +56,15 @@ export function createTransactionalFormRouter(): Router {
     const companyId = req.body.companyId || req.user.company_id;
     const formData = req.body;
     const userId = req.user.id;
+    
+    // Additional validation logging
+    console.log(`[TransactionalFormRoutes] 🧾 Form submission parameters validated:`, {
+      taskId,
+      formType,
+      companyId,
+      userId,
+      formDataFields: Object.keys(formData).length
+    });
     
     // Validate parameters
     if (isNaN(taskId) || taskId <= 0) {

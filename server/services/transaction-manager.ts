@@ -10,22 +10,29 @@
 
 import { Pool } from 'pg';
 import { logger } from '../utils/logger';
-// Import the database connection
-let db: { query: (sql: string, params?: any[]) => Promise<any>, connect: () => Promise<any> };
+// Import the database connection - FIX to use proper import from db/index.ts
+import { pool } from '../../db';
 
-try {
-  db = require('../db').db;
-} catch (error) {
-  console.error('Database module not found, creating a mock implementation');
-  // Create a mock implementation for development/testing
-  db = {
-    query: async () => ({ rows: [] }),
-    connect: async () => ({
-      query: async () => ({ rows: [] }),
-      release: () => {}
-    })
-  };
-}
+// Explicitly log the database connection info for debugging
+console.log('[TransactionManager] 🔌 Database connection status:', {
+  poolAvailable: !!pool,
+  poolConfig: {
+    max: pool.options.max,
+    idleTimeoutMillis: pool.options.idleTimeoutMillis,
+    connectionTimeoutMillis: pool.options.connectionTimeoutMillis
+  },
+  timestamp: new Date().toISOString()
+});
+
+// Replace unreliable require with direct pool reference
+const db = {
+  query: async (sql: string, params?: any[]) => {
+    return pool.query(sql, params);
+  },
+  connect: async () => {
+    return pool.connect();
+  }
+};
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionManager' };
