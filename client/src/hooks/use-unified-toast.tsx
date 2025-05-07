@@ -236,74 +236,154 @@ export const unifiedToast = {
   
   // No longer used - removed
   
-  fileUploadSuccess: (file: FileItem | string) => {
-    const fileName = typeof file === 'string' ? file : file.name;
+  /**
+   * Display a file upload success toast notification
+   * @param fileOrOptions - Either a FileItem object, filename string, or options object
+   * @returns Toast reference
+   */
+  fileUploadSuccess: (fileOrOptions: FileItem | string | { 
+    fileName: string; 
+    title?: string; 
+    id?: string; 
+    duration?: number;
+    forceAutoDismiss?: boolean;
+  }) => {
+    // Extract file name based on the parameter type
+    let fileName: string;
+    let title = "File uploaded successfully";
+    let id: string | undefined = undefined;
+    let duration = STANDARD_DURATION;
+    let forceAutoDismiss = true;
+    
+    if (typeof fileOrOptions === 'string') {
+      fileName = fileOrOptions;
+    } else if ('name' in fileOrOptions) {
+      // It's a FileItem
+      fileName = fileOrOptions.name;
+    } else {
+      // It's an options object
+      fileName = fileOrOptions.fileName;
+      title = fileOrOptions.title || title;
+      id = fileOrOptions.id;
+      duration = fileOrOptions.duration || duration;
+      forceAutoDismiss = fileOrOptions.forceAutoDismiss !== false; // Default to true
+    }
+    
     console.log('[UnifiedToast] Creating success toast for file:', fileName);
     
-    // Create success toast with explicit duration and force auto-dismiss
+    // Create success toast with explicit duration
     const toastRef = baseToast({
       variant: "success",
-      title: "File uploaded successfully",
+      title,
       description: `${fileName} has been uploaded.`,
-      duration: STANDARD_DURATION, // Standard duration (3000ms)
+      duration,
+      id
     });
     
     // Ensure the toast gets dismissed automatically after the standard duration
     // This is a failsafe for bulk uploads
-    setTimeout(() => {
-      if (toastRef && toastRef.dismiss) {
-        toastRef.dismiss();
-        console.log('[UnifiedToast] Force dismissed success toast for:', fileName);
-      }
-    }, STANDARD_DURATION + 500); // Add a small buffer (500ms) to ensure the toast has time to show
+    if (forceAutoDismiss) {
+      setTimeout(() => {
+        if (toastRef && toastRef.dismiss) {
+          toastRef.dismiss();
+          console.log('[UnifiedToast] Force dismissed success toast for:', fileName);
+        }
+      }, duration + 500); // Add a small buffer (500ms) to ensure the toast has time to show
+    }
     
     return toastRef;
   },
   
-  fileUploadError: (fileName: string, error?: string) => {
-    return baseToast({
-      variant: "error",
-      title: "Upload failed",
-      description: `Failed to upload ${fileName}. ${error || "Please try again."}`,
-      duration: STANDARD_DURATION,
-    });
+  /**
+   * Display a file upload error toast notification
+   * @param fileNameOrOptions - Either a filename string or options object
+   * @param error - Optional error message (deprecated: use options.description instead)
+   * @returns Toast reference
+   */
+  fileUploadError: (fileNameOrOptions: string | { fileName: string; error?: string; id?: string; duration?: number }, error?: string) => {
+    if (typeof fileNameOrOptions === 'string') {
+      return baseToast({
+        variant: "error",
+        title: "Upload failed",
+        description: `Failed to upload ${fileNameOrOptions}. ${error || "Please try again."}`,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      const { fileName, error: errorMsg, id, duration } = fileNameOrOptions;
+      return baseToast({
+        variant: "error",
+        title: "Upload failed",
+        description: `Failed to upload ${fileName}. ${errorMsg || "Please try again."}`,
+        duration: duration || STANDARD_DURATION,
+        id
+      });
+    }
   },
   
-  clipboardCopy: (text: string) => {
-    return baseToast({
-      variant: "clipboard",
-      title: "Copied to clipboard",
-      description: text ? (text.length > 50 ? "Content copied to clipboard." : `"${text}" copied to clipboard.`) : "Content copied to clipboard.",
-      duration: STANDARD_DURATION,
-    });
+  /**
+   * Display a clipboard copy confirmation toast notification
+   * @param textOrOptions - Either a text string or options object
+   * @returns Toast reference
+   */
+  clipboardCopy: (textOrOptions: string | { text: string; title?: string; id?: string; duration?: number }) => {
+    if (typeof textOrOptions === 'string') {
+      const text = textOrOptions;
+      return baseToast({
+        variant: "clipboard",
+        title: "Copied to clipboard",
+        description: text ? (text.length > 50 ? "Content copied to clipboard." : `"${text}" copied to clipboard.`) : "Content copied to clipboard.",
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      const { text, title = "Copied to clipboard", id, duration } = textOrOptions;
+      return baseToast({
+        variant: "clipboard",
+        title,
+        description: text ? (text.length > 50 ? "Content copied to clipboard." : `"${text}" copied to clipboard.`) : "Content copied to clipboard.",
+        duration: duration || STANDARD_DURATION,
+        id
+      });
+    }
   },
   
-  // Simple file upload toast
-  fileUploadProgress: (
-    fileName: string
-  ) => {
-    return baseToast({
-      variant: "file-upload",
-      title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file...",
-      duration: Infinity, // Stay open until explicitly closed
-    });
+  /**
+   * Display file upload progress toast notification
+   * @param fileNameOrOptions - Either a filename string or options object
+   * @returns Toast reference
+   */
+  fileUploadProgress: (fileNameOrOptions: string | { fileName: string; description?: string; id?: string }) => {
+    if (typeof fileNameOrOptions === 'string') {
+      return baseToast({
+        variant: "file-upload",
+        title: `Uploading '${fileNameOrOptions}'`,
+        description: "Please wait while we upload your file...",
+        duration: Infinity, // Stay open until explicitly closed
+      });
+    } else {
+      const { fileName, description = "Please wait while we upload your file...", id } = fileNameOrOptions;
+      return baseToast({
+        variant: "file-upload",
+        title: `Uploading '${fileName}'`,
+        description,
+        duration: Infinity, // Stay open until explicitly closed
+        id
+      });
+    }
   },
   
-  // Method with ID support
+  /**
+   * @deprecated Use fileUploadProgress with object parameter instead
+   * Display file upload progress toast notification (with ID support)
+   * @param options - Upload options object
+   * @returns Toast reference
+   */
   uploadProgress: (options: {
     id?: string;
     fileName: string;
+    description?: string;
   }) => {
-    const { id, fileName } = options;
-    
-    return baseToast({
-      id,
-      variant: "file-upload",
-      title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file...",
-      duration: Infinity, // Stay open until explicitly closed
-    });
+    // Simply delegate to the main fileUploadProgress method for consistency
+    return unifiedToast.fileUploadProgress(options);
   }
 };
 
