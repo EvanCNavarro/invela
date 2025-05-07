@@ -111,17 +111,58 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
   const [, navigate] = useLocation();
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Format the submission date
+  // Format the submission date with better handling of missing or invalid dates
   const formattedSubmissionDate = useMemo(() => {
+    // Check if we have a valid submissionDate in the task
     if (task?.submissionDate) {
       try {
-        return new Date(task.submissionDate).toLocaleString();
+        const date = new Date(task.submissionDate);
+        
+        // Check if the date is valid
+        if (!isNaN(date.getTime())) {
+          // Format date: May 7, 2025 at 2:05 PM
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+        }
       } catch (e) {
-        return task.submissionDate;
+        console.warn('Error formatting submission date:', e);
       }
     }
-    return 'Unknown';
-  }, [task?.submissionDate]);
+    
+    // If we can't get the submission date from task.submissionDate, try from metadata
+    if (task?.metadata?.submission_date) {
+      try {
+        const date = new Date(task.metadata.submission_date);
+        
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+        }
+      } catch (e) {
+        console.warn('Error formatting metadata submission date:', e);
+      }
+    }
+    
+    // Default to today's date if we can't get a valid date
+    // This is better than showing "Unknown" to the user
+    return new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }, [task?.submissionDate, task?.metadata?.submission_date]);
 
   // Helper function to scroll to top
   const scrollToTop = () => {
@@ -157,41 +198,85 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
   return (
     <div className="w-full mx-auto" ref={topRef}>
       <div className="bg-white border rounded-md shadow-sm">
-        {/* Header with submission info and download options */}
-        <div className="flex justify-between items-center p-6 border-b">
+        {/* Header with submission info and download options - Improved */}
+        <div className="flex justify-between items-center p-6 border-b bg-gray-50">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-600">
-                SUBMITTED
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-100 text-emerald-700 flex items-center gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5" />
+                <span>SUBMITTED</span>
               </div>
+              {task?.id && (
+                <div className="text-xs font-medium text-gray-500 px-2 py-1 rounded-md bg-gray-100">
+                  ID: {task.id}
+                </div>
+              )}
             </div>
             <h1 className="text-xl font-bold text-gray-900">{getFormHeading()}</h1>
-            <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
-              <Clock className="h-4 w-4" />
-              <span>Submitted on {formattedSubmissionDate}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 mt-2">
+              <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
+                <Clock className="h-4 w-4 text-blue-500" />
+                <span>Submitted on <span className="font-medium">{formattedSubmissionDate}</span></span>
+              </div>
+              {task?.status && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm mt-1 sm:mt-0">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  <span>Status: <span className="font-medium capitalize">{task.status}</span></span>
+                </div>
+              )}
+              {task?.progress !== undefined && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm mt-1 sm:mt-0">
+                  <span className="text-xs font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                    {task.progress}%
+                  </span>
+                  <span>Complete</span>
+                </div>
+              )}
             </div>
           </div>
           
-          {/* Download dropdown */}
+          {/* Download dropdown - Enhanced styling */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="default" 
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+              >
                 <Download className="mr-2 h-4 w-4" />
-                Download
+                Download Form
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleDownload('json')}>
-                <FileJson className="mr-2 h-4 w-4" />
-                Download as JSON
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem 
+                onClick={() => handleDownload('json')}
+                className="cursor-pointer flex items-center py-2"
+              >
+                <FileJson className="mr-2 h-4 w-4 text-blue-500" />
+                <div>
+                  <p className="font-medium">JSON Format</p>
+                  <p className="text-xs text-gray-500">For data processing</p>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Download as CSV
+              <DropdownMenuItem 
+                onClick={() => handleDownload('csv')}
+                className="cursor-pointer flex items-center py-2"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
+                <div>
+                  <p className="font-medium">Excel/CSV Format</p>
+                  <p className="text-xs text-gray-500">For spreadsheet applications</p>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                <FileText className="mr-2 h-4 w-4" />
-                Download as Text
+              <DropdownMenuItem 
+                onClick={() => handleDownload('txt')}
+                className="cursor-pointer flex items-center py-2"
+              >
+                <FileText className="mr-2 h-4 w-4 text-gray-600" />
+                <div>
+                  <p className="font-medium">Text Format</p>
+                  <p className="text-xs text-gray-500">Simple text document</p>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -242,21 +327,37 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
           </Accordion>
         </div>
         
-        {/* Footer with navigation buttons */}
-        <div className="flex justify-between p-6 border-t">
+        {/* Footer with navigation buttons - Enhanced styling */}
+        <div className="flex justify-between p-6 border-t bg-gray-50">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/task-center')}
+            className="text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-900 shadow-sm"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Task Center
           </Button>
           
+          {/* Middle section with task details if available */}
+          {taskId && (
+            <div className="hidden md:flex items-center space-x-2">
+              <div className="text-xs text-gray-500 px-3 py-1 rounded-full bg-gray-100 border border-gray-200">
+                Task #{taskId}
+              </div>
+              {company?.name && (
+                <div className="text-xs text-gray-500 px-3 py-1 rounded-full bg-blue-50 border border-blue-100">
+                  {company.name}
+                </div>
+              )}
+            </div>
+          )}
+          
           <Button
             variant="outline"
             size="sm"
             onClick={scrollToTop}
+            className="text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-900 shadow-sm"
           >
             <ChevronUp className="mr-2 h-4 w-4" />
             Scroll to Top
