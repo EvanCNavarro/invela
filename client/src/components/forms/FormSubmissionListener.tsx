@@ -346,7 +346,9 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           message: payload.message || null,
           timestamp: payload.timestamp,
           // Include completed actions array if it exists
-          ...(payload.completedActions && { completedActions: payload.completedActions })
+          ...(payload.completedActions && { completedActions: payload.completedActions }),
+          // Include source property if it exists (critical for final_completion detection)
+          ...(payload.source && { source: payload.source })
         };
         
         // Map task status to form submission status if needed

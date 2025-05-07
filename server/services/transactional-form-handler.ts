@@ -16,6 +16,7 @@ import {
   sendFormSubmissionError, 
   sendFormSubmissionInProgress 
 } from '../utils/form-submission-notifications';
+import { broadcastFormSubmissionCompleted } from '../utils/unified-websocket';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
@@ -356,9 +357,7 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           timestamp: new Date().toISOString()
         });
         
-        // Use the new broadcastFormSubmissionCompleted function from unified-websocket
-        const { broadcastFormSubmissionCompleted } = require('../utils/unified-websocket');
-        
+        // Use the imported broadcastFormSubmissionCompleted function from unified-websocket
         broadcastFormSubmissionCompleted(
           formType,
           taskId,
