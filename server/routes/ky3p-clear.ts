@@ -147,7 +147,7 @@ router.post('/api/ky3p/clear/:taskId', requireAuth, async (req, res) => {
       taskId
     });
   } catch (error) {
-    const errorTaskId = taskId;
+    const errorTaskId = parseInt(req.params.taskId, 10);
     logger.error('[KY3P Clear] Error clearing fields:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
@@ -193,10 +193,11 @@ router.get('/api/ky3p/clear-test/:taskId', requireAuth, async (req, res) => {
       clear_url: `/api/ky3p/clear/${taskId}?preserveProgress=${preserveProgress}`
     });
   } catch (error) {
+    const errorTaskId = parseInt(req.params.taskId, 10);
     logger.error('[KY3P Clear Test] Error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      taskId: taskId
+      taskId: errorTaskId
     });
     res.status(500).send('Error testing clear functionality');
   }
