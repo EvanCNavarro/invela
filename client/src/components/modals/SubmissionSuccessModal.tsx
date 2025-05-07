@@ -40,6 +40,10 @@ export interface SubmissionSuccessModalProps {
   returnLabel: string;
   taskType?: string;
   onDownload?: (format?: 'csv' | 'txt' | 'json') => void;
+  // New parameters for improved button options
+  showFileVaultButton?: boolean;
+  fileVaultPath?: string;
+  fileVaultLabel?: string;
 }
 
 export const SubmissionSuccessModal: React.FC<SubmissionSuccessModalProps> = ({
@@ -53,7 +57,10 @@ export const SubmissionSuccessModal: React.FC<SubmissionSuccessModalProps> = ({
   returnPath = '/task-center',
   returnLabel = 'Return to Task Center',
   taskType = 'task',
-  onDownload
+  onDownload,
+  showFileVaultButton = false,
+  fileVaultPath = '/file-vault',
+  fileVaultLabel = 'View in File Vault'
 }) => {
   // Format a task type string for display (e.g., 'kyb' -> 'KYB', 'ky3p' -> 'KY3P')
   const formatTaskType = (type: string): string => {
@@ -155,22 +162,40 @@ export const SubmissionSuccessModal: React.FC<SubmissionSuccessModalProps> = ({
           </div>
         </div>
         
-        <DialogFooter>
-          <Button 
-            variant="ghost" 
-            onClick={onClose}
-          >
-            Close
-          </Button>
-          <Button 
-            variant="default" 
-            onClick={onClose}
-            asChild
-          >
-            <Link href={returnPath} className="flex items-center gap-1">
-              {returnLabel} <ArrowRightIcon className="w-4 h-4 ml-1" />
-            </Link>
-          </Button>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between w-full">
+          <div className="flex justify-start">
+            <Button 
+              variant="ghost" 
+              onClick={onClose}
+            >
+              Close
+            </Button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Only show File Vault button if requested or if we have file information */}
+            {(showFileVaultButton || hasFileInfo) && (
+              <Button 
+                variant="outline" 
+                onClick={onClose}
+                asChild
+              >
+                <Link href={fileVaultPath} className="flex items-center gap-1">
+                  <FileIcon className="w-4 h-4 mr-1" /> {fileVaultLabel}
+                </Link>
+              </Button>
+            )}
+            
+            <Button 
+              variant="default" 
+              onClick={onClose}
+              asChild
+            >
+              <Link href={returnPath} className="flex items-center gap-1">
+                {returnLabel} <ArrowRightIcon className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
