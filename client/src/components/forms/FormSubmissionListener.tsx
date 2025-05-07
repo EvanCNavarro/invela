@@ -4,8 +4,11 @@
  * This component listens for WebSocket form submission events and calls
  * the appropriate callbacks when events are received.
  * 
- * Enhanced with global deduplication to prevent duplicate processing across
- * multiple instances of the component.
+ * Enhanced with global event deduplication to prevent duplicate toasts and modals
+ * when multiple components are listening for the same events.
+ * 
+ * This component now shares a global message tracking state with useFormSubmissionEvents
+ * to ensure that the same event is never processed twice across the application.
  */
 
 import React, { useEffect, useContext, useRef } from 'react';
@@ -17,6 +20,7 @@ const logger = getLogger('FormSubmissionListener');
 
 // Global tracking of processed messages and active listeners
 // These static variables are shared across all instances of the component
+// We use window object to make it globally accessible for both component and hook
 const GLOBAL_STATE = {
   // Global set to track processed submission messages across all instances
   // This ensures we never process the same message twice, even across different components
@@ -31,6 +35,10 @@ const GLOBAL_STATE = {
     return `${taskId}:${formType}`;
   }
 };
+
+// Make the global state available to other modules through the window object
+// This allows the useFormSubmissionEvents hook to access the same state
+(window as any).__FORM_SUBMISSION_GLOBAL_STATE = GLOBAL_STATE;
 
 export interface SubmissionAction {
   type: string;       // Type of action: "task_completion", "file_generation", etc.
