@@ -147,16 +147,18 @@ export default function TaskPage({ params }: TaskPageProps) {
     console.log('[TaskPage] Form submission success:', event);
     
     if (event.fileId) {
-      setFileId(event.fileId);
+      // Convert to number if it's a string to fix TypeScript error
+      const fileIdValue = typeof event.fileId === 'string' ? parseInt(event.fileId, 10) : event.fileId;
+      setFileId(fileIdValue as number);
     }
     
     // Store the submission result with all needed data for the UniversalSuccessModal
     setSubmissionResult({
       taskId: event.taskId,
-      fileId: event.fileId,
-      fileName: event.fileName,
+      fileId: event.fileId ? (typeof event.fileId === 'string' ? parseInt(event.fileId, 10) : event.fileId) : undefined,
+      fileName: event.fileName || undefined,
       taskStatus: 'submitted',
-      unlockedTabs: event.unlockedTabs,
+      unlockedTabs: event.unlockedTabs || undefined,
       completedActions: event.completedActions || []
     });
     
