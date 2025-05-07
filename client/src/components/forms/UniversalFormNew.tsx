@@ -1009,23 +1009,65 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
+    // Verify that fields have loaded before attempting to clear them
+    if (!Array.isArray(fields) || fields.length === 0) {
+      logger.warn('Cannot clear fields - fields have not been loaded yet');
+      toast({
+        title: "Cannot Clear Fields",
+        description: "Please wait until form fields have fully loaded.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Use centralized clear fields utility with consistent functionality across components
-    await handleClearFieldsUtil({
-      taskId,
-      taskType,
-      resetForm, 
-      saveProgress, 
-      refreshStatus
-    });
+    try {
+      // Use the fixed handleClearFieldsUtil with proper typing structure
+      const clearResult = await handleClearFieldsUtil(
+        formService,
+        fields,
+        // Create an update callback function that integrates with our form
+        (fieldId, value) => {
+          // Use form setValue method to update the field
+          try {
+            form.setValue(fieldId, value);
+            
+            // Also try to update via resetField to ensure clearing works
+            try {
+              form.resetField(fieldId, { defaultValue: value });
+            } catch (resetError) {
+              // Ignore reset errors, we have the setValue as primary method
+              logger.debug(`Reset field error for ${fieldId}:`, resetError);
+            }
+          } catch (error) {
+            logger.error(`Error setting value for field ${fieldId}:`, error);
+          }
+        }
+      );
+      
+      // Log and handle the result
+      logger.info(`Clear fields operation completed with result: ${clearResult}`);
+      
+      // Force component rerender after clear
+      setForceRerender(prev => !prev);
+      
+      toast({
+        title: 'Form cleared',
+        description: 'All fields have been reset to their default values.',
+        variant: 'default',
+      });
+    } catch (clearError) {
+      // Properly handle any errors during the clear operation
+      logger.error('Error clearing form fields:', clearError);
+      
+      toast({
+        title: 'Error Clearing Fields',
+        description: clearError instanceof Error ? clearError.message : 'An unknown error occurred',
+        variant: 'destructive',
+      });
+    }
     
-    // Force component rerender after clear
-    setForceRerender(prev => !prev);
-    
-    toast({
-      title: 'Form cleared',
-      description: 'All fields have been reset to their default values.',
-      variant: 'default',
-    });
+
   };
   
   // Handle submission - with validation showing which fields are incomplete
