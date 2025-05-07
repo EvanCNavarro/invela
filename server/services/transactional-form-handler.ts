@@ -233,11 +233,29 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // This ensures the task is marked as submitted even if WebSocket broadcast fails
         const submissionDate = new Date().toISOString();
         
+        // ENHANCED DEBUG: Add more detailed logging before update
+        console.log(`[TransactionalFormHandler] 🔴 TASK UPDATE START for task ${taskId}:`, {
+          taskType: formType,
+          companyId,
+          submissionDate,
+          timestamp: new Date().toISOString(),
+          traceId: `task_update_${taskId}_${Date.now()}`,
+          thread: 'main_transaction'
+        });
+        
         // DEBUG: Get current task state before update for validation
         const preUpdateCheck = await client.query(
           `SELECT id, status, progress FROM tasks WHERE id = $1`,
           [taskId]
         );
+        
+        // Log original task state with more visible emoji
+        console.log(`[TransactionalFormHandler] 📊 PRE-UPDATE TASK STATE for task ${taskId}:`, {
+          originalStatus: preUpdateCheck.rows[0]?.status,
+          originalProgress: preUpdateCheck.rows[0]?.progress,
+          hasRows: preUpdateCheck.rows.length > 0,
+          timestamp: new Date().toISOString()
+        });
         
         logger.info(`[TransactionalFormHandler] Pre-update task state:`, {
           taskId,
@@ -248,6 +266,8 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         
         // ENHANCED DEBUG: Added more detailed logging and improved error capture
         // FIXED: Use proper jsonb_set with 'true' as JSON value, not string
+        console.log(`[TransactionalFormHandler] 🔄 EXECUTING SQL UPDATE for task ${taskId}...`);
+        
         const updateResult = await client.query(
           `UPDATE tasks 
            SET status = 'submitted', 
@@ -261,6 +281,32 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
            RETURNING id, status, progress, metadata`,
           [taskId, submissionDate]
         );
+        
+        // ENHANCED DEBUG: Log the updated task data immediately after the update
+        console.log(`[TransactionalFormHandler] ✅ SQL UPDATE RESULT for task ${taskId}:`, {
+          success: updateResult.rowCount > 0,
+          rowCount: updateResult.rowCount,
+          updatedStatus: updateResult.rows[0]?.status,
+          updatedProgress: updateResult.rows[0]?.progress,
+          hasMetadata: updateResult.rows[0]?.metadata ? true : false,
+          returnedRowCount: updateResult.rows.length,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Verify the task was updated with a separate query
+        const postUpdateCheck = await client.query(
+          `SELECT id, status, progress, metadata FROM tasks WHERE id = $1`,
+          [taskId]
+        );
+        
+        console.log(`[TransactionalFormHandler] 🔍 VERIFICATION QUERY RESULT for task ${taskId}:`, {
+          verifiedStatus: postUpdateCheck.rows[0]?.status,
+          verifiedProgress: postUpdateCheck.rows[0]?.progress,
+          submitted: postUpdateCheck.rows[0]?.metadata?.submitted,
+          submissionDate: postUpdateCheck.rows[0]?.metadata?.submissionDate,
+          hasRows: postUpdateCheck.rows.length > 0,
+          timestamp: new Date().toISOString()
+        });
         
         // Log the update result with detailed diagnostics
         logger.info(`[TransactionalFormHandler] Task status update result:`, {
