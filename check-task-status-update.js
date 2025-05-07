@@ -5,9 +5,11 @@
  * the SQL query we're using in the transactional form handler works correctly.
  */
 
-const pg = require('pg');
+import pg from 'pg';
+import dotenv from 'dotenv';
+
 const { Pool } = pg;
-require('dotenv').config();
+dotenv.config();
 
 // Initialize DB connection from environment
 const dbConfig = {
