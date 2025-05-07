@@ -5,17 +5,12 @@
  * of the wrong form variant (editable vs read-only).
  * 
  * It ensures that we never show the editable form for submitted tasks,
- * and handles the entire loading sequence properly with proper data loading signals.
+ * and handles the entire loading sequence properly.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { UniversalForm } from './UniversalFormNew';
 import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
-import getLogger from '@/utils/logger';
-
-// Create a logger for this component
-const logger = getLogger('FormWithLoadingWrapper');
 
 interface FormWithLoadingWrapperProps {
   taskId?: number;
@@ -27,14 +22,6 @@ interface FormWithLoadingWrapperProps {
   onSubmit?: (data: any) => Promise<void>;
 }
 
-// Create a data loading tracker to properly manage loading states
-interface DataLoadingState {
-  taskLoaded: boolean;
-  fieldsLoaded: boolean;
-  timestampsLoaded: boolean;
-  formServiceInitialized: boolean;
-}
-
 export const FormWithLoadingWrapper: React.FC<FormWithLoadingWrapperProps> = ({
   taskId,
   taskType,
@@ -44,132 +31,40 @@ export const FormWithLoadingWrapper: React.FC<FormWithLoadingWrapperProps> = ({
   onProgress,
   onSubmit,
 }) => {
-  // A ref to track initialization of form service (signal from child component)
-  const formServiceInitializedRef = useRef(false);
-  const initCallCountRef = useRef(0);
-  
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  
-  // Data loading tracker
-  const [dataLoadingState, setDataLoadingState] = useState<DataLoadingState>({
-    taskLoaded: false,
-    fieldsLoaded: false,
-    timestampsLoaded: false,
-    formServiceInitialized: false
-  });
+  const [readOnlyStatusDetermined, setReadOnlyStatusDetermined] = useState(false);
   
   // Determine if the form should be read-only based on task status
+  // We use isReadOnlyDetermined to make sure we've checked this properly
   const isTaskSubmittedOrReadOnly = task?.status === 'submitted' || 
                                     task?.status === 'completed' || 
                                     isReadOnly;
   
-  // Use React Query to prefetch fields data
-  const { isLoading: isFieldsLoading, data: fieldsData } = useQuery({
-    queryKey: [`/api/${taskType}/fields`],
-    enabled: !!taskType && !!taskId, // Only run when taskType and taskId are provided
-  });
-  
-  // Use React Query to prefetch timestamps data for proper field ordering
-  const { isLoading: isTimestampsLoading, data: timestampsData } = useQuery({
-    queryKey: [`/api/${taskType}/timestamps/${taskId}`],
-    enabled: !!taskType && !!taskId, // Only run when taskType and taskId are provided
-  });
-  
-  // Event handler for when the form service is initialized
-  // We track the call count to prevent duplicate signal handling
-  const handleFormServiceInitialized = () => {
-    // Only process this signal once to prevent re-rendering loops
-    initCallCountRef.current += 1;
-    
-    logger.info(`Form service initialization signal received (call #${initCallCountRef.current})`);
-    
-    // Only process the first call
-    if (!formServiceInitializedRef.current) {
-      formServiceInitializedRef.current = true;
-      logger.info('Processing form service initialization (first call only)');
-      
-      setDataLoadingState(prev => ({
-        ...prev,
-        formServiceInitialized: true
-      }));
-    } else {
-      logger.info('Ignoring duplicate form service initialization call');
-    }
-  };
-  
-  // Update loading state when task data is loaded
   useEffect(() => {
+    // As soon as we have the task, we can determine read-only status
     if (task) {
-      logger.info(`Task data loaded: ${task.id}, status: ${task.status}, progress: ${task.progress}`);
+      setReadOnlyStatusDetermined(true);
       
-      setDataLoadingState(prev => ({
-        ...prev,
-        taskLoaded: true
-      }));
-    }
-  }, [task]);
-  
-  // Update loading state when fields data is loaded
-  useEffect(() => {
-    if (fieldsData && !isFieldsLoading) {
-      logger.info(`Fields data loaded: ${fieldsData ? 'has data' : 'no data'}`);
-      
-      setDataLoadingState(prev => ({
-        ...prev,
-        fieldsLoaded: true
-      }));
-    }
-  }, [fieldsData, isFieldsLoading]);
-  
-  // Update loading state when timestamps data is loaded
-  useEffect(() => {
-    if (timestampsData && !isTimestampsLoading) {
-      logger.info(`Timestamps data loaded: ${timestampsData ? 'has data' : 'no data'}`);
-      
-      setDataLoadingState(prev => ({
-        ...prev,
-        timestampsLoaded: true
-      }));
-    }
-  }, [timestampsData, isTimestampsLoading]);
-  
-  // Watch for all data loading to complete and update state
-  useEffect(() => {
-    const { taskLoaded, fieldsLoaded, timestampsLoaded, formServiceInitialized } = dataLoadingState;
-    
-    // If task is loaded we can determine read-only status immediately
-    if (taskLoaded) {
-      logger.info(`Task status determined: ${isTaskSubmittedOrReadOnly ? 'read-only' : 'editable'}`);
-    }
-    
-    // Check if all required data is loaded
-    const allDataLoaded = taskLoaded && fieldsLoaded && 
-                         (timestampsLoaded || taskType === 'open_banking'); // Timestamps not needed for open banking
-    
-    logger.info(`Data loading state: task=${taskLoaded}, fields=${fieldsLoaded}, timestamps=${timestampsLoaded}, allData=${allDataLoaded}`);
-    
-    if (allDataLoaded) {
-      // We still need a small delay for the form service to initialize properly
-      // But this delay is minimal and only happens when we know all data is loaded
+      // Use a longer delay for the actual form rendering to ensure
+      // all data is loaded properly
       const timer = setTimeout(() => {
-        logger.info('All data loaded, finalizing rendering');
         setInitialLoadComplete(true);
         setIsLoading(false);
-      }, 100); // Very minimal delay just for component initialization
+      }, 800); // Increased delay to ensure all data is fully loaded
       
       return () => clearTimeout(timer);
     }
-  }, [dataLoadingState, taskType, isTaskSubmittedOrReadOnly]);
+  }, [task]);
   
   // Initial loading state - show generic skeleton
-  if (!task) {
+  if (!task && isLoading) {
     return <FormSkeletonWithMode readOnly={false} />;
   }
   
-  // If we know the task is read-only, show read-only skeleton while data loads
-  if (isTaskSubmittedOrReadOnly && (isLoading || !initialLoadComplete)) {
+  // If we know the task is read-only but still loading data, show read-only skeleton
+  if (readOnlyStatusDetermined && isTaskSubmittedOrReadOnly && (isLoading || !initialLoadComplete)) {
     return <FormSkeletonWithMode readOnly={true} />;
   }
   
@@ -189,7 +84,6 @@ export const FormWithLoadingWrapper: React.FC<FormWithLoadingWrapperProps> = ({
         companyName={companyName}
         isReadOnly={isTaskSubmittedOrReadOnly}
         onSubmit={onSubmit}
-        onFormServiceInitialized={handleFormServiceInitialized}
       />
     </div>
   );
