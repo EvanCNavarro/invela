@@ -398,6 +398,28 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           // CRITICAL FIX: The 'source' property must be explicitly set to match what task-page.tsx expects
           submissionEvent.source = 'final_completion';
           
+          // IMPORTANT: Also update the task status in the form when final completion is detected
+          // This ensures the form switches to read-only mode immediately after submission
+          const taskStatusEvent = new CustomEvent('task-status-update', {
+            bubbles: true,
+            detail: {
+              taskId,
+              status: 'submitted',
+              progress: 100,
+              source: 'websocket',
+              timestamp: new Date().toISOString()
+            }
+          });
+          document.dispatchEvent(taskStatusEvent);
+          
+          // Log this important status change
+          logger.info(`[FormSubmissionListener] 🔄 Dispatched task-status-update event to mark task ${taskId} as submitted`, {
+            taskId,
+            formType,
+            source: 'final_completion',
+            timestamp: new Date().toISOString()
+          });
+          
           // Also ensure the metadata has the source field for maximum compatibility
           if (!submissionEvent.metadata) {
             submissionEvent.metadata = {};
