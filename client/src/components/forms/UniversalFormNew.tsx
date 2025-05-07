@@ -568,8 +568,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             setFormService(service);
             
             // Signal to parent component that form service is initialized
-            if (onFormServiceInitialized) {
+            // We use a ref to track if this has been called already to prevent infinite loops
+            const hasSignaled = React.useRef(false);
+            if (onFormServiceInitialized && !hasSignaled.current) {
               logger.info('Signaling form service initialization to parent component');
+              hasSignaled.current = true;
               onFormServiceInitialized();
             }
           } else {
@@ -665,10 +668,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Send another signal after sections and fields are loaded
         // This ensures the parent knows the form is FULLY initialized
-        if (onFormServiceInitialized) {
-          logger.info('Form fields and sections loaded - form service fully initialized');
-          onFormServiceInitialized();
-        }
+        // BUT we shouldn't be calling this in an effect that re-runs based on formService changes
+        // because it would create an infinite update cycle
+        // The parent component should use its own tracking mechanism
         
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to initialize form';
