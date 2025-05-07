@@ -3,6 +3,9 @@
  * 
  * This component listens for WebSocket form submission events and calls
  * the appropriate callbacks when events are received.
+ * 
+ * Enhanced with global deduplication to prevent duplicate processing across
+ * multiple instances of the component.
  */
 
 import React, { useEffect, useContext, useRef } from 'react';
@@ -11,6 +14,23 @@ import { toast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('FormSubmissionListener');
+
+// Global tracking of processed messages and active listeners
+// These static variables are shared across all instances of the component
+const GLOBAL_STATE = {
+  // Global set to track processed submission messages across all instances
+  // This ensures we never process the same message twice, even across different components
+  processedMessages: new Set<string>(),
+  
+  // Map of active listeners by task and form type
+  // Used to prevent duplicate listeners for the same task+form combination
+  activeListeners: new Map<string, boolean>(),
+  
+  // Get a unique key for a task+form combination
+  getListenerKey(taskId: number, formType: string): string {
+    return `${taskId}:${formType}`;
+  }
+};
 
 export interface SubmissionAction {
   type: string;       // Type of action: "task_completion", "file_generation", etc.
@@ -182,25 +202,29 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           return;
         }
         
-        // Message deduplication: check if we've already processed this message
+        // Message deduplication: check if we've already processed this message globally
         const messageId = data.messageId || (data.payload?.messageId) || 
                           `${data.type}_${data.taskId || data.payload?.taskId}_${data.timestamp || data.payload?.timestamp}`;
         
-        // Skip if we've already processed this message
-        if (messageId && processedMessagesRef.current.has(messageId)) {
-          logger.debug(`Skipping duplicate message: ${messageId}`);
+        // Skip if we've already processed this message (globally across all components)
+        if (messageId && GLOBAL_STATE.processedMessages.has(messageId)) {
+          logger.debug(`Skipping duplicate message: ${messageId} (globally)`);
           return;
         }
         
-        // Add to processed messages set
+        // Add to both the global processed messages set and our local component set
         if (messageId) {
+          // Add to global set to prevent any other component from processing this same message
+          GLOBAL_STATE.processedMessages.add(messageId);
+          
+          // Also add to our local component set for cleanup on unmount
           processedMessagesRef.current.add(messageId);
           
-          // Limit size of processed messages set to avoid memory leaks
-          if (processedMessagesRef.current.size > 100) {
-            // Keep only the most recent 50 messages
-            const messagesToKeep = Array.from(processedMessagesRef.current).slice(-50);
-            processedMessagesRef.current = new Set(messagesToKeep);
+          // Limit size of global processed messages set to avoid memory leaks
+          if (GLOBAL_STATE.processedMessages.size > 500) {
+            // Keep only the most recent 250 messages
+            const messagesToKeep = Array.from(GLOBAL_STATE.processedMessages).slice(-250);
+            GLOBAL_STATE.processedMessages = new Set(messagesToKeep);
           }
         }
         
