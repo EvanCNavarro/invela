@@ -568,11 +568,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             setFormService(service);
             
             // Signal to parent component that form service is initialized
-            // We use a ref to track if this has been called already to prevent infinite loops
-            const hasSignaled = React.useRef(false);
-            if (onFormServiceInitialized && !hasSignaled.current) {
+            if (onFormServiceInitialized) {
               logger.info('Signaling form service initialization to parent component');
-              hasSignaled.current = true;
               onFormServiceInitialized();
             }
           } else {
