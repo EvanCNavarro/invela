@@ -21,6 +21,7 @@ import { FormWithLoadingWrapper } from '@/components/forms/FormWithLoadingWrappe
 import { DocumentUploadWizard } from '@/components/documents/DocumentUploadWizard';
 import { CardMethodChoice } from '@/components/card/CardMethodChoice';
 import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';
+import { FixMissingFileButton } from '@/components/FixMissingFileButton';
 import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 import { UniversalSuccessModal } from '@/components/forms/UniversalSuccessModal';
