@@ -856,6 +856,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               status: s.status
             }))
           });
+          
+          // CRITICAL FIX: If any section still has progress > 0, force reset them again
+          const hasIncorrectStatuses = sectionStatuses.some(s => s.progress > 0);
+          if (hasIncorrectStatuses && typeof setSectionStatuses === 'function') {
+            logger.info(`[DIAGNOSTIC][${operationId}] Detected incorrect section statuses after timeout, forcing reset`, {
+              timestamp: new Date().toISOString()
+            });
+            
+            // Create properly formatted reset statuses
+            const forceResetStatuses = sections.map(section => ({
+              id: section.id,
+              title: section.title,
+              totalFields: 0,
+              filledFields: 0,
+              remainingFields: 0,
+              progress: 0,
+              status: 'not-started' as const
+            }));
+            
+            // Force set the section statuses one more time
+            setSectionStatuses(forceResetStatuses);
+          }
         }
       }, 500);
     } catch (error) {
@@ -866,10 +888,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Handle fields cleared via WebSocket event
   const handleFieldsCleared = useCallback((event: FieldsEvent) => {
-    logger.info(`Fields cleared event received: ${JSON.stringify(event.type)}`);
+    const wsEventId = `ws_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    logger.info(`[DIAGNOSTIC][${wsEventId}] Fields cleared event received:`, {
+      eventType: event.type,
+      taskId: event.payload.taskId,
+      formType: event.payload.formType,
+      timestamp: new Date().toISOString()
+    });
     
     // Only process if this is for our task ID
     if (event.payload.taskId !== taskId) {
+      logger.debug(`[DIAGNOSTIC][${wsEventId}] Ignoring event for different task ID: expected ${taskId}, got ${event.payload.taskId}`);
       return;
     }
     
@@ -880,10 +909,44 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       variant: 'info',
     });
     
+    // Reset the form's internal data first
+    try {
+      logger.info(`[DIAGNOSTIC][${wsEventId}] Resetting form data before refresh`);
+      
+      // Reset form
+      if (form) {
+        form.reset({});
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Form reset completed`);
+      }
+      
+      // Create reset section statuses
+      const resetSectionStatuses = sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        totalFields: 0,
+        filledFields: 0,
+        remainingFields: 0,
+        progress: 0,
+        status: 'not-started' as const
+      }));
+      
+      // Reset section statuses if possible
+      if (typeof setSectionStatuses === 'function') {
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Manually resetting section statuses via WebSocket event`);
+        setSectionStatuses(resetSectionStatuses);
+        
+        // Set active section to first tab
+        setActiveSection(0);
+      }
+    } catch (resetError) {
+      logger.error(`[DIAGNOSTIC][${wsEventId}] Error resetting form: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
+    }
+    
     // Refresh form data after fields are cleared
     // IMPORTANT: Use skipServerRefresh=true to prevent auto-reloading of data from server
+    logger.info(`[DIAGNOSTIC][${wsEventId}] Calling refreshFormData with skipServerRefresh=true`);
     refreshFormData({ skipServerRefresh: true }).catch(error => {
-      logger.error(`Error refreshing form data after fields cleared: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`[DIAGNOSTIC][${wsEventId}] Error refreshing form data after fields cleared: ${error instanceof Error ? error.message : String(error)}`);
       
       toast({
         title: 'Update Failed',
@@ -891,7 +954,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     });
-  }, [taskId, refreshFormData]);
+    
+    // Force one more refresh after a delay to make sure UI is updated
+    setTimeout(() => {
+      if (refreshStatus) {
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Forced refreshStatus after delay`);
+        refreshStatus();
+      }
+    }, 200);
+  }, [taskId, refreshFormData, form, sections, setSectionStatuses, setActiveSection, refreshStatus]);
   
   // Create and manage the Review & Submit section
   const [allSections, setAllSections] = useState<FormSection[]>([]);
@@ -1292,7 +1363,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Force section status recalculation by resetting the active section
         try {
-          // Create properly formatted section statuses for reset
+          // Create properly formatted section statuses for reset with a unique operation ID
+          const resetOpId = `reset_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          
+          logger.info(`[DIAGNOSTIC][${resetOpId}] Preparing to reset section statuses`, {
+            sectionCount: sections.length,
+            timestamp: new Date().toISOString()
+          });
+          
           const resetSectionStatuses = sections.map(section => ({
             id: section.id,
             title: section.title,
@@ -1305,15 +1383,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           // Check that sectionStatuses state setter exists
           if (typeof setSectionStatuses === 'function') {
-            logger.info('Resetting section statuses using setter function', {
-              sectionCount: resetSectionStatuses.length
+            logger.info(`[DIAGNOSTIC][${resetOpId}] Resetting section statuses using setter function`, {
+              sectionCount: resetSectionStatuses.length,
+              sections: resetSectionStatuses.map(s => `${s.id}:${s.title}:${s.status}`),
+              timestamp: new Date().toISOString()
             });
+            
+            // CRITICAL FIX: Perform the resetSectionStatuses before AND after timeout
+            // This ensures React state updates properly even with batched updates
             setSectionStatuses(resetSectionStatuses);
+            
+            // Schedule another update after a small delay to ensure it takes effect
+            setTimeout(() => {
+              logger.info(`[DIAGNOSTIC][${resetOpId}] Reinforcing section status reset after delay`, {
+                timestamp: new Date().toISOString()
+              });
+              setSectionStatuses(resetSectionStatuses);
+            }, 100);
           } else {
-            logger.warn('setSectionStatuses function not available, cannot reset section statuses');
+            logger.warn(`[DIAGNOSTIC][${resetOpId}] setSectionStatuses function not available, cannot reset section statuses`);
             // Fallback to just refreshing the status
             if (refreshStatus) {
-              logger.info('Falling back to refreshStatus call');
+              logger.info(`[DIAGNOSTIC][${resetOpId}] Falling back to refreshStatus call`);
               refreshStatus();
             }
           }
