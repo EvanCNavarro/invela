@@ -141,6 +141,16 @@ export async function handleClearFieldsUtil(
         let validFieldCount = 0;
         let invalidFieldCount = 0;
         
+        // Check if fields is an array before iterating
+        if (!Array.isArray(fields)) {
+          logger.error(`[ClearFields][${operationId}] Fields is not an array in batch update preparation`, {
+            operationId,
+            fieldsType: typeof fields,
+            fieldsValue: fields
+          });
+          throw new Error('Fields is not an array in batch update preparation');
+        }
+        
         // Populate with empty values for each field
         for (const field of fields) {
           // Get field identifier in most reliable way
@@ -411,6 +421,17 @@ export async function handleClearFieldsUtil(
     let skippedFieldCount = 0;
     
     const uiUpdateStartTime = Date.now();
+    
+    // Verify we have an array before iterating
+    if (!Array.isArray(fields)) {
+      logger.error(`[ClearFields][${operationId}] Fields is not an array, cannot iterate`, {
+        operationId,
+        fieldsType: typeof fields,
+        fieldsValue: fields
+      });
+      showClearFieldsToast('error', 'Failed to clear fields: fields is not an array', { operationId });
+      return false;
+    }
     
     for (const field of fields) {
       // Get the field ID in the most reliable way using FormField interface
