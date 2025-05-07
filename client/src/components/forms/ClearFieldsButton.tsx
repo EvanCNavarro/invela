@@ -180,10 +180,11 @@ export function ClearFieldsButton({
         });
         
         // Show API error toast but continue with client-side clearing
-        showClearFieldsToast('warning', 'Server error, attempting client-side clear...', {
-          operationId,
-          taskId,
-          taskType
+        // Show error toast but continue with client-side clearing
+        toast({
+          title: 'Server Error',
+          description: 'Server error, attempting client-side clear...',
+          variant: 'warning'
         });
         
         // Still try client-side clearing as fallback
@@ -191,10 +192,10 @@ export function ClearFieldsButton({
           await onClear();
           
           // Show partial success toast
-          showClearFieldsToast('info', 'Form cleared on client-side only. Some data may persist.', {
-            operationId,
-            taskId,
-            taskType
+          toast({
+            title: 'Partial Success',
+            description: 'Form cleared on client-side only. Some data may persist.',
+            variant: 'info'
           });
         } catch (fallbackError) {
           // Complete failure if both server and client clear fail
@@ -212,13 +213,13 @@ export function ClearFieldsButton({
       });
       
       // Show error toast with helpful message
-      showClearFieldsToast(
-        'error', 
-        error instanceof Error 
+      toast({
+        title: 'Error',
+        description: error instanceof Error 
           ? error.message 
           : "There was an error clearing the form fields. Please try again.",
-        { operationId, taskId, taskType }
-      );
+        variant: 'destructive'
+      });
     } finally {
       // Always reset the clearing state
       setIsClearing(false);
