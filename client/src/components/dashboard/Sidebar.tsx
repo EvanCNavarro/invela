@@ -225,16 +225,43 @@ export function Sidebar({
 
     const setupWebSocketSubscriptions = async () => {
       try {
-        // Set up task count update handler (reused across all task events)
+        /**
+         * Enhanced task count update handler with proper defensive programming
+         * 
+         * This handler processes WebSocket messages for task-related events and safely
+         * updates the task count display and triggers cache invalidation when needed.
+         * 
+         * @param {TaskCountData} data - The task count data from WebSocket
+         */
         const handleTaskCountUpdate = (data: TaskCountData) => {
-          if (data.count?.total !== undefined) {
-            setTaskCount(data.count.total);
-          }
+          // Safe logging with explicit type checking to aid debugging
+          console.log(`[Sidebar] Processing task update event:`, {
+            hasCountObject: !!data?.count,
+            taskId: data?.taskId,
+            companyId: data?.companyId,
+            receivedAt: new Date().toISOString(),
+          });
           
-          // Also check if this is for our company and update as needed
-          if (company && data.companyId === company.id) {
-            // For major task changes in our company, we may need to refresh view
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          try {
+            // FIXED: Add robust null/undefined checking for the count property
+            // Only update task count state if we have valid count data
+            if (data?.count?.total !== undefined) {
+              console.log(`[Sidebar] Updating task count to: ${data.count.total}`);
+              setTaskCount(data.count.total);
+            }
+            
+            // FIXED: Add proper defensive checks for company-specific updates
+            // Check if this update is relevant to our current company context
+            const currentCompanyId = company?.id;
+            const updateCompanyId = data?.companyId;
+            
+            if (currentCompanyId && updateCompanyId && currentCompanyId === updateCompanyId) {
+              console.log(`[Sidebar] Invalidating tasks query for company ${currentCompanyId}`);
+              queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+            }
+          } catch (error) {
+            // Log any unexpected errors during processing
+            console.error(`[Sidebar] Error processing task update:`, error);
           }
         };
         
