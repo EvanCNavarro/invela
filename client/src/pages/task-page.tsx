@@ -369,7 +369,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         
         {/* Success modal - Using enhanced UniversalSuccessModal for better dynamic content */}
         <UniversalSuccessModal
-          open={showSuccessModal}
+          open={showSuccessModal && submittedFormType === 'kyb'}
           onOpenChange={(open) => setShowSuccessModal(open)}
           taskType="kyb"
           companyName={displayName}
@@ -666,9 +666,9 @@ export default function TaskPage({ params }: TaskPageProps) {
           showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
-        {/* Success modal */}
+        {/* Success modal - only show when this specific form type is submitted */}
         <SubmissionSuccessModal
-          open={showSuccessModal}
+          open={showSuccessModal && submittedFormType === 'open_banking'}
           onClose={() => setShowSuccessModal(false)}
           title="Open Banking Survey Submitted"
           actions={submissionResult.completedActions || []}
