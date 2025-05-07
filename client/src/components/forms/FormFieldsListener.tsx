@@ -1,13 +1,36 @@
-import React, { useContext, useEffect, useRef } from 'react';
-import { WebSocketContext } from '../../context/WebSocketContext';
-import { useToast } from '../../hooks/use-toast';
-import { logger } from '../../lib/logger';
+/**
+ * Form Fields Listener Component
+ * 
+ * This component listens for WebSocket form fields events and calls
+ * the appropriate callbacks when events are received.
+ * 
+ * Used to handle real-time field clearing and batch operations across
+ * multiple client sessions.
+ */
 
-// Configure logger with appropriate levels
-const loggerConfig = {
-  component: 'FormFieldsListener',
-  levels: { debug: false, info: true, warn: true, error: true }
-};
+import React, { useEffect, useContext, useRef } from 'react';
+import { WebSocketContext } from '@/providers/websocket-provider';
+import { toast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
+
+// Add type declaration for the fieldEventTracker global object
+declare global {
+  interface Window {
+    fieldEventTracker?: {
+      processedEventIds: Set<string>;
+      activeListeners: number;
+    };
+  }
+}
+
+// Global tracking of processed messages and active listeners
+// These static variables are shared across all instances of the component
+if (typeof window !== 'undefined' && !window.fieldEventTracker) {
+  window.fieldEventTracker = {
+    processedEventIds: new Set<string>(),
+    activeListeners: 0
+  };
+}
 
 export interface FieldsEventPayload {
   taskId: number;
@@ -38,175 +61,129 @@ interface FormFieldsListenerProps {
  * and invokes the appropriate callbacks. It's similar to FormSubmissionListener but focuses
  * specifically on field operations rather than form submissions.
  */
-export const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
+const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
   taskId,
   formType,
   onFieldsCleared,
-  showToasts = false // Default to false to prevent duplicate toasts
+  showToasts = true
 }) => {
   const { socket, isConnected } = useContext(WebSocketContext);
-  const toast = useToast();
-  
-  // Use refs to track listener state and prevent unnecessary reattachment
   const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
-  const listenerInfoRef = useRef<{taskId: number; formType: string} | null>(null);
-  const hasSetupListenerRef = useRef<boolean>(false);
-  const reconnectionAttemptsRef = useRef<number>(0);
-  
-  // Use refs for callback functions to prevent unnecessary reattachment
-  const onFieldsClearedRef = useRef(onFieldsCleared);
-  const showToastsRef = useRef(showToasts);
-  
-  // Update refs when props change
-  useEffect(() => {
-    onFieldsClearedRef.current = onFieldsCleared;
-    showToastsRef.current = showToasts;
-  }, [onFieldsCleared, showToasts]);
+  const listenerInfoRef = useRef({ taskId, formType });
+  const hasSetupListenerRef = useRef(false);
 
-  // Main effect for setting up WebSocket listeners
   useEffect(() => {
-    // Only proceed if we actually have a socket and it's connected
+    // We need both the socket and an active connection
     if (!socket || !isConnected) {
-      // Don't show warnings during initial page load - only when we've been connected before
-      if (hasSetupListenerRef.current) {
-        reconnectionAttemptsRef.current += 1;
-        logger.warn(`WebSocket not connected (attempt ${reconnectionAttemptsRef.current}), form field updates will not be received`);
-      }
       return;
     }
-    
-    // Reset reconnection counter when connected
-    reconnectionAttemptsRef.current = 0;
-    
-    // Handle scenario where socket reconnected but the component did not remount
-    // We check both for new task and for existing socket listener attachment
-    const needsReattachment = socket &&
-      (socket.readyState === WebSocket.OPEN) &&
-      handleMessageRef.current && 
-      !hasSetupListenerRef.current;
-    
-    // Check if we need to setup a new listener
-    const needsNewListener = 
-      !hasSetupListenerRef.current || 
-      !listenerInfoRef.current ||
-      listenerInfoRef.current.taskId !== taskId ||
-      listenerInfoRef.current.formType !== formType ||
-      needsReattachment;
-      
-    // If we don't need a new listener, just return
-    if (!needsNewListener && hasSetupListenerRef.current && handleMessageRef.current) {
+
+    // Skip if we've already set up a listener for this task/form
+    if (hasSetupListenerRef.current && 
+        listenerInfoRef.current.taskId === taskId && 
+        listenerInfoRef.current.formType === formType) {
       return;
     }
-    
-    // Clean up any existing listener if we're setting up a new one
-    if (socket && handleMessageRef.current && hasSetupListenerRef.current) {
-      try {
-        socket.removeEventListener('message', handleMessageRef.current);
-        logger.info(`Cleaned up form fields listener for task ${listenerInfoRef.current?.taskId}`);
-      } catch (e) {
-        // Ignore errors removing listeners from potentially closed sockets
-      }
+
+    // Track active listeners for this specific task/form combination
+    if (typeof window !== 'undefined' && window.fieldEventTracker) {
+      window.fieldEventTracker.activeListeners++;
     }
-    
-    // Create a new message handler function
-    const handleMessage = (event: MessageEvent): void => {
+
+    logger.info(`Setting up form fields listener for task ${taskId} (${formType})`);
+
+    // Define message handler
+    const handleMessage = (messageEvent: MessageEvent): void => {
       try {
-        const data = JSON.parse(event.data);
+        // Parse incoming message
+        const message = JSON.parse(messageEvent.data);
         
-        // Skip events that don't match our expected type patterns
-        if (!data.type || (
-          data.type !== 'fields_cleared' && 
-          data.type !== 'task_update' && 
-          data.type !== 'task_updated'
-        )) {
+        // Process only 'form_fields' type messages
+        if (message.type !== 'form_fields') {
           return;
         }
         
-        logger.debug('Received WebSocket message:', data);
-        
-        // Extract payload from potentially nested structures
         let payload: FieldsEventPayload;
         
-        if (data.payload) {
-          payload = data.payload;
-        } else if (data.data) {
-          payload = data.data;
+        // Handle both 'payload' and 'data' formats for backwards compatibility
+        if (message.payload) {
+          payload = message.payload;
+        } else if (message.data) {
+          payload = message.data;
         } else {
-          payload = data;
+          logger.warn('Received form_fields message with no payload or data');
+          return;
         }
-        
-        // Handle numeric or string taskId formats (server can send either)
-        const extractedTaskId = payload.taskId || payload.formId || payload.id || null;
-        if (extractedTaskId !== null) {
-          // Ensure taskId is a number for comparison
-          payload.taskId = Number(extractedTaskId);
+
+        // Ensure the message is for this task and form type
+        if (payload.taskId !== taskId || payload.formType !== formType) {
+          return;
         }
+
+        // Create a unique message ID to prevent duplicate processing
+        const messageId = `field_${payload.action}_${payload.taskId}_${payload.timestamp || Date.now()}`;
         
-        // Log the detailed event structure to help debug compatibility issues
-        logger.debug('FormFieldsListener: Raw WebSocket message structure:', {
-          messageType: data.type,
-          hasPayload: data.payload !== undefined,
-          hasData: data.data !== undefined,
-          extractedTaskId,
-          expectedTaskId: taskId,
-          formType: payload.formType,
-          expectedFormType: formType,
-          action: payload.action,
-          rootKeys: Object.keys(data),
-          payloadKeys: Object.keys(payload)
-        });
-        
-        // Only process events for this task
-        if (payload.taskId !== taskId) {
+        // Skip if we've already processed this message (global deduplication)
+        if (typeof window !== 'undefined' && window.fieldEventTracker?.processedEventIds.has(messageId)) {
+          logger.debug(`Skipping already processed message: ${messageId}`);
           return;
         }
         
-        // For task_update events with fields_cleared action, provide the formType if missing
-        if (payload.action === 'fields_cleared' && !payload.formType && 
-           (data.type === 'task_update' || data.type === 'task_updated')) {
-          payload.formType = formType;
-          logger.debug(`Added formType to fields_cleared payload: ${formType}`);
-        } else if (payload.formType !== formType) {
-          // Skip events for different form types
-          logger.debug(`Skipping event for different form type: ${payload.formType} (expected: ${formType})`);
-          return;
-        }
-        
-        // Now handle the event based on the specific action
-        if (data.type === 'fields_cleared' || payload.action === 'fields_cleared') {
-          logger.info(`Fields cleared event received for task ${taskId}`, {
-            taskId,
-            formType,
-            timestamp: payload.timestamp || new Date().toISOString(),
-            progress: payload.progress
-          });
+        // Mark this message as processed
+        if (typeof window !== 'undefined' && window.fieldEventTracker) {
+          window.fieldEventTracker.processedEventIds.add(messageId);
           
-          // Show toast notification if enabled
-          if (showToastsRef.current) {
-            toast({
-              title: 'Form Fields Cleared',
-              description: 'The form fields have been cleared by another user.',
-              variant: 'info',
-            });
-          }
-          
-          // Invoke the callback if provided
-          if (onFieldsClearedRef.current) {
-            onFieldsClearedRef.current({
-              type: 'fields_cleared',
-              payload,
-              timestamp: data.timestamp || payload.timestamp
-            });
+          // Prevent the set from growing too large
+          if (window.fieldEventTracker.processedEventIds.size > 100) {
+            const values = Array.from(window.fieldEventTracker.processedEventIds);
+            window.fieldEventTracker.processedEventIds = new Set(values.slice(-50));
           }
         }
-      } catch (err) {
-        // Just log errors to avoid crashing the component
-        logger.error('Error processing WebSocket fields event:', err);
+
+        // Create a standardized event object
+        const fieldsEvent: FieldsEvent = {
+          type: payload.action,
+          payload,
+          timestamp: payload.timestamp || new Date().toISOString()
+        };
+
+        // Handle different field operations based on the action
+        switch (payload.action) {
+          case 'fields_cleared':
+            logger.info(`Fields cleared for task ${taskId} (${formType})`);
+            
+            // Show a toast notification if enabled
+            if (showToasts) {
+              toast({
+                title: 'Form Fields Cleared',
+                description: 'All form fields have been cleared.',
+                variant: 'info'
+              });
+            }
+            
+            // Call the onFieldsCleared callback if provided
+            if (onFieldsCleared) {
+              onFieldsCleared(fieldsEvent);
+            }
+            break;
+            
+          case 'bulk_update':
+            logger.info(`Bulk update for task ${taskId} (${formType})`);
+            
+            // No toast needed for bulk updates as they are typically handled by the
+            // form directly through state updates
+            
+            // You can add a callback for bulk updates if needed in the future
+            break;
+            
+          default:
+            logger.debug(`Unhandled form_fields action: ${payload.action}`);
+        }
+      } catch (error) {
+        logger.error('Error processing form_fields message:', error);
       }
     };
-  
-    logger.info(`Setting up WebSocket listener for fields events on task ${taskId} (${formType})`);
-    
+
     // Store refs for cleanup
     handleMessageRef.current = handleMessage;
     listenerInfoRef.current = { taskId, formType };
@@ -221,6 +198,11 @@ export const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         try {
           socket.removeEventListener('message', handleMessageRef.current);
           logger.info(`Cleaned up form fields listener for task ${taskId}`);
+          
+          // Update active listener count
+          if (typeof window !== 'undefined' && window.fieldEventTracker) {
+            window.fieldEventTracker.activeListeners = Math.max(0, window.fieldEventTracker.activeListeners - 1);
+          }
         } catch (e) {
           // Ignore errors removing listeners from potentially closed sockets
         } finally {
@@ -229,7 +211,7 @@ export const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         }
       }
     };
-  }, [socket, isConnected, taskId, formType]); // Remove callback dependencies
+  }, [socket, isConnected, taskId, formType, onFieldsCleared, showToasts]);
 
   return null; // This component doesn't render anything
 };
