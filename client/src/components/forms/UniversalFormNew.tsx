@@ -226,9 +226,9 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
     <div className="w-full mx-auto" ref={topRef}>
       <div className="bg-white border rounded-md shadow-sm">
         {/* Header with submission info and download options - Improved */}
-        <div className="flex justify-between items-center p-6 border-b bg-gray-50">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
+        <div className="p-6 border-b bg-gray-50">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex items-center gap-2">
               <div className="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-100 text-emerald-700 flex items-center gap-1.5">
                 <CheckCircle className="h-3.5 w-3.5" />
                 <span>SUBMITTED</span>
@@ -239,9 +239,59 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                 </div>
               )}
             </div>
-            <h1 className="text-xl font-bold text-gray-900">{getFormHeading()}</h1>
+            
+            {/* Download dropdown - Now in line with header */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Form
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem 
+                  onClick={() => handleDownload('json')}
+                  className="cursor-pointer flex items-center py-2"
+                >
+                  <FileJson className="mr-2 h-4 w-4 text-blue-500" />
+                  <div>
+                    <p className="font-medium">JSON Format</p>
+                    <p className="text-xs text-gray-500">For data processing</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleDownload('csv')}
+                  className="cursor-pointer flex items-center py-2"
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
+                  <div>
+                    <p className="font-medium">Excel/CSV Format</p>
+                    <p className="text-xs text-gray-500">For spreadsheet applications</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleDownload('txt')}
+                  className="cursor-pointer flex items-center py-2"
+                >
+                  <FileText className="mr-2 h-4 w-4 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Text Format</p>
+                    <p className="text-xs text-gray-500">Simple text document</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">{getFormHeading()}</h1>
+            
             {/* All metadata in expandable section */}
-            <details className="mt-2 bg-gray-50 rounded-md border border-gray-200 overflow-hidden group">
+            <details className="bg-gray-50 rounded-md border border-gray-200 overflow-hidden group">
               <summary className="flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-medium text-gray-700 hover:bg-gray-100">
                 <div className="flex items-center gap-2">
                   <Info className="h-4 w-4 text-gray-500" />
@@ -394,52 +444,6 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
               </div>
             </details>
           </div>
-          
-          {/* Download dropdown - Enhanced styling */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="default" 
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download Form
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem 
-                onClick={() => handleDownload('json')}
-                className="cursor-pointer flex items-center py-2"
-              >
-                <FileJson className="mr-2 h-4 w-4 text-blue-500" />
-                <div>
-                  <p className="font-medium">JSON Format</p>
-                  <p className="text-xs text-gray-500">For data processing</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => handleDownload('csv')}
-                className="cursor-pointer flex items-center py-2"
-              >
-                <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
-                <div>
-                  <p className="font-medium">Excel/CSV Format</p>
-                  <p className="text-xs text-gray-500">For spreadsheet applications</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => handleDownload('txt')}
-                className="cursor-pointer flex items-center py-2"
-              >
-                <FileText className="mr-2 h-4 w-4 text-gray-600" />
-                <div>
-                  <p className="font-medium">Text Format</p>
-                  <p className="text-xs text-gray-500">Simple text document</p>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
         
         {/* Form content as read-only accordions */}
