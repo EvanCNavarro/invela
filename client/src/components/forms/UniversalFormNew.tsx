@@ -78,8 +78,9 @@ import { useUser } from '@/hooks/useUser';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { userContext } from '@/lib/user-context';
 
-// Import WebSocket-based form submission listener and related components
+// Import WebSocket-based form submission and fields listeners and related components
 import { FormSubmissionListener, FormSubmissionEvent } from './FormSubmissionListener';
+import FormFieldsListener from './FormFieldsListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 
 import SectionContent from './SectionContent';
@@ -630,6 +631,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<FormSubmissionEvent | null>(null);
   const modalShownRef = useRef(false); // Ref to track if modal has been shown
+  
+  // State for WebSocket fields events
+  const [lastFieldsEvent, setLastFieldsEvent] = useState<any>(null);
   
   // Query for task data
   const { data: task, refetch: refreshTask } = useQuery<Task>({
