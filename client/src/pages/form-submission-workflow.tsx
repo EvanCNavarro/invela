@@ -460,7 +460,7 @@ export default function FormSubmissionWorkflowPage() {
         onSuccess={handleSubmissionSuccess}
         onError={handleSubmissionError}
         onInProgress={handleSubmissionInProgress}
-        showToasts
+        showToasts={false} // Disable toasts here since we're showing a modal
       />
       
       {/* Success Modal */}

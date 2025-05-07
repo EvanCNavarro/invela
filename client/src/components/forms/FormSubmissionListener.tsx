@@ -67,7 +67,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   onSuccess,
   onError,
   onInProgress,
-  showToasts = false
+  showToasts = false // Default to false to prevent duplicate toasts
 }) => {
   const { socket, isConnected } = useContext(WebSocketContext);
   
@@ -361,7 +361,8 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             onSuccessRef.current(submissionEvent);
           }
         } else if (formStatus === 'error') {
-          // Always show error toasts since errors need to be visible
+          // Only show error toasts if explicitly enabled
+          // This prevents duplicate error messages when parent component handles errors
           if (showToastsRef.current) {
             toast({
               title: 'Form submission failed',
