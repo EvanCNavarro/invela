@@ -16,7 +16,7 @@ import {
   sendFormSubmissionError, 
   sendFormSubmissionInProgress 
 } from '../utils/form-submission-notifications';
-import { broadcastFormSubmissionCompleted } from '../utils/unified-websocket';
+import { broadcastFormSubmission } from '../utils/unified-websocket';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
@@ -428,26 +428,26 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           timestamp: submissionTimestamp
         });
         
-        // IMPORTANT: Use ONLY broadcastFormSubmissionCompleted with a 'final_completion' source
+        // IMPORTANT: Use broadcastFormSubmission with type='form_submission_completed'
         // We no longer need sendFormSubmissionSuccess which was causing duplicate notifications
-        broadcastFormSubmissionCompleted(
-          formType,
+        broadcastFormSubmission({
           taskId,
+          formType,
+          status: 'completed',
           companyId,
-          {
+          metadata: {
             fileId: fileId as number | undefined,
             fileName: standardizedFormData.fileName || undefined,
             unlockedTabs: tabResult.availableTabs,
             completedActions, // Pass the single source of truth for actions
-            metadata: {
-              formSubmission: true,
-              availableTabs: tabResult.availableTabs,
-              submissionComplete: true,
-              finalCompletion: true,
-              timestamp: submissionTimestamp,
-              source: 'final_completion' // Add source to metadata as well for redundancy
-            }
+            formSubmission: true,
+            availableTabs: tabResult.availableTabs,
+            submissionComplete: true,
+            finalCompletion: true,
+            timestamp: submissionTimestamp,
+            source: 'final_completion' // Add source to metadata for tracking
           }
+        }
         );
       } catch (wsError) {
         // Log error but don't fail the transaction

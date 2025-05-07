@@ -1,598 +1,372 @@
 /**
- * Unified WebSocket Server Module
+ * Unified WebSocket Server
  * 
- * This module provides a centralized way to manage WebSocket connections and broadcasts
- * across the application, ensuring consistent messaging format and error handling.
+ * This module provides a standardized WebSocket implementation for the application,
+ * supporting real-time communication with clients across various features.
+ * 
+ * Features:
+ * - Centralized WebSocket server management
+ * - Typed message handling for different event types
+ * - Client authentication and connection tracking
+ * - Broadcast functionality for server-to-client notifications
  */
 
 import { WebSocketServer, WebSocket } from 'ws';
-import http from 'http';
+import { Server } from 'http';
+import { logger } from './logger';
 
+const wsLogger = logger.child({ module: 'WebSocket' });
+
+// WebSocket server instance
 let wss: WebSocketServer | null = null;
-let clients: Map<string, WebSocket> = new Map();
+
+// Connected clients with authentication status
+interface ConnectedClient {
+  socket: WebSocket;
+  clientId: string;
+  userId?: number;
+  companyId?: number;
+  authenticated: boolean;
+  connectedAt: Date;
+}
+
+// Track connected clients
+const clients: Map<string, ConnectedClient> = new Map();
+
+// Message types
+type MessageType = 
+  | 'authenticate'
+  | 'ping'
+  | 'task_updated'
+  | 'task_reconciled'
+  | 'form_submission_completed'
+  | 'tabs_updated'
+  | 'notification';
+
+// Base message interface
+interface WebSocketMessage {
+  type: MessageType;
+  timestamp: string;
+}
+
+// Authentication message
+interface AuthMessage extends WebSocketMessage {
+  type: 'authenticate';
+  userId: number;
+  companyId: number;
+  clientId: string;
+}
+
+// Task update message
+interface TaskUpdateMessage extends WebSocketMessage {
+  type: 'task_updated';
+  taskId: number;
+  message?: string;
+  metadata?: Record<string, any>;
+}
+
+// Task reconciliation message
+interface TaskReconciledMessage extends WebSocketMessage {
+  type: 'task_reconciled';
+  taskId: number;
+  progress: number;
+  status: string;
+  metadata?: Record<string, any>;
+}
+
+// Form submission completed message
+interface FormSubmissionCompletedMessage extends WebSocketMessage {
+  type: 'form_submission_completed';
+  taskId: number;
+  formType: string;
+  status: string;
+  metadata?: Record<string, any>;
+}
+
+// Tabs updated message
+interface TabsUpdatedMessage extends WebSocketMessage {
+  type: 'tabs_updated';
+  companyId: number;
+  tabs: string[];
+  metadata?: Record<string, any>;
+}
+
+// Notification message
+interface NotificationMessage extends WebSocketMessage {
+  type: 'notification';
+  title: string;
+  message: string;
+  variant?: 'default' | 'destructive' | 'success';
+  metadata?: Record<string, any>;
+}
+
+// Union type of all message types
+type WebSocketPayload = 
+  | AuthMessage
+  | TaskUpdateMessage
+  | TaskReconciledMessage
+  | FormSubmissionCompletedMessage
+  | TabsUpdatedMessage
+  | NotificationMessage;
 
 /**
  * Initialize the WebSocket server
+ * 
+ * @param server HTTP server instance to attach WebSocket server to
+ * @param path Path for the WebSocket server
  */
-export function initWebSocketServer(server: http.Server, path: string = '/ws') {
+export function initializeWebSocketServer(server: Server, path: string = '/ws'): void {
   if (wss) {
-    console.log('[WebSocket] WebSocket server already initialized');
-    return wss;
+    wsLogger.warn('WebSocket server already initialized, skipping initialization');
+    return;
   }
-  
-  // Create WebSocket server on the specified path
-  wss = new WebSocketServer({ 
-    server, 
-    path,
-    clientTracking: true,
-    // Configure for better reliability
-    perMessageDeflate: {
-      zlibDeflateOptions: {
-        chunkSize: 1024,
-        memLevel: 7,
-        level: 3
-      },
-      zlibInflateOptions: {
-        chunkSize: 10 * 1024
-      },
-      // Below options specified as default values
-      clientNoContextTakeover: true, // Defaults to negotiated value
-      serverNoContextTakeover: true, // Defaults to negotiated value
-      serverMaxWindowBits: 10, // Defaults to negotiated value
-      concurrencyLimit: 10, // Limits zlib concurrency for performance
-      threshold: 1024 // Size below which messages are not compressed
-    }
-  });
-  
-  // Generate a unique ID for the server instance
-  const serverId = `${Math.random().toString(36).substring(2, 8)}`;
-  console.log(`[INFO] Unified WebSocket server initialized successfully with details:`, {
-    clients: wss.clients.size,
+
+  // Create WebSocket server
+  wss = new WebSocketServer({ server, path });
+  const serverId = Math.random().toString(36).substring(2, 8);
+
+  wsLogger.info('Unified WebSocket server initialized successfully', {
+    clients: clients.size,
     path,
     id: serverId,
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
-  
-  // Set up heartbeat interval to detect and clean up dead connections
-  const pingInterval = setInterval(() => {
-    if (!wss || wss.clients.size === 0) return;
-    
-    // Send a heartbeat ping to all clients at regular interval
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        try {
-          // Send a ping to keep connection alive and detect dead clients
-          client.ping('', false, (error) => {
-            if (error) console.error('[WebSocket] Ping error:', error);
-          });
-        } catch (e) {
-          console.error('[WebSocket] Error sending ping:', e);
-        }
-      }
-    });
-  }, 30000); // Every 30 seconds
-  
-  // Handle new connections
-  wss.on('connection', (ws, req) => {
-    // Generate a unique client ID with timestamp for tracking
+
+  // Set up event handlers
+  wss.on('connection', (socket: WebSocket, request) => {
+    // Generate a unique client ID
     const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    clients.set(clientId, ws);
     
-    // Track connection health
-    const connectionData = {
-      id: clientId,
-      lastActivity: Date.now(),
-      isAlive: true,
-      hasIdentified: false,
-      userId: null as number | null,
-      companyId: null as number | null,
-      connectTime: new Date().toISOString(),
-    };
-    
-    console.log(`[INFO] [WebSocket] Client connected: ${clientId}`);
-    
-    // When a pong is received, mark the connection as alive
-    ws.on('pong', () => {
-      connectionData.isAlive = true;
-      connectionData.lastActivity = Date.now();
+    // Store client information
+    clients.set(clientId, {
+      socket,
+      clientId,
+      authenticated: false,
+      connectedAt: new Date()
     });
     
-    // Send a welcome message to confirm connection
-    try {
-      ws.send(JSON.stringify({
-        type: 'connection_established',
-        payload: {
-          message: 'Connection established',
-          clientId,
-          timestamp: new Date().toISOString(),
-        },
-        data: {
-          message: 'Connection established',
-          clientId,
-          timestamp: new Date().toISOString(),
-        }
-      }));
-    } catch (sendError) {
-      console.error(`[ERROR] [WebSocket] Error sending welcome message:`, sendError);
-    }
+    wsLogger.info('Client connected', { clientId, clients: clients.size });
     
-    // Listen for messages from this client
-    ws.on('message', (message) => {
-      connectionData.lastActivity = Date.now();
-      connectionData.isAlive = true;
-      
+    // Send connection established message
+    socket.send(JSON.stringify({
+      type: 'connection_established',
+      clientId,
+      timestamp: new Date().toISOString(),
+      message: 'Connection established'
+    }));
+    
+    // Handle messages from client
+    socket.on('message', (rawMessage: string) => {
       try {
-        const parsedMessage = JSON.parse(message.toString());
-        console.log(`[INFO] [WebSocket] Received message from client ${clientId}:`, parsedMessage);
+        const message = JSON.parse(rawMessage.toString()) as WebSocketPayload;
         
-        // Handle authentication message
-        if (parsedMessage.type === 'authenticate') {
-          const { userId, companyId } = parsedMessage;
-          connectionData.userId = userId || null;
-          connectionData.companyId = companyId || null;
-          connectionData.hasIdentified = true;
-          
-          console.log(`[INFO] [WebSocket] Authentication from client ${clientId}:`, {
-            userId,
-            companyId,
-            hasToken: !!req.headers.cookie?.includes('connect.sid')
-          });
-          
-          // Send authentication confirmation
-          ws.send(JSON.stringify({
-            type: 'authenticated',
-            payload: {
-              userId,
-              companyId,
-              clientId,
-              timestamp: new Date().toISOString(),
-            },
-            data: {
-              userId,
-              companyId,
-              clientId,
-              timestamp: new Date().toISOString(),
-            }
-          }));
-        }
+        wsLogger.info(`Received message from client ${clientId}`, message);
         
-        // Handle ping message
-        if (parsedMessage.type === 'ping') {
-          ws.send(JSON.stringify({
-            type: 'pong',
-            payload: {
+        // Handle different message types
+        switch (message.type) {
+          case 'authenticate':
+            handleAuthentication(clientId, message as AuthMessage);
+            break;
+            
+          case 'ping':
+            // Simple ping-pong to keep connection alive
+            socket.send(JSON.stringify({
+              type: 'pong',
               timestamp: new Date().toISOString(),
-            },
-            data: {
-              timestamp: new Date().toISOString(),
-            }
-          }));
+              echo: message
+            }));
+            break;
+            
+          default:
+            wsLogger.warn(`Unknown message type: ${message.type} from ${clientId}`);
         }
       } catch (error) {
-        console.error(`[ERROR] [WebSocket] Error processing message:`, error);
+        wsLogger.error('Error processing WebSocket message', {
+          error: error instanceof Error ? error.message : String(error),
+          clientId
+        });
       }
     });
     
-    // Handle disconnections
-    ws.on('close', (code, reason) => {
-      console.log(`[INFO] [WebSocket] Client disconnected: ${clientId}`, {
-        code,
-        reason: reason.toString() || 'No reason provided',
-        connectionDuration: `${Math.round((Date.now() - new Date(connectionData.connectTime).getTime()) / 1000)}s`
-      });
+    // Handle client disconnection
+    socket.on('close', (code: number, reason: string) => {
       clients.delete(clientId);
+      
+      wsLogger.info('Client disconnected', {
+        clientId,
+        code,
+        reason: reason.toString(),
+        remainingClients: clients.size
+      });
     });
     
     // Handle errors
-    ws.on('error', (error) => {
-      console.error(`[ERROR] [WebSocket] Client error: ${clientId}`, {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+    socket.on('error', (error) => {
+      wsLogger.error('[error] [websocket] WebSocket error', {
+        errorEvent: error,
+        connectionId: clientId,
+        timestamp: new Date().toISOString()
       });
     });
   });
   
-  // Handle server errors with detailed logging
+  // Handle server errors
   wss.on('error', (error) => {
-    console.error(`[ERROR] [WebSocket] Server error:`, {
+    wsLogger.error('WebSocket server error', {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString(),
-      clients: wss.clients.size
+      stack: error instanceof Error ? error.stack : undefined
     });
   });
+}
+
+/**
+ * Handle client authentication message
+ * 
+ * @param clientId Client ID
+ * @param message Authentication message
+ */
+function handleAuthentication(clientId: string, message: AuthMessage): void {
+  const client = clients.get(clientId);
   
-  // Handle server shutdown
-  process.on('SIGTERM', () => {
-    console.log('[INFO] [WebSocket] SIGTERM received, closing WebSocket server');
-    clearInterval(pingInterval);
-    
-    if (wss) {
-      try {
-        wss.close();
-        console.log('[INFO] [WebSocket] Server closed successfully');
-      } catch (error) {
-        console.error('[ERROR] [WebSocket] Error closing server:', error);
-      }
-    }
+  if (!client) {
+    wsLogger.warn(`Cannot authenticate unknown client: ${clientId}`);
+    return;
+  }
+  
+  // Update client with authentication information
+  client.userId = message.userId;
+  client.companyId = message.companyId;
+  client.authenticated = true;
+  
+  clients.set(clientId, client);
+  
+  wsLogger.info(`Authentication from client ${clientId}`, {
+    userId: message.userId,
+    companyId: message.companyId,
+    hasToken: true
   });
   
-  return wss;
+  // Send authentication confirmation
+  client.socket.send(JSON.stringify({
+    type: 'authenticated',
+    userId: message.userId,
+    companyId: message.companyId,
+    timestamp: new Date().toISOString(),
+    message: 'Authentication successful'
+  }));
 }
 
 /**
  * Broadcast a message to all connected clients
+ * 
+ * @param type Message type
+ * @param payload Message payload
+ * @param filter Optional filter function to determine which clients receive the message
  */
-export function broadcast(type: string, payload: any) {
-  // Generate a trace ID for debugging
-  const traceId = `brc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
+export function broadcast<T extends WebSocketPayload>(
+  type: MessageType,
+  payload: Omit<T, 'type' | 'timestamp'>,
+  filter?: (client: ConnectedClient) => boolean
+): void {
   if (!wss) {
-    console.warn(`[WARN] [WebSocket] Cannot broadcast, WebSocket server not initialized (trace: ${traceId})`);
-    return false;
+    wsLogger.warn('Cannot broadcast: WebSocket server not initialized');
+    return;
   }
   
-  // Extract taskId if present to ensure it's available at the top level
-  const taskId = payload.taskId || payload.id || null;
+  if (wss.readyState !== WebSocket.OPEN) {
+    wsLogger.warn(`Cannot broadcast: WebSocket server not in OPEN state (state: ${wss.readyState})`);
+    return;
+  }
   
-  // Log detailed information about broadcast attempt with task and trace IDs
-  console.log(`[INFO] [WebSocket] Preparing to broadcast ${type} message:`, {
+  // Create full message with type and timestamp
+  const message = {
     type,
-    taskId,
-    traceId,
-    clientCount: wss?.clients?.size || 0,
     timestamp: new Date().toISOString(),
+    ...payload
+  };
+  
+  const messageString = JSON.stringify(message);
+  let sentCount = 0;
+  
+  // Send to all clients, or filtered clients if filter provided
+  clients.forEach((client) => {
+    if (!filter || filter(client)) {
+      if (client.socket.readyState === WebSocket.OPEN) {
+        client.socket.send(messageString);
+        sentCount++;
+      }
+    }
   });
   
-  try {
-    const message = JSON.stringify({
-      type,
-      payload,
-      data: payload, // For backward compatibility
-      taskId: taskId, // Include taskId at the top level for client compatibility
-      timestamp: new Date().toISOString(),
-      traceId // Include traceId for debugging
-    });
-    
-    let sent = 0;
-    // Add null check to satisfy TypeScript
-    if (wss && wss.clients) {
-      wss.clients.forEach((client) => {
-        try {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
-            sent++;
-          } else {
-            console.log(`[WebSocket] Skip client with readyState: ${client.readyState}`, {
-              traceId, 
-              isOpen: client.readyState === WebSocket.OPEN,
-              readyState: client.readyState
-            });
-          }
-        } catch (sendError) {
-          console.error(`[ERROR] [WebSocket] Error sending to client:`, {
-            error: sendError instanceof Error ? sendError.message : String(sendError),
-            traceId
-          });
-        }
-      });
-    }
-    
-    // Log detailed results
-    if (sent > 0) {
-      console.log(`[INFO] [WebSocket] Successfully broadcast ${type} to ${sent} clients`, {
-        traceId,
-        taskId,
-        sent,
-        total: wss?.clients?.size || 0
-      });
-    } else {
-      console.warn(`[WARN] [WebSocket] No clients received ${type} broadcast`, {
-        traceId,
-        taskId,
-        clientCount: wss?.clients?.size || 0
-      });
-    }
-    
-    return sent > 0;
-  } catch (error) {
-    console.error(`[ERROR] [WebSocket] Failed to broadcast ${type}:`, {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      traceId,
-      taskId
-    });
-    return false;
-  }
+  wsLogger.info(`Broadcast message of type '${type}' sent to ${sentCount} clients`, {
+    messageType: type,
+    recipients: sentCount,
+    totalClients: clients.size,
+    filtered: !!filter
+  });
 }
 
-// Alias for broadcast to maintain backward compatibility with existing code
-export const broadcastMessage = broadcast;
+/**
+ * Get the current count of connected clients
+ * 
+ * @returns Number of connected clients
+ */
+export function getConnectedClientCount(): number {
+  return clients.size;
+}
 
 /**
- * Get the active WebSocket server instance
+ * Get the WebSocket server instance
+ * 
+ * @returns The WebSocket server instance or null if not initialized
  */
-export function getWebSocketServer() {
+export function getWebSocketServer(): WebSocketServer | null {
   return wss;
 }
 
+// Utility broadcast functions for common scenarios
+
 /**
- * Get the number of connected clients
+ * Broadcast a task update message
+ * 
+ * @param payload Task update payload
  */
-export function getConnectedClientCount() {
-  if (!wss) return 0;
-  return wss.clients.size;
+export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
+  broadcast<TaskUpdateMessage>('task_updated', payload);
 }
 
 /**
- * Broadcast a company tabs update message to all connected clients
+ * Broadcast a task reconciliation message
  * 
- * This is a critical function for ensuring clients see the file-vault tab
- * immediately after form submission and file creation.
- * 
- * @param companyId The ID of the company whose tabs were updated
- * @param availableTabs The updated array of available tabs
- * @param metadata Additional metadata to include in the message
- * @returns Boolean indicating whether the broadcast was successful
+ * @param payload Task reconciliation payload
  */
-export function broadcastCompanyTabsUpdate(
-  companyId: number,
-  availableTabs: string[],
-  metadata: Record<string, any> = {}
-) {
-  // Create timestamp once for consistent messaging
-  const timestamp = new Date().toISOString();
-  
-  // Log detailed information
-  console.log(`[WebSocket] Broadcasting company tabs update:`, {
-    companyId,
-    availableTabs,
-    hasFileVault: availableTabs.includes('file-vault'),
-    timestamp
-  });
-  
-  // Create a standardized message payload structure
-  const payload = {
-    companyId,
-    availableTabs,
-    metadata: {
-      ...metadata,
-      cache_invalidation: true, // Always force cache invalidation
-      timestamp
-    },
-    timestamp
-  };
-  
-  // Send both specific and general broadcasts for maximum compatibility
-  // 1. First send the specific 'company_tabs_updated' event
-  const tabsUpdateResult = broadcast('company_tabs_updated', payload);
-  
-  // 2. Send a general company_updated event as well for clients that listen for that
-  const companyUpdateResult = broadcast('company_updated', {
-    ...payload,
-    company: {
-      id: companyId,
-      available_tabs: availableTabs
-    }
-  });
-  
-  // 3. Schedule additional delayed broadcasts to ensure clients receive updates
-  // This is critical for clients that might reconnect after network issues
-  const delayTimes = [1000, 2500]; // 1s, 2.5s delays
-  delayTimes.forEach(delay => {
-    setTimeout(() => {
-      try {
-        console.log(`[WebSocket] Sending delayed (${delay}ms) company tabs broadcast for company ${companyId}`);
-        broadcast('company_tabs_updated', {
-          ...payload,
-          delayed: true,
-          delayMs: delay
-        });
-      } catch (e) {
-        console.error(`[WebSocket] Error in delayed tabs broadcast:`, e);
-      }
-    }, delay);
-  });
-  
-  return tabsUpdateResult || companyUpdateResult;
+export function broadcastTaskReconciled(payload: Omit<TaskReconciledMessage, 'type' | 'timestamp'>): void {
+  broadcast<TaskReconciledMessage>('task_reconciled', payload);
 }
 
 /**
- * Broadcast a task update message to all connected clients
+ * Broadcast a form submission completed message
  * 
- * @param taskId The ID of the task that was updated
- * @param progress The new progress value (0-100)
- * @param status The new status ('not_started', 'in_progress', etc.)
- * @param metadata Additional metadata to include in the message
- * @returns Boolean indicating whether the broadcast was successful
+ * @param payload Form submission completed payload
  */
-export function broadcastTaskUpdate(
-  taskId: number,
-  progress: number,
-  status: string,
-  metadata: Record<string, any> = {}
-) {
-  // Create timestamp once for consistent messaging
-  const timestamp = new Date().toISOString();
-  
-  // Create a standardized message payload structure
-  const payload = {
-    id: taskId,
-    taskId,
-    status,
-    progress,
-    metadata: {
-      ...metadata,
-      lastUpdate: timestamp
-    },
-    timestamp
-  };
-  
-  return broadcast('task_update', payload);
+export function broadcastFormSubmission(payload: Omit<FormSubmissionCompletedMessage, 'type' | 'timestamp'>): void {
+  broadcast<FormSubmissionCompletedMessage>('form_submission_completed', payload);
 }
 
 /**
- * Broadcast a form submission event to all connected clients
+ * Broadcast a tabs updated message
  * 
- * @param formType The type of form that was submitted ('kyb', 'ky3p', 'open_banking')
- * @param taskId The ID of the task associated with the submission
- * @param companyId The ID of the company associated with the submission
- * @param metadata Additional metadata to include in the message
- * @returns Boolean indicating whether the broadcast was successful
+ * @param payload Tabs updated payload
  */
-export function broadcastFormSubmission(
-  formType: string,
-  taskId: number,
-  companyId: number,
-  metadata: Record<string, any> = {}
-) {
-  // Create timestamp once for consistent messaging
-  const timestamp = new Date().toISOString();
-  
-  // Extract file information from metadata if present
-  const fileId = metadata.fileId;
-  const fileName = metadata.fileName;
-  
-  // Log detailed information about file references included in broadcast
-  console.log(`[WebSocket] Broadcasting form submission with file details:`, {
-    taskId,
-    formType,
-    companyId,
-    hasFileId: !!fileId,
-    hasFileName: !!fileName,
-    timestamp
-  });
-  
-  // Create a standardized message payload structure with enhanced file information
-  const payload = {
-    formType,
-    taskId,
-    companyId,
-    fileId, // Include file ID directly in the root payload for easier access
-    fileName, // Include file name directly in the root payload for easier access
-    status: 'submitted', // Always include status for consistency
-    metadata: {
-      ...metadata,
-      fileIncluded: !!fileId,
-      timestamp,
-      // File vault related information
-      downloadUrl: fileId ? `/api/files/${fileId}/download` : undefined,
-      previewUrl: fileId ? `/api/files/${fileId}/preview` : undefined,
-    },
-    timestamp
-  };
-  
-  // First broadcast the form submission event
-  const formSubmittedResult = broadcast('form_submitted', payload);
-  
-  // Additionally broadcast a task update to ensure clients have multiple ways to receive the update
-  // This helps with client synchronization even if they missed the form_submitted event
-  const taskUpdateResult = broadcastTaskUpdate(taskId, 100, 'submitted', {
-    ...metadata,
-    fileId,
-    fileName,
-    formType,
-    formSubmission: true,
-    submissionComplete: true
-  });
-  
-  // Also broadcast a specific file_vault_update event to notify file vault components
-  if (fileId) {
-    const fileUpdateResult = broadcast('file_vault_update', {
-      fileId,
-      fileName,
-      taskId,
-      companyId,
-      formType,
-      action: 'added',
-      timestamp
-    });
-    
-    // Return true if any of the broadcasts were successful
-    return formSubmittedResult || taskUpdateResult || fileUpdateResult;
-  }
-  
-  return formSubmittedResult || taskUpdateResult;
+export function broadcastTabsUpdated(payload: Omit<TabsUpdatedMessage, 'type' | 'timestamp'>): void {
+  broadcast<TabsUpdatedMessage>('tabs_updated', payload);
 }
 
 /**
- * Broadcast a comprehensive form submission completed event to all connected clients
+ * Broadcast a notification message
  * 
- * This new message type indicates that ALL server-side operations related to form submission
- * have been completed, including file generation, tab unlocking, and related task processing.
- * The client should wait for this message before showing the success modal with complete information.
- * 
- * @param formType The type of form that was submitted ('kyb', 'ky3p', 'open_banking')
- * @param taskId The ID of the task associated with the submission
- * @param companyId The ID of the company associated with the submission
- * @param options Additional options including file information and completed actions
- * @returns Boolean indicating whether the broadcast was successful
+ * @param payload Notification payload
  */
-export function broadcastFormSubmissionCompleted(
-  formType: string,
-  taskId: number,
-  companyId: number,
-  options: {
-    fileId?: number;
-    fileName?: string;
-    unlockedTabs?: string[];
-    completedActions?: Array<{
-      type: string;
-      description: string;
-      fileId?: number;
-      data?: Record<string, any>;
-    }>;
-    metadata?: Record<string, any>;
-  } = {}
-) {
-  // Create timestamp once for consistent messaging
-  const timestamp = new Date().toISOString();
-  
-  // Extract options
-  const { fileId, fileName, unlockedTabs, completedActions, metadata = {} } = options;
-  
-  // Create a trace ID for cross-log correlation
-  const traceId = `wsbc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  
-  // Log detailed information about the comprehensive completion message
-  console.log(`[WebSocket] Broadcasting form submission COMPLETED event:`, {
-    taskId,
-    formType,
-    companyId,
-    traceId,
-    hasFileId: !!fileId,
-    hasFileName: !!fileName,
-    hasUnlockedTabs: !!unlockedTabs && unlockedTabs.length > 0,
-    hasCompletedActions: !!completedActions && completedActions.length > 0,
-    timestamp
-  });
-  
-  // Create a standardized message payload with ALL information needed for the success modal
-  const payload = {
-    formType,
-    taskId,
-    companyId,
-    fileId, 
-    fileName,
-    unlockedTabs,
-    completedActions,
-    status: 'success', // Always success for the final completion message
-    submissionDate: timestamp,
-    source: 'final_completion', // Mark this as the final completion message
-    metadata: {
-      ...metadata,
-      fileIncluded: !!fileId,
-      timestamp,
-      // File vault related information if a file was generated
-      ...(fileId ? {
-        downloadUrl: `/api/files/${fileId}/download`,
-        previewUrl: `/api/files/${fileId}/preview`,
-      } : {})
-    },
-    timestamp
-  };
-  
-  // Send the comprehensive form_submission_completed event
-  // This single event contains ALL the information needed for the success modal
-  return broadcast('form_submission_completed', payload);
+export function broadcastNotification(payload: Omit<NotificationMessage, 'type' | 'timestamp'>): void {
+  broadcast<NotificationMessage>('notification', payload);
 }

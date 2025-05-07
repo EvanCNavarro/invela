@@ -1,109 +1,114 @@
 /**
- * Unified Logger
+ * Logger Utility
  * 
- * A central logging utility that provides consistent formatting and levels
- * for all application logs. Implements proper log levels and contextual
- * information consistently across the application.
+ * This module provides a standardized logging interface for the application,
+ * ensuring consistent log formats and levels across all components.
  * 
- * Usage:
- * import { logger } from '@/utils/logger';
- * 
- * logger.info('User logged in', { userId: 123 });
- * logger.error('Failed to process payment', { error: err.message, orderId: 456 });
+ * Features:
+ * - Structured logging with JSON formatting
+ * - Support for different log levels (trace, debug, info, warn, error)
+ * - Module-specific logging with child loggers
+ * - Context enrichment for tracking request flows
  */
 
-// Log levels in order of verbosity
-export enum LogLevel {
-  TRACE = 0,
-  DEBUG = 1,
-  INFO = 2,
-  WARN = 3,
-  ERROR = 4,
-}
+type LogContext = Record<string, any>;
 
-// Current log level (can be configured from environment)
-const currentLogLevel = (() => {
-  const envLevel = process.env.LOG_LEVEL?.toUpperCase();
-  switch (envLevel) {
-    case 'TRACE': return LogLevel.TRACE;
-    case 'DEBUG': return LogLevel.DEBUG;
-    case 'INFO': return LogLevel.INFO;
-    case 'WARN': return LogLevel.WARN;
-    case 'ERROR': return LogLevel.ERROR;
-    default: return LogLevel.INFO; // Default to INFO level
+/**
+ * Basic logger implementation with child logger support
+ */
+class Logger {
+  private module: string;
+  private context: LogContext;
+
+  constructor(module: string = 'App', context: LogContext = {}) {
+    this.module = module;
+    this.context = context;
   }
-})();
 
-/**
- * Format a log message with timestamp, level, and structured data
- * 
- * @param level The log level as a string
- * @param message The main log message
- * @param data Optional structured data to include
- * @returns Formatted log entry
- */
-function formatLogEntry(level: string, message: string, data?: any): string {
-  const timestamp = new Date().toISOString();
-  return `[${timestamp}] [${level}] ${message}${data ? ` ${JSON.stringify(data)}` : ''}`;
+  /**
+   * Create a child logger with additional context
+   * 
+   * @param context Additional context for the child logger
+   * @returns A new logger instance with merged context
+   */
+  child(context: LogContext): Logger {
+    return new Logger(
+      context.module || this.module,
+      { ...this.context, ...context }
+    );
+  }
+
+  /**
+   * Format a log message with timestamp, module, and context
+   * 
+   * @param level Log level
+   * @param message Log message
+   * @param data Optional additional data
+   * @returns Formatted log string
+   */
+  private formatLog(level: string, message: string, data?: any): string {
+    const timestamp = new Date().toISOString();
+    const context = { ...this.context, ...(data || {}) };
+    const contextStr = Object.keys(context).length > 0 
+      ? JSON.stringify(context) 
+      : '';
+    
+    return `[${timestamp}] [${level.toUpperCase()}] [${this.module}] ${message} ${contextStr}`;
+  }
+
+  /**
+   * Log a message at TRACE level
+   * 
+   * @param message Log message
+   * @param data Optional additional data
+   */
+  trace(message: string, data?: any): void {
+    console.log(this.formatLog('trace', message, data));
+  }
+
+  /**
+   * Log a message at DEBUG level
+   * 
+   * @param message Log message
+   * @param data Optional additional data
+   */
+  debug(message: string, data?: any): void {
+    console.log(this.formatLog('debug', message, data));
+  }
+
+  /**
+   * Log a message at INFO level
+   * 
+   * @param message Log message
+   * @param data Optional additional data
+   */
+  info(message: string, data?: any): void {
+    console.log(this.formatLog('info', message, data));
+  }
+
+  /**
+   * Log a message at WARN level
+   * 
+   * @param message Log message
+   * @param data Optional additional data
+   */
+  warn(message: string, data?: any): void {
+    console.warn(this.formatLog('warn', message, data));
+  }
+
+  /**
+   * Log a message at ERROR level
+   * 
+   * @param message Log message
+   * @param data Optional additional data
+   */
+  error(message: string, data?: any): void {
+    console.error(this.formatLog('error', message, data));
+  }
 }
 
-/**
- * Determine if a message at the given level should be logged
- * based on the current log level setting
- */
-function shouldLog(level: LogLevel): boolean {
-  return level >= currentLogLevel;
-}
+// Create and export the root logger instance
+export const logger = new Logger();
 
-/**
- * The logger interface with methods for each log level
- */
-export const logger = {
-  /**
-   * Trace level logging - most verbose, for detailed debugging
-   * Only enabled when LOG_LEVEL is set to TRACE
-   */
-  trace: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.TRACE)) {
-      console.log(formatLogEntry('TRACE', message, data));
-    }
-  },
-
-  /**
-   * Debug level logging - for development information
-   * Only enabled when LOG_LEVEL is set to DEBUG or TRACE
-   */
-  debug: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.DEBUG)) {
-      console.log(formatLogEntry('DEBUG', message, data));
-    }
-  },
-
-  /**
-   * Info level logging - for general operational information
-   * This is the default level
-   */
-  info: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.INFO)) {
-      console.log(formatLogEntry('INFO', message, data));
-    }
-  },
-
-  /**
-   * Warning level logging - for potential issues that aren't errors
-   */
-  warn: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.WARN)) {
-      console.warn(formatLogEntry('WARN', message, data));
-    }
-  },
-
-  /**
-   * Error level logging - for actual errors that need attention
-   */
-  error: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.ERROR)) {
-      console.error(formatLogEntry('ERROR', message, data));
-    }
-  },
-};
+// Export the Logger class for type checking
+export type { Logger };

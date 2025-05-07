@@ -1,144 +1,196 @@
 /**
- * Error Handler Utilities
+ * Error Handlers Utility
  * 
- * Standard error handling functions for API endpoints to ensure consistent
- * error responses throughout the application.
+ * This module provides standardized error handling functions for API responses,
+ * ensuring consistent error formats across the application.
+ * 
+ * Features:
+ * - Standardized error response format
+ * - Detailed logging for all errors
+ * - Different error types with proper HTTP status codes
+ * - Centralized error handling patterns for reuse
  */
 
 import { Response } from 'express';
 import { logger } from './logger';
 
-// Standard API error response format
-interface ErrorResponse {
-  success: false;
-  error: string;
-  details?: string;
-  code?: string;
-  status?: number;
-}
+const errorLogger = logger.child({ module: 'ErrorHandlers' });
 
 /**
- * Handles API errors with proper logging and consistent response format
+ * Handle a generic error response
  * 
  * @param res Express response object
  * @param message User-friendly error message
- * @param error Original error object
- * @param status HTTP status code (defaults to 500)
- * @returns Express response with formatted error
+ * @param error Error object or string
+ * @param statusCode HTTP status code (default: 500)
+ * @returns The response object with error details
  */
 export function handleErrorResponse(
   res: Response, 
   message: string, 
-  error?: any, 
-  status: number = 500
+  error: Error | string,
+  statusCode = 500
 ): Response {
-  // Create error context for logging
-  const errorContext = {
-    service: 'API',
-    endpoint: res.req.url,
-    method: res.req.method,
-    status,
-    error: error instanceof Error ? error.message : String(error || 'Unknown error'),
-    stack: error instanceof Error ? error.stack : undefined
-  };
+  // Extract error details
+  const errorMessage = error instanceof Error ? error.message : error;
+  const errorStack = error instanceof Error ? error.stack : undefined;
   
-  // Log the error with context
-  logger.error(`API Error: ${message}`, errorContext);
+  // Log the error with details
+  errorLogger.error(`API Error: ${message}`, {
+    errorMessage,
+    statusCode,
+    stack: errorStack,
+    path: res.req?.path || 'unknown',
+    method: res.req?.method || 'unknown',
+    timestamp: new Date().toISOString()
+  });
   
-  // Format the response
-  const errorResponse: ErrorResponse = {
+  // Return standardized error response
+  return res.status(statusCode).json({
     success: false,
     error: message,
-    status
-  };
-  
-  // Add original error details in development or if error is not sensitive
-  if (process.env.NODE_ENV !== 'production' && error) {
-    errorResponse.details = error instanceof Error ? 
-      error.message : 
-      typeof error === 'object' ? 
-        JSON.stringify(error) : 
-        String(error);
-  }
-  
-  // Add error code if available
-  if (error && 'code' in error) {
-    errorResponse.code = error.code;
-  }
-  
-  return res.status(status).json(errorResponse);
+    details: errorMessage,
+    statusCode
+  });
 }
 
 /**
- * Handle validation errors specifically
+ * Handle a validation error (bad request)
  * 
  * @param res Express response object
- * @param validationErrors Validation error details
- * @returns Express response with formatted validation errors
+ * @param message User-friendly error message
+ * @param details Detailed validation errors
+ * @returns The response object with validation error details
  */
-export function handleValidationErrors(
-  res: Response,
-  validationErrors: Record<string, string>
+export function handleValidationError(
+  res: Response, 
+  message: string, 
+  details: Record<string, string> | string
 ): Response {
-  logger.warn('Validation Error', { 
-    service: 'API', 
-    endpoint: res.req.url, 
-    errors: validationErrors 
+  // Log the validation error
+  errorLogger.warn(`Validation Error: ${message}`, {
+    details,
+    path: res.req?.path || 'unknown',
+    method: res.req?.method || 'unknown'
   });
   
+  // Return standardized validation error response
   return res.status(400).json({
     success: false,
-    error: 'Validation failed',
-    validationErrors
+    error: message,
+    validationErrors: details,
+    statusCode: 400
   });
 }
 
 /**
- * Handle not found errors
+ * Handle a not found error
  * 
  * @param res Express response object
- * @param resourceType Type of resource that wasn't found
- * @param id Identifier that was searched for
- * @returns Express response with not found error
+ * @param resourceType Type of resource that was not found
+ * @param resourceId ID of the resource that was not found
+ * @returns The response object with not found error details
  */
 export function handleNotFoundError(
-  res: Response,
-  resourceType: string,
-  id?: string | number
+  res: Response, 
+  resourceType: string, 
+  resourceId: number | string
 ): Response {
-  const message = id ? 
-    `${resourceType} with ID ${id} not found` : 
-    `${resourceType} not found`;
+  const message = `${resourceType} not found: ${resourceId}`;
   
-  logger.info(`Not Found: ${message}`, { 
-    service: 'API', 
-    endpoint: res.req.url 
+  // Log the not found error
+  errorLogger.warn(`Not Found: ${message}`, {
+    resourceType,
+    resourceId,
+    path: res.req?.path || 'unknown',
+    method: res.req?.method || 'unknown'
   });
   
+  // Return standardized not found error response
   return res.status(404).json({
     success: false,
-    error: message
+    error: message,
+    statusCode: 404
   });
 }
 
 /**
- * Handle unauthorized access errors
+ * Handle an unauthorized error
  * 
  * @param res Express response object
- * @param message Custom unauthorized message
- * @returns Express response with unauthorized error
+ * @param message User-friendly error message
+ * @returns The response object with unauthorized error details
  */
 export function handleUnauthorizedError(
-  res: Response,
-  message: string = 'Unauthorized access'
+  res: Response, 
+  message = 'Unauthorized access'
 ): Response {
-  logger.warn(`Unauthorized: ${message}`, { 
-    service: 'API', 
-    endpoint: res.req.url 
+  // Log the unauthorized error
+  errorLogger.warn(`Unauthorized: ${message}`, {
+    path: res.req?.path || 'unknown',
+    method: res.req?.method || 'unknown',
+    user: res.req?.user?.id || 'unknown'
   });
   
+  // Return standardized unauthorized error response
   return res.status(401).json({
     success: false,
-    error: message
+    error: message,
+    statusCode: 401
+  });
+}
+
+/**
+ * Handle a forbidden error
+ * 
+ * @param res Express response object
+ * @param message User-friendly error message
+ * @returns The response object with forbidden error details
+ */
+export function handleForbiddenError(
+  res: Response, 
+  message = 'Access forbidden'
+): Response {
+  // Log the forbidden error
+  errorLogger.warn(`Forbidden: ${message}`, {
+    path: res.req?.path || 'unknown',
+    method: res.req?.method || 'unknown',
+    user: res.req?.user?.id || 'unknown'
+  });
+  
+  // Return standardized forbidden error response
+  return res.status(403).json({
+    success: false,
+    error: message,
+    statusCode: 403
+  });
+}
+
+/**
+ * Handle a conflict error
+ * 
+ * @param res Express response object
+ * @param message User-friendly error message
+ * @param details Additional details about the conflict
+ * @returns The response object with conflict error details
+ */
+export function handleConflictError(
+  res: Response, 
+  message: string,
+  details?: string
+): Response {
+  // Log the conflict error
+  errorLogger.warn(`Conflict: ${message}`, {
+    details,
+    path: res.req?.path || 'unknown',
+    method: res.req?.method || 'unknown'
+  });
+  
+  // Return standardized conflict error response
+  return res.status(409).json({
+    success: false,
+    error: message,
+    details,
+    statusCode: 409
   });
 }
