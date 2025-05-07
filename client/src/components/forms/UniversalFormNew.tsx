@@ -80,7 +80,7 @@ import { userContext } from '@/lib/user-context';
 
 // Import WebSocket-based form submission and fields listeners and related components
 import { FormSubmissionListener, FormSubmissionEvent } from './FormSubmissionListener';
-import FormFieldsListener from './FormFieldsListener';
+import FormFieldsListener, { FieldsEvent } from './FormFieldsListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
 
 import SectionContent from './SectionContent';
@@ -1459,16 +1459,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   if (isFormReadOnly && hasLoaded && !formStateLoading) {
     return (
       <div className="w-full mx-auto">
-        {/* WebSocket listener is still needed for potential updates */}
+        {/* WebSocket listeners are still needed for potential updates */}
         {taskId && (
-          <FormSubmissionListener
-            taskId={taskId}
-            formType={taskType}
-            onSuccess={handleSubmissionSuccess}
-            onError={handleSubmissionError}
-            onInProgress={handleSubmissionInProgress}
-            showToasts={true}
-          />
+          <>
+            <FormSubmissionListener
+              taskId={taskId}
+              formType={taskType}
+              onSuccess={handleSubmissionSuccess}
+              onError={handleSubmissionError}
+              onInProgress={handleSubmissionInProgress}
+              showToasts={true}
+            />
+            <FormFieldsListener
+              taskId={taskId}
+              formType={taskType}
+              onFieldsCleared={handleFieldsCleared}
+              showToasts={false}
+            />
+          </>
         )}
         
         <ReadOnlyFormView
