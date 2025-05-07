@@ -635,13 +635,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
-  // If we're still loading or have an error, show appropriate content
+  // If we're still loading or have an error, show appropriate UI
   if (loading || error) {
     return (
       <div className="flex flex-col items-center justify-center p-8 h-[calc(100vh-200px)]">
         {loading && (
           <div className="text-center">
-            <LoadingSpinner className="mx-auto h-12 w-12" variant="primary" />
+            <LoadingSpinner className="mx-auto h-12 w-12" />
             <p className="mt-4 text-gray-600">Loading form...</p>
           </div>
         )}
@@ -663,35 +663,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
-  // Otherwise, render the original editable form (we need to add form implementation)
-  // This is just a temporary fix to restore functionality
-  return (
-    <div className="p-6 bg-white border rounded-md shadow-sm">
-      <div className="mb-4">
-        <h1 className="text-xl font-bold text-gray-900">
-          {taskType === 'kyb' ? 'Know Your Business (KYB)' : 
-          taskType === 'ky3p' ? 'Know Your Third Party (KY3P)' : 
-          taskType === 'open_banking' ? 'Open Banking Assessment' : 
-          taskType}
-        </h1>
-        <p className="text-gray-600">Please complete the form below</p>
-      </div>
-      
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <p className="mt-4 text-red-500">Sorry, form editing is temporarily unavailable.</p>
-          <p className="text-gray-600">You can view completed forms, but editing forms is temporarily disabled.</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.href = '/task-center'}
-          >
-            Back to Task Center
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  // Render loading skeleton until form is ready
+  if (!dataHasLoaded || isDataLoading || !form) {
+    return <FormSkeletonWithMode mode={isReadOnlyMode ? 'read-only' : 'edit'} />;
+  }
+  
+  // Return placeholder for now
+  return <div>Form is loading...</div>;
 };
 
 export default UniversalForm;
