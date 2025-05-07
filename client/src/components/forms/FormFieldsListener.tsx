@@ -150,7 +150,16 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         // Handle different field operations based on the action
         switch (payload.action) {
           case 'fields_cleared':
-            logger.info(`Fields cleared for task ${taskId} (${formType})`);
+            logger.info(`[DIAGNOSTIC] Fields cleared WebSocket event received for task ${taskId} (${formType})`, {
+              timestamp: new Date().toISOString(),
+              taskId,
+              formType,
+              payloadProgress: payload.progress,
+              metadata: payload.metadata,
+              eventTimestamp: payload.timestamp,
+              receivedAt: new Date().toISOString(),
+              hasCallback: !!onFieldsCleared
+            });
             
             // Show a toast notification if enabled
             if (showToasts) {
@@ -163,7 +172,13 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
             
             // Call the onFieldsCleared callback if provided
             if (onFieldsCleared) {
+              logger.info(`[DIAGNOSTIC] Calling onFieldsCleared callback for task ${taskId}`, {
+                hasPayload: !!fieldsEvent.payload,
+                payloadKeys: Object.keys(fieldsEvent.payload || {})
+              });
               onFieldsCleared(fieldsEvent);
+            } else {
+              logger.warn(`[DIAGNOSTIC] No onFieldsCleared callback provided for task ${taskId}`);
             }
             break;
             
