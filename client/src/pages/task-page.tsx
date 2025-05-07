@@ -363,7 +363,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="kyb"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
-          showToasts={false} // Disable toasts here since we show modals explicitly
+          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
         />
         
         {/* Success modal - Using enhanced UniversalSuccessModal for better dynamic content */}
@@ -462,7 +462,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="card"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
-          showToasts={false} // Disable toasts here since we show modals explicitly
+          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
         />
         
         {/* Success modal - only show when this specific form type is submitted */}
@@ -562,7 +562,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="ky3p"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
-          showToasts={false} // Disable toasts here since we show modals explicitly
+          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
         />
         
         {/* Success modal - only show when this specific form type is submitted */}
@@ -662,7 +662,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           formType="open_banking"
           onSuccess={handleFormSubmissionSuccess}
           onError={handleFormSubmissionError}
-          showToasts={false} // Disable toasts here since we show modals explicitly
+          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
         />
         
         {/* Success modal - only show when this specific form type is submitted */}

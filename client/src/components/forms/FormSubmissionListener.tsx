@@ -408,16 +408,10 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
             onErrorRef.current(submissionEvent);
           }
         } else if (formStatus === 'in_progress') {
-          // In-progress toasts are less important for duplicate UI
-          if (showToastsRef.current) {
-            toast({
-              title: 'Form submission in progress',
-              description: 'Your form is being processed...',
-              variant: 'default',
-              duration: 3000,
-            });
-          }
+          // Do not show toast for in-progress status to avoid redundancy
+          // The form already shows a loading indicator and we have the "Submitting form..." modal
           
+          // Still call the event handler if provided
           if (onInProgressRef.current) {
             onInProgressRef.current(submissionEvent);
           }
