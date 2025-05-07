@@ -100,6 +100,8 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
       submissionComplete: true,
       fileId,
       fileName,
+      // Include submissionDate as a separate property, but don't include submission_date directly
+      // as it's already in enhancedMetadata
       submissionDate: submissionTimestamp,
       unlockedTabs,
       ...enhancedMetadata // Use the enhanced metadata with submission_date
@@ -134,8 +136,9 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
     {
       formType,
       error: errorMessage,
+      // Include submissionDate as a separate property, but don't include submission_date directly
+      // as it's already in enhancedMetadata
       submissionDate: submissionTimestamp,
-      submission_date: submissionTimestamp, // Include both formats for UI consistency
       ...enhancedMetadata
     }
   );
@@ -151,6 +154,14 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
 export function sendFormSubmissionInProgress(options: SubmissionNotificationOptions) {
   const { formType, taskId, companyId, progress = 50, message, metadata = {} } = options;
   
+  const submissionTimestamp = new Date().toISOString();
+  
+  // Ensure metadata has submission_date for UI display
+  const enhancedMetadata = {
+    ...metadata,
+    submission_date: submissionTimestamp,
+  };
+  
   // Send the task update notification with in_progress status
   broadcastTaskUpdate(
     taskId,
@@ -158,9 +169,11 @@ export function sendFormSubmissionInProgress(options: SubmissionNotificationOpti
     'in_progress',
     {
       formType,
-      submissionDate: new Date().toISOString(),
+      // Include submissionDate as a separate property, but don't include submission_date directly
+      // as it's already in enhancedMetadata
+      submissionDate: submissionTimestamp,
       message: message || 'Form submission in progress',
-      ...metadata
+      ...enhancedMetadata
     }
   );
   
