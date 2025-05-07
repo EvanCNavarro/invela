@@ -1041,7 +1041,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   ]);
   
   // Handle clearing form fields with proper logging and error handling
-  const handleClearFieldsAction = async () => {
+  const handleClearFieldsAction = async (): Promise<void> => {
     logger.info('Executing clear fields operation');
     
     if (!taskId) {
@@ -1100,7 +1100,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Simple form reset for client-side
         form.reset({});
         
-        // Update fields individually as a fallback
+        // Update fields individually as a fallback, ensuring they're properly set to null/empty
         if (Array.isArray(fields)) {
           fields.forEach(field => {
             const fieldId = field.key || String((field as any).id) || '';
@@ -1119,7 +1119,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
       }
       
-      // Use our internal refreshFormData function
+      // Use our internal refreshFormData function to ensure all state is properly refreshed
       try {
         await refreshFormData();
         logger.info('Data refresh completed');
@@ -1129,8 +1129,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Force UI update
       setForceRerender(prev => !prev);
-      
-      return true;
     } catch (clearError) {
       // Properly handle any errors during the clear operation
       logger.error('Error clearing form fields:', clearError);
@@ -1502,6 +1500,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   taskType={taskType}
                   onClear={handleClearFieldsAction}
                   className="ml-2"
+                  preserveProgress={taskType === 'ky3p'} // Preserve progress for KY3P forms
+                  isFormEditing={document.location.href.includes('/edit')}
                 />
               </div>
             )}
