@@ -306,6 +306,7 @@ interface UniversalFormProps {
   onCancel?: () => void;
   onProgress?: (progress: number) => void;
   companyName?: string; // Optional company name to display in the form title
+  isReadOnly?: boolean; // Optional flag to render the form in read-only mode
 }
 
 /**
@@ -318,7 +319,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onSubmit,
   onCancel,
   onProgress,
-  companyName
+  companyName,
+  isReadOnly = false
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
@@ -354,10 +356,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [task?.status, isSubmitting]);
   
-  // Determine if form should be in read-only mode (when submitted)
+  // Determine if form should be in read-only mode (when submitted or explicitly requested)
   const isReadOnlyMode = useMemo(() => {
-    return task?.status === 'submitted' || task?.status === 'completed';
-  }, [task?.status]);
+    return isReadOnly || task?.status === 'submitted' || task?.status === 'completed';
+  }, [isReadOnly, task?.status]);
   
   // Determine if all data has loaded
   const hasLoaded = useMemo(() => {
