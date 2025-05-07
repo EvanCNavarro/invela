@@ -68,6 +68,8 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [selectedMethod, setSelectedMethod] = useState<'manual' | 'upload' | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
+  // Track which form type triggered the success modal
+  const [submittedFormType, setSubmittedFormType] = useState<TaskContentType | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult>({
@@ -156,19 +158,23 @@ export default function TaskPage({ params }: TaskPageProps) {
       fileName: event.fileName,
       taskStatus: 'submitted',
       unlockedTabs: event.unlockedTabs,
-      completedActions: event.actions || []
+      completedActions: event.completedActions || []
     });
     
     // Set state to update UI
     setIsSubmitted(true);
     setShowSuccessModal(true);
     
+    // Track which form type triggered the success event
+    // This helps avoid showing duplicate modals across different form sections
+    setSubmittedFormType(taskContentType);
+    
     // Invalidate queries to refresh task list
     queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
     
     // Show confetti effect
     fireEnhancedConfetti();
-  }, [queryClient]);
+  }, [queryClient, taskContentType]);
   
   // Handle form submission error
   const handleFormSubmissionError = useCallback((event: FormSubmissionEvent) => {
@@ -460,9 +466,9 @@ export default function TaskPage({ params }: TaskPageProps) {
           showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
-        {/* Success modal */}
+        {/* Success modal - only show when this specific form type is submitted */}
         <SubmissionSuccessModal
-          open={showSuccessModal}
+          open={showSuccessModal && submittedFormType === 'card'}
           onClose={() => setShowSuccessModal(false)}
           title="Card Industry Questionnaire Submitted"
           actions={submissionResult.completedActions || []}
@@ -560,9 +566,9 @@ export default function TaskPage({ params }: TaskPageProps) {
           showToasts={false} // Disable toasts here since we show modals explicitly
         />
         
-        {/* Success modal */}
+        {/* Success modal - only show when this specific form type is submitted */}
         <SubmissionSuccessModal
-          open={showSuccessModal}
+          open={showSuccessModal && submittedFormType === 'ky3p'}
           onClose={() => setShowSuccessModal(false)}
           title="KY3P Security Assessment Submitted"
           actions={submissionResult.completedActions || []}
