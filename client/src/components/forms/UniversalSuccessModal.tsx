@@ -298,18 +298,39 @@ export function UniversalSuccessModal({
         );
       }
       
-      // Tabs unlocked card
+      // Tabs unlocked card - improved version with specific File Vault mention
       // CRITICAL FIX: Also show tabs card if unlockedTabs array is available in submissionResult
-      if (tabsUnlockedAction || (submissionResult.unlockedTabs && submissionResult.unlockedTabs.length > 0)) {
+      const unlockedTabs = submissionResult.unlockedTabs || 
+                          (submissionResult.data?.unlockedTabs) || 
+                          [];
+      
+      // Check if file vault is specifically unlocked
+      const hasFileVault = unlockedTabs.some(tab => tab === 'file-vault');
+      
+      if (tabsUnlockedAction || (unlockedTabs && unlockedTabs.length > 0)) {
         cards.push(
-          <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
-            <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div key="tabs-unlocked" className="flex items-start gap-3 border rounded-md p-3 bg-indigo-50 border-indigo-200">
+            <LayoutDashboard className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-gray-900">New Access Granted</p>
               <p className="text-gray-600">
-                {tabsUnlockedAction?.description || 
-                 `Unlocked tabs: ${submissionResult.unlockedTabs?.join(', ') || 'additional features'}`}
+                {hasFileVault 
+                  ? "You now have access to the File Vault where you can view and download your reports."
+                  : (tabsUnlockedAction?.description || "You now have access to new sections of the platform.")}
               </p>
+              
+              {/* Show unlocked tabs as badges */}
+              {unlockedTabs.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {unlockedTabs.map(tab => (
+                    <span key={tab} className="inline-flex items-center rounded-md bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
+                      {tab === 'file-vault' ? 'File Vault' : 
+                       tab === 'dashboard' ? 'Dashboard' : 
+                       tab.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -675,19 +696,36 @@ export function UniversalSuccessModal({
       );
     }
     
-    // If no specific buttons were added, add default "Go to Task Center" button
-    if (buttons.length === 0) {
+    // Always add "Go to Task Center" button as a primary button
+    buttons.unshift(
+      <Button
+        key="task-center"
+        onClick={() => {
+          navigate('/task-center');
+          onOpenChange(false);
+        }}
+        className="flex-1 bg-primary hover:bg-primary/90" // Make it the primary button
+      >
+        Go to Task Center
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Button>
+    );
+    
+    // Add view submitted form button if we have a task ID
+    if (submissionResult.taskId) {
       buttons.push(
         <Button
-          key="task-center"
+          key="view-form"
           onClick={() => {
-            navigate('/task-center');
+            // Navigate to the task page with readOnly=true parameter
+            navigate(`/tasks/${submissionResult.taskId}?mode=readonly`);
             onOpenChange(false);
           }}
-          className="flex-1"
+          variant="outline"
+          className="flex items-center"
         >
-          Go to Task Center
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <FileText className="mr-1 h-4 w-4" />
+          View Submitted Form
         </Button>
       );
     }

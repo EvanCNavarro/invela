@@ -71,6 +71,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [submittedFormType, setSubmittedFormType] = useState<TaskContentType | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [displayName, setDisplayName] = useState('');
+  const [isReadOnly, setIsReadOnly] = useState(false); // Add read-only mode state
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult>({
     taskId: 0,
     taskStatus: 'not_started',
@@ -272,6 +273,20 @@ export default function TaskPage({ params }: TaskPageProps) {
     });
   }, []);
   
+  // Handle URL query parameters for mode
+  useEffect(() => {
+    // Parse URL query parameters
+    const queryParams = new URLSearchParams(window.location.search);
+    const mode = queryParams.get('mode');
+    
+    // Check if we're in read-only mode
+    if (mode === 'readonly') {
+      setIsReadOnly(true);
+      setIsSubmitted(true); // Force submitted state for read-only view
+      console.log('[TaskPage] Setting read-only mode');
+    }
+  }, []);
+
   // Fetch task data based on slug
   useEffect(() => {
     const taskSlug = params.taskSlug;
