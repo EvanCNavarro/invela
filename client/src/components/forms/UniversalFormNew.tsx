@@ -376,25 +376,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // IMPROVEMENT: Determine if form should be in read-only mode based on task status
-  // This calculation is now done earlier to avoid showing editable UI for submitted forms
+  // CRITICAL IMPROVEMENT: Determine if form should be in read-only mode based on task status
+  // This calculation is done at the very start to ensure we NEVER render editable UI for submitted forms
   const isReadOnlyMode = useMemo(() => {
-    // Check task status, submissionResult, and the isReadOnly prop
-    // This allows external control of read-only mode from parent components
-    return isReadOnly || 
+    // This is our primary gate to prevent flashing of editable forms when form should be read-only
+    const isSubmittedOrReadOnly = isReadOnly || 
            task?.status === 'submitted' || 
            task?.status === 'completed' || 
            !!submissionResult;
+    
+    if (isSubmittedOrReadOnly) {
+      // Log that we're in read-only mode to help with debugging
+      logger.info(`[UniversalFormNew] Form is in read-only mode: isReadOnly=${isReadOnly}, taskStatus=${task?.status}, hasSubmissionResult=${!!submissionResult}`);
+    }
+    
+    return isSubmittedOrReadOnly;
   }, [isReadOnly, task?.status, submissionResult]);
   
   // IMPROVEMENT: Split the loading states for read-only vs editable forms
   // This prevents showing editable UI elements during read-only form loading
   const readOnlyFormDataLoaded = useMemo(() => {
-    return isReadOnlyMode && dataHasLoaded && fields.length > 0 && sections.length > 0;
+    const isReady = isReadOnlyMode && dataHasLoaded && fields.length > 0 && sections.length > 0;
+    if (isReadOnlyMode && !isReady) {
+      logger.debug(`[UniversalFormNew] Read-only form data still loading: dataHasLoaded=${dataHasLoaded}, fields=${fields.length}, sections=${sections.length}`);
+    }
+    return isReady;
   }, [isReadOnlyMode, dataHasLoaded, fields.length, sections.length]);
   
   const editableFormDataLoaded = useMemo(() => {
-    return !isReadOnlyMode && dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
+    // Never consider editable form loaded if we're in read-only mode (prevents flash)
+    if (isReadOnlyMode) return false;
+    return dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
   }, [isReadOnlyMode, dataHasLoaded, isDataLoading, loading, fields.length, sections.length]);
   
   // Determine if all data has loaded - use the appropriate loader based on form mode
@@ -1047,16 +1059,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       {/* Show skeleton loader while determining form state */}
       {formStateLoading ? (
         <FormSkeletonWithMode readOnly={isFormReadOnly} />
-      ) : isReadOnlyMode && hasLoaded ? (
-        <ReadOnlyFormView
-          taskId={taskId}
-          taskType={taskType}
-          task={task}
-          formData={formData}
-          fields={fields}
-          sections={sections}
-          company={company}
-        />
+      ) : isReadOnlyMode ? (
+        // In read-only mode, either show the read-only view or skeleton until it's fully loaded
+        hasLoaded ? (
+          <ReadOnlyFormView
+            taskId={taskId}
+            taskType={taskType}
+            task={task}
+            formData={formData}
+            fields={fields}
+            sections={sections}
+            company={company}
+          />
+        ) : (
+          // Show read-only skeleton while read-only data loads
+          <FormSkeletonWithMode readOnly={true} />
+        )
       ) : (
         <>
           {/* Form title and subtitle */}
