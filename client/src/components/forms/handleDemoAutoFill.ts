@@ -53,7 +53,7 @@ export async function handleDemoAutoFill({
   formService,
   setForceRerender,
   skipToasts = false // Default to false for backward compatibility
-}: DemoAutoFillOptions): Promise<void> {
+}: DemoAutoFillOptions): Promise<{ success: boolean; fieldCount?: number }> {
   if (!formService) {
     logger.error('No form service provided for demo auto-fill');
     if (!skipToasts) {
