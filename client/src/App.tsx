@@ -462,6 +462,17 @@ function Router() {
             </OnboardingWrapper>
           </ProtectedLayout>
         </Route>
+        
+        {/* Form Submission WebSocket Test - For Testing Deduplication */}
+        <Route path="/websocket-test-page">
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <Suspense fallback={<div>Loading WebSocket test page...</div>}>
+                <WebSocketTestPageNew />
+              </Suspense>
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        </Route>
 
         <Route component={NotFound} />
       </Switch>
