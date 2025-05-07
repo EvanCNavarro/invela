@@ -9,6 +9,7 @@ declare global {
       taskId: number;
       timestamp: number;
       formType: string;
+      blockExpiration?: number; // When this block should expire
     } | null;
   }
 }
@@ -758,14 +759,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     onChange: onProgress
   });
   
-  // Function to refresh form data after clearing fields
-  // This ensures the form is properly reloaded with empty data but WITHOUT fetching from server
+  /**
+   * Enhanced function to refresh form data after clearing fields or other operations
+   * 
+   * CRITICAL FIX: This function is the central mechanism that prevents unwanted
+   * server reloads after clear operations. The improvements here are essential
+   * to fix the race condition where clearing fields is immediately followed by
+   * a reload from the server.
+   * 
+   * @param options Configuration options for the refresh operation
+   * @param options.skipServerRefresh Whether to prevent fetching new data from the server
+   * @returns Promise that resolves when the refresh is complete
+   */
   const refreshFormData = useCallback(async (options: { skipServerRefresh?: boolean } = {}): Promise<void> => {
-    const skipServerRefresh = options.skipServerRefresh ?? true; // Default to skipping server refresh
+    // Default to skipServerRefresh=true for safety
+    const skipServerRefresh = options.skipServerRefresh ?? true;
+    
+    // Generate a unique operation ID for diagnostic tracking
     const operationId = `refresh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     
     try {
-      logger.info(`[DIAGNOSTIC][${operationId}] Refreshing form data after clearing fields`, {
+      logger.info(`[DIAGNOSTIC][${operationId}] Refreshing form data`, {
         skipServerRefresh,
         taskId,
         taskType,
@@ -774,82 +788,135 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         hasRefreshStatus: !!refreshStatus,
         hasRefreshTask: !!refreshTask,
         sections: sections?.length || 0,
+        activeSection,
         timestamp: new Date().toISOString()
       });
       
-      // Only reset form state if we're not skipping server refresh
-      // This is critical because resetForm() calls the API and refetches data
-      if (!skipServerRefresh && resetForm) {
-        logger.info(`[DIAGNOSTIC][${operationId}] Calling resetForm() to reload form data from server`);
-        await resetForm();
-      } else {
-        logger.info(`[DIAGNOSTIC][${operationId}] Skipping resetForm() to prevent reloading data from server`);
+      // ENHANCED CLEAR OPERATION DETECTION:
+      // Check for recent clear operations with stronger timing and expiration logic
+      let preventServerRefresh = skipServerRefresh;
+      
+      if (window._lastClearOperation) {
+        const clearOp = window._lastClearOperation;
+        const now = Date.now();
+        const msSinceClear = now - clearOp.timestamp;
+        const isForCurrentTask = clearOp.taskId === taskId;
+        const isStillValid = clearOp.blockExpiration ? now < clearOp.blockExpiration : msSinceClear < 30000;
         
-        // Instead of reloading from server, manually reset the form state
-        if (form) {
-          // Check form state before reset
-          logger.info(`[DIAGNOSTIC][${operationId}] Form state before reset:`, {
-            isDirty: form.formState.isDirty,
-            fieldCount: Object.keys(form.getValues()).length,
-            timestamp: new Date().toISOString()
-          });
+        if (isForCurrentTask && isStillValid) {
+          // We have a valid clear operation blocking - enforce skipServerRefresh regardless of passed option
+          preventServerRefresh = true;
           
-          // Reset form UI state directly without server call
-          form.reset({});
+          const expiration = clearOp.blockExpiration || (clearOp.timestamp + 30000);
+          const remainingMs = Math.max(0, expiration - now);
           
-          // Check form state after reset
-          logger.info(`[DIAGNOSTIC][${operationId}] Form state after reset:`, {
-            isDirty: form.formState.isDirty,
-            fieldCount: Object.keys(form.getValues()).length,
-            timestamp: new Date().toISOString()
+          logger.info(`[DIAGNOSTIC][${operationId}] Active clear operation blocking server refresh`, {
+            taskId,
+            clearOpTimestamp: new Date(clearOp.timestamp).toISOString(),
+            msSinceClear,
+            remainingMs,
+            expiresAt: new Date(expiration).toISOString(),
+            originalSkipServerRefresh: skipServerRefresh
           });
+        } else if (isForCurrentTask && !isStillValid) {
+          // Clear operation has expired - clear it
+          logger.info(`[DIAGNOSTIC][${operationId}] Clear operation has expired, clearing`, {
+            taskId,
+            clearOpTimestamp: new Date(clearOp.timestamp).toISOString(),
+            msSinceClear,
+            isExpired: true
+          });
+          window._lastClearOperation = null;
         }
       }
       
-      // Reset to first section
-      if (typeof setActiveSection === 'function') {
-        logger.info(`[DIAGNOSTIC][${operationId}] Setting active section to 0 (was: ${activeSection})`);
-        setActiveSection(0);
-      }
-      
-      // Log section statuses before refresh
-      if (sectionStatuses && sectionStatuses.length > 0) {
-        logger.info(`[DIAGNOSTIC][${operationId}] Section statuses BEFORE refresh:`, {
-          sections: sectionStatuses.map(s => ({
-            id: s.id,
-            title: s.title,
-            progress: s.progress,
-            status: s.status
-          }))
-        });
-      }
-      
-      // Local status recalculation without server call
-      if (refreshStatus) {
-        logger.info(`[DIAGNOSTIC][${operationId}] Calling refreshStatus to recalculate form progress`);
-        refreshStatus();
-      }
-      
-      // CRITICAL FIX: Only refresh task data if we're not skipping server refresh AND
-      // we haven't just performed a clear operation
-      const recentClearOperation = window._lastClearOperation && 
-                                  window._lastClearOperation.taskId === taskId &&
-                                  (Date.now() - window._lastClearOperation.timestamp) < 10000; // Within 10 seconds
-      
-      if (recentClearOperation) {
-        logger.info(`[DIAGNOSTIC][${operationId}] Detected recent clear operation, blocking task refresh`);
-        // Clear the operation info after blocking the refresh
-        setTimeout(() => {
-          if (window._lastClearOperation && window._lastClearOperation.taskId === taskId) {
-            logger.info(`[DIAGNOSTIC][${operationId}] Clearing cached clear operation info after timeout`);
-            window._lastClearOperation = null;
-          }
-        }, 5000); // Clear after 5 seconds
-      } else if (!skipServerRefresh && refreshTask) {
-        logger.info(`[DIAGNOSTIC][${operationId}] Refreshing task data from server`);
-        await refreshTask();
+      // FORM RESET HANDLING:
+      // Only reset form state if we're explicitly requesting server data
+      if (!preventServerRefresh && resetForm) {
+        logger.info(`[DIAGNOSTIC][${operationId}] Calling resetForm() to reload form data from server`);
+        try {
+          await resetForm();
+        } catch (resetError) {
+          logger.error(`[DIAGNOSTIC][${operationId}] Error in resetForm():`, resetError);
+        }
       } else {
-        logger.info(`[DIAGNOSTIC][${operationId}] Skipping task data refresh to prevent reloading data from server`);
+        logger.info(`[DIAGNOSTIC][${operationId}] Skipping resetForm() to prevent reloading data from server`);
+        
+        // CLIENT-SIDE FORM RESET:
+        // Instead of reloading from server, manually reset the form state
+        if (form) {
+          try {
+            // Reset form UI state directly without server call
+            form.reset({});
+            
+            logger.info(`[DIAGNOSTIC][${operationId}] Successfully reset form state client-side`, {
+              isDirty: form.formState.isDirty,
+              isValid: form.formState.isValid,
+              fieldCount: Object.keys(form.getValues()).length
+            });
+          } catch (formResetError) {
+            logger.error(`[DIAGNOSTIC][${operationId}] Error in client-side form reset:`, formResetError);
+          }
+        }
+      }
+      
+      // UI SYNCHRONIZATION:
+      // Ensure section navigation is reset regardless of server refresh
+      try {
+        // Reset to first section for better UX
+        if (typeof setActiveSection === 'function') {
+          setActiveSection(0);
+          logger.info(`[DIAGNOSTIC][${operationId}] Reset active section to 0`);
+        }
+        
+        // Reset section statuses for immediate visual feedback
+        if (typeof setSectionStatuses === 'function' && sections && sections.length > 0) {
+          const resetSectionStatuses = sections.map(section => ({
+            id: section.id,
+            title: section.title,
+            totalFields: 0,
+            filledFields: 0,
+            remainingFields: 0,
+            progress: 0,
+            status: 'not-started' as const
+          }));
+          
+          // Apply reset immediately
+          setSectionStatuses(resetSectionStatuses);
+          
+          // Apply again after a short delay to prevent React batching from losing this update
+          setTimeout(() => {
+            setSectionStatuses(resetSectionStatuses);
+          }, 50);
+          
+          logger.info(`[DIAGNOSTIC][${operationId}] Reset section statuses`, {
+            sections: sections.length
+          });
+        }
+        
+        // Update progress calculations
+        if (refreshStatus) {
+          refreshStatus();
+          logger.info(`[DIAGNOSTIC][${operationId}] Refreshed section status calculations`);
+        }
+      } catch (uiSyncError) {
+        logger.error(`[DIAGNOSTIC][${operationId}] Error in UI synchronization:`, uiSyncError);
+      }
+      
+      // SERVER DATA REFRESH:
+      // Only if explicitly requested AND not blocked by clear operation
+      if (!preventServerRefresh && refreshTask) {
+        logger.info(`[DIAGNOSTIC][${operationId}] Refreshing task data from server`);
+        try {
+          await refreshTask();
+        } catch (refreshError) {
+          logger.error(`[DIAGNOSTIC][${operationId}] Error refreshing task data:`, refreshError);
+        }
+      } else {
+        logger.info(`[DIAGNOSTIC][${operationId}] Skipped server data refresh`, {
+          preventServerRefresh,
+          isSkipped: true
+        });
       }
       
       // Log section statuses after refresh (CRITICAL DIAGNOSTIC)
@@ -1329,11 +1396,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       document.body.offsetHeight;
       
       // ENHANCEMENT: Track that we've just done a clear operation to prevent reload racing condition
+      // Calculate explicit block expiration time - 30 seconds from now
+      const now = Date.now();
+      const blockExpiration = now + 30000; // 30 seconds
+      
       window._lastClearOperation = {
         taskId: formTaskId,
-        timestamp: Date.now(),
-        formType
+        timestamp: now,
+        formType,
+        blockExpiration
       };
+      
+      logger.info(`[DIAGNOSTIC][${clearOpId}] Set clear operation block until ${new Date(blockExpiration).toISOString()}`, {
+        formType,
+        taskId: formTaskId,
+        blockDurationMs: 30000
+      });
       
       // CRITICAL FIX: Reset the form's values on the client side FIRST
       try {
