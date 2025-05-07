@@ -6,6 +6,9 @@
 
 import { apiRequest } from '@/lib/queryClient';
 
+// Import SubmissionAction type from FormSubmissionListener
+import { SubmissionAction } from '../components/forms/FormSubmissionListener';
+
 type FormSubmissionResponse = {
   success: boolean;
   message: string;
@@ -18,6 +21,7 @@ type FormSubmissionResponse = {
   fileId?: number;
   error?: string;
   timestamp?: string;
+  completedActions?: SubmissionAction[];
 };
 
 /**
