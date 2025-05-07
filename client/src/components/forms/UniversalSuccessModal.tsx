@@ -280,17 +280,25 @@ export function UniversalSuccessModal({
                   </Button>
                 )}
                 
-                {/* Link to File Vault */}
+                {/* Link to File Vault - FIXED to prevent application refresh */}
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  asChild
+                  size="sm"
                   className="text-xs h-8 border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100"
+                  onClick={() => {
+                    // IMPORTANT: Use navigate from wouter instead of direct Link component
+                    // This ensures consistent navigation behavior with proper history management
+                    getLogger('UniversalSuccessModal').info('Navigating to file-vault using navigate() method');
+                    
+                    // Close modal first for better UX
+                    onOpenChange(false);
+                    
+                    // Use navigate from wouter hook
+                    navigate('/file-vault');
+                  }}
                 >
-                  <Link href="/file-vault">
-                    <FolderOpen className="h-3.5 w-3.5 mr-1" />
-                    View in File Vault
-                  </Link>
+                  <FolderOpen className="h-3.5 w-3.5 mr-1" />
+                  View in File Vault
                 </Button>
               </div>
             </div>
