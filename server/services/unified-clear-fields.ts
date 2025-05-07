@@ -109,26 +109,46 @@ export async function clearFormFields(
     const newStatus = preserveProgress ? currentStatus : 'not_started';
     const newProgress = preserveProgress ? currentProgress : 0;
     
-    // Create metadata for the update
+    // Create metadata for the update with timestamp for better diagnostics
+    const timestamp = new Date().toISOString();
     let metadataUpdate;
+    
     if (preserveProgress) {
       metadataUpdate = `jsonb_build_object(
         'clearOperation', true,
         'preservedProgress', ${currentProgress},
         'preservedStatus', '${currentStatus}',
-        'lastClearTimestamp', '${new Date().toISOString()}',
+        'lastClearTimestamp', '${timestamp}',
         'preserveProgress', true,
-        'previousMetadata', COALESCE(metadata, '{}'::jsonb)
+        'previousMetadata', COALESCE(metadata, '{}'::jsonb),
+        'clearSource', 'unified-clear-service',
+        'formType', '${formType}',
+        'preserveProgressEnabled', true
       )`;
     } else {
       metadataUpdate = `jsonb_build_object(
         'clearOperation', true,
         'previousProgress', ${currentProgress},
         'previousStatus', '${currentStatus}',
-        'lastClearTimestamp', '${new Date().toISOString()}',
-        'previousMetadata', COALESCE(metadata, '{}'::jsonb)
+        'lastClearTimestamp', '${timestamp}',
+        'previousMetadata', COALESCE(metadata, '{}'::jsonb),
+        'clearSource', 'unified-clear-service',
+        'formType', '${formType}',
+        'preserveProgressEnabled', false
       )`;
     }
+    
+    // Log detailed operation info
+    logger.info(`[UnifiedClear] Updating task status`, {
+      taskId,
+      formType,
+      newStatus,
+      newProgress,
+      currentStatus,
+      currentProgress,
+      preserveProgress,
+      timestamp
+    });
     
     // Update task status and progress
     const updateResult = await client.query(
