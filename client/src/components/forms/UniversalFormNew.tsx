@@ -1145,18 +1145,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         logger.info('Client-side form reset completed');
         
-        // Force section status recalculation
-        if (typeof calculateSectionStatuses === 'function') {
-          try {
-            const newSectionStatuses = calculateSectionStatuses();
-            setSectionStatuses(newSectionStatuses);
-            logger.info('Section statuses recalculated after clearing fields', {
-              sections: Object.keys(newSectionStatuses).length,
-              allCompleted: Object.values(newSectionStatuses).every(status => status === 'completed')
-            });
-          } catch (calcError) {
-            logger.error(`Error recalculating section statuses: ${calcError instanceof Error ? calcError.message : String(calcError)}`);
+        // Force section status recalculation by resetting the active section
+        try {
+          // Reset section completion status
+          const resetSectionStatuses = sections.map(() => ({ status: 'not_started' as const }));
+          // Check that sectionStatuses state setter exists
+          if (typeof setSectionStatuses === 'function') {
+            setSectionStatuses(resetSectionStatuses);
+          } else {
+            logger.warn('setSectionStatuses function not available, cannot reset section statuses');
           }
+          
+          // Reset active section to the first one
+          setActiveSection(0);
+          
+          logger.info('Section statuses reset after clearing fields', {
+            sections: sections.length,
+            resetTo: 'not_started'
+          });
+        } catch (calcError) {
+          logger.error(`Error resetting section statuses: ${calcError instanceof Error ? calcError.message : String(calcError)}`);
         }
       } catch (resetError) {
         logger.error(`Error during form reset: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
