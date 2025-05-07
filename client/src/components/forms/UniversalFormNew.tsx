@@ -1087,11 +1087,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Properly handle any errors during the clear operation
       logger.error('Error clearing form fields:', clearError);
       
-      toast({
-        title: 'Error Clearing Fields',
-        description: clearError instanceof Error ? clearError.message : 'An unknown error occurred',
-        variant: 'destructive',
-      });
+      // Show error message with the unified toast system
+      showClearFieldsToast('error', clearError instanceof Error ? clearError.message : 'An unknown error occurred');
     } finally {
       // Always reset loading state
       setIsLoading(false);
