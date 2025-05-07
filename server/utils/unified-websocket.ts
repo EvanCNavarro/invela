@@ -463,3 +463,81 @@ export function broadcastFormSubmission(
   
   return formSubmittedResult || taskUpdateResult;
 }
+
+/**
+ * Broadcast a comprehensive form submission completed event to all connected clients
+ * 
+ * This new message type indicates that ALL server-side operations related to form submission
+ * have been completed, including file generation, tab unlocking, and related task processing.
+ * The client should wait for this message before showing the success modal with complete information.
+ * 
+ * @param formType The type of form that was submitted ('kyb', 'ky3p', 'open_banking')
+ * @param taskId The ID of the task associated with the submission
+ * @param companyId The ID of the company associated with the submission
+ * @param options Additional options including file information and completed actions
+ * @returns Boolean indicating whether the broadcast was successful
+ */
+export function broadcastFormSubmissionCompleted(
+  formType: string,
+  taskId: number,
+  companyId: number,
+  options: {
+    fileId?: number;
+    fileName?: string;
+    unlockedTabs?: string[];
+    completedActions?: Array<{
+      type: string;
+      description: string;
+      fileId?: number;
+      data?: Record<string, any>;
+    }>;
+    metadata?: Record<string, any>;
+  } = {}
+) {
+  // Create timestamp once for consistent messaging
+  const timestamp = new Date().toISOString();
+  
+  // Extract options
+  const { fileId, fileName, unlockedTabs, completedActions, metadata = {} } = options;
+  
+  // Log detailed information about the comprehensive completion message
+  console.log(`[WebSocket] Broadcasting form submission COMPLETED event:`, {
+    taskId,
+    formType,
+    companyId,
+    hasFileId: !!fileId,
+    hasFileName: !!fileName,
+    hasUnlockedTabs: !!unlockedTabs && unlockedTabs.length > 0,
+    hasCompletedActions: !!completedActions && completedActions.length > 0,
+    timestamp
+  });
+  
+  // Create a standardized message payload with ALL information needed for the success modal
+  const payload = {
+    formType,
+    taskId,
+    companyId,
+    fileId, 
+    fileName,
+    unlockedTabs,
+    completedActions,
+    status: 'success', // Always success for the final completion message
+    submissionDate: timestamp,
+    source: 'final_completion', // Mark this as the final completion message
+    metadata: {
+      ...metadata,
+      fileIncluded: !!fileId,
+      timestamp,
+      // File vault related information if a file was generated
+      ...(fileId ? {
+        downloadUrl: `/api/files/${fileId}/download`,
+        previewUrl: `/api/files/${fileId}/preview`,
+      } : {})
+    },
+    timestamp
+  };
+  
+  // Send the comprehensive form_submission_completed event
+  // This single event contains ALL the information needed for the success modal
+  return broadcast('form_submission_completed', payload);
+}
