@@ -1017,8 +1017,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
-    // Set loading state
-    setIsLoading(true);
+    // No need to set loading state here as ClearFieldsButton manages its own loading state
     
     try {
       // Get form type - prefer the standard taskType over formService for reliability
@@ -1112,8 +1111,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.error('Error clearing form fields:', clearError);
       throw clearError;
     } finally {
-      // Always reset loading state
-      setIsLoading(false);
+      // No need to reset loading state here as ClearFieldsButton manages its own loading state
     }
   };
   
