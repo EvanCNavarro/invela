@@ -301,156 +301,147 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
               </summary>
               
               <div className="p-4 bg-white border-t border-gray-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {/* Group 1: Primary Task Information */}
-                  <div className="space-y-4 col-span-1 sm:col-span-2 md:col-span-1">
-                    {/* Task ID */}
-                    {task?.id && (
-                      <div className="flex items-center gap-2">
-                        <Hash className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Task ID</span>
-                          <p className="text-sm text-gray-700">#{task.id}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Status */}
-                    {task?.status && (
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Status</span>
-                          <p className="text-sm text-gray-700 capitalize">{task.status}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Progress */}
-                    {task?.progress !== undefined && (
-                      <div className="flex items-center gap-2">
-                        <ChartBar className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Progress</span>
-                          <p className="text-sm text-gray-700">{task.progress}% Complete</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Priority */}
-                    {task?.priority && (
-                      <div className="flex items-center gap-2">
-                        <Flag className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Priority</span>
-                          <p className="text-sm text-gray-700 capitalize">{task.priority}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Group 2: Dates */}
-                  <div className="space-y-4 col-span-1">
-                    {/* Submission date */}
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {/* Task ID */}
+                  {task?.id && (
+                    <div className="flex items-start gap-2">
+                      <Hash className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-xs text-gray-500">Submitted</span>
-                        <p className="text-sm text-gray-700">{formattedSubmissionDate}</p>
+                        <span className="text-xs text-gray-500">Task ID</span>
+                        <p className="text-sm text-gray-700 font-medium">#{task.id}</p>
                       </div>
                     </div>
-                    
-                    {/* Created date */}
-                    {task?.created_at && (
-                      <div className="flex items-center gap-2">
-                        <CalendarClock className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Created</span>
-                          <p className="text-sm text-gray-700">{new Date(task.created_at).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Completed date */}
-                    {task?.completed_at && (
-                      <div className="flex items-center gap-2">
-                        <CheckSquare className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Completed</span>
-                          <p className="text-sm text-gray-700">{new Date(task.completed_at).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Due date */}
-                    {task?.due_date && (
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Due date</span>
-                          <p className="text-sm text-gray-700">{new Date(task.due_date).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    )}
+                  )}
+                  
+                  {/* Submission date */}
+                  <div className="flex items-start gap-2">
+                    <Clock className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-xs text-gray-500">Submitted</span>
+                      <p className="text-sm text-gray-700 font-medium">{formattedSubmissionDate}</p>
+                    </div>
                   </div>
                   
-                  {/* Group 3: Organization */}
-                  <div className="space-y-4 col-span-1">
-                    {/* Company */}
-                    {task?.company_id && company?.name && (
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Company</span>
-                          <p className="text-sm text-gray-700">{company.name} (#{task.company_id})</p>
-                        </div>
+                  {/* Company */}
+                  {task?.company_id && company?.name && (
+                    <div className="flex items-start gap-2">
+                      <Building2 className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Company</span>
+                        <p className="text-sm text-gray-700 font-medium">{company.name} (#{task.company_id})</p>
                       </div>
-                    )}
-                    
-                    {/* Task scope */}
-                    {task?.task_scope && (
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Scope</span>
-                          <p className="text-sm text-gray-700 capitalize">{task.task_scope}</p>
-                        </div>
+                    </div>
+                  )}
+                  
+                  {/* Status */}
+                  {task?.status && (
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Status</span>
+                        <p className="text-sm text-gray-700 font-medium capitalize">{task.status}</p>
                       </div>
-                    )}
-                    
-                    {/* Created by */}
-                    {task?.created_by && (
-                      <div className="flex items-center gap-2">
-                        <UserPlus className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Created by</span>
-                          <p className="text-sm text-gray-700">User #{task.created_by}</p>
-                        </div>
+                    </div>
+                  )}
+                  
+                  {/* Created date */}
+                  {task?.created_at && (
+                    <div className="flex items-start gap-2">
+                      <CalendarClock className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Created</span>
+                        <p className="text-sm text-gray-700 font-medium">{new Date(task.created_at).toLocaleString()}</p>
                       </div>
-                    )}
-                    
-                    {/* Assigned to */}
-                    {task?.assigned_to && (
-                      <div className="flex items-center gap-2">
-                        <User2 className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Assigned to</span>
-                          <p className="text-sm text-gray-700">User #{task.assigned_to}</p>
-                        </div>
+                    </div>
+                  )}
+                  
+                  {/* Scope */}
+                  {task?.task_scope && (
+                    <div className="flex items-start gap-2">
+                      <Users className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Scope</span>
+                        <p className="text-sm text-gray-700 font-medium capitalize">{task.task_scope}</p>
                       </div>
-                    )}
-                    
-                    {/* Template ID */}
-                    {task?.template_id && (
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <div>
-                          <span className="text-xs text-gray-500">Template ID</span>
-                          <p className="text-sm text-gray-700">#{task.template_id}</p>
-                        </div>
+                    </div>
+                  )}
+                  
+                  {/* Progress */}
+                  {task?.progress !== undefined && (
+                    <div className="flex items-start gap-2">
+                      <ChartBar className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Progress</span>
+                        <p className="text-sm text-gray-700 font-medium">{task.progress}% Complete</p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  
+                  {/* Due date */}
+                  {task?.due_date && (
+                    <div className="flex items-start gap-2">
+                      <CalendarDays className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Due date</span>
+                        <p className="text-sm text-gray-700 font-medium">{new Date(task.due_date).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Created by */}
+                  {task?.created_by && (
+                    <div className="flex items-start gap-2">
+                      <UserPlus className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Created by</span>
+                        <p className="text-sm text-gray-700 font-medium">User #{task.created_by}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Priority */}
+                  {task?.priority && (
+                    <div className="flex items-start gap-2">
+                      <Flag className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Priority</span>
+                        <p className="text-sm text-gray-700 font-medium capitalize">{task.priority}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Completed date */}
+                  {task?.completed_at && (
+                    <div className="flex items-start gap-2">
+                      <CheckSquare className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Completed</span>
+                        <p className="text-sm text-gray-700 font-medium">{new Date(task.completed_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Assigned to */}
+                  {task?.assigned_to && (
+                    <div className="flex items-start gap-2">
+                      <User2 className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Assigned to</span>
+                        <p className="text-sm text-gray-700 font-medium">User #{task.assigned_to}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Template ID */}
+                  {task?.template_id && (
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-xs text-gray-500">Template ID</span>
+                        <p className="text-sm text-gray-700 font-medium">#{task.template_id}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </details>
