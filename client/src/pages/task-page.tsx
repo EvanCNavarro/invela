@@ -17,6 +17,7 @@ import { PageTemplate } from '@/components/ui/page-template';
 import { BreadcrumbNav } from '@/components/dashboard/BreadcrumbNav';
 import { UniversalForm } from '@/components/forms';
 import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
+import { FormWithLoadingWrapper } from '@/components/forms/FormWithLoadingWrapper';
 import { DocumentUploadWizard } from '@/components/documents/DocumentUploadWizard';
 import { CardMethodChoice } from '@/components/card/CardMethodChoice';
 import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';
@@ -470,13 +471,13 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </div>
             
-            <UniversalForm
+            <FormWithLoadingWrapper
               taskId={task.id}
               taskType="kyb"
-              initialData={{}}
-              onProgress={updateTaskProgress}
+              task={task}
               companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
+              isReadOnly={isReadOnly || isSubmitted}
+              onProgress={updateTaskProgress}
               onSubmit={async (data) => {
                 console.log('[TaskPage] KYB form submission handler called', { taskId: task.id });
                 try {
@@ -565,13 +566,13 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </div>
             
-            <UniversalForm
+            <FormWithLoadingWrapper
               taskId={task.id}
               taskType="card"
-              initialData={{}}
-              onProgress={updateTaskProgress}
+              task={task}
               companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
+              isReadOnly={isReadOnly || isSubmitted}
+              onProgress={updateTaskProgress}
               onSubmit={async (data) => {
                 console.log('[TaskPage] Card form submission handler called', { taskId: task.id });
                 try {
@@ -666,13 +667,13 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </div>
             
-            <UniversalForm
+            <FormWithLoadingWrapper
               taskId={task.id}
               taskType="ky3p"
-              initialData={{}}
-              onProgress={updateTaskProgress}
+              task={task}
               companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
+              isReadOnly={isReadOnly || isSubmitted}
+              onProgress={updateTaskProgress}
               onSubmit={async (data) => {
                 console.log('[TaskPage] KY3P form submission handler called', { taskId: task.id });
                 try {
@@ -767,13 +768,13 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </div>
             
-            <UniversalForm
+            <FormWithLoadingWrapper
               taskId={task.id}
               taskType="open_banking"
-              initialData={{}}
-              onProgress={updateTaskProgress}
+              task={task}
               companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted} // Pass read-only flag to the form
+              isReadOnly={isReadOnly || isSubmitted}
+              onProgress={updateTaskProgress}
               onSubmit={async (data) => {
                 console.log('[TaskPage] Open Banking form submission handler called', { taskId: task.id });
                 try {
