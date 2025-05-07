@@ -1020,41 +1020,68 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
-    // Use centralized clear fields utility with consistent functionality across components
+    // Set loading state
+    setIsLoading(true);
+    
     try {
-      // Use the fixed handleClearFieldsUtil with proper typing structure
-      const clearResult = await handleClearFieldsUtil(
+      // Get task type and ID
+      const taskType = formService.formType || taskType || 'kyb';
+      const taskId = formService.taskId || taskId;
+      
+      logger.info(`Clearing all fields for ${taskType} task ${taskId}`);
+      
+      // Direct API call to backend
+      const clearUrl = `/api/${taskType}/clear/${taskId}`;
+      logger.info(`Calling clear fields API: ${clearUrl}`);
+      
+      const response = await fetch(clearUrl, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to clear fields. Server responded with: ${response.status}`);
+      }
+      
+      // Also use the utility to update the UI state
+      await handleClearFieldsUtil(
         formService,
         fields,
-        // Create an update callback function that integrates with our form
         (fieldId, value) => {
-          // Use form setValue method to update the field
           try {
-            form.setValue(fieldId, value);
-            
-            // Also try to update via resetField to ensure clearing works
-            try {
-              form.resetField(fieldId, { defaultValue: value });
-            } catch (resetError) {
-              // Ignore reset errors, we have the setValue as primary method
-              logger.debug(`Reset field error for ${fieldId}:`, resetError);
-            }
+            // Reset this specific field in form state
+            form.setValue(fieldId, null);
+            form.resetField(fieldId);
           } catch (error) {
-            logger.error(`Error setting value for field ${fieldId}:`, error);
+            logger.error(`Error resetting field ${fieldId}:`, error);
           }
         }
       );
       
-      // Log and handle the result
-      logger.info(`Clear fields operation completed with result: ${clearResult}`);
+      // Reset form to empty values
+      form.reset({});
       
-      // Force component rerender after clear
+      // Force data refresh
+      if (refreshData && typeof refreshData === 'function') {
+        await refreshData();
+      }
+      
+      // Reset progress indicators
+      setOverallProgress(0);
+      setSectionStatuses(prevStatuses => 
+        prevStatuses.map(s => ({ ...s, status: 'not_started', completedCount: 0, totalCount: s.totalCount }))
+      );
+      
+      // Force UI update
       setForceRerender(prev => !prev);
       
+      // Show success message
       toast({
         title: 'Form cleared',
         description: 'All fields have been reset to their default values.',
-        variant: 'default',
+        variant: 'success',
       });
     } catch (clearError) {
       // Properly handle any errors during the clear operation
@@ -1065,6 +1092,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: clearError instanceof Error ? clearError.message : 'An unknown error occurred',
         variant: 'destructive',
       });
+    } finally {
+      // Always reset loading state
+      setIsLoading(false);
     }
     
 
