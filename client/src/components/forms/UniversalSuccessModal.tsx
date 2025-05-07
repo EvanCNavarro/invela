@@ -15,7 +15,8 @@ import {
   FileArchive, 
   Folder,
   Download,
-  FolderOpen
+  FolderOpen,
+  BarChart2
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { userContext } from "@/lib/user-context";

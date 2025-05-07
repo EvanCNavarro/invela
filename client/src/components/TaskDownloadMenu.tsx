@@ -14,12 +14,14 @@ interface TaskDownloadMenuProps {
   onDownload: (format: 'csv' | 'txt' | 'json') => Promise<void>;
   taskType?: string;
   disabled?: boolean;
+  fileId?: number;  // Add fileId prop to support direct file access
 }
 
 export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
   onDownload,
   taskType = 'form',
-  disabled = false
+  disabled = false,
+  fileId  // Include fileId in destructuring but we won't use it directly in this component
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentFormat, setCurrentFormat] = useState<'csv' | 'txt' | 'json' | null>(null);
