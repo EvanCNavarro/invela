@@ -30,9 +30,15 @@ interface SectionContentProps {
   section: FormSection;
   fields: FormField[];
   template?: TaskTemplateWithConfigs;
-  onFieldChange: (name: string, value: any) => void;
+  // CRITICAL FIX: Make onFieldChange optional with onFieldUpdate as alternative
+  onFieldChange?: (name: string, value: any) => void;
   startingQuestionNumber?: number; // Add starting question number prop
   isSubmitted?: boolean; // Add isSubmitted prop to disable form fields
+  sectionIndex?: number; // Add section index for proper numbering
+  // Added properties needed by new universal form
+  form?: any; // Form context from parent
+  onFieldUpdate?: (fieldId: string, value: any) => void; // Callback for field updates
+  refreshStatus?: () => void; // Method to refresh section status calculations
 }
 
 /**
@@ -44,11 +50,16 @@ const SectionContent: React.FC<SectionContentProps> = ({
   template,
   onFieldChange,
   startingQuestionNumber = 1,
-  isSubmitted = false
+  isSubmitted = false,
+  sectionIndex = 0,
+  form,
+  onFieldUpdate,
+  refreshStatus
 }) => {
   // Try to get the form context from React Hook Form
   // If we're inside a FormProvider, this will give us the form methods
-  const formContext = useFormContext();
+  // If form is explicitly provided, use that instead
+  const formContext = form || useFormContext();
   
   // Defensive checks to prevent runtime errors
   if (!section) {
@@ -122,7 +133,14 @@ const SectionContent: React.FC<SectionContentProps> = ({
                 getValues: () => ({}),
                 setValue: () => ({})
               }}
-              onFieldChange={(value) => onFieldChange(field.key, value)}
+              onFieldChange={(value) => {
+                // Support both callback patterns
+                if (onFieldUpdate) {
+                  onFieldUpdate(field.key, value);
+                } else if (onFieldChange) {
+                  onFieldChange(field.key, value);
+                }
+              }}
               isSubmitted={isSubmitted}
             />
           </div>

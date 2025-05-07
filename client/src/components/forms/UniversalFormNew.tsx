@@ -2259,11 +2259,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           key={section.id}
                           className={index === activeSection ? 'block' : 'hidden'}
                         >
+                          {/* CRITICAL FIX: Filter fields by section ID to prevent showing all fields in each section */}
                           <SectionContent
                             section={section}
                             sectionIndex={index}
                             form={form}
-                            fields={fields}
+                            fields={fields.filter(field => {
+                              // If field has a sectionId property, filter by it
+                              if (field.sectionId !== undefined) {
+                                return String(field.sectionId) === String(section.id);
+                              }
+                              
+                              // Fallback: Try to match with section_id for backward compatibility
+                              if ((field as any).section_id !== undefined) {
+                                return String((field as any).section_id) === String(section.id);
+                              }
+                              
+                              // If no section info in field, assign to first section as fallback
+                              return index === 0;
+                            })}
                             onFieldUpdate={(fieldId, value) => {
                               updateField(fieldId, value);
                             }}
