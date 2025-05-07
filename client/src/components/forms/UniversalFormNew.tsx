@@ -301,33 +301,39 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
               </summary>
               
               <div className="p-4 bg-white border-t border-gray-200">
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {/* Task ID */}
                   {task?.id && (
-                    <div className="flex items-start gap-2">
-                      <Hash className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <Hash className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Task ID</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Task ID</span>
                         <p className="text-sm text-gray-700 font-medium">#{task.id}</p>
                       </div>
                     </div>
                   )}
                   
                   {/* Submission date */}
-                  <div className="flex items-start gap-2">
-                    <Clock className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                    <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                      <Clock className="h-4 w-4 text-gray-600" />
+                    </div>
                     <div>
-                      <span className="text-xs text-gray-500">Submitted</span>
+                      <span className="text-xs font-medium text-gray-500 block mb-0.5">Submitted</span>
                       <p className="text-sm text-gray-700 font-medium">{formattedSubmissionDate}</p>
                     </div>
                   </div>
                   
                   {/* Company */}
                   {task?.company_id && company?.name && (
-                    <div className="flex items-start gap-2">
-                      <Building2 className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <Building2 className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Company</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Company</span>
                         <p className="text-sm text-gray-700 font-medium">{company.name} (#{task.company_id})</p>
                       </div>
                     </div>
@@ -335,10 +341,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Status */}
                   {task?.status && (
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-green-50 rounded-md">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Status</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Status</span>
                         <p className="text-sm text-gray-700 font-medium capitalize">{task.status}</p>
                       </div>
                     </div>
@@ -346,10 +354,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Created date */}
                   {task?.created_at && (
-                    <div className="flex items-start gap-2">
-                      <CalendarClock className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <CalendarClock className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Created</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Created</span>
                         <p className="text-sm text-gray-700 font-medium">{new Date(task.created_at).toLocaleString()}</p>
                       </div>
                     </div>
@@ -357,10 +367,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Scope */}
                   {task?.task_scope && (
-                    <div className="flex items-start gap-2">
-                      <Users className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <Users className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Scope</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Scope</span>
                         <p className="text-sm text-gray-700 font-medium capitalize">{task.task_scope}</p>
                       </div>
                     </div>
@@ -368,10 +380,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Progress */}
                   {task?.progress !== undefined && (
-                    <div className="flex items-start gap-2">
-                      <ChartBar className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-emerald-50 rounded-md">
+                        <ChartBar className="h-4 w-4 text-emerald-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Progress</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Progress</span>
                         <p className="text-sm text-gray-700 font-medium">{task.progress}% Complete</p>
                       </div>
                     </div>
@@ -379,10 +393,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Due date */}
                   {task?.due_date && (
-                    <div className="flex items-start gap-2">
-                      <CalendarDays className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <CalendarDays className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Due date</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Due date</span>
                         <p className="text-sm text-gray-700 font-medium">{new Date(task.due_date).toLocaleDateString()}</p>
                       </div>
                     </div>
@@ -390,10 +406,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Created by */}
                   {task?.created_by && (
-                    <div className="flex items-start gap-2">
-                      <UserPlus className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <UserPlus className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Created by</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Created by</span>
                         <p className="text-sm text-gray-700 font-medium">User #{task.created_by}</p>
                       </div>
                     </div>
@@ -401,10 +419,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Priority */}
                   {task?.priority && (
-                    <div className="flex items-start gap-2">
-                      <Flag className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-blue-50 rounded-md">
+                        <Flag className="h-4 w-4 text-blue-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Priority</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Priority</span>
                         <p className="text-sm text-gray-700 font-medium capitalize">{task.priority}</p>
                       </div>
                     </div>
@@ -412,10 +432,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Completed date */}
                   {task?.completed_at && (
-                    <div className="flex items-start gap-2">
-                      <CheckSquare className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <CheckSquare className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Completed</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Completed</span>
                         <p className="text-sm text-gray-700 font-medium">{new Date(task.completed_at).toLocaleString()}</p>
                       </div>
                     </div>
@@ -423,10 +445,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Assigned to */}
                   {task?.assigned_to && (
-                    <div className="flex items-start gap-2">
-                      <User2 className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <User2 className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Assigned to</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Assigned to</span>
                         <p className="text-sm text-gray-700 font-medium">User #{task.assigned_to}</p>
                       </div>
                     </div>
@@ -434,10 +458,12 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   
                   {/* Template ID */}
                   {task?.template_id && (
-                    <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-center">
+                      <div className="flex-shrink-0 mr-3 h-8 w-8 flex items-center justify-center bg-gray-100 rounded-md">
+                        <FileText className="h-4 w-4 text-gray-600" />
+                      </div>
                       <div>
-                        <span className="text-xs text-gray-500">Template ID</span>
+                        <span className="text-xs font-medium text-gray-500 block mb-0.5">Template ID</span>
                         <p className="text-sm text-gray-700 font-medium">#{task.template_id}</p>
                       </div>
                     </div>
