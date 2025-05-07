@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
-import { showClearFieldsToast } from '@/hooks/use-unified-toast';
+import { useToast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('ClearFieldsButton');
@@ -46,6 +46,7 @@ export function ClearFieldsButton({
 }: ClearFieldsButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const { toast } = useToast();
   
   // Generate operation ID outside handler to ensure consistency
   const generateOperationId = useCallback(() => {
@@ -96,9 +97,10 @@ export function ClearFieldsButton({
         setIsClearing(false);
         
         // Show success toast even though we debounced
-        showClearFieldsToast('success', 'Form fields cleared successfully', {
-          operationId,
-          wasDebounced: true
+        toast({
+          title: 'Success',
+          description: 'Form fields cleared successfully',
+          variant: 'success'
         });
         return;
       }
@@ -109,10 +111,10 @@ export function ClearFieldsButton({
       lastClearOperation.operationId = operationId;
       
       // Show in-progress toast for better user feedback
-      showClearFieldsToast('loading', 'Clearing form fields...', { 
-        operationId, 
-        taskId, 
-        taskType 
+      toast({
+        title: 'Clearing...',
+        description: 'Clearing form fields...',
+        variant: 'default'
       });
       
       try {
@@ -163,12 +165,11 @@ export function ClearFieldsButton({
           serverResponse: result
         });
         
-        // Show success toast using the unified toast system
-        showClearFieldsToast('success', 'Form fields cleared successfully', { 
-          operationId, 
-          taskId, 
-          taskType,
-          durationMs: duration
+        // Show success toast
+        toast({
+          title: 'Success',
+          description: 'Form fields cleared successfully',
+          variant: 'success'
         });
       } catch (apiError) {
         // Log the API error but still call onClear as fallback
@@ -199,7 +200,7 @@ export function ClearFieldsButton({
           });
         } catch (fallbackError) {
           // Complete failure if both server and client clear fail
-          throw new Error(`Failed to clear fields: ${apiError.message}. Client fallback also failed.`);
+          throw new Error(`Failed to clear fields: ${apiError instanceof Error ? apiError.message : 'Server error'}. Client fallback also failed.`);
         }
       }
     } catch (error) {
