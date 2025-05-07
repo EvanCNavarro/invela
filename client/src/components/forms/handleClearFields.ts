@@ -569,7 +569,10 @@ export async function handleClearFieldsUtil(
     });
     
     // Show success toast using the standard toast component
-    unifiedToast.success('Fields Cleared', 'All form fields have been cleared successfully.');
+    unifiedToast.success({ 
+      title: 'Fields Cleared', 
+      description: 'All form fields have been cleared successfully.' 
+    });
     
     return true;
   } catch (e) {
@@ -585,7 +588,10 @@ export async function handleClearFieldsUtil(
     
     // Show error toast
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    unifiedToast.error('Error Clearing Fields', errorMessage);
+    unifiedToast.error({ 
+      title: 'Error Clearing Fields', 
+      description: errorMessage 
+    });
     
     return false;
   }
@@ -629,7 +635,10 @@ export async function directClearFields(
     
     // Show loading toast unless skipToasts is true
     if (!options.skipToasts) {
-      unifiedToast.info('Clearing Fields', `Clearing all fields for ${formType} task...`);
+      unifiedToast.info({
+        title: 'Clearing Fields',
+        description: `Clearing all fields for ${formType} task...`
+      });
     }
     
     const normalizedFormType = formType.toLowerCase().replace('_', '-');
@@ -771,7 +780,10 @@ export async function directClearFields(
       
       // Show error toast unless skipToasts is true
       if (!options.skipToasts) {
-        unifiedToast.error('Error Clearing Fields', errorMessage);
+        unifiedToast.error({
+          title: 'Error Clearing Fields',
+          description: errorMessage
+        });
       }
       
       throw new Error(errorMessage);
@@ -796,7 +808,10 @@ export async function directClearFields(
       
       // Show success toast unless skipToasts is true
       if (!options.skipToasts) {
-        unifiedToast.success('Fields Cleared', `Successfully cleared all ${formType} fields`);
+        unifiedToast.success({
+          title: 'Fields Cleared',
+          description: `Successfully cleared all ${formType} fields`
+        });
       }
     } catch (jsonError) {
       logger.warn(`[DirectClearFields][${operationId}] Could not parse JSON response:`, jsonError, {
@@ -846,7 +861,10 @@ export async function directClearFields(
     // Show error toast unless skipToasts is true
     if (!options.skipToasts) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      unifiedToast.error('Error Clearing Fields', errorMessage);
+      unifiedToast.error({
+        title: 'Error Clearing Fields',
+        description: errorMessage
+      });
     }
     
     throw error;
