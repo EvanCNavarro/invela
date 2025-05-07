@@ -537,20 +537,6 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
             Back to Task Center
           </Button>
           
-          {/* Middle section with task details if available */}
-          {taskId && (
-            <div className="hidden md:flex items-center space-x-2">
-              <div className="text-xs text-gray-500 px-3 py-1 rounded-full bg-gray-100 border border-gray-200">
-                Task #{taskId}
-              </div>
-              {company?.name && (
-                <div className="text-xs text-gray-500 px-3 py-1 rounded-full bg-blue-50 border border-blue-100">
-                  {company.name}
-                </div>
-              )}
-            </div>
-          )}
-          
           <Button
             variant="outline"
             size="sm"
