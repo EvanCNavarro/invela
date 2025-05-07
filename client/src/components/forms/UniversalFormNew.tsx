@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
 import { componentFactory } from '@/services/componentFactory';
 import { FormServiceInterface, FormData, FormSection as ServiceFormSection } from '@/services/formService';
 import type { FormField as ServiceFormField } from '@/services/formService';
@@ -957,6 +958,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const formTitle = getFormTitle();
   const formDescription = getFormDescription();
 
+  // Early loading state - show skeleton loaders while determining form state
+  const formStateLoading = useMemo(() => {
+    // Show skeleton if we're loading task data or waiting for field/section data
+    return !task || loading || fields.length === 0;
+  }, [task, loading, fields.length]);
+  
   // Render main form
   return (
     <div className="w-full mx-auto">
@@ -997,8 +1004,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         />
       )}
       
-      {/* Conditionally render read-only view for submitted forms */}
-      {isReadOnlyMode && hasLoaded ? (
+      {/* IMPROVEMENT: Show skeleton loader while determining form state */}
+      {formStateLoading ? (
+        <FormSkeletonWithMode readOnly={isReadOnly || task?.status === 'submitted' || task?.status === 'completed'} />
+      ) : isReadOnlyMode && hasLoaded ? (
         <ReadOnlyFormView
           taskId={taskId}
           taskType={taskType}
