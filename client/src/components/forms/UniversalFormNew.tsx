@@ -373,16 +373,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // Determine if form should be in read-only mode (when submitted)
+  // IMPROVEMENT: Determine if form should be in read-only mode based on task status
+  // This calculation is now done earlier to avoid showing editable UI for submitted forms
   const isReadOnlyMode = useMemo(() => {
     // Check both task status and submissionResult to handle both initial load and after submission
     return task?.status === 'submitted' || task?.status === 'completed' || !!submissionResult;
   }, [task?.status, submissionResult]);
   
-  // Determine if all data has loaded
+  // IMPROVEMENT: Split the loading states for read-only vs editable forms
+  // This prevents showing editable UI elements during read-only form loading
+  const readOnlyFormDataLoaded = useMemo(() => {
+    return isReadOnlyMode && dataHasLoaded && fields.length > 0 && sections.length > 0;
+  }, [isReadOnlyMode, dataHasLoaded, fields.length, sections.length]);
+  
+  const editableFormDataLoaded = useMemo(() => {
+    return !isReadOnlyMode && dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
+  }, [isReadOnlyMode, dataHasLoaded, isDataLoading, loading, fields.length, sections.length]);
+  
+  // Determine if all data has loaded - use the appropriate loader based on form mode
   const hasLoaded = useMemo(() => {
-    return dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
-  }, [dataHasLoaded, isDataLoading, loading, fields.length, sections.length]);
+    return isReadOnlyMode ? readOnlyFormDataLoaded : editableFormDataLoaded;
+  }, [isReadOnlyMode, readOnlyFormDataLoaded, editableFormDataLoaded]);
   
   // Make sure agreement_confirmation is set to false by default
   // and sync the agreementChecked React state with form value
