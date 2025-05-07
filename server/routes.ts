@@ -420,6 +420,9 @@ export function registerRoutes(app: Express): Express {
   app.use(unifiedDemoAutofillRouter);
   app.use(filesRouter);
   
+  // Register fix-missing-file API router for regenerating files
+  app.use(fixMissingFileRouter);
+  
   // Register Open Banking Survey routes with WebSocket support
   // Use getWebSocketServer from the unified implementation
   registerOpenBankingRoutes(app, getWebSocketServer());
