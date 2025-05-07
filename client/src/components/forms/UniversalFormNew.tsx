@@ -490,7 +490,13 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
                   className="border border-gray-200 rounded-md overflow-hidden"
                 >
                   <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 font-medium">
-                    {section.title}
+                    <div className="flex items-center">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 mr-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                      <span className="text-gray-500 mr-2">{sectionIndex + 1}.</span>
+                      {section.title}
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 py-2">
                     <div className="space-y-4">
