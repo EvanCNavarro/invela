@@ -233,7 +233,7 @@ export default function CompanyProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              <span className="leading-tight">S&P Business Data<br />Risk Score</span>
+              <span className="leading-tight">S&P Data Access<br />Risk Score</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -468,7 +468,7 @@ export default function CompanyProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              <span className="leading-tight">S&P Business Data<br />Risk Score</span>
+              <span className="leading-tight">S&P Data Access<br />Risk Score</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
