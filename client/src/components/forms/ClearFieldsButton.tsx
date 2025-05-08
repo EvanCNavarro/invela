@@ -79,7 +79,28 @@ export function ClearFieldsButton({
         variant: 'default'
       });
       
-      // SIMPLE APPROACH: Make a direct API call to clear fields
+      // STEP 1: First, forcefully remove all existing cached data about this form
+      // to ensure we don't have stale data influencing our UI
+      const keysToRemove = [
+        `/api/tasks/${taskId}`,
+        `/api/${formTypeForApi}/progress/${taskId}`,
+        `/api/${formTypeForApi.replace('-', '_')}/progress/${taskId}`,
+        `/api/kyb/progress/${taskId}`,
+        `/api/ky3p/progress/${taskId}`,
+        `/api/open-banking/progress/${taskId}`
+      ];
+      
+      logger.info(`[ClearFields] Removing form data from cache BEFORE API call`, {
+        keys: keysToRemove,
+        operationId
+      });
+      
+      // Remove cache entries BEFORE the API call to prevent stale data influences
+      for (const key of keysToRemove) {
+        queryClient.removeQueries({ queryKey: [key] });
+      }
+      
+      // STEP 2: Make a direct API call to clear fields on the server
       const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
       
       logger.info(`[ClearFields] Calling API to clear fields: ${clearUrl}`, {
@@ -92,10 +113,15 @@ export function ClearFieldsButton({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // Add cache-busting headers
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
         body: JSON.stringify({ 
           preserveProgress,
-          resetUI: true
+          resetUI: true,
+          timestamp: Date.now() // Include timestamp to prevent caching
         })
       });
       
@@ -103,28 +129,65 @@ export function ClearFieldsButton({
         throw new Error(`Server returned ${response.status}: ${await response.text()}`);
       }
       
-      // SIMPLIFICATION: Force remove relevant queries from cache
-      const keysToRemove = [
-        `/api/tasks/${taskId}`,
-        `/api/${formTypeForApi}/progress/${taskId}`,
-        `/api/${formTypeForApi.replace('-', '_')}/progress/${taskId}`,
-        `/api/kyb/progress/${taskId}`,
-        `/api/ky3p/progress/${taskId}`,
-        `/api/open-banking/progress/${taskId}`
-      ];
-      
-      logger.info(`[ClearFields] Removing queries from cache`, {
-        keys: keysToRemove,
+      // STEP 3: Purge all potentially affected API endpoints again
+      // This ensures any in-flight requests or race conditions are addressed
+      logger.info(`[ClearFields] Purging cache again AFTER successful API call`, {
         operationId
       });
       
-      // Remove cache entries
       for (const key of keysToRemove) {
         queryClient.removeQueries({ queryKey: [key] });
       }
       
-      // Call the onClear callback to reset form state
+      // STEP 4: Force a fresh data fetch by refetching key data
+      // This ensures we have fresh data from the server
+      logger.info(`[ClearFields] Forcing fresh data fetch`, {
+        operationId
+      });
+      
+      // Get fresh task data
+      await queryClient.fetchQuery({ 
+        queryKey: [`/api/tasks/${taskId}`],
+        staleTime: 0
+      });
+      
+      // Get fresh form progress data
+      await queryClient.fetchQuery({
+        queryKey: [`/api/${formTypeForApi}/progress/${taskId}`],
+        staleTime: 0
+      });
+      
+      // STEP 5: Reset form UI state completely
+      // Call the parent component's onClear to reset the form
+      logger.info(`[ClearFields] Resetting form UI state`, {
+        operationId
+      });
+      
       await onClear();
+      
+      // STEP 6: Direct fetch to ensure progress data is correct
+      try {
+        // Make a direct fetch to ensure data is fresh
+        const freshDataResponse = await fetch(`/api/${formTypeForApi}/progress/${taskId}?t=${Date.now()}`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (freshDataResponse.ok) {
+          const freshData = await freshDataResponse.json();
+          logger.info(`[ClearFields] Verified fresh data:`, {
+            formData: Object.keys(freshData.formData || {}).length,
+            progress: freshData.progress,
+            status: freshData.status,
+            operationId
+          });
+        }
+      } catch (fetchError) {
+        logger.warn(`[ClearFields] Error verifying fresh data:`, fetchError);
+      }
       
       // Success toast
       toast({
@@ -132,16 +195,6 @@ export function ClearFieldsButton({
         description: 'Form fields cleared successfully',
         variant: 'success'
       });
-      
-      // SIMPLIFICATION: Force a redirect to the same page to get fresh data
-      // This is the most reliable way to ensure everything is reset
-      setTimeout(() => {
-        const currentUrl = window.location.pathname;
-        logger.info(`[ClearFields] Redirecting to refresh page: ${currentUrl}`);
-        
-        // Navigate to the same page to force a full re-render and data refetch
-        navigate(currentUrl);
-      }, 300);
       
     } catch (error) {
       // Log error
