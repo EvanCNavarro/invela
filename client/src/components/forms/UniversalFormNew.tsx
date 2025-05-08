@@ -10,6 +10,7 @@ declare global {
       timestamp: number;
       formType: string;
       blockExpiration?: number; // When this block should expire
+      operationId?: string;     // Operation ID for tracking
     } | null;
   }
 }
@@ -818,11 +819,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
    * @param options.skipServerRefresh Whether to prevent fetching new data from the server
    * @returns Promise that resolves when the refresh is complete
    */
-  const refreshFormData = useCallback(async (options: { skipServerRefresh?: boolean, forceUIReset?: boolean } = {}): Promise<void> => {
-    // Default to skipServerRefresh=true for safety
-    const skipServerRefresh = options.skipServerRefresh ?? true;
+  const refreshFormData = useCallback(async (options: { 
+    skipServerRefresh?: boolean, 
+    forceUIReset?: boolean,
+    clearCache?: boolean 
+  } = {}): Promise<void> => {
+    // Default to skipServerRefresh=true for safety (except when clearCache is true)
+    const skipServerRefresh = options.clearCache ? false : (options.skipServerRefresh ?? true);
     // Support for forcefully resetting the UI state
     const forceUIReset = options.forceUIReset === true;
+    // Whether to perform aggressive cache clearing
+    const clearCache = options.clearCache === true;
     
     // Generate a unique operation ID for diagnostic tracking
     const operationId = `refresh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -830,6 +837,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     try {
       logger.info(`[DIAGNOSTIC][${operationId}] Refreshing form data`, {
         skipServerRefresh,
+        forceUIReset,
+        clearCache,
         taskId,
         taskType,
         hasForm: !!form,
@@ -840,6 +849,36 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         activeSection,
         timestamp: new Date().toISOString()
       });
+      
+      // AGGRESSIVE CACHE CLEARING - only when clearCache is specifically requested
+      if (clearCache && taskId) {
+        try {
+          logger.info(`[DIAGNOSTIC][${operationId}] Performing aggressive cache clearing`);
+          
+          // Import and use query client directly
+          const { queryClient } = require('@/lib/queryClient');
+          
+          // Clear cache for specific endpoints related to this task
+          const cacheKeysToRemove = [
+            `/api/tasks/${taskId}`,
+            `/api/tasks.json/${taskId}`,
+            `/api/kyb/progress/${taskId}`,
+            `/api/ky3p/progress/${taskId}`,
+            `/api/tasks/${taskId}/kyb-responses`,
+            `/api/tasks/${taskId}/ky3p-responses`,
+            `/api/tasks/${taskId}/open-banking-responses`,
+            `/api/tasks/${taskId}/form-data`
+          ];
+          
+          // Remove each query from cache directly (stronger than invalidate)
+          for (const key of cacheKeysToRemove) {
+            queryClient.removeQueries({ queryKey: [key] });
+            logger.info(`[DIAGNOSTIC][${operationId}] Removed query cache for ${key}`);
+          }
+        } catch (cacheError) {
+          logger.error(`[DIAGNOSTIC][${operationId}] Error clearing cache:`, cacheError);
+        }
+      }
       
       // ENHANCED CLEAR OPERATION DETECTION:
       // Check for recent clear operations with stronger timing and expiration logic
