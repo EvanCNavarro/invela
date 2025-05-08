@@ -157,12 +157,25 @@ export const clearFormFields = async (
       // Commit transaction
       await client.query('COMMIT');
       
-      // Broadcast update for UI refresh
+      // Enhanced: Broadcast task update with full fields_cleared operation metadata
+      // This includes a clear signal that all form sections should be reset
       try {
-        logger.info(`[ClearFields] Broadcasting task update for task ${taskId}`);
+        logger.info(`[ClearFields] Broadcasting enhanced task update for task ${taskId}`);
         await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
           operation: 'fields_cleared',
+          clearSections: true,  // Signal to client to reset all section statuses
+          formType: normalizedFormType,
+          resetUI: true,        // Signal to client to fully reset UI state
+          clearedAt: new Date().toISOString(),
           timestamp: new Date().toISOString()
+        });
+        
+        // Additional logging for diagnostics
+        logger.info(`[ClearFields] Enhanced broadcast for task ${taskId} completed`, {
+          taskId,
+          formType: normalizedFormType,
+          operation: 'fields_cleared',
+          resetUI: true
         });
       } catch (broadcastError) {
         // Log but don't fail if broadcast fails
@@ -334,8 +347,13 @@ export const clearFieldsService = async (
             });
               
             // Also broadcast a task update with the new progress
+            // Enhanced with clearSections and resetUI flags for consistent client handling
             await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
               operation: 'fields_cleared',
+              clearSections: true,         // Signal to client to reset all section statuses
+              formType,                    // Include form type for client-side filtering
+              resetUI: true,               // Signal to client to fully reset UI state
+              clearedAt: new Date().toISOString(),
               timestamp: new Date().toISOString()
             });
               
