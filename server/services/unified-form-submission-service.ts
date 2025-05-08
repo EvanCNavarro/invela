@@ -722,6 +722,23 @@ async function handleKy3pPostSubmission(
  * - Generates risk score
  * - Updates accreditation status
  */
+/**
+ * Handle Open Banking post-submission processing
+ * 
+ * This function performs the following steps after an Open Banking form is submitted:
+ * 1. Unlocks Dashboard and Insights tabs for the company
+ * 2. Marks company onboarding as completed
+ * 3. Generates a risk score (random value between 5-95)
+ * 4. Calculates risk clusters based on the risk score
+ * 5. Sets accreditation status to APPROVED
+ * 
+ * @param trx The transaction context
+ * @param taskId The task ID
+ * @param companyId The company ID
+ * @param formData The form data
+ * @param transactionId Optional transaction ID for tracking
+ * @returns Array of unlocked tabs
+ */
 async function handleOpenBankingPostSubmission(
   trx: any,
   taskId: number,
@@ -745,8 +762,19 @@ async function handleOpenBankingPostSubmission(
     timestamp: new Date().toISOString()
   });
   
+  // Track success of each step
+  const stepResults = {
+    companyVerified: false,
+    tabsUnlocked: false,
+    onboardingCompleted: false,
+    riskScoreGenerated: false,
+    accreditationUpdated: false
+  };
+  
+  let unlockedTabs: string[] = [];
+  
   try {
-    // Verify company exists before proceeding
+    // STEP 0: Verify company exists before proceeding
     const companyCheck = await trx.select({ id: companies.id })
       .from(companies)
       .where(eq(companies.id, companyId))
@@ -758,142 +786,247 @@ async function handleOpenBankingPostSubmission(
     }
     
     console.log(`[OpenBankingPostSubmission] ✅ Company verified: ${companyId}`);
+    stepResults.companyVerified = true;
     
+    // STEP 1: Unlock Dashboard and Insights tabs
     // Open Banking unlocks Dashboard and Insights tabs
-    const unlockedTabs = ['dashboard', 'insights'];
+    unlockedTabs = ['dashboard', 'insights'];
     
-    // Unlock Dashboard and Insights tabs
-    await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
-    console.log(`[OpenBankingPostSubmission] ✅ Unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
+    try {
+      // Unlock Dashboard and Insights tabs
+      await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
+      console.log(`[OpenBankingPostSubmission] ✅ Unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
+      stepResults.tabsUnlocked = true;
+      
+      logger.info('Unlocked dashboard and insights tabs', { 
+        ...obPostLogContext,
+        step: 'tabs_unlock',
+        tabs: unlockedTabs,
+        status: 'success',
+        timestamp: new Date().toISOString()
+      });
+    } catch (tabError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to unlock tabs:`, tabError);
+      logger.error('Failed to unlock tabs', {
+        ...obPostLogContext,
+        step: 'tabs_unlock',
+        error: tabError instanceof Error ? tabError.message : String(tabError),
+        status: 'failed'
+      });
+      // Continue execution - don't break the whole process if tab unlocking fails
+    }
     
-    // STEP 1: Mark company onboarding as completed
+    // STEP 2: Mark company onboarding as completed
     // This is crucial for the post-submission workflow
-    // IMPORTANT: Column name is onboarding_company_completed (not onboarding_completed)
-    console.log(`[OpenBankingPostSubmission] Step 1/4: Setting onboarding_company_completed to true for company ${companyId}`);
-    const onboardingUpdateResult = await trx.update(companies)
-      .set({
-        onboarding_company_completed: true, // Correct column name confirmed
-        updated_at: new Date()
-      })
-      .where(eq(companies.id, companyId))
-      .returning({ id: companies.id });
+    try {
+      console.log(`[OpenBankingPostSubmission] Step 2/5: Setting onboarding_company_completed to true for company ${companyId}`);
+      const onboardingUpdateResult = await trx.update(companies)
+        .set({
+          onboarding_company_completed: true, // Correct column name
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning({ id: companies.id });
+      
+      if (onboardingUpdateResult && onboardingUpdateResult.length > 0) {
+        console.log(`[OpenBankingPostSubmission] ✅ Step 2/5 Complete: Updated onboarding status to true for company ${companyId}`);
+        stepResults.onboardingCompleted = true;
+        
+        logger.info('Updated company onboarding status', { 
+          ...obPostLogContext,
+          step: 'update_onboarding_status',
+          column: 'onboarding_company_completed',
+          status: 'success',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.warn(`[OpenBankingPostSubmission] ⚠️ Step 2/5: No rows updated for onboarding_company_completed`);
+        logger.warn('No rows updated for onboarding status', {
+          ...obPostLogContext,
+          step: 'update_onboarding_status'
+        });
+      }
+    } catch (onboardingError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to update onboarding status:`, onboardingError);
+      logger.error('Failed to update onboarding status', {
+        ...obPostLogContext,
+        step: 'update_onboarding_status',
+        error: onboardingError instanceof Error ? onboardingError.message : String(onboardingError),
+        status: 'failed'
+      });
+      // Continue execution - we'll try to proceed with other updates
+    }
     
-    console.log(`[OpenBankingPostSubmission] ✅ Step 1/4 Complete: Updated onboarding status to true for company ${companyId}`);
-    logger.info('Updated company onboarding status', { 
-      ...obPostLogContext,
-      step: 1,
-      action: 'update_onboarding_status',
-      column: 'onboarding_company_completed',
-      status: 'success',
-      timestamp: new Date().toISOString()
-    });
+    // STEP 3: Generate risk score - random value between 5 and 95
+    let riskScore: number;
+    let riskClusters: any;
     
-    // STEP 2: Generate risk score based on survey responses - random value between 5 and 95
-    // Random value is used as specified in requirements
-    console.log(`[OpenBankingPostSubmission] Step 2/4: Generating risk score for company ${companyId}`);
-    const riskScore = Math.floor(Math.random() * (95 - 5 + 1)) + 5;
+    try {
+      console.log(`[OpenBankingPostSubmission] Step 3/5: Generating risk score for company ${companyId}`);
+      riskScore = Math.floor(Math.random() * (95 - 5 + 1)) + 5;
+      
+      // STEP 4: Calculate risk clusters based on the total risk score
+      console.log(`[OpenBankingPostSubmission] Step 4/5: Calculating risk clusters based on risk score ${riskScore}`);
+      riskClusters = calculateRiskClusters(riskScore);
+      
+      console.log(`[OpenBankingPostSubmission] ✅ Steps 3-4/5 Complete: Generated risk score ${riskScore} and clusters:`, JSON.stringify(riskClusters));
+      stepResults.riskScoreGenerated = true;
+      
+      logger.info('Generated risk score and clusters', { 
+        ...obPostLogContext, 
+        steps: [3, 4],
+        action: 'generate_risk_score_and_clusters',
+        riskScore,
+        riskClusters,
+        riskDistribution: {
+          piiData: '35%',
+          accountData: '30%',
+          dataTransfers: '10%',
+          certificationsRisk: '10%',
+          securityRisk: '10%',
+          financialRisk: '5%'
+        },
+        status: 'success',
+        timestamp: new Date().toISOString()
+      });
+    } catch (riskGenerationError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to generate risk score:`, riskGenerationError);
+      logger.error('Failed to generate risk score', {
+        ...obPostLogContext,
+        steps: [3, 4],
+        error: riskGenerationError instanceof Error ? riskGenerationError.message : String(riskGenerationError),
+        status: 'failed'
+      });
+      // Set default values to continue execution
+      riskScore = 50; // Default risk score if generation fails
+      riskClusters = {
+        "PII Data": 18, 
+        "Account Data": 15, 
+        "Data Transfers": 5, 
+        "Certifications Risk": 5, 
+        "Security Risk": 5, 
+        "Financial Risk": 2
+      };
+    }
     
-    // STEP 3: Calculate risk clusters based on the total risk score
-    // Distribute the risk score across different risk categories with these weights:
-    // - PII Data: 35%
-    // - Account Data: 30%
-    // - Data Transfers: 10% 
-    // - Certifications Risk: 10%
-    // - Security Risk: 10%
-    // - Financial Risk: 5%
-    console.log(`[OpenBankingPostSubmission] Step 3/4: Calculating risk clusters based on risk score ${riskScore}`);
-    const riskClusters = calculateRiskClusters(riskScore);
+    // STEP 5: Update accreditation status to APPROVED, save risk score and clusters
+    try {
+      console.log(`[OpenBankingPostSubmission] Step 5/5: Setting accreditation status to APPROVED and saving risk scores`);
+      const riskUpdateResult = await trx.update(companies)
+        .set({
+          accreditation_status: 'APPROVED', // Must be APPROVED per requirements
+          risk_score: riskScore,
+          risk_clusters: riskClusters,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning({ 
+          id: companies.id,
+          risk_score: companies.risk_score,
+          accreditation_status: companies.accreditation_status 
+        });
+      
+      if (riskUpdateResult && riskUpdateResult.length > 0) {
+        console.log(`[OpenBankingPostSubmission] ✅ Step 5/5 Complete: Updated accreditation status to APPROVED and risk score to ${riskScore} for company ${companyId}`);
+        stepResults.accreditationUpdated = true;
+        
+        logger.info('Updated accreditation status and risk scores', { 
+          ...obPostLogContext,
+          step: 'update_accreditation_and_risk',
+          accreditation_status: 'APPROVED',
+          riskScore,
+          riskUpdateResult: riskUpdateResult || 'No result returned',
+          status: 'success',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.warn(`[OpenBankingPostSubmission] ⚠️ Step 5/5: No rows updated for accreditation status and risk scores`);
+        logger.warn('No rows updated for accreditation and risk', {
+          ...obPostLogContext,
+          step: 'update_accreditation_and_risk'
+        });
+      }
+    } catch (accreditationError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to update accreditation status:`, accreditationError);
+      logger.error('Failed to update accreditation status', {
+        ...obPostLogContext,
+        step: 'update_accreditation_and_risk',
+        error: accreditationError instanceof Error ? accreditationError.message : String(accreditationError),
+        status: 'failed'
+      });
+      // At this point, we've tried all the main operations
+    }
     
-    console.log(`[OpenBankingPostSubmission] ✅ Steps 2-3/4 Complete: Generated risk score ${riskScore} and clusters:`, JSON.stringify(riskClusters));
-    logger.info('Generated risk score and clusters', { 
-      ...obPostLogContext, 
-      steps: [2, 3],
-      action: 'generate_risk_score_and_clusters',
-      riskScore,
-      riskClusters,
-      riskDistribution: {
-        piiData: '35%',
-        accountData: '30%',
-        dataTransfers: '10%',
-        certificationsRisk: '10%',
-        securityRisk: '10%',
-        financialRisk: '5%'
-      },
-      status: 'success',
-      timestamp: new Date().toISOString()
-    });
-    
-    // STEP 4: Update accreditation status to APPROVED, save risk score and clusters
-    // IMPORTANT: Status must be set to 'APPROVED' (not 'VALIDATED' as was previously coded)
-    console.log(`[OpenBankingPostSubmission] Step 4/4: Setting accreditation status to APPROVED and saving risk scores`);
-    const riskUpdateResult = await trx.update(companies)
-      .set({
-        accreditation_status: 'APPROVED', // Must be APPROVED per requirements
-        risk_score: riskScore,
-        risk_clusters: riskClusters,
-        updated_at: new Date()
-      })
-      .where(eq(companies.id, companyId))
-      .returning({ 
+    // Final verification step - verify all updates were applied
+    try {
+      const companyAfterUpdate = await trx.select({
         id: companies.id,
         risk_score: companies.risk_score,
-        accreditation_status: companies.accreditation_status 
+        accreditation_status: companies.accreditation_status,
+        risk_clusters: companies.risk_clusters,
+        onboarding_completed: companies.onboarding_company_completed,
+        available_tabs: companies.available_tabs
+      })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+      
+      if (companyAfterUpdate.length > 0) {
+        console.log(`[OpenBankingPostSubmission] ✅ Verified company updates. Current state:`, 
+          JSON.stringify(companyAfterUpdate[0]));
+        
+        // Verify all updates were successful
+        const company = companyAfterUpdate[0];
+        const verificationResults = {
+          onboardingCompleted: company.onboarding_completed === true,
+          accreditationApproved: company.accreditation_status === 'APPROVED',
+          riskScoreSet: company.risk_score !== null && company.risk_score > 0,
+          riskClustersSet: company.risk_clusters !== null,
+          dashboardTabUnlocked: company.available_tabs && company.available_tabs.includes('dashboard'),
+          insightsTabUnlocked: company.available_tabs && company.available_tabs.includes('insights')
+        };
+        
+        logger.info('Final verification of all updates', {
+          ...obPostLogContext,
+          verificationResults,
+          allUpdatesSuccessful: Object.values(verificationResults).every(v => v === true)
+        });
+      } else {
+        console.error(`[OpenBankingPostSubmission] ❌ Failed to verify company updates - could not retrieve company record`);
+      }
+    } catch (verificationError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed during final verification:`, verificationError);
+      logger.error('Failed during final verification', {
+        ...obPostLogContext,
+        error: verificationError instanceof Error ? verificationError.message : String(verificationError),
       });
-    
-    // Log results of risk update
-    console.log(`[OpenBankingPostSubmission] ✅ Step 4/4 Complete: Updated accreditation status to APPROVED and risk score to ${riskScore} for company ${companyId}`);
-    
-    logger.info('Updated accreditation status and risk scores', { 
-      ...obPostLogContext,
-      step: 4,
-      action: 'update_accreditation_and_risk',
-      accreditation_status: 'APPROVED',
-      riskScore,
-      riskUpdateResult: riskUpdateResult || 'No result returned',
-      status: 'success',
-      timestamp: new Date().toISOString()
-    });
-    
-    // Verify risk score has been set by retrieving the company record
-    const companyAfterUpdate = await trx.select({
-      id: companies.id,
-      risk_score: companies.risk_score,
-      accreditation_status: companies.accreditation_status,
-      risk_clusters: companies.risk_clusters,
-      onboarding_completed: companies.onboarding_company_completed
-    })
-    .from(companies)
-    .where(eq(companies.id, companyId))
-    .limit(1);
-    
-    if (companyAfterUpdate.length > 0) {
-      console.log(`[OpenBankingPostSubmission] ✅ Verified company updates. Current state:`, 
-        JSON.stringify(companyAfterUpdate[0]));
-    } else {
-      console.error(`[OpenBankingPostSubmission] ❌ Failed to verify company updates - could not retrieve company record`);
     }
     
     const endTime = performance.now();
-    logger.info('Open Banking post-submission completed successfully', {
+    logger.info('Open Banking post-submission completed', {
       ...obPostLogContext,
+      stepResults,
       unlockedTabs,
-      riskScore,
-      companyState: companyAfterUpdate[0] || 'Unknown',
       duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
     
     return unlockedTabs;
+    
   } catch (error) {
+    // Log the error with extensive context
     const endTime = performance.now();
-    logger.error('Error in Open Banking post-submission processing', {
+    logger.error('Critical error in Open Banking post-submission processing', {
       ...obPostLogContext,
+      stepResults, // Include which steps succeeded before the error
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
-    throw error; // Re-throw to trigger transaction rollback
+    
+    // Re-throw the error to trigger transaction rollback
+    throw error;
   }
 }
 

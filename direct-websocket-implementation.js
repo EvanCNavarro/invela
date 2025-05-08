@@ -1,218 +1,278 @@
 /**
- * Direct JavaScript WebSocket Implementation
+ * WebSocket Server Implementation
  * 
- * This file provides a direct JavaScript implementation of WebSocket functionality
- * that can be used in both CommonJS and ESM contexts. It's designed to be a reliable
- * fallback mechanism if the TypeScript WebSocket implementations fail.
- * 
- * Usage:
- * const { setupWebSocketServer, broadcastTask } = require('./direct-websocket-implementation');
- * 
- * // In your Express/HTTP server setup:
- * const httpServer = http.createServer(app);
- * const wss = setupWebSocketServer(httpServer);
- * 
- * // To broadcast a task update:
- * broadcastTask(763, 'ready_for_submission', 100);
+ * This script creates a dedicated WebSocket server for real-time task updates
+ * to notify clients about task status changes, progress updates, and form submissions.
  */
 
+// Import required modules
+const express = require('express');
 const { WebSocketServer } = require('ws');
-const path = require('path');
-const randomBytes = require('crypto').randomBytes;
+const http = require('http');
 
-// Global WebSocket server instance
-let wss = null;
+// Create a simple Express server for testing
+const app = express();
+const port = process.env.PORT || 5000;
 
-/**
- * Generate a unique message ID for tracking
- * @returns {string} A unique message ID
- */
-function generateMessageId() {
-  const timestamp = Date.now();
-  const random = randomBytes(4).toString('hex');
-  return `msg_${timestamp}_${random}`;
-}
+// Create HTTP server
+const server = http.createServer(app);
 
-/**
- * Set up the WebSocket server on the specified HTTP server
- * 
- * @param {import('http').Server} httpServer - The HTTP server to attach to
- * @param {string} wsPath - The WebSocket path (default: '/ws')
- * @returns {import('ws').WebSocketServer} The WebSocket server instance
- */
-function setupWebSocketServer(httpServer, wsPath = '/ws') {
-  // Create WebSocket server with proper path to avoid conflict with Vite HMR
-  wss = new WebSocketServer({ 
-    server: httpServer, 
-    path: wsPath,
-    clientTracking: true 
+// Create WebSocket server on a distinct path to avoid conflicts with Vite's HMR
+const wss = new WebSocketServer({ 
+  server: server, 
+  path: '/ws'
+});
+
+// Store connected clients
+const clients = new Map();
+
+// Listen for WebSocket connection events
+wss.on('connection', (ws) => {
+  // Generate a unique client ID
+  const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+  
+  // Add client to the map with authentication status
+  clients.set(ws, {
+    id: clientId,
+    authenticated: false,
+    userId: null,
+    companyId: null
   });
   
-  console.log(`[WebSocket] Server initialized on path: ${wsPath}`);
+  console.log(`Client connected: ${clientId}`);
+  console.log(`Total clients: ${clients.size}`);
   
-  // Set up connection handler
-  wss.on('connection', (ws) => {
-    console.log('[WebSocket] New client connected');
-    
-    // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'connection_established',
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Set up message handler
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message);
-        // Handle authentication message to attach user info to the connection
-        if (data.type === 'authenticate') {
-          ws.userId = data.userId;
-          ws.companyId = data.companyId;
-          console.log(`[WebSocket] Client authenticated: user=${data.userId}, company=${data.companyId}`);
-        }
-      } catch (e) {
-        console.error('[WebSocket] Error parsing message:', e);
+  // Send connection confirmation
+  ws.send(JSON.stringify({
+    type: 'connection_established',
+    clientId: clientId,
+    timestamp: new Date().toISOString(),
+    message: 'Connection established'
+  }));
+  
+  // Handle incoming messages
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      console.log(`Received message from ${clientId}:`, data);
+      
+      // Handle authentication
+      if (data.type === 'authenticate') {
+        handleAuthentication(ws, data);
       }
-    });
-    
-    // Handle disconnection
-    ws.on('close', () => {
-      console.log('[WebSocket] Client disconnected');
-    });
-    
-    // Handle errors
-    ws.on('error', (error) => {
-      console.error('[WebSocket] Connection error:', error);
-    });
+      
+      // Handle ping
+      if (data.type === 'ping') {
+        ws.send(JSON.stringify({
+          type: 'pong',
+          timestamp: new Date().toISOString(),
+          echo: { type: 'ping' }
+        }));
+      }
+      
+      // Handle task update requests
+      if (data.type === 'update_task' && isAuthenticated(ws)) {
+        const client = clients.get(ws);
+        handleTaskUpdate(data.taskId, data.status, data.progress, client.userId);
+      }
+    } catch (error) {
+      console.error('Error processing message:', error);
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Invalid message format',
+        timestamp: new Date().toISOString()
+      }));
+    }
   });
   
-  return wss;
+  // Handle disconnection
+  ws.on('close', () => {
+    const client = clients.get(ws);
+    console.log(`Client disconnected: ${client?.id || 'unknown'}`);
+    clients.delete(ws);
+    console.log(`Remaining clients: ${clients.size}`);
+  });
+  
+  // Handle errors
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    clients.delete(ws);
+  });
+});
+
+/**
+ * Handle client authentication
+ */
+function handleAuthentication(ws, data) {
+  const client = clients.get(ws);
+  
+  if (!client) return;
+  
+  // Update client info with user and company IDs if provided
+  if (data.userId && data.companyId) {
+    client.userId = data.userId;
+    client.companyId = data.companyId;
+    client.authenticated = true;
+    
+    console.log(`Client authenticated: ${client.id} (User: ${client.userId}, Company: ${client.companyId})`);
+    
+    // Send authentication confirmation
+    ws.send(JSON.stringify({
+      type: 'authenticated',
+      timestamp: new Date().toISOString(),
+      message: 'Authentication successful'
+    }));
+  } else {
+    // Basic authentication without user details
+    client.authenticated = true;
+    
+    console.log(`Client authenticated without user details: ${client.id}`);
+    
+    // Send authentication confirmation
+    ws.send(JSON.stringify({
+      type: 'authenticated',
+      timestamp: new Date().toISOString(),
+      message: 'Authentication successful'
+    }));
+  }
 }
 
 /**
- * Broadcast a message to all connected clients
- * 
- * @param {string} type - The message type
- * @param {any} payload - The message payload
- * @returns {Object} Result with success status and client count
+ * Check if a client is authenticated
  */
-function broadcast(type, payload) {
-  if (!wss) {
-    console.error('[WebSocket] Cannot broadcast: Server not initialized');
-    return { success: false, error: 'Server not initialized' };
+function isAuthenticated(ws) {
+  const client = clients.get(ws);
+  return client && client.authenticated;
+}
+
+/**
+ * Broadcast a message to all authenticated clients
+ */
+function broadcast(message, filter = null) {
+  let recipientCount = 0;
+  
+  clients.forEach((client, ws) => {
+    // Skip clients that are not authenticated
+    if (!client.authenticated) return;
+    
+    // Apply filter if provided
+    if (filter && !filter(client)) return;
+    
+    // Send message to client
+    if (ws.readyState === WebSocketServer.OPEN) {
+      ws.send(JSON.stringify(message));
+      recipientCount++;
+    }
+  });
+  
+  console.log(`Broadcast message of type '${message.type}' sent to ${recipientCount} clients (total: ${clients.size})`);
+  return recipientCount;
+}
+
+/**
+ * Handle task update and broadcast to clients
+ */
+function handleTaskUpdate(taskId, status, progress, userId) {
+  // Validate inputs
+  if (!taskId || !status) {
+    console.error('Invalid task update parameters:', { taskId, status, progress });
+    return;
   }
   
-  const messageId = generateMessageId();
-  const message = JSON.stringify({
-    type,
-    payload,
-    timestamp: new Date().toISOString(),
-    messageId
-  });
-  
-  let successCount = 0;
-  let errorCount = 0;
-  
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) { // WebSocket.OPEN
-      try {
-        client.send(message);
-        successCount++;
-      } catch (e) {
-        console.error('[WebSocket] Error sending to client:', e);
-        errorCount++;
-      }
+  // Create task update message
+  const message = {
+    type: 'task_update',
+    payload: {
+      taskId: taskId,
+      status: status,
+      progress: progress || 0,
+      metadata: {
+        updatedBy: userId,
+        updatedAt: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
     }
-  });
-  
-  console.log(`[WebSocket] Broadcast ${type} to ${successCount} clients (${errorCount} errors)`, { messageId });
-  
-  return { 
-    success: successCount > 0, 
-    clients: successCount,
-    errors: errorCount,
-    messageId 
   };
+  
+  // Broadcast to all authenticated clients
+  broadcast(message);
+  
+  console.log(`Task update broadcasted: Task #${taskId} - Status: ${status}, Progress: ${progress}%`);
 }
 
 /**
- * Broadcast a task update
- * 
- * @param {number} taskId - The task ID
- * @param {string} status - The task status
- * @param {number} progress - The task progress (0-100)
- * @param {Object} metadata - Optional metadata
- * @returns {Object} Result with success status and client count
+ * Handle form submission completion and broadcast to clients
  */
-function broadcastTask(taskId, status, progress, metadata = {}) {
-  return broadcast('task_update', {
-    id: taskId,
-    status,
-    progress,
-    metadata: {
-      ...metadata,
-      lastUpdated: new Date().toISOString()
+function broadcastFormSubmissionCompleted(taskId, formType, company) {
+  // Create form submission completion message
+  const message = {
+    type: 'form_submission_completed',
+    payload: {
+      taskId: taskId,
+      formType: formType,
+      timestamp: new Date().toISOString(),
+      companyId: company?.id,
+      companyName: company?.name,
+      unlockedTabs: company?.availableTabs || []
     }
-  });
+  };
+  
+  // Filter to only send to clients of the same company
+  const companyFilter = (client) => {
+    return !client.companyId || client.companyId === company?.id;
+  };
+  
+  // Broadcast to matching clients
+  broadcast(message, companyFilter);
+  
+  console.log(`Form submission completion broadcasted: Task #${taskId} - Type: ${formType}`);
 }
 
 /**
- * Broadcast a form submission update
- * 
- * @param {number} taskId - The task ID
- * @param {string} formType - The form type (kyb, ky3p, etc.)
- * @param {string} status - The submission status
- * @returns {Object} Result with success status and client count
+ * Handle company tabs update and broadcast to clients
  */
-function broadcastFormSubmission(taskId, formType, status) {
-  return broadcast('form_submission', {
-    taskId,
-    formType,
-    status,
-    timestamp: new Date().toISOString()
-  });
+function broadcastCompanyTabsUpdated(companyId, availableTabs) {
+  // Create company tabs update message
+  const message = {
+    type: 'company_tabs_updated',
+    payload: {
+      companyId: companyId,
+      availableTabs: availableTabs,
+      timestamp: new Date().toISOString()
+    }
+  };
+  
+  // Filter to only send to clients of the specified company
+  const companyFilter = (client) => {
+    return !client.companyId || client.companyId === companyId;
+  };
+  
+  // Broadcast to matching clients
+  broadcast(message, companyFilter);
+  
+  console.log(`Company tabs update broadcasted: Company #${companyId} - Tabs: ${availableTabs.join(', ')}`);
 }
 
-/**
- * Broadcast company tabs update
- * 
- * @param {number} companyId - The company ID
- * @param {string[]} tabs - The available tabs
- * @returns {Object} Result with success status and client count
- */
-function broadcastCompanyTabs(companyId, tabs) {
-  return broadcast('company_tabs_update', {
-    companyId,
-    availableTabs: tabs,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * Check if the WebSocket server is initialized
- * 
- * @returns {boolean} Whether the server is initialized
- */
-function isServerInitialized() {
-  return !!wss;
-}
-
-/**
- * Get the number of connected clients
- * 
- * @returns {number} The number of connected clients
- */
-function getConnectedClientCount() {
-  return wss ? wss.clients.size : 0;
-}
-
-// Export the API
+// Expose the HTTP server, WebSocket server, and broadcast functions
 module.exports = {
-  setupWebSocketServer,
-  broadcast,
-  broadcastTask,
-  broadcastFormSubmission,
-  broadcastCompanyTabs,
-  isServerInitialized,
-  getConnectedClientCount
+  httpServer: server,
+  wss: wss,
+  broadcast: broadcast,
+  broadcastTaskUpdate: handleTaskUpdate,
+  broadcastFormSubmissionCompleted: broadcastFormSubmissionCompleted,
+  broadcastCompanyTabsUpdated: broadcastCompanyTabsUpdated
 };
+
+// Start the server if this script is run directly
+if (require.main === module) {
+  // Add a basic route for testing
+  app.get('/', (req, res) => {
+    res.send('WebSocket Server is running. Connect to /ws for real-time updates.');
+  });
+  
+  // Start the server
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${port}`);
+    console.log(`WebSocket server available at ws://0.0.0.0:${port}/ws`);
+  });
+}
