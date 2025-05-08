@@ -428,97 +428,6 @@ export async function broadcastFormSubmission(formSubmissionData: {
   }
 }
 
-/**
- * Send a custom message with any type and data
- * 
- * This is a utility function that allows sending custom WebSocket messages
- * with any type and data structure. It's useful for sending specialized
- * messages that don't fit into the predefined broadcast functions.
- * 
- * @param message The message object with type and data fields
- */
-export async function sendMessage(message: { 
-  type: string; 
-  data: any; 
-  targetCompanyId?: number;
-  targetUserId?: number;
-}): Promise<void> {
-  try {
-    // Format the message with standard fields
-    const formattedMessage = {
-      type: message.type,
-      data: message.data,
-      timestamp: new Date().toISOString(),
-      messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    };
-    
-    // Use the broadcast function to send the message
-    await broadcast(message.type, message.data);
-    
-    logger.debug('Custom message sent', {
-      type: message.type,
-      hasData: !!message.data
-    });
-  } catch (error) {
-    logger.error('Error sending custom message', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      messageType: message.type
-    });
-  }
-}
-
-/**
- * Send a form submission error message via WebSocket
- * 
- * @param errorData The error data to send
- */
-export async function sendFormSubmissionError(errorData: { 
-  taskId: number;
-  formType: string;
-  companyId?: number;
-  error: string;
-  message?: string;
-  metadata?: any;
-}): Promise<void> {
-  try {
-    // Generate a unique message ID for tracking/deduplication
-    const messageId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const timestamp = new Date().toISOString();
-    
-    // Create a standardized error payload
-    const errorPayload = {
-      ...errorData,
-      status: 'error',
-      timestamp,
-      messageId,
-      message: errorData.message || `Form submission failed: ${errorData.error}`,
-      source: 'server-error-handler',
-      recoverable: errorData.metadata?.recoverable || false,
-      errorCode: errorData.metadata?.errorCode || 'FORM_SUBMISSION_ERROR'
-    };
-    
-    // Broadcast on multiple channels for compatibility with different client implementations
-    await broadcast('form_submission_error', errorPayload);
-    await broadcast('submission_status', {
-      ...errorPayload,
-      type: 'form_submission_error'
-    });
-    
-    logger.info('Form submission error message sent', {
-      taskId: errorData.taskId,
-      formType: errorData.formType,
-      errorMessage: errorData.error,
-      messageId
-    });
-  } catch (error) {
-    logger.error('Failed to send form submission error message', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      taskId: errorData.taskId,
-      formType: errorData.formType
-    });
-  }
-}
-
 export default {
   initializeWebSocketServer,
   getWebSocketServer,
@@ -528,7 +437,5 @@ export default {
   broadcastCompanyUpdate,
   broadcastMessage,
   broadcastEvent,
-  broadcastFormSubmission,
-  sendMessage,
-  sendFormSubmissionError
+  broadcastFormSubmission
 };

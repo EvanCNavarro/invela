@@ -29,25 +29,11 @@ class WebSocketManager {
    */
   private connect() {
     try {
-      // Determine the correct WebSocket URL with improved error handling
+      // Determine the correct WebSocket URL
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = window.location.host;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      // Validate host before constructing URL
-      if (!host) {
-        console.error('[WebSocket] Invalid host detected in window.location.host, using default');
-        throw new Error('Cannot establish WebSocket connection: Invalid host');
-      }
-      
-      // Construct WebSocket URL with path
-      const wsUrl = `${protocol}//${host}/ws`;
-      
-      console.info('[WebSocket] Connecting to WebSocket:', wsUrl, {
-        protocol,
-        host,
-        windowLocation: window.location.toString(),
-        timestamp: new Date().toISOString()
-      });
+      console.info('[WebSocket] Connecting to WebSocket:', wsUrl);
       
       this.socket = new WebSocket(wsUrl);
       
@@ -166,26 +152,7 @@ class WebSocketManager {
    */
   private handleError(event: Event) {
     console.error('[WebSocket] WebSocket error:', event);
-    
-    // Enhanced error logging with more details
-    console.error('[WebSocket] Connection error:', {
-      event, 
-      readyState: this.socket?.readyState,
-      hasSocket: !!this.socket,
-      reconnectAttempts: this.reconnectAttempts,
-      location: window.location.toString(),
-      timestamp: new Date().toISOString()
-    });
-    
-    // Log structured error message for easier debugging
-    console.error(`[WebSocket] [${new Date().toISOString()}] Connection error occurred`,
-      JSON.stringify({
-        readyState: this.socket?.readyState,
-        hasSocket: !!this.socket,
-        reconnectAttempts: this.reconnectAttempts,
-        location: window.location.toString()
-      })
-    );
+    console.error('[WebSocket] Connection error:', event);
   }
   
   /**

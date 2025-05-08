@@ -89,11 +89,6 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     
     // Use a transaction to ensure all operations succeed or fail together
     return await withTransactionContext(async (client) => {
-      // Log start of transaction with better visibility
-      console.log(`[TransactionalFormHandler] 🟢 TRANSACTION STARTED for task ${taskId} (${formType})`);
-      
-      // Track whether an error has occurred in any step
-      let transactionErrorOccurred = false;
       // 1. Update task status to submitted
       const now = new Date();
       
@@ -163,11 +158,8 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             timestamp: new Date().toISOString()
           });
           
-          // Enhanced file verification to ensure file is fully created
           if (fileResult.success && fileResult.fileId) {
             fileId = fileResult.fileId;
-            
-            console.log(`[TransactionalFormHandler] Verifying file ${fileId} for task ${taskId}...`);
             
             // Update task metadata with file information
             // UNIFIED FIX: Use properly parameterized query for the fileId and include fileName
@@ -188,18 +180,6 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
                WHERE id = $1`,
               [fileId]
             );
-            
-            // Add verification query to ensure file was properly linked
-            const fileVerification = await client.query(
-              `SELECT id, file_name FROM files WHERE id = $1`,
-              [fileId]
-            );
-            
-            if (fileVerification.rows.length > 0) {
-              console.log(`[FileCreation] ✅ File ${fileId} verified for task ${taskId}: ${fileVerification.rows[0].file_name}`);
-            } else {
-              console.error(`[FileCreation] ⚠️ File ${fileId} created but verification failed for task ${taskId}`);
-            }
             
             console.log(`[FileCreation] ✅ File ${fileId} created for task ${taskId} and linked to file vault`);
           } else {
@@ -346,56 +326,14 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           formType,
           error: statusError instanceof Error ? statusError.message : 'Unknown error'
         });
-        
-        // Mark that a transaction error occurred - critical for handling transaction abort state
-        transactionErrorOccurred = true;
-        
-        // If the error contains "current transaction is aborted", throw immediately to ensure proper rollback
-        if (statusError instanceof Error && 
-            statusError.message.includes('current transaction is aborted')) {
-          console.error(`[TransactionalFormHandler] 🔥 TRANSACTION ABORTED for task ${taskId}: throwing to trigger proper rollback`, {
-            error: statusError.message,
-            taskId,
-            formType,
-            timestamp: new Date().toISOString()
-          });
-          throw statusError;
-        }
       }
       
-      // 5. Unlock tabs based on form type with verification
-      console.log(`[TransactionalFormHandler] Unlocking tabs for company ${companyId} based on ${formType} submission...`);
-      
+      // 5. Unlock tabs based on form type
       const tabResult = await UnifiedTabService.unlockTabsForFormSubmission(
         companyId, 
         formType,
         { broadcast: true }
       );
-      
-      // Verify tabs were actually unlocked
-      console.log(`[TransactionalFormHandler] Tab unlock result for company ${companyId}:`, {
-        availableTabs: tabResult.availableTabs,
-        fileVaultUnlocked: tabResult.availableTabs.includes('file-vault'),
-        tabsChanged: tabResult.tabsChanged,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Add tab verification check
-      const tabVerification = await client.query(
-        `SELECT available_tabs FROM companies WHERE id = $1`,
-        [companyId]
-      );
-      
-      if (tabVerification.rows.length > 0) {
-        const availableTabs = tabVerification.rows[0].available_tabs || [];
-        console.log(`[TransactionalFormHandler] Tab verification: Company ${companyId} has tabs:`, availableTabs);
-        
-        if (availableTabs.includes('file-vault')) {
-          console.log(`[TransactionalFormHandler] ✅ File Vault tab successfully unlocked for company ${companyId}`);
-        } else {
-          console.warn(`[TransactionalFormHandler] ⚠️ File Vault tab NOT found in available tabs for company ${companyId}`);
-        }
-      }
       
       // 6. Broadcast form submission events with comprehensive information
       try {
@@ -469,18 +407,13 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // Create a single timestamp for consistency
         const submissionTimestamp = new Date().toISOString();
         
-        // Log intent to send final message with additional details
-        console.log(`[TransactionalFormHandler] 🔔 SENDING FINAL completion message for task ${taskId}:`, {
+        // Log intent to send final message
+        console.log(`[TransactionalFormHandler] Sending FINAL completion message for task ${taskId}:`, {
           formType,
           taskId,
           companyId,
-          hasFileId: !!fileId,
-          fileIdValue: fileId,
-          hasUnlockedTabs: tabResult.availableTabs.includes('file-vault'),
-          unlockedTabs: tabResult.availableTabs,
-          completedActionCount: completedActions.length,
-          timestamp: submissionTimestamp,
-          sequence: 'FINAL_STEP'
+          hasCompletedActions: completedActions.length,
+          timestamp: submissionTimestamp
         });
         
         // IMPORTANT: Use broadcastFormSubmission with type='form_submission_completed'
@@ -514,16 +447,6 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         });
       }
       
-      // Check for any transaction errors before returning success
-      if (transactionErrorOccurred) {
-        console.error(`[TransactionalFormHandler] 🔥 Transaction had errors for task ${taskId}, but no exception was thrown. Rolling back manually.`);
-        // This will trigger a rollback in the transaction manager's catch block
-        throw new Error(`Transaction encountered errors during execution for task ${taskId}`);
-      }
-      
-      // Log successful transaction completion
-      console.log(`[TransactionalFormHandler] ✅ TRANSACTION COMPLETED SUCCESSFULLY for task ${taskId} (${formType})`);
-      
       // 6. Return success result
       return {
         success: true,
@@ -536,134 +459,40 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
     
-    // Import the TransactionErrorType for better error categorization
-    const { categorizeError, TransactionErrorType } = await import('./transaction-manager');
-    
-    // Determine the error type using our new categorization function
-    const errorType = (error instanceof Error && (error as any).errorType) 
-      ? (error as any).errorType 
-      : categorizeError(error);
-    
-    // Set error details based on categorized error type
+    // Determine the error origin by analyzing error details (stack trace or message)
     let errorOrigin = 'unknown';
     let errorPhase = 'unknown';
-    let errorCode = errorType;
+    let errorCode = 'TX_ERROR_UNKNOWN';
     
-    // Enhance logging based on error categories
-    switch (errorType) {
-      case TransactionErrorType.TX_ERROR_DEADLOCK:
-        errorOrigin = 'database';
-        errorPhase = 'transaction_deadlock';
-        
-        console.error(`[TransactionalFormHandler] 🔄 DEADLOCK ERROR detected for task ${taskId}:`, {
-          errorMessage,
-          errorOrigin: 'database',
-          errorPhase: 'transaction_deadlock',
-          taskId,
-          formType,
-          timestamp: new Date().toISOString()
-        });
-        break;
-        
-      case TransactionErrorType.TX_ERROR_ABORTED:
-        errorOrigin = 'database';
-        errorPhase = 'transaction_aborted';
-        
-        console.error(`[TransactionalFormHandler] 🔴 TRANSACTION ABORT ERROR detected for task ${taskId}:`, {
-          errorMessage,
-          errorOrigin: 'database',
-          errorPhase: 'transaction_aborted',
-          taskId,
-          formType,
-          timestamp: new Date().toISOString(),
-          transactionId: (error as any).transactionId || 'unknown'
-        });
-        
-        // Attempt to recover immediately if possible or notify user to retry
-        try {
-          // Send a special notification about the aborted transaction
-          WebSocketService.sendMessage({
-            type: 'form_submission_error',
-            data: {
-              taskId,
-              formType,
-              error: 'The form submission was interrupted due to a database issue. Please try again.',
-              errorCode: 'TX_ABORTED',
-              recoverable: true
-            }
-          });
-        } catch (wsError) {
-          console.error('[TransactionalFormHandler] Failed to send transaction abort notification:', wsError);
-        }
-        break;
-        
-      case TransactionErrorType.TX_ERROR_CONSTRAINT:
-        errorOrigin = 'database';
-        errorPhase = 'constraint_violation';
-        
-        console.error(`[TransactionalFormHandler] ⚠️ CONSTRAINT VIOLATION detected for task ${taskId}:`, {
-          errorMessage,
-          errorOrigin: 'database',
-          errorPhase: 'constraint_violation',
-          taskId,
-          formType,
-          timestamp: new Date().toISOString()
-        });
-        break;
-        
-      case TransactionErrorType.TX_ERROR_CONNECTION:
-        errorOrigin = 'database';
-        errorPhase = 'connection_issue';
-        
-        console.error(`[TransactionalFormHandler] 🔌 DATABASE CONNECTION ERROR detected for task ${taskId}:`, {
-          errorMessage,
-          errorOrigin: 'database',
-          errorPhase: 'connection_issue',
-          taskId,
-          formType,
-          timestamp: new Date().toISOString()
-        });
-        break;
-      
-      default:
-        // Handle any other errors
-        if (errorMessage.includes('investigationsIncidents')) {
-          errorOrigin = 'form_field';
-          errorPhase = 'field_rendering';
-          errorCode = 'FIELD_ERROR';
-          
-          console.error(`[TransactionalFormHandler] 🔍 FIELD RENDERING ERROR detected for task ${taskId}:`, {
-            errorMessage,
-            errorOrigin: 'form_field',
-            errorPhase: 'field_rendering',
-            fieldName: 'investigationsIncidents',
-            taskId,
-            formType,
-            timestamp: new Date().toISOString()
-          });
-        }
+    // Check for transaction lock errors
+    if (errorMessage.includes('deadlock') || errorMessage.includes('lock')) {
+      errorOrigin = 'database';
+      errorPhase = 'transaction';
+      errorCode = 'TX_ERROR_DEADLOCK';
+    } 
+    // Check for database constraint violations
+    else if (errorMessage.includes('constraint') || errorMessage.includes('violation')) {
+      errorOrigin = 'database';
+      errorPhase = 'constraint_violation';
+      errorCode = 'TX_ERROR_CONSTRAINT';
     }
-    
-    // Additional error type checking for non-categorized errors
-    if (errorOrigin === 'unknown') {
-      // Check for file creation errors
-      if (errorMessage.includes('file') || (errorStack && errorStack.includes('fileCreation'))) {
-        errorOrigin = 'file_system';
-        errorPhase = 'file_creation';
-        errorCode = 'TX_ERROR_FILE_CREATION';
-      }
-      // Check for task update failures
-      else if (errorMessage.includes('update') || errorMessage.includes('task')) {
-        errorOrigin = 'database';
-        errorPhase = 'task_update';
-        errorCode = 'TX_ERROR_TASK_UPDATE';
-      }
-      // Check for tab unlock errors
-      else if (errorMessage.includes('tab') || (errorStack && errorStack.includes('UnifiedTabService'))) {
-        errorOrigin = 'tab_service';
-        errorPhase = 'tab_unlock';
-        errorCode = 'TX_ERROR_TAB_UNLOCK';
-      }
+    // Check for file creation errors
+    else if (errorMessage.includes('file') || (errorStack && errorStack.includes('fileCreation'))) {
+      errorOrigin = 'file_system';
+      errorPhase = 'file_creation';
+      errorCode = 'TX_ERROR_FILE_CREATION';
+    }
+    // Check for task update failures
+    else if (errorMessage.includes('update') || errorMessage.includes('task')) {
+      errorOrigin = 'database';
+      errorPhase = 'task_update';
+      errorCode = 'TX_ERROR_TASK_UPDATE';
+    }
+    // Check for tab unlock errors
+    else if (errorMessage.includes('tab') || (errorStack && errorStack.includes('UnifiedTabService'))) {
+      errorOrigin = 'tab_service';
+      errorPhase = 'tab_unlock';
+      errorCode = 'TX_ERROR_TAB_UNLOCK';
     }
     
     // Add detailed diagnostic information to help pinpoint the failure
