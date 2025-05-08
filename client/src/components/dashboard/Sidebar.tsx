@@ -466,32 +466,22 @@ export function Sidebar({
         
         return (
           <Link href={logoLinkHref} className={cn(
-            "flex items-center cursor-pointer hover:bg-muted/50 transition-colors rounded-md",
-            isExpanded 
-              ? "px-4 mx-4 my-4 h-12 min-w-[260px]" 
-              : "justify-center mx-auto my-4 w-12 h-12"
+            "flex items-center h-16 cursor-pointer hover:bg-muted/50 transition-colors",
+            isExpanded ? "px-4" : "justify-center"
           )}>
-            <div className={cn(
-              "flex items-center justify-center w-full",
-              isExpanded ? "" : "mx-auto"
-            )}>
-              <img
-                src="/invela-logo.svg"
-                alt="Invela Trust Network"
-                className={cn(
-                  "flex-shrink-0", 
-                  isExpanded ? "h-7 w-7" : "h-8 w-8"
-                )}
-              />
-              {isExpanded && (
-                <span className="ml-4 font-semibold text-lg text-foreground whitespace-nowrap">Invela Trust Network</span>
-              )}
-            </div>
+            <img
+              src="/invela-logo.svg"
+              alt="Invela Trust Network"
+              className="h-6 w-6"
+            />
+            {isExpanded && (
+              <span className="ml-3 font-semibold text-lg text-foreground">Invela Trust Network</span>
+            )}
           </Link>
         );
       })()}
 
-      <nav className="mt-1 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
+      <nav className="mt-8 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
         <div className="space-y-1">
           <div>
             {visibleMenuItems.map((item) => (
