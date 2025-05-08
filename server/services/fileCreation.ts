@@ -208,6 +208,8 @@ export async function createTaskFile(
     
     // Determine which tables to use based on form type and fetch data using Drizzle ORM
     if (normalizedFormType === 'kyb' || normalizedFormType === 'company_kyb') {
+      // Standardize form type for consistent metadata
+      logger.info(`Processing KYB task: ${taskId} with normalized form type: ${normalizedFormType}`, { taskId, formType: normalizedFormType });
       const responses = await db.select({
         responseValue: kybResponses.response_value,
         fieldKey: kybFields.field_key,
