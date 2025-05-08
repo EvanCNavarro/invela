@@ -42,7 +42,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
 
   // Common styles
   const cardClassName = "p-4 border rounded-lg shadow-sm flex flex-col items-center";
-  const labelClassName = "text-sm font-medium mb-2 text-foreground";
+  const labelClassName = "text-sm font-medium mb-2 text-foreground text-center";
   const valueClassName = "text-3xl font-bold text-black";
   const iconClassName = "h-5 w-5 mr-2 text-foreground";
 
@@ -129,11 +129,12 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
             cardClassName,
             "border-blue-500/50 border-2"
           )}>
-            <div className="flex items-center justify-center mb-2">
-              <Award className={iconClassName} />
-              <span className={labelClassName}>
-                S&P DATA ACCESS RISK SCORE
-              </span>
+            <div className="flex flex-col items-center mb-2">
+              <div className="flex items-center justify-center">
+                <Award className={iconClassName} />
+                <span className="text-sm font-medium text-foreground">S&P DATA</span>
+              </div>
+              <span className="text-sm font-medium text-foreground text-center">ACCESS RISK SCORE</span>
             </div>
             <div className={valueClassName}>
               {riskScore}

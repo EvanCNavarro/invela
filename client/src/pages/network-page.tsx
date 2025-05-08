@@ -367,7 +367,7 @@ export default function NetworkPage() {
                       className="p-0 hover:bg-transparent text-right w-full justify-end"
                       onClick={() => handleSort("riskScore")}
                     >
-                      <span>Risk Score</span>
+                      <span>S&P Data Access Risk Score</span>
                       {getSortIcon("riskScore")}
                     </Button>
                   </TableHead>
