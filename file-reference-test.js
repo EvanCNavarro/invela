@@ -1,17 +1,23 @@
 /**
  * File Reference Test
  * 
- * This script provides a simple tool to test if the file references
+ * This script provides a browser-based tool to test if the file references
  * for tasks are working correctly. It uses our new file verification
  * API endpoint to verify proper file reference resolution.
+ * 
+ * To use: Copy this file's content and run it in the browser console
+ * when logged into the application.
  */
+
+// Set the base URL for API requests - needed for browser environment
+const BASE_URL = window.location.origin;
 
 async function testFileReference(taskId = 762) {
   try {
     console.log(`Testing file reference for task ${taskId}...`);
     
     // Call our new file verification API to check references
-    const response = await fetch(`/api/file-verification/${taskId}`);
+    const response = await fetch(`${BASE_URL}/api/file-verification/${taskId}`);
     
     if (!response.ok) {
       const error = await response.json();
@@ -72,7 +78,13 @@ async function testFileReference(taskId = 762) {
   }
 }
 
-// Execute the test when this script is run directly
-testFileReference(762).then(result => {
-  console.log('Test complete!', { success: result.success });
-});
+// In a browser environment, this test needs to be run from the console.
+// If this script is run directly in Node.js, we'll provide instructions.
+if (typeof window === 'undefined') {
+  console.log('This script is designed to be run in a browser environment.');
+  console.log('Please copy the script content and run it in your browser console when logged into the application.');
+} else {
+  console.log('File Reference Test Tool Loaded');
+  console.log('To run the test, execute: testFileReference(taskId)');
+  console.log('Example: testFileReference(762)');
+}
