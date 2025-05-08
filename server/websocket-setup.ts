@@ -3,14 +3,14 @@
  * 
  * This module sets up the unified WebSocket server for real-time communication.
  * It uses the centralized unified-websocket module for all WebSocket functionality
- * and also initializes the legacy WebSocket server for backward compatibility.
+ * and also initializes the improved WebSocket server for form status updates.
  */
 
 import { Server } from 'http';
 import { WebSocketServer } from 'ws';
 import { logger } from './utils/logger';
 import { initializeWebSocketServer as initializeUnifiedWebSocketServer, getWebSocketServer } from './utils/unified-websocket';
-import { initializeWebSocketServer as initializeLegacyWebSocketServer } from './services/websocket';
+import * as formSubmissionWebSocketService from './services/websocket-service';
 
 /**
  * Initialize the WebSocket server on the specified path
@@ -35,14 +35,14 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
     
     logger.info('[WebSocket] Unified WebSocket server initialized successfully');
     
-    // Also initialize the legacy WebSocket server with the same HTTP server
-    // This ensures backward compatibility with existing code
+    // Also initialize the improved form submission WebSocket server with the same HTTP server
+    // This provides enhanced real-time updates for form submissions
     try {
-      initializeLegacyWebSocketServer(httpServer);
-      logger.info('[WebSocket] Legacy WebSocket server initialized successfully');
-    } catch (legacyError) {
-      logger.warn('[WebSocket] Failed to initialize legacy WebSocket server, but unified server is working', {
-        error: legacyError instanceof Error ? legacyError.message : String(legacyError)
+      formSubmissionWebSocketService.initializeWebSocketServer(httpServer);
+      logger.info('[WebSocket] Form submission WebSocket server initialized successfully');
+    } catch (wsError) {
+      logger.warn('[WebSocket] Failed to initialize form submission WebSocket server, but unified server is working', {
+        error: wsError instanceof Error ? wsError.message : String(wsError)
       });
     }
     
