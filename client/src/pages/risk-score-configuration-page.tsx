@@ -533,14 +533,11 @@ export default function RiskScoreConfigurationPage() {
     newDimensions.splice(hoverIndex, 0, draggedItem);
     
     // Recalculate weights based on the new order
-    // For the MVP we'll use a simple linear distribution
-    // Later we can implement more sophisticated weighting algorithms
+    // Top position (index 0) gets highest weight, decreasing as index increases
     const totalWeight = 100;
     const newWeightedDimensions = newDimensions.map((dim, index) => {
-      // Higher index = lower weight (reverse order)
-      const reverseIndex = newDimensions.length - 1 - index;
-      // Simple exponentially decreasing weight distribution
-      const weight = Math.max(1, Math.round(totalWeight * Math.pow(0.8, reverseIndex) / newDimensions.length * 2.5 * 10) / 10);
+      // Simple exponentially decreasing weight distribution - highest at top
+      const weight = Math.max(1, Math.round(totalWeight * Math.pow(0.8, index) / newDimensions.length * 2.5 * 10) / 10);
       return { ...dim, weight };
     });
     
@@ -735,7 +732,7 @@ export default function RiskScoreConfigurationPage() {
                           <div>
                             <h3 className="font-medium text-base mb-1 text-blue-700">How Dimension Ranking & Priorities Work</h3>
                             <p className="text-sm text-blue-600">
-                              Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the risk score calculation. The priority weight is automatically calculated based on the position.
+                              Drag and drop dimensions to stack rank them by importance. Dimensions at the top have the highest weight in the risk score calculation, with weight decreasing as you move down the list. The priority weight is automatically calculated based on the position.
                             </p>
                           </div>
                         </div>
