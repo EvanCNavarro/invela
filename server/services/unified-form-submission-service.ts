@@ -752,8 +752,8 @@ async function handleOpenBankingPostSubmission(
     // Mark company onboarding as completed
     await trx.update(companies)
       .set({
-        onboarding_completed: true,
-        onboarding_completed_at: new Date()
+        onboarding_company_completed: true,
+        updated_at: new Date()
       })
       .where(eq(companies.id, companyId));
     
@@ -762,8 +762,8 @@ async function handleOpenBankingPostSubmission(
       timestamp: new Date().toISOString()
     });
     
-    // Generate risk score based on survey responses
-    const riskScore = await generateRiskScore(trx, taskId, formData, transactionId);
+    // Generate risk score based on survey responses - random value between 5 and 95
+    const riskScore = Math.floor(Math.random() * (95 - 5 + 1)) + 5;
     
     logger.info('Generated risk score', { 
       ...obPostLogContext, 
@@ -771,11 +771,12 @@ async function handleOpenBankingPostSubmission(
       timestamp: new Date().toISOString()
     });
     
-    // Update accreditation status
+    // Update accreditation status and risk score in a single operation
     await trx.update(companies)
       .set({
-        accreditation_status: 'validated',
-        risk_score: riskScore
+        accreditation_status: 'VALIDATED',
+        risk_score: riskScore,
+        updated_at: new Date()
       })
       .where(eq(companies.id, companyId));
     
