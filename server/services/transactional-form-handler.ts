@@ -6,7 +6,7 @@
  */
 
 import { logger } from '../utils/logger';
-import { withTransaction } from './transaction-manager';
+import { withTransactionContext } from './transaction-manager';
 import { UnifiedTabService } from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
 import * as fileCreationService from './fileCreation';
@@ -88,7 +88,7 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     }
     
     // Use a transaction to ensure all operations succeed or fail together
-    return await withTransaction(async (client) => {
+    return await withTransactionContext(async (client) => {
       // 1. Update task status to submitted
       const now = new Date();
       
