@@ -1,162 +1,168 @@
 /**
- * KY3P Submission Fix
+ * KY3P Submission Fix Router
  * 
- * This module adds a route to correctly handle KY3P form submissions,
- * ensuring they get marked as "submitted" with 100% progress similar to KYB forms.
+ * This module adds endpoints to handle KY3P form submissions correctly,
+ * ensuring they get marked as "submitted" with 100% progress.
  */
+import { Router } from "express";
+import { db } from "@db";
+import { tasks } from "@db/schema";
+import { eq } from "drizzle-orm";
+import { requireAuth } from "../middleware/auth";
+import { getWebSocketServer } from "../services/websocket";
 
-import express from 'express';
-import { db } from '@db';
-import { tasks } from '@db/schema';
-import { eq } from 'drizzle-orm';
-import { requireAuth } from '../middleware/auth';
-import { logger } from '../utils/logger';
-import * as WebSocketService from '../services/websocket';
-
-const router = express.Router();
+// Create router instance
+const router = Router();
 
 /**
  * POST /api/ky3p/submit-form/:taskId
  * 
- * Handles KY3P form submissions and properly sets the task status to "submitted"
+ * Handles KY3P form submissions properly and sets task status to "submitted"
+ * with 100% progress.
  */
-router.post('/api/ky3p/submit-form/:taskId', requireAuth, async (req, res) => {
+router.post("/api/ky3p/submit-form/:taskId", requireAuth, async (req, res) => {
   try {
-    const taskId = parseInt(req.params.taskId);
-    if (isNaN(taskId)) {
+    const { taskId } = req.params;
+    const taskIdNum = parseInt(taskId, 10);
+
+    if (isNaN(taskIdNum)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid task ID'
+        error: "Invalid task ID format"
       });
     }
-    
-    logger.info(`KY3P form submission requested for task ${taskId}`, {
-      taskId,
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Get the task to confirm it's a KY3P task
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
-    
-    if (!task) {
+
+    console.log(`[KY3P Submission Fix] Processing submission for task ${taskIdNum}`);
+
+    // Update the task status and progress in the database
+    const result = await db.update(tasks)
+      .set({
+        status: "submitted",
+        progress: 100,
+        // Use completion_date for submission date as that's the proper column in our schema
+        completion_date: new Date(),
+        // Update metadata to include submission info
+        metadata: {
+          submission_info: {
+            submitted: true,
+            submitted_at: new Date().toISOString(),
+            submission_status: 'completed'
+          }
+        }
+      })
+      .where(eq(tasks.id, taskIdNum))
+      .returning({ id: tasks.id, status: tasks.status, progress: tasks.progress });
+
+    if (!result || result.length === 0) {
+      console.error(`[KY3P Submission Fix] Failed to update task ${taskIdNum}`);
       return res.status(404).json({
         success: false,
-        message: `Task ${taskId} not found`
+        error: `Task with ID ${taskIdNum} not found`
       });
     }
-    
-    // Verify it's a KY3P task
-    if (!task.task_type.includes('ky3p')) {
-      return res.status(400).json({
-        success: false,
-        message: `Task ${taskId} is not a KY3P task (type: ${task.task_type})`
-      });
+
+    const updatedTask = result[0];
+    console.log(`[KY3P Submission Fix] Successfully updated task ${taskIdNum} to submitted with 100% progress`, updatedTask);
+
+    // Broadcast the update to WebSocket clients
+    const wsServer = getWebSocketServer();
+    if (wsServer) {
+      try {
+        // Import the broadcast function from our websocket service
+        const { broadcast } = require('../services/websocket');
+        
+        // Use the broadcast function from the module
+        const broadcastResult = broadcast("task_update", {
+          taskId: taskIdNum,
+          status: "submitted",
+          progress: 100,
+          timestamp: new Date().toISOString(),
+        });
+
+        console.log(`[KY3P Submission Fix] WebSocket broadcast result:`, {
+          success: broadcastResult.success,
+          clientCount: broadcastResult.clientCount
+        });
+      } catch (error) {
+        console.error(`[KY3P Submission Fix] Error broadcasting update:`, error);
+      }
+    } else {
+      console.warn("[KY3P Submission Fix] WebSocket server not available for broadcasting");
     }
-    
-    // Update the task status to submitted
-    const now = new Date();
-    const submissionDate = now.toISOString();
-    
-    // Broadcast submission in progress
-    try {
-      WebSocketService.broadcast('form_submission', {
-        taskId,
-        formType: 'ky3p',
-        status: 'in_progress',
-        companyId: task.company_id,
-        payload: {
-          progress: 50,
-          message: 'Processing KY3P form submission...',
-          timestamp: submissionDate
-        }
-      });
-    } catch (wsError) {
-      logger.warn('Failed to broadcast submission in progress', {
-        taskId,
-        error: wsError instanceof Error ? wsError.message : String(wsError)
-      });
-      // Continue with submission process
-    }
-    
-    // Update task with submitted status, 100% progress and metadata
-    await db.update(tasks)
-      .set({
-        status: 'submitted',
-        progress: 100,
-        metadata: {
-          ...task.metadata,
-          submitted: true,
-          submissionDate: submissionDate,
-          submittedAt: submissionDate
-        },
-        updated_at: now
-      })
-      .where(eq(tasks.id, taskId));
-    
-    logger.info(`KY3P task ${taskId} has been marked as submitted`, {
-      taskId,
-      status: 'submitted',
-      progress: 100,
-      timestamp: submissionDate
-    });
-    
-    // Broadcast task update
-    try {
-      WebSocketService.broadcast('task_update', {
-        taskId,
-        status: 'submitted',
-        progress: 100,
-        metadata: {
-          submitted: true,
-          submissionDate,
-          submittedAt: submissionDate,
-          updatedVia: 'ky3p-submission-fix',
-          timestamp: now.toISOString()
-        }
-      });
-      
-      // Also broadcast form submission completed
-      WebSocketService.broadcast('form_submission', {
-        taskId,
-        formType: 'ky3p',
-        status: 'completed',
-        companyId: task.company_id,
-        payload: {
-          message: 'KY3P form submission completed successfully',
-          timestamp: now.toISOString()
-        }
-      });
-    } catch (wsError) {
-      logger.warn('Failed to broadcast task update', {
-        taskId,
-        error: wsError instanceof Error ? wsError.message : String(wsError)
-      });
-      // Continue anyway since the database update is more important
-    }
-    
+
+    // Return success response
     return res.status(200).json({
       success: true,
-      message: `KY3P task ${taskId} has been successfully submitted`,
-      taskId,
-      status: 'submitted',
-      progress: 100,
-      submissionDate
+      message: "KY3P form submitted successfully",
+      task: updatedTask
     });
   } catch (error) {
-    logger.error('Error processing KY3P form submission', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
+    console.error("[KY3P Submission Fix] Error processing KY3P form submission:", error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while processing the KY3P form submission',
-      error: error instanceof Error ? error.message : String(error)
+      error: "Internal server error processing KY3P form submission"
     });
   }
 });
 
+/**
+ * GET /api/ky3p/submission-status/:taskId
+ * 
+ * Get the current submission status of a KY3P task
+ */
+router.get("/api/ky3p/submission-status/:taskId", requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const taskIdNum = parseInt(taskId, 10);
+
+    if (isNaN(taskIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid task ID format"
+      });
+    }
+
+    // Query the task from the database
+    const taskResult = await db.select({
+      id: tasks.id,
+      status: tasks.status,
+      progress: tasks.progress,
+      completionDate: tasks.completion_date,
+      metadata: tasks.metadata
+    })
+    .from(tasks)
+    .where(eq(tasks.id, taskIdNum))
+    .limit(1);
+
+    if (!taskResult || taskResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `Task with ID ${taskIdNum} not found`
+      });
+    }
+
+    const task = taskResult[0];
+    
+    return res.status(200).json({
+      success: true,
+      task: {
+        id: task.id,
+        status: task.status,
+        progress: task.progress,
+        submitted: task.status === "submitted",
+        submissionDate: task.completionDate,
+        metadata: task.metadata
+      }
+    });
+  } catch (error) {
+    console.error("[KY3P Submission Fix] Error checking KY3P submission status:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error checking KY3P submission status"
+    });
+  }
+});
+
+// Export as both named export and default for flexibility
+export const ky3pSubmissionFixRouter = router;
 export default router;
