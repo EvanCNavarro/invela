@@ -673,7 +673,7 @@ export default function CompanyProfilePage() {
                   <div className="flex flex-col items-center justify-center gap-1 mb-1">
                     <Award className="h-5 w-5 text-black mb-0.5" />
                     <div className="text-xs text-black font-medium leading-tight">
-                      S&P BUSINESS DATA<br />RISK SCORE
+                      S&P DATA ACCESS<br />RISK SCORE
                     </div>
                   </div>
                   <div className="text-3xl font-bold text-gray-900 mt-1 py-1">
