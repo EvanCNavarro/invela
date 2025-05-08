@@ -427,13 +427,6 @@ export function Sidebar({
       href: "/risk-score-configuration",
       locked: !availableTabs.includes('risk-score-configuration') && !availableTabs.includes('risk-score'),
       hideForFinTech: true
-    },
-    {
-      icon: Hammer,
-      label: "Builder",
-      href: "/builder",
-      locked: !availableTabs.includes('builder'),
-      hideForFinTech: true
     }
   ];
 
