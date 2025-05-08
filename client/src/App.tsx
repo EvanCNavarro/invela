@@ -42,6 +42,12 @@ import OpenBankingTaskPage from "@/pages/open-banking-task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
 import FormDebugPage from "@/pages/form-debug-page";
 // Builder pages have been removed
+// Empty component definitions for type checking - these components are no longer used
+const BuilderPage = () => null;
+const OnboardingBuilderPage = () => null;
+const RiskRulesBuilderPage = () => null;
+const ReportingBuilderPage = () => null;
+const GroupsBuilderPage = () => null;
 import { ProtectedRoute } from "./lib/protected-route";
 import TestFormUpdate from "./test-form-update";
 import FormDbTestPage from "./form-db-test";
@@ -214,60 +220,7 @@ function Router() {
           )} 
         />
 
-        <ProtectedRoute 
-          path="/builder" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <BuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/onboarding" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <OnboardingBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/risk-rules" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <RiskRulesBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/reporting" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <ReportingBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/groups" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <GroupsBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
+        {/* Builder routes have been removed */}
 
         <ProtectedRoute 
           path="/risk-score-configuration" 
