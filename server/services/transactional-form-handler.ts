@@ -158,8 +158,11 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             timestamp: new Date().toISOString()
           });
           
+          // Enhanced file verification to ensure file is fully created
           if (fileResult.success && fileResult.fileId) {
             fileId = fileResult.fileId;
+            
+            console.log(`[TransactionalFormHandler] Verifying file ${fileId} for task ${taskId}...`);
             
             // Update task metadata with file information
             // UNIFIED FIX: Use properly parameterized query for the fileId and include fileName
@@ -180,6 +183,18 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
                WHERE id = $1`,
               [fileId]
             );
+            
+            // Add verification query to ensure file was properly linked
+            const fileVerification = await client.query(
+              `SELECT id, file_name FROM files WHERE id = $1`,
+              [fileId]
+            );
+            
+            if (fileVerification.rows.length > 0) {
+              console.log(`[FileCreation] ✅ File ${fileId} verified for task ${taskId}: ${fileVerification.rows[0].file_name}`);
+            } else {
+              console.error(`[FileCreation] ⚠️ File ${fileId} created but verification failed for task ${taskId}`);
+            }
             
             console.log(`[FileCreation] ✅ File ${fileId} created for task ${taskId} and linked to file vault`);
           } else {
@@ -328,12 +343,39 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         });
       }
       
-      // 5. Unlock tabs based on form type
+      // 5. Unlock tabs based on form type with verification
+      console.log(`[TransactionalFormHandler] Unlocking tabs for company ${companyId} based on ${formType} submission...`);
+      
       const tabResult = await UnifiedTabService.unlockTabsForFormSubmission(
         companyId, 
         formType,
         { broadcast: true }
       );
+      
+      // Verify tabs were actually unlocked
+      console.log(`[TransactionalFormHandler] Tab unlock result for company ${companyId}:`, {
+        availableTabs: tabResult.availableTabs,
+        fileVaultUnlocked: tabResult.availableTabs.includes('file-vault'),
+        tabsChanged: tabResult.tabsChanged,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Add tab verification check
+      const tabVerification = await client.query(
+        `SELECT available_tabs FROM companies WHERE id = $1`,
+        [companyId]
+      );
+      
+      if (tabVerification.rows.length > 0) {
+        const availableTabs = tabVerification.rows[0].available_tabs || [];
+        console.log(`[TransactionalFormHandler] Tab verification: Company ${companyId} has tabs:`, availableTabs);
+        
+        if (availableTabs.includes('file-vault')) {
+          console.log(`[TransactionalFormHandler] ✅ File Vault tab successfully unlocked for company ${companyId}`);
+        } else {
+          console.warn(`[TransactionalFormHandler] ⚠️ File Vault tab NOT found in available tabs for company ${companyId}`);
+        }
+      }
       
       // 6. Broadcast form submission events with comprehensive information
       try {
@@ -407,13 +449,18 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // Create a single timestamp for consistency
         const submissionTimestamp = new Date().toISOString();
         
-        // Log intent to send final message
-        console.log(`[TransactionalFormHandler] Sending FINAL completion message for task ${taskId}:`, {
+        // Log intent to send final message with additional details
+        console.log(`[TransactionalFormHandler] 🔔 SENDING FINAL completion message for task ${taskId}:`, {
           formType,
           taskId,
           companyId,
-          hasCompletedActions: completedActions.length,
-          timestamp: submissionTimestamp
+          hasFileId: !!fileId,
+          fileIdValue: fileId,
+          hasUnlockedTabs: tabResult.availableTabs.includes('file-vault'),
+          unlockedTabs: tabResult.availableTabs,
+          completedActionCount: completedActions.length,
+          timestamp: submissionTimestamp,
+          sequence: 'FINAL_STEP'
         });
         
         // IMPORTANT: Use broadcastFormSubmission with type='form_submission_completed'
