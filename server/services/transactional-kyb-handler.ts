@@ -11,7 +11,7 @@ import { db } from '../../db';
 import { companies, files, kybFields, kybResponses, tasks } from '../../db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import { FileCreationService } from './file-creation';
-import { TaskStatus } from '../../types/task';
+import { TaskStatus } from '@db/schema';
 import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket-service';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
