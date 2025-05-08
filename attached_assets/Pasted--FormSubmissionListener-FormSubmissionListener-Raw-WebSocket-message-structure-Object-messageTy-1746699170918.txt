@@ -1,0 +1,130 @@
+[FormSubmissionListener] FormSubmissionListener: Raw WebSocket message structure: 
+Object {messageType: "form_submission", hasPayload: true, hasData: true, extractedTaskId: 770, expectedTaskId: 770, …}
+[FormSubmissionListener] Skipping duplicate message: msg_1746699153737_2v5qv7k6k (globally)
+[WebSocket] Received message: 
+Object {type: "form_submission", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:33.737Z", messageId: "msg_1746699153737_2v5qv7k6k"}
+[2025-05-08T10:12:33.812Z] [WebSocket] Received message of type: form_submitted 
+[2025-05-08T10:12:33.812Z] [WebSocket] Form submission update: 
+Object {type: "form_submitted", taskId: 770, status: "unknown"}
+[FormSubmissionListener] Processing WebSocket message of type: form_submitted 
+Object {messageType: "form_submitted", hasPayload: true, hasData: true}
+[FormSubmissionListener] FormSubmissionListener: Raw WebSocket message structure: 
+Object {messageType: "form_submitted", hasPayload: true, hasData: true, extractedTaskId: 770, expectedTaskId: 770, …}
+[FormSubmissionListener] Skipping duplicate message: msg_1746699153737_m9x094gal (globally)
+[Sidebar] Received form_submitted event: 
+Object {payload: {…}, data: {…}, taskId: 770, timestamp: "2025-05-08T10:12:33.737Z"}
+[Sidebar] Received form_submitted event: 
+Object {payload: {…}, data: {…}, taskId: 770, timestamp: "2025-05-08T10:12:33.737Z"}
+[Sidebar] Received form_submitted event: 
+Object {payload: {…}, data: {…}, taskId: 770, timestamp: "2025-05-08T10:12:33.737Z"}
+[WebSocket] Received message: 
+Object {type: "form_submitted", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:33.737Z", messageId: "msg_1746699153737_m9x094gal"}
+[2025-05-08T10:12:33.820Z] [WebSocket] Received message of type: submission_status 
+[WebSocket] Received message: 
+Object {type: "submission_status", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:33.738Z", messageId: "msg_1746699153738_na9nyhl70"}
+[WebSocket] Received message: 
+Object {type: "form_submission_error", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:34.017Z", messageId: "msg_1746699154017_8s7gsnubg"}
+[2025-05-08T10:12:33.993Z] [WebSocket] Received message of type: form_submission_error 
+[WebSocket] Received message: 
+Object {type: "form_submission_error", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:34.018Z", messageId: "msg_1746699154018_mtbyzxi3f"}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:34.019Z", messageId: "msg_1746699154019_olyjdmdbm"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-08T10:12:34.019Z", taskId: 770, progress: 0, status: "error", …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-08T10:12:33.998Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-08T10:12:33.998Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-08T10:12:33.998Z"}
+[WebSocket] Received message: 
+Object {type: "submission_status", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:34.020Z", messageId: "msg_1746699154020_tdj5sqiok"}
+[WebSocket] Received message: 
+Object {type: "form_submission", payload: {…}, data: {…}, timestamp: "2025-05-08T10:12:34.020Z", messageId: "msg_1746699154020_mlhooeddo"}
+[2025-05-08T10:12:34.002Z] [WebSocket] Received message of type: form_submission_error 
+[2025-05-08T10:12:34.002Z] [WebSocket] Received message of type: task_update 
+[2025-05-08T10:12:34.002Z] [WebSocket] Task update received: Task #770 - Status: error, Progress: unknown 
+[FormSubmissionListener] Processing WebSocket message of type: task_update 
+Object {messageType: "task_update", hasPayload: true, hasData: true}
+[FormSubmissionListener] FormSubmissionListener: Raw WebSocket message structure: 
+Object {messageType: "task_update", hasPayload: true, hasData: true, extractedTaskId: 770, expectedTaskId: 770, …}
+[FormSubmissionListener] Added formType to WebSocket payload: kyb
+[FormSubmissionListener] Received form submission event for task 770: 
+Object {status: undefined, timestamp: "2025-05-08T10:12:34.019Z"}
+[FormSubmissionListener] Using timestamp as fallback for submission date: 2025-05-08T10:12:34.019Z
+[FormSubmissionListener] Normalized submission date format: 2025-05-08T10:12:34.019Z
+[FormSubmissionListener] Mapped WebSocket event status: undefined → undefined
+[FormSubmissionListener] Skipping duplicate message: msg_1746699154019_olyjdmdbm (globally)
+[2025-05-08T10:12:34.003Z] [WebSocket] Received message of type: task_updated 
+[FormSubmissionListener] Processing WebSocket message of type: task_updated 
+Object {messageType: "task_updated", hasPayload: false, hasData: false}
+[FormSubmissionListener] FormSubmissionListener: Raw WebSocket message structure: 
+Object {messageType: "task_updated", hasPayload: false, hasData: false, extractedTaskId: 770, expectedTaskId: 770, …}
+[FormSubmissionListener] Added formType to WebSocket payload: kyb
+[FormSubmissionListener] Received form submission event for task 770: 
+Object {status: "error", timestamp: "2025-05-08T10:12:34.019Z"}
+[FormSubmissionListener] Using submission_date from metadata: 2025-05-08T10:12:34.018Z
+[FormSubmissionListener] Normalized submission date format: 2025-05-08T10:12:34.018Z
+[FormSubmissionListener] Mapped WebSocket event status: error → error
+[TaskPage] Form submission error: 
+Object {taskId: 770, formType: "kyb", status: "error", companyId: null, fileName: null, …}
+companyId: null
+error: null
+fileId: null
+fileName: null
+formType: "kyb"
+message: null
+status: "error"
+submissionDate: "2025-05-08T10:12:34.018Z"
+taskId: 770
+timestamp: "2025-05-08T10:12:34.019Z"
+unlockedTabs: null
+[[Prototype]]: Object
+
+[FormSubmissionListener] Skipping duplicate message: task_updated_770_2025-05-08T10:12:34.019Z (globally)
+[2025-05-08T10:12:34.003Z] [WebSocket] Received message of type: submission_status 
+[2025-05-08T10:12:34.003Z] [WebSocket] Received message of type: form_submission 
+[2025-05-08T10:12:34.003Z] [WebSocket] Form submission update: 
+Object {type: "form_submission", taskId: 770, status: "unknown"}
+[FormSubmissionListener] Processing WebSocket message of type: form_submission 
+Object {messageType: "form_submission", hasPayload: true, hasData: true}
+[FormSubmissionListener] FormSubmissionListener: Raw WebSocket message structure: 
+Object {messageType: "form_submission", hasPayload: true, hasData: true, extractedTaskId: 770, expectedTaskId: 770, …}
+[FormSubmissionListener] Skipping duplicate message: msg_1746699154020_mlhooeddo (globally)
+[UniversalSuccessModal] Processing submission result: 
+Object {fileId: undefined, fileName: undefined, taskId: 770, taskStatus: "submitted", unlockedTabs: undefined, …}
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "legalEntityName", originalKey: "legalEntityName", id: 1, label: "Legal Entity Name"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "registrationNumber", originalKey: "registrationNumber", id: 2, label: "Registration Number"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "incorporationDate", originalKey: "incorporationDate", id: 3, label: "Incorporation Date"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "businessType", originalKey: "businessType", id: 4, label: "Business Type"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "jurisdiction", originalKey: "jurisdiction", id: 5, label: "Jurisdiction"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "registeredAddress", originalKey: "registeredAddress", id: 6, label: "Registered Address"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "companyPhone", originalKey: "companyPhone", id: 7, label: "Company Phone Number"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "priorNames", originalKey: "priorNames", id: 8, label: "Previous Name"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "licenses", originalKey: "licenses", id: 9, label: "Licenses"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "goodStanding", originalKey: "goodStanding", id: 10, label: "Good Standing"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "corporateRegistration", originalKey: "corporateRegistration", id: 11, label: "Corporate Registration"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "externalAudit", originalKey: "externalAudit", id: 12, label: "External Audit"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "controlEnvironment", originalKey: "controlEnvironment", id: 13, label: "Control Environment"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "authorizedSigners", originalKey: "authorizedSigners", id: 14, label: "Authorized Signers"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "governmentOwnership", originalKey: "governmentOwnership", id: 15, label: "Government Ownership"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "ultimateBeneficialOwners", originalKey: "ultimateBeneficialOwners", id: 16, label: "Ultimate Beneficial Owners"}
+[FieldRenderer] Rendering field: 
+Object {fieldKey: "directorsAndOfficers", originalKey: "directorsAndOfficers", id: 17, label: "Directors and Officers"}
