@@ -11,7 +11,8 @@ import {
   MousePointer2Icon,
   Hammer,
   FileText,
-  BarChart2
+  BarChart2,
+  Gauge
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -422,7 +423,7 @@ export function Sidebar({
       externalLink: false
     },
     {
-      icon: BarChart2,
+      icon: Gauge,
       label: "S&P Risk Score",
       href: "/risk-score-configuration",
       locked: !availableTabs.includes('risk-score-configuration') && !availableTabs.includes('risk-score'),
