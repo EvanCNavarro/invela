@@ -13,6 +13,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import { FileCreationService } from './file-creation';
 import { TaskStatus } from '../../types/task';
 import { logger } from '../utils/logger';
+import * as WebSocketService from './websocket-service';
+import { broadcastFormSubmission } from '../utils/unified-websocket';
 
 export interface KybSubmissionInput {
   taskId: number;
@@ -237,6 +239,44 @@ export async function processKybSubmission(
     
     // 5. Unlock security tasks
     const unlockResult = await unlockSecurityTasks(task.company_id, taskId, userId);
+    
+    // 6. Ensure real-time update with WebSocket broadcast
+    try {
+      // Broadcast task update via WebSocket to ensure clients get immediate notification
+      // This is critical for ensuring task status changes are reflected in the UI
+      await broadcastFormSubmission({
+        taskId,
+        formType: 'kyb',
+        status: 'submitted', // Explicitly use 'submitted' status
+        companyId: task.company_id,
+        fileId: fileCreationResult.fileId,
+        progress: 100,
+        submissionDate: new Date().toISOString(),
+        source: 'transactional-kyb-handler',
+        metadata: {
+          transactionId,
+          warnings: warnings.length,
+          securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
+          explicitlySubmitted: true
+        }
+      });
+      
+      logger.info(`[KYB Transaction] WebSocket broadcast completed`, {
+        transactionId,
+        taskId,
+        status: 'submitted',
+        elapsedMs: performance.now() - startTime
+      });
+    } catch (wsError) {
+      // Log but don't fail if WebSocket broadcast fails
+      logger.warn(`[KYB Transaction] WebSocket broadcast failed`, {
+        transactionId,
+        taskId,
+        error: wsError instanceof Error ? wsError.message : 'Unknown error',
+        elapsedMs: performance.now() - startTime
+      });
+      // Continue despite WebSocket error (non-critical)
+    }
     
     return {
       success: true,
