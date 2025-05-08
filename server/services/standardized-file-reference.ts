@@ -190,7 +190,7 @@ export async function getFileReference(
     
     return {
       fileId: fileData.id,
-      fileName: fileData.original_name || `file_${fileData.id}.json`,
+      fileName: fileData.name || `file_${fileData.id}.json`,
       fileExists: true
     };
   } catch (error) {
