@@ -3,18 +3,10 @@ import { RiskDimension, RiskThresholds, CompanyComparison } from './risk-score-c
 // Default risk dimensions with initial values
 export const defaultRiskDimensions: RiskDimension[] = [
   {
-    id: 'physical_security',
-    name: 'Physical Security',
-    description: 'Security measures to protect physical assets and facilities',
-    weight: 22.2,
-    value: 50,
-    color: '#f44336' // red
-  },
-  {
     id: 'cyber_security',
     name: 'Cyber Security',
     description: 'Protection against digital threats and vulnerabilities',
-    weight: 19.4,
+    weight: 25.0,
     value: 50,
     color: '#2196f3' // blue
   },
@@ -22,7 +14,7 @@ export const defaultRiskDimensions: RiskDimension[] = [
     id: 'financial_stability',
     name: 'Financial Stability',
     description: 'Financial health and sustainability of the organization',
-    weight: 16.7,
+    weight: 22.0,
     value: 50,
     color: '#4caf50' // green
   },
@@ -30,7 +22,7 @@ export const defaultRiskDimensions: RiskDimension[] = [
     id: 'dark_web_data',
     name: 'Dark Web Data',
     description: 'Presence of sensitive information on the dark web',
-    weight: 13.9,
+    weight: 18.0,
     value: 50,
     color: '#9c27b0' // purple
   },
@@ -38,7 +30,7 @@ export const defaultRiskDimensions: RiskDimension[] = [
     id: 'public_sentiment',
     name: 'Public Sentiment',
     description: 'Public perception and reputation in the market',
-    weight: 11.1,
+    weight: 15.0,
     value: 50,
     color: '#ffc107' // amber
   },
@@ -46,23 +38,15 @@ export const defaultRiskDimensions: RiskDimension[] = [
     id: 'potential_liability',
     name: 'Potential Liability',
     description: 'Risk exposure based on transactions, data access, and accounts',
-    weight: 8.3,
+    weight: 12.0,
     value: 50,
     color: '#ff9800' // orange
-  },
-  {
-    id: 'supply_chain_issues',
-    name: 'Supply Chain Issues',
-    description: 'Vulnerabilities in the supply chain and third-party dependencies',
-    weight: 5.6,
-    value: 50,
-    color: '#3f51b5' // indigo
   },
   {
     id: 'data_access_scope',
     name: 'Data Access Scope',
     description: 'Extent and sensitivity of data being accessed',
-    weight: 2.8,
+    weight: 8.0,
     value: 50,
     color: '#009688' // teal
   }
