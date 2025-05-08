@@ -427,6 +427,11 @@ export function registerRoutes(app: Express): Express {
   // Register fix-missing-file API router for regenerating files
   app.use(fixMissingFileRouter);
   
+  // Register task broadcast router for WebSocket notifications
+  console.log('[Routes] Setting up task broadcast router');
+  app.use(taskBroadcastRouter);
+  console.log('[Routes] Successfully registered task broadcast router');
+  
   // Register Open Banking Survey routes with WebSocket support
   // Use getWebSocketServer from the unified implementation
   registerOpenBankingRoutes(app, getWebSocketServer());
