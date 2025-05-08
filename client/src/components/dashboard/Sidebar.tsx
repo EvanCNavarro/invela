@@ -467,16 +467,26 @@ export function Sidebar({
         return (
           <Link href={logoLinkHref} className={cn(
             "flex items-center cursor-pointer hover:bg-muted/50 transition-colors rounded-md",
-            isExpanded ? "px-4 mx-4 my-4 h-12 min-w-[260px]" : "justify-center mx-auto my-4 w-12 h-12"
+            isExpanded 
+              ? "px-4 mx-4 my-4 h-12 min-w-[260px]" 
+              : "justify-center mx-auto my-4 w-12 h-12"
           )}>
-            <img
-              src="/invela-logo.svg"
-              alt="Invela Trust Network"
-              className="h-7 w-7 flex-shrink-0"
-            />
-            {isExpanded && (
-              <span className="ml-4 font-semibold text-lg text-foreground whitespace-nowrap">Invela Trust Network</span>
-            )}
+            <div className={cn(
+              "flex items-center justify-center w-full",
+              isExpanded ? "" : "mx-auto"
+            )}>
+              <img
+                src="/invela-logo.svg"
+                alt="Invela Trust Network"
+                className={cn(
+                  "flex-shrink-0", 
+                  isExpanded ? "h-7 w-7" : "h-8 w-8"
+                )}
+              />
+              {isExpanded && (
+                <span className="ml-4 font-semibold text-lg text-foreground whitespace-nowrap">Invela Trust Network</span>
+              )}
+            </div>
           </Link>
         );
       })()}
