@@ -25,13 +25,11 @@ import { useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const dimensionIcons: Record<string, React.ReactNode> = {
-  physical_security: <Shield className="h-5 w-5" />,
   cyber_security: <FileCode className="h-5 w-5" />,
   financial_stability: <BarChart className="h-5 w-5" />,
   dark_web_data: <Globe2 className="h-5 w-5" />,
   public_sentiment: <MessageSquare className="h-5 w-5" />,
   potential_liability: <AlertTriangle className="h-5 w-5" />,
-  supply_chain_issues: <Box className="h-5 w-5" />,
   data_access_scope: <Database className="h-5 w-5" />
 };
 
