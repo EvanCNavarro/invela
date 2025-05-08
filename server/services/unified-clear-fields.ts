@@ -22,6 +22,13 @@ import {
 import { broadcast, broadcastTaskUpdate } from '../utils/websocket';
 import { WebSocketContext } from '../utils/websocket-context';
 import { logger } from '../utils/logger';
+import { Pool } from 'pg';
+
+// Create a PostgreSQL connection pool for direct SQL operations
+// This avoids the ORM syntax issues we were encountering
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
 
 // Import FormType and re-export for consumers
 import type { FormType } from '../utils/websocket-context';
@@ -145,113 +152,140 @@ export const clearFieldsService = async (
     // Start a bulk operation in the WebSocket context
     WebSocketContext.startOperation('clear_fields', taskId, formType, opts.suppressDuration);
     
-    // Begin a database transaction to ensure atomicity
-    return db.transaction(async (tx) => {
-      try {
-        // 1. Get the current task to ensure it exists and get its current status
-        const task = await tx.query.tasks.findFirst({
-          where: eq(tasks.id, taskId)
-        });
-        
-        if (!task) {
-          throw new Error(`Task ${taskId} not found`);
-        }
-        
-        // 2. Clear responses from the appropriate table based on form type
-        let deletedCount = 0;
-        
-        // Handle different form types - each has its own table
-        if (formType === 'kyb' || formType === 'company_kyb') {
-          // Handle both 'kyb' and 'company_kyb' form types using kybResponses table
-          const result = await tx.delete(kybResponses).where(eq(kybResponses.task_id, taskId));
-          deletedCount = result.count;
-        } else if (formType === 'ky3p') {
-          const result = await tx.delete(ky3pResponses).where(eq(ky3pResponses.task_id, taskId));
-          deletedCount = result.count;
-        } else if (formType === 'open_banking') {
-          const result = await tx.delete(openBankingResponses).where(eq(openBankingResponses.task_id, taskId));
-          deletedCount = result.count;
-        } else if (formType === 'card') {
-          const result = await tx.delete(cardResponses).where(eq(cardResponses.task_id, taskId));
-          deletedCount = result.count;
-        }
-        
-        // 3. Clear the savedFormData field if specified
-        // CRITICAL: This prevents the form from being rehydrated from cache
-        if (opts.clearSavedFormData) {
-          await tx.update(tasks)
-            .set({ savedFormData: null })
-            .where(eq(tasks.id, taskId));
-          
-          serviceLogger.info(`Cleared savedFormData for task ${taskId}`);
-        }
-        
-        // 4. Update progress if not preserving
-        if (!preserveProgress) {
-          await tx.update(tasks)
-            .set({ progress: 0 })
-            .where(eq(tasks.id, taskId));
-          
-          serviceLogger.info(`Reset progress for task ${taskId} to 0%`);
-        }
-        
-        // 5. Record operation metadata for tracking
-        // In the future, this could be stored in a dedicated operations table
-        const operationMetadata = {
-          operationId: `op_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-          taskId,
-          formType,
-          operation: 'clear_fields',
-          preserveProgress,
-          deletedCount,
-          timestamp: new Date().toISOString()
-        };
-        
-        // 6. Send a bulk WebSocket notification if not skipping broadcasts
-        if (!opts.skipBroadcast) {
-          // Small delay to ensure DB operations are complete
-          setTimeout(async () => {
-            try {
-              // Broadcast a specialized clear_fields event that clients can use
-              // to synchronize their state
-              await broadcast('clear_fields', {
-                ...operationMetadata,
-                preservedProgress: preserveProgress
-              });
-              
-              // Also broadcast a task update with the new progress
-              await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
-                operation: 'fields_cleared',
-                timestamp: new Date().toISOString()
-              });
-              
-              serviceLogger.info(`Sent clear_fields broadcast for task ${taskId}`);
-            } catch (broadcastError) {
-              serviceLogger.error(`Error broadcasting clear_fields event:`, broadcastError);
-            } finally {
-              // End the operation after broadcasting
-              WebSocketContext.endOperation();
-            }
-          }, opts.broadcastDelay);
-        } else {
-          // If skipping broadcasts, still end the operation
-          WebSocketContext.endOperation();
-        }
-        
-        serviceLogger.info(`Successfully cleared ${deletedCount} fields for task ${taskId}`);
-        
-        return {
-          success: true,
-          deletedCount,
-          message: `Successfully cleared ${deletedCount} fields for task ${taskId}`,
-          preserveProgress
-        };
-      } catch (error) {
-        serviceLogger.error(`Error clearing fields for task ${taskId}:`, error);
-        // End the operation on error
-        WebSocketContext.endOperation();
-        throw error;
+    // Use a native PostgreSQL client to avoid ORM syntax issues
+    const client = await pool.connect();
+    
+    try {
+      // Begin a transaction
+      await client.query('BEGIN');
+      
+      // 1. Get the current task to ensure it exists and get its current status
+      const taskResult = await client.query(
+        'SELECT * FROM tasks WHERE id = $1 LIMIT 1',
+        [taskId]
+      );
+      
+      if (taskResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        throw new Error(`Task ${taskId} not found`);
       }
-    });
+      
+      const task = taskResult.rows[0];
+      
+      // 2. Clear responses from the appropriate table based on form type
+      let deletedCount = 0;
+      let deleteResult;
+      
+      // Handle different form types - each has its own table
+      if (formType === 'kyb' || formType === 'company_kyb') {
+        // Handle both 'kyb' and 'company_kyb' form types using kyb_responses table
+        deleteResult = await client.query(
+          'DELETE FROM kyb_responses WHERE task_id = $1',
+          [taskId]
+        );
+        deletedCount = deleteResult.rowCount || 0;
+      } else if (formType === 'ky3p') {
+        deleteResult = await client.query(
+          'DELETE FROM ky3p_responses WHERE task_id = $1',
+          [taskId]
+        );
+        deletedCount = deleteResult.rowCount || 0;
+      } else if (formType === 'open_banking') {
+        deleteResult = await client.query(
+          'DELETE FROM open_banking_responses WHERE task_id = $1',
+          [taskId]
+        );
+        deletedCount = deleteResult.rowCount || 0;
+      } else if (formType === 'card') {
+        deleteResult = await client.query(
+          'DELETE FROM card_responses WHERE task_id = $1',
+          [taskId]
+        );
+        deletedCount = deleteResult.rowCount || 0;
+      }
+        
+      // 3. Clear the savedFormData field if specified
+      // CRITICAL: This prevents the form from being rehydrated from cache
+      if (opts.clearSavedFormData) {
+        await client.query(
+          'UPDATE tasks SET saved_form_data = NULL WHERE id = $1',
+          [taskId]
+        );
+        serviceLogger.info(`Cleared savedFormData for task ${taskId}`);
+      }
+        
+      // 4. Update progress if not preserving
+      if (!preserveProgress) {
+        await client.query(
+          'UPDATE tasks SET progress = 0 WHERE id = $1',
+          [taskId]
+        );
+        serviceLogger.info(`Reset progress for task ${taskId} to 0%`);
+      }
+        
+      // 5. Commit the transaction
+      await client.query('COMMIT');
+        
+      // 6. Record operation metadata for tracking
+      const operationMetadata = {
+        operationId: `op_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        taskId,
+        formType,
+        operation: 'clear_fields',
+        preserveProgress,
+        deletedCount,
+        timestamp: new Date().toISOString()
+      };
+        
+      // 7. Send a bulk WebSocket notification if not skipping broadcasts
+      if (!opts.skipBroadcast) {
+        // Small delay to ensure DB operations are complete
+        setTimeout(async () => {
+          try {
+            // Broadcast a specialized clear_fields event that clients can use
+            // to synchronize their state
+            await broadcast('clear_fields', {
+              ...operationMetadata,
+              preservedProgress: preserveProgress
+            });
+              
+            // Also broadcast a task update with the new progress
+            await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
+              operation: 'fields_cleared',
+              timestamp: new Date().toISOString()
+            });
+              
+            serviceLogger.info(`Sent clear_fields broadcast for task ${taskId}`);
+          } catch (broadcastError) {
+            serviceLogger.error(`Error broadcasting clear_fields event:`, broadcastError);
+          } finally {
+            // End the operation after broadcasting
+            WebSocketContext.endOperation();
+          }
+        }, opts.broadcastDelay);
+      } else {
+        // If skipping broadcasts, still end the operation
+        WebSocketContext.endOperation();
+      }
+        
+      serviceLogger.info(`Successfully cleared ${deletedCount} fields for task ${taskId}`);
+        
+      return {
+        success: true,
+        deletedCount,
+        message: `Successfully cleared ${deletedCount} fields for task ${taskId}`,
+        preserveProgress
+      };
+    } catch (error) {
+      // Rollback on error
+      await client.query('ROLLBACK');
+      serviceLogger.error(`Error clearing fields for task ${taskId}:`, error);
+      // End the operation on error
+      WebSocketContext.endOperation();
+      throw error;
+    } finally {
+      // Always release the client back to the pool
+      client.release();
+    }
   });
-};
+}
