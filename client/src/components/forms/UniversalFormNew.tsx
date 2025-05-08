@@ -818,9 +818,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
    * @param options.skipServerRefresh Whether to prevent fetching new data from the server
    * @returns Promise that resolves when the refresh is complete
    */
-  const refreshFormData = useCallback(async (options: { skipServerRefresh?: boolean } = {}): Promise<void> => {
+  const refreshFormData = useCallback(async (options: { skipServerRefresh?: boolean, forceUIReset?: boolean } = {}): Promise<void> => {
     // Default to skipServerRefresh=true for safety
     const skipServerRefresh = options.skipServerRefresh ?? true;
+    // Support for forcefully resetting the UI state
+    const forceUIReset = options.forceUIReset === true;
     
     // Generate a unique operation ID for diagnostic tracking
     const operationId = `refresh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -998,8 +1000,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           // ENHANCED FIX: More aggressive reset for section statuses
           // Force reset regardless of current progress state when options.forceUIReset is true
+          const hasIncorrectStatuses = sectionStatuses.some(s => s.progress > 0);
           if ((typeof setSectionStatuses === 'function') && 
-              (hasIncorrectStatuses || options.forceUIReset)) {
+              (hasIncorrectStatuses || forceUIReset)) {
             
             logger.info(`[DIAGNOSTIC][${operationId}] Forcing section status reset`, {
               reason: hasIncorrectStatuses ? 'detected incorrect statuses' : 'forceUIReset option',
