@@ -1,0 +1,857 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[Auth] Setting up authentication...
+[Auth] Setting up PostgreSQL session store
+[Auth] PostgreSQL session store initialized successfully
+[Auth] Authentication setup completed
+[2025-05-08T08:43:49.850Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-08T08:43:49.851Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-08T08:43:49.851Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-08T08:43:49.852Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-08T08:43:49.853Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-08T08:43:49.855Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-08T08:43:49.856Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"6by4z9","timestamp":"2025-05-08T08:43:49.856Z"}
+[2025-05-08T08:43:49.856Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-08T08:43:49.856Z] [INFO] [App] Using existing unified WebSocket server 
+[2025-05-08T08:43:49.856Z] [INFO] [App] [WebSocket] Legacy WebSocket server initialized successfully 
+[2025-05-08T08:43:49.856Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-08T08:43:49.856Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-08T08:43:49.856Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-08T08:43:49.857Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-08T08:43:49.857Z] [INFO] [App] Setting up Vite development server 
+[ENV] Using PORT=5000 from environment (override: yes)
+[ENV] Environment=development (production: no)
+[2025-05-08T08:43:49.872Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-08T08:43:49.872Z] [INFO] [App] Environment: development 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-08T08:43:49.873Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-08T08:43:49.873Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-08T08:43:50.615Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693830614-pqwq9do","clients":1}
+[2025-05-08T08:43:50.758Z] [INFO] [WebSocket] Received message from client client-1746693830614-pqwq9do {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-08T08:43:50.605Z"}}
+[2025-05-08T08:43:50.758Z] [INFO] [WebSocket] Authentication from client client-1746693830614-pqwq9do {"module":"WebSocket","hasToken":true}
+[2025-05-08T08:43:51.275Z] [INFO] [App] [ServerStartup] WebSocket server active with 1 connected clients 
+[2025-05-08T08:43:52.836Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693832836-j7ap36m","clients":2}
+[2025-05-08T08:43:54.695Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693834695-nddt2b4","clients":3}
+[2025-05-08T08:43:55.009Z] [INFO] [WebSocket] Received message from client client-1746693834695-nddt2b4 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1746693116111_vvnao4hun","timestamp":"2025-05-08T08:43:54.693Z"}
+[2025-05-08T08:43:55.009Z] [INFO] [WebSocket] Authentication from client client-1746693834695-nddt2b4 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-05-08T08:43:55.744Z] New client connected to the pool (1/3)
+[Current Company] Fetching company for user: { userId: 316, companyId: 273 }
+[2025-05-08T08:43:56.167Z] New client connected to the pool (2/3)
+[Current Company] Found company: {
+  id: 273,
+  name: 'DevTest18',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[2025-05-08T08:43:56.205Z] [INFO] [App] GET /api/companies/current 200 in 85ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[Auth] Returning user session data
+[2025-05-08T08:43:56.403Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:43:56.588Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:43:56.711Z] [INFO] [WebSocket] Received message from client client-1746693832836-j7ap36m {"module":"WebSocket","type":"authenticate","userId":316,"companyId":273,"clientId":"ws_1746693830595_ulhhopn6e","timestamp":"2025-05-08T08:43:56.580Z"}
+[2025-05-08T08:43:56.712Z] [INFO] [WebSocket] Authentication from client client-1746693832836-j7ap36m {"module":"WebSocket","userId":316,"companyId":273,"hasToken":true}
+[2025-05-08T08:43:56.797Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693836797-1u0wl3e","clients":4}
+[Auth] Unauthenticated user session
+[2025-05-08T08:43:56.862Z] [INFO] [WebSocket] Received message from client client-1746693836797-1u0wl3e {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-08T08:43:56.861Z"}}
+[2025-05-08T08:43:56.862Z] [INFO] [WebSocket] Authentication from client client-1746693836797-1u0wl3e {"module":"WebSocket","hasToken":true}
+[2025-05-08T08:43:57.639Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:43:58.276Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1746693836797-1u0wl3e","code":1001,"reason":"","remainingClients":3}
+[2025-05-08T08:44:00.642Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:03.645Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:06.643Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:09.642Z] [INFO] [App] GET /api/companies/current 304 in 33ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:12.650Z] [INFO] [App] GET /api/companies/current 304 in 34ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:12.968Z] [INFO] [WebSocket] Received message from client client-1746693832836-j7ap36m {"module":"WebSocket","type":"ping","timestamp":"2025-05-08T08:44:12.840Z","connectionId":"ws_1746693830595_ulhhopn6e"}
+[2025-05-08T08:44:15.653Z] [INFO] [App] GET /api/companies/current 304 in 38ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:18.646Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:19.023Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1746693830614-pqwq9do","code":1001,"reason":"","remainingClients":2}
+[2025-05-08T08:44:19.026Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1746693834695-nddt2b4","code":1001,"reason":"","remainingClients":1}
+[2025-05-08T08:44:19.026Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1746693832836-j7ap36m","code":1001,"reason":"","remainingClients":0}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  770, 771, 706, 718,
+  772, 719, 717, 723,
+  724, 713
+]
+[Task Progress] Calculated progress for task 770 (company_kyb): 0/30 = 0%
+[2025-05-08T08:44:20.143Z] New client connected to the pool (3/3)
+[Task Progress] Calculated progress for task 771 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 706 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 718 (ky3p): 1/120 = 1%
+[Task Progress] Calculated progress for task 772 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 719 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 717 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 723 (ky3p): 0/120 = 0%
+[Task Progress] Calculated progress for task 724 (open_banking): 44/44 = 100%
+[Task Progress] Calculated progress for task 713 (company_kyb): 30/30 = 100%
+[Auth] Returning user session data
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 316, company_id: 273, email: '18@e.com' }
+[2025-05-08T08:44:29.102Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":273,"userId":316}
+[2025-05-08T08:44:29.134Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":273}
+[Tasks] Automatically unlocking all tasks for company { userId: 316, companyId: 273, requestedBy: 'automatic_task_unlock' }
+[2025-05-08T08:44:29.135Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":273}
+[2025-05-08T08:44:29.145Z] [INFO] [App] GET /api/companies/current 304 in 41ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:29.194Z] [INFO] [App] GET /api/tasks/762 304 in 82ms :: {"id":762,"title":"1. KYB Form: DevTest18","description":"Complete KYB verifi... 
+[2025-05-08T08:44:29.203Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":761,"userEmail":"18@e.com","currentStatus":"completed","currentProgress":100}
+[TaskDependencies] Skipping task 764 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[TaskDependencies] Skipping task 762 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[TaskDependencies] Skipping task 763 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[2025-05-08T08:44:29.203Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":273,"count":1,"taskIds":[761],"taskTypes":["user_onboarding"],"ky3pTaskCount":0,"ky3pTaskIds":[]}
+[2025-05-08T08:44:29.204Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":761,"userEmail":"18@e.com","timestamp":"2025-05-08T08:44:29.204Z"}
+[2025-05-08T08:44:29.236Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-08T08:44:29.236Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 0 clients {"module":"WebSocket","messageType":"task_updated","recipients":0,"totalClients":0,"filtered":false}
+[2025-05-08T08:44:29.236Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":761,"status":"completed"}
+[2025-05-08T08:44:29.236Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":273,"count":1}
+[Tasks] Successfully unlocked all tasks for company: 273
+[2025-05-08T08:44:29.238Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693869238-waa03kn","clients":1}
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 316',
+    condition2: 'tasks.created_by = 316',
+    condition3: "tasks.company_id = 273 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('18@e.com')"
+  }
+}
+[Tasks] Tasks found: { count: 4 }
+[2025-05-08T08:44:29.331Z] [INFO] [App] GET /api/tasks 200 in 230ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:44:29.373Z] [INFO] [WebSocket] Received message from client client-1746693869238-waa03kn {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-08T08:44:29.238Z"}}
+[2025-05-08T08:44:29.373Z] [INFO] [WebSocket] Authentication from client client-1746693869238-waa03kn {"module":"WebSocket","hasToken":true}
+[2025-05-08T08:44:29.403Z] [INFO] [App] GET /api/companies/current 304 in 34ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:29.505Z] [INFO] [App] GET /api/tasks 304 in 32ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:44:29.805Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693869805-qp3yxd6","clients":2}
+[2025-05-08T08:44:29.930Z] [INFO] [WebSocket] Received message from client client-1746693869805-qp3yxd6 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1746693868681_o3zrgujbr","timestamp":"2025-05-08T08:44:29.797Z"}
+[2025-05-08T08:44:29.930Z] [INFO] [WebSocket] Authentication from client client-1746693869805-qp3yxd6 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Task Templates API] Fetching template for task type: company_kyb, user: 316
+[Task Templates API] Found template: 1 (KYB Form) for task type: company_kyb
+[2025-05-08T08:44:30.786Z] [INFO] [App] GET /api/tasks/762 304 in 62ms :: {"id":762,"title":"1. KYB Form: DevTest18","description":"Complete KYB verifi... 
+[Task Templates API] Retrieved 9 configuration items for template ID: 1
+[2025-05-08T08:44:30.818Z] [INFO] [App] GET /api/task-templates/by-type/company_kyb 304 in 93ms :: {"id":1,"name":"KYB Form","description":"Know Your Business form for company ... 
+[2025-05-08T08:44:30.973Z] [INFO] [App] Fetching KYB fields 
+[2025-05-08T08:44:31.004Z] [INFO] [App] KYB fields retrieved successfully {"fieldCount":30,"groups":["companyProfile","financialProfile","governanceLeadership","operationsCompliance"]}
+[2025-05-08T08:44:31.035Z] [INFO] [App] GET /api/kyb/fields 304 in 62ms :: [{"id":1,"field_key":"legalEntityName","display_name":"Legal Entity Name","fi... 
+[2025-05-08T08:44:31.086Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1746693871086-na5djau","clients":3}
+[KYB API Debug] Loading progress for task: 762
+[Auth] Returning user session data
+[Task Reconciliation] Found 30 responses for task 762 (type: company_kyb)
+[STATUS DETERMINATION] Calculating status for task with: {
+  progress: 100,
+  currentStatus: 'ready_for_submission',
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasResponses: true,
+  effectiveHasResponses: true,
+  timestamp: '2025-05-08T08:44:31.261Z'
+}
+[STATUS DETERMINATION] Task has 100% progress but is not submitted, setting to READY_FOR_SUBMISSION
+[Task Reconciliation] Progress calculation: {
+  taskId: 762,
+  currentProgress: 100,
+  calculatedProgress: 100,
+  currentStatus: 'ready_for_submission',
+  calculatedStatus: 'ready_for_submission',
+  responseCount: 30,
+  completeCount: 30
+}
+[Task Reconciliation] No updates needed for task 762
+[KYB API Debug] Retrieved task: {
+  taskId: 762,
+  status: 'ready_for_submission',
+  progress: 100,
+  metadata: [
+    'formType',
+    'statusFlow',
+    'clearSource',
+    'lastUpdated',
+    'clearOperation',
+    'previousStatus',
+    'previousMetadata',
+    'previousProgress',
+    'lastClearTimestamp',
+    'preserveProgressEnabled',
+    'lastProgressReconciliation'
+  ],
+  timestamp: '2025-05-08T08:44:31.291Z'
+}
+[KYB API Debug] Retrieved responses: {
+  responseCount: 30,
+  fields: [
+    {
+      field: 'lifetimeCustomerValue',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'financialStatements',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'operationalPolicies',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'dataTypes', status: 'COMPLETE', hasValue: true },
+    { field: 'regulatoryActions', status: 'COMPLETE', hasValue: true },
+    { field: 'legalEntityName', status: 'COMPLETE', hasValue: true },
+    { field: 'registrationNumber', status: 'COMPLETE', hasValue: true },
+    { field: 'businessType', status: 'COMPLETE', hasValue: true },
+    { field: 'companyPhone', status: 'COMPLETE', hasValue: true },
+    { field: 'priorNames', status: 'COMPLETE', hasValue: true },
+    { field: 'goodStanding', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'corporateRegistration',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'externalAudit', status: 'COMPLETE', hasValue: true },
+    { field: 'controlEnvironment', status: 'COMPLETE', hasValue: true },
+    { field: 'authorizedSigners', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'governmentOwnership',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'directorsAndOfficers',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'contactEmail', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'marketCapitalization',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'jurisdiction', status: 'COMPLETE', hasValue: true },
+    { field: 'registeredAddress', status: 'COMPLETE', hasValue: true },
+    { field: 'licenses', status: 'COMPLETE', hasValue: true },
+    { field: 'sanctionsCheck', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'annualRecurringRevenue',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'monthlyRecurringRevenue',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'dataVolume', status: 'COMPLETE', hasValue: true },
+    { field: 'dueDiligence', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'investigationsIncidents',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'ultimateBeneficialOwners',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'incorporationDate', status: 'COMPLETE', hasValue: true }
+  ],
+  timestamp: '2025-05-08T08:44:31.321Z'
+}
+[SERVER DEBUG] No savedFormData found in task table
+[SERVER DEBUG] No KYB form file ID found in task metadata
+[KYB API Debug] Retrieved task data: {
+  id: 762,
+  responseCount: 30,
+  progress: 100,
+  status: 'ready_for_submission',
+  formDataKeys: [
+    'lifetimeCustomerValue',
+    'financialStatements',
+    'operationalPolicies',
+    'dataTypes',
+    'regulatoryActions',
+    'legalEntityName',
+    'registrationNumber',
+    'businessType',
+    'companyPhone',
+    'priorNames',
+    'goodStanding',
+    'corporateRegistration',
+    'externalAudit',
+    'controlEnvironment',
+    'authorizedSigners',
+    'governmentOwnership',
+    'directorsAndOfficers',
+    'contactEmail',
+    'marketCapitalization',
+    'jurisdiction',
+    'registeredAddress',
+    'licenses',
+    'sanctionsCheck',
+    'annualRecurringRevenue',
+    'monthlyRecurringRevenue',
+    'dataVolume',
+    'dueDiligence',
+    'investigationsIncidents',
+    'ultimateBeneficialOwners',
+    'incorporationDate'
+  ]
+}
+===============================================
+[SERVER DEBUG] PREPARING GET RESPONSE at 2025-05-08T08:44:31.323Z
+[SERVER DEBUG] Task ID: 762, Found 30 fields in database
+===============================================
+[SERVER DEBUG] Checking field corporateRegistration in retrieved data: "Delaware State Filing Number 1234567, registered as FinTech Innovations LLC on 05/12/2010"
+[SERVER DEBUG] Checking field goodStanding in retrieved data: "Yes"
+[SERVER DEBUG] Checking field regulatoryActions in retrieved data: "Yes"
+[SERVER DEBUG] Checking field investigationsIncidents in retrieved data: "No significant incidents in the past 3 years"
+[SERVER DEBUG] No fields with value "asdf" found in GET response data
+[SERVER DEBUG] Sending GET response with 30 fields, status: ready_for_submission, progress: 100%
+===============================================
+[2025-05-08T08:44:31.354Z] [INFO] [App] GET /api/kyb/progress/762 304 in 156ms :: {"formData":{"lifetimeCustomerValue":"$1,250","financialStatements":"Yes","op... 
+[2025-05-08T08:44:31.466Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[KYB API Debug] Loading progress for task: 762
+[TimestampHandler] Retrieved 30 timestamps for task 762
+[TimestampAPI] Returning 30 timestamps for task 762
+[Task Reconciliation] Found 30 responses for task 762 (type: company_kyb)
+[STATUS DETERMINATION] Calculating status for task with: {
+  progress: 100,
+  currentStatus: 'ready_for_submission',
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasResponses: true,
+  effectiveHasResponses: true,
+  timestamp: '2025-05-08T08:44:31.566Z'
+}
+[STATUS DETERMINATION] Task has 100% progress but is not submitted, setting to READY_FOR_SUBMISSION
+[Task Reconciliation] Progress calculation: {
+  taskId: 762,
+  currentProgress: 100,
+  calculatedProgress: 100,
+  currentStatus: 'ready_for_submission',
+  calculatedStatus: 'ready_for_submission',
+  responseCount: 30,
+  completeCount: 30
+}
+[Task Reconciliation] No updates needed for task 762
+[2025-05-08T08:44:31.569Z] [INFO] [App] GET /api/kyb/timestamps/762 304 in 62ms :: {"legalEntityName":1746692303442,"registrationNumber":1746692303442,"incorpor... 
+[2025-05-08T08:44:31.590Z] [INFO] [WebSocket] Received message from client client-1746693871086-na5djau {"module":"WebSocket","type":"authenticate","userId":316,"companyId":273,"clientId":"ws_1746693870551_hlye1ndb2","timestamp":"2025-05-08T08:44:31.461Z"}
+[2025-05-08T08:44:31.590Z] [INFO] [WebSocket] Authentication from client client-1746693871086-na5djau {"module":"WebSocket","userId":316,"companyId":273,"hasToken":true}
+[KYB API Debug] Retrieved task: {
+  taskId: 762,
+  status: 'ready_for_submission',
+  progress: 100,
+  metadata: [
+    'formType',
+    'statusFlow',
+    'clearSource',
+    'lastUpdated',
+    'clearOperation',
+    'previousStatus',
+    'previousMetadata',
+    'previousProgress',
+    'lastClearTimestamp',
+    'preserveProgressEnabled',
+    'lastProgressReconciliation'
+  ],
+  timestamp: '2025-05-08T08:44:31.595Z'
+}
+[KYB API Debug] Retrieved responses: {
+  responseCount: 30,
+  fields: [
+    {
+      field: 'lifetimeCustomerValue',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'financialStatements',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'operationalPolicies',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'dataTypes', status: 'COMPLETE', hasValue: true },
+    { field: 'regulatoryActions', status: 'COMPLETE', hasValue: true },
+    { field: 'legalEntityName', status: 'COMPLETE', hasValue: true },
+    { field: 'registrationNumber', status: 'COMPLETE', hasValue: true },
+    { field: 'businessType', status: 'COMPLETE', hasValue: true },
+    { field: 'companyPhone', status: 'COMPLETE', hasValue: true },
+    { field: 'priorNames', status: 'COMPLETE', hasValue: true },
+    { field: 'goodStanding', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'corporateRegistration',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'externalAudit', status: 'COMPLETE', hasValue: true },
+    { field: 'controlEnvironment', status: 'COMPLETE', hasValue: true },
+    { field: 'authorizedSigners', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'governmentOwnership',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'directorsAndOfficers',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'contactEmail', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'marketCapitalization',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'jurisdiction', status: 'COMPLETE', hasValue: true },
+    { field: 'registeredAddress', status: 'COMPLETE', hasValue: true },
+    { field: 'licenses', status: 'COMPLETE', hasValue: true },
+    { field: 'sanctionsCheck', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'annualRecurringRevenue',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'monthlyRecurringRevenue',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'dataVolume', status: 'COMPLETE', hasValue: true },
+    { field: 'dueDiligence', status: 'COMPLETE', hasValue: true },
+    {
+      field: 'investigationsIncidents',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    {
+      field: 'ultimateBeneficialOwners',
+      status: 'COMPLETE',
+      hasValue: true
+    },
+    { field: 'incorporationDate', status: 'COMPLETE', hasValue: true }
+  ],
+  timestamp: '2025-05-08T08:44:31.625Z'
+}
+[SERVER DEBUG] No savedFormData found in task table
+[SERVER DEBUG] No KYB form file ID found in task metadata
+[KYB API Debug] Retrieved task data: {
+  id: 762,
+  responseCount: 30,
+  progress: 100,
+  status: 'ready_for_submission',
+  formDataKeys: [
+    'lifetimeCustomerValue',
+    'financialStatements',
+    'operationalPolicies',
+    'dataTypes',
+    'regulatoryActions',
+    'legalEntityName',
+    'registrationNumber',
+    'businessType',
+    'companyPhone',
+    'priorNames',
+    'goodStanding',
+    'corporateRegistration',
+    'externalAudit',
+    'controlEnvironment',
+    'authorizedSigners',
+    'governmentOwnership',
+    'directorsAndOfficers',
+    'contactEmail',
+    'marketCapitalization',
+    'jurisdiction',
+    'registeredAddress',
+    'licenses',
+    'sanctionsCheck',
+    'annualRecurringRevenue',
+    'monthlyRecurringRevenue',
+    'dataVolume',
+    'dueDiligence',
+    'investigationsIncidents',
+    'ultimateBeneficialOwners',
+    'incorporationDate'
+  ]
+}
+===============================================
+[SERVER DEBUG] PREPARING GET RESPONSE at 2025-05-08T08:44:31.626Z
+[SERVER DEBUG] Task ID: 762, Found 30 fields in database
+===============================================
+[SERVER DEBUG] Checking field corporateRegistration in retrieved data: "Delaware State Filing Number 1234567, registered as FinTech Innovations LLC on 05/12/2010"
+[SERVER DEBUG] Checking field goodStanding in retrieved data: "Yes"
+[SERVER DEBUG] Checking field regulatoryActions in retrieved data: "Yes"
+[SERVER DEBUG] Checking field investigationsIncidents in retrieved data: "No significant incidents in the past 3 years"
+[SERVER DEBUG] No fields with value "asdf" found in GET response data
+[SERVER DEBUG] Sending GET response with 30 fields, status: ready_for_submission, progress: 100%
+===============================================
+[2025-05-08T08:44:31.657Z] [INFO] [App] GET /api/kyb/progress/762 304 in 152ms :: {"formData":{"lifetimeCustomerValue":"$1,250","financialStatements":"Yes","op... 
+[TimestampHandler] Retrieved 30 timestamps for task 762
+[TimestampAPI] Returning 30 timestamps for task 762
+[2025-05-08T08:44:31.873Z] [INFO] [App] GET /api/kyb/timestamps/762 304 in 61ms :: {"legalEntityName":1746692303442,"registrationNumber":1746692303442,"incorpor... 
+[2025-05-08T08:44:32.775Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:35.754Z] [INFO] [App] GET /api/companies/current 304 in 37ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:38.776Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:41.745Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:44.763Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:47.746Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:50.768Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:51.681Z] [INFO] [WebSocket] Received message from client client-1746693871086-na5djau {"module":"WebSocket","type":"ping","timestamp":"2025-05-08T08:44:51.551Z","connectionId":"ws_1746693870551_hlye1ndb2"}
+[Current Company] Using cached company data: 273
+[2025-05-08T08:44:53.756Z] [INFO] [App] GET /api/companies/current 304 in 33ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[Current Company] Fetching company for user: { userId: 316, companyId: 273 }
+[Current Company] Found company: {
+  id: 273,
+  name: 'DevTest18',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[2025-05-08T08:44:56.807Z] [INFO] [App] GET /api/companies/current 304 in 63ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:59.053Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:44:59.369Z] [INFO] [WebSocket] Received message from client client-1746693869238-waa03kn {"module":"WebSocket","type":"ping"}
+[2025-05-08T08:44:59.424Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[TransactionalFormRoutes] 📬 FORM SUBMISSION START - 2025-05-08T08:45:01.825Z {
+  path: '/submit/kyb/762',
+  method: 'POST',
+  params: { formType: 'kyb', taskId: '762' },
+  userPresent: true,
+  userIdPresent: true,
+  bodyKeys: [ 'taskId', 'formType', 'formData', 'companyId' ],
+  timestamp: '2025-05-08T08:45:01.825Z'
+}
+[TransactionalFormRoutes] 🧾 Form submission parameters validated: {
+  taskId: 762,
+  formType: 'kyb',
+  companyId: 273,
+  userId: 316,
+  formDataFields: 4
+}
+[2025-05-08T08:45:01.825Z] [INFO] [App] Received form submission request {"taskId":762,"formType":"kyb","userId":316,"companyId":273,"dataKeysCount":4}
+[WebSocket] Broadcast form_submission to 3 clients (0 errors) { messageId: 'msg_1746693901825_zhgem49wy' }
+[2025-05-08T08:45:01.826Z] [INFO] [App] Successfully broadcasted form_submission message 
+[2025-05-08T08:45:01.826Z] [INFO] [App] Starting transactional form submission {"taskId":762,"userId":316,"companyId":273,"formType":"kyb","fieldsCount":4}
+[2025-05-08T08:45:01.827Z] [INFO] [App] Starting form submission transaction {"taskId":762,"userId":316,"companyId":273,"formType":"kyb","transactionId":"tx-1746693901827-98qyu","logContext":{"service":"TransactionalFormHandler"}}
+[2025-05-08T08:45:01.827Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 3 clients {"module":"WebSocket","messageType":"task_updated","recipients":3,"totalClients":3,"filtered":false}
+[FormNotifications] Sent in-progress notification for kyb task 762 (25%)
+[2025-05-08T08:45:01.828Z] [DEBUG] [TransactionManager] Starting new transaction {"module":"TransactionManager"}
+[2025-05-08T08:45:01.857Z] [DEBUG] [TransactionManager] Transaction started successfully {"module":"TransactionManager"}
+[2025-05-08T08:45:01.879Z] [INFO] [App] GET /api/tasks/762 304 in 61ms :: {"id":762,"title":"1. KYB Form: DevTest18","description":"Complete KYB verifi... 
+[TransactionalFormHandler] Starting file creation for task 762 {
+  taskId: 762,
+  formType: 'kyb',
+  companyId: 273,
+  userId: 316,
+  formDataKeys: 4,
+  timestamp: '2025-05-08T08:45:01.888Z'
+}
+[2025-05-08T08:45:01.888Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 3 clients {"module":"WebSocket","messageType":"task_updated","recipients":3,"totalClients":3,"filtered":false}
+[FormNotifications] Sent in-progress notification for kyb task 762 (50%)
+[2025-05-08T08:45:01.889Z] [INFO] [App] Creating file for kyb task 762 {"taskId":762,"normalizedFormType":"kyb"}
+[FileCreation] Retrieved 30 KYB responses for task 762 ordered by UI form order
+[2025-05-08T08:45:01.919Z] [INFO] [App] Building CSV from 30 complete responses {"taskId":762}
+[2025-05-08T08:45:01.919Z] [INFO] [App] Created 30 data rows from database responses {"taskId":762}
+[2025-05-08T08:45:01.919Z] [INFO] [App] Created CSV with 30 rows (form fields only, no metadata rows) {"taskId":762}
+[FileCreation] Created standard CSV file with 30 data rows for task 762
+[FileCreation] CSV file created with 30 fields: {
+  rowCount: 31,
+  headerRow: [ 'id', 'question', 'response', 'field_key', 'timestamp' ],
+  contentLength: 4089
+}
+[FileCreation] Created CSV file for task 762
+[FileCreation] Creating file with metadata for task 762: {
+  taskId: 762,
+  formType: 'kyb',
+  fileName: 'kyb_762_273_v1.0_20250508084501.csv',
+  metadataFields: [
+    'taskId',
+    'taskType',
+    'submissionDate',
+    'formType',
+    'formSubmission',
+    'fieldCount',
+    'fileName',
+    'version',
+    'jsonBackup'
+  ]
+}
+[2025-05-08T08:45:01.920Z] [INFO] [App] Creating file: kyb_762_273_v1.0_20250508084501.csv {"companyId":273,"userId":316,"fileType":"text/csv","fileSize":4089}
+[FileCreation] Creating file for company 273 by user 316 {
+  fileName: 'kyb_762_273_v1.0_20250508084501.csv',
+  fileType: 'text/csv',
+  fileSize: 4089,
+  timestamp: '2025-05-08T08:45:01.920Z'
+}
+[2025-05-08T08:45:01.974Z] [INFO] [App] File created successfully {"fileId":877,"fileName":"kyb_762_273_v1.0_20250508084501.csv","companyId":273}
+[TransactionalFormHandler] File creation result for task 762: {
+  success: true,
+  fileId: 877,
+  fileName: 'kyb_762_273_v1.0_20250508084501.csv',
+  error: undefined,
+  timestamp: '2025-05-08T08:45:01.974Z'
+}
+[FileCreation] ✅ File 877 created for task 762 and linked to file vault
+[TransactionalFormHandler] Updating task 762 status to 'submitted' with 100% progress
+[2025-05-08T08:45:02.043Z] [INFO] [App] [TransactionalFormHandler] Starting task status update to 'submitted' for task 762 {"taskId":762,"formType":"kyb","companyId":273,"transactionId":"tx-1746693902043-k5hfr"}
+[TransactionalFormHandler] 🔴 TASK UPDATE START for task 762: {
+  taskType: 'kyb',
+  companyId: 273,
+  submissionDate: '2025-05-08T08:45:02.043Z',
+  timestamp: '2025-05-08T08:45:02.043Z',
+  traceId: 'task_update_762_1746693902043',
+  thread: 'main_transaction'
+}
+[TransactionalFormHandler] 📊 PRE-UPDATE TASK STATE for task 762: {
+  originalStatus: 'submitted',
+  originalProgress: 100,
+  hasRows: true,
+  timestamp: '2025-05-08T08:45:02.073Z'
+}
+[2025-05-08T08:45:02.073Z] [INFO] [App] [TransactionalFormHandler] Pre-update task state: {"taskId":762,"status":"submitted","progress":100,"timestamp":"2025-05-08T08:45:02.073Z"}
+[TransactionalFormHandler] 🔄 EXECUTING SQL UPDATE for task 762...
+[TransactionalFormHandler] ✅ SQL UPDATE RESULT for task 762: {
+  success: true,
+  rowCount: 1,
+  updatedStatus: 'submitted',
+  updatedProgress: 100,
+  hasMetadata: true,
+  returnedRowCount: 1,
+  timestamp: '2025-05-08T08:45:02.107Z'
+}
+[TransactionalFormHandler] 🔍 VERIFICATION QUERY RESULT for task 762: {
+  verifiedStatus: 'submitted',
+  verifiedProgress: 100,
+  submitted: true,
+  submissionDate: '2025-05-08T08:45:02.043Z',
+  hasRows: true,
+  timestamp: '2025-05-08T08:45:02.140Z'
+}
+[2025-05-08T08:45:02.140Z] [INFO] [App] [TransactionalFormHandler] Task status update result: {"taskId":762,"formType":"kyb","rowCount":1,"success":true,"returnedStatus":"submitted","returnedProgress":100,"hasMetadata":true,"submissionDate":"2025-05-08T08:45:02.043Z","timestamp":"2025-05-08T08:45:02.140Z"}
+[TransactionalFormHandler] ✅ Successfully updated task 762 status: {
+  updatedStatus: 'submitted',
+  updatedProgress: 100,
+  timestamp: '2025-05-08T08:45:02.140Z'
+}
+[2025-05-08T08:45:02.140Z] [INFO] [App] [TabAccess] Unlocking tabs for form submission {"companyId":273,"formType":"kyb"}
+[2025-05-08T08:45:02.140Z] [INFO] [App] [TabAccess] Adding tabs to company {"companyId":273,"tabs":["file-vault"],"source":"form_submission"}
+[2025-05-08T08:45:02.204Z] [ERROR] [App] WebSocket server not available, cannot broadcast company_tabs_updated message 
+[2025-05-08T08:45:02.204Z] [DEBUG] [App] [TabAccess] Broadcast company tabs update via WebSocket {"companyId":273,"availableTabs":["task-center","file-vault"],"source":"form_submission"}
+[2025-05-08T08:45:02.204Z] [INFO] [App] [TabAccess] Successfully added tabs to company {"companyId":273,"addedTabs":["file-vault"],"allTabs":["task-center","file-vault"],"source":"form_submission"}
+[TransactionalFormHandler] Broadcasting form submission for task 762: {
+  formType: 'kyb',
+  taskId: 762,
+  companyId: 273,
+  hasFileId: true,
+  hasUnlockedTabs: true,
+  timestamp: '2025-05-08T08:45:02.205Z'
+}
+[2025-05-08T08:45:02.205Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 3 clients {"module":"WebSocket","messageType":"task_updated","recipients":3,"totalClients":3,"filtered":false}
+[FormNotifications] Sent in-progress notification for kyb task 762 (90%)
+[TransactionalFormHandler] Sending FINAL completion message for task 762: {
+  formType: 'kyb',
+  taskId: 762,
+  companyId: 273,
+  hasCompletedActions: 3,
+  timestamp: '2025-05-08T08:45:02.205Z'
+}
+[2025-05-08T08:45:02.206Z] [INFO] [WebSocket] Broadcast message of type 'form_submission_completed' sent to 3 clients {"module":"WebSocket","messageType":"form_submission_completed","recipients":3,"totalClients":3,"filtered":false}
+[2025-05-08T08:45:02.206Z] [DEBUG] [TransactionManager] Committing transaction {"module":"TransactionManager"}
+[2025-05-08T08:45:02.237Z] [DEBUG] [TransactionManager] Transaction committed successfully {"module":"TransactionManager"}
+[2025-05-08T08:45:02.237Z] [INFO] [App] Sending form submission completion event {"taskId":762,"formType":"kyb","companyId":273,"fileId":877,"actionCount":2,"timestamp":"2025-05-08T08:45:02.237Z"}
+[2025-05-08T08:45:02.238Z] [INFO] [WebSocket] Broadcast message of type 'form_submission_completed' sent to 3 clients {"module":"WebSocket","messageType":"form_submission_completed","recipients":3,"totalClients":3,"filtered":false}
+[2025-05-08T08:45:02.279Z] [INFO] [App] POST /api/forms-tx/submit/kyb/762 200 in 455ms :: {"success":true,"message":"Form submitted successfully","fileId":877} 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 316, company_id: 273, email: '18@e.com' }
+[2025-05-08T08:45:02.363Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":273,"userId":316}
+[2025-05-08T08:45:02.444Z] [INFO] [App] Found completed KYB tasks, checking security tasks to unlock {"companyId":273,"kybTaskCount":1}
+[2025-05-08T08:45:02.457Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:02.474Z] [INFO] [App] No security tasks found for company {"companyId":273}
+[Tasks] Automatically unlocking all tasks for company { userId: 316, companyId: 273, requestedBy: 'automatic_task_unlock' }
+[2025-05-08T08:45:02.475Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":273}
+[2025-05-08T08:45:02.533Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":761,"userEmail":"18@e.com","currentStatus":"completed","currentProgress":100}
+[TaskDependencies] Skipping task 764 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[TaskDependencies] Skipping task 762 with submission indicators {
+  hasSubmissionDate: true,
+  hasSubmittedFlag: true,
+  hasFileId: true,
+  status: 'submitted',
+  progress: 100,
+  isReadyForSubmission: false
+}
+[TaskDependencies] Skipping task 763 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[2025-05-08T08:45:02.533Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":273,"count":1,"taskIds":[761],"taskTypes":["user_onboarding"],"ky3pTaskCount":0,"ky3pTaskIds":[]}
+[2025-05-08T08:45:02.533Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":761,"userEmail":"18@e.com","timestamp":"2025-05-08T08:45:02.533Z"}
+[2025-05-08T08:45:02.564Z] [DEBUG] [App] Broadcasting task update with object format {"taskId":761,"status":"completed"}
+[WebSocket] Broadcast task_update to 3 clients (0 errors) { messageId: 'msg_1746693902564_4n74yq2gv' }
+[2025-05-08T08:45:02.565Z] [INFO] [App] Successfully broadcasted task_update message 
+[2025-05-08T08:45:02.565Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":273,"count":1}
+[Tasks] Successfully unlocked all tasks for company: 273
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 316',
+    condition2: 'tasks.created_by = 316',
+    condition3: "tasks.company_id = 273 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('18@e.com')"
+  }
+}
+[Tasks] Tasks found: { count: 4 }
+[2025-05-08T08:45:02.686Z] [INFO] [App] GET /api/tasks 200 in 324ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:02.843Z] [INFO] [App] GET /api/tasks 304 in 33ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:03.047Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:03.243Z] [INFO] [App] GET /api/tasks 304 in 36ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:05.404Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:08.433Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:11.220Z] [INFO] [WebSocket] Received message from client client-1746693871086-na5djau {"module":"WebSocket","type":"ping","timestamp":"2025-05-08T08:45:11.089Z","connectionId":"ws_1746693870551_hlye1ndb2"}
+[2025-05-08T08:45:11.401Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:14.416Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:17.423Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:20.402Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:23.406Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:26.414Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:29.371Z] [INFO] [WebSocket] Received message from client client-1746693869238-waa03kn {"module":"WebSocket","type":"ping"}
+[Current Company] Using cached company data: 273
+[2025-05-08T08:45:29.409Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:30.843Z] [INFO] [App] GET /api/forms/kyb/762/download 200 in 54ms 
+[2025-05-08T08:45:31.243Z] [INFO] [WebSocket] Received message from client client-1746693871086-na5djau {"module":"WebSocket","type":"ping","timestamp":"2025-05-08T08:45:31.089Z","connectionId":"ws_1746693870551_hlye1ndb2"}
+Suppressing further connection logs. Pool size: 3
+[2025-05-08T08:45:32.400Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:35.447Z] [INFO] [App] GET /api/companies/current 304 in 65ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:38.415Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:41.405Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 316, company_id: 273, email: '18@e.com' }
+[2025-05-08T08:45:41.900Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":273,"userId":316}
+[2025-05-08T08:45:41.930Z] [INFO] [App] Found completed KYB tasks, checking security tasks to unlock {"companyId":273,"kybTaskCount":1}
+[2025-05-08T08:45:41.932Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:41.959Z] [INFO] [App] No security tasks found for company {"companyId":273}
+[Tasks] Automatically unlocking all tasks for company { userId: 316, companyId: 273, requestedBy: 'automatic_task_unlock' }
+[2025-05-08T08:45:41.960Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":273}
+[2025-05-08T08:45:42.015Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":761,"userEmail":"18@e.com","currentStatus":"completed","currentProgress":100}
+[TaskDependencies] Skipping task 764 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[TaskDependencies] Skipping task 762 with submission indicators {
+  hasSubmissionDate: true,
+  hasSubmittedFlag: true,
+  hasFileId: true,
+  status: 'submitted',
+  progress: 100,
+  isReadyForSubmission: false
+}
+[TaskDependencies] Skipping task 763 with submission indicators {
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  status: 'ready_for_submission',
+  progress: 100,
+  isReadyForSubmission: true
+}
+[2025-05-08T08:45:42.016Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":273,"count":1,"taskIds":[761],"taskTypes":["user_onboarding"],"ky3pTaskCount":0,"ky3pTaskIds":[]}
+[2025-05-08T08:45:42.016Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":761,"userEmail":"18@e.com","timestamp":"2025-05-08T08:45:42.016Z"}
+[2025-05-08T08:45:42.046Z] [DEBUG] [App] Broadcasting task update with object format {"taskId":761,"status":"completed"}
+[WebSocket] Broadcast task_update to 3 clients (0 errors) { messageId: 'msg_1746693942046_z0g9tuhyd' }
+[2025-05-08T08:45:42.047Z] [INFO] [App] Successfully broadcasted task_update message 
+[2025-05-08T08:45:42.047Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":273,"count":1}
+[Tasks] Successfully unlocked all tasks for company: 273
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 316',
+    condition2: 'tasks.created_by = 316',
+    condition3: "tasks.company_id = 273 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('18@e.com')"
+  }
+}
+[Tasks] Tasks found: { count: 4 }
+[2025-05-08T08:45:42.138Z] [INFO] [App] GET /api/tasks 200 in 238ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[Tasks] Using cached task data for user: 316
+[2025-05-08T08:45:42.294Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[Tasks] Using cached task data for user: 316
+[2025-05-08T08:45:42.475Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:42.661Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:44.933Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:47.947Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:50.933Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:51.216Z] [INFO] [WebSocket] Received message from client client-1746693871086-na5djau {"module":"WebSocket","type":"ping","timestamp":"2025-05-08T08:45:51.089Z","connectionId":"ws_1746693870551_hlye1ndb2"}
+[2025-05-08T08:45:53.939Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[Current Company] Fetching company for user: { userId: 316, companyId: 273 }
+[Current Company] Found company: {
+  id: 273,
+  name: 'DevTest18',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[2025-05-08T08:45:56.966Z] [INFO] [App] GET /api/companies/current 200 in 61ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:57.161Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
+[2025-05-08T08:45:57.660Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":761,"title":"New User Invitation: 18@e.com","description":"Complete us... 
+[2025-05-08T08:45:59.370Z] [INFO] [WebSocket] Received message from client client-1746693869238-waa03kn {"module":"WebSocket","type":"ping"}
+[2025-05-08T08:45:59.948Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":273,"name":"DevTest18","category":"FinTech","is_demo":true,"revenue_tie... 
