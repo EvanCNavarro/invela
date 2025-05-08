@@ -1,290 +1,256 @@
 /**
- * Unified Clear Fields Service
+ * Enhanced Unified Clear Fields Service
  * 
- * This service provides a unified, transaction-based approach for clearing form fields
- * across all form types (KYB, KY3P, Open Banking). It ensures reliable atomic operations
- * and consistent behavior with proper WebSocket broadcasting.
+ * This service handles clearing form fields for different form types:
+ * - KYB (Know Your Business)
+ * - KY3P (Know Your Third Party Provider)
+ * - Open Banking
+ * - Card
+ * 
+ * It uses database transactions to ensure atomicity and provides
+ * WebSocket broadcast control to prevent race conditions.
  */
-
-import { pool } from '@db';
-import { TaskStatus } from '@db/schema';
+import { eq } from 'drizzle-orm';
+import { db } from '@db';
+import { 
+  tasks, 
+  kybResponses, 
+  ky3pResponses, 
+  openBankingResponses,
+  cardResponses
+} from '@db/schema';
+import { broadcast, broadcastTaskUpdate } from '../utils/websocket';
+import { WebSocketContext } from '../utils/websocket-context';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
-// Form type definitions for type safety
-export type FormType = 'company_kyb' | 'ky3p' | 'open_banking';
+// Import FormType and re-export for consumers
+import type { FormType } from '../utils/websocket-context';
+export type { FormType };
 
-// Map form types to their respective database tables
-const responseTableMap: Record<FormType, string> = {
-  'company_kyb': 'kyb_responses',
-  'ky3p': 'ky3p_responses',
-  'open_banking': 'open_banking_responses'
-};
+// CRITICAL: To ensure proper type safety, explicitly define form types
+const SUPPORTED_FORM_TYPES = ['kyb', 'ky3p', 'open_banking', 'card'];
 
-// Map form types to their timestamp tables (if applicable)
-const timestampTableMap: Partial<Record<FormType, string>> = {
-  'company_kyb': 'kyb_field_timestamps',
-  // Other form types may not have timestamp tables
-};
+// Configure service options
+interface ClearFieldsOptions {
+  skipBroadcast?: boolean;      // Whether to skip WebSocket broadcasts for individual fields
+  clearSavedFormData?: boolean; // Whether to clear the cached savedFormData in tasks table
+  broadcastDelay?: number;      // Delay before sending final broadcast (allows DB to settle)
+  suppressDuration?: number;    // Duration to suppress individual broadcasts
+}
 
 /**
- * Clear form fields using a transactional approach for data consistency
+ * High-level API for clearing form fields - this is used by routes and controllers
  * 
- * @param taskId The ID of the task to clear fields for
- * @param formType The type of form (KYB, KY3P, Open Banking)
- * @param userId The ID of the user performing the operation
- * @param companyId The ID of the company the task belongs to
- * @param preserveProgress Whether to preserve the current progress (optional, default false)
- * @returns Result of the operation with status information
+ * @param taskId - The ID of the task to clear fields for
+ * @param formType - The type of form (kyb, ky3p, open_banking, card)
+ * @param userId - The ID of the user performing the operation
+ * @param companyId - The ID of the company the task belongs to
+ * @param preserveProgress - Whether to preserve the task's progress value
+ * @returns Object with operation result and status information
  */
-export async function clearFormFields(
+export const clearFormFields = async (
   taskId: number,
   formType: FormType,
   userId: number,
   companyId: number,
-  preserveProgress: boolean = false
+  preserveProgress = false
 ): Promise<{
   success: boolean;
-  taskId: number;
   message: string;
   status?: string;
   progress?: number;
-  error?: any;
-}> {
-  // Get a dedicated client from the pool to use transactions
-  const client = await pool.connect();
-  
+  error?: string;
+}> => {
   try {
-    const responseTable = responseTableMap[formType];
-    
-    if (!responseTable) {
-      throw new Error(`Invalid form type: ${formType}`);
-    }
-    
-    logger.info(`[UnifiedClear] Clearing fields for ${formType} task`, {
-      taskId,
-      userId,
+    const serviceLogger = logger.child({ 
+      module: 'ClearFormFields', 
+      userId, 
       companyId,
-      formType,
-      preserveProgress,
-      responseTable
+      taskId,
+      formType
     });
-
-    // Begin transaction
-    await client.query('BEGIN');
     
-    // First, verify the task exists and belongs to the user's company
-    const taskResult = await client.query(
-      'SELECT * FROM tasks WHERE id = $1 AND company_id = $2 AND task_type = $3 LIMIT 1',
-      [taskId, companyId, formType]
-    );
-
-    if (taskResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      logger.warn(`[UnifiedClear] Task not found or not authorized`, {
-        taskId,
-        companyId,
-        formType
-      });
+    // Get the current task to check permissions and status
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      serviceLogger.warn(`Task ${taskId} not found`);
       return {
         success: false,
-        taskId,
-        message: 'Task not found or not authorized'
+        message: `Task ${taskId} not found`,
+        error: 'NOT_FOUND'
       };
     }
-
-    const task = taskResult.rows[0];
     
-    // Save the current progress and status if needed for preserveProgress option
-    const currentProgress = task.progress || 0;
-    const currentStatus = task.status || 'not_started';
-    
-    // Delete all responses for this task
-    const deleteResult = await client.query(
-      `DELETE FROM ${responseTable} WHERE task_id = $1`,
-      [taskId]
-    );
-
-    logger.info(`[UnifiedClear] Deleted responses`, {
+    // Call the core service
+    const result = await clearFieldsService(
       taskId,
       formType,
-      responseTable,
-      count: deleteResult.rowCount
-    });
-    
-    // Also clear the timestamp table if it exists for this form type
-    const timestampTable = timestampTableMap[formType];
-    if (timestampTable) {
-      try {
-        const timestampDeleteResult = await client.query(
-          `DELETE FROM ${timestampTable} WHERE task_id = $1`,
-          [taskId]
-        );
-        
-        logger.info(`[UnifiedClear] Deleted field timestamps`, {
-          taskId,
-          formType,
-          timestampTable,
-          count: timestampDeleteResult.rowCount
-        });
-      } catch (timestampError) {
-        // Log but continue with the operation - timestamp table errors shouldn't block the main operation
-        logger.warn(`[UnifiedClear] Error clearing timestamp table`, {
-          taskId,
-          formType,
-          timestampTable,
-          error: timestampError instanceof Error ? timestampError.message : String(timestampError)
-        });
+      preserveProgress,
+      { 
+        // No special options needed for the standard API
       }
-    }
-    
-    // Prepare status update based on preserveProgress flag
-    const newStatus = preserveProgress ? currentStatus : 'not_started';
-    const newProgress = preserveProgress ? currentProgress : 0;
-    
-    // Create metadata for the update with timestamp for better diagnostics
-    const timestamp = new Date().toISOString();
-    let metadataUpdate;
-    
-    if (preserveProgress) {
-      metadataUpdate = `jsonb_build_object(
-        'clearOperation', true,
-        'preservedProgress', ${currentProgress},
-        'preservedStatus', '${currentStatus}',
-        'lastClearTimestamp', '${timestamp}',
-        'preserveProgress', true,
-        'previousMetadata', COALESCE(metadata, '{}'::jsonb),
-        'clearSource', 'unified-clear-service',
-        'formType', '${formType}',
-        'preserveProgressEnabled', true
-      )`;
-    } else {
-      metadataUpdate = `jsonb_build_object(
-        'clearOperation', true,
-        'previousProgress', ${currentProgress},
-        'previousStatus', '${currentStatus}',
-        'lastClearTimestamp', '${timestamp}',
-        'previousMetadata', COALESCE(metadata, '{}'::jsonb),
-        'clearSource', 'unified-clear-service',
-        'formType', '${formType}',
-        'preserveProgressEnabled', false
-      )`;
-    }
-    
-    // Log detailed operation info
-    logger.info(`[UnifiedClear] Updating task status`, {
-      taskId,
-      formType,
-      newStatus,
-      newProgress,
-      currentStatus,
-      currentProgress,
-      preserveProgress,
-      timestamp
-    });
-    
-    // Update task status and progress
-    const updateResult = await client.query(
-      `UPDATE tasks SET 
-         status = $1, 
-         progress = $2, 
-         updated_at = NOW(),
-         metadata = ${metadataUpdate}
-       WHERE id = $3
-       RETURNING id, status, progress, metadata`,
-      [newStatus, newProgress, taskId]
     );
     
-    if (updateResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      logger.error(`[UnifiedClear] Failed to update task status`, {
-        taskId,
-        formType
-      });
-      return {
-        success: false,
-        taskId,
-        message: 'Failed to update task after clearing fields'
-      };
-    }
-
-    // Commit the transaction
-    await client.query('COMMIT');
-    
-    const updatedTask = updateResult.rows[0];
-    
-    logger.info(`[UnifiedClear] Successfully cleared ${formType} task fields`, {
-      taskId,
-      formType,
-      status: updatedTask.status,
-      progress: updatedTask.progress,
-      preserveProgress
-    });
-
-    // Broadcast the task update to all clients
-    try {
-      // Use the unified WebSocket broadcasting method
-      broadcastTaskUpdate({
-        taskId,
-        status: updatedTask.status,
-        progress: updatedTask.progress,
-        metadata: {
-          ...updatedTask.metadata,
-          clearOperation: true,
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      logger.info(`[UnifiedClear] Successfully broadcast task update`, {
-        taskId,
-        formType,
-        status: updatedTask.status,
-        progress: updatedTask.progress
-      });
-    } catch (broadcastError) {
-      // Log but don't fail the operation if broadcast fails
-      logger.warn(`[UnifiedClear] Failed to broadcast task update`, {
-        taskId,
-        formType,
-        error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError)
-      });
-    }
-    
-    // Return success response
     return {
       success: true,
-      taskId,
-      message: `${formType} fields cleared successfully`,
-      status: updatedTask.status,
-      progress: updatedTask.progress
+      message: result.message || `Successfully cleared fields for task ${taskId}`,
+      status: task.status,
+      progress: preserveProgress ? task.progress : 0
     };
   } catch (error) {
-    // Rollback in case of error
-    try {
-      await client.query('ROLLBACK');
-    } catch (rollbackError) {
-      logger.error(`[UnifiedClear] Error during rollback`, {
-        taskId,
-        formType,
-        error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
-      });
-    }
-    
-    logger.error(`[UnifiedClear] Error clearing fields`, {
-      taskId,
-      formType,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Error in clearFormFields:`, { taskId, formType, error: errorMessage });
     
     return {
       success: false,
-      taskId,
-      message: 'Error clearing fields',
-      error: error instanceof Error ? error.message : String(error)
+      message: `Failed to clear fields: ${errorMessage}`,
+      error: errorMessage
     };
-  } finally {
-    // Always release the client back to the pool
-    client.release();
   }
-}
+};
+
+/**
+ * Core service for clearing fields - this handles the actual database operations
+ */
+export const clearFieldsService = async (
+  taskId: number,
+  formType: FormType,
+  preserveProgress = false,
+  options: ClearFieldsOptions = {}
+) => {
+  // Set default options
+  const opts = {
+    skipBroadcast: false,
+    clearSavedFormData: true,
+    broadcastDelay: 500,
+    suppressDuration: 5000,
+    ...options
+  };
+  
+  const serviceLogger = logger.child({ module: 'ClearFieldsService' });
+  
+  // Validate form type
+  if (!SUPPORTED_FORM_TYPES.includes(formType)) {
+    serviceLogger.error(`Unsupported form type: ${formType}`);
+    throw new Error(`Unsupported form type: ${formType}. Must be one of: ${SUPPORTED_FORM_TYPES.join(', ')}`);
+  }
+  
+  serviceLogger.info(`Clearing fields for task ${taskId} (${formType}), preserveProgress=${preserveProgress}`);
+  
+  // Begin a WebSocket context for this operation
+  return WebSocketContext.run(async () => {
+    // Start a bulk operation in the WebSocket context
+    WebSocketContext.startOperation('clear_fields', taskId, formType, opts.suppressDuration);
+    
+    // Begin a database transaction to ensure atomicity
+    return db.transaction(async (tx) => {
+      try {
+        // 1. Get the current task to ensure it exists and get its current status
+        const task = await tx.query.tasks.findFirst({
+          where: eq(tasks.id, taskId)
+        });
+        
+        if (!task) {
+          throw new Error(`Task ${taskId} not found`);
+        }
+        
+        // 2. Clear responses from the appropriate table based on form type
+        let deletedCount = 0;
+        
+        // Handle different form types - each has its own table
+        if (formType === 'kyb') {
+          const result = await tx.delete(kybResponses).where(eq(kybResponses.task_id, taskId));
+          deletedCount = result.count;
+        } else if (formType === 'ky3p') {
+          const result = await tx.delete(ky3pResponses).where(eq(ky3pResponses.task_id, taskId));
+          deletedCount = result.count;
+        } else if (formType === 'open_banking') {
+          const result = await tx.delete(openBankingResponses).where(eq(openBankingResponses.task_id, taskId));
+          deletedCount = result.count;
+        } else if (formType === 'card') {
+          const result = await tx.delete(cardResponses).where(eq(cardResponses.task_id, taskId));
+          deletedCount = result.count;
+        }
+        
+        // 3. Clear the savedFormData field if specified
+        // CRITICAL: This prevents the form from being rehydrated from cache
+        if (opts.clearSavedFormData) {
+          await tx.update(tasks)
+            .set({ savedFormData: null })
+            .where(eq(tasks.id, taskId));
+          
+          serviceLogger.info(`Cleared savedFormData for task ${taskId}`);
+        }
+        
+        // 4. Update progress if not preserving
+        if (!preserveProgress) {
+          await tx.update(tasks)
+            .set({ progress: 0 })
+            .where(eq(tasks.id, taskId));
+          
+          serviceLogger.info(`Reset progress for task ${taskId} to 0%`);
+        }
+        
+        // 5. Record operation metadata for tracking
+        // In the future, this could be stored in a dedicated operations table
+        const operationMetadata = {
+          operationId: `op_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          taskId,
+          formType,
+          operation: 'clear_fields',
+          preserveProgress,
+          deletedCount,
+          timestamp: new Date().toISOString()
+        };
+        
+        // 6. Send a bulk WebSocket notification if not skipping broadcasts
+        if (!opts.skipBroadcast) {
+          // Small delay to ensure DB operations are complete
+          setTimeout(async () => {
+            try {
+              // Broadcast a specialized clear_fields event that clients can use
+              // to synchronize their state
+              await broadcast('clear_fields', {
+                ...operationMetadata,
+                preservedProgress: preserveProgress
+              });
+              
+              // Also broadcast a task update with the new progress
+              await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
+                operation: 'fields_cleared',
+                timestamp: new Date().toISOString()
+              });
+              
+              serviceLogger.info(`Sent clear_fields broadcast for task ${taskId}`);
+            } catch (broadcastError) {
+              serviceLogger.error(`Error broadcasting clear_fields event:`, broadcastError);
+            } finally {
+              // End the operation after broadcasting
+              WebSocketContext.endOperation();
+            }
+          }, opts.broadcastDelay);
+        } else {
+          // If skipping broadcasts, still end the operation
+          WebSocketContext.endOperation();
+        }
+        
+        serviceLogger.info(`Successfully cleared ${deletedCount} fields for task ${taskId}`);
+        
+        return {
+          success: true,
+          deletedCount,
+          message: `Successfully cleared ${deletedCount} fields for task ${taskId}`,
+          preserveProgress
+        };
+      } catch (error) {
+        serviceLogger.error(`Error clearing fields for task ${taskId}:`, error);
+        // End the operation on error
+        WebSocketContext.endOperation();
+        throw error;
+      }
+    });
+  });
+};
