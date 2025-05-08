@@ -6,8 +6,8 @@
  */
 
 // Import required modules
-const { db } = require('./server/db');
-const { companies, tasks } = require('./server/db/schema');
+const { db } = require('./db/index');
+const { companies, tasks } = require('./db/schema');
 const { eq } = require('drizzle-orm');
 
 // Colors for console output
@@ -88,7 +88,7 @@ async function handleOpenBankingPostSubmission(
     // Update accreditation status and risk score in a single operation
     await trx.update(companies)
       .set({
-        accreditation_status: 'VALIDATED',
+        accreditation_status: 'APPROVED',
         risk_score: riskScore,
         updated_at: new Date()
       })
@@ -261,10 +261,10 @@ async function runTest() {
       console.log(`${colors.red}✗ onboarding_company_completed not set to true${colors.reset}`);
     }
     
-    if (company.accreditation_status === 'VALIDATED') {
-      console.log(`${colors.green}✓ accreditation_status set to VALIDATED${colors.reset}`);
+    if (company.accreditation_status === 'APPROVED') {
+      console.log(`${colors.green}✓ accreditation_status set to APPROVED${colors.reset}`);
     } else {
-      console.log(`${colors.red}✗ accreditation_status not set to VALIDATED${colors.reset}`);
+      console.log(`${colors.red}✗ accreditation_status not set to APPROVED${colors.reset}`);
     }
     
     if (company.risk_score !== null && company.risk_score >= 5 && company.risk_score <= 95) {
