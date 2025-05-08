@@ -23,9 +23,11 @@ const moduleLogger = logger.child({ module: 'StandardizedFileReference' });
 // Form type to file metadata field mapping for backward compatibility
 const formTypeToFieldMap = {
   kyb: 'kybFormFile',
+  company_kyb: 'kybFormFile', // Add support for 'company_kyb' type
   ky3p: 'securityFormFile',
   security: 'securityFormFile',
   open_banking: 'openBankingFormFile',
+  openbanking: 'openBankingFormFile', // Normalized version
   card: 'cardFormFile',
   default: 'fileId'
 };
@@ -173,6 +175,9 @@ export async function getFileReference(
       });
       return undefined;
     }
+    
+    // Convert fileId to number if it's stored as a string
+    const numericFileId = typeof fileId === 'string' ? parseInt(fileId, 10) : fileId;
     
     // Verify file exists
     const fileData = await db.query.files.findFirst({
