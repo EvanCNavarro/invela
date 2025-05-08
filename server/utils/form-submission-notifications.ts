@@ -38,6 +38,9 @@ interface SubmissionNotificationOptions {
 
 /**
  * Send a form submission success notification
+ * 
+ * This enhanced version uses both the enhanced WebSocket service and the unified WebSocket service
+ * for maximum compatibility and reliability.
  */
 export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions) {
   const { formType, taskId, companyId, fileName, fileId, submissionDate, unlockedTabs, metadata = {} } = options;
@@ -77,43 +80,93 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
   const enhancedMetadata = {
     ...metadata,
     submission_date: submissionTimestamp,
+    submissionDate: submissionTimestamp, // Include both formats for compatibility
   };
 
-  // Send the form submission notification with updated API
-  broadcastFormSubmission({
-    taskId,
-    formType,
-    status: 'submitted',
-    companyId,
-    metadata: {
-      fileName,
-      fileId,
-      submissionDate: submissionTimestamp,
-      unlockedTabs,
-      message: 'Form submitted successfully',
-      completedActions: actions,
-      ...enhancedMetadata
-    }
-  });
-  
-  // Also send a task update notification for redundancy with updated API
-  broadcastTaskUpdate({
-    taskId,
-    progress: 100, // 100% progress for successful submission
-    status: 'submitted',
-    metadata: {
+  try {
+    // Send the form submission notification with our enhanced WebSocket service
+    broadcastFormSubmission({
+      taskId,
       formType,
-      submissionComplete: true,
+      status: 'success', // Use 'success' instead of 'submitted' for clearer messaging
+      companyId,
       fileId,
       fileName,
-      // Include submissionDate as a separate property
-      submissionDate: submissionTimestamp,
       unlockedTabs,
-      ...enhancedMetadata // Use the enhanced metadata with submission_date
+      completedActions: actions,
+      message: 'Form submitted successfully',
+      metadata: enhancedMetadata
+    });
+    
+    // Also send a task update notification for redundancy
+    broadcastTaskUpdate({
+      id: taskId, // Use id instead of taskId for compatibility
+      progress: 100, // 100% progress for successful submission
+      status: 'submitted',
+      metadata: {
+        formType,
+        submissionComplete: true,
+        fileId,
+        fileName,
+        unlockedTabs,
+        ...enhancedMetadata // enhancedMetadata already includes submissionDate
+      }
+    });
+    
+    // For maximum backward compatibility, also use the unified implementation
+    try {
+      // Use unified broadcast form submission
+      unifiedBroadcastFormSubmission({
+        taskId,
+        formType,
+        status: 'success',
+        companyId,
+        metadata: {
+          fileName,
+          fileId,
+          submissionDate: submissionTimestamp,
+          unlockedTabs,
+          message: 'Form submitted successfully',
+          completedActions: actions,
+          ...enhancedMetadata
+        }
+      });
+      
+      // And unified task update
+      unifiedBroadcastTaskUpdate({
+        taskId,
+        progress: 100,
+        status: 'submitted',
+        metadata: {
+          formType,
+          submissionComplete: true,
+          fileId,
+          fileName,
+          submissionDate: submissionTimestamp,
+          unlockedTabs,
+          ...enhancedMetadata
+        }
+      });
+    } catch (unifiedError) {
+      console.warn('[FormNotifications] Failed to send via unified implementation:', unifiedError);
     }
-  });
-  
-  console.log(`[FormNotifications] Sent success notification for ${formType} task ${taskId}`);
+    
+    console.log(`[FormNotifications] Sent enhanced success notification for ${formType} task ${taskId}`);
+  } catch (error) {
+    console.error('[FormNotifications] Failed to send success notification:', error);
+    
+    // Fall back to the simplest implementation if all else fails
+    try {
+      broadcastTaskUpdate({
+        id: taskId, // Use id instead of taskId for compatibility
+        status: 'submitted',
+        progress: 100,
+        metadata: { submissionComplete: true }
+      });
+    } catch {
+      console.error('[FormNotifications] All success notification attempts failed');
+    }
+  }
   
   return true;
 }
@@ -142,7 +195,7 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
   
   try {
     // Use the enhanced WebSocket service's specialized error function
-    sendFormSubmissionError({
+    sendFormSubmissionErrorWs({
       taskId,
       formType,
       companyId,
@@ -153,8 +206,8 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
     
     // Also send via the task update channel for maximum compatibility
     broadcastTaskUpdate({
-      taskId,
-      progress: options.progress !== undefined ? options.progress : null, // Keep current progress if specified
+      id: taskId, // Use id instead of taskId for compatibility
+      progress: options.progress !== undefined ? options.progress : undefined, // Keep current progress if specified
       status: 'error',
       metadata: {
         formType,
@@ -188,7 +241,7 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
     // Fall back to the simplest implementation if all else fails
     try {
       broadcastTaskUpdate({
-        taskId,
+        id: taskId,
         status: 'error',
         metadata: { error: errorMessage }
       });
@@ -202,6 +255,9 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
 
 /**
  * Send a form submission in-progress notification
+ * 
+ * This enhanced version uses both the enhanced WebSocket service and the unified WebSocket service
+ * for maximum compatibility and reliability.
  */
 export function sendFormSubmissionInProgress(options: SubmissionNotificationOptions) {
   const { formType, taskId, companyId, progress = 50, message, metadata = {} } = options;
@@ -212,23 +268,73 @@ export function sendFormSubmissionInProgress(options: SubmissionNotificationOpti
   const enhancedMetadata = {
     ...metadata,
     submission_date: submissionTimestamp,
+    submissionDate: submissionTimestamp, // Include both formats for compatibility
   };
   
-  // Send the task update notification with in_progress status using updated API
-  broadcastTaskUpdate({
-    taskId,
-    progress,
-    status: 'in_progress',
-    metadata: {
+  try {
+    // Custom message for in-progress notification
+    const inProgressMessage = message || 'Form submission in progress';
+    
+    // Send the task update notification with in_progress status using our enhanced service
+    broadcastTaskUpdate({
+      id: taskId, // Use id instead of taskId for compatibility
+      progress,
+      status: 'in_progress',
+      metadata: {
+        formType,
+        message: inProgressMessage,
+        ...enhancedMetadata // enhancedMetadata already includes submissionDate
+      }
+    });
+    
+    // Also send a form submission notification with in_progress status
+    broadcastFormSubmission({
+      taskId,
       formType,
-      // Include submissionDate as a separate property
-      submissionDate: submissionTimestamp,
-      message: message || 'Form submission in progress',
-      ...enhancedMetadata
+      status: 'in_progress',
+      companyId,
+      message: inProgressMessage,
+      metadata: {
+        ...enhancedMetadata,
+        progress,
+        formType,
+        phase: 'submission'
+      }
+    });
+    
+    // For maximum backward compatibility, also use the unified implementation
+    try {
+      unifiedBroadcastTaskUpdate({
+        taskId,
+        progress,
+        status: 'in_progress',
+        metadata: {
+          formType,
+          submissionDate: submissionTimestamp,
+          message: inProgressMessage,
+          ...enhancedMetadata
+        }
+      });
+    } catch (unifiedError) {
+      console.warn('[FormNotifications] Failed to send in-progress via unified implementation:', unifiedError);
     }
-  });
-  
-  console.log(`[FormNotifications] Sent in-progress notification for ${formType} task ${taskId} (${progress}%)`);
+    
+    console.log(`[FormNotifications] Sent enhanced in-progress notification for ${formType} task ${taskId} (${progress}%)`);
+  } catch (error) {
+    console.error('[FormNotifications] Failed to send in-progress notification:', error);
+    
+    // Fall back to the simplest implementation if all else fails
+    try {
+      broadcastTaskUpdate({
+        id: taskId, // Use id instead of taskId for compatibility
+        status: 'in_progress',
+        progress,
+        metadata: { message: message || 'Form submission in progress' }
+      });
+    } catch {
+      console.error('[FormNotifications] All in-progress notification attempts failed');
+    }
+  }
   
   return true;
 }
