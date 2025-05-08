@@ -36,7 +36,7 @@ export async function executeRawQuery<T = any>(
     
     // Execute the query with Drizzle's sql template
     // This creates a properly parameterized query that Drizzle can execute
-    const result = await db.execute(sql.raw(`${query}`, ...params));
+    const result = await db.execute(sql.raw(query, ...params));
     
     return result as T;
   } catch (error) {
