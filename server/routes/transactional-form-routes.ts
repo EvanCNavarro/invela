@@ -52,15 +52,36 @@ export function createTransactionalFormRouter(): Router {
     
     // Get parameters from request
     const taskId = parseInt(req.params.taskId);
-    const formType = req.params.formType;
+    let formType = req.params.formType;
     const companyId = req.body.companyId || req.user.company_id;
     const formData = req.body;
     const userId = req.user.id;
+    
+    // Important: normalize form type to handle client-server inconsistency
+    // Map 'kyb' to 'company_kyb' for consistency with database schema
+    const formTypeMapping: Record<string, string> = {
+      'kyb': 'company_kyb',
+      'ky3p': 'ky3p',
+      'open_banking': 'open_banking_assessment'
+    };
+    
+    // Use type safe lookup with fallback
+    const normalizedFormType = Object.prototype.hasOwnProperty.call(formTypeMapping, formType) 
+      ? formTypeMapping[formType] 
+      : formType;
+    
+    // Add enhanced logging to help diagnose form type issues
+    console.log(`[TransactionalFormRoutes] 🔍 Form type normalization:`, {
+      originalFormType: formType,
+      normalizedFormType,
+      taskId
+    });
     
     // Additional validation logging
     console.log(`[TransactionalFormRoutes] 🧾 Form submission parameters validated:`, {
       taskId,
       formType,
+      normalizedFormType,
       companyId,
       userId,
       formDataFields: Object.keys(formData).length
@@ -107,13 +128,13 @@ export function createTransactionalFormRouter(): Router {
     });
     
     try {
-      // Process the submission transactionally
+      // Process the submission transactionally with normalized form type
       const result = await submitFormWithTransaction({
         taskId,
         formData,
         userId,
         companyId,
-        formType
+        formType: normalizedFormType // Use the normalized form type
       });
       
       // Handle the result
