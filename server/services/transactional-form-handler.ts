@@ -471,27 +471,79 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
     
-    logger.error('Error in transactional form submission', {
+    // Determine the error origin by analyzing error details (stack trace or message)
+    let errorOrigin = 'unknown';
+    let errorPhase = 'unknown';
+    let errorCode = 'TX_ERROR_UNKNOWN';
+    
+    // Check for transaction lock errors
+    if (errorMessage.includes('deadlock') || errorMessage.includes('lock')) {
+      errorOrigin = 'database';
+      errorPhase = 'transaction';
+      errorCode = 'TX_ERROR_DEADLOCK';
+    } 
+    // Check for database constraint violations
+    else if (errorMessage.includes('constraint') || errorMessage.includes('violation')) {
+      errorOrigin = 'database';
+      errorPhase = 'constraint_violation';
+      errorCode = 'TX_ERROR_CONSTRAINT';
+    }
+    // Check for file creation errors
+    else if (errorMessage.includes('file') || (errorStack && errorStack.includes('fileCreation'))) {
+      errorOrigin = 'file_system';
+      errorPhase = 'file_creation';
+      errorCode = 'TX_ERROR_FILE_CREATION';
+    }
+    // Check for task update failures
+    else if (errorMessage.includes('update') || errorMessage.includes('task')) {
+      errorOrigin = 'database';
+      errorPhase = 'task_update';
+      errorCode = 'TX_ERROR_TASK_UPDATE';
+    }
+    // Check for tab unlock errors
+    else if (errorMessage.includes('tab') || (errorStack && errorStack.includes('UnifiedTabService'))) {
+      errorOrigin = 'tab_service';
+      errorPhase = 'tab_unlock';
+      errorCode = 'TX_ERROR_TAB_UNLOCK';
+    }
+    
+    // Add detailed diagnostic information to help pinpoint the failure
+    const diagnosticInfo = {
       taskId,
       formType,
       userId,
       companyId,
       error: errorMessage,
       stack: errorStack,
+      errorPhase,
+      errorOrigin,
+      errorCode,
       timestamp: new Date().toISOString(),
       requestPath: `/api/forms-tx/submit/${formType}/${taskId}`,
-      errorCode: error instanceof Error && 'code' in error ? (error as any).code : undefined,
       errorType: error instanceof Error ? error.constructor.name : typeof error,
-      logContext
-    });
+      logContext,
+      // Additional diagnostic information
+      objectKeys: Object.keys(error || {}).join(','),
+      isDatabaseError: error instanceof Error && errorMessage.includes('database'),
+      isConstraintError: error instanceof Error && errorMessage.includes('constraint'),
+      isInvalidInput: error instanceof Error && errorMessage.includes('invalid input'),
+      isTransactionError: error instanceof Error && errorMessage.includes('transaction')
+    };
     
-    // Log to console for immediate visibility during development
-    console.error(`[TransactionalFormHandler] Submission error for task ${taskId} (${formType}):`, {
+    // Log detailed error information
+    logger.error(`[ENHANCED ERROR] Error in transactional form submission: ${errorCode}`, diagnosticInfo);
+    
+    // Log to console for immediate visibility during development with more structure
+    console.error(`[TransactionalFormHandler] 🔴 SUBMISSION FAILURE for task ${taskId} (${formType}):`, {
+      errorCode,
+      errorOrigin,
+      errorPhase,
       message: errorMessage,
-      stack: errorStack?.split('\n').slice(0, 3).join('\n')
+      timestamp: new Date().toISOString(),
+      stack: errorStack?.split('\n').slice(0, 5).join('\n')
     });
     
-    // Send error notification via WebSocket
+    // Send enhanced error notification via WebSocket
     try {
       sendFormSubmissionError({
         formType,
@@ -500,6 +552,9 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         error: errorMessage,
         message: `Form submission failed: ${errorMessage}`,
         metadata: {
+          errorCode,
+          errorOrigin,
+          errorPhase,
           errorType: error instanceof Error ? error.constructor.name : typeof error,
           timestamp: new Date().toISOString()
         }
@@ -510,7 +565,10 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     
     return {
       success: false,
-      error: errorMessage
+      error: errorMessage,
+      errorCode, // Include error code in response
+      errorOrigin, // Include error origin in response
+      errorPhase   // Include error phase in response
     };
   }
 }
