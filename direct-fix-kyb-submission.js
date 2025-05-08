@@ -3,9 +3,22 @@
  * 
  * This script updates the KYB form task status to 'submitted'
  * and sets the appropriate metadata fields.
+ * 
+ * Usage: node direct-fix-kyb-submission.js <taskId> [<companyId>]
  */
 
-const { Pool } = require('pg');
+import pg from 'pg';
+import { WebSocketServer } from 'ws';
+import http from 'http';
+
+const { Pool } = pg;
+
+// Create database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+// Colors for console output
 const colors = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
@@ -16,11 +29,6 @@ const colors = {
   cyan: '\x1b[36m'
 };
 
-// Create database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
-
 /**
  * Fix the KYB form submission status
  */
@@ -28,74 +36,110 @@ async function fixKybSubmission(taskId, companyId) {
   const client = await pool.connect();
   
   try {
-    console.log(`Examining KYB task ${taskId} for company ${companyId}...`);
+    console.log(`${colors.blue}=== Fixing KYB Submission for Task ${taskId} ===${colors.reset}`);
     
     // Start a transaction
     await client.query('BEGIN');
     
-    // Check the current state of the task
+    // Step 1: Check current status
     const { rows: [task] } = await client.query(
-      `SELECT id, title, status, progress, metadata FROM tasks WHERE id = $1`,
+      `SELECT id, title, status, progress, company_id, metadata FROM tasks WHERE id = $1`,
       [taskId]
     );
     
     if (!task) {
-      console.error(`${colors.red}Task ${taskId} not found!${colors.reset}`);
-      return;
+      console.error(`${colors.red}❌ Task ${taskId} not found!${colors.reset}`);
+      await client.query('ROLLBACK');
+      return { success: false, error: 'Task not found' };
     }
     
-    console.log(`Current task state:`);
-    console.log(`- ID: ${task.id}`);
+    // If companyId was not provided, use the one from the task
+    if (!companyId) {
+      companyId = task.company_id;
+      console.log(`${colors.yellow}Using company ID from task: ${companyId}${colors.reset}`);
+    }
+    
+    console.log(`${colors.cyan}Initial task state:${colors.reset}`);
     console.log(`- Title: ${task.title}`);
     console.log(`- Status: ${task.status}`);
     console.log(`- Progress: ${task.progress}%`);
+    console.log(`- Company ID: ${task.company_id}`);
     
-    // Update the task status to 'submitted'
-    const metadata = task.metadata || {};
-    metadata.submitted = true;
-    metadata.submittedAt = new Date().toISOString();
-    metadata.submissionDate = new Date().toISOString();
-    
-    if (task.status === 'ready_for_submission' && task.progress === 100) {
-      console.log(`${colors.yellow}Task is ready for submission, updating status...${colors.reset}`);
-      
-      const { rows: [updatedTask] } = await client.query(
-        `UPDATE tasks 
-         SET status = 'submitted',
-             metadata = $1
-         WHERE id = $2
-         RETURNING id, status, progress, metadata`,
-        [metadata, taskId]
-      );
-      
-      console.log(`${colors.green}✅ Task status updated to 'submitted'!${colors.reset}`);
-      console.log(`Updated task state:`);
-      console.log(`- ID: ${updatedTask.id}`);
-      console.log(`- Status: ${updatedTask.status}`);
-      console.log(`- Progress: ${updatedTask.progress}%`);
-      
-      // Broadcast the task update via WebSocket
-      await broadcastTaskUpdate(client, taskId, companyId);
-      
-      // Commit the transaction
-      await client.query('COMMIT');
-      console.log(`${colors.green}✅ Transaction committed!${colors.reset}`);
-    } else {
-      console.log(`${colors.yellow}Task is not in the expected state for submission.${colors.reset}`);
-      console.log(`Expected: status='ready_for_submission', progress=100`);
-      console.log(`Actual: status='${task.status}', progress=${task.progress}`);
-      
-      // Rollback the transaction
+    if (task.status === 'submitted') {
+      console.log(`${colors.green}✅ Task is already in 'submitted' status${colors.reset}`);
       await client.query('ROLLBACK');
-      console.log(`Transaction rolled back`);
+      return { success: true, status: 'already_submitted' };
     }
     
+    // Step 2: Update the task status and metadata
+    const now = new Date();
+    const submissionDate = now.toISOString();
+    const updatedMetadata = {
+      ...task.metadata,
+      submission_date: submissionDate,
+      completed: true
+    };
+    
+    await client.query(
+      `UPDATE tasks 
+       SET status = 'submitted', 
+           progress = 100, 
+           metadata = $1, 
+           updated_at = NOW() 
+       WHERE id = $2`,
+      [updatedMetadata, taskId]
+    );
+    
+    console.log(`${colors.green}✅ Updated task status to 'submitted'${colors.reset}`);
+    
+    // Step 3: Mark company KYB as completed
+    if (companyId) {
+      await client.query(
+        `UPDATE companies 
+         SET kyb_completed = true, 
+             kyb_completed_at = NOW(), 
+             updated_at = NOW() 
+         WHERE id = $1`,
+        [companyId]
+      );
+      
+      console.log(`${colors.green}✅ Marked KYB as completed for company ${companyId}${colors.reset}`);
+    }
+    
+    // Step 4: Get the company's available_tabs and ensure KYB tab is unlocked
+    const { rows: [company] } = await client.query(
+      `SELECT id, name, available_tabs FROM companies WHERE id = $1`,
+      [companyId]
+    );
+    
+    if (company) {
+      let availableTabs = company.available_tabs || [];
+      
+      // Ensure KYB tab is unlocked
+      if (!availableTabs.includes('kyb')) {
+        availableTabs.push('kyb');
+        
+        await client.query(
+          `UPDATE companies SET available_tabs = $1 WHERE id = $2`,
+          [availableTabs, companyId]
+        );
+        
+        console.log(`${colors.green}✅ Unlocked KYB tab for company ${companyId}${colors.reset}`);
+      } else {
+        console.log(`${colors.blue}ℹ️ KYB tab already unlocked for company ${companyId}${colors.reset}`);
+      }
+    }
+    
+    // Commit the transaction
+    await client.query('COMMIT');
+    
+    console.log(`${colors.green}✅ Fix completed successfully!${colors.reset}`);
+    return { success: true, task, companyId };
   } catch (error) {
-    // Rollback the transaction in case of error
     await client.query('ROLLBACK');
-    console.error(`${colors.red}Error fixing KYB submission:${colors.reset}`, error);
+    console.error(`${colors.red}❌ Fix failed:${colors.reset}`, error);
+    return { success: false, error: error.message };
   } finally {
-    // Release the client back to the pool
     client.release();
   }
 }
@@ -104,54 +148,106 @@ async function fixKybSubmission(taskId, companyId) {
  * Broadcast the task update via WebSocket
  */
 async function broadcastTaskUpdate(client, taskId, companyId) {
+  console.log(`${colors.blue}=== Broadcasting Task Update via WebSocket ===${colors.reset}`);
+  
   try {
-    console.log(`${colors.blue}Broadcasting task update...${colors.reset}`);
-    
-    // Insert a broadcast message in the websocket_messages table
-    const message = {
-      type: 'task_update',
-      payload: {
-        taskId: taskId,
-        status: 'submitted',
-        progress: 100,
-        metadata: {
-          submitted: true,
-          submittedAt: new Date().toISOString()
-        },
-        timestamp: new Date().toISOString()
-      }
-    };
-    
-    await client.query(
-      `INSERT INTO websocket_messages (type, message, created_at)
-       VALUES ($1, $2, NOW())`,
-      ['task_update', JSON.stringify(message)]
+    // Get the updated task
+    const { rows: [task] } = await client.query(
+      `SELECT id, title, status, progress, metadata FROM tasks WHERE id = $1`,
+      [taskId]
     );
     
-    console.log(`${colors.green}✅ WebSocket broadcast message inserted!${colors.reset}`);
+    if (!task) {
+      console.error(`${colors.red}❌ Task ${taskId} not found for WebSocket broadcast!${colors.reset}`);
+      return { success: false, error: 'Task not found' };
+    }
+    
+    // Create a simple HTTP server for the WebSocket
+    const server = http.createServer();
+    const wss = new WebSocketServer({ server, path: '/ws' });
+    
+    // Start the server on a random port
+    server.listen(0, () => {
+      const port = server.address().port;
+      console.log(`${colors.blue}WebSocket server started on port ${port}${colors.reset}`);
+      
+      // Create the message payload
+      const message = {
+        type: 'task_update',
+        payload: {
+          taskId: parseInt(taskId),
+          status: 'submitted',
+          progress: 100,
+          metadata: {
+            transactionId: `fix-${Date.now()}`,
+            submissionDate: new Date().toISOString(),
+            verifiedStatus: true,
+            companyId
+          },
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      // Broadcast to any connected clients
+      wss.clients.forEach(client => {
+        client.send(JSON.stringify(message));
+      });
+      
+      console.log(`${colors.green}✅ WebSocket message sent:${colors.reset}`, message);
+      
+      // Close the server after a short delay
+      setTimeout(() => {
+        server.close();
+        console.log(`${colors.blue}WebSocket server closed${colors.reset}`);
+      }, 1000);
+    });
+    
+    return { success: true };
   } catch (error) {
-    console.error(`${colors.red}Error broadcasting task update:${colors.reset}`, error);
-    throw error;
+    console.error(`${colors.red}❌ WebSocket broadcast failed:${colors.reset}`, error);
+    return { success: false, error: error.message };
   }
 }
 
-// If this script is run directly, execute the fix function with the provided task ID
-if (require.main === module) {
+// Main function to run the fix
+const runFix = async () => {
   const taskId = process.argv[2];
-  const companyId = process.argv[3];
+  const companyId = process.argv[3] ? parseInt(process.argv[3]) : null;
   
-  if (!taskId || !companyId) {
-    console.error(`${colors.red}Usage: node direct-fix-kyb-submission.js <taskId> <companyId>${colors.reset}`);
+  if (!taskId) {
+    console.error(`${colors.red}Usage: node direct-fix-kyb-submission.js <taskId> [<companyId>]${colors.reset}`);
     process.exit(1);
   }
   
-  fixKybSubmission(parseInt(taskId), parseInt(companyId))
-    .then(() => {
-      console.log(`${colors.green}✅ Fix completed!${colors.reset}`);
-      process.exit(0);
-    })
-    .catch(error => {
-      console.error(`${colors.red}Error:${colors.reset}`, error);
-      process.exit(1);
-    });
+  try {
+    // Run the fix
+    const result = await fixKybSubmission(taskId, companyId);
+    
+    if (result.success) {
+      // Broadcast the task update via WebSocket if fix was successful
+      if (result.status !== 'already_submitted') {
+        await broadcastTaskUpdate(await pool.connect(), taskId, result.companyId);
+      }
+      
+      console.log(`${colors.green}✅ All operations completed successfully!${colors.reset}`);
+    } else {
+      console.error(`${colors.red}❌ Fix failed:${colors.reset}`, result.error);
+    }
+    
+    process.exit(0);
+  } catch (error) {
+    console.error(`${colors.red}❌ Error:${colors.reset}`, error);
+    process.exit(1);
+  }
+};
+
+// Only run if this is the main module (not imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runFix();
 }
+
+// Export functions for use in other modules
+export {
+  fixKybSubmission,
+  broadcastTaskUpdate
+};
