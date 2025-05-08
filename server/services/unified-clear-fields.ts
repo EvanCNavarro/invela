@@ -204,14 +204,10 @@ export const clearFieldsService = async (
         deletedCount = deleteResult.rowCount || 0;
       }
         
-      // 3. Clear the savedFormData field if specified
-      // CRITICAL: This prevents the form from being rehydrated from cache
+      // FIXED: Don't try to clear savedFormData since the column doesn't exist
+      // Just log the action for tracking
       if (opts.clearSavedFormData) {
-        await client.query(
-          'UPDATE tasks SET saved_form_data = NULL WHERE id = $1',
-          [taskId]
-        );
-        serviceLogger.info(`Cleared savedFormData for task ${taskId}`);
+        serviceLogger.info(`Skipping savedFormData clearing for task ${taskId} (column doesn't exist)`);
       }
         
       // 4. Update progress if not preserving
