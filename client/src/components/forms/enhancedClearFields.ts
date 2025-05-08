@@ -35,6 +35,11 @@ export interface FieldsEvent {
   timestamp?: string;
 }
 
+export interface ClearFieldsResult {
+  success: boolean;
+  message: string;
+}
+
 // Anti-debounce cooldown to prevent rapid repeated clear operations
 const CLEAR_OPERATION_COOLDOWN = 5000; // 5 seconds
 
