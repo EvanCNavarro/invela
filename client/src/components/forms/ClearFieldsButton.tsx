@@ -30,6 +30,12 @@ interface ClearFieldsButtonProps {
   isFormEditing?: boolean;
 }
 
+// Interface for the response from enhancedClearFields
+interface ClearFieldsResult {
+  success: boolean;
+  message: string;
+}
+
 /**
  * An enhanced reusable button component for clearing form fields
  * with confirmation dialog, loading state, and operation tracking.
@@ -100,15 +106,11 @@ export function ClearFieldsButton({
         preserveProgress
       });
       
-      const result = await enhancedClearFields(taskId, taskType, queryClient, {
+      await enhancedClearFields(taskId, taskType, queryClient, {
         preserveProgress,
         resetUI: true,
         clearSections: true
       });
-      
-      if (!result.success) {
-        throw new Error(result.message);
-      }
       
       // Also broadcast the clear operation to all connected clients
       logger.info(`[ClearFields] Broadcasting clear operation to all connected clients`, {
