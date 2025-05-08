@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { logger } from './logger';
+import { TaskStatus } from '@db/schema';
 
 // Store a reference to the WebSocket server
 let wssInstance: WebSocketServer | null = null;
@@ -73,4 +74,28 @@ export function broadcast(type: string, payload: any): {
     clientCount, 
     errorCount 
   };
+}
+
+/**
+ * Broadcast a task update to all connected WebSocket clients
+ * 
+ * @param taskId - The ID of the task that has been updated
+ * @param status - The new status of the task
+ * @param progress - The new progress value (0-100)
+ * @param metadata - Optional additional data to include in the broadcast
+ * @returns Object with result of the broadcast operation
+ */
+export function broadcastTaskUpdate(
+  taskId: number, 
+  status: TaskStatus | string, 
+  progress: number = 0,
+  metadata: Record<string, any> = {}
+): ReturnType<typeof broadcast> {
+  return broadcast('task_update', {
+    taskId,
+    status,
+    progress,
+    ...(metadata || {}),
+    timestamp: new Date().toISOString()
+  });
 }
