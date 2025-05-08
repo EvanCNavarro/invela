@@ -119,33 +119,41 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   return (
     <div 
       ref={ref}
-      className="flex items-center gap-2 p-4 bg-white border border-border rounded-md shadow-sm mb-2 relative transition-opacity"
+      className="flex items-center gap-3 p-5 bg-blue-50 border border-blue-100 rounded-lg shadow-sm mb-3 relative transition-all hover:shadow-md group"
       style={{ opacity }}
     >
-      <div className="flex-shrink-0 cursor-move text-muted-foreground">
+      {/* Priority indicator */}
+      <div className="absolute top-0 left-0 w-1.5 h-full rounded-l-lg" 
+        style={{ backgroundColor: dimension.color || '#4285F4' }}>
+      </div>
+      
+      {/* Icon container with color from dimension */}
+      <div className="h-12 w-12 flex items-center justify-center rounded-md bg-white border border-blue-100 shadow-sm text-primary flex-shrink-0">
+        {dimensionIcons[dimension.id] || <Shield className="h-6 w-6" />}
+      </div>
+      
+      {/* Content */}
+      <div className="flex-grow">
+        <div className="flex items-center mb-1">
+          <h4 className="font-medium text-base text-gray-900">{dimension.name}</h4>
+          <div className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium inline-flex items-center">
+            <span className="flex-shrink-0">Rank {index + 1}</span>
+          </div>
+        </div>
+        <p className="text-sm text-gray-600">{dimension.description}</p>
+      </div>
+      
+      {/* Weight indicator */}
+      <div className="ml-auto flex flex-col items-end justify-center">
+        <div className="text-2xl font-bold" style={{ color: dimension.color || '#4285F4' }}>
+          {dimension.weight}%
+        </div>
+        <div className="text-xs text-gray-600 font-medium">Priority Weight</div>
+      </div>
+      
+      {/* Grip handle for dragging - only visible on hover */}
+      <div className="flex-shrink-0 cursor-move text-gray-400 group-hover:text-gray-700 transition-colors ml-3">
         <GripVertical className="h-5 w-5" />
-      </div>
-      
-      <div className="h-8 w-8 flex items-center justify-center rounded-full text-white mr-2"
-        style={{ backgroundColor: dimension.color || '#ccc' }}>
-        {index + 1}
-      </div>
-      
-      <div className="flex items-center gap-2 mr-4">
-        <span className="text-primary">
-          {dimensionIcons[dimension.id] || <Shield className="h-5 w-5" />}
-        </span>
-        <div>
-          <h4 className="font-medium text-lg">{dimension.name}</h4>
-          <p className="text-sm text-muted-foreground">{dimension.description}</p>
-        </div>
-      </div>
-      
-      <div className="ml-auto flex items-center">
-        <div className="flex-shrink-0 w-28 text-right">
-          <div className="text-sm font-medium text-muted-foreground">Priority Weight</div>
-          <div className="text-lg font-bold">{dimension.weight}%</div>
-        </div>
       </div>
     </div>
   );
