@@ -403,9 +403,9 @@ export default function TaskPage({ params }: TaskPageProps) {
               <UniversalForm
                 taskId={task.id}
                 taskType="kyb"
-                taskStatus={task.status}
                 companyName={displayName}
                 initialData={task.savedFormData}
+                isReadOnly={task.status === "submitted"}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
                   updateTaskProgress(progress, task);
@@ -553,8 +553,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               <UniversalForm
                 taskId={task.id}
                 taskType="ky3p"
-                taskStatus={task.status}
                 companyName={displayName}
+                isReadOnly={task.status === "submitted"}
                 initialData={task.savedFormData}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
@@ -717,8 +717,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               <UniversalForm
                 taskId={task.id}
                 taskType="card"
-                taskStatus={task.status}
                 companyName={displayName}
+                isReadOnly={task.status === "submitted"}
                 initialData={task.savedFormData}
                 onProgress={(progress) => {
                   // Update local state immediately for responsive UI
@@ -886,8 +886,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               <UniversalForm
                 taskId={task.id}
                 taskType="open_banking"
-                taskStatus={task.status}
                 companyName={displayName}
+                isReadOnly={task.status === "submitted"}
                 initialData={task.savedFormData}
                 onSubmit={(formData) => {
                   console.log('[TaskPage] Open Banking Survey submitted via playground');
@@ -917,7 +917,6 @@ export default function TaskPage({ params }: TaskPageProps) {
               open={showSuccessModal}
               onOpenChange={(open) => setShowSuccessModal(open)}
               companyName={displayName}
-              description="The Open Banking Survey has been successfully submitted and processed."
             />
           )}
         </PageTemplate>
