@@ -123,12 +123,17 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
     const topColor = '#4285F4';
     const bottomColor = '#0D47A1';
     
-    // Calculate color based on index position (0 = top, dimensions.length-1 = bottom)
-    const totalItems = dimensions.length || 6; // Fallback if dimensions not available
+    // Since we're in the component level, we use a fixed number for consistency
+    const totalItems = 6; // Fixed number of dimensions
     const positionRatio = index / (totalItems - 1);
     
-    // Interpolate between top and bottom colors - simplified for implementation
-    const primaryColor = index === 0 ? topColor : bottomColor;
+    // Interpolate between top and bottom colors based on position
+    const primaryColor = index === 0 ? topColor : 
+                         index === 1 ? '#1976D2' : 
+                         index === 2 ? '#1565C0' : 
+                         index === 3 ? '#0D47A1' : 
+                         index === 4 ? '#0A3783' : 
+                         '#072C6E';
     const secondaryColor = index === 0 ? primaryColor : topColor;
     
     return { primaryColor, secondaryColor };
