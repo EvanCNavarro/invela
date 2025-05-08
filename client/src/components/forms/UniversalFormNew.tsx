@@ -996,11 +996,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             }))
           });
           
-          // CRITICAL FIX: If any section still has progress > 0, force reset them again
-          const hasIncorrectStatuses = sectionStatuses.some(s => s.progress > 0);
-          if (hasIncorrectStatuses && typeof setSectionStatuses === 'function') {
-            logger.info(`[DIAGNOSTIC][${operationId}] Detected incorrect section statuses after timeout, forcing reset`, {
-              timestamp: new Date().toISOString()
+          // ENHANCED FIX: More aggressive reset for section statuses
+          // Force reset regardless of current progress state when options.forceUIReset is true
+          if ((typeof setSectionStatuses === 'function') && 
+              (hasIncorrectStatuses || options.forceUIReset)) {
+            
+            logger.info(`[DIAGNOSTIC][${operationId}] Forcing section status reset`, {
+              reason: hasIncorrectStatuses ? 'detected incorrect statuses' : 'forceUIReset option',
+              timestamp: new Date().toISOString(),
+              options: JSON.stringify(options)
             });
             
             // Create properly formatted reset statuses
@@ -1016,6 +1020,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             
             // Force set the section statuses one more time
             setSectionStatuses(forceResetStatuses);
+            
+            // Also reset active section to first tab
+            setActiveSection(0);
+            
+            // Force a second reset after a very short delay to ensure it takes effect
+            setTimeout(() => {
+              if (typeof setSectionStatuses === 'function') {
+                logger.info(`[DIAGNOSTIC][${operationId}] Second forced reset after 50ms`);
+                setSectionStatuses(forceResetStatuses);
+              }
+            }, 50);
           }
         }
       }, 500);
