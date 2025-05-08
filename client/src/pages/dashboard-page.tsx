@@ -50,7 +50,7 @@ import {
 // Create separate default widget sets based on company type
 const FINTECH_DEFAULT_WIDGETS = {
   quickActions: true,
-  companyScore: true,
+  companySnapshot: true,
   networkVisualization: false,
   riskRadar: true
 };
