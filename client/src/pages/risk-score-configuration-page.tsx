@@ -118,22 +118,25 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   
   // Calculate grayscale colors based on index and position
   const getGradientColors = () => {
-    // Create a grayscale that transitions from dark to light
+    // Create a grayscale that transitions from dark to light (top to bottom)
     // For a more business-appropriate muted palette
-    const topColor = '#2c3e50'; // Darker slate blue-gray for top items
-    const middleColor = '#34495e'; // Mid-level slate for middle items
-    const bottomColor = '#7f8c8d'; // Lighter gray for bottom items
+    const topDarkColor = '#1a2530'; // Darkest slate for top priority item
+    const midDarkColor = '#2c3e50'; // Dark slate blue-gray for high priority
+    const midColor = '#34495e';     // Mid-level slate
+    const midLightColor = '#4a6178'; // Medium-light slate
+    const lightColor = '#607993';   // Lighter slate blue-gray 
+    const bottomLightColor = '#7f8c8d'; // Lightest gray for bottom priority
     
     // Since we're in the component level, we use a fixed number for consistency
     const totalItems = 6; // Fixed number of dimensions
     
-    // Interpolate between grayscale colors based on position
-    const primaryColor = index === 0 ? topColor : 
-                         index === 1 ? '#3d566e' : 
-                         index === 2 ? '#445a70' : 
-                         index === 3 ? '#516577' : 
-                         index === 4 ? '#5d6e7e' : 
-                         middleColor;
+    // Interpolate between grayscale colors based on position - darker for top items, lighter for bottom
+    const primaryColor = index === 0 ? topDarkColor : 
+                         index === 1 ? midDarkColor : 
+                         index === 2 ? midColor : 
+                         index === 3 ? midLightColor : 
+                         index === 4 ? lightColor : 
+                         bottomLightColor;
     
     // Accent color (slightly different shade for secondary elements)
     const secondaryColor = '#95a5a6';
