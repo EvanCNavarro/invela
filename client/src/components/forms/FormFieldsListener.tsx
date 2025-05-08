@@ -39,6 +39,10 @@ export interface FieldsEventPayload {
   progress?: number;
   metadata?: Record<string, any>;
   timestamp?: string;
+  // Enhanced properties for improved client-side handling
+  clearSections?: boolean;   // Flag to indicate all section statuses should be reset
+  resetUI?: boolean;         // Flag to indicate a full UI reset is needed
+  clearedAt?: string;        // Timestamp when fields were cleared
 }
 
 export interface FieldsEvent {
