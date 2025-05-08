@@ -17,7 +17,9 @@ async function testKY3PSubmission() {
     
     // First, check the current task status via API
     console.log('Checking current task status...');
-    const taskResponse = await fetch(`http://localhost:5000/api/tasks/${taskId}`);
+    // Use the full URL (with protocol and hostname)
+    const apiBaseUrl = 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev';
+    const taskResponse = await fetch(`${apiBaseUrl}/api/tasks/${taskId}`);
     
     if (!taskResponse.ok) {
       console.error(`Failed to get task ${taskId}: ${taskResponse.status} ${taskResponse.statusText}`);
@@ -45,7 +47,7 @@ async function testKY3PSubmission() {
     
     // First update the form fields
     console.log('Updating form fields...');
-    const updateResponse = await fetch(`http://localhost:5000/api/ky3p/batch-update/${taskId}`, {
+    const updateResponse = await fetch(`${apiBaseUrl}/api/ky3p/batch-update/${taskId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
@@ -63,7 +65,7 @@ async function testKY3PSubmission() {
     
     // Then submit the form
     console.log('\nSubmitting the form...');
-    const submitResponse = await fetch(`http://localhost:5000/api/forms/${formType}/submit/${taskId}`, {
+    const submitResponse = await fetch(`${apiBaseUrl}/api/forms/${formType}/submit/${taskId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ formData: {} }) // Empty form data since we already set fields
@@ -81,7 +83,7 @@ async function testKY3PSubmission() {
     
     // Check task status after submission
     console.log('\nChecking task status after submission...');
-    const updatedTaskResponse = await fetch(`http://localhost:5000/api/tasks/${taskId}`);
+    const updatedTaskResponse = await fetch(`${apiBaseUrl}/api/tasks/${taskId}`);
     
     if (!updatedTaskResponse.ok) {
       console.error(`Failed to get updated task: ${updatedTaskResponse.status}`);
