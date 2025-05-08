@@ -12,6 +12,7 @@ import React, { useEffect, useContext, useRef } from 'react';
 import { WebSocketContext } from '@/providers/websocket-provider';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Add type declaration for the fieldEventTracker global object
 declare global {
@@ -19,6 +20,13 @@ declare global {
     fieldEventTracker?: {
       processedEventIds: Set<string>;
       activeListeners: number;
+    };
+    _lastClearOperation?: {
+      taskId: number;
+      formType: string;
+      timestamp: number;
+      blockExpiration: number;
+      operationId: string;
     };
   }
 }
@@ -72,6 +80,7 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
   showToasts = true
 }) => {
   const { socket, isConnected } = useContext(WebSocketContext);
+  const queryClient = useQueryClient();
   const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
   const listenerInfoRef = useRef({ taskId, formType });
   const hasSetupListenerRef = useRef(false);
@@ -102,8 +111,42 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         // Parse incoming message
         const message = JSON.parse(messageEvent.data);
         
-        // Process only 'form_fields' type messages
-        if (message.type !== 'form_fields') {
+        // Process both 'form_fields' and 'clear_fields' type messages
+        if (message.type !== 'form_fields' && message.type !== 'clear_fields') {
+          return;
+        }
+        
+        // Special handling for clear_fields events
+        if (message.type === 'clear_fields') {
+          // Import dynamically to avoid circular dependencies
+          import('./enhancedClearFields').then(({ handleWebSocketClearFields }) => {
+            // Use our enhanced handler
+            handleWebSocketClearFields(message, queryClient);
+            
+            // Also call the callback if provided
+            if (onFieldsCleared) {
+              const fieldsEvent: FieldsEvent = {
+                type: 'fields_cleared',
+                payload: {
+                  taskId,
+                  formType,
+                  action: 'fields_cleared',
+                  metadata: message.payload?.metadata || {},
+                  clearSections: true,
+                  resetUI: true,
+                  clearedAt: message.payload?.timestamp || new Date().toISOString()
+                },
+                timestamp: message.timestamp || new Date().toISOString()
+              };
+              
+              setTimeout(() => {
+                onFieldsCleared(fieldsEvent);
+              }, 100);
+            }
+          }).catch(err => {
+            logger.error(`Error handling clear_fields event:`, err);
+          });
+          
           return;
         }
         
