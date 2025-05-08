@@ -28,8 +28,6 @@ import ky3pRouter from './routes/ky3p';
 import ky3pFieldsRouter from './routes/ky3p-fields';
 // Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
-// Import file verification routes for debugging file references
-import fileVerificationRouter from './routes/file-verification-routes';
 // Import the KY3P progress test route
 import testKy3pProgressRouter from './routes/test-ky3p-progress';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
@@ -518,9 +516,6 @@ export function registerRoutes(app: Express): Express {
   
   // Register submission status API - reliable form submission status checking
   app.use('/api/submissions', submissionsRouter);
-  
-  // Register file verification routes for debugging file references
-  app.use('/api/file-verification', fileVerificationRouter);
   
   // Register broadcast router for demo auto-fill WebSocket functionality
   app.use(broadcastRouter);
