@@ -1,40 +1,29 @@
-/**
- * Task Page Component
- * 
- * This page handles displaying task details based on the task type.
- * It supports KYB forms, card industry questionnaires, KY3P security assessments,
- * and Open Banking surveys.
- */
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { PageTemplate } from '@/components/ui/page-template';
-import { BreadcrumbNav } from '@/components/dashboard/BreadcrumbNav';
-import { UniversalForm } from '@/components/forms';
-import { FormSkeletonWithMode } from '@/components/ui/form-skeleton';
-import { FormWithLoadingWrapper } from '@/components/forms/FormWithLoadingWrapper';
-import { DocumentUploadWizard } from '@/components/documents/DocumentUploadWizard';
-import { CardMethodChoice } from '@/components/card/CardMethodChoice';
-// TaskDownloadMenu is wrapped by EnhancedTaskDownloadMenu
-// import { TaskDownloadMenu } from '@/components/TaskDownloadMenu';
-import { FixMissingFileButton } from '@/components/FixMissingFileButton';
-import { EnhancedTaskDownloadMenu } from '@/components/EnhancedTaskDownloadMenu';
-import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
-import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import { UniversalSuccessModal } from '@/components/forms/UniversalSuccessModal';
+import React, { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { UniversalForm } from "@/components/forms/UniversalForm";
+import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
+import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
+import { OpenBankingPlayground } from "@/components/playground/OpenBankingPlayground";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import confetti from "canvas-confetti";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { PageTemplate } from "@/components/ui/page-template";
+import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
+import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
+import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
 import { fireEnhancedConfetti } from '@/utils/confetti';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { submitFormTransactional } from '@/api/form-submission-api';
-import { userContext } from '@/lib/user-context';
-import { useCurrentCompany } from '@/hooks/use-current-company';
-import getLogger from '@/utils/logger';
-
-const logger = getLogger('TaskPage');
+import { CardMethodChoice } from "@/components/card/CardMethodChoice";
+import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
 
 interface TaskPageProps {
   params: {
@@ -42,807 +31,939 @@ interface TaskPageProps {
   }
 }
 
-interface SubmissionAction {
-  type: string;
-  description: string;
-  fileId?: number;
-  data?: {
-    details?: string;
-    buttonText?: string;
-  };
+interface Task {
+  id: number;
+  title: string;
+  description: string | null;
+  task_type: string;
+  task_scope: string;
+  status: string;
+  priority: string;
+  progress: number;
+  metadata: {
+    companyId?: number;
+    companyName?: string;
+    company?: {
+      name: string;
+      description?: string;
+    };
+    kybFormFile?: number;
+    cardFormFile?: number;
+    securityFormFile?: number;
+    [key: string]: any;
+  } | null;
+  savedFormData?: Record<string, any>;
 }
 
-interface SubmissionResult {
-  taskId: number;
-  fileId?: number;
-  fileName?: string;
-  taskStatus: string;
-  unlockedTabs?: string[];
-  completedActions?: SubmissionAction[];
-}
-
-type TaskContentType = 'kyb' | 'card' | 'security' | 'ky3p' | 'open_banking' | 'unknown';
+// Define task type as a valid type
+type TaskContentType = 'kyb' | 'card' | 'security' | 'open_banking' | 'unknown';
 
 export default function TaskPage({ params }: TaskPageProps) {
-  const [task, setTask] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
-  const [showForm, setShowForm] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<'manual' | 'upload' | null>(null);
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  
+  // All state variables defined at the top level
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
-  // Track which form type triggered the success modal
-  const [submittedFormType, setSubmittedFormType] = useState<TaskContentType | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [derivedCompanyName, setDerivedCompanyName] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [isReadOnly, setIsReadOnly] = useState(false); // Add read-only mode state
-  const [submissionResult, setSubmissionResult] = useState<SubmissionResult>({
-    taskId: 0,
-    taskStatus: 'not_started',
-    completedActions: []
-  });
+  const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [task, setTask] = useState<Task | null>(null);
   
-  const [_, navigate] = useLocation();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  // Parse taskSlug into a numeric ID if possible
+  const parsedId = parseInt(params.taskSlug);
+  const taskId = !isNaN(parsedId) ? parsedId : null;
+  
+  // The url for fetching tasks
+  const apiEndpoint = taskId ? `/api/tasks.json/${taskId}` : '/api/tasks';
+  
+  // Function to extract company name from task title
+  const extractCompanyNameFromTitle = useCallback((title: string): string => {
+    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/);
+    if (match && match[6]) {
+      return match[6].trim();
+    }
+    return 'Unknown Company';
+  }, []);
+  
+  // Log task initialization for debugging
+  useEffect(() => {
+    console.log('[TaskPage] Task initialization:', { 
+      taskSlug: params.taskSlug,
+      parsedId,
+      taskId,
+      apiEndpoint: taskId ? apiEndpoint : '/api/tasks',
+      timestamp: new Date().toISOString()
+    });
+  }, [params.taskSlug, parsedId, taskId, apiEndpoint]);
   
   // Handle back button click
   const handleBackClick = useCallback(() => {
     navigate('/task-center');
   }, [navigate]);
   
-  // Update the task progress in state
-  const updateTaskProgress = useCallback((progress: number) => {
-    setTask((prevTask: any) => {
-      if (!prevTask) return null;
-      return {
-        ...prevTask,
-        progress
-      };
-    });
-    
-    console.log(`[TaskPage] Form progress updated: ${progress}%`);
-  }, []);
-  
-  // Handle file download
-  const handleDownload = useCallback(async (format: 'csv' | 'txt' | 'json' = 'csv') => {
-    if (!fileId) {
-      toast({
-        title: "Download Failed",
-        description: "No file available for download",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Standardized download dropdown menu component
+  const StandardizedDownloadMenu = useCallback(() => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleDownload('csv')}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Download as CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDownload('txt')}>
+            <FileText className="mr-2 h-4 w-4" />
+            Download as TXT
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleDownload('json')}>
+            <FileJson className="mr-2 h-4 w-4" />
+            Download as JSON
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }, [handleDownload]);
+
+  // Handle file downloads
+  const handleDownload = useCallback(async (format: 'json' | 'csv' | 'txt') => {
+    if (!fileId) return;
     
     try {
       const response = await fetch(`/api/files/${fileId}/download?format=${format}`);
       if (!response.ok) {
-        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to download file: ${response.statusText}`);
       }
       
+      // Handle file download
       const blob = await response.blob();
-      const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || `file-${fileId}.${format}`;
-      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.style.display = 'none';
       a.href = url;
-      a.download = filename;
+      a.download = `compliance_data_${taskContentType}_${new Date().toISOString().split('T')[0]}.${format}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Download Success",
-        description: `Successfully downloaded ${filename}`,
-      });
-    } catch (error) {
-      console.error('Download error:', error);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('[TaskPage] Download error:', err);
       toast({
         title: "Download Failed",
-        description: error instanceof Error ? error.message : String(error),
-        variant: "destructive"
+        description: "Could not download the file. Please try again later.",
+        variant: "destructive",
       });
     }
-  }, [fileId, toast]);
+  }, [fileId, taskContentType, toast]);
   
-  // Handle form submission success
-  const handleFormSubmissionSuccess = useCallback((event: FormSubmissionEvent) => {
-    console.log('[TaskPage] Form submission success:', event);
-    
-    // ENHANCED SOURCE DETECTION: Check if this is from the final completed message or an intermediate one
-    // Looking both at event.source property AND in metadata.source for maximum compatibility
-    const isCompletedMessage = 
-      event.source === 'final_completion' || 
-      (event.metadata && event.metadata.source === 'final_completion') ||
-      (event.metadata && event.metadata.finalCompletion === true) ||
-      (event.completedActions && event.completedActions.length > 0);
-    
-    console.log('[TaskPage] Processing form submission event:', {
-      isCompletedMessage,
-      hasCompletedActions: event.completedActions?.length || 0,
-      messageSource: event.source,
-      messageSourceType: typeof event.source,
-      eventKeys: Object.keys(event),
-      eventHasSourceProperty: 'source' in event,
-      source: event.source,
-      timestamp: new Date().toISOString(),
-      metadata: event.metadata
-    });
-    
-    if (event.fileId) {
-      // Convert to number if it's a string to fix TypeScript error
-      const fileIdValue = typeof event.fileId === 'string' ? parseInt(event.fileId, 10) : event.fileId;
-      setFileId(fileIdValue as number);
-    }
-    
-    // Store the submission result with all needed data for the UniversalSuccessModal
-    setSubmissionResult({
-      taskId: event.taskId,
-      fileId: event.fileId ? (typeof event.fileId === 'string' ? parseInt(event.fileId, 10) : event.fileId) : undefined,
-      fileName: event.fileName || undefined,
-      taskStatus: 'submitted',
-      unlockedTabs: event.unlockedTabs || undefined,
-      completedActions: event.completedActions || []
-    });
-    
-    // Set task as submitted regardless of which message type it is
-    setIsSubmitted(true);
-    
-    // Only show the modal and fire confetti if this is the final completion message
-    // This ensures we only show the modal with complete information
-    if (isCompletedMessage) {
-      console.log('[TaskPage] Showing success modal with complete information:', event);
-      
-      // Show the modal with the complete information
-      setShowSuccessModal(true);
-      
-      // Track which form type triggered the success event
-      setSubmittedFormType(taskContentType);
-      
-      // Show confetti effect for the final completion
-      fireEnhancedConfetti();
-    }
-    
-    // Always invalidate queries to refresh task list
-    queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-  }, [queryClient, taskContentType]);
+  // Fetch task data and keep local state to allow updates
+  const { data: taskData, isLoading, error } = useQuery<Task>({
+    queryKey: [apiEndpoint, taskId, params.taskSlug],
+    queryFn: async () => {
+      try {
+        let response;
+        
+        // If we have a task ID, use direct ID lookup with special endpoint
+        if (taskId) {
+          console.log('[TaskPage] Fetching task data by ID:', { 
+            taskId,
+            fullUrl: apiEndpoint,
+            timestamp: new Date().toISOString()
+          });
+          
+          response = await fetch(apiEndpoint);
+        } 
+        // Otherwise try to parse the slug for name-based lookup
+        else {
+          // Parse the slug format: "{taskType}-{companyName}"
+          const match = params.taskSlug.match(/^(kyb|card|security)-(.+)$/i);
+          
+          if (match) {
+            const [, type, companyName] = match;
+            console.log('[TaskPage] Fetching task by type and company name:', { 
+              type, 
+              companyName,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Determine the endpoint based on task type
+            let lookupEndpoint = '';
+            if (type.toLowerCase() === 'kyb') {
+              lookupEndpoint = `/api/tasks/kyb/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'card') {
+              lookupEndpoint = `/api/tasks/card/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'security') {
+              lookupEndpoint = `/api/tasks/security/${encodeURIComponent(companyName)}`;
+            }
+            
+            if (lookupEndpoint) {
+              response = await fetch(lookupEndpoint);
+            } else {
+              throw new Error(`Unsupported task type: ${type}`);
+            }
+          } else {
+            throw new Error(`Invalid task slug format: ${params.taskSlug}`);
+          }
+        }
+        
+        if (!response.ok) {
+          console.error('[TaskPage] Failed to fetch task:', { 
+            status: response.status, 
+            url: response.url,
+            timestamp: new Date().toISOString()
+          });
+          throw new Error(`Failed to fetch task: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        console.log('[TaskPage] Task data received:', { 
+          taskId: data.id,
+          taskType: data.task_type,
+          title: data.title,
+          status: data.status,
+          timestamp: new Date().toISOString()
+        });
+        
+        return data;
+      } catch (err) {
+        console.error('[TaskPage] Error fetching task:', err);
+        throw err;
+      }
+    },
+    staleTime: 300000 // 5 minutes
+  });
   
-  // Handle form submission error
-  const handleFormSubmissionError = useCallback((event: FormSubmissionEvent) => {
-    console.error('[TaskPage] Form submission error:', event);
+  // Define the task processing logic outside the render cycle
+  const processTaskData = useCallback((taskData: Task) => {
+    if (!taskData) return;
     
-    toast({
-      title: "Form Submission Failed",
-      description: event.error || "An error occurred while submitting the form",
-      variant: "destructive"
-    });
-  }, [toast]);
-  
-  // Determine the task content type based on the task data
-  const processTaskData = useCallback((taskData: any) => {
+    // Determine task type for rendering
     let type: TaskContentType = 'unknown';
     
-    if (taskData.task_type === 'kyb_assessment' || taskData.task_type === 'kyb' || taskData.task_type === 'company_kyb') {
+    if (taskData.task_type === 'company_kyb' || taskData.task_type === 'company_onboarding_KYB') {
       type = 'kyb';
-    } else if (taskData.task_type === 'card_assessment' || taskData.task_type === 'card') {
+    } else if (taskData.task_type === 'company_card') {
       type = 'card';
-    } else if (taskData.task_type === 'ky3p_assessment' || taskData.task_type === 'security_assessment' || 
-               taskData.task_type === 'ky3p' || taskData.task_type === 'security') {
-      type = 'ky3p';
-    } else if (taskData.task_type === 'open_banking_assessment' || taskData.task_type === 'open_banking') {
+    } else if (taskData.task_type === 'security_assessment' || taskData.task_type === 'sp_ky3p_assessment' || taskData.task_type === 'ky3p') {
+      type = 'security';
+    } else if (taskData.task_type === 'open_banking_survey' || taskData.task_type === 'open_banking') {
       type = 'open_banking';
     }
     
-    console.log(`[TaskPage] Processed task type: ${taskData.task_type} → ${type}`, {
-      originalType: taskData.task_type,
-      mappedType: type,
-      timestamp: new Date().toISOString()
-    });
+    // Extract company information
+    const extractedName = extractCompanyNameFromTitle(taskData.title);
     
-    setTaskContentType(type);
+    // Set display name from metadata or fallback to extracted name
+    const displayNameValue = taskData?.metadata?.company?.name || 
+                            taskData?.metadata?.companyName || 
+                            extractedName || 
+                            'Unknown Company';
     
-    // Check if the task is already submitted
-    if (taskData.status === 'submitted') {
-      setIsSubmitted(true);
-      
-      // Set file ID if available in metadata
-      if (type === 'kyb' && taskData.metadata?.kybFormFile) {
-        setFileId(taskData.metadata.kybFormFile);
-      } else if (type === 'card' && taskData.metadata?.cardFormFile) {
-        setFileId(taskData.metadata.cardFormFile);
-      } else if (type === 'ky3p' && taskData.metadata?.securityFormFile) {
-        setFileId(taskData.metadata.securityFormFile);
-      } else if (type === 'open_banking' && taskData.metadata?.openBankingFormFile) {
-        setFileId(taskData.metadata.openBankingFormFile);
-      }
-    }
-    
-    // Set the display name based on metadata or extract from title
-    let companyDisplayName = '';
-    if (taskData.metadata?.companyName) {
-      companyDisplayName = taskData.metadata.companyName;
-    } else if (taskData.metadata?.company?.name) {
-      companyDisplayName = taskData.metadata.company.name;
-    } else {
-      // Extract company name from title if possible (e.g., "KY3P Assessment: CompanyName")
-      const titleMatch = taskData.title.match(/:\s*([^:]+)$/);
-      if (titleMatch && titleMatch[1]) {
-        companyDisplayName = titleMatch[1].trim();
-      } else {
-        companyDisplayName = 'Company'; // Generic fallback
-      }
-    }
-    
-    setDisplayName(companyDisplayName);
-    console.log(`[TaskPage] Company name set for ${type} form`, {
-      displayNameValue: companyDisplayName,
-      extractedName: companyDisplayName,
-      metadata: taskData.metadata
-    });
-  }, []);
+    // Return the processed values
+    return {
+      type,
+      extractedName,
+      displayNameValue,
+      shouldRedirect: type === 'unknown',
+      isSubmitted: !!(
+        taskData.status === 'submitted' || 
+        (type === 'kyb' && taskData.metadata?.kybFormFile) ||
+        (type === 'card' && taskData.metadata?.cardFormFile) ||
+        (type === 'security' && taskData.metadata?.securityFormFile) ||
+        (type === 'open_banking' && taskData.metadata?.openBankingFormFile)
+      ),
+      fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
+              type === 'card' ? taskData.metadata?.cardFormFile :
+              type === 'security' ? taskData.metadata?.securityFormFile :
+              type === 'open_banking' ? taskData.metadata?.openBankingFormFile : null
+    };
+  }, [extractCompanyNameFromTitle]);
   
-  // Handle URL query parameters for mode
-  useEffect(() => {
-    // Parse URL query parameters
-    const queryParams = new URLSearchParams(window.location.search);
-    const mode = queryParams.get('mode');
-    
-    // Check if we're in read-only mode
-    if (mode === 'readonly') {
-      setIsReadOnly(true);
-      setIsSubmitted(true); // Force submitted state for read-only view
-      console.log('[TaskPage] Setting read-only mode');
-    }
+  // Function to safely update task progress
+  const updateTaskProgress = useCallback((progress: number, task: Task | null) => {
+    if (!task) return;
+    setTask({
+      ...task,
+      progress
+    });
   }, []);
 
-  // Fetch task data based on slug
+  // Set task state from taskData when it changes
   useEffect(() => {
-    const taskSlug = params.taskSlug;
+    if (taskData) {
+      setTask(taskData);
+    }
+  }, [taskData]);
+
+  // Process task data once loaded - using useEffect properly
+  useEffect(() => {
+    if (!task) return;
     
-    // Extract task ID from slug
-    const taskIdMatch = taskSlug?.match(/\d+/);
-    if (!taskIdMatch) {
-      setError("Invalid task identifier");
-      setLoading(false);
-      return;
+    const processedData = processTaskData(task);
+    if (!processedData) return;
+    
+    // Update state variables safely in useEffect
+    setTaskContentType(processedData.type);
+    setDerivedCompanyName(processedData.extractedName);
+    setDisplayName(processedData.displayNameValue);
+    setShouldRedirect(processedData.shouldRedirect);
+    setIsSubmitted(processedData.isSubmitted);
+    
+    if (processedData.fileId) {
+      setFileId(processedData.fileId);
     }
     
-    const taskId = parseInt(taskIdMatch[0], 10);
-    logger.info(`Fetching task data for ID: ${taskId}`);
-    
-    // Set the task ID in user context for proper data isolation
-    // This is CRITICAL for ensuring each task only accesses its own data
-    userContext.setContext({
-      taskId: taskId
-    });
-    logger.info(`Set task context: taskId=${taskId}`);
-    
-    fetch(`/api/tasks/${taskId}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Task fetch failed: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        setTask(data);
-        processTaskData(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(`[TaskPage] Error fetching task:`, err);
-        setError(err.message || "Failed to load task");
-        setLoading(false);
-      });
-  }, [params.taskSlug, processTaskData]);
+    // Log for debugging
+    if (processedData.shouldRedirect) {
+      console.log('[TaskPage] Unknown task type, redirecting to task center:', task.task_type);
+    }
+  }, [task, processTaskData]);
   
-  // Advanced loading state - determine if we're loading task info or form content
-  if (loading) {
-    // Check if we can determine early that the task is submitted/read-only
-    const isTaskReadOnly = task?.status === 'submitted' || task?.status === 'completed' || isReadOnly;
-    
+  // Handle error states
+  useEffect(() => {
+    if (error) {
+      console.error('[TaskPage] Task fetch error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load task details. Please try again or contact support.",
+        variant: "destructive",
+      });
+      
+      // Redirect back to task center after short delay
+      const timer = setTimeout(() => {
+        navigate('/task-center');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, navigate, toast]);
+  
+  // Handle redirection for unknown task types
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate('/task-center');
+    }
+  }, [shouldRedirect, navigate]);
+  
+  // Show loading spinner while fetching data
+  if (isLoading) {
     return (
       <DashboardLayout>
-        <PageTemplate>
-          {task ? (
-            // If we have the task data but still loading form, show appropriate skeleton
-            <div className="w-full mx-auto">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex items-start py-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-              </div>
-              <FormSkeletonWithMode readOnly={isTaskReadOnly} />
+        <PageTemplate className="container">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+  
+  // Show loading spinner for unknown task types while redirecting
+  if (shouldRedirect) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="container">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+  
+  // KYB Task Form Rendering
+  if (taskContentType === 'kyb' && task) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as TXT
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
-          ) : (
-            // If we don't have task data yet, show simpler loading spinner
-            <div className="flex items-center justify-center h-96">
-              <div className="text-center">
-                <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent mx-auto mb-4"></div>
-                <h3 className="text-lg font-medium">Loading task...</h3>
-              </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              {/* Universal form component */}
+              <UniversalForm
+                taskId={task.id}
+                taskType="kyb"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
+                }}
+                onSubmit={(formData) => {
+                  toast({
+                    title: "Submitting KYB Form",
+                    description: "Please wait while we process your submission...",
+                  });
+
+                  fetch(`/api/kyb/submit/${task.id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ formData })
+                  })
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to save KYB form');
+                      }
+                      return data;
+                    })
+                    .then((result) => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
+                      setFileId(result.fileId);
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+
+                      toast({
+                        title: "Success",
+                        description: "KYB form has been saved successfully.",
+                        variant: "default",
+                      });
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Form submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to save KYB form. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
             </div>
+
+            {showSuccessModal && (
+              <KYBSuccessModal
+                open={showSuccessModal}
+                onOpenChange={(open) => setShowSuccessModal(open)}
+                companyName={displayName}
+              />
+            )}
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Security Assessment Form Rendering
+  if (taskContentType === 'security' && task) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              {/* Universal form for Security Assessment */}
+              <UniversalForm
+                taskId={task.id}
+                taskType="ky3p"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Security Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
+                }}
+                onSubmit={(formData) => {
+                  toast({
+                    title: "Submitting Security Assessment",
+                    description: "Please wait while we process your submission...",
+                  });
+
+                  // Submit the security assessment
+                  fetch(`/api/security/submit/${task.id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ formData })
+                  })
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                      }
+                      return data;
+                    })
+                    .then(() => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+
+                      toast({
+                        title: "Success",
+                        description: "Security assessment has been submitted successfully.",
+                        variant: "default",
+                      });
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Security assessment submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to submit security assessment. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
+            </div>
+          </div>
+          
+          {showSuccessModal && (
+            <SecuritySuccessModal
+              open={showSuccessModal}
+              onOpenChange={(open) => setShowSuccessModal(open)}
+              companyName={displayName}
+            />
           )}
         </PageTemplate>
       </DashboardLayout>
     );
   }
   
-  // Show error state
-  if (error) {
+  // CARD (1033) Assessment Form Rendering
+  if (taskContentType === 'card' && task) {
     return (
       <DashboardLayout>
-        <PageTemplate>
-          <div className="max-w-3xl mx-auto my-12">
-            <Alert variant="destructive">
-              <AlertTitle>Error Loading Task</AlertTitle>
-              <AlertDescription>
-                {error}
-              </AlertDescription>
-            </Alert>
-            <div className="mt-6">
-              <Button onClick={handleBackClick}>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Task Center
               </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as Text
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            {selectedMethod === 'upload' && !showForm ? (
+              <DocumentUploadWizard
+                companyName={derivedCompanyName}
+                onComplete={() => {
+                  setShowForm(true);
+                }}
+              />
+            ) : (selectedMethod === 'manual' || showForm) ? (
+              <UniversalForm
+                taskId={task.id}
+                taskType="card"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update local state immediately for responsive UI
+                  updateTaskProgress(progress, task);
+                  
+                  console.log('[TaskPage] Card Form progress updated:', progress);
+                  
+                  // Send the progress to the server to update the task
+                  fetch(`/api/tasks/${task.id}/update-progress`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      progress,
+                      calculateFromForm: false, // We're explicitly setting progress
+                      forceStatusUpdate: true // Force the task status to update
+                    })
+                  })
+                  .then(response => {
+                    if (!response.ok) {
+                      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                  })
+                  .then(result => {
+                    console.log('[TaskPage] Task progress updated on server:', result);
+                    
+                    // Force refetch of tasks to update task center
+                    fetch('/api/tasks')
+                      .then(response => response.json())
+                      .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                  })
+                  .catch(error => {
+                    console.error('[TaskPage] Failed to update task progress:', error);
+                    
+                    // Revert local state on error if we have a valid task
+                    if (task) {
+                      updateTaskProgress(task.progress, task);
+                    }
+                  });
+                }}
+                onSubmit={(formData) => {
+                  fetch('/api/card/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                      formData,
+                      taskId: task.id
+                    })
+                  })
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to save compliance form');
+                      }
+                      return data;
+                    })
+                    .then((result) => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
+                      setFileId(result.fileId);
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+
+                      toast({
+                        title: "Success",
+                        description: result.warnings?.length
+                          ? "Compliance form has been saved successfully with some updates to existing data."
+                          : "Compliance form has been saved successfully.",
+                        variant: "default",
+                      });
+
+                      if (result.warnings?.length) {
+                        result.warnings.forEach((warning: string) => {
+                          console.warn('[Card Form] Warning:', warning);
+                        });
+                      }
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Form submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to submit compliance form. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
+            ) : (
+              // Method selection screen
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h2 className="text-2xl font-semibold mb-4">Open Banking (1033) Survey: {displayName}</h2>
+                <p className="text-muted-foreground mb-6">
+                  Please select how you would like to provide the Section 1033 compliance information for {displayName}.
+                </p>
+                
+                <CardMethodChoice 
+                  taskId={task.id}
+                  onMethodSelect={(method) => setSelectedMethod(method)} 
+                  companyName={displayName}
+                />
+              </div>
+            )}
           </div>
         </PageTemplate>
       </DashboardLayout>
     );
   }
-  
-  // Show not found state if no task data
-  if (!task) {
-    return (
-      <DashboardLayout>
-        <PageTemplate>
-          <div className="max-w-3xl mx-auto my-12 text-center">
-            <h2 className="text-2xl font-bold mb-4">Task Not Found</h2>
-            <p className="text-muted-foreground mb-6">
-              We couldn't find the task you're looking for. It may have been removed or you
-              don't have access to it.
-            </p>
-            <Button onClick={handleBackClick}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Task Center
-            </Button>
-          </div>
-        </PageTemplate>
-      </DashboardLayout>
-    );
-  }
-  
-  // Render appropriate form based on task content type
-  
-  // KYB Task Form Rendering
-  if (taskContentType === 'kyb' && task) {
-    return (
-      <>
-        {/* Form submission event listener */}
-        <FormSubmissionListener 
-          taskId={task.id}
-          formType="kyb"
-          onSuccess={handleFormSubmissionSuccess}
-          onError={handleFormSubmissionError}
-          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
-        />
-        
-        {/* Success modal - Using enhanced UniversalSuccessModal for better dynamic content */}
-        <UniversalSuccessModal
-          open={showSuccessModal && submittedFormType === 'kyb'}
-          onOpenChange={(open) => setShowSuccessModal(open)}
-          taskType="kyb"
-          companyName={displayName}
-          submissionResult={{
-            fileId: fileId || undefined,
-            fileName: submissionResult.fileName,
-            taskId: task?.id,
-            taskStatus: 'submitted',
-            unlockedTabs: submissionResult.unlockedTabs,
-            completedActions: submissionResult.completedActions || []
-          }}
-        />
-        
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-                {isSubmitted && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
-                )}
-              </div>
-            </div>
-            
-            <FormWithLoadingWrapper
-              taskId={task.id}
-              taskType="kyb"
-              task={task}
-              companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted}
-              onProgress={updateTaskProgress}
-              onSubmit={async (data) => {
-                console.log('[TaskPage] KYB form submission handler called', { taskId: task.id });
-                try {
-                  // Get company ID from task metadata if available
-                  const companyId = task.company_id || task.metadata?.company?.id;
-                  
-                  // Use the submitForm API function to submit the form
-                  const result = await submitFormTransactional(task.id, 'kyb', data, companyId);
-                  
-                  // We no longer immediately show the success modal here.
-                  // Instead, we now wait for the WebSocket event in FormSubmissionListener
-                  // which will call handleFormSubmissionSuccess when the server finishes processing
-                  // This ensures tabs are properly unlocked before showing the modal
-                  
-                  console.log('[TaskPage] KYB form submission API call completed successfully', result);
-                  console.log('[TaskPage] Waiting for WebSocket confirmation of tab unlocking before showing success modal');
-                } catch (error) {
-                  console.error('[TaskPage] KYB form submission error:', error);
-                  
-                  // Dispatch error event
-                  const event = new CustomEvent('form-submission-error', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'kyb',
-                      error: error instanceof Error ? error.message : String(error)
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  // Show toast
-                  toast({
-                    title: "Form Submission Failed",
-                    description: error instanceof Error ? error.message : String(error),
-                    variant: "destructive"
-                  });
-                }
-              }}
-            />
-          </PageTemplate>
-        </DashboardLayout>
-      </>
-    );
-  }
-  
-  // Card Form Rendering
-  if (taskContentType === 'card' && task) {
-    return (
-      <>
-        {/* Form submission event listener */}
-        <FormSubmissionListener 
-          taskId={task.id}
-          formType="card"
-          onSuccess={handleFormSubmissionSuccess}
-          onError={handleFormSubmissionError}
-          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
-        />
-        
-        {/* Success modal - only show when this specific form type is submitted */}
-        <SubmissionSuccessModal
-          open={showSuccessModal && submittedFormType === 'card'}
-          onClose={() => setShowSuccessModal(false)}
-          title="Card Industry Questionnaire Submitted"
-          actions={submissionResult.completedActions || []}
-          returnPath="/task-center"
-          returnLabel="Back to Task Center"
-          onDownload={handleDownload}
-        />
-        
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-                {isSubmitted && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
-                )}
-              </div>
-            </div>
-            
-            <FormWithLoadingWrapper
-              taskId={task.id}
-              taskType="card"
-              task={task}
-              companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted}
-              onProgress={updateTaskProgress}
-              onSubmit={async (data) => {
-                console.log('[TaskPage] Card form submission handler called', { taskId: task.id });
-                try {
-                  // Get company ID from task metadata if available
-                  const companyId = task.company_id || task.metadata?.company?.id;
-                  
-                  // Use the submitForm API function to submit the form
-                  const result = await submitFormTransactional(task.id, 'card', data, companyId);
-                  
-                  // Dispatch a custom event to notify the form submission listener
-                  const event = new CustomEvent('form-submission-success', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'card',
-                      result,
-                      fileId: result.fileId,
-                      actions: result.completedActions || []
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  console.log('[TaskPage] Card form submission completed successfully', result);
-                } catch (error) {
-                  console.error('[TaskPage] Card form submission error:', error);
-                  
-                  // Dispatch error event
-                  const event = new CustomEvent('form-submission-error', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'card',
-                      error: error instanceof Error ? error.message : String(error)
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  // Show toast
-                  toast({
-                    title: "Form Submission Failed",
-                    description: error instanceof Error ? error.message : String(error),
-                    variant: "destructive"
-                  });
-                }
-              }}
-            />
-          </PageTemplate>
-        </DashboardLayout>
-      </>
-    );
-  }
-  
-  // Security Assessment (KY3P) Form Rendering
-  if (taskContentType === 'ky3p' && task) {
-    return (
-      <>
-        {/* Form submission event listener */}
-        <FormSubmissionListener 
-          taskId={task.id}
-          formType="ky3p"
-          onSuccess={handleFormSubmissionSuccess}
-          onError={handleFormSubmissionError}
-          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
-        />
-        
-        {/* Success modal - only show when this specific form type is submitted */}
-        <SubmissionSuccessModal
-          open={showSuccessModal && submittedFormType === 'ky3p'}
-          onClose={() => setShowSuccessModal(false)}
-          title="KY3P Security Assessment Submitted"
-          actions={submissionResult.completedActions || []}
-          returnPath="/task-center"
-          returnLabel="Back to Task Center"
-          onDownload={handleDownload}
-        />
-        
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-                {isSubmitted && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
-                )}
-              </div>
-            </div>
-            
-            <FormWithLoadingWrapper
-              taskId={task.id}
-              taskType="ky3p"
-              task={task}
-              companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted}
-              onProgress={updateTaskProgress}
-              onSubmit={async (data) => {
-                console.log('[TaskPage] KY3P form submission handler called', { taskId: task.id });
-                try {
-                  // Get company ID from task metadata if available
-                  const companyId = task.company_id || task.metadata?.company?.id;
-                  
-                  // Use the submitForm API function to submit the form
-                  const result = await submitFormTransactional(task.id, 'ky3p', data, companyId);
-                  
-                  // Dispatch a custom event to notify the form submission listener
-                  const event = new CustomEvent('form-submission-success', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'ky3p',
-                      result,
-                      fileId: result.fileId,
-                      actions: result.completedActions || []
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  console.log('[TaskPage] KY3P form submission completed successfully', result);
-                } catch (error) {
-                  console.error('[TaskPage] KY3P form submission error:', error);
-                  
-                  // Dispatch error event
-                  const event = new CustomEvent('form-submission-error', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'ky3p',
-                      error: error instanceof Error ? error.message : String(error)
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  // Show toast
-                  toast({
-                    title: "Form Submission Failed",
-                    description: error instanceof Error ? error.message : String(error),
-                    variant: "destructive"
-                  });
-                }
-              }}
-            />
-          </PageTemplate>
-        </DashboardLayout>
-      </>
-    );
-  }
-  
+
   // Open Banking Survey Form Rendering
   if (taskContentType === 'open_banking' && task) {
     return (
-      <>
-        {/* Form submission event listener */}
-        <FormSubmissionListener 
-          taskId={task.id}
-          formType="open_banking"
-          onSuccess={handleFormSubmissionSuccess}
-          onError={handleFormSubmissionError}
-          showToasts={true} // Enable toasts alongside modal - deduplication prevents duplicates
-        />
-        
-        {/* Success modal - only show when this specific form type is submitted */}
-        <SubmissionSuccessModal
-          open={showSuccessModal && submittedFormType === 'open_banking'}
-          onClose={() => setShowSuccessModal(false)}
-          title="Open Banking Survey Submitted"
-          actions={submissionResult.completedActions || []}
-          returnPath="/task-center"
-          returnLabel="Back to Task Center"
-          onDownload={handleDownload}
-        />
-        
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-                {isSubmitted && (
-                  <EnhancedTaskDownloadMenu taskId={task.id} fileId={fileId} onDownload={handleDownload} taskType={taskContentType} onFileIdUpdate={setFileId} />
-                )}
-              </div>
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as TXT
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
-            
-            <FormWithLoadingWrapper
-              taskId={task.id}
-              taskType="open_banking"
-              task={task}
-              companyName={displayName}
-              isReadOnly={isReadOnly || isSubmitted}
-              onProgress={updateTaskProgress}
-              onSubmit={async (data) => {
-                console.log('[TaskPage] Open Banking form submission handler called', { taskId: task.id });
-                try {
-                  // Get company ID from task metadata if available
-                  const companyId = task.company_id || task.metadata?.company?.id;
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              {/* Universal form for Open Banking Survey */}
+              <UniversalForm
+                taskId={task.id}
+                taskType="open_banking"
+                taskStatus={task.status}
+                companyName={displayName}
+                initialData={task.savedFormData}
+                onSubmit={(formData) => {
+                  console.log('[TaskPage] Open Banking Survey submitted via playground');
                   
-                  // Use the submitForm API function to submit the form
-                  const result = await submitFormTransactional(task.id, 'open_banking', data, companyId);
+                  // Update UI state
+                  setIsSubmitted(true);
                   
-                  // Dispatch a custom event to notify the form submission listener
-                  const event = new CustomEvent('form-submission-success', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'open_banking',
-                      result,
-                      fileId: result.fileId,
-                      actions: result.completedActions || []
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  console.log('[TaskPage] Open Banking form submission completed successfully', result);
-                } catch (error) {
-                  console.error('[TaskPage] Open Banking form submission error:', error);
-                  
-                  // Dispatch error event
-                  const event = new CustomEvent('form-submission-error', {
-                    detail: {
-                      taskId: task.id,
-                      formType: 'open_banking',
-                      error: error instanceof Error ? error.message : String(error)
-                    }
-                  });
-                  document.dispatchEvent(event);
-                  
-                  // Show toast
+                  // Force refetch of tasks to update task center
+                  fetch('/api/tasks')
+                    .then(response => response.json())
+                    .catch(err => console.warn('[TaskPage] Error refreshing task list:', err));
+                    
+                  // Show success toast
                   toast({
-                    title: "Form Submission Failed",
-                    description: error instanceof Error ? error.message : String(error),
-                    variant: "destructive"
+                    title: "Success",
+                    description: "Open Banking Survey has been submitted successfully.",
+                    variant: "default",
                   });
-                }
-              }}
+                }}
+              />
+            </div>
+          </div>
+          
+          {/* Show success modal if needed */}
+          {showSuccessModal && (
+            <SecuritySuccessModal
+              open={showSuccessModal}
+              onOpenChange={(open) => setShowSuccessModal(open)}
+              companyName={displayName}
+              description="The Open Banking Survey has been successfully submitted and processed."
             />
-          </PageTemplate>
-        </DashboardLayout>
-      </>
+          )}
+        </PageTemplate>
+      </DashboardLayout>
     );
   }
-  
-  // Default case: unknown task type
+
+  // Fallback handling - this should ideally never happen but provides graceful degradation
   return (
     <DashboardLayout>
-      <PageTemplate>
-        <div className="max-w-3xl mx-auto my-12">
-          <Alert>
-            <AlertTitle>Unsupported Task Type</AlertTitle>
-            <AlertDescription>
-              This task type ({task.task_type}) is not supported in the current view.
-              Please contact support if you believe this is an error.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-6">
+      <PageTemplate className="container">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">Task Not Available</h2>
+            <p className="text-muted-foreground mb-6">
+              This task is no longer available or cannot be displayed.
+            </p>
             <Button onClick={handleBackClick}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Task Center
             </Button>
           </div>
