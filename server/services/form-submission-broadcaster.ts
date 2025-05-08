@@ -48,24 +48,39 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
   
   try {
     // 1. Use our enhanced WebSocket service for form submission events
+    let websocketSuccess = false;
+    
     try {
-      // First try the enhanced WebSocket service
-      WebSocketService.broadcastFormSubmissionCompleted(taskId, formType, companyId);
-      channels.push('form_submission_completed');
+      // First try the enhanced WebSocket service if it exists
+      // Using JavaScript-style access pattern to handle TypeScript compatibility issues
+      const broadcastFn = WebSocketService['broadcastFormSubmissionCompleted'];
       
-      logger.debug(`[Form Broadcaster] Sent message using enhanced WebSocket service`, {
-        taskId,
-        formType,
-        companyId
-      });
+      if (typeof broadcastFn === 'function') {
+        broadcastFn(taskId, formType, companyId);
+        channels.push('form_submission_completed');
+        websocketSuccess = true;
+        
+        logger.debug(`[Form Broadcaster] Sent message using enhanced WebSocket service`, {
+          taskId,
+          formType,
+          companyId
+        });
+      } else {
+        logger.debug(`[Form Broadcaster] Enhanced WebSocket service function not available, falling back`, {
+          taskId,
+          formType
+        });
+      }
     } catch (enhancedError) {
       logger.warn(`[Form Broadcaster] Error using enhanced WebSocket service, falling back to unified broadcast`, {
         error: enhancedError instanceof Error ? enhancedError.message : 'Unknown error',
         taskId,
         formType
       });
-      
-      // Fall back to unified broadcast system
+    }
+    
+    // If enhanced WebSocket service didn't work, try unified broadcast system
+    if (!websocketSuccess) {
       try {
         unifiedBroadcast('form_submission_completed', {
           taskId,
@@ -78,6 +93,7 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
           source: data.source || 'form-submission-broadcaster'
         });
         channels.push('form_submission_completed');
+        websocketSuccess = true;
         
         logger.debug(`[Form Broadcaster] Sent message using unified broadcast service`, {
           taskId,
@@ -104,6 +120,7 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
             source: data.source || 'form-submission-broadcaster'
           });
           channels.push('form_submission');
+          websocketSuccess = true;
           
           logger.debug(`[Form Broadcaster] Sent message using legacy broadcast`, {
             taskId,
@@ -120,33 +137,47 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
     }
     
     // 2. Broadcast task update for dashboard updates
+    let taskUpdateSuccess = false;
+    
     try {
-      // Try enhanced WebSocket service first
-      WebSocketService.broadcastTaskUpdate({
-        id: taskId,
-        status,
-        progress: data.progress || 100,
-        metadata: {
-          ...(data.metadata || {}),
-          lastUpdated: timestamp,
-          submissionDate: data.submissionDate || timestamp,
-          broadcastSource: data.source || 'form-submission-broadcaster'
-        }
-      });
-      channels.push('task_update');
+      // Try enhanced WebSocket service first if it exists
+      const broadcastTaskUpdateFn = WebSocketService['broadcastTaskUpdate'];
       
-      logger.debug(`[Form Broadcaster] Sent task update using enhanced WebSocket service`, {
-        taskId,
-        formType
-      });
+      if (typeof broadcastTaskUpdateFn === 'function') {
+        broadcastTaskUpdateFn({
+          id: taskId,
+          status,
+          progress: data.progress || 100,
+          metadata: {
+            ...(data.metadata || {}),
+            lastUpdated: timestamp,
+            submissionDate: data.submissionDate || timestamp,
+            broadcastSource: data.source || 'form-submission-broadcaster'
+          }
+        });
+        channels.push('task_update');
+        taskUpdateSuccess = true;
+        
+        logger.debug(`[Form Broadcaster] Sent task update using enhanced WebSocket service`, {
+          taskId,
+          formType
+        });
+      } else {
+        logger.debug(`[Form Broadcaster] Enhanced WebSocket service task update function not available, falling back`, {
+          taskId,
+          formType
+        });
+      }
     } catch (enhancedError) {
       logger.warn(`[Form Broadcaster] Error using enhanced WebSocket for task update, falling back to unified`, {
         error: enhancedError instanceof Error ? enhancedError.message : 'Unknown error',
         taskId,
         formType
       });
-      
-      // Fall back to unified task update
+    }
+    
+    // If enhanced task update didn't work, fall back to unified broadcast
+    if (!taskUpdateSuccess) {
       try {
         unifiedBroadcast('task_updated', {
           id: taskId,
@@ -160,6 +191,7 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
           }
         });
         channels.push('task_updated');
+        taskUpdateSuccess = true;
         
         logger.debug(`[Form Broadcaster] Sent task update using unified broadcast service`, {
           taskId,
