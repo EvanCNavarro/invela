@@ -112,22 +112,39 @@ export function ClearFieldsButton({
       
       // CRITICAL FIX: Set window._lastClearOperation to prevent race conditions
       try {
-        // Calculate a block expiration 30 seconds in the future
-        const blockExpiration = now + 30000; // 30 seconds
+        // Calculate a block expiration 60 seconds in the future (increased from 30 for better reliability)
+        const blockExpiration = now + 60000; // 60 seconds
         
+        // Track operation in a global variable to ensure all components respect it
         window._lastClearOperation = {
           taskId,
           timestamp: now,
           formType: taskType,
-          blockExpiration // Add explicit expiration timestamp
+          blockExpiration, // Add explicit expiration timestamp
+          operationId     // Add operation ID for tracking
         };
+        
+        // Also set a localStorage backup in case the page reloads during a clear operation
+        try {
+          localStorage.setItem('lastClearOperation', JSON.stringify({
+            taskId,
+            timestamp: now,
+            formType: taskType, 
+            blockExpiration,
+            operationId
+          }));
+        } catch (localStorageError) {
+          // Non-critical error, just log it
+          logger.warn(`[ClearFieldsButton][${operationId}] Failed to store backup clear operation in localStorage`);
+        }
         
         logger.info(`[ClearFieldsButton][${operationId}] Set window._lastClearOperation to prevent race condition`, {
           taskId,
           formType: taskType,
           timestamp: new Date().toISOString(),
           blockExpiresAt: new Date(blockExpiration).toISOString(),
-          blockDurationMs: 30000
+          blockDurationMs: 60000,
+          hasLocalStorageBackup: true
         });
       } catch (winError) {
         logger.warn(`[ClearFieldsButton][${operationId}] Error setting window._lastClearOperation:`, {

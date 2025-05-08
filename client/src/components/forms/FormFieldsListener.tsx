@@ -179,12 +179,65 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
             }
             
             // Call the onFieldsCleared callback if provided
+            // CRITICAL FIX: Before calling onFieldsCleared, ensure we set window._lastClearOperation
+            // to prevent this clear operation from being immediately followed by a server refresh
+            try {
+              const now = Date.now();
+              const blockExpiration = now + 60000; // 60 seconds
+              
+              // Update window._lastClearOperation with the information from the websocket event
+              window._lastClearOperation = {
+                taskId,
+                timestamp: now,
+                formType,
+                blockExpiration,
+                // Use event operation ID if available, otherwise generate one
+                operationId: (payload.metadata?.operationId || `ws_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
+              };
+              
+              // Store backup in localStorage
+              try {
+                localStorage.setItem('lastClearOperation', JSON.stringify({
+                  taskId,
+                  timestamp: now,
+                  formType,
+                  blockExpiration,
+                  // Use event operation ID if available, otherwise generate one
+                  operationId: (payload.metadata?.operationId || `ws_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
+                }));
+              } catch (localStorageError) {
+                // Non-critical error, just log it
+                logger.warn(`[FormFieldsListener] Failed to store backup clear operation in localStorage`);
+              }
+              
+              logger.info(`[DIAGNOSTIC] Set window._lastClearOperation to prevent race conditions`, {
+                taskId,
+                formType,
+                timestamp: new Date().toISOString(),
+                blockExpiresAt: new Date(blockExpiration).toISOString()
+              });
+            } catch (winError) {
+              logger.warn(`[DIAGNOSTIC] Error setting window._lastClearOperation:`, {
+                error: winError instanceof Error ? winError.message : String(winError)
+              });
+            }
+            
+            // Now call the callback with the enhanced event
             if (onFieldsCleared) {
               logger.info(`[DIAGNOSTIC] Calling onFieldsCleared callback for task ${taskId}`, {
                 hasPayload: !!fieldsEvent.payload,
-                payloadKeys: Object.keys(fieldsEvent.payload || {})
+                payloadKeys: Object.keys(fieldsEvent.payload || {}),
+                // Add enhanced details to the log
+                clearSections: !!payload.clearSections,
+                resetUI: !!payload.resetUI, 
+                hasMetadata: !!payload.metadata,
+                timestamp: new Date().toISOString()
               });
-              onFieldsCleared(fieldsEvent);
+              
+              // Force a slight delay before calling the callback to allow state updates to settle
+              setTimeout(() => {
+                onFieldsCleared(fieldsEvent);
+              }, 50);
             } else {
               logger.warn(`[DIAGNOSTIC] No onFieldsCleared callback provided for task ${taskId}`);
             }
