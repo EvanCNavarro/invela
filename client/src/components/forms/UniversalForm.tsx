@@ -361,6 +361,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     return isReadOnly || task?.status === 'submitted' || task?.status === 'completed';
   }, [isReadOnly, task?.status]);
   
+  // Determine if all data has loaded
+  const hasLoaded = useMemo(() => {
+    return dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
+  }, [dataHasLoaded, isDataLoading, loading, fields.length, sections.length]);
+  
   // Use our new form data manager hook to handle form data
   const {
     form,
@@ -380,11 +385,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.debug(`Form data changed: ${Object.keys(data).length} fields`);
     }
   });
-    
-  // Determine if all data has loaded - must be defined after dataHasLoaded is available
-  const hasLoaded = useMemo(() => {
-    return dataHasLoaded && !isDataLoading && !loading && fields.length > 0 && sections.length > 0;
-  }, [dataHasLoaded, isDataLoading, loading, fields.length, sections.length]);
   
   // Make sure agreement_confirmation is set to false by default
   // and sync the agreementChecked React state with form value
