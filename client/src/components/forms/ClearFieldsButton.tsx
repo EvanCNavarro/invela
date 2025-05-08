@@ -13,15 +13,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
+import { useLocation } from 'wouter';
+import { useQueryClient } from '@tanstack/react-query';
 
 const logger = getLogger('ClearFieldsButton');
 
-// Track the last clear operation to prevent duplicates
-const lastClearOperation = {
-  taskId: 0,
-  timestamp: 0,
-  operationId: ''
-};
+// Simple tracking to prevent spamming the button
+let lastClearTime = 0;
 
 interface ClearFieldsButtonProps {
   taskId: number;
@@ -53,11 +51,19 @@ export function ClearFieldsButton({
     return `clear_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }, []);
   
+  // Add hooks for navigation and query cache management
+  const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  
   const handleClearFields = async () => {
-    // Generate a unique operation ID for tracking
+    // Simple tracking ID for logs
     const operationId = generateOperationId();
     
     try {
+      // Close dialog and show loading state
+      setIsOpen(false);
+      setIsClearing(true);
+      
       // Map taskType to URL-friendly form type for API consistency
       let formTypeForApi = taskType;
       if (taskType === 'company_kyb') {
@@ -66,214 +72,89 @@ export function ClearFieldsButton({
         formTypeForApi = 'open-banking';
       }
       
-      // Log the start of the operation
-      logger.info(`[ClearFieldsButton] Starting clear operation for ${taskType} task ${taskId}`, {
-        taskId,
-        taskType,
-        formTypeForApi,
-        operationId,
-        preserveProgress,
-        isFormEditing,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Close dialog and show loading state
-      setIsOpen(false);
-      setIsClearing(true);
-      
-      // Prevent duplicate operations within a short time window
-      const now = Date.now();
-      // Debounce within 3 seconds and same task
-      if (lastClearOperation.taskId === taskId && now - lastClearOperation.timestamp < 3000) {
-        logger.warn(`[ClearFieldsButton] Debouncing duplicate clear operation for task ${taskId}`, {
-          taskId,
-          operationId,
-          lastOperationId: lastClearOperation.operationId,
-          timeSinceLastClear: now - lastClearOperation.timestamp
-        });
-        
-        // No need to actually clear again, just act like we did
-        await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
-        setIsClearing(false);
-        
-        // Show success toast even though we debounced
-        toast({
-          title: 'Success',
-          description: 'Form fields cleared successfully',
-          variant: 'success'
-        });
-        return;
-      }
-      
-      // Update the last clear operation tracking
-      lastClearOperation.taskId = taskId;
-      lastClearOperation.timestamp = now;
-      lastClearOperation.operationId = operationId;
-      
-      // CRITICAL FIX: Set window._lastClearOperation to prevent race conditions
-      try {
-        // Calculate a block expiration 60 seconds in the future (increased from 30 for better reliability)
-        const blockExpiration = now + 60000; // 60 seconds
-        
-        // Track operation in a global variable to ensure all components respect it
-        window._lastClearOperation = {
-          taskId,
-          timestamp: now,
-          formType: taskType,
-          blockExpiration, // Add explicit expiration timestamp
-          operationId     // Add operation ID for tracking
-        };
-        
-        // Also set a localStorage backup in case the page reloads during a clear operation
-        try {
-          localStorage.setItem('lastClearOperation', JSON.stringify({
-            taskId,
-            timestamp: now,
-            formType: taskType, 
-            blockExpiration,
-            operationId
-          }));
-        } catch (localStorageError) {
-          // Non-critical error, just log it
-          logger.warn(`[ClearFieldsButton][${operationId}] Failed to store backup clear operation in localStorage`);
-        }
-        
-        logger.info(`[ClearFieldsButton][${operationId}] Set window._lastClearOperation to prevent race condition`, {
-          taskId,
-          formType: taskType,
-          timestamp: new Date().toISOString(),
-          blockExpiresAt: new Date(blockExpiration).toISOString(),
-          blockDurationMs: 60000,
-          hasLocalStorageBackup: true
-        });
-      } catch (winError) {
-        logger.warn(`[ClearFieldsButton][${operationId}] Error setting window._lastClearOperation:`, {
-          error: winError instanceof Error ? winError.message : String(winError)
-        });
-      }
-      
-      // Show in-progress toast for better user feedback
+      // Show in-progress toast
       toast({
         title: 'Clearing...',
         description: 'Clearing form fields...',
         variant: 'default'
       });
       
-      try {
-        // ENHANCED FIX: Make direct API call with proper cache prevention
-        // Add timestamp query param to prevent stale responses
-        const timestamp = Date.now();
-        const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : '?preserveProgress=false'}&t=${timestamp}`;
-        
-        logger.info(`[ClearFieldsButton][${operationId}] Making direct API call to: ${clearUrl}`, {
-          taskId,
-          formTypeForApi,
-          preserveProgress,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Call parent's onClear FIRST for immediate UI feedback
-        logger.info(`[ClearFieldsButton][${operationId}] Calling onClear for immediate UI reset`);
-        await onClear();
-        
-        // Then make the API call with proper cache busting headers
-        const response = await fetch(clearUrl, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          },
-          body: JSON.stringify({ 
-            preserveProgress,
-            forceUIReset: true,  // CRITICAL: Signal that UI should be forcefully reset
-            timestamp,
-            operationId
-          })
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to clear fields. Server responded with: ${response.status}. ${errorText}`);
-        }
-        
-        // Parse the response
-        const result = await response.json();
-        
-        logger.info(`[ClearFieldsButton][${operationId}] Server response:`, {
-          taskId,
-          success: result.success,
-          status: result.status, 
-          progress: result.progress,
-          operationId
-        });
-        
-        // CRITICAL FIX: Call onClear AGAIN after server response to ensure UI is in sync
-        logger.info(`[ClearFieldsButton][${operationId}] Calling onClear again to ensure UI sync`);
-        await onClear();
-        
-        logger.info(`[ClearFieldsButton] Successfully cleared fields for task ${taskId}`, {
-          taskId,
-          taskType,
-          operationId,
-          serverResponse: result
-        });
-        
-        // Show success toast
-        toast({
-          title: 'Success',
-          description: 'Form fields cleared successfully',
-          variant: 'success'
-        });
-      } catch (apiError) {
-        // Log the API error but still call onClear as fallback
-        logger.error(`[ClearFieldsButton] API error when clearing fields:`, {
-          error: apiError instanceof Error ? apiError.message : String(apiError),
-          taskId,
-          taskType,
-          operationId
-        });
-        
-        // Show API error toast but continue with client-side clearing
-        // Show error toast but continue with client-side clearing
-        toast({
-          title: 'Server Error',
-          description: 'Server error, attempting client-side clear...',
-          variant: 'warning'
-        });
-        
-        // SIMPLIFIED APPROACH: Just call onClear without extra complexity 
-        await onClear();
-        
-        // Show simple success message - we'll adjust our expectations
-        toast({
-          title: 'Fields Cleared',
-          description: 'Form fields cleared successfully.',
-          variant: 'success'
-        });
-      }
-    } catch (error) {
-      // Log error with detailed information
-      logger.error(`[ClearFieldsButton] Error clearing fields for task ${taskId}:`, error, {
+      // SIMPLE APPROACH: Make a direct API call to clear fields
+      const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
+      
+      logger.info(`[ClearFields] Calling API to clear fields: ${clearUrl}`, {
         taskId,
-        taskType,
-        operationId,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : 'UnknownError'
+        formType: taskType,
+        operationId
       });
       
-      // Show error toast with helpful message
+      const response = await fetch(clearUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          preserveProgress,
+          resetUI: true
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+      }
+      
+      // SIMPLIFICATION: Force remove relevant queries from cache
+      const keysToRemove = [
+        `/api/tasks/${taskId}`,
+        `/api/${formTypeForApi}/progress/${taskId}`,
+        `/api/${formTypeForApi.replace('-', '_')}/progress/${taskId}`,
+        `/api/kyb/progress/${taskId}`,
+        `/api/ky3p/progress/${taskId}`,
+        `/api/open-banking/progress/${taskId}`
+      ];
+      
+      logger.info(`[ClearFields] Removing queries from cache`, {
+        keys: keysToRemove,
+        operationId
+      });
+      
+      // Remove cache entries
+      for (const key of keysToRemove) {
+        queryClient.removeQueries({ queryKey: [key] });
+      }
+      
+      // Call the onClear callback to reset form state
+      await onClear();
+      
+      // Success toast
+      toast({
+        title: 'Success',
+        description: 'Form fields cleared successfully',
+        variant: 'success'
+      });
+      
+      // SIMPLIFICATION: Force a redirect to the same page to get fresh data
+      // This is the most reliable way to ensure everything is reset
+      setTimeout(() => {
+        const currentUrl = window.location.pathname;
+        logger.info(`[ClearFields] Redirecting to refresh page: ${currentUrl}`);
+        
+        // Navigate to the same page to force a full re-render and data refetch
+        navigate(currentUrl);
+      }, 300);
+      
+    } catch (error) {
+      // Log error
+      logger.error(`[ClearFields] Error clearing fields:`, error);
+      
+      // Show error toast
       toast({
         title: 'Error',
-        description: error instanceof Error 
-          ? error.message 
-          : "There was an error clearing the form fields. Please try again.",
+        description: error instanceof Error ? error.message : 'Failed to clear fields',
         variant: 'destructive'
       });
     } finally {
-      // Always reset the clearing state
+      // Reset clearing state
       setIsClearing(false);
     }
   };
