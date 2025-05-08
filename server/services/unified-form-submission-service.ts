@@ -765,17 +765,24 @@ async function handleOpenBankingPostSubmission(
     // Generate risk score based on survey responses - random value between 5 and 95
     const riskScore = Math.floor(Math.random() * (95 - 5 + 1)) + 5;
     
-    logger.info('Generated risk score', { 
+    // Calculate risk clusters based on the total risk score
+    // Distribute the risk score across different risk categories
+    // with higher weight on PII Data and Account Data
+    const riskClusters = calculateRiskClusters(riskScore);
+    
+    logger.info('Generated risk score and clusters', { 
       ...obPostLogContext, 
       riskScore,
+      riskClusters,
       timestamp: new Date().toISOString()
     });
     
-    // Update accreditation status and risk score in a single operation
+    // Update accreditation status, risk score, and risk clusters in a single operation
     await trx.update(companies)
       .set({
         accreditation_status: 'APPROVED',
         risk_score: riskScore,
+        risk_clusters: riskClusters,
         updated_at: new Date()
       })
       .where(eq(companies.id, companyId));
@@ -805,6 +812,70 @@ async function handleOpenBankingPostSubmission(
     });
     throw error; // Re-throw to trigger transaction rollback
   }
+}
+
+/**
+ * Calculate risk clusters based on the total risk score
+ * 
+ * This function distributes the risk score across different risk categories
+ * with higher weightage given to PII Data and Account Data categories.
+ * 
+ * @param riskScore The total risk score (0-100)
+ * @returns An object containing risk scores distributed across categories
+ */
+function calculateRiskClusters(riskScore: number): {
+  "PII Data": number,
+  "Account Data": number,
+  "Data Transfers": number,
+  "Certifications Risk": number,
+  "Security Risk": number,
+  "Financial Risk": number
+} {
+  // Base distribution weights for each category
+  const weights = {
+    "PII Data": 0.35,           // 35% of total score
+    "Account Data": 0.30,        // 30% of total score
+    "Data Transfers": 0.10,      // 10% of total score
+    "Certifications Risk": 0.10, // 10% of total score
+    "Security Risk": 0.10,       // 10% of total score
+    "Financial Risk": 0.05       // 5% of total score
+  };
+  
+  // Calculate base values for each category
+  let clusters = {
+    "PII Data": Math.round(riskScore * weights["PII Data"]),
+    "Account Data": Math.round(riskScore * weights["Account Data"]),
+    "Data Transfers": Math.round(riskScore * weights["Data Transfers"]),
+    "Certifications Risk": Math.round(riskScore * weights["Certifications Risk"]),
+    "Security Risk": Math.round(riskScore * weights["Security Risk"]),
+    "Financial Risk": Math.round(riskScore * weights["Financial Risk"])
+  };
+  
+  // Ensure the sum equals the total risk score by adjusting the main categories
+  const sum = Object.values(clusters).reduce((total, value) => total + value, 0);
+  const diff = riskScore - sum;
+  
+  // If there's a difference, adjust the main categories to match the total
+  if (diff !== 0) {
+    // If positive, add to the highest weighted categories
+    // If negative, subtract from them
+    if (diff > 0) {
+      clusters["PII Data"] += Math.ceil(diff * 0.6);
+      clusters["Account Data"] += Math.floor(diff * 0.4);
+    } else {
+      const absDiff = Math.abs(diff);
+      clusters["PII Data"] -= Math.ceil(absDiff * 0.6);
+      clusters["Account Data"] -= Math.floor(absDiff * 0.4);
+    }
+  }
+  
+  // Ensure no negative values
+  for (const key in clusters) {
+    clusters[key as keyof typeof clusters] = 
+      Math.max(0, clusters[key as keyof typeof clusters]);
+  }
+  
+  return clusters;
 }
 
 /**
