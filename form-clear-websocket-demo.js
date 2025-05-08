@@ -11,155 +11,127 @@
  * 3. If you have other tabs/devices open to the same form, they should also clear
  */
 
-(function runDemo() {
-  // Configuration
-  const taskId = 762; // The task ID to clear
-  const formType = 'kyb'; // The form type (kyb, ky3p, open_banking, etc.)
-  const preserveProgress = false; // Whether to preserve progress or reset to 0%
-  
-  // Utility functions
-  function log(message, data = null) {
-    const timestamp = new Date().toISOString();
-    const prefix = `%c[${timestamp}] [FormClearDemo]`;
+(async function() {
+  // Get the current task ID and form type from the URL or page context
+  function getTaskContext() {
+    // Try to get from URL first (most reliable)
+    const urlParams = new URLSearchParams(window.location.search);
+    const taskId = urlParams.get('taskId') || urlParams.get('id');
     
-    if (data !== null) {
-      console.log(prefix, 'color: #4CAF50;', message, data);
+    // If we can't get from URL, check the document for task info
+    if (!taskId) {
+      // Try to find task ID in the page context (this is application specific)
+      const taskIdElement = document.querySelector('[data-task-id]');
+      if (taskIdElement) {
+        return {
+          taskId: taskIdElement.getAttribute('data-task-id'),
+          formType: taskIdElement.getAttribute('data-form-type') || guessFormType()
+        };
+      }
+      
+      // Last resort - ask the user
+      const manualTaskId = prompt("Enter the task ID:");
+      if (manualTaskId) {
+        return {
+          taskId: manualTaskId,
+          formType: guessFormType() || prompt("Enter the form type (kyb, ky3p, open_banking, card):")
+        };
+      }
+      
+      throw new Error("Could not determine task ID");
+    }
+    
+    return {
+      taskId: parseInt(taskId),
+      formType: guessFormType()
+    };
+  }
+  
+  // Try to guess the form type from the URL
+  function guessFormType() {
+    const path = window.location.pathname.toLowerCase();
+    
+    if (path.includes('kyb')) return 'kyb';
+    if (path.includes('ky3p')) return 'ky3p';
+    if (path.includes('open-banking') || path.includes('openbanking')) return 'open_banking';
+    if (path.includes('card')) return 'card';
+    
+    // Default to KYB as the most common form type
+    return 'kyb';
+  }
+  
+  function log(message, data = null) {
+    const styles = "padding: 2px 5px; border-radius: 3px; color: white; background: #2196F3; font-weight: bold;";
+    if (data) {
+      console.log(`%c[FormClearDemo] ${message}`, styles, data);
     } else {
-      console.log(prefix, 'color: #4CAF50;', message);
+      console.log(`%c[FormClearDemo] ${message}`, styles);
     }
   }
   
   function logError(message, error = null) {
-    const timestamp = new Date().toISOString();
-    const prefix = `%c[${timestamp}] [FormClearDemo] ERROR:`;
-    
-    if (error !== null) {
-      console.error(prefix, 'color: #F44336;', message, error);
+    const styles = "padding: 2px 5px; border-radius: 3px; color: white; background: #F44336; font-weight: bold;";
+    if (error) {
+      console.error(`%c[FormClearDemo] ${message}`, styles, error);
     } else {
-      console.error(prefix, 'color: #F44336;', message);
+      console.error(`%c[FormClearDemo] ${message}`, styles);
     }
   }
-
-  // Main function to broadcast form clear
+  
   async function broadcastFormClear() {
     try {
-      log(`Starting form clear broadcast for task ${taskId} (${formType})`);
+      // Get the task context 
+      const { taskId, formType } = getTaskContext();
       
-      const operationId = `demo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      
-      // 1. First make direct API call to clear the form
-      const clearUrl = `/api/${formType}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
-      
-      log(`Calling API to clear fields: ${clearUrl}`);
-      
-      const response = await fetch(clearUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate'
-        },
-        body: JSON.stringify({ 
-          preserveProgress,
-          resetUI: true,
-          clearSections: true,
-          timestamp: Date.now(),
-          operationId
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+      if (!taskId || !formType) {
+        logError("Missing task ID or form type");
+        return;
       }
       
-      const result = await response.json();
-      log(`Clear API response:`, result);
+      log(`Broadcasting clear_fields for task ${taskId} (${formType})`);
       
-      // 2. Now trigger WebSocket broadcast
-      log(`Broadcasting clear fields event via WebSocket`);
-      
-      const broadcastResponse = await fetch(`/api/tasks/${taskId}/broadcast`, {
+      // Use our task broadcast endpoint to send the clear_fields event
+      const response = await fetch(`/api/tasks/${taskId}/broadcast`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           type: 'clear_fields',
           payload: {
-            taskId,
-            formType,
-            preserveProgress,
+            formType: formType,
+            preserveProgress: false,
             resetUI: true,
             clearSections: true,
-            timestamp: new Date().toISOString(),
             metadata: {
-              operationId,
-              source: 'browser_demo',
-              initiatedAt: new Date().toISOString()
+              source: 'browser-demo',
+              timestamp: new Date().toISOString(),
+              operationId: `demo_${Date.now()}`
             }
           }
         })
       });
       
-      if (!broadcastResponse.ok) {
-        throw new Error(`Broadcast failed: ${broadcastResponse.status} ${await broadcastResponse.text()}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to broadcast clear_fields: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
-      const broadcastResult = await broadcastResponse.json();
-      log(`Broadcast response:`, broadcastResult);
+      const result = await response.json();
+      log("Successfully broadcast clear_fields event", result);
       
-      // 3. Add a message for demonstration purposes
-      if (broadcastResult.success) {
-        log(`✅ SUCCESS! WebSocket broadcast sent to ${broadcastResult.clientCount || 'all'} connected clients`);
-        log(`📱 If you have other browsers/tabs open to this form, they should also clear`);
-        log(`🔄 You may need to refresh this page to see the cleared state if automatic update doesn't work`);
-        
-        // Store the operation in window._lastClearOperation to prevent redundant operations
-        window._lastClearOperation = {
-          taskId,
-          timestamp: Date.now(),
-          formType,
-          blockExpiration: Date.now() + 60000, // 60 seconds
-          operationId
-        };
-        
-        // Also store in localStorage for persistence across refreshes
-        try {
-          localStorage.setItem('lastClearOperation', JSON.stringify({
-            taskId,
-            timestamp: Date.now(),
-            formType,
-            blockExpiration: Date.now() + 60000,
-            operationId
-          }));
-        } catch (e) {
-          // Non-critical error
-          logError('Error storing operation info in localStorage', e);
-        }
-      } else {
-        logError('Broadcast appeared successful but returned success: false');
-      }
+      return result;
     } catch (error) {
-      logError('Error in broadcasting form clear', error);
+      logError("Error broadcasting form clear", error);
+      throw error;
     }
   }
-
-  // Check if we're on a form page before proceeding
-  const currentPathname = window.location.pathname;
-  if (!currentPathname.includes('/tasks/') && !currentPathname.includes('/forms/')) {
-    logError('This script should be run from a form page.');
-    return;
+  
+  // Execute the broadcast
+  try {
+    const result = await broadcastFormClear();
+    log("Form clear broadcast complete", result);
+  } catch (error) {
+    logError("Form clear broadcast failed", error);
   }
-  
-  // Explanation of what's happening
-  log('=== Form Clear WebSocket Demo ===');
-  log(`This script will clear the form for task ${taskId} (${formType})`);
-  log(`preserveProgress = ${preserveProgress}`);
-  log('');
-  log('The clear operation will be broadcast to all connected clients');
-  log('This demonstrates the WebSocket-based form clearing solution');
-  log('');
-  
-  // Start the demo
-  broadcastFormClear();
 })();

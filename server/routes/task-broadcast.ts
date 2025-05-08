@@ -5,15 +5,38 @@
  * to all connected WebSocket clients.
  */
 
-import { Router } from 'express';
-import { eq } from 'drizzle-orm';
-import { db } from '@db';
-import { tasks } from '@db/schema';
-import { requireAuth } from '../middleware/auth';
-import { logger } from '../utils/logger';
-import { broadcast } from '../utils/unified-websocket';
+import express, { Request, Response } from 'express';
+import { getWebSocketServer } from '../utils/websocket';
+import getLogger from '../utils/logger';
+import { WebSocket } from 'ws';
 
-const router = Router();
+const router = express.Router();
+const logger = getLogger('TaskBroadcast');
+
+// Define the supported message types for type safety
+export type MessageType = 
+  | 'clear_fields'
+  | 'field_updated'
+  | 'batch_update'
+  | 'task_status_updated'
+  | 'task_progress_updated'
+  | 'form_submission_completed';
+
+interface BroadcastMessage {
+  type: MessageType;
+  payload: {
+    taskId: number;
+    formType?: string;
+    status?: string;
+    progress?: number;
+    metadata?: Record<string, any>;
+    timestamp?: string;
+    preserveProgress?: boolean;
+    resetUI?: boolean;
+    clearSections?: boolean;
+  };
+  timestamp?: string;
+}
 
 /**
  * POST /api/tasks/:taskId/broadcast
@@ -21,85 +44,70 @@ const router = Router();
  * Broadcast a message to all connected clients about a specific task.
  * This is used for operations like form clearing, submission status updates, etc.
  */
-router.post('/api/tasks/:taskId/broadcast', requireAuth, async (req, res) => {
+router.post('/:taskId/broadcast', async (req: Request, Response): Promise<void> => {
   try {
     const taskId = parseInt(req.params.taskId);
+    
+    if (isNaN(taskId)) {
+      logger.error(`Invalid task ID: ${req.params.taskId}`);
+      return res.status(400).json({ success: false, message: 'Invalid task ID' });
+    }
+    
     const { type, payload } = req.body;
     
-    if (isNaN(taskId) || taskId <= 0) {
-      return res.status(400).json({
-        success: false, 
-        message: 'Invalid task ID'
-      });
+    if (!type || !payload) {
+      logger.error('Missing required fields: type or payload');
+      return res.status(400).json({ success: false, message: 'Missing required fields: type or payload' });
     }
     
-    if (!type) {
-      return res.status(400).json({
-        success: false,
-        message: 'Message type is required'
-      });
+    // Ensure the task ID in the payload matches the URL parameter
+    if (payload.taskId !== taskId) {
+      logger.error(`Task ID mismatch: URL param ${taskId} vs payload ${payload.taskId}`);
+      return res.status(400).json({ success: false, message: 'Task ID mismatch' });
     }
     
-    // Verify the task exists
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
+    // Add any type-specific required fields
+    const typeSpecificFields = getTypeSpecificFields(type, payload, taskId);
     
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: `Task with ID ${taskId} not found`
-      });
-    }
-    
-    // Verify user has access to this task
-    // Note: This check can be skipped if we're sure the requireAuth middleware
-    // is sufficient, but it's good practice to explicitly check task access
-    if (req.user?.company_id !== task.company_id) {
-      logger.warn(`User ${req.user?.id} from company ${req.user?.company_id} attempted to broadcast for task ${taskId} belonging to company ${task.company_id}`);
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to broadcast updates for this task'
-      });
-    }
-    
-    // Normalize the payload format
-    const normalizedPayload = {
-      ...payload,
-      taskId: taskId,
-      timestamp: payload?.timestamp || new Date().toISOString(),
-      source: payload?.source || 'api',
-      // Ensure type-specific fields are present
-      ...getTypeSpecificFields(type, payload, taskId)
+    // Create the broadcast message
+    const message: BroadcastMessage = {
+      type,
+      payload: {
+        ...payload,
+        ...typeSpecificFields,
+        taskId,
+        timestamp: payload.timestamp || new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
     };
     
-    // Log the broadcast attempt
-    logger.info(`Broadcasting ${type} message for task ${taskId}`, {
-      type,
-      taskId,
-      payloadKeys: Object.keys(normalizedPayload),
-      userId: req.user?.id,
-      companyId: req.user?.company_id
+    // Get the WebSocket server instance
+    const wss = getWebSocketServer();
+    
+    if (!wss) {
+      logger.error('WebSocket server not available');
+      return res.status(500).json({ success: false, message: 'WebSocket server not available' });
+    }
+    
+    // Broadcast to all connected clients
+    let clientCount = 0;
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(message));
+        clientCount++;
+      }
     });
     
-    // Broadcast the message via WebSocket
-    await broadcast(type, normalizedPayload);
+    logger.info(`Broadcast ${type} message for task ${taskId} to ${clientCount} clients`);
     
-    // Return success response
-    return res.json({
-      success: true,
-      message: `Successfully broadcast ${type} message for task ${taskId}`,
-      type,
-      taskId,
-      timestamp: normalizedPayload.timestamp
+    return res.json({ 
+      success: true, 
+      message: `Broadcast ${type} message to ${clientCount} clients`,
+      clientCount
     });
   } catch (error) {
-    logger.error('Error broadcasting task message:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error broadcasting message',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    logger.error(`Error broadcasting task message:`, error);
+    return res.status(500).json({ success: false, message: 'Error broadcasting task message' });
   }
 });
 
@@ -112,36 +120,43 @@ router.post('/api/tasks/:taskId/broadcast', requireAuth, async (req, res) => {
  * @returns Additional fields needed for this message type
  */
 function getTypeSpecificFields(
-  type: string,
+  type: MessageType,
   payload: any,
   taskId: number
 ): Record<string, any> {
   switch (type) {
     case 'clear_fields':
+      // For clear_fields, ensure formType is present
+      if (!payload.formType) {
+        logger.warn(`Missing formType for clear_fields message on task ${taskId}`);
+      }
       return {
         formType: payload.formType || 'unknown',
         preserveProgress: !!payload.preserveProgress,
         resetUI: payload.resetUI !== false,
-        clearSections: payload.clearSections !== false,
-        metadata: {
-          ...(payload.metadata || {}),
-          operationId: payload.metadata?.operationId || `server_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-        }
+        clearSections: payload.clearSections !== false
       };
       
-    case 'task_update':
+    case 'task_status_updated':
+      // For task_status_updated, ensure status is present
+      if (!payload.status) {
+        logger.warn(`Missing status for task_status_updated message on task ${taskId}`);
+      }
       return {
-        status: payload.status || 'unknown',
-        progress: typeof payload.progress === 'number' ? payload.progress : null
+        status: payload.status || 'unknown'
       };
       
-    case 'form_submission_complete':
+    case 'task_progress_updated':
+      // For task_progress_updated, ensure progress is present
+      if (payload.progress === undefined) {
+        logger.warn(`Missing progress for task_progress_updated message on task ${taskId}`);
+      }
       return {
-        formType: payload.formType || 'unknown',
-        status: payload.status || 'submitted'
+        progress: payload.progress !== undefined ? payload.progress : -1
       };
       
     default:
+      // For other message types, no specific requirements
       return {};
   }
 }
