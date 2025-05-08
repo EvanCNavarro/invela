@@ -709,7 +709,6 @@ export default function RiskScoreConfigurationPage() {
           <PageHeader
             title="S&P Data Access Risk Score"
             description="Configure your risk assessment priorities for third parties accessing your data"
-            icon={<Gauge className="h-6 w-6 text-primary" />}
             actions={
               <div className="flex items-center space-x-2">
                 <Button variant="outline" onClick={handleReset}>
