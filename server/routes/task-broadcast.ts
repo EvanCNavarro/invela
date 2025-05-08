@@ -7,11 +7,11 @@
 
 import express, { Request, Response } from 'express';
 import { getWebSocketServer } from '../utils/websocket';
-import getLogger from '../utils/logger';
+import { logger } from '../utils/logger';
 import { WebSocket } from 'ws';
 
 const router = express.Router();
-const logger = getLogger('TaskBroadcast');
+const taskLogger = logger.child({ module: 'TaskBroadcast' });
 
 // Define the supported message types for type safety
 export type MessageType = 
@@ -44,25 +44,25 @@ interface BroadcastMessage {
  * Broadcast a message to all connected clients about a specific task.
  * This is used for operations like form clearing, submission status updates, etc.
  */
-router.post('/:taskId/broadcast', async (req: Request, Response): Promise<void> => {
+router.post('/:taskId/broadcast', async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.taskId);
     
     if (isNaN(taskId)) {
-      logger.error(`Invalid task ID: ${req.params.taskId}`);
+      taskLogger.error(`Invalid task ID: ${req.params.taskId}`);
       return res.status(400).json({ success: false, message: 'Invalid task ID' });
     }
     
     const { type, payload } = req.body;
     
     if (!type || !payload) {
-      logger.error('Missing required fields: type or payload');
+      taskLogger.error('Missing required fields: type or payload');
       return res.status(400).json({ success: false, message: 'Missing required fields: type or payload' });
     }
     
     // Ensure the task ID in the payload matches the URL parameter
     if (payload.taskId !== taskId) {
-      logger.error(`Task ID mismatch: URL param ${taskId} vs payload ${payload.taskId}`);
+      taskLogger.error(`Task ID mismatch: URL param ${taskId} vs payload ${payload.taskId}`);
       return res.status(400).json({ success: false, message: 'Task ID mismatch' });
     }
     
@@ -85,7 +85,7 @@ router.post('/:taskId/broadcast', async (req: Request, Response): Promise<void> 
     const wss = getWebSocketServer();
     
     if (!wss) {
-      logger.error('WebSocket server not available');
+      taskLogger.error('WebSocket server not available');
       return res.status(500).json({ success: false, message: 'WebSocket server not available' });
     }
     
@@ -98,7 +98,7 @@ router.post('/:taskId/broadcast', async (req: Request, Response): Promise<void> 
       }
     });
     
-    logger.info(`Broadcast ${type} message for task ${taskId} to ${clientCount} clients`);
+    taskLogger.info(`Broadcast ${type} message for task ${taskId} to ${clientCount} clients`);
     
     return res.json({ 
       success: true, 
@@ -106,7 +106,7 @@ router.post('/:taskId/broadcast', async (req: Request, Response): Promise<void> 
       clientCount
     });
   } catch (error) {
-    logger.error(`Error broadcasting task message:`, error);
+    taskLogger.error(`Error broadcasting task message:`, error);
     return res.status(500).json({ success: false, message: 'Error broadcasting task message' });
   }
 });
@@ -128,7 +128,7 @@ function getTypeSpecificFields(
     case 'clear_fields':
       // For clear_fields, ensure formType is present
       if (!payload.formType) {
-        logger.warn(`Missing formType for clear_fields message on task ${taskId}`);
+        taskLogger.warn(`Missing formType for clear_fields message on task ${taskId}`);
       }
       return {
         formType: payload.formType || 'unknown',
@@ -140,7 +140,7 @@ function getTypeSpecificFields(
     case 'task_status_updated':
       // For task_status_updated, ensure status is present
       if (!payload.status) {
-        logger.warn(`Missing status for task_status_updated message on task ${taskId}`);
+        taskLogger.warn(`Missing status for task_status_updated message on task ${taskId}`);
       }
       return {
         status: payload.status || 'unknown'
@@ -149,7 +149,7 @@ function getTypeSpecificFields(
     case 'task_progress_updated':
       // For task_progress_updated, ensure progress is present
       if (payload.progress === undefined) {
-        logger.warn(`Missing progress for task_progress_updated message on task ${taskId}`);
+        taskLogger.warn(`Missing progress for task_progress_updated message on task ${taskId}`);
       }
       return {
         progress: payload.progress !== undefined ? payload.progress : -1
