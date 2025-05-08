@@ -143,22 +143,38 @@ export function ClearFieldsButton({
       });
       
       try {
-        // Make direct API call to the unified clear fields endpoint
-        // This provides better error handling and diagnostics
-        const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
+        // ENHANCED FIX: Make direct API call with proper cache prevention
+        // Add timestamp query param to prevent stale responses
+        const timestamp = Date.now();
+        const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : '?preserveProgress=false'}&t=${timestamp}`;
         
-        logger.info(`[ClearFieldsButton] Making direct API call to: ${clearUrl}`, {
+        logger.info(`[ClearFieldsButton][${operationId}] Making direct API call to: ${clearUrl}`, {
           taskId,
           formTypeForApi,
           preserveProgress,
-          operationId
+          timestamp: new Date().toISOString()
         });
         
+        // Call parent's onClear FIRST for immediate UI feedback
+        logger.info(`[ClearFieldsButton][${operationId}] Calling onClear for immediate UI reset`);
+        await onClear();
+        
+        // Then make the API call with proper cache busting headers
         const response = await fetch(clearUrl, {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ preserveProgress })
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+          body: JSON.stringify({ 
+            preserveProgress,
+            forceUIReset: true,  // CRITICAL: Signal that UI should be forcefully reset
+            timestamp,
+            operationId
+          })
         });
         
         if (!response.ok) {
@@ -169,24 +185,22 @@ export function ClearFieldsButton({
         // Parse the response
         const result = await response.json();
         
-        logger.info(`[ClearFieldsButton] Server response:`, {
+        logger.info(`[ClearFieldsButton][${operationId}] Server response:`, {
           taskId,
           success: result.success,
-          status: result.status,
+          status: result.status, 
           progress: result.progress,
           operationId
         });
         
-        // Still call parent's onClear for UI reset and consistency
-        const startTime = Date.now();
+        // CRITICAL FIX: Call onClear AGAIN after server response to ensure UI is in sync
+        logger.info(`[ClearFieldsButton][${operationId}] Calling onClear again to ensure UI sync`);
         await onClear();
-        const duration = Date.now() - startTime;
         
-        logger.info(`[ClearFieldsButton] Successfully cleared fields for task ${taskId} in ${duration}ms`, {
+        logger.info(`[ClearFieldsButton] Successfully cleared fields for task ${taskId}`, {
           taskId,
           taskType,
           operationId,
-          durationMs: duration,
           serverResponse: result
         });
         
