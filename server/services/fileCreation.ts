@@ -309,9 +309,20 @@ export async function createTaskFile(
     
     // ─── STEP 2: BUILD CSV ROWS ────────────────────────────────────────
     // Filter for only COMPLETE responses - use case-insensitive comparison
+    // IMPORTANT: We must use case-insensitive comparison because the database stores 'complete'
+    // in lowercase, but some parts of the code might send 'COMPLETE' in uppercase
     const completeResponses = responseData.filter(r => 
       r.status.toLowerCase() === 'complete' || r.status.toUpperCase() === 'COMPLETE'
     );
+    
+    // Enhanced logging to better track the status distribution issue
+    logger.info(`[FileCreation] Filtering responses with status 'complete' (case-insensitive)`, {
+      taskId,
+      formType: normalizedFormType,
+      totalResponses: responseData.length,
+      completeResponses: completeResponses.length,
+      timestamp: new Date().toISOString()
+    });
     
     // Log status distribution for debugging
     const statusDistribution = responseData.reduce((acc, r) => {
