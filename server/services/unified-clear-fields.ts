@@ -134,14 +134,29 @@ export const clearFormFields = async (
           };
       }
       
-      // Delete from appropriate table - use a direct, simple query
-      logger.info(`[ClearFields] Deleting all responses for task ${taskId} from ${tableName}`);
-      const deleteResult = await client.query(
-        `DELETE FROM ${tableName} WHERE task_id = $1`,
+      // Instead of deleting records, update them to have empty values with "EMPTY" status
+      // This is more consistent with how the kyb.ts route handles clearing fields
+      logger.info(`[ClearFields] Updating all responses for task ${taskId} in ${tableName} to empty values`);
+      
+      // First, get count of existing responses
+      const countResult = await client.query(
+        `SELECT COUNT(*) FROM ${tableName} WHERE task_id = $1`,
+        [taskId]
+      );
+      const existingCount = parseInt(countResult.rows[0].count);
+      
+      // Then update all responses to empty values with EMPTY status
+      const updateResult = await client.query(
+        `UPDATE ${tableName} 
+         SET response_value = '', status = 'EMPTY', updated_at = NOW() 
+         WHERE task_id = $1`,
         [taskId]
       );
       
-      logger.info(`[ClearFields] Deleted ${deleteResult.rowCount} responses from ${tableName}`);
+      logger.info(`[ClearFields] Updated ${updateResult.rowCount} responses in ${tableName} (from ${existingCount} total)`);
+      
+      // Also log the specific operation for better debugging
+      logger.debug(`[ClearFields] Updated fields to empty values with EMPTY status in ${tableName} for task ${taskId}`);
       
       // Update progress if needed
       if (!preserveProgress) {
@@ -187,7 +202,7 @@ export const clearFormFields = async (
       
       return {
         success: true,
-        message: `Successfully cleared ${deleteResult.rowCount} fields for task ${taskId}`,
+        message: `Successfully cleared fields for task ${taskId}`,
         status: task.status,
         progress: preserveProgress ? task.progress : 0
       };
@@ -273,36 +288,87 @@ export const clearFieldsService = async (
       
       const task = taskResult.rows[0];
       
-      // 2. Clear responses from the appropriate table based on form type
-      let deletedCount = 0;
-      let deleteResult;
+      // 2. Update responses with empty values and EMPTY status instead of deleting them
+      // This approach maintains data consistency and works better with client-side UI
+      let updatedCount = 0;
+      let updateResult;
+      
+      // Get count before update for logging purposes
+      let countResult;
       
       // Handle different form types - each has its own table
       if (formType === 'kyb' || formType === 'company_kyb') {
-        // Handle both 'kyb' and 'company_kyb' form types using kyb_responses table
-        deleteResult = await client.query(
-          'DELETE FROM kyb_responses WHERE task_id = $1',
+        // First count existing responses
+        countResult = await client.query(
+          'SELECT COUNT(*) FROM kyb_responses WHERE task_id = $1',
           [taskId]
         );
-        deletedCount = deleteResult.rowCount || 0;
+        const existingCount = parseInt(countResult.rows[0].count);
+        
+        // Then update all to empty values with EMPTY status
+        updateResult = await client.query(
+          `UPDATE kyb_responses 
+           SET response_value = '', status = 'EMPTY', updated_at = NOW() 
+           WHERE task_id = $1`,
+          [taskId]
+        );
+        updatedCount = updateResult.rowCount || 0;
+        
+        serviceLogger.info(`Updated ${updatedCount} kyb_responses (from ${existingCount} total) for task ${taskId}`);
       } else if (formType === 'ky3p') {
-        deleteResult = await client.query(
-          'DELETE FROM ky3p_responses WHERE task_id = $1',
+        // First count existing responses
+        countResult = await client.query(
+          'SELECT COUNT(*) FROM ky3p_responses WHERE task_id = $1',
           [taskId]
         );
-        deletedCount = deleteResult.rowCount || 0;
+        const existingCount = parseInt(countResult.rows[0].count);
+        
+        // Then update all to empty values with EMPTY status
+        updateResult = await client.query(
+          `UPDATE ky3p_responses 
+           SET response_value = '', status = 'EMPTY', updated_at = NOW() 
+           WHERE task_id = $1`,
+          [taskId]
+        );
+        updatedCount = updateResult.rowCount || 0;
+        
+        serviceLogger.info(`Updated ${updatedCount} ky3p_responses (from ${existingCount} total) for task ${taskId}`);
       } else if (formType === 'open_banking') {
-        deleteResult = await client.query(
-          'DELETE FROM open_banking_responses WHERE task_id = $1',
+        // First count existing responses
+        countResult = await client.query(
+          'SELECT COUNT(*) FROM open_banking_responses WHERE task_id = $1',
           [taskId]
         );
-        deletedCount = deleteResult.rowCount || 0;
+        const existingCount = parseInt(countResult.rows[0].count);
+        
+        // Then update all to empty values with EMPTY status
+        updateResult = await client.query(
+          `UPDATE open_banking_responses 
+           SET response_value = '', status = 'EMPTY', updated_at = NOW() 
+           WHERE task_id = $1`,
+          [taskId]
+        );
+        updatedCount = updateResult.rowCount || 0;
+        
+        serviceLogger.info(`Updated ${updatedCount} open_banking_responses (from ${existingCount} total) for task ${taskId}`);
       } else if (formType === 'card') {
-        deleteResult = await client.query(
-          'DELETE FROM card_responses WHERE task_id = $1',
+        // First count existing responses
+        countResult = await client.query(
+          'SELECT COUNT(*) FROM card_responses WHERE task_id = $1',
           [taskId]
         );
-        deletedCount = deleteResult.rowCount || 0;
+        const existingCount = parseInt(countResult.rows[0].count);
+        
+        // Then update all to empty values with EMPTY status
+        updateResult = await client.query(
+          `UPDATE card_responses 
+           SET response_value = '', status = 'EMPTY', updated_at = NOW() 
+           WHERE task_id = $1`,
+          [taskId]
+        );
+        updatedCount = updateResult.rowCount || 0;
+        
+        serviceLogger.info(`Updated ${updatedCount} card_responses (from ${existingCount} total) for task ${taskId}`);
       }
         
       // FIXED: Don't try to clear savedFormData since the column doesn't exist
@@ -330,7 +396,7 @@ export const clearFieldsService = async (
         formType,
         operation: 'clear_fields',
         preserveProgress,
-        deletedCount,
+        updatedCount,
         timestamp: new Date().toISOString()
       };
         
@@ -370,12 +436,12 @@ export const clearFieldsService = async (
         WebSocketContext.endOperation();
       }
         
-      serviceLogger.info(`Successfully cleared ${deletedCount} fields for task ${taskId}`);
+      serviceLogger.info(`Successfully cleared ${updatedCount} fields for task ${taskId}`);
         
       return {
         success: true,
-        deletedCount,
-        message: `Successfully cleared ${deletedCount} fields for task ${taskId}`,
+        updatedCount,
+        message: `Successfully cleared ${updatedCount} fields for task ${taskId}`,
         preserveProgress
       };
     } catch (error) {
