@@ -106,7 +106,7 @@ export function TopNav() {
   return (
     <div className="w-full">
       <div className="h-14 px-6 flex items-center justify-between">
-        <div className="min-w-0 max-w-[340px]">
+        <div className="min-w-0 max-w-[450px] flex-grow">
           <SearchBar
             isGlobalSearch
             onSearch={handleSearch}
