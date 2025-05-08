@@ -116,44 +116,85 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   
   const opacity = isDragging ? 0.4 : 1;
   
+  // Calculate gradient colors based on index and position
+  const getGradientColors = () => {
+    // Create a gradient that transitions from top dimension color to bottom dimension color
+    // We'll use a blue family for consistency
+    const topColor = '#4285F4';
+    const bottomColor = '#0D47A1';
+    
+    // Calculate color based on index position (0 = top, dimensions.length-1 = bottom)
+    const totalItems = dimensions.length || 6; // Fallback if dimensions not available
+    const positionRatio = index / (totalItems - 1);
+    
+    // Interpolate between top and bottom colors - simplified for implementation
+    const primaryColor = index === 0 ? topColor : bottomColor;
+    const secondaryColor = index === 0 ? primaryColor : topColor;
+    
+    return { primaryColor, secondaryColor };
+  };
+  
+  const { primaryColor, secondaryColor } = getGradientColors();
+
   return (
     <div 
       ref={ref}
-      className="flex items-center gap-3 p-5 bg-blue-50 border border-blue-100 rounded-lg shadow-sm mb-3 relative transition-all hover:shadow-md group"
-      style={{ opacity }}
+      className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-50 to-blue-50/60 border border-blue-100 rounded-2xl shadow-sm mb-4 relative transition-all hover:shadow-md group"
+      style={{ 
+        opacity,
+        borderRadius: '16px' // More pronounced squircle effect
+      }}
     >
-      {/* Priority indicator */}
-      <div className="absolute top-0 left-0 w-1.5 h-full rounded-l-lg" 
-        style={{ backgroundColor: dimension.color || '#4285F4' }}>
+      {/* Icon container with squircle shape */}
+      <div 
+        className="h-14 w-14 flex items-center justify-center text-white flex-shrink-0"
+        style={{ 
+          backgroundColor: primaryColor,
+          borderRadius: '12px',
+          boxShadow: '0 2px 6px rgba(66, 133, 244, 0.2)'
+        }}
+      >
+        {dimensionIcons[dimension.id] || <Shield className="h-7 w-7" />}
       </div>
       
-      {/* Icon container with color from dimension */}
-      <div className="h-12 w-12 flex items-center justify-center rounded-md bg-white border border-blue-100 shadow-sm text-primary flex-shrink-0">
-        {dimensionIcons[dimension.id] || <Shield className="h-6 w-6" />}
-      </div>
-      
-      {/* Content */}
+      {/* Content with improved hierarchy */}
       <div className="flex-grow">
-        <div className="flex items-center mb-1">
-          <h4 className="font-medium text-base text-gray-900">{dimension.name}</h4>
-          <div className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium inline-flex items-center">
-            <span className="flex-shrink-0">Rank {index + 1}</span>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-lg text-gray-900">{dimension.name}</h3>
+          <div 
+            className="ml-1 text-xs px-2.5 py-1 rounded-full font-medium inline-flex items-center"
+            style={{ 
+              backgroundColor: `${primaryColor}20`, // 20% opacity of primary color
+              color: primaryColor 
+            }}
+          >
+            <span className="flex-shrink-0">Priority {index + 1}</span>
           </div>
         </div>
-        <p className="text-sm text-gray-600">{dimension.description}</p>
+        <p className="text-sm text-gray-600 mt-1">{dimension.description}</p>
       </div>
       
-      {/* Weight indicator */}
+      {/* Weight indicator with improved contrast for accessibility */}
       <div className="ml-auto flex flex-col items-end justify-center">
-        <div className="text-2xl font-bold" style={{ color: dimension.color || '#4285F4' }}>
+        <div 
+          className="text-3xl font-bold" 
+          style={{ color: primaryColor }}
+          aria-label={`Weight ${dimension.weight} percent`}
+        >
           {dimension.weight}%
         </div>
-        <div className="text-xs text-gray-600 font-medium">Priority Weight</div>
+        <div className="text-xs font-medium" style={{ color: `${primaryColor}CC` }}>
+          Priority Weight
+        </div>
       </div>
       
-      {/* Grip handle for dragging - only visible on hover */}
-      <div className="flex-shrink-0 cursor-move text-gray-400 group-hover:text-gray-700 transition-colors ml-3">
-        <GripVertical className="h-5 w-5" />
+      {/* Grip handle for dragging - with improved accessibility */}
+      <div
+        className="flex-shrink-0 cursor-move ml-2 p-2 rounded-full hover:bg-blue-100/50 transition-colors"
+        aria-label="Drag to reorder"
+        title="Drag to reorder priority"
+      >
+        <GripVertical className="h-5 w-5" style={{ color: primaryColor }} />
       </div>
     </div>
   );
