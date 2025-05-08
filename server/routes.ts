@@ -429,7 +429,7 @@ export function registerRoutes(app: Express): Express {
   
   // Register task broadcast router for WebSocket notifications
   console.log('[Routes] Setting up task broadcast router');
-  app.use(taskBroadcastRouter);
+  app.use('/api/tasks', taskBroadcastRouter);
   console.log('[Routes] Successfully registered task broadcast router');
   
   // Register Open Banking Survey routes with WebSocket support
