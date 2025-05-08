@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
-import { CompanyScoreWidget } from "@/components/dashboard/CompanyScoreWidget";
+import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import { Button } from "@/components/ui/button";
@@ -294,10 +294,10 @@ export default function DashboardPage() {
                 {/* FinTech layout - 1:3 ratio grid */}
                 {companyData?.category === 'FinTech' && (visibleWidgets.companyScore || visibleWidgets.riskRadar) && (
                   <div className="grid grid-cols-4 gap-4 h-[450px]">
-                    {/* Company Score (1/4 width) for FinTech */}
+                    {/* Company Snapshot (1/4 width) for FinTech */}
                     {visibleWidgets.companyScore && companyData && (
                       <div className="col-span-1">
-                        <CompanyScoreWidget 
+                        <CompanySnapshot 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companyScore')}
                           isVisible={visibleWidgets.companyScore}
@@ -321,10 +321,10 @@ export default function DashboardPage() {
                 {/* Bank/Invela layout - 1:1 ratio grid */}
                 {companyData?.category !== 'FinTech' && (
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Company Score for Bank/Invela */}
+                    {/* Company Snapshot for Bank/Invela */}
                     {visibleWidgets.companyScore && companyData && (
                       <div>
-                        <CompanyScoreWidget 
+                        <CompanySnapshot 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companyScore')}
                           isVisible={visibleWidgets.companyScore}
