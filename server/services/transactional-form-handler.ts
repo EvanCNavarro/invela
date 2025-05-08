@@ -19,6 +19,7 @@ import {
 import { broadcast, broadcastFormSubmissionCompleted } from '../utils/unified-websocket';
 import { db } from '@db';
 import { Pool } from 'pg';
+import { executeRawQuery, updateTaskStatusAndProgress } from './drizzle-sql-fix';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
