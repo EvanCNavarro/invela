@@ -342,18 +342,11 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // Verify the task was updated with a separate query
         let postUpdateCheck;
         try {
-          // Check if client has a valid query method
-          if (!txClient.query || typeof txClient.query !== 'function') {
-            postUpdateCheck = await db.query(
-              `SELECT id, status, progress, metadata FROM tasks WHERE id = $1`,
-              [taskId]
-            );
-          } else {
-            postUpdateCheck = await txClient.query(
-              `SELECT id, status, progress, metadata FROM tasks WHERE id = $1`,
-              [taskId]
-            );
-          }
+          // Use our enhanced transaction client with executeSQL method
+          postUpdateCheck = await txClient.executeSQL(
+            `SELECT id, status, progress, metadata FROM tasks WHERE id = $1`,
+            [taskId]
+          );
         } catch (postCheckError) {
           console.error(`[TransactionalFormHandler] Error checking post-update task state:`, {
             error: postCheckError instanceof Error ? postCheckError.message : String(postCheckError),
