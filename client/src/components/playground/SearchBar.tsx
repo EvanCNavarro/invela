@@ -121,7 +121,7 @@ export function SearchBar({
         onChange={handleChange}
         placeholder={getPlaceholder()}
         className={cn(
-          "pl-9 pr-[70px]",
+          "pl-9 pr-[70px] text-sm",
           className
         )}
         autoFocus={false}
