@@ -5,10 +5,10 @@
  * our fixes for company attributes updates are working properly.
  */
 
-const { db } = require('./server/db');
-const { companies, tasks } = require('./server/db/schema');
-const { eq } = require('drizzle-orm');
-const fs = require('fs');
+import { db } from './server/db/index.js';
+import { companies, tasks } from './server/db/schema.js';
+import { eq } from 'drizzle-orm';
+import * as fs from 'fs';
 
 // Mock console for logging
 const originalConsole = { ...console };
@@ -28,9 +28,9 @@ const functionCode = source.match(functionRegex)[0];
 
 // Prepare the function with dependencies
 const functionScript = `
-const { db } = require('./server/db');
-const { companies } = require('./server/db/schema');
-const { eq } = require('drizzle-orm');
+import { db } from './server/db/index.js';
+import { companies } from './server/db/schema.js';
+import { eq } from 'drizzle-orm';
 
 // Mock logger
 const logger = {
@@ -74,7 +74,7 @@ async function unlockTabsForCompany(trx, companyId, tabNames) {
 ${functionCode}
 
 // Export for use in our test
-module.exports = { handleOpenBankingPostSubmission };
+export { handleOpenBankingPostSubmission };
 `;
 
 // Write the function script to a temporary file
@@ -84,7 +84,7 @@ fs.writeFileSync('./temp-function.js', functionScript);
 async function testOpenBankingPostSubmission() {
   try {
     // Import the extracted function
-    const { handleOpenBankingPostSubmission } = require('./temp-function');
+    const { handleOpenBankingPostSubmission } = await import('./temp-function.js');
     
     // Parameters for testing
     const taskId = 776;
