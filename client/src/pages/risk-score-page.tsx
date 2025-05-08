@@ -15,7 +15,7 @@ export default function RiskScorePage() {
           <PageHeader
             title="S&P Risk Score"
             description="Track and analyze your organization's S&P risk assessment score."
-            icon={<BarChart2 className="h-6 w-6 text-primary" />}
+            icon={<Gauge className="h-6 w-6 text-primary" />}
           />
 
           <Card className="p-6">

@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart2, Info, BarChart, Shield, Globe2, FileCode, MessageSquare, AlertTriangle, Box, Database, GripVertical } from "lucide-react";
+import { BarChart2, Info, BarChart, Shield, Globe2, FileCode, MessageSquare, AlertTriangle, Box, Database, GripVertical, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
@@ -711,7 +711,7 @@ export default function RiskScoreConfigurationPage() {
           <PageHeader
             title="S&P Risk Score Configuration"
             description="Configure your risk assessment priorities for third parties accessing your open banking data"
-            icon={<BarChart2 className="h-6 w-6 text-primary" />}
+            icon={<Gauge className="h-6 w-6 text-primary" />}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
