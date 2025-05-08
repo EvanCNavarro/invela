@@ -1,6 +1,6 @@
 import { Widget } from "@/components/dashboard/Widget";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Activity, Bell, Zap, AlertTriangle, Globe, Shield } from "lucide-react";
+import { Activity, Bell, Zap, Building2, Globe, Shield } from "lucide-react";
 
 /**
  * Skeleton loader for a default widget with adaptive sizes
@@ -90,20 +90,44 @@ export function SkeletonQuickActionsWidget() {
 }
 
 /**
- * Skeleton loader for the Company Score widget
+ * Skeleton loader for the Company Snapshot widget
  */
-export function SkeletonCompanyScoreWidget() {
+export function SkeletonCompanySnapshotWidget() {
   return (
     <Widget
-      title="Company Score"
-      icon={<AlertTriangle className="h-5 w-5" />}
+      title="Company Snapshot"
+      icon={<Building2 className="h-5 w-5" />}
       isVisible={true}
     >
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-full rounded-lg" />
-        <div className="space-y-2">
-          <Skeleton className="h-32 w-full rounded-lg" />
-          <Skeleton className="h-5 w-3/4 mx-auto" />
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-3/4 rounded-lg" />
+        <Skeleton className="h-14 w-full rounded-lg" />
+        
+        {/* Top Stats Row */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="border rounded-md p-4">
+            <Skeleton className="h-4 w-2/3 mb-3" />
+            <Skeleton className="h-8 w-10 mx-auto" />
+          </div>
+          <div className="border rounded-md p-4">
+            <Skeleton className="h-4 w-2/3 mb-3" />
+            <Skeleton className="h-8 w-10 mx-auto" />
+          </div>
+        </div>
+        
+        {/* Bottom Stats Row */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="border border-blue-500 border-2 rounded-md p-4 flex flex-col items-center">
+            <Skeleton className="h-6 w-6 mb-2 rounded-full" />
+            <Skeleton className="h-3 w-20 mb-1" />
+            <Skeleton className="h-3 w-24 mb-3" />
+            <Skeleton className="h-10 w-10" />
+          </div>
+          <div className="border border-green-500 border-2 rounded-md p-4 flex flex-col items-center">
+            <Skeleton className="h-6 w-6 mb-2 rounded-full" />
+            <Skeleton className="h-3 w-24 mb-3" />
+            <Skeleton className="h-6 w-16" />
+          </div>
         </div>
       </div>
     </Widget>
@@ -171,10 +195,10 @@ export function DashboardSkeleton() {
       
       {/* Two widgets in the middle */}
       <div className="col-span-2">
-        <SkeletonCompanyScoreWidget />
+        <SkeletonCompanySnapshotWidget />
       </div>
       <div className="col-span-1">
-        <SkeletonCompanyScoreWidget />
+        <SkeletonCompanySnapshotWidget />
       </div>
       
       {/* Network Visualization at the bottom */}
@@ -198,10 +222,10 @@ export function FinTechDashboardSkeleton() {
       
       {/* Two widgets in the middle */}
       <div className="col-span-2">
-        <SkeletonCompanyScoreWidget />
+        <SkeletonCompanySnapshotWidget />
       </div>
       <div className="col-span-1">
-        <SkeletonCompanyScoreWidget />
+        <SkeletonCompanySnapshotWidget />
       </div>
       
       {/* Risk Radar at the bottom */}
