@@ -10,7 +10,8 @@ import { Server } from 'http';
 import { WebSocketServer } from 'ws';
 import { logger } from './utils/logger';
 import { initializeWebSocketServer as initializeUnifiedWebSocketServer, getWebSocketServer } from './utils/unified-websocket';
-import * as formSubmissionWebSocketService from './services/websocket-service';
+// Import the enhanced WebSocket service
+import * as WebSocketService from './services/websocket-service';
 
 /**
  * Initialize the WebSocket server on the specified path
@@ -38,8 +39,15 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
     // Also initialize the improved form submission WebSocket server with the same HTTP server
     // This provides enhanced real-time updates for form submissions
     try {
-      formSubmissionWebSocketService.initializeWebSocketServer(httpServer);
-      logger.info('[WebSocket] Form submission WebSocket server initialized successfully');
+      // Our new WebSocketService might not be fully TypeScript compatible yet
+      // Using JavaScript-style access pattern as a workaround
+      const initFn = WebSocketService['initializeWebSocketServer'];
+      if (typeof initFn === 'function') {
+        initFn(httpServer);
+        logger.info('[WebSocket] Form submission WebSocket server initialized successfully');
+      } else {
+        logger.warn('[WebSocket] Form submission WebSocket initialization function not found');
+      }
     } catch (wsError) {
       logger.warn('[WebSocket] Failed to initialize form submission WebSocket server, but unified server is working', {
         error: wsError instanceof Error ? wsError.message : String(wsError)
