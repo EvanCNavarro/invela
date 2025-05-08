@@ -32,6 +32,8 @@ import ky3pProgressRouter from './routes/ky3p-progress';
 import testKy3pProgressRouter from './routes/test-ky3p-progress';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
+// Import KY3P submission fix to properly handle form submissions
+import ky3pSubmissionFixRouter from './routes/ky3p-submission-fix';
 // Import standardized KY3P batch update routes
 // Use the fixed KY3P batch update routes
 import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
@@ -386,6 +388,9 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pProgressFixTestRouter);
   // Register manual KY3P progress fix endpoint
   app.use('/api/ky3p/manual-fix', manualKy3pFix);
+  // Register KY3P submission fix router to properly handle form submissions
+  app.use(ky3pSubmissionFixRouter);
+  console.log('[Routes] Registered KY3P form submission fix routes');
   // Register task progress endpoints for testing and direct manipulation
   app.use(taskProgressRouter);
   // Register the unified form update API for all form types
