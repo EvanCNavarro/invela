@@ -105,7 +105,17 @@ export async function rollbackTransaction(client: PoolClient): Promise<void> {
   } catch (error) {
     transactionLogger.error('Failed to rollback transaction', {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+      isAborted: error instanceof Error && error.message.includes('transaction is aborted')
+    });
+    
+    // Add enhanced console error for immediate visibility
+    console.error('[Transaction Manager] 🔥 ROLLBACK FAILURE:', {
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+      isAborted: error instanceof Error && error.message.includes('transaction is aborted'),
+      source: 'rollbackTransaction'
     });
     
     // Force release client on rollback failure
