@@ -6,7 +6,9 @@
  */
 
 import { Router } from 'express';
-import { broadcastFormSubmission, broadcastTaskUpdate } from '../utils/unified-websocket';
+import { broadcast } from '../utils/unified-websocket';
+
+// We'll use broadcast directly instead of wrapper functions
 import { sendFormSubmissionSuccess, sendFormSubmissionError, sendFormSubmissionInProgress } from '../utils/form-submission-notifications';
 
 const router = Router();
@@ -23,44 +25,44 @@ router.post('/broadcast-form-submission', (req, res) => {
   const testCompanyId = companyId || 272;
   
   try {
+    // Create payload
+    const formPayload = {
+      taskId: testTaskId,
+      formType: testFormType,
+      companyId: testCompanyId,
+      status: 'completed',
+      fileName: 'Test_Form_Submission.pdf',
+      fileId: 9999,
+      submissionDate: new Date().toISOString(),
+      completedActions: [
+        {
+          type: 'form_submission',
+          description: 'Form submitted successfully',
+          icon: 'check-circle'
+        },
+        {
+          type: 'file_generation',
+          description: 'PDF file generated',
+          fileId: 9999,
+          icon: 'file-text'
+        }
+      ]
+    };
+    
     // Broadcast a form submission event
-    const result = broadcastFormSubmission(
-      testFormType,
-      testTaskId,
-      testCompanyId,
-      {
-        fileName: 'Test_Form_Submission.pdf',
-        fileId: 9999,
-        submissionDate: new Date().toISOString(),
-        completedActions: [
-          {
-            type: 'form_submission',
-            description: 'Form submitted successfully',
-            icon: 'check-circle'
-          },
-          {
-            type: 'file_generation',
-            description: 'PDF file generated',
-            fileId: 9999,
-            icon: 'file-text'
-          }
-        ]
-      }
-    );
+    const result = broadcast('form_submission_completed', formPayload);
     
     // Also broadcast a task update to ensure both types of events are received
-    broadcastTaskUpdate(
-      testTaskId,
-      100,
-      'submitted',
-      {
-        formType: testFormType,
-        submissionComplete: true,
-        fileId: 9999,
-        fileName: 'Test_Form_Submission.pdf',
-        submissionDate: new Date().toISOString()
-      }
-    );
+    broadcast('task_update', {
+      taskId: testTaskId,
+      progress: 100,
+      status: 'submitted', 
+      formType: testFormType,
+      submissionComplete: true,
+      fileId: 9999,
+      fileName: 'Test_Form_Submission.pdf',
+      submissionDate: new Date().toISOString()
+    });
     
     return res.json({
       success: true,

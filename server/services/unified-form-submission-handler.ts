@@ -16,7 +16,7 @@ import { eq, and } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
 import { logger } from '../utils/logger';
 import * as FileCreationService from './fileCreation';
-import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { broadcast } from '../utils/unified-websocket';
 
 // Define common form submission input interface
 export interface FormSubmissionInput {
@@ -168,7 +168,13 @@ export async function processFormSubmission(
       dashboardUnlocked: result.dashboardUnlocked,
     };
     
-    broadcastFormSubmission(formType, taskId, result.companyId || 0, metadata);
+    broadcast('form_submission_completed', {
+      taskId,
+      formType,
+      companyId: result.companyId || 0,
+      status: 'completed',
+      ...metadata
+    });
     
     return {
       ...result,
