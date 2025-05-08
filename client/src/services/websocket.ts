@@ -142,7 +142,7 @@ class WebSocketService {
       // If this is a connection establishment message, store any connection ID
       if (data.type === 'connection_established') {
         this.connectionId = data.connectionId || 'ws-1';
-        // Connection ID received, but log removed to reduce console noise
+        console.log(`[WebSocket] Connection established with ID: ${this.connectionId}`);
         
         // Notify subscribers for connection_established type
         this.subscribers.get('connection_established')?.forEach(callback => {
@@ -157,12 +157,49 @@ class WebSocketService {
         return;
       }
       
+      // Handle task updates with special handling for taskId
+      if (data.type === 'task_update') {
+        // Normalize the taskId field which could be in different formats
+        const normalizedPayload = data.payload || data.data || {};
+        
+        // Check if taskId is nested inside another taskId object (server inconsistency)
+        if (normalizedPayload.taskId && typeof normalizedPayload.taskId === 'object' && normalizedPayload.taskId.taskId) {
+          console.log('[WebSocket] Normalizing nested taskId structure', normalizedPayload);
+          // Extract the nested taskId structure
+          const normalizedData = {
+            ...normalizedPayload.taskId,
+            messageSource: 'normalized_from_nested'
+          };
+          
+          // Deliver to specific subscribers
+          this.subscribers.get('task_update')?.forEach(callback => {
+            callback(normalizedData);
+          });
+          
+          // Deliver to wildcard subscribers
+          this.subscribers.get('')?.forEach(callback => {
+            callback({
+              type: 'task_update',
+              payload: normalizedData
+            });
+          });
+          
+          return;
+        }
+      }
+      
       // Handle generic message with type/payload format
       if (data.type) {
         // First deliver to specific subscribers
         if (this.subscribers.has(data.type)) {
+          const payload = data.payload || data.data || data;
+          console.log(`[WebSocket] Received message type: ${data.type}`, 
+            typeof payload === 'object' ? 
+              { keys: Object.keys(payload), taskId: payload.taskId } : 
+              { payload });
+              
           this.subscribers.get(data.type)?.forEach(callback => {
-            callback(data.payload || data.data || data);
+            callback(payload);
           });
         }
         
