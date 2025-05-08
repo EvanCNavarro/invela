@@ -340,6 +340,20 @@ export const FormClearingService = {
             }
             
             // Invalidate all possible query keys that might contain form data
+            // CRITICAL FIX: Add aggressive cache purging to handle inconsistency between database and UI state
+            logger.info(`[FormClearingService] Starting AGGRESSIVE cache purging for task ${taskId}`);
+            
+            // Step 1: Remove all task data from the cache to force reloading
+            queryClient.removeQueries({ queryKey: [`/api/tasks/${taskId}`] });
+            queryClient.removeQueries({ queryKey: [`/api/tasks.json/${taskId}`] });
+            queryClient.removeQueries({ queryKey: [`/api/kyb/progress/${taskId}`] });
+            queryClient.removeQueries({ queryKey: [`/api/ky3p/progress/${taskId}`] });
+            queryClient.removeQueries({ queryKey: [`/api/tasks/${taskId}/kyb-responses`] });
+            queryClient.removeQueries({ queryKey: [`/api/tasks/${taskId}/ky3p-responses`] });
+            queryClient.removeQueries({ queryKey: [`/api/tasks/${taskId}/open-banking-responses`] });
+            queryClient.removeQueries({ queryKey: [`/api/tasks/${taskId}/form-data`] });
+            
+            // Step 2: Now invalidate queries to trigger refetching with fresh data from server
             queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}`] });
             queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
             queryClient.invalidateQueries({ queryKey: ['/api/kyb/progress'] });
@@ -350,7 +364,28 @@ export const FormClearingService = {
             queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/open-banking-responses`] });
             queryClient.invalidateQueries({ queryKey: [`/api/tasks/${taskId}/form-data`] });
             
-            logger.info('[FormClearingService] Invalidated all query caches for task and form data');
+            // Step 3: Clear browser-level cache using fetch API
+            try {
+              // Use NO-CACHE header to ensure fresh data on next fetch
+              const clearCacheOpts = {
+                method: 'GET',
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+                }
+              };
+              
+              // Trigger cache-clearing requests to key endpoints
+              await fetch(`/api/tasks/${taskId}?_=${Date.now()}`, clearCacheOpts);
+              await fetch(`/api/kyb/progress/${taskId}?_=${Date.now()}`, clearCacheOpts);
+              
+              logger.info('[FormClearingService] Successfully cleared browser cache for endpoints');
+            } catch (cacheError) {
+              logger.warn('[FormClearingService] Error clearing browser cache:', cacheError);
+            }
+            
+            logger.info('[FormClearingService] Completed aggressive query cache purging for task and form data');
           } catch (cacheError) {
             logger.error('[FormClearingService] Error invalidating cache:', cacheError);
           }
