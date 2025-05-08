@@ -1,312 +1,393 @@
 /**
- * Unified WebSocket Utility
+ * Unified WebSocket Server
  * 
- * This module provides a simplified interface for broadcasting messages
- * via WebSocket. It handles error cases and provides fallback mechanisms.
+ * This module provides a standardized WebSocket implementation for the application,
+ * supporting real-time communication with clients across various features.
+ * 
+ * Features:
+ * - Centralized WebSocket server management
+ * - Typed message handling for different event types
+ * - Client authentication and connection tracking
+ * - Broadcast functionality for server-to-client notifications
  */
 
-import { logger } from './logger';
-import * as websocketService from '../services/websocket-service';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
+import { logger } from './logger';
 
-// Define valid message types
-export type MessageType = 
-  | 'task_update'
-  | 'form_submission_completed'
-  | 'task_status_update'
-  | 'company_tabs_updated'
-  | 'progress_update'
-  | 'notification';
+const wsLogger = logger.child({ module: 'WebSocket' });
 
 // WebSocket server instance
-let wsServer: WebSocketServer | null = null;
-// Client tracking
-const clients = new Set<WebSocket>();
-// Connection IDs
-const connectionIds = new Map<WebSocket, string>();
+let wss: WebSocketServer | null = null;
+
+// Connected clients with authentication status
+interface ConnectedClient {
+  socket: WebSocket;
+  clientId: string;
+  userId?: number;
+  companyId?: number;
+  authenticated: boolean;
+  connectedAt: Date;
+}
+
+// Track connected clients
+const clients: Map<string, ConnectedClient> = new Map();
+
+// Message types
+type MessageType = 
+  | 'authenticate'
+  | 'ping'
+  | 'pong'
+  | 'task_updated'
+  | 'task_reconciled'
+  | 'form_submission_completed'
+  | 'tabs_updated'
+  | 'notification';
+
+// Base message interface
+interface WebSocketMessage {
+  type: MessageType;
+  timestamp: string;
+}
+
+// Authentication message
+interface AuthMessage extends WebSocketMessage {
+  type: 'authenticate';
+  userId: number;
+  companyId: number;
+  clientId: string;
+}
+
+// Ping message for connection keepalive
+interface PingMessage extends WebSocketMessage {
+  type: 'ping';
+}
+
+// Pong response message
+interface PongMessage extends WebSocketMessage {
+  type: 'pong';
+  echo?: any;
+}
+
+// Task update message
+interface TaskUpdateMessage extends WebSocketMessage {
+  type: 'task_updated';
+  taskId: number;
+  message?: string;
+  progress?: number;
+  status?: string;
+  metadata?: Record<string, any>;
+}
+
+// Task reconciliation message
+interface TaskReconciledMessage extends WebSocketMessage {
+  type: 'task_reconciled';
+  taskId: number;
+  progress: number;
+  status: string;
+  metadata?: Record<string, any>;
+}
+
+// Form submission completed message
+interface FormSubmissionCompletedMessage extends WebSocketMessage {
+  type: 'form_submission_completed';
+  taskId: number;
+  formType: string;
+  status: string;
+  companyId?: number;
+  fileName?: string;
+  fileId?: number | string;
+  unlockedTabs?: string[];
+  message?: string;
+  progress?: number;
+  metadata?: Record<string, any>;
+}
+
+// Tabs updated message
+interface TabsUpdatedMessage extends WebSocketMessage {
+  type: 'tabs_updated';
+  companyId: number;
+  tabs: string[];
+  metadata?: Record<string, any>;
+}
+
+// Notification message
+interface NotificationMessage extends WebSocketMessage {
+  type: 'notification';
+  title: string;
+  message: string;
+  variant?: 'default' | 'destructive' | 'success';
+  metadata?: Record<string, any>;
+}
+
+// Union type of all message types
+type WebSocketPayload = 
+  | AuthMessage
+  | PingMessage
+  | PongMessage
+  | TaskUpdateMessage
+  | TaskReconciledMessage
+  | FormSubmissionCompletedMessage
+  | TabsUpdatedMessage
+  | NotificationMessage;
 
 /**
  * Initialize the WebSocket server
  * 
- * @param httpServer The HTTP server to attach the WebSocket server to
- * @param path The path for the WebSocket server (default: '/ws')
- * @returns The initialized WebSocket server
+ * @param server HTTP server instance to attach WebSocket server to
+ * @param path Path for the WebSocket server
  */
-export function initializeWebSocketServer(httpServer: Server, path: string = '/ws'): WebSocketServer {
-  // Initialize the WebSocket server
-  wsServer = new WebSocketServer({ 
-    server: httpServer,
-    path
+export function initializeWebSocketServer(server: Server, path: string = '/ws'): void {
+  if (wss) {
+    wsLogger.warn('WebSocket server already initialized, skipping initialization');
+    return;
+  }
+
+  // Create WebSocket server
+  wss = new WebSocketServer({ server, path });
+  const serverId = Math.random().toString(36).substring(2, 8);
+
+  wsLogger.info('Unified WebSocket server initialized successfully', {
+    clients: clients.size,
+    path,
+    id: serverId,
+    timestamp: new Date().toISOString()
   });
-  
-  // Set up connection handling
-  wsServer.on('connection', (ws: WebSocket) => {
-    // Generate a unique connection ID
-    const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  // Set up event handlers
+  wss.on('connection', (socket: WebSocket, request) => {
+    // Generate a unique client ID
+    const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     
-    // Add client to tracking
-    clients.add(ws);
-    connectionIds.set(ws, connectionId);
+    // Store client information
+    clients.set(clientId, {
+      socket,
+      clientId,
+      authenticated: false,
+      connectedAt: new Date()
+    });
     
-    logger.info(`New WebSocket client connected: ${connectionId}`);
+    wsLogger.info('Client connected', { clientId, clients: clients.size });
     
     // Send connection established message
-    ws.send(JSON.stringify({
+    socket.send(JSON.stringify({
       type: 'connection_established',
-      connectionId,
-      timestamp: new Date().toISOString()
+      clientId,
+      timestamp: new Date().toISOString(),
+      message: 'Connection established'
     }));
     
-    // Set up message handler
-    ws.on('message', (message: string) => {
+    // Handle messages from client
+    socket.on('message', (rawMessage: string) => {
       try {
-        const data = JSON.parse(message.toString());
-        logger.debug(`Received WebSocket message: ${data.type || 'unknown'}`, {
-          connectionId,
-          messageType: data.type
-        });
+        const message = JSON.parse(rawMessage.toString()) as WebSocketPayload;
+        
+        wsLogger.info(`Received message from client ${clientId}`, message);
+        
+        // Handle different message types
+        switch (message.type) {
+          case 'authenticate':
+            handleAuthentication(clientId, message as AuthMessage);
+            break;
+            
+          case 'ping':
+            // Simple ping-pong to keep connection alive
+            socket.send(JSON.stringify({
+              type: 'pong',
+              timestamp: new Date().toISOString(),
+              echo: message
+            }));
+            break;
+            
+          default:
+            wsLogger.warn(`Unknown message type: ${message.type} from ${clientId}`);
+        }
       } catch (error) {
-        logger.warn(`Error parsing WebSocket message`, {
+        wsLogger.error('Error processing WebSocket message', {
           error: error instanceof Error ? error.message : String(error),
-          connectionId
+          clientId
         });
       }
     });
     
-    // Set up close handler
-    ws.on('close', (code: number, reason: Buffer) => {
-      clients.delete(ws);
-      const connId = connectionIds.get(ws);
-      connectionIds.delete(ws);
+    // Handle client disconnection
+    socket.on('close', (code: number, reason: string) => {
+      clients.delete(clientId);
       
-      logger.info(`WebSocket client disconnected: ${connId}`, {
+      wsLogger.info('Client disconnected', {
+        clientId,
         code,
         reason: reason.toString(),
-        clientsRemaining: clients.size
+        remainingClients: clients.size
       });
     });
     
-    // Set up error handler
-    ws.on('error', (error) => {
-      logger.error(`WebSocket error for client: ${connectionIds.get(ws)}`, {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+    // Handle errors
+    socket.on('error', (error) => {
+      wsLogger.error('[error] [websocket] WebSocket error', {
+        errorEvent: error,
+        connectionId: clientId,
+        timestamp: new Date().toISOString()
       });
     });
   });
   
-  logger.info(`WebSocket server initialized on path: ${path}`);
+  // Handle server errors
+  wss.on('error', (error) => {
+    wsLogger.error('WebSocket server error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  });
+}
+
+/**
+ * Handle client authentication message
+ * 
+ * @param clientId Client ID
+ * @param message Authentication message
+ */
+function handleAuthentication(clientId: string, message: AuthMessage): void {
+  const client = clients.get(clientId);
   
-  return wsServer;
+  if (!client) {
+    wsLogger.warn(`Cannot authenticate unknown client: ${clientId}`);
+    return;
+  }
+  
+  // Update client with authentication information
+  client.userId = message.userId;
+  client.companyId = message.companyId;
+  client.authenticated = true;
+  
+  clients.set(clientId, client);
+  
+  wsLogger.info(`Authentication from client ${clientId}`, {
+    userId: message.userId,
+    companyId: message.companyId,
+    hasToken: true
+  });
+  
+  // Send authentication confirmation
+  client.socket.send(JSON.stringify({
+    type: 'authenticated',
+    userId: message.userId,
+    companyId: message.companyId,
+    timestamp: new Date().toISOString(),
+    message: 'Authentication successful'
+  }));
+}
+
+/**
+ * Broadcast a message to all connected clients
+ * 
+ * @param type Message type
+ * @param payload Message payload
+ * @param filter Optional filter function to determine which clients receive the message
+ */
+export function broadcast<T extends WebSocketPayload>(
+  type: MessageType,
+  payload: Omit<T, 'type' | 'timestamp'>,
+  filter?: (client: ConnectedClient) => boolean
+): void {
+  if (!wss) {
+    wsLogger.warn('Cannot broadcast: WebSocket server not initialized');
+    return;
+  }
+  
+  // WebSocketServer does not have readyState property - we can only check if it exists
+  // The individual client connections will have their own readyState
+  // which we check before sending messages to each client
+  
+  // Create full message with type and timestamp
+  const message = {
+    type,
+    timestamp: new Date().toISOString(),
+    ...payload
+  };
+  
+  const messageString = JSON.stringify(message);
+  let sentCount = 0;
+  
+  // Send to all clients, or filtered clients if filter provided
+  clients.forEach((client) => {
+    if (!filter || filter(client)) {
+      if (client.socket.readyState === WebSocket.OPEN) {
+        client.socket.send(messageString);
+        sentCount++;
+      }
+    }
+  });
+  
+  wsLogger.info(`Broadcast message of type '${type}' sent to ${sentCount} clients`, {
+    messageType: type,
+    recipients: sentCount,
+    totalClients: clients.size,
+    filtered: !!filter
+  });
+}
+
+/**
+ * Get the current count of connected clients
+ * 
+ * @returns Number of connected clients
+ */
+export function getConnectedClientCount(): number {
+  return clients.size;
 }
 
 /**
  * Get the WebSocket server instance
  * 
- * @returns The WebSocket server instance or null if not available
+ * @returns The WebSocket server instance or null if not initialized
  */
 export function getWebSocketServer(): WebSocketServer | null {
-  try {
-    // First try to return our internally stored WebSocket server
-    if (wsServer) {
-      return wsServer;
-    }
+  return wss;
+}
 
-    // Fall back to the websocketService implementation if available
-    if (typeof (websocketService as any).getServer === 'function') {
-      return (websocketService as any).getServer();
-    }
-    
-    return null;
-  } catch (error) {
-    logger.warn(`[WebSocket] Error getting WebSocket server`, {
-      error: error instanceof Error ? error.message : String(error)
-    });
-    return null;
-  }
+// Utility broadcast functions for common scenarios
+
+/**
+ * Broadcast a task update message
+ * 
+ * @param payload Task update payload
+ */
+export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
+  broadcast<TaskUpdateMessage>('task_updated', payload);
 }
 
 /**
- * Broadcast a message to all connected WebSocket clients
+ * Broadcast a task reconciliation message
  * 
- * This function wraps the WebSocket service's broadcast function and adds
- * error handling to prevent crashes if the WebSocket service is unavailable.
- * It also tries multiple broadcast methods to ensure message delivery.
- * 
- * @param type The type of message to broadcast
- * @param data The data to include in the message
- * @returns Whether the broadcast was successful
+ * @param payload Task reconciliation payload
  */
-export function broadcast(
-  type: MessageType,
-  data: Record<string, any>
-): boolean {
-  try {
-    let success = false;
-    
-    // First attempt: Try using the websocketService.broadcastMessage method
-    if (typeof (websocketService as any).broadcastMessage === 'function') {
-      try {
-        (websocketService as any).broadcastMessage(type, data);
-        success = true;
-        logger.debug(`[WebSocket] Broadcast via websocketService.broadcastMessage succeeded`, {
-          messageType: type
-        });
-      } catch (err) {
-        logger.warn(`[WebSocket] Broadcast via websocketService.broadcastMessage failed`, {
-          error: err instanceof Error ? err.message : String(err)
-        });
-      }
-    }
-    
-    // Second attempt: Try using the websocketService.broadcast method
-    if (!success && typeof (websocketService as any).broadcast === 'function') {
-      try {
-        (websocketService as any).broadcast(type, data);
-        success = true;
-        logger.debug(`[WebSocket] Broadcast via websocketService.broadcast succeeded`, {
-          messageType: type
-        });
-      } catch (err) {
-        logger.warn(`[WebSocket] Broadcast via websocketService.broadcast failed`, {
-          error: err instanceof Error ? err.message : String(err)
-        });
-      }
-    }
-    
-    // Final attempt: Try using direct WebSocket API if we have a server instance
-    if (!success && wsServer) {
-      try {
-        const message = JSON.stringify({
-          type,
-          payload: data,
-          timestamp: new Date().toISOString()
-        });
-        
-        // 1. First try clients from our set to ensure we're reaching all clients
-        let openClientCount = 0;
-        const errorClients = new Set<WebSocket>();
-        
-        clients.forEach(client => {
-          try {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(message);
-              openClientCount++;
-            }
-          } catch (err) {
-            errorClients.add(client);
-            logger.warn(`[WebSocket] Error sending to client`, {
-              error: err instanceof Error ? err.message : String(err),
-              connectionId: connectionIds.get(client)
-            });
-          }
-        });
-        
-        // Clean up any clients that had errors
-        errorClients.forEach(client => {
-          clients.delete(client);
-          connectionIds.delete(client);
-        });
-        
-        // 2. Then try broadcasting to all clients from wss.clients (redundant but ensures delivery)
-        wsServer.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            try {
-              client.send(message);
-            } catch (err) {
-              // Ignore errors here as we already broadcast to our tracked clients
-            }
-          }
-        });
-        
-        success = openClientCount > 0;
-        if (success) {
-          logger.debug(`[WebSocket] Direct broadcast via wsServer succeeded`, {
-            messageType: type,
-            clientCount: openClientCount
-          });
-        } else if (clients.size > 0) {
-          logger.warn(`[WebSocket] No open clients found despite having ${clients.size} clients tracked`, {
-            messageType: type
-          });
-        } else {
-          logger.info(`[WebSocket] No active WebSocket clients, skipping broadcast`, {
-            messageType: type
-          });
-        }
-      } catch (err) {
-        logger.warn(`[WebSocket] Direct broadcast via wsServer failed`, {
-          error: err instanceof Error ? err.message : String(err)
-        });
-      }
-    }
-    
-    if (!success) {
-      // No broadcast method available or all methods failed
-      logger.warn(`[WebSocket] Unable to broadcast ${type} message: All broadcast methods failed`, {
-        messageType: type,
-        fallbackAttempted: true
-      });
-    }
-    
-    return success;
-  } catch (error) {
-    logger.error(`[WebSocket] Error in broadcast function for ${type} message`, {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      messageType: type,
-      dataKeys: Object.keys(data)
-    });
-    
-    return false;
-  }
+export function broadcastTaskReconciled(payload: Omit<TaskReconciledMessage, 'type' | 'timestamp'>): void {
+  broadcast<TaskReconciledMessage>('task_reconciled', payload);
 }
 
 /**
- * Broadcast a task update to all connected WebSocket clients
+ * Broadcast a form submission completed message
  * 
- * @param taskId The ID of the task being updated
- * @param progress The new progress value (0-100)
- * @param status The new status of the task
- * @param metadata Any additional metadata to include
- * @returns Whether the broadcast was successful
+ * @param payload Form submission completed payload
  */
-export function broadcastTaskUpdate(
-  taskId: number,
-  progress: number,
-  status: string,
-  metadata: Record<string, any> = {}
-): boolean {
-  return broadcast('task_update', {
-    taskId,
-    progress,
-    status,
-    ...metadata,
-    timestamp: new Date().toISOString()
-  });
+export function broadcastFormSubmission(payload: Omit<FormSubmissionCompletedMessage, 'type' | 'timestamp'>): void {
+  broadcast<FormSubmissionCompletedMessage>('form_submission_completed', payload);
 }
 
 /**
- * Broadcast a form submission completion to all connected WebSocket clients
+ * Broadcast a tabs updated message
  * 
- * @param taskId The ID of the task being completed
- * @param formType The type of form that was submitted
- * @param companyId The ID of the company
- * @param submissionDate The date the form was submitted
- * @returns Whether the broadcast was successful
+ * @param payload Tabs updated payload
  */
-export function broadcastFormSubmissionCompleted(
-  taskId: number,
-  formType: string,
-  companyId: number,
-  submissionDate: string = new Date().toISOString()
-): boolean {
-  return broadcast('form_submission_completed', {
-    taskId,
-    formType,
-    companyId,
-    submissionDate,
-    timestamp: new Date().toISOString()
-  });
+export function broadcastTabsUpdated(payload: Omit<TabsUpdatedMessage, 'type' | 'timestamp'>): void {
+  broadcast<TabsUpdatedMessage>('tabs_updated', payload);
+}
+
+/**
+ * Broadcast a notification message
+ * 
+ * @param payload Notification payload
+ */
+export function broadcastNotification(payload: Omit<NotificationMessage, 'type' | 'timestamp'>): void {
+  broadcast<NotificationMessage>('notification', payload);
 }

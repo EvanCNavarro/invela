@@ -1,70 +1,45 @@
 /**
- * Transaction Manager
+ * Transaction Manager Service
  * 
- * This module provides transaction management utilities for ensuring
- * database operations are performed atomically.
+ * This service provides a standardized approach to working with database transactions,
+ * ensuring consistent transaction handling across the application.
+ * 
+ * Features:
+ * - Unified transaction management for all database operations
+ * - Comprehensive logging for transaction lifecycle
+ * - Proper error handling for transactions
+ * - Utility methods for transaction-aware database operations
  */
 
-import { db } from '@db';
-import { sql } from 'drizzle-orm';
+import { PoolClient } from 'pg';
+import { db, pool } from '@db';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { logger } from '../utils/logger';
-import { performance } from 'perf_hooks';
+
+const transactionLogger = logger.child({ module: 'TransactionManager' });
 
 /**
- * Execute a function within a database transaction
+ * Start a new database transaction
  * 
- * This function provides a convenient way to wrap a series of database
- * operations in a transaction, ensuring they either all succeed or all fail.
- * 
- * @param callback Function to execute within the transaction
- * @returns The result of the callback function
+ * @returns A transaction client to be used for operations within the transaction
  */
-export async function withTransactionContext<T>(
-  callback: (tx: any) => Promise<T>
-): Promise<T> {
-  const startTime = performance.now();
-  const transactionId = `tx-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
-  
+export async function startTransaction(): Promise<PoolClient> {
   try {
-    // Start a transaction
-    logger.info(`[TransactionManager] Starting transaction ${transactionId}`);
+    transactionLogger.debug('Starting new transaction');
     
-    const result = await db.transaction(async (tx) => {
-      // Add an executeSQL method to the transaction context
-      // This allows executing raw SQL queries within the transaction
-      const enhancedTx = {
-        ...tx,
-        transactionId,
-        // Properly execute SQL within transaction context
-        executeSQL: async (query: string, params: any[] = []) => {
-          logger.debug(`[TransactionManager] Executing SQL in transaction ${transactionId}`, {
-            query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
-            paramCount: params.length
-          });
-          
-          // Use Drizzle's SQL template for proper parameter binding
-          return await tx.execute(sql`${sql.raw(query, ...params)}`);
-        }
-      };
-      
-      // Execute the callback with our enhanced transaction object
-      return await callback(enhancedTx);
-    });
+    // Get a client from the pool
+    const client = await pool.connect();
     
-    const elapsedMs = performance.now() - startTime;
+    // Begin transaction
+    await client.query('BEGIN');
     
-    logger.info(`[TransactionManager] Transaction ${transactionId} completed successfully`, {
-      elapsedMs: Math.round(elapsedMs)
-    });
+    transactionLogger.debug('Transaction started successfully');
     
-    return result;
+    return client;
   } catch (error) {
-    const elapsedMs = performance.now() - startTime;
-    
-    logger.error(`[TransactionManager] Transaction ${transactionId} failed`, {
+    transactionLogger.error('Failed to start transaction', {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      elapsedMs: Math.round(elapsedMs)
+      stack: error instanceof Error ? error.stack : undefined
     });
     
     throw error;
@@ -72,64 +47,196 @@ export async function withTransactionContext<T>(
 }
 
 /**
- * Execute a database operation with retry logic
+ * Commit a database transaction
  * 
- * This function attempts to execute a database operation and will
- * retry it if it fails due to transient errors.
- * 
- * @param operation Function to execute
- * @param options Retry options
- * @returns The result of the operation
+ * @param client The transaction client to commit
  */
-export async function withRetry<T>(
-  operation: () => Promise<T>,
-  options: {
-    maxRetries?: number;
-    retryDelay?: number;
-    operationName?: string;
-  } = {}
-): Promise<T> {
-  const {
-    maxRetries = 3,
-    retryDelay = 500,
-    operationName = 'Database operation'
-  } = options;
-  
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+export async function commitTransaction(client: PoolClient): Promise<void> {
+  try {
+    transactionLogger.debug('Committing transaction');
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    
+    // Release client back to pool
+    client.release();
+    
+    transactionLogger.debug('Transaction committed successfully');
+  } catch (error) {
+    transactionLogger.error('Failed to commit transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Try to rollback on commit failure
     try {
-      const result = await operation();
+      await client.query('ROLLBACK');
+      client.release();
+      transactionLogger.debug('Transaction rolled back after commit failure');
+    } catch (rollbackError) {
+      transactionLogger.error('Failed to rollback after commit failure', {
+        error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+        originalError: error instanceof Error ? error.message : String(error)
+      });
       
-      if (attempt > 1) {
-        logger.info(`[TransactionManager] ${operationName} succeeded after ${attempt} attempts`);
+      client.release(true); // Release with error
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Rollback a database transaction
+ * 
+ * @param client The transaction client to rollback
+ */
+export async function rollbackTransaction(client: PoolClient): Promise<void> {
+  try {
+    transactionLogger.debug('Rolling back transaction');
+    
+    // Rollback transaction
+    await client.query('ROLLBACK');
+    
+    // Release client back to pool
+    client.release();
+    
+    transactionLogger.debug('Transaction rolled back successfully');
+  } catch (error) {
+    transactionLogger.error('Failed to rollback transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Force release client on rollback failure
+    client.release(true);
+    
+    throw error;
+  }
+}
+
+/**
+ * Execute a database query within a transaction
+ * 
+ * @param client The transaction client to use
+ * @param query The SQL query to execute
+ * @param params The parameters for the query
+ * @returns The query result
+ */
+export async function executeInTransaction(
+  client: PoolClient,
+  query: string,
+  params: any[] = []
+): Promise<any> {
+  try {
+    transactionLogger.debug('Executing query in transaction', {
+      query,
+      paramCount: params.length
+    });
+    
+    const result = await client.query(query, params);
+    
+    transactionLogger.debug('Query executed successfully', {
+      rowCount: result.rowCount
+    });
+    
+    return result;
+  } catch (error) {
+    transactionLogger.error('Error executing query in transaction', {
+      error: error instanceof Error ? error.message : String(error),
+      query,
+      paramCount: params.length,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    throw error;
+  }
+}
+
+/**
+ * Create a transaction-aware Drizzle instance
+ * 
+ * @param client The transaction client to use
+ * @returns A Drizzle instance bound to the transaction
+ */
+export function withTransaction(client: PoolClient) {
+  // Create Drizzle instance with the client as a custom pool-like object
+  return drizzle({ client: client as any });
+}
+
+/**
+ * Execute a function within a transaction and handle committing or rolling back
+ * 
+ * @param fn The function to execute within the transaction
+ * @returns The result of the function
+ */
+export async function withTransactionContext<T>(
+  fn: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  let client: PoolClient | null = null;
+  
+  try {
+    // Start transaction with enhanced error capture
+    try {
+      client = await startTransaction();
+    } catch (txStartError) {
+      console.error('[Transaction Manager] Failed to start transaction', {
+        error: txStartError instanceof Error ? txStartError.message : String(txStartError),
+        stack: txStartError instanceof Error ? txStartError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Rethrow with more contextual information
+      throw new Error(`Transaction initialization failed: ${txStartError instanceof Error ? txStartError.message : String(txStartError)}`);
+    }
+    
+    // Execute function with the transaction client
+    let result: T;
+    try {
+      result = await fn(client);
+    } catch (fnError) {
+      console.error('[Transaction Manager] Error during transaction execution', {
+        error: fnError instanceof Error ? fnError.message : String(fnError),
+        stack: fnError instanceof Error ? fnError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Rollback and rethrow with context
+      if (client) {
+        await rollbackTransaction(client);
       }
+      throw fnError;
+    }
+    
+    // Commit the transaction
+    try {
+      await commitTransaction(client);
+    } catch (commitError) {
+      console.error('[Transaction Manager] Failed to commit transaction', {
+        error: commitError instanceof Error ? commitError.message : String(commitError),
+        stack: commitError instanceof Error ? commitError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       
-      return result;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      
-      // Only retry if we haven't exceeded max retries
-      if (attempt < maxRetries) {
-        logger.warn(`[TransactionManager] ${operationName} failed (attempt ${attempt}/${maxRetries}), retrying...`, {
-          error: lastError.message,
-          attempt,
-          maxRetries,
-          retryDelay
-        });
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
-      } else {
-        logger.error(`[TransactionManager] ${operationName} failed after ${maxRetries} attempts`, {
-          error: lastError.message,
-          stack: lastError.stack,
-          attempts: maxRetries
+      // Rethrow with more contextual information
+      throw new Error(`Transaction commit failed: ${commitError instanceof Error ? commitError.message : String(commitError)}`);
+    }
+    
+    return result;
+  } catch (error) {
+    // If we have an active client but haven't properly rolled back or committed yet
+    if (client) {
+      try {
+        await rollbackTransaction(client);
+      } catch (rollbackError) {
+        console.error('[Transaction Manager] Failed to rollback transaction during error handling', {
+          originalError: error instanceof Error ? error.message : String(error),
+          rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          timestamp: new Date().toISOString()
         });
       }
     }
+    
+    throw error;
   }
-  
-  // If we get here, all retries failed
-  throw lastError || new Error(`${operationName} failed after ${maxRetries} attempts`);
 }
