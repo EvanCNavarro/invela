@@ -105,7 +105,7 @@ export function SearchBar({
   // Determine placeholder text
   const getPlaceholder = () => {
     if (isLoading) return "Loading..."
-    if (isGlobalSearch) return "Search Invela Trust Network"
+    if (isGlobalSearch) return "Search Invela Trust Network..."
     if (contextualType) return `Search for ${contextualType}`
     return placeholder || "Search..."
   }
@@ -121,9 +121,14 @@ export function SearchBar({
         onChange={handleChange}
         placeholder={getPlaceholder()}
         className={cn(
-          "pl-9 pr-[70px] text-sm",
+          "pl-9 pr-[70px] text-sm text-ellipsis",
           className
         )}
+        style={{
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden'
+        }}
         autoFocus={false}
         {...props}
       />
