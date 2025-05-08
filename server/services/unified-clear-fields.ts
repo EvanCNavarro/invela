@@ -28,7 +28,7 @@ import type { FormType } from '../utils/websocket-context';
 export type { FormType };
 
 // CRITICAL: To ensure proper type safety, explicitly define form types
-const SUPPORTED_FORM_TYPES = ['kyb', 'ky3p', 'open_banking', 'card'];
+const SUPPORTED_FORM_TYPES = ['kyb', 'company_kyb', 'ky3p', 'open_banking', 'card'];
 
 // Configure service options
 interface ClearFieldsOptions {
@@ -161,7 +161,8 @@ export const clearFieldsService = async (
         let deletedCount = 0;
         
         // Handle different form types - each has its own table
-        if (formType === 'kyb') {
+        if (formType === 'kyb' || formType === 'company_kyb') {
+          // Handle both 'kyb' and 'company_kyb' form types using kybResponses table
           const result = await tx.delete(kybResponses).where(eq(kybResponses.task_id, taskId));
           deletedCount = result.count;
         } else if (formType === 'ky3p') {

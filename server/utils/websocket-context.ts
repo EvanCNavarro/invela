@@ -23,7 +23,7 @@ const contextLogger = logger.child({ module: 'WebSocketContext' });
 export const webSocketAsyncStorage = new AsyncLocalStorage<WebSocketContextStore>();
 
 // List of all form types the system supports - ensures compatibility with future form types
-export type FormType = 'kyb' | 'ky3p' | 'open_banking' | 'card' | string;
+export type FormType = 'kyb' | 'company_kyb' | 'ky3p' | 'open_banking' | 'card' | string;
 
 /**
  * WebSocket Context API for managing broadcast suppression and operation tracking
