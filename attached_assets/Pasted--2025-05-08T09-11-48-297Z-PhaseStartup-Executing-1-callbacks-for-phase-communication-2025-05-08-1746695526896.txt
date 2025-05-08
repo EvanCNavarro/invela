@@ -1,0 +1,347 @@
+[2025-05-08T09:11:48.297Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-08T09:11:48.297Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-08T09:11:48.297Z] [App] Communication phase initializing 
+[2025-05-08T09:11:48.297Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-08T09:11:48.297Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-08T09:11:48.298Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-08T09:11:48.298Z] [App] Application ready for user interaction 
+[2025-05-08T09:11:48.298Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-08T09:11:48.298Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /task-center
+[TanStack Query] Response for /api/user: Status 200
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 316, email: "18@e.com", onboardingCompleted: true, userObject: "{↵  "id": 316,↵  "email": "18@e.com",↵  "full_name": "John Doe",↵  "first_name":…"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-08T09:11:48.487Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[ONBOARDING DEBUG] User object in AuthProvider changed: 
+Object {userId: 316, onboardingCompleted: true, typeOfOnboardingFlag: "boolean", timestamp: "2025-05-08T09:11:48.487Z"}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=273, path=/task-center, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 273
+[2025-05-08T09:11:48.714Z] [INFO] [SidebarTab] File Vault tab access changed 
+Object {isLocked: false, previousState: false, timestamp: "2025-05-08T09:11:48.714Z"}
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1746695508801-cf0edg2", timestamp: "2025-05-08T09:11:48.801Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-08T09:11:48.921Z", message: "Authentication successful"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-08T09:11:49.295Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[2025-05-08T09:11:49.784Z] [WebSocket] WebSocket connection established 
+[2025-05-08T09:11:49.784Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-08T09:11:49.784Z] [WebSocket] Received message of type: connection_established 
+[2025-05-08T09:11:49.784Z] [WebSocket] WebSocket server connection confirmed with ID: client-1746695509801-54fw9ke 
+[2025-05-08T09:11:50.153Z] [WebSocket] Sending authentication message 
+Object {userId: 316, companyId: 273, connectionId: "ws_1746695509295_f5mg0sedx", hasUserData: true, hasCompanyData: true}
+[2025-05-08T09:11:50.270Z] [WebSocket] Received message of type: authenticated 
+[2025-05-08T09:11:50.270Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[TaskTable] Task clicked: 
+Object {id: 763, title: "2. S&P KY3P Security Assessment: DevTest18", type: "ky3p", status: "ready_for_submission", metadata: {…}, …}
+[TaskTable] Generated task URL: 
+Object {taskId: 763, companyName: "DevTest18", formUrl: "/task-center/task/763?review=true", timestamp: "2025-05-08T09:11:55.703Z"}
+[TaskTable] Direct task navigation preparation: 
+Object {taskId: 763, taskType: "ky3p", formType: "ky3p", title: "2. S&P KY3P Security Assessment: DevTest18", constructedUrl: "/task-center/task/763?review=true", …}
+[TaskTable] Initiating direct ID-based navigation to: /task-center/task/763?review=true
+[Router] Current location: /task-center/task/763
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center/task/763", …}
+[Sidebar] Tab state check: company=273, path=/task-center/task/763, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 273
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 316, email: "18@e.com", onboardingCompleted: true, userObject: "{↵  "id": 316,↵  "email": "18@e.com",↵  "full_name": "John Doe",↵  "first_name":…"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[TaskPage] Task initialization: 
+Object {taskSlug: "763", parsedId: 763, taskId: 763, apiEndpoint: "/api/tasks.json/763", timestamp: "2025-05-08T09:11:55.711Z"}
+[TaskPage] Fetching task data by ID: 
+Object {taskId: 763, fullUrl: "/api/tasks.json/763", timestamp: "2025-05-08T09:11:55.711Z"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[TaskPage] Task data received: 
+Object {taskId: 763, taskType: "ky3p", title: "2. S&P KY3P Security Assessment: DevTest18", status: "ready_for_submission", timestamp: "2025-05-08T09:11:55.932Z"}
+[CurrentCompany] Setting company context: 273
+[FormStatus] [DIAGNOSTIC][diag_1746695515941_awsin] Starting section status calculation 
+Object {timestamp: "2025-05-08T09:11:55.941Z", sectionCount: 0, hasValues: false, valueCount: 0}
+[TaskPage] Security Form progress updated: 0
+[UniversalForm] Fetching template for task type: ky3p
+[TaskTemplateService] Fetching template for task type: ky3p
+[TaskTemplateService] Successfully fetched template: 
+Object {templateId: 48, templateName: "S&P KY3P Security Assessment", taskType: "ky3p", configCount: 10}
+[UniversalForm] Template loaded: ID=48, Name=S&P KY3P Security Assessment
+[UniversalForm] Looking for company-specific form service for task type: ky3p
+[UniversalForm] Data isolation: Using company ID 273 from user context
+[FormServiceFactory] Creating form service for type: ky3p 
+Object {companyId: 273, taskId: 763, useEnhanced: true, fromContext: false}
+[FormServiceFactory] Using unified KY3P form service for company 273, task 763
+[FormServiceFactory] Successfully imported unified KY3P service module
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: 273, taskId: 763, timestamp: "2025-05-08T09:11:56.218Z"}
+[UniversalForm] Found form service: UnifiedKY3PFormService
+[FormStatus] [DIAGNOSTIC][diag_1746695516219_j93gq] Starting section status calculation 
+Object {timestamp: "2025-05-08T09:11:56.219Z", sectionCount: 0, hasValues: false, valueCount: 0}
+[TaskPage] Security Form progress updated: 0
+[UniversalForm] Initializing form structure with form service
+[UniversalForm] Form service type: UnifiedKY3PFormService
+[UniversalForm] Form service has initialize method: true
+[UniversalForm] Initializing form service with template ID: 48
+[UnifiedKY3PFormService] [Unified KY3P] Initializing with template ID: 48
+[UnifiedKY3PFormService] [Unified KY3P] Loaded 120 fields
+[UnifiedKY3PFormService] [Unified KY3P] Generated 4 sections
+[UnifiedKY3PFormService] [Unified KY3P] First section ID: Development, Name: Development
+[UnifiedKY3PFormService] [Unified KY3P] Sample field section values: Development, Development, Development
+[UnifiedKY3PFormService] [Unified KY3P] Successfully initialized with 120 fields and 4 sections
+[UniversalForm] Form service initialization completed
+[UniversalForm] Fetching fields from form service...
+[UniversalForm] Fields result type: object
+[UniversalForm] Is fields array: true
+[UniversalForm] Loaded 120 fields from form service
+[UniversalForm] Sample field: {"id":1,"key":"externalSystems","fieldKey":"externalSystems","label":"External Systems","displayName":"External Systems","fieldType":"multi-line","type":"multi-line","question":"Describe how your organization maintains and updates its inventory of external information systems.","required":false,"group":"Development","order":1,"description":"Describe how your organization maintains and updates its inventory of external information systems.","section":"Development","step":0,"validation":{}}
+[UniversalForm] Fetching sections from form service...
+[UniversalForm] Sections result type: object
+[UniversalForm] Is sections array: true
+[UniversalForm] Loaded 4 sections from form service
+[UniversalForm] Sample section: {"id":"Development","name":"Development","title":"Development","label":"Development","order":0,"collapsed":false,"fields":[{"id":1,"key":"externalSystems","fieldKey":"externalSystems","label":"External Systems","displayName":"External Systems","fieldType":"multi-line","type":"multi-line","question":"Describe how your organization maintains and updates its inventory of external information systems.","required":false,"group":"Development","order":1,"description":"Describe how your organization maintains and updates its inventory of external information systems.","section":"Development","step":0,"validation":{}},{"id":2,"key":"breachNotification","fieldKey":"breachNotification","label":"Breach Notification","displayName":"Breach Notification","fieldType":"multi-line","type":"multi-line","question":"Explain the process your organization follows to notify data controllers promptly upon becoming aware of a privacy data breach.","required":false,"group":"Development","order":2,"description":"Explain the process your organization follows to notify data controllers promptly upon becoming aware of a privacy data breach.","section":"Development","step":0,"validation":{}},{"id":3,"key":"privacyIncidentProcedure","fieldKey":"privacyIncidentProcedure","label":"Privacy Incident Procedure","displayName":"Privacy Incident Procedure","fieldType":"multi-line","type":"multi-line","question":"Detail your organization's formal procedures for reporting and responding to privacy-related incidents.","required":false,"group":"Development","order":3,"description":"Detail your organization's formal procedures for reporting and responding to privacy-related incidents.","section":"Development","step":0,"validation":{}},{"id":4,"key":"publicPrivacyNotice","fieldKey":"publicPrivacyNotice","label":"Public Privacy Notice","displayName":"Public Privacy Notice","fieldType":"multi-line","type":"multi-line","question":"Describe how your organization provides publicly accessible privacy notices or policies at all points of personal data collection and processing.","required":false,"group":"Development","order":4,"description":"Describe how your organization provides publicly accessible privacy notices or policies at all points of personal data collection and processing.","section":"Development","step":0,"validation":{}},{"id":5,"key":"privacyLawCompliance","fieldKey":"privacyLawCompliance","label":"Privacy Law Compliance","displayName":"Privacy Law Compliance","fieldType":"multi-line","type":"multi-line","question":"Explain how your organization's privacy policies and standards are designed to protect customer privacy and comply with global and local privacy regulations (e.g., GDPR, CCPA, CPPA, GLBA).","required":false,"group":"Development","order":5,"description":"Explain how your organization's privacy policies and standards are designed to protect customer privacy and comply with global and local privacy regulations (e.g., GDPR, CCPA, CPPA, GLBA).","section":"Development","step":0,"validation":{}},{"id":6,"key":"dataRetentionLimits","fieldKey":"dataRetentionLimits","label":"Data Retention Limits","displayName":"Data Retention Limits","fieldType":"multi-line","type":"multi-line","question":"Explain your organization's practices for retaining personal data only for the duration necessary for its intended…
+[UniversalForm] Processing section Development (Development) with 31 fields
+[UniversalForm] Processing section Governance (Governance) with 30 fields
+[UniversalForm] Processing section Resilience (Resilience) with 27 fields
+[UniversalForm] Processing section Security (Security) with 32 fields
+Warning: React has detected a change in the order of Hooks called by UniversalForm. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+1. useContext                 useContext
+2. useContext                 useContext
+3. useContext                 useContext
+4. useEffect                  useEffect
+5. useState                   useState
+6. useCallback                useCallback
+7. useSyncExternalStore       useSyncExternalStore
+8. useEffect                  useEffect
+9. useContext                 useContext
+10. useContext                useContext
+11. useContext                useContext
+12. useEffect                 useEffect
+13. useState                  useState
+14. useCallback               useCallback
+15. useSyncExternalStore      useSyncExternalStore
+16. useEffect                 useEffect
+17. useEffect                 useEffect
+18. useState                  useState
+19. useState                  useState
+20. useState                  useState
+21. useState                  useState
+22. useState                  useState
+23. useState                  useState
+24. useState                  useState
+25. useState                  useState
+26. useState                  useState
+27. useState                  useState
+28. useState                  useState
+29. useRef                    useRef
+30. useContext                useContext
+31. useContext                useContext
+32. useContext                useContext
+33. useEffect                 useEffect
+34. useState                  useState
+35. useCallback               useCallback
+36. useSyncExternalStore      useSyncExternalStore
+37. useEffect                 useEffect
+38. useEffect                 useEffect
+39. useMemo                   useMemo
+40. useState                  useState
+41. useState                  useState
+42. useState                  useState
+43. useState                  useState
+44. useRef                    useRef
+45. useRef                    useRef
+46. useRef                    useRef
+47. useRef                    useRef
+48. useRef                    useRef
+49. useCallback               useCallback
+50. useRef                    useRef
+51. useRef                    useRef
+52. useState                  useState
+53. useRef                    useRef
+54. useEffect                 useEffect
+55. useEffect                 useEffect
+56. useEffect                 useEffect
+57. useEffect                 useEffect
+58. useEffect                 useEffect
+59. useEffect                 useEffect
+60. useEffect                 useEffect
+61. useEffect                 useEffect
+62. useRef                    useRef
+63. useCallback               useCallback
+64. useCallback               useCallback
+65. useEffect                 useEffect
+66. useEffect                 useEffect
+67. useEffect                 useEffect
+68. useCallback               useCallback
+69. useMemo                   useMemo
+70. useEffect                 useEffect
+71. useCallback               useCallback
+72. useState                  useState
+73. useState                  useState
+74. useCallback               useCallback
+75. useCallback               useCallback
+76. useCallback               useCallback
+77. useEffect                 useEffect
+78. useCallback               useCallback
+79. useState                  useState
+80. useEffect                 useEffect
+81. useEffect                 useEffect
+82. useEffect                 useEffect
+83. useState                  useState
+84. useEffect                 useEffect
+85. useEffect                 useEffect
+86. useCallback               useCallback
+87. useCallback               useCallback
+88. useCallback               useCallback
+89. useCallback               useCallback
+90. useMemo                   useMemo
+91. useMemo                   useMemo
+92. undefined                 useCallback
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    at UniversalForm (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/forms/UniversalForm.tsx:367:3)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at PageTemplate (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/page-template.tsx:21:3)
+    at div
+    at main
+    at div
+    at div
+    at DashboardLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/layouts/DashboardLayout.tsx:29:35)
+    at TaskPage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/task-page.tsx:34:36)
+    at div
+    at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ggSEmkDXn_Q7Zu-NmKfPP:87:28)
+    at component…
+
+Previous render Next render
+------------------------------------------------------
+1. useContext useContext
+2. useContext useContext
+3. useContext useContext
+4. useEffect useEffect
+5. useState useState
+6. useCallback useCallback
+7. useSyncExternalStore useSyncExternalStore
+8. useEffect useEffect
+9. useContext useContext
+10. useContext useContext
+11. useContext useContext
+12. useEffect useEffect
+13. useState useState
+14. useCallback useCallback
+15. useSyncExternalStore useSyncExternalStore
+16. useEffect useEffect
+17. useEffect useEffect
+18. useState useState
+19. useState useState
+20. useState useState
+21. useState useState
+22. useState useState
+23. useState useState
+24. useState useState
+25. useState useState
+26. useState useState
+27. useState useState
+28. useState useState
+29. useRef useRef
+30. useContext useContext
+31. useContext useContext
+32. useContext useContext
+33. useEffect useEffect
+34. useState useState
+35. useCallback useCallback
+36. useSyncExternalStore useSyncExternalStore
+37. useEffect useEffect
+38. useEffect useEffect
+39. useMemo useMemo
+40. useState useState
+41. useState useState
+42. useState useState
+43. useState useState
+44. useRef useRef
+45. useRef useRef
+46. useRef useRef
+47. useRef useRef
+48. useRef useRef
+49. useCallback useCallback
+50. useRef useRef
+51. useRef useRef
+52. useState useState
+53. useRef useRef
+54. useEffect useEffect
+55. useEffect useEffect
+56. useEffect useEffect
+57. useEffect useEffect
+58. useEffect useEffect
+59. useEffect useEffect
+60. useEffect useEffect
+61. useEffect useEffect
+62. useRef useRef
+63. useCallback useCallback
+64. useCallback useCallback
+65. useEffect useEffect
+66. useEffect useEffect
+67. useEffect useEffect
+68. useCallback useCallback
+69. useMemo useMemo
+70. useEffect useEffect
+71. useCallback useCallback
+72. useState useState
+73. useState useState
+74. useCallback useCallback
+75. useCallback useCallback
+76. useCallback useCallback
+77. useEffect useEffect
+78. useCallback useCallback
+79. useState useState
+80. useEffect useEffect
+81. useEffect useEffect
+82. useEffect useEffect
+83. useState useState
+84. useEffect useEffect
+85. useEffect useEffect
+86. useCallback useCallback
+87. useCallback useCallback
+88. useCallback useCallback
+89. useCallback useCallback
+90. useMemo useMemo
+91. useMemo useMemo
+92. undefined useCallback
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+at UniversalForm (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/forms/UniversalForm.tsx:367:3)
+at div
+at div
+at div
+at div
+at div
+at PageTemplate (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/page-template.tsx:21:3)
+at div
+at main
+at div
+at div
+at DashboardLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/layouts/DashboardLayout.tsx:29:35)
+at TaskPage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/task-page.tsx:34:36)
+at div
+at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ggSEmkDXn_Q7Zu-NmKfPP:87:28)
+at component…
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
