@@ -181,14 +181,18 @@ export async function getFileReference(
     
     // Verify file exists
     const fileData = await db.query.files.findFirst({
-      where: eq(files.id, fileId)
+      where: eq(files.id, numericFileId)
     });
     
     if (!fileData) {
-      moduleLogger.warn(`File ${fileId} referenced by task ${taskId} not found in database`);
+      moduleLogger.warn(`File ${numericFileId} referenced by task ${taskId} not found in database`, {
+        originalFileId: fileId,
+        numericFileId,
+        fileIdType: typeof fileId
+      });
       return {
-        fileId: fileId as number,
-        fileName: `missing_file_${fileId}.json`,
+        fileId: numericFileId,
+        fileName: `missing_file_${numericFileId}.json`,
         fileExists: false
       };
     }
