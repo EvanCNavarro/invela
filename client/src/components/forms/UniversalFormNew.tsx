@@ -1032,6 +1032,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       eventType: event.type,
       taskId: event.payload.taskId,
       formType: event.payload.formType,
+      // Enhanced logging to show if we received the new resetUI and clearSections flags
+      resetUI: !!event.payload.resetUI,
+      clearSections: !!event.payload.clearSections,
+      clearedAt: event.payload.clearedAt || 'not provided',
       timestamp: new Date().toISOString()
     });
     
@@ -1050,7 +1054,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Reset the form's internal data first
     try {
-      logger.info(`[DIAGNOSTIC][${wsEventId}] Resetting form data before refresh`);
+      logger.info(`[DIAGNOSTIC][${wsEventId}] Resetting form data before refresh`, {
+        // Enhanced diagnostics for improved debugging
+        hasForm: !!form,
+        hasSetSectionStatuses: typeof setSectionStatuses === 'function',
+        sectionCount: sections?.length || 0,
+        hasMetadata: !!event.payload.metadata,
+        resetUIFlag: !!event.payload.resetUI,
+        clearSectionsFlag: !!event.payload.clearSections
+      });
       
       // Reset form
       if (form) {
@@ -1069,10 +1081,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         status: 'not-started' as const
       }));
       
-      // Reset section statuses if possible
-      if (typeof setSectionStatuses === 'function') {
-        logger.info(`[DIAGNOSTIC][${wsEventId}] Manually resetting section statuses via WebSocket event`);
+      // Always reset section statuses when clearSections flag is true (from enhanced server payload)
+      // or as a fallback if the flag isn't present
+      if (typeof setSectionStatuses === 'function' && 
+          (event.payload.clearSections === true || event.payload.clearSections === undefined)) {
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Manually resetting section statuses via WebSocket event`, {
+          reason: event.payload.clearSections === true ? 'clearSections flag' : 'fallback behavior',
+          sectionCount: resetSectionStatuses.length
+        });
+        
+        // Apply the reset twice - immediately and with a small delay for reliability
         setSectionStatuses(resetSectionStatuses);
+        
+        // Additional reset with delay to ensure it takes effect
+        setTimeout(() => {
+          if (typeof setSectionStatuses === 'function') {
+            setSectionStatuses(resetSectionStatuses);
+          }
+        }, 50);
         
         // Set active section to first tab
         setActiveSection(0);
@@ -1081,10 +1107,20 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.error(`[DIAGNOSTIC][${wsEventId}] Error resetting form: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
     }
     
-    // Refresh form data after fields are cleared
+    // Refresh form data after fields are cleared with enhanced resetUI handling
     // IMPORTANT: Use skipServerRefresh=true to prevent auto-reloading of data from server
-    logger.info(`[DIAGNOSTIC][${wsEventId}] Calling refreshFormData with skipServerRefresh=true`);
-    refreshFormData({ skipServerRefresh: true }).catch(error => {
+    logger.info(`[DIAGNOSTIC][${wsEventId}] Calling refreshFormData with skipServerRefresh=true`, {
+      hasResetUIFlag: !!event.payload.resetUI,
+      hasRefreshFunction: !!refreshFormData
+    });
+    
+    // Apply different refresh strategies based on resetUI flag
+    const refreshOptions = {
+      skipServerRefresh: true,
+      forceUIReset: !!event.payload.resetUI
+    };
+    
+    refreshFormData(refreshOptions).catch(error => {
       logger.error(`[DIAGNOSTIC][${wsEventId}] Error refreshing form data after fields cleared: ${error instanceof Error ? error.message : String(error)}`);
       
       toast({
@@ -1094,13 +1130,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
     });
     
-    // Force one more refresh after a delay to make sure UI is updated
-    setTimeout(() => {
-      if (refreshStatus) {
-        logger.info(`[DIAGNOSTIC][${wsEventId}] Forced refreshStatus after delay`);
-        refreshStatus();
-      }
-    }, 200);
+    // Enhanced refresh strategy with multiple timed refreshes for maximum reliability
+    // This helps ensure the UI state is fully synchronized with the server state
+    if (event.payload.resetUI) {
+      logger.info(`[DIAGNOSTIC][${wsEventId}] Enhanced UI refresh strategy activated based on resetUI flag`);
+      
+      // First refresh - immediate (already done above)
+      
+      // Second refresh - after short delay
+      setTimeout(() => {
+        if (refreshStatus) {
+          logger.info(`[DIAGNOSTIC][${wsEventId}] Second refresh after fields cleared (100ms)`);
+          refreshStatus();
+        }
+      }, 100);
+      
+      // Third refresh - after longer delay
+      setTimeout(() => {
+        if (refreshStatus) {
+          logger.info(`[DIAGNOSTIC][${wsEventId}] Third refresh after fields cleared (500ms)`);
+          refreshStatus();
+        }
+      }, 500);
+    } else {
+      // Standard refresh - single delayed refresh
+      setTimeout(() => {
+        if (refreshStatus) {
+          logger.info(`[DIAGNOSTIC][${wsEventId}] Standard refreshStatus after delay`);
+          refreshStatus();
+        }
+      }, 200);
+    }
   }, [taskId, refreshFormData, form, sections, setSectionStatuses, setActiveSection, refreshStatus]);
   
   // Create and manage the Review & Submit section

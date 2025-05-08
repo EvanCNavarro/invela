@@ -160,6 +160,10 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
               formType,
               payloadProgress: payload.progress,
               metadata: payload.metadata,
+              // Enhanced logging for the new flags
+              clearSections: !!payload.clearSections,
+              resetUI: !!payload.resetUI, 
+              clearedAt: payload.clearedAt || 'not provided',
               eventTimestamp: payload.timestamp,
               receivedAt: new Date().toISOString(),
               hasCallback: !!onFieldsCleared
