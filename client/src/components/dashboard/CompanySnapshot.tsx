@@ -132,7 +132,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
             <div className="flex items-center justify-center mb-2">
               <Award className={iconClassName} />
               <span className={labelClassName}>
-                S&P RISK SCORE
+                S&P DATA ACCESS RISK SCORE
               </span>
             </div>
             <div className={valueClassName}>
