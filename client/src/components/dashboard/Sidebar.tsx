@@ -456,19 +456,30 @@ export function Sidebar({
       "h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
       isExpanded ? "w-64" : "w-20"
     )}>
-      <div className={cn(
-        "flex items-center h-16",
-        isExpanded ? "px-4" : "justify-center"
-      )}>
-        <img
-          src="/invela-logo.svg"
-          alt="Invela Trust Network"
-          className="h-6 w-6"
-        />
-        {isExpanded && (
-          <span className="ml-3 font-semibold text-lg text-foreground">Invela Trust Network</span>
-        )}
-      </div>
+      {/* Find first unlocked menu item to use as the destination for the logo link */}
+      {(() => {
+        // Find the first available tab that's not locked
+        const firstAvailableTab = [...visibleMenuItems, ...adminMenuItems]
+          .find(item => !item.locked);
+        
+        const logoLinkHref = firstAvailableTab?.href || '/task-center'; // Fallback to task-center
+        
+        return (
+          <Link href={logoLinkHref} className={cn(
+            "flex items-center h-16 cursor-pointer hover:bg-muted/50 transition-colors",
+            isExpanded ? "px-4" : "justify-center"
+          )}>
+            <img
+              src="/invela-logo.svg"
+              alt="Invela Trust Network"
+              className="h-6 w-6"
+            />
+            {isExpanded && (
+              <span className="ml-3 font-semibold text-lg text-foreground">Invela Trust Network</span>
+            )}
+          </Link>
+        );
+      })()}
 
       <nav className="mt-8 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
         <div className="space-y-1">
