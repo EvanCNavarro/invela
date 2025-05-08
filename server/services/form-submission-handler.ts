@@ -70,17 +70,29 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       ...currentMetadata,
       lastUpdated: now.toISOString(),
       submittedAt: now.toISOString(),
+      submissionDate: now.toISOString(),
       submittedBy: userId,
-      status: 'submitted',         // Explicit status flag in metadata
+      submitted: true,           // Critical flag for all form types
+      status: 'submitted',       // Explicit status flag in metadata
       explicitlySubmitted: explicitSubmission,   // Flag to prevent status reconciliation from changing it back
-      statusFlow: [...(currentMetadata.statusFlow || []), 'submitted']
+      statusFlow: [...(currentMetadata.statusFlow || []), 'submitted'],
+      locked: true               // Lock the form upon submission
     };
     
+    // Log current task state before update for debugging
+    logger.info('Current task state before submission update', {
+      taskId,
+      status: currentTask?.status,
+      progress: currentTask?.progress,
+      formType
+    });
+    
     // Update task with submitted status and enhanced metadata
+    // CRITICAL FIX: Always ensure progress is set to 100 regardless of form type
     await db.update(tasks)
       .set({
         status: 'submitted',
-        progress: 100,
+        progress: 100,           // Ensure progress is explicitly set to 100
         metadata: updatedMetadata,
         updated_at: now
       })
@@ -89,12 +101,49 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     logger.info('Enhanced task status update with submission protection', { 
       taskId, 
       status: 'submitted',
+      progress: 100,             // Log the explicit progress value
+      formType,
       metadataKeys: Object.keys(updatedMetadata)
     });
     
     logger.info('Task status updated to submitted', { taskId, formType });
     
-    // 2. Broadcast the task update via WebSocket with enhanced submission metadata
+    // 2. Double-verify the task was updated correctly (preventing KY3P/Open Banking issues)
+    const [verifiedTask] = await db.select({
+      id: tasks.id,
+      status: tasks.status,
+      progress: tasks.progress,
+      metadata: tasks.metadata
+    })
+    .from(tasks)
+    .where(eq(tasks.id, taskId));
+    
+    // Check if task was properly updated
+    if (verifiedTask.status !== 'submitted' || verifiedTask.progress !== 100) {
+      logger.warn('Task not properly updated after submission, applying direct fix', {
+        taskId,
+        formType,
+        currentStatus: verifiedTask.status,
+        currentProgress: verifiedTask.progress,
+        expected: {
+          status: 'submitted',
+          progress: 100
+        }
+      });
+      
+      // Direct SQL fix for the task to ensure proper status and progress
+      await db.update(tasks)
+        .set({
+          status: 'submitted',
+          progress: 100,
+          updated_at: now
+        })
+        .where(eq(tasks.id, taskId));
+        
+      logger.info('Applied direct fix for task status/progress', { taskId, formType });
+    }
+    
+    // 3. Broadcast the task update via WebSocket with enhanced submission metadata
     try {
       logger.info('Sending WebSocket notification for task submission', { taskId });
       
@@ -105,9 +154,11 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         metadata: {
           lastUpdated: now.toISOString(),
           submittedAt: now.toISOString(),
+          submitted: true,
           submittedBy: userId,
           status: 'submitted',
-          explicitlySubmitted: explicitSubmission
+          explicitlySubmitted: explicitSubmission,
+          locked: true
         }
       });
       
