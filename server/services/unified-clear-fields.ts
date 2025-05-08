@@ -46,7 +46,8 @@ interface ClearFieldsOptions {
 }
 
 /**
- * High-level API for clearing form fields - this is used by routes and controllers
+ * Simple, reliable API for clearing form fields - this is used by routes and controllers
+ * This implementation follows the KISS principle for maximum reliability.
  * 
  * @param taskId - The ID of the task to clear fields for
  * @param formType - The type of form (kyb, ky3p, open_banking, card)
@@ -69,6 +70,14 @@ export const clearFormFields = async (
   error?: string;
 }> => {
   try {
+    logger.info(`[ClearFields] Starting clear operation for task ${taskId} (${formType})`, {
+      taskId,
+      formType,
+      userId,
+      companyId,
+      preserveProgress
+    });
+    
     // Simple direct implementation - just delete from the appropriate table and update progress
     const client = await pool.connect();
     
@@ -84,6 +93,7 @@ export const clearFormFields = async (
       
       if (taskResult.rows.length === 0) {
         await client.query('ROLLBACK');
+        logger.warn(`[ClearFields] Task ${taskId} not found`);
         return {
           success: false,
           message: `Task ${taskId} not found`,
@@ -116,6 +126,7 @@ export const clearFormFields = async (
           break;
         default:
           await client.query('ROLLBACK');
+          logger.warn(`[ClearFields] Unsupported form type: ${formType}`);
           return {
             success: false,
             message: `Unsupported form type: ${formType}`,
@@ -123,32 +134,42 @@ export const clearFormFields = async (
           };
       }
       
-      // Delete from appropriate table
+      // Delete from appropriate table - use a direct, simple query
+      logger.info(`[ClearFields] Deleting all responses for task ${taskId} from ${tableName}`);
       const deleteResult = await client.query(
         `DELETE FROM ${tableName} WHERE task_id = $1`,
         [taskId]
       );
       
+      logger.info(`[ClearFields] Deleted ${deleteResult.rowCount} responses from ${tableName}`);
+      
       // Update progress if needed
       if (!preserveProgress) {
+        logger.info(`[ClearFields] Resetting progress to 0 for task ${taskId}`);
         await client.query(
           'UPDATE tasks SET progress = 0 WHERE id = $1',
           [taskId]
         );
+      } else {
+        logger.info(`[ClearFields] Preserving progress (${task.progress}%) for task ${taskId}`);
       }
       
       // Commit transaction
       await client.query('COMMIT');
       
-      // Broadcast update (optional but helpful)
+      // Broadcast update for UI refresh
       try {
+        logger.info(`[ClearFields] Broadcasting task update for task ${taskId}`);
         await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
           operation: 'fields_cleared',
           timestamp: new Date().toISOString()
         });
       } catch (broadcastError) {
         // Log but don't fail if broadcast fails
-        logger.warn('Failed to broadcast clear fields update, continuing', { broadcastError });
+        logger.warn('[ClearFields] Failed to broadcast task update, continuing', { 
+          broadcastError,
+          taskId
+        });
       }
       
       return {
@@ -160,6 +181,11 @@ export const clearFormFields = async (
     } catch (error) {
       // Rollback on error
       await client.query('ROLLBACK');
+      logger.error(`[ClearFields] Database error in clearFormFields:`, { 
+        taskId, 
+        formType, 
+        error: error instanceof Error ? error.message : String(error)
+      });
       throw error;
     } finally {
       // Always release client
@@ -167,7 +193,11 @@ export const clearFormFields = async (
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`Error in clearFormFields:`, { taskId, formType, error: errorMessage });
+    logger.error(`[ClearFields] Error in clearFormFields:`, { 
+      taskId, 
+      formType, 
+      error: errorMessage 
+    });
     
     return {
       success: false,
