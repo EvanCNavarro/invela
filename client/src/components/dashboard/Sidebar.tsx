@@ -424,7 +424,7 @@ export function Sidebar({
     },
     {
       icon: Gauge,
-      label: "S&P Risk Score",
+      label: "S&P Data Access Risk Score",
       href: "/risk-score-configuration",
       locked: !availableTabs.includes('risk-score-configuration') && !availableTabs.includes('risk-score'),
       hideForFinTech: true

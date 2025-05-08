@@ -709,7 +709,7 @@ export default function RiskScoreConfigurationPage() {
       <PageTemplate showBreadcrumbs>
         <div className="space-y-6">
           <PageHeader
-            title="S&P Risk Score Configuration"
+            title="S&P Data Access Risk Score Configuration"
             description="Configure your risk assessment priorities for third parties accessing your open banking data"
             icon={<Gauge className="h-6 w-6 text-primary" />}
           />
