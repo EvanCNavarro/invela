@@ -133,14 +133,14 @@ export function SkeletonCompanySnapshotWidget() {
         
         {/* Bottom Stats Row */}
         <div className="grid grid-cols-2 gap-4">
-          <div className={cardClassName + " border-blue-300 border-2"}>
+          <div className={cardClassName + " border-blue-500/50 border-2"}>
             <div className="flex items-center justify-center mb-2">
               <Skeleton className="h-5 w-5 mr-2" />
               <Skeleton className="h-4 w-24" />
             </div>
             <Skeleton className="h-8 w-16 mx-auto" />
           </div>
-          <div className={cardClassName + " border-green-300 border-2"}>
+          <div className={cardClassName + " border-green-500/50 border-2"}>
             <div className="flex items-center justify-center mb-2">
               <Skeleton className="h-5 w-5 mr-2" />
               <Skeleton className="h-4 w-24" />

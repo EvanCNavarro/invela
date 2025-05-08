@@ -127,7 +127,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
           {/* S&P Business Data Risk Score Card */}
           <Card className={cn(
             cardClassName,
-            "border-blue-300 border-2"
+            "border-blue-500/50 border-2"
           )}>
             <div className="flex items-center justify-center mb-2">
               <Award className={iconClassName} />
@@ -143,7 +143,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
           {/* Accreditation Card */}
           <Card className={cn(
             cardClassName,
-            "border-green-300 border-2"
+            "border-green-500/50 border-2"
           )}>
             <div className="flex items-center justify-center mb-2">
               <CheckCircle className={iconClassName} />
