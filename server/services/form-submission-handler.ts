@@ -10,9 +10,11 @@ import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
 import { synchronizeTasks, unlockFileVaultAccess } from './synchronous-task-dependencies';
-import { broadcastTaskUpdate } from './websocket';
+import { broadcastTaskUpdate as legacyBroadcastTaskUpdate } from './websocket';
 import { broadcastCompanyTabsUpdate, unlockDashboardAndInsightsTabs } from './company-tabs';
 import { logger } from '../utils/logger';
+import * as WebSocketService from './websocket-service';
+import { broadcast, broadcastTaskUpdate } from '../utils/unified-websocket';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
 import * as fileCreationService from './fileCreation.fixed';
 

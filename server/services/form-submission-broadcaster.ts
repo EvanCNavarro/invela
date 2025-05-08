@@ -9,6 +9,8 @@
  */
 
 import { logger } from '../utils/logger';
+import * as WebSocketService from './websocket-service';
+import { broadcast as unifiedBroadcast } from '../utils/unified-websocket';
 
 interface FormSubmissionData {
   taskId: number;
@@ -45,38 +47,82 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
   const channels: string[] = [];
   
   try {
-    // Get WebSocket broadcast function
-    const { broadcast } = require('./websocket');
-    
-    // 1. Broadcast on the specific form_submission channel
+    // 1. Use our enhanced WebSocket service for form submission events
     try {
-      broadcast('form_submission', {
+      // First try the enhanced WebSocket service
+      WebSocketService.broadcastFormSubmissionCompleted(taskId, formType, companyId);
+      channels.push('form_submission_completed');
+      
+      logger.debug(`[Form Broadcaster] Sent message using enhanced WebSocket service`, {
         taskId,
         formType,
-        status,
-        companyId,
-        timestamp,
-        submissionDate: data.submissionDate || timestamp,
-        fileId: data.fileId,
-        source: data.source || 'form-submission-broadcaster'
+        companyId
       });
-      channels.push('form_submission');
+    } catch (enhancedError) {
+      logger.warn(`[Form Broadcaster] Error using enhanced WebSocket service, falling back to unified broadcast`, {
+        error: enhancedError instanceof Error ? enhancedError.message : 'Unknown error',
+        taskId,
+        formType
+      });
       
-      logger.debug(`[Form Broadcaster] Sent message on 'form_submission' channel`, {
-        taskId,
-        formType
-      });
-    } catch (error) {
-      logger.error(`[Form Broadcaster] Error broadcasting on 'form_submission' channel`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        taskId,
-        formType
-      });
+      // Fall back to unified broadcast system
+      try {
+        unifiedBroadcast('form_submission_completed', {
+          taskId,
+          formType,
+          status,
+          companyId,
+          timestamp,
+          submissionDate: data.submissionDate || timestamp,
+          fileId: data.fileId,
+          source: data.source || 'form-submission-broadcaster'
+        });
+        channels.push('form_submission_completed');
+        
+        logger.debug(`[Form Broadcaster] Sent message using unified broadcast service`, {
+          taskId,
+          formType
+        });
+      } catch (unifiedError) {
+        logger.error(`[Form Broadcaster] Error using unified broadcast service`, {
+          error: unifiedError instanceof Error ? unifiedError.message : 'Unknown error',
+          taskId,
+          formType
+        });
+        
+        // Last resort, try legacy broadcast
+        try {
+          const { broadcast } = require('./websocket');
+          broadcast('form_submission', {
+            taskId,
+            formType,
+            status,
+            companyId,
+            timestamp,
+            submissionDate: data.submissionDate || timestamp,
+            fileId: data.fileId,
+            source: data.source || 'form-submission-broadcaster'
+          });
+          channels.push('form_submission');
+          
+          logger.debug(`[Form Broadcaster] Sent message using legacy broadcast`, {
+            taskId,
+            formType
+          });
+        } catch (legacyError) {
+          logger.error(`[Form Broadcaster] All broadcast methods failed`, {
+            error: legacyError instanceof Error ? legacyError.message : 'Unknown error',
+            taskId,
+            formType
+          });
+        }
+      }
     }
     
-    // 2. Broadcast on the task_update channel (for dashboard updates)
+    // 2. Broadcast task update for dashboard updates
     try {
-      broadcast('task_update', {
+      // Try enhanced WebSocket service first
+      WebSocketService.broadcastTaskUpdate({
         id: taskId,
         status,
         progress: data.progress || 100,
@@ -89,39 +135,43 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
       });
       channels.push('task_update');
       
-      logger.debug(`[Form Broadcaster] Sent message on 'task_update' channel`, {
+      logger.debug(`[Form Broadcaster] Sent task update using enhanced WebSocket service`, {
         taskId,
         formType
       });
-    } catch (error) {
-      logger.error(`[Form Broadcaster] Error broadcasting on 'task_update' channel`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
+    } catch (enhancedError) {
+      logger.warn(`[Form Broadcaster] Error using enhanced WebSocket for task update, falling back to unified`, {
+        error: enhancedError instanceof Error ? enhancedError.message : 'Unknown error',
         taskId,
         formType
       });
-    }
-    
-    // 3. Broadcast on the generic form_submission_complete channel (as fallback)
-    try {
-      broadcast('form_submission_complete', {
-        taskId,
-        formType,
-        status,
-        timestamp,
-        source: data.source || 'form-submission-broadcaster'
-      });
-      channels.push('form_submission_complete');
       
-      logger.debug(`[Form Broadcaster] Sent message on 'form_submission_complete' channel`, {
-        taskId,
-        formType
-      });
-    } catch (error) {
-      logger.error(`[Form Broadcaster] Error broadcasting on 'form_submission_complete' channel`, {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        taskId,
-        formType
-      });
+      // Fall back to unified task update
+      try {
+        unifiedBroadcast('task_updated', {
+          id: taskId,
+          status,
+          progress: data.progress || 100,
+          metadata: {
+            ...(data.metadata || {}),
+            lastUpdated: timestamp,
+            submissionDate: data.submissionDate || timestamp,
+            broadcastSource: data.source || 'form-submission-broadcaster'
+          }
+        });
+        channels.push('task_updated');
+        
+        logger.debug(`[Form Broadcaster] Sent task update using unified broadcast service`, {
+          taskId,
+          formType
+        });
+      } catch (unifiedError) {
+        logger.error(`[Form Broadcaster] All task update methods failed`, {
+          error: unifiedError instanceof Error ? unifiedError.message : 'Unknown error',
+          taskId,
+          formType
+        });
+      }
     }
     
     return {
