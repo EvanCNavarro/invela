@@ -19,8 +19,9 @@ async function testFormSubmission() {
       contactEmail: 'john@example.com'
     };
     
-    // Make the request to the form submission endpoint
-    const response = await fetch(`/api/forms/${formType}/submit/${taskId}`, {
+    // Make the request to the form submission endpoint - use the full URL
+    const baseUrl = 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev';
+    const response = await fetch(`${baseUrl}/api/forms/${formType}/submit/${taskId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
