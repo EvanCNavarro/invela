@@ -69,44 +69,102 @@ export const clearFormFields = async (
   error?: string;
 }> => {
   try {
-    const serviceLogger = logger.child({ 
-      module: 'ClearFormFields', 
-      userId, 
-      companyId,
-      taskId,
-      formType
-    });
+    // Simple direct implementation - just delete from the appropriate table and update progress
+    const client = await pool.connect();
     
-    // Get the current task to check permissions and status
-    const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
-    
-    if (!task) {
-      serviceLogger.warn(`Task ${taskId} not found`);
-      return {
-        success: false,
-        message: `Task ${taskId} not found`,
-        error: 'NOT_FOUND'
-      };
-    }
-    
-    // Call the core service
-    const result = await clearFieldsService(
-      taskId,
-      formType,
-      preserveProgress,
-      { 
-        // No special options needed for the standard API
+    try {
+      // Start transaction
+      await client.query('BEGIN');
+      
+      // Get current task
+      const taskResult = await client.query(
+        'SELECT * FROM tasks WHERE id = $1',
+        [taskId]
+      );
+      
+      if (taskResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: `Task ${taskId} not found`,
+          error: 'NOT_FOUND'
+        };
       }
-    );
-    
-    return {
-      success: true,
-      message: result.message || `Successfully cleared fields for task ${taskId}`,
-      status: task.status,
-      progress: preserveProgress ? task.progress : 0
-    };
+      
+      const task = taskResult.rows[0];
+      
+      // Map form types for consistency
+      const normalizedFormType = 
+        formType === 'company_kyb' ? 'kyb' : 
+        formType === 'open-banking' ? 'open_banking' : 
+        formType;
+      
+      // Determine table name
+      let tableName;
+      switch (normalizedFormType) {
+        case 'kyb':
+          tableName = 'kyb_responses';
+          break;
+        case 'ky3p':
+          tableName = 'ky3p_responses';
+          break;
+        case 'open_banking':
+          tableName = 'open_banking_responses';
+          break;
+        case 'card':
+          tableName = 'card_responses';
+          break;
+        default:
+          await client.query('ROLLBACK');
+          return {
+            success: false,
+            message: `Unsupported form type: ${formType}`,
+            error: 'INVALID_FORM_TYPE'
+          };
+      }
+      
+      // Delete from appropriate table
+      const deleteResult = await client.query(
+        `DELETE FROM ${tableName} WHERE task_id = $1`,
+        [taskId]
+      );
+      
+      // Update progress if needed
+      if (!preserveProgress) {
+        await client.query(
+          'UPDATE tasks SET progress = 0 WHERE id = $1',
+          [taskId]
+        );
+      }
+      
+      // Commit transaction
+      await client.query('COMMIT');
+      
+      // Broadcast update (optional but helpful)
+      try {
+        await broadcastTaskUpdate(taskId, task.status, preserveProgress ? task.progress : 0, {
+          operation: 'fields_cleared',
+          timestamp: new Date().toISOString()
+        });
+      } catch (broadcastError) {
+        // Log but don't fail if broadcast fails
+        logger.warn('Failed to broadcast clear fields update, continuing', { broadcastError });
+      }
+      
+      return {
+        success: true,
+        message: `Successfully cleared ${deleteResult.rowCount} fields for task ${taskId}`,
+        status: task.status,
+        progress: preserveProgress ? task.progress : 0
+      };
+    } catch (error) {
+      // Rollback on error
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      // Always release client
+      client.release();
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Error in clearFormFields:`, { taskId, formType, error: errorMessage });
