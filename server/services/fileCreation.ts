@@ -308,8 +308,17 @@ export async function createTaskFile(
     }
     
     // ─── STEP 2: BUILD CSV ROWS ────────────────────────────────────────
-    // Filter for only COMPLETE responses
-    const completeResponses = responseData.filter(r => r.status === 'COMPLETE');
+    // Filter for only COMPLETE responses - use case-insensitive comparison
+    const completeResponses = responseData.filter(r => 
+      r.status.toLowerCase() === 'complete' || r.status.toUpperCase() === 'COMPLETE'
+    );
+    
+    // Log status distribution for debugging
+    const statusDistribution = responseData.reduce((acc, r) => {
+      acc[r.status] = (acc[r.status] || 0) + 1;
+      return acc;
+    }, {});
+    logger.info(`Response status distribution: ${JSON.stringify(statusDistribution)}`, { taskId });
     
     if (completeResponses.length > 0) {
       logger.info(`Building CSV from ${completeResponses.length} complete responses`, { taskId });
