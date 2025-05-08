@@ -60,7 +60,7 @@ export async function storeFileReference(
   transaction?: PoolClient
 ): Promise<boolean> {
   const trx = transaction || (await transactionManager.startTransaction());
-  const dbClient = transaction ? db.withTransaction(trx) : db;
+  const dbClient = transaction ? transactionManager.withTransaction(trx) : db;
   const startTime = Date.now();
   
   try {
@@ -258,6 +258,75 @@ export async function verifyFileReference(
  * @param formType The form type
  * @returns Whether the operation succeeded
  */
+/**
+ * Standardize file references in form data
+ * 
+ * This function ensures all file references in form data follow a consistent pattern
+ * by normalizing file IDs and ensuring they're properly placed in the formData.
+ * 
+ * @param formData The original form data
+ * @param formType The form type (kyb, ky3p, etc.)
+ * @returns Standardized form data with consistent file references
+ */
+export function standardizeFileReference(
+  formData: Record<string, any>,
+  formType: string
+): Record<string, any> {
+  // Create a copy to avoid modifying the original
+  const standardizedData = { ...formData };
+  
+  // Get the appropriate metadata field for this form type
+  const metadataField = getMetadataFieldForFormType(formType);
+  
+  // If there's a fileId field but not a form-specific field, add it
+  if (standardizedData.fileId && !standardizedData[metadataField]) {
+    standardizedData[metadataField] = standardizedData.fileId;
+    moduleLogger.debug(`Adding standardized file reference for ${formType}`, {
+      formType,
+      metadataField,
+      fileId: standardizedData.fileId
+    });
+  }
+  
+  // If there's a form-specific field but not a fileId field, add it
+  if (standardizedData[metadataField] && !standardizedData.fileId) {
+    standardizedData.fileId = standardizedData[metadataField];
+    moduleLogger.debug(`Adding generic fileId reference for ${formType}`, {
+      formType,
+      metadataField,
+      fileId: standardizedData[metadataField]
+    });
+  }
+  
+  return standardizedData;
+}
+
+/**
+ * Get the standardized file ID from form data
+ * 
+ * @param formData The form data to extract file ID from
+ * @param formType The form type (kyb, ky3p, etc.) 
+ * @returns The file ID if found, undefined otherwise
+ */
+export function getStandardizedFileId(
+  formData: Record<string, any>,
+  formType: string
+): number | string | undefined {
+  // First check for the standard fileId field
+  if (formData.fileId) {
+    return formData.fileId;
+  }
+  
+  // Then check for form-specific fields based on type
+  const metadataField = getMetadataFieldForFormType(formType);
+  if (formData[metadataField]) {
+    return formData[metadataField];
+  }
+  
+  // File ID not found in any expected field
+  return undefined;
+}
+
 export async function repairFileReference(
   taskId: number,
   fileId: number,

@@ -12,7 +12,7 @@
  */
 
 import { PoolClient } from 'pg';
-import { db } from '@db';
+import { db, pool } from '@db';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { logger } from '../utils/logger';
 
@@ -28,7 +28,7 @@ export async function startTransaction(): Promise<PoolClient> {
     transactionLogger.debug('Starting new transaction');
     
     // Get a client from the pool
-    const client = await db.runtime.client.connect();
+    const client = await pool.connect();
     
     // Begin transaction
     await client.query('BEGIN');
@@ -160,7 +160,8 @@ export async function executeInTransaction(
  * @returns A Drizzle instance bound to the transaction
  */
 export function withTransaction(client: PoolClient) {
-  return drizzle(client);
+  // Create Drizzle instance with the client as a custom pool-like object
+  return drizzle({ client: client as any });
 }
 
 /**
