@@ -44,6 +44,8 @@ export interface FormSubmissionPayload {
  * Provides an interface for broadcasting messages via WebSocket
  */
 export class WebSocketService {
+  // Adding method signatures for TypeScript
+  static broadcastFormSubmissionCompleted: (formType: string, taskId: number, companyId: number, options?: any) => boolean;
   /**
    * Broadcast a task update to all connected clients
    * 
@@ -230,26 +232,30 @@ export function broadcastFormSubmission(submissionData: FormSubmissionPayload): 
 }
 
 /**
- * Import and re-export the broadcastFormSubmission function as part of WebSocketService
- * to provide backwards compatibility with the broadcastFormSubmissionCompleted function name
+ * Add the broadcastFormSubmissionCompleted function to the WebSocketService class and export it 
+ * to provide backwards compatibility
  */
-import { broadcastFormSubmission as unifiedBroadcastFormSubmission } from './utils/unified-websocket';
 
-// Add the broadcastFormSubmissionCompleted method to the WebSocketService class for backwards compatibility
+// Add the broadcastFormSubmissionCompleted method directly to the WebSocketService class
 WebSocketService.broadcastFormSubmissionCompleted = (
   formType: string,
   taskId: number, 
   companyId: number,
   options = {}
 ) => {
-  // Call the form submission function with a modified type to indicate completion
-  return unifiedBroadcastFormSubmission({
+  // Create a submission payload with status 'completed'
+  const payload: FormSubmissionPayload = {
     taskId,
     formType,
     companyId,
     status: 'completed',
-    ...options,
-  });
+    submissionDate: new Date().toISOString(),
+    ...options
+  };
+  
+  // Use the existing broadcast method
+  WebSocketService.broadcastFormSubmission(payload);
+  return true;
 };
 
 // Also export as a standalone function for backward compatibility
@@ -259,5 +265,6 @@ export function broadcastFormSubmissionCompleted(
   companyId: number,
   options = {}
 ): void {
+  // Forward to the WebSocketService method
   WebSocketService.broadcastFormSubmissionCompleted(formType, taskId, companyId, options);
 }

@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { submitFormWithTransaction } from '../services/transactional-form-handler';
 import * as WebSocketService from '../services/websocket';
-import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { broadcast } from '../utils/unified-websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
 // Add namespace context to logs
@@ -180,9 +180,9 @@ export function createTransactionalFormRouter(): Router {
         timestamp: submissionTimestamp
       });
       
-      // Use the imported broadcastFormSubmission function with type='form_submission_completed'
+      // Use the imported broadcast function with type='form_submission_completed'
       // This is now the single source of truth for form submission notifications
-      broadcastFormSubmission({
+      broadcast('form_submission_completed', {
         taskId,
         formType,
         status: 'completed',

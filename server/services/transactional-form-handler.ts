@@ -16,7 +16,7 @@ import {
   sendFormSubmissionError, 
   sendFormSubmissionInProgress 
 } from '../utils/form-submission-notifications';
-import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { broadcast } from '../utils/unified-websocket';
 import { db } from '@db';
 
 // Add namespace context to logs
@@ -416,9 +416,9 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           timestamp: submissionTimestamp
         });
         
-        // IMPORTANT: Use broadcastFormSubmission with type='form_submission_completed'
+        // IMPORTANT: Use broadcast with type='form_submission_completed'
         // We no longer need sendFormSubmissionSuccess which was causing duplicate notifications
-        broadcastFormSubmission({
+        broadcast('form_submission_completed', {
           taskId,
           formType,
           status: 'completed',
