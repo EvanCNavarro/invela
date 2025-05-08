@@ -64,14 +64,6 @@ export function ClearFieldsButton({
       setIsOpen(false);
       setIsClearing(true);
       
-      // Map taskType to URL-friendly form type for API consistency
-      let formTypeForApi = taskType;
-      if (taskType === 'company_kyb') {
-        formTypeForApi = 'kyb';
-      } else if (taskType === 'open_banking') {
-        formTypeForApi = 'open-banking';
-      }
-      
       // Show in-progress toast
       toast({
         title: 'Clearing...',
@@ -79,115 +71,69 @@ export function ClearFieldsButton({
         variant: 'default'
       });
       
-      // STEP 1: First, forcefully remove all existing cached data about this form
-      // to ensure we don't have stale data influencing our UI
-      const keysToRemove = [
-        `/api/tasks/${taskId}`,
-        `/api/${formTypeForApi}/progress/${taskId}`,
-        `/api/${formTypeForApi.replace('-', '_')}/progress/${taskId}`,
-        `/api/kyb/progress/${taskId}`,
-        `/api/ky3p/progress/${taskId}`,
-        `/api/open-banking/progress/${taskId}`
-      ];
+      // Import and use the enhanced clear fields functionality
+      const { enhancedClearFields, shouldBlockClearOperation, broadcastClearFields } = await import('./enhancedClearFields');
       
-      logger.info(`[ClearFields] Removing form data from cache BEFORE API call`, {
-        keys: keysToRemove,
-        operationId
-      });
-      
-      // Remove cache entries BEFORE the API call to prevent stale data influences
-      for (const key of keysToRemove) {
-        queryClient.removeQueries({ queryKey: [key] });
+      // Check if we should block this operation due to recent clear
+      if (shouldBlockClearOperation(taskId, taskType)) {
+        logger.info(`[ClearFields] Blocking clear operation due to recent clear`, {
+          taskId,
+          formType: taskType,
+          operationId
+        });
+        
+        toast({
+          title: 'Already Cleared',
+          description: 'Form fields were just cleared. Please wait a moment before trying again.',
+          variant: 'info'
+        });
+        
+        setIsClearing(false);
+        return;
       }
       
-      // STEP 2: Make a direct API call to clear fields on the server
-      const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${preserveProgress ? '?preserveProgress=true' : ''}`;
+      // Use the enhanced clear fields functionality
+      logger.info(`[ClearFields] Using enhanced clear fields approach`, {
+        taskId,
+        formType: taskType,
+        operationId,
+        preserveProgress
+      });
       
-      logger.info(`[ClearFields] Calling API to clear fields: ${clearUrl}`, {
+      const result = await enhancedClearFields(taskId, taskType, queryClient, {
+        preserveProgress,
+        resetUI: true,
+        clearSections: true
+      });
+      
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      
+      // Also broadcast the clear operation to all connected clients
+      logger.info(`[ClearFields] Broadcasting clear operation to all connected clients`, {
         taskId,
         formType: taskType,
         operationId
       });
       
-      const response = await fetch(clearUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add cache-busting headers
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        body: JSON.stringify({ 
-          preserveProgress,
-          resetUI: true,
-          timestamp: Date.now() // Include timestamp to prevent caching
-        })
+      // Don't await this to avoid blocking UI
+      broadcastClearFields(taskId, taskType, {
+        preserveProgress,
+        resetUI: true,
+        clearSections: true
+      }).catch(err => {
+        // Non-critical error, just log it
+        logger.warn(`[ClearFields] Error broadcasting clear operation:`, err);
       });
       
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${await response.text()}`);
-      }
-      
-      // STEP 3: Purge all potentially affected API endpoints again
-      // This ensures any in-flight requests or race conditions are addressed
-      logger.info(`[ClearFields] Purging cache again AFTER successful API call`, {
-        operationId
-      });
-      
-      for (const key of keysToRemove) {
-        queryClient.removeQueries({ queryKey: [key] });
-      }
-      
-      // STEP 4: Force a fresh data fetch by refetching key data
-      // This ensures we have fresh data from the server
-      logger.info(`[ClearFields] Forcing fresh data fetch`, {
-        operationId
-      });
-      
-      // Get fresh task data
-      await queryClient.fetchQuery({ 
-        queryKey: [`/api/tasks/${taskId}`],
-        staleTime: 0
-      });
-      
-      // Get fresh form progress data
-      await queryClient.fetchQuery({
-        queryKey: [`/api/${formTypeForApi}/progress/${taskId}`],
-        staleTime: 0
-      });
-      
-      // STEP 5: Reset form UI state completely
+      // Reset form UI state completely
       // Call the parent component's onClear to reset the form
       logger.info(`[ClearFields] Resetting form UI state`, {
         operationId
       });
       
       await onClear();
-      
-      // STEP 6: Direct fetch to ensure progress data is correct
-      try {
-        // Make a direct fetch to ensure data is fresh
-        const freshDataResponse = await fetch(`/api/${formTypeForApi}/progress/${taskId}?t=${Date.now()}`, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        if (freshDataResponse.ok) {
-          const freshData = await freshDataResponse.json();
-          logger.info(`[ClearFields] Verified fresh data:`, {
-            formData: Object.keys(freshData.formData || {}).length,
-            progress: freshData.progress,
-            status: freshData.status,
-            operationId
-          });
-        }
-      } catch (fetchError) {
-        logger.warn(`[ClearFields] Error verifying fresh data:`, fetchError);
-      }
       
       // Success toast
       toast({
