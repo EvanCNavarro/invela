@@ -737,26 +737,45 @@ async function handleOpenBankingPostSubmission(
     transactionId 
   };
   
+  // Console log for better visibility in debugging
+  console.log(`[OpenBankingPostSubmission] 🚀 Starting Open Banking post-submission for task ${taskId}, company ${companyId}`);
+  
   logger.info('Processing Open Banking post-submission logic', {
     ...obPostLogContext,
     timestamp: new Date().toISOString()
   });
   
   try {
+    // Verify company exists before proceeding
+    const companyCheck = await trx.select({ id: companies.id })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+    
+    if (!companyCheck.length) {
+      console.error(`[OpenBankingPostSubmission] ❌ Company with ID ${companyId} not found - cannot process post submission`);
+      throw new Error(`Company with ID ${companyId} not found`);
+    }
+    
+    console.log(`[OpenBankingPostSubmission] ✅ Company verified: ${companyId}`);
+    
     // Open Banking unlocks Dashboard and Insights tabs
     const unlockedTabs = ['dashboard', 'insights'];
     
     // Unlock Dashboard and Insights tabs
     await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
+    console.log(`[OpenBankingPostSubmission] ✅ Unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
     
     // Mark company onboarding as completed
-    await trx.update(companies)
+    const onboardingUpdateResult = await trx.update(companies)
       .set({
         onboarding_company_completed: true,
         updated_at: new Date()
       })
-      .where(eq(companies.id, companyId));
+      .where(eq(companies.id, companyId))
+      .returning({ id: companies.id });
     
+    console.log(`[OpenBankingPostSubmission] ✅ Updated onboarding status to true for company ${companyId}`);
     logger.info('Updated company onboarding status', { 
       ...obPostLogContext,
       timestamp: new Date().toISOString()
@@ -770,6 +789,7 @@ async function handleOpenBankingPostSubmission(
     // with higher weight on PII Data and Account Data
     const riskClusters = calculateRiskClusters(riskScore);
     
+    console.log(`[OpenBankingPostSubmission] ✅ Generated risk score ${riskScore} and clusters:`, JSON.stringify(riskClusters));
     logger.info('Generated risk score and clusters', { 
       ...obPostLogContext, 
       riskScore,
@@ -778,24 +798,55 @@ async function handleOpenBankingPostSubmission(
     });
     
     // Update accreditation status, risk score, and risk clusters in a single operation
-    await trx.update(companies)
+    const riskUpdateResult = await trx.update(companies)
       .set({
         accreditation_status: 'APPROVED',
         risk_score: riskScore,
         risk_clusters: riskClusters,
         updated_at: new Date()
       })
-      .where(eq(companies.id, companyId));
+      .where(eq(companies.id, companyId))
+      .returning({ 
+        id: companies.id,
+        risk_score: companies.risk_score,
+        accreditation_status: companies.accreditation_status 
+      });
     
-    logger.info('Updated accreditation status', { 
+    // Log results of risk update
+    console.log(`[OpenBankingPostSubmission] ✅ Updated risk score and accreditation status:`, 
+      riskUpdateResult ? JSON.stringify(riskUpdateResult) : "No result returned");
+      
+    logger.info('Updated accreditation status and risk scores', { 
       ...obPostLogContext,
+      riskUpdateResult: riskUpdateResult || 'No result returned',
       timestamp: new Date().toISOString()
     });
+    
+    // Verify risk score has been set by retrieving the company record
+    const companyAfterUpdate = await trx.select({
+      id: companies.id,
+      risk_score: companies.risk_score,
+      accreditation_status: companies.accreditation_status,
+      risk_clusters: companies.risk_clusters,
+      onboarding_completed: companies.onboarding_company_completed
+    })
+    .from(companies)
+    .where(eq(companies.id, companyId))
+    .limit(1);
+    
+    if (companyAfterUpdate.length > 0) {
+      console.log(`[OpenBankingPostSubmission] ✅ Verified company updates. Current state:`, 
+        JSON.stringify(companyAfterUpdate[0]));
+    } else {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to verify company updates - could not retrieve company record`);
+    }
     
     const endTime = performance.now();
     logger.info('Open Banking post-submission completed successfully', {
       ...obPostLogContext,
       unlockedTabs,
+      riskScore,
+      companyState: companyAfterUpdate[0] || 'Unknown',
       duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
