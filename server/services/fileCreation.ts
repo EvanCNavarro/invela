@@ -94,16 +94,67 @@ export async function createFile(options: FileCreationOptions): Promise<FileCrea
       fileName: options.name
     };
   } catch (error) {
-    logger.error('Error creating file', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+    // Enhanced error diagnostic information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorCode = 'FILE_STORAGE_ERROR';
+    
+    // Determine specific file creation error type
+    let errorType = 'unknown';
+    let errorPhase = 'unknown';
+    
+    // Analyze the error message and stack to determine specific error type
+    if (errorMessage.includes('database') || errorMessage.includes('SQL') || errorMessage.includes('query')) {
+      errorType = 'database';
+      errorPhase = 'database_insert';
+    } else if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {
+      errorType = 'duplicate';
+      errorPhase = 'file_exists';
+    } else if (errorMessage.includes('permission') || errorMessage.includes('access')) {
+      errorType = 'permission';
+      errorPhase = 'file_storage_access';
+    } else if (errorMessage.includes('invalid')) {
+      errorType = 'validation';
+      errorPhase = 'file_validation';
+    } else if (errorMessage.includes('size') || errorMessage.includes('too large')) {
+      errorType = 'size';
+      errorPhase = 'file_size_limit';
+    }
+    
+    // Log detailed diagnostic information
+    logger.error(`[ENHANCED ERROR] Error creating file in storage: ${errorCode}`, {
+      error: errorMessage,
+      stack: errorStack,
       fileName: options.name,
-      companyId: options.companyId
+      companyId: options.companyId,
+      userId: options.userId,
+      errorType,
+      errorPhase,
+      errorCode,
+      timestamp: new Date().toISOString(),
+      // Additional diagnostic information
+      fileSize: options.content ? Buffer.from(options.content).length : 0,
+      fileType: options.type,
+      contentType: typeof options.content,
+      hasValidOptions: options && options.name && options.companyId
+    });
+    
+    // Log to console for immediate visibility during development
+    console.error(`[FileCreation] 🔴 FILE STORAGE FAILURE for file ${options.name}:`, {
+      errorCode,
+      errorType,
+      errorPhase,
+      message: errorMessage,
+      fileSize: options.content ? Buffer.from(options.content).length : 0,
+      timestamp: new Date().toISOString()
     });
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage,
+      errorType,
+      errorPhase,
+      errorCode
     };
   }
 }
@@ -412,17 +463,74 @@ export async function createTaskFile(
       status: 'uploaded'
     });
   } catch (error) {
-    logger.error('Error creating task file', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+    // Enhanced error diagnostic information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorCode = 'FILE_CREATION_ERROR';
+    
+    // Determine specific file creation error type
+    let errorType = 'unknown';
+    let errorPhase = 'unknown';
+    
+    // Analyze the error message and stack to determine specific error type
+    if (errorMessage.includes('database') || errorMessage.includes('SQL') || errorMessage.includes('query')) {
+      errorType = 'database';
+      errorPhase = 'database_query';
+    } else if (errorMessage.includes('permission') || errorMessage.includes('access')) {
+      errorType = 'permission';
+      errorPhase = 'file_access';
+    } else if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
+      errorType = 'validation';
+      errorPhase = 'form_data_validation';
+    } else if (errorMessage.includes('format') || errorMessage.includes('content')) {
+      errorType = 'format';
+      errorPhase = 'content_generation';
+    } else if (errorStack && errorStack.includes('createFile')) {
+      errorType = 'file';
+      errorPhase = 'file_creation';
+    } else if (errorStack && errorStack.includes('KYB')) {
+      errorType = 'kyb';
+      errorPhase = 'kyb_processing';
+    } else if (errorStack && errorStack.includes('KY3P')) {
+      errorType = 'ky3p';
+      errorPhase = 'ky3p_processing';
+    }
+    
+    // Log detailed diagnostic information
+    logger.error(`[ENHANCED ERROR] Error creating task file: ${errorCode}`, {
+      error: errorMessage,
+      stack: errorStack,
       taskId,
       formType,
-      companyId
+      companyId,
+      errorType,
+      errorPhase,
+      errorCode,
+      timestamp: new Date().toISOString(),
+      // Additional diagnostic information
+      formDataKeys: formData ? Object.keys(formData).length : 0,
+      responseDataCount: responseData ? responseData.length : 0,
+      validFieldCount: Object.keys(formFields).length,
+      detectedFormType: normalizedFormType,
+      hasValidFormData: formData && Object.keys(formData).length > 0
+    });
+    
+    // Log to console for immediate visibility during development
+    console.error(`[FileCreation] 🔴 FILE CREATION FAILURE for task ${taskId} (${formType}):`, {
+      errorCode,
+      errorType,
+      errorPhase,
+      message: errorMessage,
+      formDataKeysCount: formData ? Object.keys(formData).length : 0,
+      timestamp: new Date().toISOString()
     });
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage,
+      errorType,
+      errorPhase,
+      errorCode
     };
   }
 }
