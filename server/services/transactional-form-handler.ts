@@ -89,6 +89,11 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     
     // Use a transaction to ensure all operations succeed or fail together
     return await withTransactionContext(async (client) => {
+      // Log start of transaction with better visibility
+      console.log(`[TransactionalFormHandler] 🟢 TRANSACTION STARTED for task ${taskId} (${formType})`);
+      
+      // Track whether an error has occurred in any step
+      let transactionErrorOccurred = false;
       // 1. Update task status to submitted
       const now = new Date();
       
@@ -341,6 +346,21 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           formType,
           error: statusError instanceof Error ? statusError.message : 'Unknown error'
         });
+        
+        // Mark that a transaction error occurred - critical for handling transaction abort state
+        transactionErrorOccurred = true;
+        
+        // If the error contains "current transaction is aborted", throw immediately to ensure proper rollback
+        if (statusError instanceof Error && 
+            statusError.message.includes('current transaction is aborted')) {
+          console.error(`[TransactionalFormHandler] 🔥 TRANSACTION ABORTED for task ${taskId}: throwing to trigger proper rollback`, {
+            error: statusError.message,
+            taskId,
+            formType,
+            timestamp: new Date().toISOString()
+          });
+          throw statusError;
+        }
       }
       
       // 5. Unlock tabs based on form type with verification
@@ -493,6 +513,16 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           stack: wsError instanceof Error ? wsError.stack : undefined
         });
       }
+      
+      // Check for any transaction errors before returning success
+      if (transactionErrorOccurred) {
+        console.error(`[TransactionalFormHandler] 🔥 Transaction had errors for task ${taskId}, but no exception was thrown. Rolling back manually.`);
+        // This will trigger a rollback in the transaction manager's catch block
+        throw new Error(`Transaction encountered errors during execution for task ${taskId}`);
+      }
+      
+      // Log successful transaction completion
+      console.log(`[TransactionalFormHandler] ✅ TRANSACTION COMPLETED SUCCESSFULLY for task ${taskId} (${formType})`);
       
       // 6. Return success result
       return {
