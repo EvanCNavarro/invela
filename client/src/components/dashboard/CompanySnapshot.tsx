@@ -4,12 +4,14 @@ import {
   Award,
   CheckCircle,
   Network,
-  TrendingUp
+  TrendingUp,
+  Building
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 
 interface CompanySnapshotProps {
   companyData: any;
@@ -53,25 +55,28 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
     >
       <div className="space-y-4">
         {/* Company Banner */}
-        <div className="bg-muted/50 rounded-lg py-3 px-4 flex flex-col items-center justify-center">
-          {companyData?.logoId ? (
-            <img
-              src={`/api/companies/${companyData.id}/logo`}
-              alt={`${companyName} logo`}
-              className="w-8 h-8 object-contain mb-1"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center mb-1">
-              <span className="text-sm font-medium text-white">
-                {companyName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <span className="text-xl font-semibold text-center">{companyName}</span>
-        </div>
+        <Card className="p-4 border rounded-lg shadow-sm">
+          <div className="flex items-center">
+            <Building className={iconClassName} />
+            {companyData?.logoId ? (
+              <img
+                src={`/api/companies/${companyData.id}/logo`}
+                alt={`${companyName} logo`}
+                className="w-5 h-5 object-contain mr-2"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center mr-2">
+                <span className="text-xs font-medium text-white">
+                  {companyName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <span className="text-xl font-semibold">{companyName}</span>
+          </div>
+        </Card>
         
         {/* Top Stats Row */}
         <div className="grid grid-cols-2 gap-4">
@@ -83,13 +88,15 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
                 RELATIONSHIPS
               </span>
             </div>
-            <div className={valueClassName}>
-              {isLoadingRelationships ? (
-                <Skeleton className="h-10 w-14 mx-auto" />
-              ) : (
-                relationshipsCount
-              )}
-            </div>
+            <Link href="/network">
+              <a className={valueClassName + " text-blue-500 hover:underline cursor-pointer"}>
+                {isLoadingRelationships ? (
+                  <Skeleton className="h-10 w-14 mx-auto" />
+                ) : (
+                  relationshipsCount
+                )}
+              </a>
+            </Link>
           </Card>
           
           {/* Risk Score Changes Card */}
@@ -135,7 +142,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
                 ACCREDITATION
               </span>
             </div>
-            <div className={valueClassName + " text-green-500"}>
+            <div className="text-xl font-semibold text-green-500">
               {displayStatus}
             </div>
           </Card>
