@@ -57,7 +57,7 @@ const FINTECH_DEFAULT_WIDGETS = {
 
 const OTHER_DEFAULT_WIDGETS = {
   quickActions: true,
-  companyScore: true,
+  companySnapshot: true,
   networkVisualization: true,
   riskRadar: false
 };
@@ -68,7 +68,7 @@ export default function DashboardPage() {
   // Initially set to a common subset of widgets
   const [visibleWidgets, setVisibleWidgets] = useState({
     quickActions: true,
-    companyScore: true,
+    companySnapshot: true,
     networkVisualization: false,
     riskRadar: false
   });
@@ -83,7 +83,7 @@ export default function DashboardPage() {
     refetchInterval: false
   });
 
-  type WidgetKey = 'quickActions' | 'companyScore' | 'networkVisualization' | 'riskRadar';
+  type WidgetKey = 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar';
   
   const toggleWidget = (widgetId: WidgetKey) => {
     setVisibleWidgets(prev => ({
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                     key={key}
                     onSelect={(event) => {
                       event.preventDefault();
-                      toggleWidget(key as 'quickActions' | 'companyScore' | 'networkVisualization' | 'riskRadar');
+                      toggleWidget(key as 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar');
                     }}
                     className="flex items-center gap-2"
                   >
@@ -292,15 +292,15 @@ export default function DashboardPage() {
               {/* Middle section */}
               <div className="col-span-3 grid gap-4">
                 {/* FinTech layout - 1:3 ratio grid */}
-                {companyData?.category === 'FinTech' && (visibleWidgets.companyScore || visibleWidgets.riskRadar) && (
+                {companyData?.category === 'FinTech' && (visibleWidgets.companySnapshot || visibleWidgets.riskRadar) && (
                   <div className="grid grid-cols-4 gap-4 h-[450px]">
                     {/* Company Snapshot (1/4 width) for FinTech */}
-                    {visibleWidgets.companyScore && companyData && (
+                    {visibleWidgets.companySnapshot && companyData && (
                       <div className="col-span-1">
                         <CompanySnapshot 
                           companyData={companyData}
-                          onToggle={() => toggleWidget('companyScore')}
-                          isVisible={visibleWidgets.companyScore}
+                          onToggle={() => toggleWidget('companySnapshot')}
+                          isVisible={visibleWidgets.companySnapshot}
                         />
                       </div>
                     )}
@@ -322,12 +322,12 @@ export default function DashboardPage() {
                 {companyData?.category !== 'FinTech' && (
                   <div className="grid grid-cols-2 gap-4">
                     {/* Company Snapshot for Bank/Invela */}
-                    {visibleWidgets.companyScore && companyData && (
+                    {visibleWidgets.companySnapshot && companyData && (
                       <div>
                         <CompanySnapshot 
                           companyData={companyData}
-                          onToggle={() => toggleWidget('companyScore')}
-                          isVisible={visibleWidgets.companyScore}
+                          onToggle={() => toggleWidget('companySnapshot')}
+                          isVisible={visibleWidgets.companySnapshot}
                         />
                       </div>
                     )}
