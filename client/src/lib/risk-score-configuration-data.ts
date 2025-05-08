@@ -67,13 +67,11 @@ export const sampleCompanyComparisons: CompanyComparison[] = [
     description: 'Average risk configuration across the financial industry',
     score: 65,
     dimensions: {
-      physical_security: 70,
       cyber_security: 65,
       financial_stability: 68,
       dark_web_data: 55,
       public_sentiment: 72,
       potential_liability: 60,
-      supply_chain_issues: 58,
       data_access_scope: 62
     }
   },
@@ -84,13 +82,11 @@ export const sampleCompanyComparisons: CompanyComparison[] = [
     description: 'Automated investment service and robo-advisor',
     score: 80,
     dimensions: {
-      physical_security: 82,
       cyber_security: 85,
       financial_stability: 83,
       dark_web_data: 78,
       public_sentiment: 88,
       potential_liability: 75,
-      supply_chain_issues: 70,
       data_access_scope: 64
     }
   },
@@ -101,13 +97,11 @@ export const sampleCompanyComparisons: CompanyComparison[] = [
     description: 'Online investment and financial advisory service',
     score: 78,
     dimensions: {
-      physical_security: 75,
       cyber_security: 82,
       financial_stability: 80,
       dark_web_data: 76,
       public_sentiment: 84,
       potential_liability: 72,
-      supply_chain_issues: 68,
       data_access_scope: 65
     }
   },
@@ -118,13 +112,11 @@ export const sampleCompanyComparisons: CompanyComparison[] = [
     description: 'Commission-free stock trading and investing platform',
     score: 74,
     dimensions: {
-      physical_security: 70,
       cyber_security: 79,
       financial_stability: 75,
       dark_web_data: 72,
       public_sentiment: 68,
       potential_liability: 76,
-      supply_chain_issues: 72,
       data_access_scope: 68
     }
   }
