@@ -62,6 +62,8 @@ import fixKy3pFilesRouter from './routes/fix-ky3p-files';
 import enhancedDebugRoutes from './enhanced-debug-routes';
 import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
+// Import our new task broadcast router
+import taskBroadcastRouter from './routes/task-broadcast';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
 // Import our test submission state router for testing submission state preservation
