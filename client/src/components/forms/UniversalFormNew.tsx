@@ -2203,7 +2203,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   setForceRerender={setForceRerender}
                 />
                 
-                {/* Clear Fields button is now visible */}
+                {/* Clear Fields button is temporarily hidden due to UI refresh issues 
                 <ClearFieldsButton
                   taskId={taskId || 0}
                   taskType={taskType}
@@ -2212,6 +2212,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   preserveProgress={taskType === 'ky3p'} // Preserve progress for KY3P forms
                   isFormEditing={document.location.href.includes('/edit')}
                 />
+                */}
               </div>
             )}
           </div>
