@@ -547,6 +547,21 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       errorPhase = 'transaction';
       errorCode = 'TX_ERROR_DEADLOCK';
     } 
+    // Check for aborted transaction errors
+    else if (errorMessage.includes('transaction is aborted')) {
+      errorOrigin = 'database';
+      errorPhase = 'transaction';
+      errorCode = 'TX_ERROR_ABORTED';
+      
+      console.error(`[TransactionalFormHandler] 🔴 TRANSACTION ABORT ERROR detected for task ${taskId}:`, {
+        errorMessage,
+        errorOrigin: 'database',
+        errorPhase: 'transaction',
+        taskId,
+        formType,
+        timestamp: new Date().toISOString()
+      });
+    }
     // Check for database constraint violations
     else if (errorMessage.includes('constraint') || errorMessage.includes('violation')) {
       errorOrigin = 'database';
