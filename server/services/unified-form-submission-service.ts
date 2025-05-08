@@ -774,7 +774,7 @@ async function handleOpenBankingPostSubmission(
     // Update accreditation status and risk score in a single operation
     await trx.update(companies)
       .set({
-        accreditation_status: 'VALIDATED',
+        accreditation_status: 'APPROVED',
         risk_score: riskScore,
         updated_at: new Date()
       })
