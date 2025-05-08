@@ -196,43 +196,33 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
-// Get the appropriate port and host for the current environment
-const PORT = getDeploymentPort();
-const HOST = getDeploymentHost();
-
-// Differentiate between development and deployment environments
-// For local development (workflow), use port 5000
-// For Autoscale deployment, use port 8080
+// Configure server for proper deployment
+// Always use port 8080 for Autoscale deployment, 5000 for local development
 const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
 
-// Set environment variables based on context
-if (isDeployment) {
-  // For Autoscale deployment
-  process.env.NODE_ENV = 'production';
-  process.env.PORT = '8080';
-  process.env.HOST = '0.0.0.0';
-} else {
-  // For local development workflow
-  process.env.NODE_ENV = 'development';
-  process.env.PORT = '5000';
-  process.env.HOST = '0.0.0.0';
-}
+// Set NODE_ENV based on deployment context
+process.env.NODE_ENV = isDeployment ? 'production' : 'development';
 
-// Use environment-appropriate settings
-const FORCE_USE_ENV_PORT = parseInt(process.env.PORT, 10);
-const FORCE_USE_ENV_HOST = '0.0.0.0'; // Required for Replit
-const FORCE_PRODUCTION = process.env.NODE_ENV === 'production';
+// Standardize port configuration for deployment compatibility
+// Always bind to 0.0.0.0 for proper network access
+const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
+const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
-// Log environment detection information
-console.log(`[ENV] Using PORT=${FORCE_USE_ENV_PORT} from environment (override: ${process.env.PORT ? 'yes' : 'no'})`);
-console.log(`[ENV] Environment=${process.env.NODE_ENV || 'development'} (production: ${FORCE_PRODUCTION ? 'yes' : 'no'})`);
+// Set environment variable for other components that might need it
+process.env.PORT = PORT.toString();
+process.env.HOST = HOST;
 
-server.listen(FORCE_USE_ENV_PORT, FORCE_USE_ENV_HOST, () => {
-  logger.info(`Server running on ${FORCE_USE_ENV_HOST}:${FORCE_USE_ENV_PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+// Log deployment configuration for debugging
+logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isDeployment ? 'yes' : 'no'})`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
+
+// Start the server with the standardized configuration
+server.listen(PORT, HOST, () => {
+  logger.info(`Server running on ${HOST}:${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV}`);
   
   // Log additional deployment information
-  logDeploymentInfo(FORCE_USE_ENV_PORT, FORCE_USE_ENV_HOST);
+  logDeploymentInfo(PORT, HOST);
   
   // Start the periodic task reconciliation system
   if (process.env.NODE_ENV !== 'test') {
