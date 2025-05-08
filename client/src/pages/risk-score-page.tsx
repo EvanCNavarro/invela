@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { PageTemplate } from "@/components/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart2 } from "lucide-react";
+import { Gauge } from "lucide-react";
 
 export default function RiskScorePage() {
   return (
