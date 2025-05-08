@@ -240,7 +240,53 @@ export async function processKybSubmission(
     // 5. Unlock security tasks
     const unlockResult = await unlockSecurityTasks(task.company_id, taskId, userId);
     
-    // 6. Ensure real-time update with WebSocket broadcast
+    // 6. Verify task status was properly updated and fix if necessary
+    const [verifiedTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (verifiedTask?.status !== TaskStatus.SUBMITTED) {
+      logger.warn(`[KYB Transaction] Task status verification failed - expected 'submitted' but found '${verifiedTask?.status}'`, {
+        transactionId,
+        taskId,
+        expectedStatus: TaskStatus.SUBMITTED,
+        actualStatus: verifiedTask?.status,
+        metadata: verifiedTask?.metadata
+      });
+      
+      // Perform a direct fix if the status is not set correctly
+      try {
+        await db.update(tasks)
+          .set({
+            status: TaskStatus.SUBMITTED,
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info(`[KYB Transaction] Applied direct status fix to ensure task is properly marked as submitted`, {
+          transactionId,
+          taskId,
+          fixedStatus: TaskStatus.SUBMITTED,
+          elapsedMs: performance.now() - startTime
+        });
+      } catch (fixError) {
+        logger.error(`[KYB Transaction] Failed to apply direct status fix`, {
+          transactionId,
+          taskId,
+          error: fixError instanceof Error ? fixError.message : 'Unknown error',
+          elapsedMs: performance.now() - startTime
+        });
+      }
+    } else {
+      logger.info(`[KYB Transaction] Task status verification successful - confirmed status is 'submitted'`, {
+        transactionId,
+        taskId,
+        status: verifiedTask.status,
+        elapsedMs: performance.now() - startTime
+      });
+    }
+    
+    // 7. Ensure real-time update with WebSocket broadcast
     try {
       // Broadcast task update via WebSocket to ensure clients get immediate notification
       // This is critical for ensuring task status changes are reflected in the UI
@@ -257,7 +303,8 @@ export async function processKybSubmission(
           transactionId,
           warnings: warnings.length,
           securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
-          explicitlySubmitted: true
+          explicitlySubmitted: true,
+          verifiedStatus: true // Flag to indicate status was verified
         }
       });
       
