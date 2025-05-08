@@ -708,18 +708,34 @@ export default function RiskScoreConfigurationPage() {
         <div className="space-y-6">
           <PageHeader
             title="S&P Data Access Risk Score Configuration"
-            description="Configure your risk assessment priorities for third parties accessing your open banking data"
+            description="Configure your risk assessment priorities for third parties accessing your data"
             icon={<Gauge className="h-6 w-6 text-primary" />}
+            actions={
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" onClick={handleReset}>
+                  Reset to Defaults
+                </Button>
+                <Button 
+                  onClick={handleSave} 
+                  disabled={savePrioritiesMutation.isPending || saveMutation.isPending}
+                >
+                  {savePrioritiesMutation.isPending || saveMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                </Button>
+              </div>
+            }
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
+          {/* Main content area */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Left side - Main configuration area */}
+            <div className="md:col-span-3 space-y-6">
+              {/* Tabs container */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Risk Dimension Prioritization</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Drag and drop dimensions to rank them by importance. Adjust thresholds using the sliders.
-                  </p>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center">
+                    <BarChart2 className="h-5 w-5 mr-2 text-primary" />
+                    Risk Management Settings
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Tabs 
@@ -728,26 +744,27 @@ export default function RiskScoreConfigurationPage() {
                     onValueChange={setActiveTab}
                     className="w-full"
                   >
-                    <TabsList className="mb-6">
-                      <TabsTrigger value="dimension-ranking">Dimension Ranking & Priorities</TabsTrigger>
-                      <TabsTrigger value="comparative-visualization">Comparative Visualization</TabsTrigger>
+                    <TabsList className="grid grid-cols-2 mb-6">
+                      <TabsTrigger value="dimension-ranking">Dimension Priorities</TabsTrigger>
+                      <TabsTrigger value="comparative-visualization">Comparative Analysis</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="dimension-ranking" className="space-y-6">
                       <div className="bg-muted/40 p-4 rounded-lg border border-border">
                         <div className="flex items-start gap-2">
-                          <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <Info className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                           <div className="text-sm text-muted-foreground">
                             <p className="font-medium">How Dimension Ranking & Priorities Work</p>
-                            <p>Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the final risk score calculation. Adjust risk levels for each dimension using the sliders. Click Save to persist your priorities.</p>
+                            <p>Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the risk score calculation. Adjust risk levels using the sliders.</p>
                           </div>
                         </div>
                       </div>
                       
+                      {/* Priority scale indicator */}
                       <div className="space-y-1">
                         <div className="flex justify-between">
                           <div className="text-sm font-medium pl-20">1</div>
-                          <div className="text-sm font-medium pr-20">8</div>
+                          <div className="text-sm font-medium pr-20">6</div>
                         </div>
                         <div className="bg-muted/30 h-2 rounded-full relative mb-6">
                           <div className="absolute inset-x-0 flex justify-between px-4">
@@ -755,8 +772,8 @@ export default function RiskScoreConfigurationPage() {
                             <div className="w-1 h-3 -mt-0.5 bg-primary"></div>
                           </div>
                           <div className="absolute inset-x-0 top-4 flex justify-between px-4">
-                            <div className="text-xs text-muted-foreground">Highest <br/>Priority</div>
-                            <div className="text-xs text-muted-foreground text-right">Lowest <br/>Priority</div>
+                            <div className="text-xs text-muted-foreground">Highest Priority</div>
+                            <div className="text-xs text-muted-foreground text-right">Lowest Priority</div>
                           </div>
                         </div>
                         
@@ -780,10 +797,10 @@ export default function RiskScoreConfigurationPage() {
                     <TabsContent value="comparative-visualization" className="space-y-6">
                       <div className="bg-muted/40 p-4 rounded-lg border border-border">
                         <div className="flex items-start gap-2">
-                          <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <Info className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                           <div className="text-sm text-muted-foreground">
                             <p className="font-medium">Compare Your Risk Profile</p>
-                            <p>See how your risk configuration compares to popular fintech companies and industry standards.</p>
+                            <p>See how your risk configuration compares to other fintech companies and industry standards. This helps benchmark your risk management approach.</p>
                           </div>
                         </div>
                       </div>
@@ -792,28 +809,62 @@ export default function RiskScoreConfigurationPage() {
                       <ComparativeVisualization dimensions={dimensions} />
                     </TabsContent>
                   </Tabs>
-
-                  <Separator className="my-6" />
-
-                  <div className="flex justify-between">
-                    <div className="space-x-2">
-                      <Button variant="outline" onClick={handleReset}>Reset to Defaults</Button>
-                    </div>
-                    <Button onClick={handleSave} disabled={savePrioritiesMutation.isPending || saveMutation.isPending}>
-                      {savePrioritiesMutation.isPending || saveMutation.isPending ? 'Saving...' : 'Save Configuration'}
-                    </Button>
-                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Weight distribution card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center">
+                    <BarChart className="h-5 w-5 mr-2 text-primary" />
+                    Dimension Weight Distribution
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    How each dimension contributes to the overall risk score calculation
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4">
+                    {dimensions.map((dimension, index) => (
+                      <li key={dimension.id} className="text-sm">
+                        <div className="flex justify-between mb-1">
+                          <span className="flex items-center gap-2">
+                            <span className="flex-shrink-0 h-5 w-5 text-primary">
+                              {dimensionIcons[dimension.id] || <Shield className="h-5 w-5" />}
+                            </span>
+                            <span>{dimension.name}</span>
+                          </span>
+                          <span className="font-medium">{dimension.weight}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full" 
+                            style={{ 
+                              width: `${dimension.weight}%`,
+                              backgroundColor: dimension.color || '#ccc'
+                            }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{dimension.description}</p>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             </div>
-
-            <div>
+            
+            {/* Right side - Summary and visualization */}
+            <div className="space-y-6">
+              {/* Risk Score Summary Card */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Risk Score Summary</CardTitle>
-                  <p className="text-sm text-muted-foreground">Based on your dimension prioritization</p>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center">
+                    <Gauge className="h-5 w-5 mr-2 text-primary" />
+                    Risk Score Summary
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
+                  {/* Gauge visualization */}
                   <div className="relative w-36 h-36 my-4">
                     <div className="w-full h-full rounded-full border-8 border-muted flex items-center justify-center">
                       {/* Semi-circle gauge background */}
@@ -846,8 +897,7 @@ export default function RiskScoreConfigurationPage() {
                     </div>
                   </div>
                   
-                  <p className="text-sm mt-4 text-center">Based on your prioritized dimensions</p>
-                  
+                  {/* Top priorities section */}
                   <div className="w-full mt-6">
                     <h4 className="font-medium mb-2">Top Priority Dimensions</h4>
                     <ul className="space-y-2">
@@ -862,32 +912,34 @@ export default function RiskScoreConfigurationPage() {
                       ))}
                     </ul>
                   </div>
-                  
-                  <div className="w-full mt-6">
-                    <h4 className="font-medium mb-2">Weight Distribution</h4>
-                    <p className="text-xs text-muted-foreground mb-3">How each dimension contributes to the risk score</p>
-                    
-                    <ul className="space-y-3">
-                      {dimensions.map((dimension, index) => (
-                        <li key={dimension.id} className="text-sm">
-                          <div className="flex justify-between mb-1">
-                            <span className="flex items-center gap-1">
-                              <span className="text-muted-foreground">{index + 1}.</span> {dimension.name}
-                            </span>
-                            <span className="font-medium">{dimension.weight}%</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full rounded-full" 
-                              style={{ 
-                                width: `${dimension.weight}%`,
-                                backgroundColor: dimension.color || '#ccc'
-                              }}
-                            ></div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                </CardContent>
+              </Card>
+              
+              {/* DB Integration readiness card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center">
+                    <Database className="h-5 w-5 mr-2 text-primary" />
+                    Database Integration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">This section is prepared for future database integration.</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Last Saved</span>
+                      <span className="text-sm font-medium">{new Date().toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Modified By</span>
+                      <span className="text-sm font-medium">Current User</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Sync Status</span>
+                      <span className="text-sm flex items-center gap-1 text-green-600">
+                        <Check className="h-3 w-3" /> Synced
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
