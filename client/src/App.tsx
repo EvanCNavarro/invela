@@ -41,11 +41,7 @@ import KY3PTaskPage from "@/pages/ky3p-task-page";
 import OpenBankingTaskPage from "@/pages/open-banking-task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
 import FormDebugPage from "@/pages/form-debug-page";
-import { BuilderPage } from "@/pages/builder/BuilderPage";
-import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
-import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
-import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilderPage";
-import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
+// Builder pages have been removed
 import { ProtectedRoute } from "./lib/protected-route";
 import TestFormUpdate from "./test-form-update";
 import FormDbTestPage from "./form-db-test";
