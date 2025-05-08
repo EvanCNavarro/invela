@@ -466,8 +466,8 @@ export function Sidebar({
         
         return (
           <Link href={logoLinkHref} className={cn(
-            "flex items-center h-16 cursor-pointer hover:bg-muted/50 transition-colors",
-            isExpanded ? "px-4" : "justify-center"
+            "flex items-center h-10 cursor-pointer hover:bg-muted/50 transition-colors rounded-md border border-border/40",
+            isExpanded ? "px-3 mx-3 my-3" : "justify-center mx-auto my-3 w-10"
           )}>
             <img
               src="/invela-logo.svg"
@@ -481,7 +481,7 @@ export function Sidebar({
         );
       })()}
 
-      <nav className="mt-8 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
+      <nav className="mt-4 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
         <div className="space-y-1">
           <div>
             {visibleMenuItems.map((item) => (
