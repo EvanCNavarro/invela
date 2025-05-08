@@ -29,29 +29,8 @@ router.post('/api/:formType/clear/:taskId', requireAuth, async (req, res) => {
     const preserveProgress = req.query.preserveProgress === 'true' || 
                            req.body.preserveProgress === true;
     
-    // Map URL parameter to internal form type
-    let formType: FormType;
-    switch (formTypeParam) {
-      case 'kyb':
-        formType = 'company_kyb';
-        break;
-      case 'ky3p':
-        formType = 'ky3p';
-        break;
-      case 'open-banking':
-        formType = 'open_banking';
-        break;
-      default:
-        logger.warn(`[UnifiedClear] Invalid form type requested: ${formTypeParam}`, {
-          taskId,
-          userId,
-          formTypeParam
-        });
-        return res.status(400).json({
-          success: false,
-          message: `Invalid form type: ${formTypeParam}`
-        });
-    }
+    // Use form type directly - our new implementation handles the mapping internally
+    let formType = formTypeParam as FormType;
     
     // Input validation
     if (isNaN(taskId)) {
