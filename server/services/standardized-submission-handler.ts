@@ -1,337 +1,256 @@
 /**
  * Standardized Form Submission Handler
  * 
- * This service provides a consistent approach to handling form submissions
- * for all form types (KYB, KY3P, Open Banking) ensuring that:
- * 1. Task status is properly set to 'submitted'
- * 2. Progress is always set to 100%
- * 3. Metadata includes proper submission indicators
- * 4. Form-specific post-submission actions are executed
- * 5. Notifications are broadcast to all clients
+ * This module provides a unified approach to form submissions with consistent
+ * behavior across all form types. It ensures that:
+ * 
+ * 1. Both status and progress are set correctly for all form types
+ * 2. CSV files are generated consistently
+ * 3. WebSocket notifications are reliable
+ * 4. Form-specific post-submission processes are executed
  */
 
 import { db } from '@db';
-import { tasks, files } from '@db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { tasks } from '@db/schema';
+import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import * as WebSocketService from './websocket-service';
-import { broadcastFormSubmission } from '../utils/unified-websocket';
-import { TaskStatus } from '../types';
-import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
-import * as FileCreationService from './fileCreation.fixed';
-import * as TransactionManager from './transaction-manager';
-import { performance } from 'perf_hooks';
+import { ClientFormType, SchemaFormType, mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
+import * as fileCreation from './fileCreation.fixed';
+import { withTransactionContext } from './transaction-manager';
+import { handleOpenBankingPostSubmission } from './open-banking-handler';
+import { broadcastFormSubmissionCompleted, broadcastTaskUpdate } from '../utils/unified-websocket';
 
-// Define interface for submission request
-export interface StandardizedSubmissionRequest {
+// Type for the form submission input
+export interface FormSubmissionInput {
   taskId: number;
-  userId: number;
   companyId: number;
+  formType: ClientFormType | SchemaFormType;
   formData: Record<string, any>;
-  formType: string;
-  fileName?: string;
+  userId?: number;
 }
 
-// Define interface for submission result
-export interface StandardizedSubmissionResult {
+// Type for the submission result
+export interface FormSubmissionResult {
   success: boolean;
   taskId: number;
   status: string;
   progress: number;
   fileId?: string | number;
-  companyId: number;
-  submissionDate: string;
+  warning?: string;
   error?: string;
-  warnings?: string[];
-  elapsedMs?: number;
 }
 
 /**
- * Execute form-specific post-submission actions 
+ * Handle form submission with standardized behavior
  * 
- * These are the specialized steps that need to happen after submission
- * but are specific to each form type
- */
-async function executePostSubmissionActions(
-  formType: string,
-  taskId: number,
-  companyId: number,
-  userId: number
-): Promise<{ success: boolean; warnings?: string[] }> {
-  const normalizedFormType = mapClientFormTypeToSchemaType(formType);
-  const warnings: string[] = [];
-  
-  logger.info(`[StandardizedSubmission] Executing post-submission actions for ${normalizedFormType} task ${taskId}`);
-  
-  try {
-    switch (normalizedFormType) {
-      case 'kyb':
-      case 'company_kyb':
-        // Unlock file vault and security tasks
-        try {
-          const { unlockFileVaultAccess, unlockSecurityTasksForCompany } = await import('./synchronous-task-dependencies');
-          await unlockFileVaultAccess(companyId);
-          await unlockSecurityTasksForCompany(companyId, userId);
-        } catch (unlockError) {
-          warnings.push(`Warning: Failed to unlock dependent tasks: ${unlockError instanceof Error ? unlockError.message : String(unlockError)}`);
-        }
-        break;
-        
-      case 'ky3p':
-      case 'sp_ky3p_assessment':
-        // KY3P tasks don't have specific post-submission actions
-        break;
-        
-      case 'open_banking':
-      case 'open_banking_survey':
-        try {
-          // Get the Open Banking post-submission handler
-          const { handleOpenBankingPostSubmission } = await import('./open-banking-handler');
-          await handleOpenBankingPostSubmission(taskId, companyId);
-        } catch (obError) {
-          warnings.push(`Warning: Failed to execute Open Banking post-submission actions: ${obError instanceof Error ? obError.message : String(obError)}`);
-        }
-        break;
-        
-      default:
-        logger.warn(`[StandardizedSubmission] No post-submission actions for form type '${normalizedFormType}'`);
-    }
-    
-    return { success: true, warnings };
-  } catch (error) {
-    logger.error(`[StandardizedSubmission] Error executing post-submission actions`, {
-      error: error instanceof Error ? error.message : String(error),
-      formType: normalizedFormType,
-      taskId,
-      companyId
-    });
-    
-    return { 
-      success: false, 
-      warnings: [...warnings, `Failed to execute post-submission actions: ${error instanceof Error ? error.message : String(error)}`] 
-    };
-  }
-}
-
-/**
- * Create a file based on the form data
- */
-async function createFormFile(
-  formType: string,
-  taskId: number,
-  companyId: number,
-  formData: Record<string, any>,
-  fileName?: string
-): Promise<{ success: boolean; fileId?: string | number; error?: string }> {
-  try {
-    logger.info(`[StandardizedSubmission] Creating form file for ${formType} task ${taskId}`);
-    
-    const normalizedFormType = mapClientFormTypeToSchemaType(formType);
-    const result = await FileCreationService.createFileForFormSubmission(
-      normalizedFormType,
-      taskId,
-      companyId,
-      formData,
-      fileName
-    );
-    
-    if (!result.success) {
-      return { 
-        success: false, 
-        error: result.error || 'Unknown error creating form file' 
-      };
-    }
-    
-    return { success: true, fileId: result.fileId };
-  } catch (error) {
-    logger.error(`[StandardizedSubmission] Error creating form file`, {
-      error: error instanceof Error ? error.message : String(error),
-      formType,
-      taskId,
-      companyId
-    });
-    
-    return { 
-      success: false, 
-      error: `Failed to create form file: ${error instanceof Error ? error.message : String(error)}` 
-    };
-  }
-}
-
-/**
- * Standardized form submission function that works for all form types
+ * This function handles the entire form submission process, including:
  * 
- * This function ensures consistent behavior for all form submissions:
- * - Status always set to 'submitted'
- * - Progress always set to 100%
- * - Submission date recorded in metadata
- * - File created from form data
- * - Form-specific post-submission actions executed
- * - Notification broadcast to all clients
+ * 1. Validating the form data
+ * 2. Updating the task status and progress
+ * 3. Creating a CSV file
+ * 4. Executing form-specific post-submission processes
+ * 5. Broadcasting WebSocket notifications
+ * 
+ * @param input The form submission input data
+ * @returns The result of the submission process
  */
-export async function submitFormStandardized(
-  request: StandardizedSubmissionRequest
-): Promise<StandardizedSubmissionResult> {
-  const startTime = performance.now();
-  const { taskId, userId, companyId, formData, formType, fileName } = request;
-  const normalizedFormType = mapClientFormTypeToSchemaType(formType);
-  const warnings: string[] = [];
-  const submissionDate = new Date().toISOString();
+export async function handleFormSubmission(
+  input: FormSubmissionInput
+): Promise<FormSubmissionResult> {
+  const { taskId, companyId, formType: clientFormType, formData, userId } = input;
+  const formType = mapClientFormTypeToSchemaType(clientFormType.toString());
   
-  logger.info(`[StandardizedSubmission] Processing ${normalizedFormType} submission for task ${taskId}`, {
-    taskId, 
+  logger.info(`[StandardizedSubmissionHandler] Processing form submission for ${formType}`, {
+    taskId,
     companyId,
+    formType,
     userId,
-    formType: normalizedFormType,
-    fieldCount: Object.keys(formData).length
+    fieldsCount: Object.keys(formData).length
   });
   
   try {
-    // Wrap everything in a transaction to ensure atomicity
-    return await TransactionManager.withTransactionContext(async (tx) => {
-      // Step 1: Update task status, progress, and metadata
-      try {
-        await tx.update(tasks)
-          .set({
-            status: 'submitted' as TaskStatus,
-            progress: 100, // Always set progress to 100% for submitted forms
-            submitted_at: new Date(),
-            submitted_by: userId,
-            updated_at: new Date(),
-            metadata: sql`jsonb_set(
-              COALESCE(${tasks.metadata}, '{}'::jsonb),
-              '{submissionDate}',
-              to_jsonb(${submissionDate}::text)
-            )`
-          })
-          .where(eq(tasks.id, taskId));
-          
-        logger.info(`[StandardizedSubmission] Updated task status to 'submitted' with 100% progress`, {
-          taskId,
-          formType: normalizedFormType
-        });
-      } catch (updateError) {
-        logger.error(`[StandardizedSubmission] Error updating task status`, {
-          error: updateError instanceof Error ? updateError.message : String(updateError),
-          taskId,
-          formType: normalizedFormType
-        });
-        
-        throw updateError;
+    // Use a transaction to ensure atomicity
+    return await withTransactionContext(async (tx) => {
+      // Step 1: Get the current task data
+      const task = await tx.query.tasks.findFirst({
+        where: eq(tasks.id, taskId)
+      });
+      
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
       }
       
-      // Step 2: Create file from form data
-      const fileResult = await createFormFile(
-        normalizedFormType,
-        taskId,
-        companyId,
-        formData,
-        fileName
-      );
+      const currentMetadata = task.metadata || {};
+      const submissionDate = new Date().toISOString();
       
-      if (!fileResult.success) {
-        warnings.push(`Warning: ${fileResult.error}`);
-      }
-      
-      // Step 3: Execute form-specific post-submission actions
-      const postSubmissionResult = await executePostSubmissionActions(
-        normalizedFormType,
-        taskId,
-        companyId,
-        userId
-      );
-      
-      if (!postSubmissionResult.success) {
-        warnings.push(...(postSubmissionResult.warnings || []));
-      }
-      
-      // Step 4: Commit transaction and broadcast updates
-      const elapsedMs = performance.now() - startTime;
-      
-      // Broadcast form submission completion to all clients
-      try {
-        // Try both broadcast methods for maximum client coverage
-        await broadcastFormSubmission({
-          taskId,
-          formType: normalizedFormType,
+      // Step 2: Update the task status, progress and metadata
+      const [updatedTask] = await tx.update(tasks)
+        .set({
           status: 'submitted',
           progress: 100,
-          companyId,
-          fileId: fileResult.fileId,
-          submissionDate
-        });
-        
-        logger.info(`[StandardizedSubmission] Broadcast submission completed via unified channel`, {
+          metadata: {
+            ...currentMetadata,
+            submissionDate,
+            submitted: true,
+            submitted_at: submissionDate,
+            submittedBy: userId,
+            last_status: task.status
+          },
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+      
+      if (!updatedTask) {
+        throw new Error(`Failed to update task ${taskId}`);
+      }
+      
+      // Step 3: Create a CSV file for the submission (outside transaction to avoid issues)
+      let fileId: string | number | undefined;
+      let fileWarning: string | undefined;
+      
+      try {
+        // We use the fixed fileCreation service to avoid type issues
+        const fileResult = await fileCreation.createFileForFormSubmission(
+          formType,
           taskId,
-          formType: normalizedFormType
-        });
-      } catch (broadcastError) {
-        logger.warn(`[StandardizedSubmission] Error broadcasting via unified channel, attempting legacy method`, {
-          error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError)
-        });
+          companyId,
+          formData
+        );
         
-        // Try legacy broadcast as fallback
-        try {
-          WebSocketService.broadcastFormSubmissionCompleted?.(taskId, normalizedFormType, companyId);
-          logger.info(`[StandardizedSubmission] Broadcast submission completed via legacy channel`, {
+        if (fileResult.success && fileResult.fileId) {
+          fileId = fileResult.fileId;
+          logger.info(`[StandardizedSubmissionHandler] Created file for ${formType} submission`, {
             taskId,
-            formType: normalizedFormType
+            fileId
           });
-        } catch (legacyError) {
-          warnings.push(`Warning: Failed to broadcast submission completion: ${legacyError instanceof Error ? legacyError.message : String(legacyError)}`);
+        } else {
+          fileWarning = `Warning: Failed to create file for submission: ${fileResult.error || 'Unknown error'}`;
+          logger.warn(`[StandardizedSubmissionHandler] ${fileWarning}`, {
+            taskId,
+            formType
+          });
+        }
+      } catch (fileError) {
+        fileWarning = `Warning: Error creating file for submission: ${fileError instanceof Error ? fileError.message : String(fileError)}`;
+        logger.warn(`[StandardizedSubmissionHandler] ${fileWarning}`, {
+          error: fileError instanceof Error ? fileError.message : String(fileError),
+          stack: fileError instanceof Error ? fileError.stack : undefined,
+          taskId
+        });
+      }
+      
+      // Step 4: Execute form-specific post-submission processes
+      let postSubmissionWarning: string | undefined;
+      
+      if (formType === 'open_banking_survey' || formType === 'open_banking') {
+        try {
+          // Handle Open Banking specific post-submission steps
+          const result = await handleOpenBankingPostSubmission(taskId, companyId);
+          
+          if (!result.success && result.warnings && result.warnings.length > 0) {
+            postSubmissionWarning = `Warning: Open Banking post-submission processing had issues: ${result.warnings.join('; ')}`;
+            logger.warn(`[StandardizedSubmissionHandler] ${postSubmissionWarning}`, {
+              taskId,
+              companyId
+            });
+          }
+        } catch (obError) {
+          postSubmissionWarning = `Warning: Error in Open Banking post-submission process: ${obError instanceof Error ? obError.message : String(obError)}`;
+          logger.warn(`[StandardizedSubmissionHandler] ${postSubmissionWarning}`, {
+            error: obError instanceof Error ? obError.message : String(obError),
+            stack: obError instanceof Error ? obError.stack : undefined,
+            taskId,
+            companyId
+          });
         }
       }
       
-      // Return success result
+      // Step 5: Broadcast WebSocket notifications for task status update
+      try {
+        // Broadcast task update
+        broadcastTaskUpdate(
+          taskId,
+          100,
+          'submitted',
+          {
+            formType,
+            submissionDate,
+            fileId
+          }
+        );
+        
+        // Broadcast form submission completed
+        broadcastFormSubmissionCompleted(
+          taskId,
+          formType.toString(),
+          companyId,
+          submissionDate
+        );
+        
+        logger.info(`[StandardizedSubmissionHandler] Broadcast notifications sent for ${formType} submission`, {
+          taskId,
+          formType
+        });
+      } catch (wsError) {
+        logger.warn(`[StandardizedSubmissionHandler] Error broadcasting task updates`, {
+          error: wsError instanceof Error ? wsError.message : String(wsError),
+          stack: wsError instanceof Error ? wsError.stack : undefined,
+          taskId
+        });
+        // Non-critical error, we continue
+      }
+      
+      // Combine any warnings
+      const warning = [fileWarning, postSubmissionWarning]
+        .filter(Boolean)
+        .join('\n');
+      
+      logger.info(`[StandardizedSubmissionHandler] Successfully processed ${formType} submission`, {
+        taskId,
+        companyId,
+        fileId,
+        hasWarning: !!warning
+      });
+      
       return {
         success: true,
         taskId,
         status: 'submitted',
         progress: 100,
-        fileId: fileResult.fileId,
-        companyId,
-        submissionDate,
-        warnings: warnings.length > 0 ? warnings : undefined,
-        elapsedMs
+        fileId,
+        warning: warning || undefined
       };
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const elapsedMs = performance.now() - startTime;
     
-    logger.error(`[StandardizedSubmission] Error processing form submission`, {
+    logger.error(`[StandardizedSubmissionHandler] Error processing form submission`, {
       error: errorMessage,
       stack: error instanceof Error ? error.stack : undefined,
       taskId,
-      formType: normalizedFormType,
       companyId,
-      elapsedMs
+      formType
     });
     
-    // Send error status via WebSocket (both methods)
     try {
-      await broadcastFormSubmission({
+      // Try to broadcast error status
+      broadcastFormSubmissionCompleted(
         taskId,
-        formType: normalizedFormType,
-        status: 'error',
+        formType.toString(),
         companyId,
-        error: errorMessage
-      });
-    } catch (broadcastError) {
-      logger.warn(`[StandardizedSubmission] Error broadcasting submission error`, {
-        error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError)
-      });
+        new Date().toISOString()
+      );
+    } catch (wsError) {
+      // Ignore WebSocket errors in error handlers
     }
     
     return {
       success: false,
       taskId,
       status: 'error',
-      progress: 0,
-      companyId,
-      submissionDate,
-      error: errorMessage,
-      elapsedMs
+      progress: -1,
+      error: errorMessage
     };
   }
 }

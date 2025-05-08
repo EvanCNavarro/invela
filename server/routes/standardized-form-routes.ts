@@ -1,149 +1,186 @@
 /**
  * Standardized Form Routes
  * 
- * This module provides standardized routes for form submissions to ensure consistent
- * behavior across all form types. It integrates with the standardized submission handler
- * to provide a uniform approach to status updates and progress indicators.
+ * This module provides unified API route handlers for form submissions across
+ * different form types. It ensures consistent behavior and error handling.
  */
 
 import { Router, Request, Response } from 'express';
 import { db } from '@db';
 import { tasks } from '@db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { submitFormStandardized } from '../services/standardized-submission-handler';
-import { requireAuth } from '../middleware/auth';
+import { handleFormSubmission, FormSubmissionInput } from '../services/standardized-submission-handler';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
 
-// Create router
 const router = Router();
 
 /**
- * Universal Form Submission Endpoint
+ * Submit a form
  * 
- * This endpoint handles submissions for all form types in a standardized way.
- * It ensures that status is set to 'submitted' and progress to 100% consistently.
+ * This endpoint handles form submissions for all form types (KYB, KY3P, Open Banking)
+ * using the standardized form submission handler.
+ * 
+ * @route POST /api/forms/:formType/submit
  */
-router.post('/api/forms/submit/:formType/:taskId', requireAuth, async (req: Request, res: Response) => {
+router.post('/:formType/submit', async (req: Request, res: Response) => {
+  const { formType } = req.params;
+  const { taskId, formData } = req.body;
+  
+  if (!taskId) {
+    return res.status(400).json({
+      success: false,
+      error: 'taskId is required'
+    });
+  }
+  
+  if (!formData) {
+    return res.status(400).json({
+      success: false,
+      error: 'formData is required'
+    });
+  }
+  
   try {
-    const { taskId: taskIdParam, formType: formTypeParam } = req.params;
-    const taskId = parseInt(taskIdParam, 10);
-    const formType = formTypeParam?.toLowerCase();
-    const { formData, fileName } = req.body;
-    
-    if (!formType) {
+    // Validate form type
+    try {
+      mapClientFormTypeToSchemaType(formType);
+    } catch (error) {
       return res.status(400).json({
         success: false,
-        error: 'Form type is required'
+        error: `Invalid form type: ${formType}`
       });
     }
     
-    if (isNaN(taskId)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid task ID'
-      });
-    }
-    
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated'
-      });
-    }
-    
-    // Fetch the task to get company ID
+    // Get the task to verify ownership and get company ID
     const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+      where: and(
+        eq(tasks.id, parseInt(taskId.toString(), 10)),
+        ...(req.user ? [eq(tasks.user_id, req.user.id)] : [])
+      )
     });
     
     if (!task) {
       return res.status(404).json({
         success: false,
-        error: 'Task not found'
+        error: `Task ${taskId} not found or you don't have permission to access it`
       });
     }
     
-    // Log the submission request
-    logger.info(`[StandardizedFormRoutes] Received form submission request`, {
-      taskId,
-      formType,
-      userId: req.user.id,
-      companyId: task.company_id,
-      fieldCount: formData ? Object.keys(formData).length : 0
-    });
+    // Get company ID from task or user session
+    const companyId = task.company_id || (req.user?.company_id ?? null);
     
-    // Process the form submission using our standardized handler
-    const result = await submitFormStandardized({
-      taskId,
-      userId: req.user.id,
-      companyId: task.company_id,
-      formData: formData || {},
-      formType,
-      fileName
-    });
-    
-    if (result.success) {
-      // Return successful response
-      return res.status(200).json({
-        success: true,
-        message: 'Form submitted successfully',
-        taskId,
-        status: result.status,
-        progress: result.progress,
-        fileId: result.fileId,
-        submissionDate: result.submissionDate,
-        warnings: result.warnings
-      });
-    } else {
-      // Log the error
-      logger.error(`[StandardizedFormRoutes] Form submission failed`, {
-        taskId,
-        formType,
-        error: result.error
-      });
-      
-      // Return error response
-      return res.status(500).json({
+    if (!companyId) {
+      return res.status(400).json({
         success: false,
-        error: result.error || 'Unknown error processing form submission'
+        error: 'Company ID could not be determined'
       });
     }
-  } catch (error) {
-    // Log unexpected errors
-    logger.error(`[StandardizedFormRoutes] Unexpected error processing form submission`, {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      path: req.path,
-      params: req.params
+    
+    // Prepare submission input
+    const input: FormSubmissionInput = {
+      taskId: parseInt(taskId.toString(), 10),
+      companyId,
+      formType,
+      formData,
+      userId: req.user?.id
+    };
+    
+    logger.info(`[API] Form submission request received for ${formType}`, {
+      taskId,
+      companyId,
+      formType,
+      userId: req.user?.id
     });
     
-    // Return error response
+    // Handle the form submission
+    const result = await handleFormSubmission(input);
+    
+    logger.info(`[API] Form submission ${result.success ? 'succeeded' : 'failed'} for ${formType}`, {
+      taskId,
+      success: result.success,
+      status: result.status,
+      error: result.error
+    });
+    
+    return res.status(result.success ? 200 : 500).json(result);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    logger.error(`[API] Error handling form submission`, {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      formType,
+      taskId
+    });
+    
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unexpected error processing form submission'
+      error: errorMessage
     });
   }
 });
 
 /**
- * Legacy compatibility route
+ * Get form submissions for a specific form type
  * 
- * This route provides backward compatibility with the old submission endpoints.
+ * This endpoint returns information about submitted forms for a given type.
+ * 
+ * @route GET /api/forms/:formType/submissions
  */
-router.post('/api/forms/submit-form', requireAuth, async (req: Request, res: Response) => {
+router.get('/:formType/submissions', async (req: Request, res: Response) => {
+  const { formType } = req.params;
+  const { companyId } = req.query;
+  
   try {
-    const { taskId, formType } = req.body;
+    // Validate form type
+    try {
+      mapClientFormTypeToSchemaType(formType);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid form type: ${formType}`
+      });
+    }
     
-    // Redirect to the new standardized endpoint
-    return res.redirect(307, `/api/forms/submit/${formType}/${taskId}`);
+    // Build query conditions
+    const conditions = [
+      eq(tasks.status, 'submitted'),
+      ...(companyId ? [eq(tasks.company_id, parseInt(companyId.toString(), 10))] : []),
+      ...(req.user && !req.user.is_admin ? [eq(tasks.user_id, req.user.id)] : [])
+    ];
+    
+    // Get submissions
+    const submissions = await db.query.tasks.findMany({
+      where: and(...conditions),
+      orderBy: (tasks, { desc }) => [desc(tasks.updated_at)]
+    });
+    
+    return res.status(200).json({
+      success: true,
+      submissions: submissions.map(submission => ({
+        id: submission.id,
+        title: submission.title,
+        status: submission.status,
+        progress: submission.progress,
+        submittedAt: submission.metadata?.submissionDate || submission.updated_at,
+        companyId: submission.company_id
+      }))
+    });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    logger.error(`[API] Error getting form submissions`, {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      formType
+    });
+    
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unexpected error'
+      error: errorMessage
     });
   }
 });
 
-// Export router
 export default router;

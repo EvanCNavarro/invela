@@ -5,7 +5,17 @@
  * via WebSocket using the unified WebSocket service.
  */
 
-import { broadcastFormSubmission, broadcastTaskUpdate } from './unified-websocket';
+// Import the unified WebSocket broadcast functions
+import { broadcast } from './unified-websocket';
+
+// Define helper functions that match the previous interface
+function broadcastFormSubmission(payload: any) {
+  return broadcast('form_submission_completed', payload);
+}
+
+function broadcastTaskUpdate(payload: any) {
+  return broadcast('task_update', payload);
+}
 
 // Define the action item interface to properly include the metadata field
 interface ActionItem {
