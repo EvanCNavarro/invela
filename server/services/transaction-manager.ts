@@ -172,14 +172,70 @@ export function withTransaction(client: PoolClient) {
 export async function withTransactionContext<T>(
   fn: (client: PoolClient) => Promise<T>
 ): Promise<T> {
-  const client = await startTransaction();
+  let client: PoolClient | null = null;
   
   try {
-    const result = await fn(client);
-    await commitTransaction(client);
+    // Start transaction with enhanced error capture
+    try {
+      client = await startTransaction();
+    } catch (txStartError) {
+      console.error('[Transaction Manager] Failed to start transaction', {
+        error: txStartError instanceof Error ? txStartError.message : String(txStartError),
+        stack: txStartError instanceof Error ? txStartError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Rethrow with more contextual information
+      throw new Error(`Transaction initialization failed: ${txStartError instanceof Error ? txStartError.message : String(txStartError)}`);
+    }
+    
+    // Execute function with the transaction client
+    let result: T;
+    try {
+      result = await fn(client);
+    } catch (fnError) {
+      console.error('[Transaction Manager] Error during transaction execution', {
+        error: fnError instanceof Error ? fnError.message : String(fnError),
+        stack: fnError instanceof Error ? fnError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Rollback and rethrow with context
+      if (client) {
+        await rollbackTransaction(client);
+      }
+      throw fnError;
+    }
+    
+    // Commit the transaction
+    try {
+      await commitTransaction(client);
+    } catch (commitError) {
+      console.error('[Transaction Manager] Failed to commit transaction', {
+        error: commitError instanceof Error ? commitError.message : String(commitError),
+        stack: commitError instanceof Error ? commitError.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Rethrow with more contextual information
+      throw new Error(`Transaction commit failed: ${commitError instanceof Error ? commitError.message : String(commitError)}`);
+    }
+    
     return result;
   } catch (error) {
-    await rollbackTransaction(client);
+    // If we have an active client but haven't properly rolled back or committed yet
+    if (client) {
+      try {
+        await rollbackTransaction(client);
+      } catch (rollbackError) {
+        console.error('[Transaction Manager] Failed to rollback transaction during error handling', {
+          originalError: error instanceof Error ? error.message : String(error),
+          rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     throw error;
   }
 }
