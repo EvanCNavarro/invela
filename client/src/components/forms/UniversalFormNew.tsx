@@ -1070,25 +1070,72 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       variant: 'info',
     });
     
-    // Reset the form's internal data first
+    // CRITICAL FIX: Force a full cache invalidation and data reload
+    // This addresses the issue where the UI shows completed sections but DB has 0% progress
     try {
-      logger.info(`[DIAGNOSTIC][${wsEventId}] Resetting form data before refresh`, {
-        // Enhanced diagnostics for improved debugging
+      logger.info(`[DIAGNOSTIC][${wsEventId}] Performing AGGRESSIVE CACHE REFRESH`);
+      
+      // 1. Force immediate query cache invalidation to prevent stale data
+      const { queryClient } = require('@/lib/queryClient');
+      
+      // Clear query cache for all form-related endpoints
+      const cacheKeysToInvalidate = [
+        `/api/tasks/${taskId}`,
+        `/api/tasks.json/${taskId}`,
+        `/api/kyb/progress/${taskId}`,
+        `/api/ky3p/progress/${taskId}`,
+        `/api/tasks/${taskId}/kyb-responses`,
+        `/api/tasks/${taskId}/ky3p-responses`,
+        `/api/tasks/${taskId}/open-banking-responses`,
+        `/api/tasks/${taskId}/form-data`
+      ];
+      
+      // First remove the queries to ensure data is fully cleared
+      cacheKeysToInvalidate.forEach(key => {
+        queryClient.removeQueries({ queryKey: [key] });
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Removed query cache for ${key}`);
+      });
+      
+      // Then invalidate to trigger a refetch
+      cacheKeysToInvalidate.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Invalidated query cache for ${key}`);
+      });
+    } catch (cacheError) {
+      logger.error(`[DIAGNOSTIC][${wsEventId}] Error during cache invalidation:`, cacheError);
+    }
+    
+    // 2. Reset the form's internal data
+    try {
+      logger.info(`[DIAGNOSTIC][${wsEventId}] Resetting form data with aggressive approach`, {
         hasForm: !!form,
         hasSetSectionStatuses: typeof setSectionStatuses === 'function',
         sectionCount: sections?.length || 0,
-        hasMetadata: !!event.payload.metadata,
-        resetUIFlag: !!event.payload.resetUI,
-        clearSectionsFlag: !!event.payload.clearSections
       });
       
-      // Reset form
+      // Reset form completely with empty data
       if (form) {
-        form.reset({});
+        // Create empty data object
+        const emptyData = {};
+        form.reset(emptyData);
+        
+        // Force clear all fields individually
+        try {
+          const formValues = form.getValues();
+          Object.keys(formValues).forEach(field => {
+            form.setValue(field, '', { shouldValidate: false, shouldDirty: false });
+          });
+          logger.info(`[DIAGNOSTIC][${wsEventId}] Form fields individually cleared`);
+        } catch (clearError) {
+          logger.warn(`[DIAGNOSTIC][${wsEventId}] Error clearing individual fields:`, clearError);
+        }
+        
+        // Clear form errors
+        form.clearErrors();
         logger.info(`[DIAGNOSTIC][${wsEventId}] Form reset completed`);
       }
       
-      // Create reset section statuses
+      // Create reset section statuses - CRITICAL: Set progress to 0 for all sections
       const resetSectionStatuses = sections.map(section => ({
         id: section.id,
         title: section.title,
@@ -1099,24 +1146,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         status: 'not-started' as const
       }));
       
-      // Always reset section statuses when clearSections flag is true (from enhanced server payload)
-      // or as a fallback if the flag isn't present
-      if (typeof setSectionStatuses === 'function' && 
-          (event.payload.clearSections === true || event.payload.clearSections === undefined)) {
-        logger.info(`[DIAGNOSTIC][${wsEventId}] Manually resetting section statuses via WebSocket event`, {
-          reason: event.payload.clearSections === true ? 'clearSections flag' : 'fallback behavior',
+      // Always reset section statuses - this is critical for UI consistency
+      if (typeof setSectionStatuses === 'function') {
+        logger.info(`[DIAGNOSTIC][${wsEventId}] Forcefully resetting all section statuses`, {
           sectionCount: resetSectionStatuses.length
         });
         
-        // Apply the reset twice - immediately and with a small delay for reliability
+        // Apply multiple resets with increasing delays for maximum reliability
         setSectionStatuses(resetSectionStatuses);
         
-        // Additional reset with delay to ensure it takes effect
+        // Additional resets with escalating delays to ensure it takes effect
+        // even if there are race conditions with data fetching
         setTimeout(() => {
           if (typeof setSectionStatuses === 'function') {
+            logger.info(`[DIAGNOSTIC][${wsEventId}] Second section status reset (50ms)`);
             setSectionStatuses(resetSectionStatuses);
           }
         }, 50);
+        
+        setTimeout(() => {
+          if (typeof setSectionStatuses === 'function') {
+            logger.info(`[DIAGNOSTIC][${wsEventId}] Third section status reset (300ms)`);
+            setSectionStatuses(resetSectionStatuses);
+          }
+        }, 300);
+        
+        setTimeout(() => {
+          if (typeof setSectionStatuses === 'function') {
+            logger.info(`[DIAGNOSTIC][${wsEventId}] Fourth section status reset (1000ms)`);
+            setSectionStatuses(resetSectionStatuses);
+          }
+        }, 1000);
         
         // Set active section to first tab
         setActiveSection(0);
@@ -1125,60 +1185,60 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       logger.error(`[DIAGNOSTIC][${wsEventId}] Error resetting form: ${resetError instanceof Error ? resetError.message : String(resetError)}`);
     }
     
-    // Refresh form data after fields are cleared with enhanced resetUI handling
-    // IMPORTANT: Use skipServerRefresh=true to prevent auto-reloading of data from server
-    logger.info(`[DIAGNOSTIC][${wsEventId}] Calling refreshFormData with skipServerRefresh=true`, {
-      hasResetUIFlag: !!event.payload.resetUI,
-      hasRefreshFunction: !!refreshFormData
-    });
-    
-    // Apply different refresh strategies based on resetUI flag
+    // Refresh form data with most aggressive options
     const refreshOptions = {
-      skipServerRefresh: true,
-      forceUIReset: !!event.payload.resetUI
+      skipServerRefresh: false, // CHANGED: Force a full server refresh to get latest data
+      forceUIReset: true,       // Always force UI reset
+      clearCache: true          // New option to clear cache during refresh
     };
     
+    logger.info(`[DIAGNOSTIC][${wsEventId}] Calling refreshFormData with aggressive options`, refreshOptions);
+    
+    // Execute immediate refresh
     refreshFormData(refreshOptions).catch(error => {
-      logger.error(`[DIAGNOSTIC][${wsEventId}] Error refreshing form data after fields cleared: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`[DIAGNOSTIC][${wsEventId}] Error refreshing form data: ${error instanceof Error ? error.message : String(error)}`);
       
       toast({
         title: 'Update Failed',
-        description: 'Failed to refresh form after fields were cleared. Please reload the page.',
+        description: 'Failed to refresh form after clearing. Please reload the page.',
         variant: 'destructive',
       });
     });
     
-    // Enhanced refresh strategy with multiple timed refreshes for maximum reliability
-    // This helps ensure the UI state is fully synchronized with the server state
-    if (event.payload.resetUI) {
-      logger.info(`[DIAGNOSTIC][${wsEventId}] Enhanced UI refresh strategy activated based on resetUI flag`);
-      
-      // First refresh - immediate (already done above)
-      
-      // Second refresh - after short delay
+    // Add multiple delayed refresh attempts to handle race conditions
+    for (const delay of [100, 500, 1500, 3000]) {
       setTimeout(() => {
         if (refreshStatus) {
-          logger.info(`[DIAGNOSTIC][${wsEventId}] Second refresh after fields cleared (100ms)`);
+          logger.info(`[DIAGNOSTIC][${wsEventId}] Executing delayed refresh after ${delay}ms`);
           refreshStatus();
         }
-      }, 100);
-      
-      // Third refresh - after longer delay
-      setTimeout(() => {
-        if (refreshStatus) {
-          logger.info(`[DIAGNOSTIC][${wsEventId}] Third refresh after fields cleared (500ms)`);
-          refreshStatus();
-        }
-      }, 500);
-    } else {
-      // Standard refresh - single delayed refresh
-      setTimeout(() => {
-        if (refreshStatus) {
-          logger.info(`[DIAGNOSTIC][${wsEventId}] Standard refreshStatus after delay`);
-          refreshStatus();
-        }
-      }, 200);
+      }, delay);
     }
+    
+    // Force reload the page as a last resort after 5 seconds if issues persist
+    setTimeout(() => {
+      try {
+        // Check if the section progress is inconsistent with task progress
+        const hasInconsistentProgress = sectionStatuses.some(s => s.progress > 0);
+        
+        if (hasInconsistentProgress) {
+          logger.warn(`[DIAGNOSTIC][${wsEventId}] Detected inconsistent UI state after clearing, forcing page reload`);
+          
+          toast({
+            title: 'Refreshing page',
+            description: 'Completing form reset operation...',
+            variant: 'default',
+          });
+          
+          // Give time for toast to display
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        }
+      } catch (error) {
+        logger.error(`[DIAGNOSTIC][${wsEventId}] Error in final consistency check:`, error);
+      }
+    }, 5000);
   }, [taskId, refreshFormData, form, sections, setSectionStatuses, setActiveSection, refreshStatus]);
   
   // Create and manage the Review & Submit section
