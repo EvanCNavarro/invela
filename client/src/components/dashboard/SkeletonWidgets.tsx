@@ -98,35 +98,51 @@ export function SkeletonCompanySnapshotWidget() {
       title="Company Snapshot"
       icon={<Building2 className="h-5 w-5" />}
       isVisible={true}
+      headerClassName="pb-2"
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <Skeleton className="h-4 w-3/4 rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
+        
+        {/* Company Banner */}
+        <div className="bg-muted/50 rounded-lg py-3 px-4 flex items-center space-x-3">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-6 w-[120px]" />
+        </div>
         
         {/* Top Stats Row */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="border rounded-md p-4">
-            <Skeleton className="h-4 w-2/3 mb-3" />
-            <Skeleton className="h-8 w-10 mx-auto" />
+          <div className="p-3 border rounded-lg shadow-sm">
+            <Skeleton className="h-3 w-[80%] mx-auto mb-1" />
+            <div className="flex justify-center my-1">
+              <Skeleton className="h-5 w-5" />
+            </div>
+            <Skeleton className="h-10 w-16 mx-auto" />
           </div>
-          <div className="border rounded-md p-4">
-            <Skeleton className="h-4 w-2/3 mb-3" />
-            <Skeleton className="h-8 w-10 mx-auto" />
+          <div className="p-3 border rounded-lg shadow-sm">
+            <Skeleton className="h-3 w-[80%] mx-auto mb-1" />
+            <div className="flex justify-center my-1">
+              <Skeleton className="h-5 w-5" />
+            </div>
+            <Skeleton className="h-10 w-16 mx-auto" />
           </div>
         </div>
         
         {/* Bottom Stats Row */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="border border-blue-500 border-2 rounded-md p-4 flex flex-col items-center">
-            <Skeleton className="h-6 w-6 mb-2 rounded-full" />
-            <Skeleton className="h-3 w-20 mb-1" />
-            <Skeleton className="h-3 w-24 mb-3" />
-            <Skeleton className="h-10 w-10" />
+          <div className="p-3 border border-blue-500 border-2 rounded-lg shadow-sm flex flex-col items-center">
+            <Skeleton className="h-6 w-6 my-1" />
+            <div className="text-center">
+              <Skeleton className="h-3 w-24 mx-auto" />
+              <Skeleton className="h-3 w-20 mx-auto mb-1" />
+              <Skeleton className="h-12 w-10 mx-auto" />
+            </div>
           </div>
-          <div className="border border-green-500 border-2 rounded-md p-4 flex flex-col items-center">
-            <Skeleton className="h-6 w-6 mb-2 rounded-full" />
-            <Skeleton className="h-3 w-24 mb-3" />
-            <Skeleton className="h-6 w-16" />
+          <div className="p-3 border border-green-500 border-2 rounded-lg shadow-sm flex flex-col items-center">
+            <Skeleton className="h-6 w-6 my-1" />
+            <div className="text-center">
+              <Skeleton className="h-3 w-24 mx-auto mb-2" />
+              <Skeleton className="h-8 w-20 mx-auto" />
+            </div>
           </div>
         </div>
       </div>

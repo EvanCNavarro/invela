@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { 
   Building2, 
-  AlertTriangle, 
-  BarChart,
   Award,
   CheckCircle,
+  Network,
+  TrendingUp
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Card } from "@/components/ui/card";
@@ -32,6 +32,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
   
   // Get the accreditation status
   const accreditationStatus = companyData?.accreditation_status || "PENDING";
+  const displayStatus = accreditationStatus === "VALID" ? "APPROVED" : accreditationStatus;
 
   const companyName = companyData?.name || "Loading...";
   const relationshipsCount = relationships?.length || 0;
@@ -44,8 +45,8 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
       isVisible={isVisible}
       headerClassName="pb-2"
     >
-      <div className="space-y-4">
-        <div className="text-muted-foreground text-sm">
+      <div className="space-y-3">
+        <div className="text-muted-foreground text-sm mb-1">
           Key metrics on activity and trends.
         </div>
         
@@ -55,38 +56,32 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
             <img
               src={`/api/companies/${companyData.id}/logo`}
               alt={`${companyName} logo`}
-              className="w-6 h-6 object-contain"
+              className="w-8 h-8 object-contain"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-xs font-medium text-white">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-sm font-medium text-white">
                 {companyName.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
-          <span className="text-lg font-semibold">{companyName}</span>
+          <span className="text-xl font-semibold">{companyName}</span>
         </div>
         
         {/* Top Stats Row */}
         <div className="grid grid-cols-2 gap-4">
           {/* Company Relationships Card */}
-          <Card className="p-4 relative">
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-sm font-medium uppercase text-muted-foreground">
-                Company Relationships
-              </div>
-              <button className="text-muted-foreground hover:text-foreground">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <circle cx="8" cy="8" r="1.5" />
-                  <circle cx="4" cy="8" r="1.5" />
-                  <circle cx="12" cy="8" r="1.5" />
-                </svg>
-              </button>
+          <Card className="p-3 border rounded-lg shadow-sm">
+            <div className="text-xs font-medium uppercase text-muted-foreground mb-1 text-center">
+              COMPANY RELATIONSHIPS
             </div>
-            <div className="text-3xl font-bold text-center mt-2">
+            <div className="flex justify-center">
+              <Network className="w-5 h-5 text-muted-foreground mb-1" />
+            </div>
+            <div className="text-4xl font-bold text-center">
               {isLoadingRelationships ? (
                 <Skeleton className="h-10 w-14 mx-auto" />
               ) : (
@@ -96,20 +91,14 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
           </Card>
           
           {/* Risk Score Changes Card */}
-          <Card className="p-4 relative">
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-sm font-medium uppercase text-muted-foreground">
-                Risk Score Changes
-              </div>
-              <button className="text-muted-foreground hover:text-foreground">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <circle cx="8" cy="8" r="1.5" />
-                  <circle cx="4" cy="8" r="1.5" />
-                  <circle cx="12" cy="8" r="1.5" />
-                </svg>
-              </button>
+          <Card className="p-3 border rounded-lg shadow-sm">
+            <div className="text-xs font-medium uppercase text-muted-foreground mb-1 text-center">
+              RISK SCORE CHANGES
             </div>
-            <div className="text-3xl font-bold text-center mt-2">
+            <div className="flex justify-center">
+              <TrendingUp className="w-5 h-5 text-muted-foreground mb-1" />
+            </div>
+            <div className="text-4xl font-bold text-center">
               {riskScoreChanges}
             </div>
           </Card>
@@ -119,16 +108,16 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
         <div className="grid grid-cols-2 gap-4">
           {/* S&P Business Data Risk Score Card */}
           <Card className={cn(
-            "p-4 relative overflow-hidden border-blue-500 border-2",
-            "flex flex-col items-center justify-center py-6"
+            "p-3 border border-blue-500 border-2 rounded-lg shadow-sm",
+            "flex flex-col items-center"
           )}>
-            <Award className="h-8 w-8 mb-2" />
+            <Award className="h-6 w-6 text-blue-600 my-1" />
             <div className="text-center">
-              <div className="uppercase font-medium text-sm mb-1">
-                S&P Business Data
+              <div className="uppercase font-medium text-xs">
+                S&P BUSINESS DATA
               </div>
-              <div className="uppercase font-medium text-sm mb-3">
-                Risk Score
+              <div className="uppercase font-medium text-xs mb-1">
+                RISK SCORE
               </div>
               <div className="text-5xl font-bold">
                 {riskScore}
@@ -138,16 +127,16 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
           
           {/* Accreditation Card */}
           <Card className={cn(
-            "p-4 relative overflow-hidden border-green-500 border-2",
-            "flex flex-col items-center justify-center py-6"
+            "p-3 border border-green-500 border-2 rounded-lg shadow-sm",
+            "flex flex-col items-center"
           )}>
-            <CheckCircle className="h-8 w-8 mb-2" />
+            <CheckCircle className="h-6 w-6 text-green-600 my-1" />
             <div className="text-center">
-              <div className="uppercase font-medium text-sm mb-4">
-                Accreditation
+              <div className="uppercase font-medium text-xs mb-2">
+                ACCREDITATION
               </div>
               <div className="text-2xl font-bold text-green-500">
-                {accreditationStatus === "VALID" ? "VALID" : accreditationStatus}
+                {displayStatus}
               </div>
             </div>
           </Card>
