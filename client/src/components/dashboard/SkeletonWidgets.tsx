@@ -105,10 +105,13 @@ export function SkeletonCompanySnapshotWidget() {
     >
       <div className="space-y-4">
         {/* Company Banner */}
-        <div className="bg-muted/50 rounded-lg py-3 px-4 flex flex-col items-center justify-center">
-          <Skeleton className="h-8 w-8 rounded-full mb-1" />
-          <Skeleton className="h-6 w-[120px]" />
-        </div>
+        <Card className="p-4 border rounded-lg shadow-sm">
+          <div className="flex items-center">
+            <Skeleton className="h-5 w-5 mr-2" />
+            <Skeleton className="h-5 w-5 mr-2" />
+            <Skeleton className="h-6 w-[120px]" />
+          </div>
+        </Card>
         
         {/* Top Stats Row */}
         <div className="grid grid-cols-2 gap-4">
@@ -142,7 +145,7 @@ export function SkeletonCompanySnapshotWidget() {
               <Skeleton className="h-5 w-5 mr-2" />
               <Skeleton className="h-4 w-24" />
             </div>
-            <Skeleton className="h-8 w-16 mx-auto" />
+            <Skeleton className="h-6 w-20 mx-auto" />
           </div>
         </div>
       </div>
