@@ -141,28 +141,10 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
         </div>
       </div>
       
-      <div className="ml-auto flex items-center gap-6">
-        <div className="flex-grow w-40 md:w-60">
-          <Slider
-            defaultValue={[dimension.value]}
-            max={100}
-            step={1}
-            value={[dimension.value]}
-            onValueChange={(values) => onValueChange(dimension.id, values[0])}
-            className="cursor-pointer"
-          />
-        </div>
-        
-        <div className="flex items-center justify-center px-3 py-1 rounded-md"
-          style={{ backgroundColor: dimension.color ? `${dimension.color}20` : '#f5f5f5' }}>
-          <span className="font-semibold" style={{ color: dimension.color }}>
-            {dimension.value}%
-          </span>
-        </div>
-        
-        <div className="ml-2 flex-shrink-0 w-20 text-right">
-          <div className="text-sm font-medium">Weight</div>
-          <div className="text-lg font-bold text-muted-foreground">{dimension.weight}%</div>
+      <div className="ml-auto flex items-center">
+        <div className="flex-shrink-0 w-28 text-right">
+          <div className="text-sm font-medium text-muted-foreground">Priority Weight</div>
+          <div className="text-lg font-bold">{dimension.weight}%</div>
         </div>
       </div>
     </div>
@@ -753,7 +735,7 @@ export default function RiskScoreConfigurationPage() {
                           <div>
                             <h3 className="font-medium text-base mb-1 text-blue-700">How Dimension Ranking & Priorities Work</h3>
                             <p className="text-sm text-blue-600">
-                              Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the risk score calculation. Adjust risk levels using the sliders.
+                              Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the risk score calculation. The priority weight is automatically calculated based on the position.
                             </p>
                           </div>
                         </div>
