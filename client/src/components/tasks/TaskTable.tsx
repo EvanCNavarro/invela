@@ -238,7 +238,6 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
-              <TableHead>Due Date</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -318,9 +317,6 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                         {task.progress < 1 ? Math.ceil(task.progress * 100) : task.progress}%
                       </span>
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
                   </TableCell>
                   <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                     {!isLocked && (
