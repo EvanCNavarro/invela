@@ -96,7 +96,6 @@ import unifiedFormUpdateRouter from './routes/unified-form-update';
 // Test routes have been removed
 import { createUnifiedFormSubmissionRouter } from './routes/unified-form-submission';
 import { createTransactionalFormRouter } from './routes/transactional-form-routes';
-import standardizedFormRoutes from './routes/standardized-form-routes';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -477,16 +476,6 @@ export function registerRoutes(app: Express): Express {
     console.log('[Routes] Successfully registered transaction-based unified form submission router');
   } catch (error) {
     console.error('[Routes] Error setting up transaction-based unified form submission router:', error);
-  }
-  
-  // Register our NEW standardized form submission routes
-  // This provides a consistent approach to form submissions with proper status and progress updates
-  try {
-    console.log('[Routes] Setting up standardized form submission routes');
-    app.use(standardizedFormRoutes);
-    console.log('[Routes] Successfully registered standardized form submission routes');
-  } catch (error) {
-    console.error('[Routes] Error setting up standardized form submission routes:', error);
   }
   
   // Register our new truly unified form submission endpoint that works for all form types

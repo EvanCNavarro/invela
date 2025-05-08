@@ -16,10 +16,8 @@ import {
   sendFormSubmissionError, 
   sendFormSubmissionInProgress 
 } from '../utils/form-submission-notifications';
-import { broadcast, broadcastFormSubmissionCompleted } from '../utils/unified-websocket';
+import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { db } from '@db';
-import { Pool } from 'pg';
-import { executeRawQuery, updateTaskStatusAndProgress } from './drizzle-sql-fix';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
@@ -90,36 +88,19 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
     }
     
     // Use a transaction to ensure all operations succeed or fail together
-    return await withTransactionContext(async (txClient) => {
-      try {
-        // 1. Update task status to submitted
-        const now = new Date();
-        
-        // Use our enhanced transaction client with executeSQL method
-        logger.info('[TransactionalFormHandler] Updating task status using enhanced transaction client', {
-          taskId,
-          status: 'submitted',
-          progress: 100,
-          timestamp: now.toISOString()
-        });
-        
-        await txClient.executeSQL(
-          `UPDATE tasks 
-           SET status = 'submitted', progress = 100, 
-               metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', to_jsonb($3::text)), 
-               updated_at = $1 
-           WHERE id = $2`,
-          [now, taskId, now.toISOString()]
-        );
-      } catch (queryError) {
-        console.error('[TransactionalFormHandler] Error executing query in transaction:', {
-          error: queryError instanceof Error ? queryError.message : String(queryError),
-          stack: queryError instanceof Error ? queryError.stack : undefined,
-          taskId,
-          timestamp: new Date().toISOString()
-        });
-        throw queryError;
-      }
+    return await withTransactionContext(async (client) => {
+      // 1. Update task status to submitted
+      const now = new Date();
+      
+      // UNIFIED FIX: Use parameterized query to avoid SQL injection and type issues
+      await client.query(
+        `UPDATE tasks 
+         SET status = 'submitted', progress = 100, 
+             metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', to_jsonb($3::text)), 
+             updated_at = $1 
+         WHERE id = $2`,
+        [now, taskId, now.toISOString()]
+      );
       
       // 2. Standardize file references in form data
       const standardizedFormData = StandardizedFileReference.standardizeFileReference(formData, formType);
@@ -182,35 +163,23 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             
             // Update task metadata with file information
             // UNIFIED FIX: Use properly parameterized query for the fileId and include fileName
-            try {
-              // Use our enhanced transaction client with executeSQL method
-              await txClient.executeSQL(
-                `UPDATE tasks 
-                 SET metadata = jsonb_set(
-                   jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)),
-                   '{fileName}', to_jsonb($3::text)
-                 ) 
-                 WHERE id = $1`,
-                [taskId, fileId, fileResult.fileName || '']
-              );
-              
-              // Also ensure the file is properly linked to the task as a form submission file
-              await txClient.executeSQL(
-                `UPDATE files
-                 SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{formSubmission}', 'true')
-                 WHERE id = $1`,
-                [fileId]
-              );
-            } catch (metadataError) {
-              console.error(`[TransactionalFormHandler] Error updating file metadata:`, {
-                error: metadataError instanceof Error ? metadataError.message : String(metadataError),
-                stack: metadataError instanceof Error ? metadataError.stack : undefined,
-                taskId,
-                fileId,
-                timestamp: new Date().toISOString()
-              });
-              // Continue with the transaction even if metadata update fails
-            }
+            await client.query(
+              `UPDATE tasks 
+               SET metadata = jsonb_set(
+                 jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)),
+                 '{fileName}', to_jsonb($3::text)
+               ) 
+               WHERE id = $1`,
+              [taskId, fileId, fileResult.fileName || '']
+            );
+            
+            // Also ensure the file is properly linked to the task as a form submission file
+            await client.query(
+              `UPDATE files
+               SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{formSubmission}', 'true')
+               WHERE id = $1`,
+              [fileId]
+            );
             
             console.log(`[FileCreation] ✅ File ${fileId} created for task ${taskId} and linked to file vault`);
           } else {
@@ -247,9 +216,6 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         transactionId: `tx-${new Date().getTime()}-${Math.random().toString(36).substring(2, 7)}`
       });
       
-      // We now have our enhanced txClient.executeSQL method
-      // No need for the helper function anymore
-      
       try {
         // CRITICAL FIX: Explicitly update the task status and progress in the database
         // This ensures the task is marked as submitted even if WebSocket broadcast fails
@@ -266,97 +232,60 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         });
         
         // DEBUG: Get current task state before update for validation
-        let preUpdateCheck;
-        try {
-          // Use our enhanced transaction client with executeSQL method
-          preUpdateCheck = await txClient.executeSQL(
-            `SELECT id, status, progress FROM tasks WHERE id = $1`,
-            [taskId]
-          );
-          
-          // Log original task state with more visible emoji
-          console.log(`[TransactionalFormHandler] 📊 PRE-UPDATE TASK STATE for task ${taskId}:`, {
-            originalStatus: preUpdateCheck.rows[0]?.status,
-            originalProgress: preUpdateCheck.rows[0]?.progress,
-            hasRows: preUpdateCheck.rows.length > 0,
-            timestamp: new Date().toISOString()
-          });
-          
-          logger.info(`[TransactionalFormHandler] Pre-update task state:`, {
-            taskId,
-            status: preUpdateCheck.rows[0]?.status,
-            progress: preUpdateCheck.rows[0]?.progress,
-            timestamp: new Date().toISOString()
-          });
-        } catch (preCheckError) {
-          console.error(`[TransactionalFormHandler] Error checking pre-update task state:`, {
-            error: preCheckError instanceof Error ? preCheckError.message : String(preCheckError),
-            stack: preCheckError instanceof Error ? preCheckError.stack : undefined,
-            taskId,
-            timestamp: new Date().toISOString()
-          });
-          // Continue even if pre-check fails
-        }
+        const preUpdateCheck = await client.query(
+          `SELECT id, status, progress FROM tasks WHERE id = $1`,
+          [taskId]
+        );
+        
+        // Log original task state with more visible emoji
+        console.log(`[TransactionalFormHandler] 📊 PRE-UPDATE TASK STATE for task ${taskId}:`, {
+          originalStatus: preUpdateCheck.rows[0]?.status,
+          originalProgress: preUpdateCheck.rows[0]?.progress,
+          hasRows: preUpdateCheck.rows.length > 0,
+          timestamp: new Date().toISOString()
+        });
+        
+        logger.info(`[TransactionalFormHandler] Pre-update task state:`, {
+          taskId,
+          status: preUpdateCheck.rows[0]?.status,
+          progress: preUpdateCheck.rows[0]?.progress,
+          timestamp: new Date().toISOString()
+        });
         
         // ENHANCED DEBUG: Added more detailed logging and improved error capture
         // FIXED: Use proper jsonb_set with 'true' as JSON value, not string
         console.log(`[TransactionalFormHandler] 🔄 EXECUTING SQL UPDATE for task ${taskId}...`);
         
-        let updateResult;
-        try {
-          // Use our enhanced transaction client with executeSQL method
-          updateResult = await txClient.executeSQL(
-            `UPDATE tasks 
-             SET status = 'submitted', 
-                 progress = 100, 
-                 metadata = jsonb_set(
-                   jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'::jsonb),
-                   '{submissionDate}', to_jsonb($2::text)
-                 ),
-                 updated_at = NOW()
-             WHERE id = $1
-             RETURNING id, status, progress, metadata`,
-            [taskId, submissionDate]
-          );
-          
-          // ENHANCED DEBUG: Log the updated task data immediately after the update
-          console.log(`[TransactionalFormHandler] ✅ SQL UPDATE RESULT for task ${taskId}:`, {
-            success: updateResult.rowCount > 0,
-            rowCount: updateResult.rowCount,
-            updatedStatus: updateResult.rows[0]?.status,
-            updatedProgress: updateResult.rows[0]?.progress,
-            hasMetadata: updateResult.rows[0]?.metadata ? true : false,
-            returnedRowCount: updateResult.rows.length,
-            timestamp: new Date().toISOString()
-          });
-        } catch (updateError) {
-          console.error(`[TransactionalFormHandler] Error updating task status:`, {
-            error: updateError instanceof Error ? updateError.message : String(updateError),
-            stack: updateError instanceof Error ? updateError.stack : undefined,
-            taskId,
-            timestamp: new Date().toISOString()
-          });
-          throw updateError; // Re-throw to ensure transaction fails
-        }
+        const updateResult = await client.query(
+          `UPDATE tasks 
+           SET status = 'submitted', 
+               progress = 100, 
+               metadata = jsonb_set(
+                 jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'::jsonb),
+                 '{submissionDate}', to_jsonb($2::text)
+               ),
+               updated_at = NOW()
+           WHERE id = $1
+           RETURNING id, status, progress, metadata`,
+          [taskId, submissionDate]
+        );
+        
+        // ENHANCED DEBUG: Log the updated task data immediately after the update
+        console.log(`[TransactionalFormHandler] ✅ SQL UPDATE RESULT for task ${taskId}:`, {
+          success: updateResult.rowCount > 0,
+          rowCount: updateResult.rowCount,
+          updatedStatus: updateResult.rows[0]?.status,
+          updatedProgress: updateResult.rows[0]?.progress,
+          hasMetadata: updateResult.rows[0]?.metadata ? true : false,
+          returnedRowCount: updateResult.rows.length,
+          timestamp: new Date().toISOString()
+        });
         
         // Verify the task was updated with a separate query
-        let postUpdateCheck;
-        try {
-          // Use our enhanced transaction client with executeSQL method
-          postUpdateCheck = await txClient.executeSQL(
-            `SELECT id, status, progress, metadata FROM tasks WHERE id = $1`,
-            [taskId]
-          );
-        } catch (postCheckError) {
-          console.error(`[TransactionalFormHandler] Error checking post-update task state:`, {
-            error: postCheckError instanceof Error ? postCheckError.message : String(postCheckError),
-            stack: postCheckError instanceof Error ? postCheckError.stack : undefined,
-            taskId,
-            timestamp: new Date().toISOString()
-          });
-          // Continue even if post-check fails
-          postUpdateCheck = { rows: [] };
-        }
+        const postUpdateCheck = await client.query(
+          `SELECT id, status, progress, metadata FROM tasks WHERE id = $1`,
+          [taskId]
+        );
         
         console.log(`[TransactionalFormHandler] 🔍 VERIFICATION QUERY RESULT for task ${taskId}:`, {
           verifiedStatus: postUpdateCheck.rows[0]?.status,
@@ -487,9 +416,9 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
           timestamp: submissionTimestamp
         });
         
-        // IMPORTANT: Use broadcast with type='form_submission_completed'
+        // IMPORTANT: Use broadcastFormSubmission with type='form_submission_completed'
         // We no longer need sendFormSubmissionSuccess which was causing duplicate notifications
-        broadcast('form_submission_completed', {
+        broadcastFormSubmission({
           taskId,
           formType,
           status: 'completed',
