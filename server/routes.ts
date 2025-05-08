@@ -12,7 +12,8 @@ import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './ty
 import { emailService } from './services/email';
 import { requireAuth, optionalAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import * as WebSocketService from './services/websocket';
+import * as LegacyWebSocketService from './services/websocket';
+import * as WebSocketService from './services/websocket-service';
 import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
