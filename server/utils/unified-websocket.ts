@@ -21,6 +21,10 @@ export type MessageType =
 
 // WebSocket server instance
 let wsServer: WebSocketServer | null = null;
+// Client tracking
+const clients = new Set<WebSocket>();
+// Connection IDs
+const connectionIds = new Map<WebSocket, string>();
 
 /**
  * Initialize the WebSocket server
@@ -34,6 +38,62 @@ export function initializeWebSocketServer(httpServer: Server, path: string = '/w
   wsServer = new WebSocketServer({ 
     server: httpServer,
     path
+  });
+  
+  // Set up connection handling
+  wsServer.on('connection', (ws: WebSocket) => {
+    // Generate a unique connection ID
+    const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Add client to tracking
+    clients.add(ws);
+    connectionIds.set(ws, connectionId);
+    
+    logger.info(`New WebSocket client connected: ${connectionId}`);
+    
+    // Send connection established message
+    ws.send(JSON.stringify({
+      type: 'connection_established',
+      connectionId,
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Set up message handler
+    ws.on('message', (message: string) => {
+      try {
+        const data = JSON.parse(message.toString());
+        logger.debug(`Received WebSocket message: ${data.type || 'unknown'}`, {
+          connectionId,
+          messageType: data.type
+        });
+      } catch (error) {
+        logger.warn(`Error parsing WebSocket message`, {
+          error: error instanceof Error ? error.message : String(error),
+          connectionId
+        });
+      }
+    });
+    
+    // Set up close handler
+    ws.on('close', (code: number, reason: Buffer) => {
+      clients.delete(ws);
+      const connId = connectionIds.get(ws);
+      connectionIds.delete(ws);
+      
+      logger.info(`WebSocket client disconnected: ${connId}`, {
+        code,
+        reason: reason.toString(),
+        clientsRemaining: clients.size
+      });
+    });
+    
+    // Set up error handler
+    ws.on('error', (error) => {
+      logger.error(`WebSocket error for client: ${connectionIds.get(ws)}`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    });
   });
   
   logger.info(`WebSocket server initialized on path: ${path}`);
@@ -120,22 +180,61 @@ export function broadcast(
       try {
         const message = JSON.stringify({
           type,
-          data,
+          payload: data,
           timestamp: new Date().toISOString()
         });
         
-        // Broadcast to all connected clients who are in OPEN state
-        wsServer.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
+        // 1. First try clients from our set to ensure we're reaching all clients
+        let openClientCount = 0;
+        const errorClients = new Set<WebSocket>();
+        
+        clients.forEach(client => {
+          try {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(message);
+              openClientCount++;
+            }
+          } catch (err) {
+            errorClients.add(client);
+            logger.warn(`[WebSocket] Error sending to client`, {
+              error: err instanceof Error ? err.message : String(err),
+              connectionId: connectionIds.get(client)
+            });
           }
         });
         
-        success = true;
-        logger.debug(`[WebSocket] Direct broadcast via wsServer succeeded`, {
-          messageType: type,
-          clientCount: wsServer.clients.size
+        // Clean up any clients that had errors
+        errorClients.forEach(client => {
+          clients.delete(client);
+          connectionIds.delete(client);
         });
+        
+        // 2. Then try broadcasting to all clients from wss.clients (redundant but ensures delivery)
+        wsServer.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            try {
+              client.send(message);
+            } catch (err) {
+              // Ignore errors here as we already broadcast to our tracked clients
+            }
+          }
+        });
+        
+        success = openClientCount > 0;
+        if (success) {
+          logger.debug(`[WebSocket] Direct broadcast via wsServer succeeded`, {
+            messageType: type,
+            clientCount: openClientCount
+          });
+        } else if (clients.size > 0) {
+          logger.warn(`[WebSocket] No open clients found despite having ${clients.size} clients tracked`, {
+            messageType: type
+          });
+        } else {
+          logger.info(`[WebSocket] No active WebSocket clients, skipping broadcast`, {
+            messageType: type
+          });
+        }
       } catch (err) {
         logger.warn(`[WebSocket] Direct broadcast via wsServer failed`, {
           error: err instanceof Error ? err.message : String(err)
