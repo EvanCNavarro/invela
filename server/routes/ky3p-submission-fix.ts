@@ -34,24 +34,65 @@ router.post("/api/ky3p/submit-form/:taskId", requireAuth, async (req, res) => {
 
     console.log(`[KY3P Submission Fix] Processing submission for task ${taskIdNum}`);
 
+    // First, fetch the current task to get existing metadata
+    const existingTask = await db.select({
+      id: tasks.id,
+      metadata: tasks.metadata,
+      status: tasks.status,
+      progress: tasks.progress
+    })
+    .from(tasks)
+    .where(eq(tasks.id, taskIdNum))
+    .limit(1);
+
+    if (!existingTask || existingTask.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `Task with ID ${taskIdNum} not found`
+      });
+    }
+
+    // Log current task state for debugging
+    console.log(`[KY3P Submission Fix] Current task state:`, {
+      id: existingTask[0].id,
+      status: existingTask[0].status,
+      progress: existingTask[0].progress
+    });
+
+    // Get the existing metadata (or initialize if null)
+    const existingMetadata = existingTask[0].metadata || {};
+    
+    // Create submission timestamp (use consistently)
+    const submissionDate = new Date();
+    const submissionTimestamp = submissionDate.toISOString();
+    
+    // Create merged metadata with submission info
+    const updatedMetadata = {
+      ...existingMetadata,
+      submitted: true,
+      submission_date: submissionTimestamp,
+      submission_info: {
+        submitted: true,
+        submitted_at: submissionTimestamp,
+        submission_status: 'completed'
+      }
+    };
+
     // Update the task status and progress in the database
     const result = await db.update(tasks)
       .set({
         status: "submitted",
-        progress: 100,
-        // Use completion_date for submission date as that's the proper column in our schema
-        completion_date: new Date(),
-        // Update metadata to include submission info
-        metadata: {
-          submission_info: {
-            submitted: true,
-            submitted_at: new Date().toISOString(),
-            submission_status: 'completed'
-          }
-        }
+        progress: 100, // Force progress to 100%
+        completion_date: submissionDate,
+        metadata: updatedMetadata
       })
       .where(eq(tasks.id, taskIdNum))
-      .returning({ id: tasks.id, status: tasks.status, progress: tasks.progress });
+      .returning({ 
+        id: tasks.id, 
+        status: tasks.status, 
+        progress: tasks.progress,
+        metadata: tasks.metadata
+      });
 
     if (!result || result.length === 0) {
       console.error(`[KY3P Submission Fix] Failed to update task ${taskIdNum}`);
@@ -62,7 +103,11 @@ router.post("/api/ky3p/submit-form/:taskId", requireAuth, async (req, res) => {
     }
 
     const updatedTask = result[0];
-    console.log(`[KY3P Submission Fix] Successfully updated task ${taskIdNum} to submitted with 100% progress`, updatedTask);
+    console.log(`[KY3P Submission Fix] Successfully updated task ${taskIdNum} to submitted with 100% progress`, {
+      status: updatedTask.status,
+      progress: updatedTask.progress,
+      metadataKeys: Object.keys(updatedTask.metadata || {})
+    });
 
     // Broadcast the update to WebSocket clients
     const wsServer = getWebSocketServer();
@@ -76,12 +121,19 @@ router.post("/api/ky3p/submit-form/:taskId", requireAuth, async (req, res) => {
           taskId: taskIdNum,
           status: "submitted",
           progress: 100,
-          timestamp: new Date().toISOString(),
+          metadata: {
+            submitted: true,
+            submission_date: submissionTimestamp
+          },
+          timestamp: submissionTimestamp
         });
 
         console.log(`[KY3P Submission Fix] WebSocket broadcast result:`, {
           success: broadcastResult.success,
-          clientCount: broadcastResult.clientCount
+          clientCount: broadcastResult.clientCount,
+          taskId: taskIdNum,
+          status: "submitted", 
+          progress: 100
         });
       } catch (error) {
         console.error(`[KY3P Submission Fix] Error broadcasting update:`, error);
@@ -90,11 +142,18 @@ router.post("/api/ky3p/submit-form/:taskId", requireAuth, async (req, res) => {
       console.warn("[KY3P Submission Fix] WebSocket server not available for broadcasting");
     }
 
-    // Return success response
+    // Return success response with more detailed information
     return res.status(200).json({
       success: true,
       message: "KY3P form submitted successfully",
-      task: updatedTask
+      task: {
+        id: updatedTask.id,
+        status: updatedTask.status,
+        progress: updatedTask.progress,
+        submitted: true,
+        submission_date: submissionTimestamp,
+        metadata: updatedTask.metadata
+      }
     });
   } catch (error) {
     console.error("[KY3P Submission Fix] Error processing KY3P form submission:", error);
