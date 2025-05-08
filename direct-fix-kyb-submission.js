@@ -92,18 +92,56 @@ async function fixKybSubmission(taskId, companyId) {
     
     console.log(`${colors.green}✅ Updated task status to 'submitted'${colors.reset}`);
     
-    // Step 3: Mark company KYB as completed
+    // Step 3: Update company metadata to indicate KYB is completed
     if (companyId) {
-      await client.query(
-        `UPDATE companies 
-         SET kyb_completed = true, 
-             kyb_completed_at = NOW(), 
-             updated_at = NOW() 
-         WHERE id = $1`,
-        [companyId]
-      );
-      
-      console.log(`${colors.green}✅ Marked KYB as completed for company ${companyId}${colors.reset}`);
+      try {
+        // First check if the companies table has kyb_completed column
+        const { rows: columns } = await client.query(
+          `SELECT column_name 
+           FROM information_schema.columns 
+           WHERE table_name = 'companies' 
+             AND column_name = 'kyb_completed'`
+        );
+        
+        if (columns.length > 0) {
+          // If column exists, use direct column update
+          await client.query(
+            `UPDATE companies 
+             SET kyb_completed = true, 
+                 kyb_completed_at = NOW(), 
+                 updated_at = NOW() 
+             WHERE id = $1`,
+            [companyId]
+          );
+          console.log(`${colors.green}✅ Marked KYB as completed for company ${companyId} using direct column${colors.reset}`);
+        } else {
+          // Otherwise, update the metadata field which should contain this information
+          // First get current metadata
+          const { rows: [company] } = await client.query(
+            `SELECT metadata FROM companies WHERE id = $1`,
+            [companyId]
+          );
+          
+          // Update the metadata to include KYB completion info
+          const updatedMetadata = {
+            ...(company?.metadata || {}),
+            kyb_completed: true,
+            kyb_completed_at: new Date().toISOString()
+          };
+          
+          await client.query(
+            `UPDATE companies 
+             SET metadata = $1, 
+                 updated_at = NOW() 
+             WHERE id = $2`,
+            [updatedMetadata, companyId]
+          );
+          console.log(`${colors.green}✅ Marked KYB as completed for company ${companyId} using metadata${colors.reset}`);
+        }
+      } catch (metadataError) {
+        console.warn(`${colors.yellow}⚠️ Could not update company KYB completion status: ${metadataError.message}${colors.reset}`);
+        // Continue despite metadata update error (non-critical)
+      }
     }
     
     // Step 4: Get the company's available_tabs and ensure KYB tab is unlocked
