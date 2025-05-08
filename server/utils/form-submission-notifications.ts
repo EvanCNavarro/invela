@@ -2,10 +2,16 @@
  * Form Submission Notifications Utils
  * 
  * This module provides standardized functions for sending form submission notifications
- * via WebSocket using the unified WebSocket service.
+ * via WebSocket using both the enhanced WebSocket service and the unified WebSocket service
+ * for maximum compatibility and reliability.
  */
 
-import { broadcastFormSubmission, broadcastTaskUpdate } from './unified-websocket';
+import { broadcastFormSubmission as unifiedBroadcastFormSubmission, broadcastTaskUpdate as unifiedBroadcastTaskUpdate } from './unified-websocket';
+import { 
+  broadcastFormSubmission, 
+  broadcastTaskUpdate, 
+  sendFormSubmissionError as sendFormSubmissionErrorWs 
+} from '../services/websocket';
 
 // Define the action item interface to properly include the metadata field
 interface ActionItem {
@@ -114,6 +120,9 @@ export function sendFormSubmissionSuccess(options: SubmissionNotificationOptions
 
 /**
  * Send a form submission error notification
+ * 
+ * This enhanced version uses both the enhanced WebSocket service and the unified WebSocket service
+ * for maximum compatibility and reliability.
  */
 export function sendFormSubmissionError(options: SubmissionNotificationOptions) {
   const { formType, taskId, companyId, error, message, metadata = {} } = options;
@@ -125,23 +134,68 @@ export function sendFormSubmissionError(options: SubmissionNotificationOptions) 
   const enhancedMetadata = {
     ...metadata,
     submission_date: submissionTimestamp,
+    errorCode: metadata.errorCode || 'FORM_SUBMISSION_ERROR',
+    errorPhase: metadata.errorPhase || 'submission',
+    errorOrigin: metadata.errorOrigin || 'form_handler',
+    recoverable: metadata.recoverable !== false // Default to true unless explicitly set to false
   };
   
-  // Send the task update notification with error status using updated API
-  broadcastTaskUpdate({
-    taskId,
-    progress: options.progress || 0, // Keep current progress or reset to 0
-    status: 'error',
-    metadata: {
+  try {
+    // Use the enhanced WebSocket service's specialized error function
+    sendFormSubmissionError({
+      taskId,
       formType,
+      companyId,
       error: errorMessage,
-      // Include submissionDate as a separate property
-      submissionDate: submissionTimestamp,
-      ...enhancedMetadata
+      message: `Form submission failed: ${errorMessage}`,
+      metadata: enhancedMetadata
+    });
+    
+    // Also send via the task update channel for maximum compatibility
+    broadcastTaskUpdate({
+      taskId,
+      progress: options.progress !== undefined ? options.progress : null, // Keep current progress if specified
+      status: 'error',
+      metadata: {
+        formType,
+        error: errorMessage,
+        submissionDate: submissionTimestamp,
+        ...enhancedMetadata
+      }
+    });
+    
+    // For maximum backward compatibility, also use the unified implementation
+    try {
+      unifiedBroadcastTaskUpdate({
+        taskId,
+        progress: options.progress || 0,
+        status: 'error',
+        metadata: {
+          formType,
+          error: errorMessage,
+          submissionDate: submissionTimestamp,
+          ...enhancedMetadata
+        }
+      });
+    } catch (unifiedError) {
+      console.warn('[FormNotifications] Failed to send via unified implementation:', unifiedError);
     }
-  });
-  
-  console.log(`[FormNotifications] Sent error notification for ${formType} task ${taskId}: ${errorMessage}`);
+    
+    console.log(`[FormNotifications] Sent enhanced error notification for ${formType} task ${taskId}: ${errorMessage}`);
+  } catch (error) {
+    console.error('[FormNotifications] Failed to send error notification:', error);
+    
+    // Fall back to the simplest implementation if all else fails
+    try {
+      broadcastTaskUpdate({
+        taskId,
+        status: 'error',
+        metadata: { error: errorMessage }
+      });
+    } catch {
+      console.error('[FormNotifications] All error notification attempts failed');
+    }
+  }
   
   return true;
 }
