@@ -731,12 +731,6 @@ export default function RiskScoreConfigurationPage() {
             <div className="md:col-span-3 space-y-6">
               {/* Tabs container */}
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center">
-                    <BarChart2 className="h-5 w-5 mr-2 text-primary" />
-                    Risk Management Settings
-                  </CardTitle>
-                </CardHeader>
                 <CardContent>
                   <Tabs 
                     defaultValue="dimension-ranking" 
@@ -761,21 +755,7 @@ export default function RiskScoreConfigurationPage() {
                       </div>
                       
                       {/* Priority scale indicator */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <div className="text-sm font-medium pl-20">1</div>
-                          <div className="text-sm font-medium pr-20">6</div>
-                        </div>
-                        <div className="bg-muted/30 h-2 rounded-full relative mb-6">
-                          <div className="absolute inset-x-0 flex justify-between px-4">
-                            <div className="w-1 h-3 -mt-0.5 bg-primary"></div>
-                            <div className="w-1 h-3 -mt-0.5 bg-primary"></div>
-                          </div>
-                          <div className="absolute inset-x-0 top-4 flex justify-between px-4">
-                            <div className="text-xs text-muted-foreground">Highest Priority</div>
-                            <div className="text-xs text-muted-foreground text-right">Lowest Priority</div>
-                          </div>
-                        </div>
+                      <div className="space-y-1 mb-6">
                         
                         {/* Dimension rows with drag and drop */}
                         <DndProvider backend={HTML5Backend}>
