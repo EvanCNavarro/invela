@@ -922,48 +922,54 @@ export default function RiskScoreConfigurationPage() {
                     </div>
                   </div>
                   
-                  {/* Top priorities section */}
-                  <div className="w-full mt-6">
-                    <h4 className="font-medium mb-2">Top Priority Dimensions</h4>
-                    <ul className="space-y-2">
-                      {dimensions.slice(0, 3).map(dimension => (
-                        <li key={dimension.id} className="flex items-center gap-2">
-                          <span className="text-primary">
-                            {dimensionIcons[dimension.id] || <Shield className="h-5 w-5" />}
-                          </span>
-                          <span>{dimension.name}</span>
-                          <span className="ml-auto font-semibold">{dimension.value}%</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {/* Removed Top Priority Dimensions section as requested */}
                 </CardContent>
               </Card>
               
-              {/* DB Integration readiness card */}
+              {/* Weight Distribution Card */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center">
-                    <Database className="h-5 w-5 mr-2 text-primary" />
-                    Database Integration
+                    <BarChart className="h-5 w-5 mr-2 text-primary" />
+                    Weight Distribution
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">This section is prepared for future database integration.</p>
-                  <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground mb-4">Weight influence is automatically calculated based on dimension priority.</p>
+                  
+                  <div className="space-y-3 mt-4">
+                    {dimensions.map((dimension, index) => (
+                      <div key={dimension.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white"
+                               style={{ backgroundColor: index === 0 ? '#1a2530' : 
+                                                       index === 1 ? '#2c3e50' :
+                                                       index === 2 ? '#34495e' :
+                                                       index === 3 ? '#4a6178' :
+                                                       index === 4 ? '#607993' : '#7f8c8d' }}>
+                            <span className="text-xs font-bold">{index + 1}</span>
+                          </div>
+                          <span className="text-sm font-medium truncate max-w-[120px]">{dimension.name}</span>
+                        </div>
+                        <div className="font-bold" style={{ color: index === 0 ? '#1a2530' : 
+                                                          index === 1 ? '#2c3e50' :
+                                                          index === 2 ? '#34495e' :
+                                                          index === 3 ? '#4a6178' :
+                                                          index === 4 ? '#607993' : '#7f8c8d' }}>
+                          {Math.round(dimension.weight)}%
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-gray-100">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Last Saved</span>
                       <span className="text-sm font-medium">{new Date().toLocaleDateString()}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Modified By</span>
-                      <span className="text-sm font-medium">Current User</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Sync Status</span>
-                      <span className="text-sm flex items-center gap-1 text-green-600">
-                        <Check className="h-3 w-3" /> Synced
-                      </span>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-sm">Total Weight</span>
+                      <span className="text-sm font-medium text-blue-600">100%</span>
                     </div>
                   </div>
                 </CardContent>
