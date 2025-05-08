@@ -5,11 +5,11 @@
  * It directly calls our fixed post-submission handling code.
  */
 
-import { db } from './server/db.js';
-import { companies, tasks, openBankingResponses, files } from './db/schema.js';
-import { eq } from 'drizzle-orm';
-import { createTaskFile } from './server/services/fileCreation.js';
-import { calculateRiskClusters, generateRandomRiskScore } from './server/services/openBankingRiskScore.js';
+const { db } = require('./server/db');
+const { companies, tasks, openBankingResponses, files } = require('./db/schema');
+const { eq } = require('drizzle-orm');
+const { createTaskFile } = require('./server/services/fileCreation');
+const { calculateRiskClusters, generateRandomRiskScore } = require('./server/services/openBankingRiskScore');
 
 // Task to fix
 const TASK_ID = 780;
