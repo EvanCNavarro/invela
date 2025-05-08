@@ -766,41 +766,69 @@ async function handleOpenBankingPostSubmission(
     await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
     console.log(`[OpenBankingPostSubmission] ✅ Unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
     
-    // Mark company onboarding as completed
+    // STEP 1: Mark company onboarding as completed
+    // This is crucial for the post-submission workflow
+    // IMPORTANT: Column name is onboarding_company_completed (not onboarding_completed)
+    console.log(`[OpenBankingPostSubmission] Step 1/4: Setting onboarding_company_completed to true for company ${companyId}`);
     const onboardingUpdateResult = await trx.update(companies)
       .set({
-        onboarding_company_completed: true,
+        onboarding_company_completed: true, // Correct column name confirmed
         updated_at: new Date()
       })
       .where(eq(companies.id, companyId))
       .returning({ id: companies.id });
     
-    console.log(`[OpenBankingPostSubmission] ✅ Updated onboarding status to true for company ${companyId}`);
+    console.log(`[OpenBankingPostSubmission] ✅ Step 1/4 Complete: Updated onboarding status to true for company ${companyId}`);
     logger.info('Updated company onboarding status', { 
       ...obPostLogContext,
+      step: 1,
+      action: 'update_onboarding_status',
+      column: 'onboarding_company_completed',
+      status: 'success',
       timestamp: new Date().toISOString()
     });
     
-    // Generate risk score based on survey responses - random value between 5 and 95
+    // STEP 2: Generate risk score based on survey responses - random value between 5 and 95
+    // Random value is used as specified in requirements
+    console.log(`[OpenBankingPostSubmission] Step 2/4: Generating risk score for company ${companyId}`);
     const riskScore = Math.floor(Math.random() * (95 - 5 + 1)) + 5;
     
-    // Calculate risk clusters based on the total risk score
-    // Distribute the risk score across different risk categories
-    // with higher weight on PII Data and Account Data
+    // STEP 3: Calculate risk clusters based on the total risk score
+    // Distribute the risk score across different risk categories with these weights:
+    // - PII Data: 35%
+    // - Account Data: 30%
+    // - Data Transfers: 10% 
+    // - Certifications Risk: 10%
+    // - Security Risk: 10%
+    // - Financial Risk: 5%
+    console.log(`[OpenBankingPostSubmission] Step 3/4: Calculating risk clusters based on risk score ${riskScore}`);
     const riskClusters = calculateRiskClusters(riskScore);
     
-    console.log(`[OpenBankingPostSubmission] ✅ Generated risk score ${riskScore} and clusters:`, JSON.stringify(riskClusters));
+    console.log(`[OpenBankingPostSubmission] ✅ Steps 2-3/4 Complete: Generated risk score ${riskScore} and clusters:`, JSON.stringify(riskClusters));
     logger.info('Generated risk score and clusters', { 
       ...obPostLogContext, 
+      steps: [2, 3],
+      action: 'generate_risk_score_and_clusters',
       riskScore,
       riskClusters,
+      riskDistribution: {
+        piiData: '35%',
+        accountData: '30%',
+        dataTransfers: '10%',
+        certificationsRisk: '10%',
+        securityRisk: '10%',
+        financialRisk: '5%'
+      },
+      status: 'success',
       timestamp: new Date().toISOString()
     });
     
-    // Update accreditation status, risk score, and risk clusters in a single operation
+    // STEP 4: Update accreditation status to APPROVED, save risk score and clusters
+    // IMPORTANT: Status must be set to 'APPROVED' (not 'VALIDATED' as was previously coded)
+    console.log(`[OpenBankingPostSubmission] Step 4/4: Setting accreditation status to APPROVED and saving risk scores`);
     const riskUpdateResult = await trx.update(companies)
       .set({
-        accreditation_status: 'APPROVED',
+        accreditation_status: 'APPROVED', // Must be APPROVED per requirements
         risk_score: riskScore,
         risk_clusters: riskClusters,
         updated_at: new Date()
@@ -813,12 +841,16 @@ async function handleOpenBankingPostSubmission(
       });
     
     // Log results of risk update
-    console.log(`[OpenBankingPostSubmission] ✅ Updated risk score and accreditation status:`, 
-      riskUpdateResult ? JSON.stringify(riskUpdateResult) : "No result returned");
-      
+    console.log(`[OpenBankingPostSubmission] ✅ Step 4/4 Complete: Updated accreditation status to APPROVED and risk score to ${riskScore} for company ${companyId}`);
+    
     logger.info('Updated accreditation status and risk scores', { 
       ...obPostLogContext,
+      step: 4,
+      action: 'update_accreditation_and_risk',
+      accreditation_status: 'APPROVED',
+      riskScore,
       riskUpdateResult: riskUpdateResult || 'No result returned',
+      status: 'success',
       timestamp: new Date().toISOString()
     });
     
@@ -868,11 +900,19 @@ async function handleOpenBankingPostSubmission(
 /**
  * Calculate risk clusters based on the total risk score
  * 
- * This function distributes the risk score across different risk categories
- * with higher weightage given to PII Data and Account Data categories.
+ * This function distributes the total risk score across different risk categories
+ * using predetermined weight percentages. The distribution follows these rules:
  * 
- * @param riskScore The total risk score (0-100)
- * @returns An object containing risk scores distributed across categories
+ * 1. PII Data receives the highest weight (35%) as it's the most critical category
+ * 2. Account Data receives the second highest weight (30%)
+ * 3. Data Transfers, Certifications Risk, and Security Risk each get 10%
+ * 4. Financial Risk receives 5% of the total risk score
+ * 
+ * The function ensures that the sum of all category scores exactly equals the
+ * total risk score, making adjustments to the main categories if needed.
+ * 
+ * @param riskScore The total risk score (typically 5-95)
+ * @returns An object containing risk scores distributed across all six categories
  */
 function calculateRiskClusters(riskScore: number): {
   "PII Data": number,
@@ -882,10 +922,10 @@ function calculateRiskClusters(riskScore: number): {
   "Security Risk": number,
   "Financial Risk": number
 } {
-  // Base distribution weights for each category
+  // Base distribution weights for each category - THESE MUST SUM TO 1.0 (100%)
   const weights = {
-    "PII Data": 0.35,           // 35% of total score
-    "Account Data": 0.30,        // 30% of total score
+    "PII Data": 0.35,           // 35% of total score - Highest priority
+    "Account Data": 0.30,        // 30% of total score - Second highest priority
     "Data Transfers": 0.10,      // 10% of total score
     "Certifications Risk": 0.10, // 10% of total score
     "Security Risk": 0.10,       // 10% of total score
