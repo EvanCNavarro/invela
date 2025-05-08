@@ -37,6 +37,12 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
   const companyName = companyData?.name || "Loading...";
   const relationshipsCount = relationships?.length || 0;
 
+  // Common styles
+  const cardClassName = "p-4 border rounded-lg shadow-sm flex flex-col items-center";
+  const labelClassName = "text-sm font-medium mb-2 text-foreground";
+  const valueClassName = "text-3xl font-bold";
+  const iconClassName = "h-5 w-5 mr-2 text-foreground";
+
   return (
     <Widget
       title="Company Snapshot"
@@ -45,43 +51,39 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
       isVisible={isVisible}
       headerClassName="pb-2"
     >
-      <div className="space-y-3">
-        <div className="text-muted-foreground text-sm mb-1">
-          Key metrics on activity and trends.
-        </div>
-        
+      <div className="space-y-4">
         {/* Company Banner */}
-        <div className="bg-muted/50 rounded-lg py-3 px-4 flex items-center space-x-3">
+        <div className="bg-muted/50 rounded-lg py-3 px-4 flex flex-col items-center justify-center">
           {companyData?.logoId ? (
             <img
               src={`/api/companies/${companyData.id}/logo`}
               alt={`${companyName} logo`}
-              className="w-8 h-8 object-contain"
+              className="w-8 h-8 object-contain mb-1"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center mb-1">
               <span className="text-sm font-medium text-white">
                 {companyName.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
-          <span className="text-xl font-semibold">{companyName}</span>
+          <span className="text-xl font-semibold text-center">{companyName}</span>
         </div>
         
         {/* Top Stats Row */}
         <div className="grid grid-cols-2 gap-4">
           {/* Company Relationships Card */}
-          <Card className="p-3 border rounded-lg shadow-sm">
-            <div className="text-xs font-medium uppercase text-muted-foreground mb-1 text-center">
-              COMPANY RELATIONSHIPS
+          <Card className={cardClassName}>
+            <div className="flex items-center justify-center mb-2">
+              <Network className={iconClassName} />
+              <span className={labelClassName}>
+                RELATIONSHIPS
+              </span>
             </div>
-            <div className="flex justify-center">
-              <Network className="w-5 h-5 text-muted-foreground mb-1" />
-            </div>
-            <div className="text-4xl font-bold text-center">
+            <div className={valueClassName}>
               {isLoadingRelationships ? (
                 <Skeleton className="h-10 w-14 mx-auto" />
               ) : (
@@ -91,14 +93,14 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
           </Card>
           
           {/* Risk Score Changes Card */}
-          <Card className="p-3 border rounded-lg shadow-sm">
-            <div className="text-xs font-medium uppercase text-muted-foreground mb-1 text-center">
-              RISK SCORE CHANGES
+          <Card className={cardClassName}>
+            <div className="flex items-center justify-center mb-2">
+              <TrendingUp className={iconClassName} />
+              <span className={labelClassName}>
+                RISK CHANGES
+              </span>
             </div>
-            <div className="flex justify-center">
-              <TrendingUp className="w-5 h-5 text-muted-foreground mb-1" />
-            </div>
-            <div className="text-4xl font-bold text-center">
+            <div className={valueClassName}>
               {riskScoreChanges}
             </div>
           </Card>
@@ -108,36 +110,33 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
         <div className="grid grid-cols-2 gap-4">
           {/* S&P Business Data Risk Score Card */}
           <Card className={cn(
-            "p-3 border border-blue-500 border-2 rounded-lg shadow-sm",
-            "flex flex-col items-center"
+            cardClassName,
+            "border-blue-500 border-2"
           )}>
-            <Award className="h-6 w-6 text-blue-600 my-1" />
-            <div className="text-center">
-              <div className="uppercase font-medium text-xs">
-                S&P BUSINESS DATA
-              </div>
-              <div className="uppercase font-medium text-xs mb-1">
-                RISK SCORE
-              </div>
-              <div className="text-5xl font-bold">
-                {riskScore}
-              </div>
+            <div className="flex items-center justify-center mb-2">
+              <Award className={iconClassName} />
+              <span className={labelClassName}>
+                S&P RISK SCORE
+              </span>
+            </div>
+            <div className={valueClassName}>
+              {riskScore}
             </div>
           </Card>
           
           {/* Accreditation Card */}
           <Card className={cn(
-            "p-3 border border-green-500 border-2 rounded-lg shadow-sm",
-            "flex flex-col items-center"
+            cardClassName,
+            "border-green-500 border-2"
           )}>
-            <CheckCircle className="h-6 w-6 text-green-600 my-1" />
-            <div className="text-center">
-              <div className="uppercase font-medium text-xs mb-2">
+            <div className="flex items-center justify-center mb-2">
+              <CheckCircle className={iconClassName} />
+              <span className={labelClassName}>
                 ACCREDITATION
-              </div>
-              <div className="text-2xl font-bold text-green-500">
-                {displayStatus}
-              </div>
+              </span>
+            </div>
+            <div className={valueClassName + " text-green-500"}>
+              {displayStatus}
             </div>
           </Card>
         </div>
