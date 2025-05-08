@@ -13,8 +13,8 @@ export default function RiskScorePage() {
       >
         <div className="space-y-6">
           <PageHeader
-            title="S&P Risk Score"
-            description="Track and analyze your organization's S&P risk assessment score."
+            title="S&P Data Access Risk Score"
+            description="Track and analyze your organization's S&P Data Access risk assessment score."
             icon={<Gauge className="h-6 w-6 text-primary" />}
           />
 
