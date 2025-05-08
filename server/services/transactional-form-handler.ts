@@ -17,22 +17,10 @@ import {
   sendFormSubmissionInProgress 
 } from '../utils/form-submission-notifications';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { db } from '@db';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
-
-// Import the database connection
-let db: { query: (sql: string, params?: any[]) => Promise<any> };
-
-try {
-  db = require('../db').db;
-} catch (error) {
-  console.error('Database module not found, creating a mock implementation');
-  // Create a mock implementation for development/testing
-  db = {
-    query: async () => ({ rows: [] })
-  };
-}
 
 interface FormSubmissionOptions {
   taskId: number;
