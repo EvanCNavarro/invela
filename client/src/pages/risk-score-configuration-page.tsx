@@ -747,15 +747,21 @@ export default function RiskScoreConfigurationPage() {
                     </TabsList>
                     
                     <TabsContent value="dimension-ranking" className="space-y-6">
-                      <div className="bg-muted/40 p-4 rounded-lg border border-border">
-                        <div className="flex items-start gap-2">
-                          <Info className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div className="text-sm text-muted-foreground">
-                            <p className="font-medium">How Dimension Ranking & Priorities Work</p>
-                            <p>Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the risk score calculation. Adjust risk levels using the sliders.</p>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-3">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Info className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-base mb-1">How Dimension Ranking & Priorities Work</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Drag and drop dimensions to stack rank them by importance. Dimensions at the top have more weight in the risk score calculation. Adjust risk levels using the sliders.
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
                       
                       {/* Priority scale indicator */}
                       <div className="space-y-1 mb-6">
@@ -778,15 +784,21 @@ export default function RiskScoreConfigurationPage() {
                     </TabsContent>
 
                     <TabsContent value="comparative-visualization" className="space-y-6">
-                      <div className="bg-muted/40 p-4 rounded-lg border border-border">
-                        <div className="flex items-start gap-2">
-                          <Info className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div className="text-sm text-muted-foreground">
-                            <p className="font-medium">Compare Your Risk Profile</p>
-                            <p>See how your risk configuration compares to other fintech companies and industry standards. This helps benchmark your risk management approach.</p>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-3">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <BarChart2 className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-base mb-1">Compare Your Risk Profile</h3>
+                              <p className="text-sm text-muted-foreground">
+                                See how your risk configuration compares to other fintech companies and industry standards. This helps benchmark your risk management approach.
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
                       
                       {/* Comparative visualization component */}
                       <ComparativeVisualization dimensions={dimensions} />
