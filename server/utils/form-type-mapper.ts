@@ -1,57 +1,88 @@
 /**
  * Form Type Mapper
  * 
- * This utility provides a standardized way to map form types between
- * different parts of the system, ensuring consistent form type names
- * regardless of where they're used.
+ * This utility provides mapping functions between client-side form types
+ * and server-side schema types. It helps standardize type identifiers
+ * across the system.
  */
 
+export type ClientFormType = 'kyb' | 'ky3p' | 'open_banking' | 'card';
+export type SchemaFormType = 'company_kyb' | 'kyb' | 'ky3p' | 'sp_ky3p_assessment' | 'open_banking' | 'open_banking_survey' | 'card';
+
 /**
- * Map client-side form types to database/schema task types
+ * Map a client-side form type to its corresponding schema type
  * 
- * This function ensures that form types used in API calls are correctly
- * mapped to the expected enum values in the database schema.
- * 
- * @param clientFormType The form type as used in client/API (e.g., 'ky3p', 'kyb', 'open_banking')
- * @returns The corresponding database schema type (e.g., 'sp_ky3p_assessment', 'company_kyb', 'open_banking')
+ * @param clientType The client-side form type (e.g., 'kyb', 'ky3p')
+ * @returns The corresponding schema type for database operations
  */
-export function mapClientFormTypeToSchemaType(clientFormType: string): string {
-  // Normalize form type to lowercase
-  const normalizedType = clientFormType.toLowerCase().trim();
+export function mapClientFormTypeToSchemaType(clientType?: string): SchemaFormType {
+  if (!clientType) {
+    throw new Error('Form type is required');
+  }
   
-  // Map client-side form types to schema types
-  const typeMap: Record<string, string> = {
-    'kyb': 'company_kyb',
-    'ky3p': 'sp_ky3p_assessment',
-    'open_banking': 'open_banking_survey',  // Fixed incorrect mapping
-    'card': 'company_card',
-  };
+  const normalizedType = clientType.toLowerCase();
   
-  // Return the mapped type or the original if no mapping exists
-  return typeMap[normalizedType] || normalizedType;
+  switch (normalizedType) {
+    case 'kyb':
+      return 'company_kyb';
+    case 'ky3p':
+      return 'sp_ky3p_assessment';
+    case 'open_banking':
+    case 'ob':
+      return 'open_banking_survey';
+    case 'card':
+      return 'card';
+    default:
+      if (isValidSchemaType(normalizedType)) {
+        return normalizedType as SchemaFormType;
+      }
+      throw new Error(`Unknown form type: ${clientType}`);
+  }
 }
 
 /**
- * Map schema/database task types to client-side form types
- * 
- * This function does the reverse mapping, converting database schema task types
- * to the simplified form types used in the client.
- * 
- * @param schemaTaskType The task type as stored in the database (e.g., 'sp_ky3p_assessment')
- * @returns The corresponding client-side form type (e.g., 'ky3p')
+ * Check if a given type is a valid schema type
  */
-export function mapSchemaTypeToClientFormType(schemaTaskType: string): string {
-  // Normalize form type to lowercase
-  const normalizedType = schemaTaskType.toLowerCase().trim();
+function isValidSchemaType(type: string): boolean {
+  const validTypes: SchemaFormType[] = [
+    'company_kyb', 
+    'kyb', 
+    'ky3p', 
+    'sp_ky3p_assessment', 
+    'open_banking', 
+    'open_banking_survey', 
+    'card'
+  ];
   
-  // Map schema types to client-side form types
-  const typeMap: Record<string, string> = {
-    'company_kyb': 'kyb',
-    'sp_ky3p_assessment': 'ky3p',
-    'open_banking_survey': 'open_banking',  // Fixed incorrect mapping
-    'company_card': 'card',
-  };
+  return validTypes.includes(type as SchemaFormType);
+}
+
+/**
+ * Map a schema type to its client-side form type
+ * 
+ * @param schemaType The schema type from the database
+ * @returns The corresponding client-side form type
+ */
+export function mapSchemaTypeToClientFormType(schemaType?: string): ClientFormType {
+  if (!schemaType) {
+    throw new Error('Schema type is required');
+  }
   
-  // Return the mapped type or the original if no mapping exists
-  return typeMap[normalizedType] || normalizedType;
+  const normalizedType = schemaType.toLowerCase();
+  
+  switch (normalizedType) {
+    case 'company_kyb':
+    case 'kyb':
+      return 'kyb';
+    case 'ky3p':
+    case 'sp_ky3p_assessment':
+      return 'ky3p';
+    case 'open_banking':
+    case 'open_banking_survey':
+      return 'open_banking';
+    case 'card':
+      return 'card';
+    default:
+      throw new Error(`Unknown schema type: ${schemaType}`);
+  }
 }
