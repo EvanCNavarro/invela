@@ -472,7 +472,7 @@ export function Sidebar({
           className="h-6 w-6"
         />
         {isExpanded && (
-          <span className="ml-3 font-semibold text-lg text-foreground">Invela</span>
+          <span className="ml-3 font-semibold text-lg text-foreground">Invela Trust Network</span>
         )}
       </div>
 
@@ -509,7 +509,7 @@ export function Sidebar({
                   </div>
                   <div className="px-5 pt-2 pb-2">
                     <span className="text-[#707F95] text-xs font-medium tracking-wider uppercase">
-                      Invela Only
+                      Invela Trust Network Only
                     </span>
                   </div>
                 </>
