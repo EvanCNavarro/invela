@@ -13,16 +13,30 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import getLogger from '@/utils/logger';
 
-const logger = getLogger('EnhancedClearFields');
-
-interface ClearFieldsOptions {
+export interface ClearFieldsOptions {
   preserveProgress?: boolean;
   skipBroadcast?: boolean;
   resetUI?: boolean;
   clearSections?: boolean;
 }
+
+export interface FieldsEvent {
+  type: string;
+  payload: {
+    taskId: number;
+    formType: string;
+    preserveProgress?: boolean;
+    resetUI?: boolean;
+    clearSections?: boolean;
+    metadata?: Record<string, any>;
+    timestamp?: string;
+  };
+  timestamp?: string;
+}
+
+// Anti-debounce cooldown to prevent rapid repeated clear operations
+const CLEAR_OPERATION_COOLDOWN = 5000; // 5 seconds
 
 /**
  * Enhanced function to clear form fields that addresses all caching layers
@@ -38,189 +52,90 @@ export async function enhancedClearFields(
   formType: string,
   queryClient: QueryClient,
   options: ClearFieldsOptions = {}
-): Promise<{success: boolean, message: string}> {
-  const operationId = `clear_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  
-  // Default options
-  const opts = {
-    preserveProgress: false,
-    skipBroadcast: false,
-    resetUI: true,
-    clearSections: true,
-    ...options
-  };
-  
-  logger.info(`[EnhancedClear] Starting enhanced clear operation for task ${taskId} (${formType})`, {
-    operationId,
-    options: opts
-  });
-
+): Promise<void> {
   try {
-    // Map formType to URL-friendly form type for API consistency
-    let formTypeForApi = formType;
-    if (formType === 'company_kyb') {
-      formTypeForApi = 'kyb';
-    } else if (formType === 'open_banking') {
-      formTypeForApi = 'open-banking';
+    // Generate a unique operation ID for this clear operation
+    const operationId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    
+    // Check if we should block this operation due to a recent clear
+    if (shouldBlockClearOperation(taskId, formType)) {
+      console.warn(`[enhancedClearFields] Blocked clear operation for task ${taskId} (${formType}) - too soon after previous clear`);
+      return;
     }
     
-    // STEP 1: First, forcefully remove all existing cached data about this form
-    // to ensure we don't have stale data influencing our UI
-    const keysToRemove = [
-      `/api/tasks/${taskId}`,
-      `/api/${formTypeForApi}/progress/${taskId}`,
-      `/api/${formTypeForApi.replace('-', '_')}/progress/${taskId}`,
-      `/api/kyb/progress/${taskId}`,
-      `/api/ky3p/progress/${taskId}`,
-      `/api/open-banking/progress/${taskId}`
-    ];
-    
-    logger.info(`[EnhancedClear] Removing form data from cache BEFORE API call`, {
-      keys: keysToRemove,
-      operationId
-    });
-    
-    // Remove cache entries BEFORE the API call to prevent stale data influence
-    for (const key of keysToRemove) {
-      queryClient.removeQueries({ queryKey: [key] });
-    }
-    
-    // STEP 2: Call API to clear fields on the server
-    const clearUrl = `/api/${formTypeForApi}/clear/${taskId}${opts.preserveProgress ? '?preserveProgress=true' : ''}`;
-    
-    logger.info(`[EnhancedClear] Calling API to clear fields: ${clearUrl}`, {
+    // Record this clear operation to prevent rapid repeated clears
+    window._lastClearOperation = {
       taskId,
       formType,
+      timestamp: Date.now(),
+      blockExpiration: Date.now() + CLEAR_OPERATION_COOLDOWN,
+      operationId
+    };
+    
+    console.log(`[enhancedClearFields] Clearing fields for task ${taskId} (${formType})`, {
+      preserveProgress: options.preserveProgress,
+      skipBroadcast: options.skipBroadcast,
+      resetUI: options.resetUI,
+      clearSections: options.clearSections,
       operationId
     });
     
-    const response = await fetch(clearUrl, {
+    // 1. First clear the database state via API call
+    const response = await fetch(`/api/forms/clear-fields`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        // Add cache-busting headers
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ 
-        preserveProgress: opts.preserveProgress,
-        resetUI: opts.resetUI,
-        clearSections: opts.clearSections,
-        timestamp: Date.now(), // Include timestamp to prevent caching
-        operationId
+      body: JSON.stringify({
+        taskId,
+        formType,
+        preserveProgress: !!options.preserveProgress,
+        metadata: {
+          source: 'client',
+          timestamp: new Date().toISOString(),
+          operationId
+        }
       })
     });
     
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+      const errorText = await response.text();
+      throw new Error(`Failed to clear fields: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
-    // Parse response
-    const result = await response.json();
+    // 2. CRITICAL: Use removeQueries (not just invalidateQueries) to completely 
+    // remove the stale data from the cache
+    // This ensures the UI doesn't render stale data while refreshing
     
-    // STEP 3: Purge all potentially affected API endpoints again
-    // This ensures any in-flight requests or race conditions are addressed
-    logger.info(`[EnhancedClear] Purging cache again AFTER successful API call`, {
-      operationId
+    // Remove form data queries
+    queryClient.removeQueries({
+      queryKey: [`/api/${formType}/fields/${taskId}`],
     });
     
-    for (const key of keysToRemove) {
-      queryClient.removeQueries({ queryKey: [key] });
-    }
-    
-    // STEP 4: Force a fresh data fetch by refetching key data
-    logger.info(`[EnhancedClear] Forcing fresh data fetch`, {
-      operationId
+    // Remove progress queries
+    queryClient.removeQueries({
+      queryKey: [`/api/${formType}/progress/${taskId}`],
     });
     
-    // Get fresh task data with staleTime: 0 to force network request
-    await queryClient.fetchQuery({ 
+    // Remove any other related queries that might be affected
+    queryClient.removeQueries({
       queryKey: [`/api/tasks/${taskId}`],
-      staleTime: 0
     });
     
-    // Get fresh form progress data with staleTime: 0 to force network request
-    await queryClient.fetchQuery({
-      queryKey: [`/api/${formTypeForApi}/progress/${taskId}`],
-      staleTime: 0
-    });
-    
-    // STEP 5: Store operation in window._lastClearOperation to prevent redundant operations
-    try {
-      const now = Date.now();
-      const blockExpiration = now + 60000; // 60 seconds
-      
-      // Store in window for cross-component access
-      window._lastClearOperation = {
-        taskId,
-        timestamp: now,
-        formType,
-        blockExpiration,
-        operationId
-      };
-      
-      // Backup in localStorage for page refreshes
-      localStorage.setItem('lastClearOperation', JSON.stringify({
-        taskId,
-        timestamp: now,
-        formType,
-        blockExpiration,
-        operationId
-      }));
-      
-      logger.info(`[EnhancedClear] Set window._lastClearOperation`, {
-        taskId,
-        formType,
-        operationId,
-        expires: new Date(blockExpiration).toISOString()
-      });
-    } catch (err) {
-      // Non-critical error, just log it
-      logger.warn(`[EnhancedClear] Failed to store operation info:`, err);
+    // 3. Broadcast to other clients if not skipped
+    if (!options.skipBroadcast) {
+      await broadcastClearFields(taskId, formType, options);
     }
     
-    // STEP 6: Verify data is cleared with a direct fetch
-    try {
-      const freshDataResponse = await fetch(`/api/${formTypeForApi}/progress/${taskId}?t=${Date.now()}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      
-      if (freshDataResponse.ok) {
-        const freshData = await freshDataResponse.json();
-        logger.info(`[EnhancedClear] Verified fresh data:`, {
-          formData: Object.keys(freshData.formData || {}).length,
-          progress: freshData.progress,
-          status: freshData.status,
-          operationId
-        });
-      }
-    } catch (fetchError) {
-      // Non-critical error, just log it
-      logger.warn(`[EnhancedClear] Error verifying fresh data:`, fetchError);
-    }
-    
-    logger.info(`[EnhancedClear] Successfully completed clear operation`, {
-      taskId,
-      formType,
+    console.log(`[enhancedClearFields] Successfully cleared fields for task ${taskId} (${formType})`, {
+      preserveProgress: options.preserveProgress,
       operationId
     });
     
-    return {
-      success: true,
-      message: result.message || 'Form fields cleared successfully'
-    };
+    return;
   } catch (error) {
-    logger.error(`[EnhancedClear] Error clearing fields:`, error);
-    
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : 'Failed to clear fields'
-    };
+    console.error(`[enhancedClearFields] Error clearing fields for task ${taskId} (${formType}):`, error);
+    throw error;
   }
 }
 
@@ -232,49 +147,23 @@ export async function enhancedClearFields(
  * @returns Whether we should block the operation
  */
 export function shouldBlockClearOperation(taskId: number, formType: string): boolean {
-  try {
-    // Check window variable first
-    if (window._lastClearOperation) {
-      const { taskId: lastTaskId, formType: lastFormType, blockExpiration } = window._lastClearOperation;
-      
-      if (lastTaskId === taskId && lastFormType === formType && blockExpiration > Date.now()) {
-        logger.info(`[EnhancedClear] Blocking clear operation for task ${taskId} due to recent clear`, {
-          lastClear: new Date(window._lastClearOperation.timestamp).toISOString(),
-          expiresAt: new Date(blockExpiration).toISOString(),
-          timeRemaining: Math.floor((blockExpiration - Date.now()) / 1000) + ' seconds'
-        });
-        return true;
-      }
-    }
-    
-    // Fallback to localStorage if window variable isn't set
-    const storedValue = localStorage.getItem('lastClearOperation');
-    if (storedValue) {
-      try {
-        const stored = JSON.parse(storedValue);
-        
-        if (stored.taskId === taskId && 
-            stored.formType === formType && 
-            stored.blockExpiration > Date.now()) {
-          logger.info(`[EnhancedClear] Blocking clear operation for task ${taskId} from localStorage`, {
-            lastClear: new Date(stored.timestamp).toISOString(),
-            expiresAt: new Date(stored.blockExpiration).toISOString(),
-            timeRemaining: Math.floor((stored.blockExpiration - Date.now()) / 1000) + ' seconds'
-          });
-          return true;
-        }
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-    
-    // If we get here, it's safe to proceed
-    return false;
-  } catch (e) {
-    // If we encounter any errors checking, err on the side of allowing the operation
-    logger.warn(`[EnhancedClear] Error checking block status:`, e);
+  if (!window._lastClearOperation) {
     return false;
   }
+  
+  const {
+    taskId: lastTaskId,
+    formType: lastFormType,
+    blockExpiration
+  } = window._lastClearOperation;
+  
+  // Allow clearing different tasks or form types
+  if (lastTaskId !== taskId || lastFormType !== formType) {
+    return false;
+  }
+  
+  // Block if we're still within the cooldown period
+  return Date.now() < blockExpiration;
 }
 
 /**
@@ -287,101 +176,54 @@ export function shouldBlockClearOperation(taskId: number, formType: string): boo
  * @param queryClient The React Query client instance
  */
 export function handleWebSocketClearFields(
-  event: any,
+  event: FieldsEvent,
   queryClient: QueryClient
 ): void {
-  // Extract task info from the event
-  const taskId = event.payload?.taskId || event.data?.taskId;
-  const formType = event.payload?.formType || event.data?.formType;
+  const { taskId, formType, preserveProgress, metadata } = event.payload;
   
-  if (!taskId || !formType) {
-    logger.warn('[WebSocketClear] Invalid clear fields event, missing taskId or formType', event);
+  // Check if this is our own operation - if so, we've already handled it locally
+  const operationId = metadata?.operationId;
+  if (operationId && window._lastClearOperation?.operationId === operationId) {
+    console.log(`[handleWebSocketClearFields] Ignoring our own clear operation: ${operationId}`);
     return;
   }
   
-  logger.info(`[WebSocketClear] Processing WebSocket clear fields event for task ${taskId} (${formType})`, {
-    eventType: event.type,
-    timestamp: event.timestamp || new Date().toISOString()
+  // Check for debounce/cooldown
+  if (shouldBlockClearOperation(taskId, formType)) {
+    console.warn(`[handleWebSocketClearFields] Ignoring clear fields operation due to cooldown: task ${taskId} (${formType})`);
+    return;
+  }
+  
+  console.log(`[handleWebSocketClearFields] Processing remote clear fields event for task ${taskId} (${formType})`, event);
+  
+  // Record this clear operation to prevent duplicate handling
+  window._lastClearOperation = {
+    taskId,
+    formType,
+    timestamp: Date.now(),
+    blockExpiration: Date.now() + CLEAR_OPERATION_COOLDOWN,
+    operationId: operationId || `ws_${Date.now()}`
+  };
+  
+  // Use removeQueries (not just invalidateQueries) to completely clear the cache
+  // This is critical for resetting the UI state properly
+  
+  // Remove form data queries
+  queryClient.removeQueries({
+    queryKey: [`/api/${formType}/fields/${taskId}`],
   });
   
-  // Map formType to API-friendly format
-  let formTypeForApi = formType;
-  if (formType === 'company_kyb') {
-    formTypeForApi = 'kyb';
-  } else if (formType === 'open_banking') {
-    formTypeForApi = 'open-banking';
-  }
+  // Remove progress queries
+  queryClient.removeQueries({
+    queryKey: [`/api/${formType}/progress/${taskId}`],
+  });
   
-  // Identify and remove all relevant cache entries
-  const keysToRemove = [
-    `/api/tasks/${taskId}`,
-    `/api/${formTypeForApi}/progress/${taskId}`,
-    `/api/${formTypeForApi.replace('-', '_')}/progress/${taskId}`,
-    `/api/kyb/progress/${taskId}`,
-    `/api/ky3p/progress/${taskId}`,
-    `/api/open-banking/progress/${taskId}`
-  ];
+  // Remove any other related queries that might be affected
+  queryClient.removeQueries({
+    queryKey: [`/api/tasks/${taskId}`],
+  });
   
-  // Remove all affected queries from cache
-  for (const key of keysToRemove) {
-    queryClient.removeQueries({ queryKey: [key] });
-  }
-  
-  // Schedule a refetch of the key data to ensure fresh state
-  setTimeout(() => {
-    // Get fresh task data
-    queryClient.fetchQuery({ 
-      queryKey: [`/api/tasks/${taskId}`],
-      staleTime: 0
-    }).catch(err => logger.warn('[WebSocketClear] Error refetching task data', err));
-    
-    // Get fresh form progress data
-    queryClient.fetchQuery({
-      queryKey: [`/api/${formTypeForApi}/progress/${taskId}`],
-      staleTime: 0
-    }).catch(err => logger.warn('[WebSocketClear] Error refetching progress data', err));
-    
-    logger.info(`[WebSocketClear] Scheduled refetch of fresh data for task ${taskId}`);
-  }, 100);
-  
-  // Store operation in window._lastClearOperation to prevent redundant operations
-  try {
-    const now = Date.now();
-    const blockExpiration = now + 60000; // 60 seconds
-    
-    // Use operation ID from event if available
-    const operationId = event.payload?.operationId || 
-                        event.payload?.metadata?.operationId || 
-                        `ws_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    
-    // Store in window for cross-component access
-    window._lastClearOperation = {
-      taskId,
-      timestamp: now,
-      formType,
-      blockExpiration,
-      operationId
-    };
-    
-    // Backup in localStorage for page refreshes
-    localStorage.setItem('lastClearOperation', JSON.stringify({
-      taskId,
-      timestamp: now,
-      formType,
-      blockExpiration,
-      operationId
-    }));
-    
-    logger.info(`[WebSocketClear] Set window._lastClearOperation`, {
-      taskId,
-      formType,
-      operationId,
-      expires: new Date(blockExpiration).toISOString()
-    });
-  } catch (err) {
-    // Non-critical error, just log it
-    logger.warn(`[WebSocketClear] Failed to store operation info:`, err);
-  }
+  console.log(`[handleWebSocketClearFields] Successfully processed clear fields event for task ${taskId} (${formType})`);
 }
 
 /**
@@ -399,53 +241,41 @@ export async function broadcastClearFields(
   taskId: number,
   formType: string,
   options: ClearFieldsOptions = {}
-): Promise<boolean> {
-  const operationId = `clear_broadcast_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  
+): Promise<void> {
   try {
-    logger.info(`[BroadcastClear] Broadcasting clear fields operation for task ${taskId} (${formType})`, {
-      operationId
-    });
+    console.log(`[broadcastClearFields] Broadcasting clear fields for task ${taskId} (${formType})`);
     
-    // Use the task broadcast endpoint to trigger a clear fields event
+    // Use our task broadcast endpoint to send the clear_fields event
     const response = await fetch(`/api/tasks/${taskId}/broadcast`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         type: 'clear_fields',
         payload: {
-          taskId,
           formType,
-          preserveProgress: options.preserveProgress || false,
+          preserveProgress: !!options.preserveProgress,
           resetUI: options.resetUI !== false,
           clearSections: options.clearSections !== false,
-          timestamp: new Date().toISOString(),
           metadata: {
-            operationId,
             source: 'client_broadcast',
-            initiatedAt: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            operationId: window._lastClearOperation?.operationId || `broadcast_${Date.now()}`
           }
         }
       })
     });
     
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}: ${await response.text()}`);
+      const errorText = await response.text();
+      throw new Error(`Failed to broadcast clear fields: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
-    logger.info(`[BroadcastClear] Successfully broadcasted clear fields operation`, {
-      taskId,
-      formType,
-      operationId,
-      status: response.status
-    });
-    
-    return true;
+    console.log(`[broadcastClearFields] Successfully broadcast clear fields for task ${taskId} (${formType})`);
   } catch (error) {
-    logger.error(`[BroadcastClear] Error broadcasting clear fields:`, error);
-    return false;
+    console.error(`[broadcastClearFields] Error broadcasting clear fields for task ${taskId} (${formType}):`, error);
+    // Don't re-throw the error since this is a background operation
+    // and should not block the main clear fields flow
   }
 }
