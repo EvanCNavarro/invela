@@ -33,7 +33,7 @@ import testKy3pProgressRouter from './routes/test-ky3p-progress';
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 // Import KY3P submission fix to properly handle form submissions
-import ky3pSubmissionFixRouter from './routes/ky3p-submission-fix';
+import { ky3pSubmissionFixRouter } from './routes/ky3p-submission-fix';
 // Import standardized KY3P batch update routes
 // Use the fixed KY3P batch update routes
 import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
