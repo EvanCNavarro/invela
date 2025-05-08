@@ -1,6 +1,7 @@
 import { Widget } from "@/components/dashboard/Widget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, Bell, Zap, Building2, Globe, Shield } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 /**
  * Skeleton loader for a default widget with adaptive sizes
