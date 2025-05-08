@@ -95,36 +95,22 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // 1. Update task status to submitted
         const now = new Date();
         
-        // Check if the client has the proper query method
-        // This resolves the "client.query is not a function" error
-        if (!txClient.query || typeof txClient.query !== 'function') {
-          console.error('[TransactionalFormHandler] Transaction client does not have a query method:', {
-            clientType: typeof txClient,
-            hasQueryMethod: typeof txClient.query === 'function',
-            taskId,
-            timestamp: new Date().toISOString()
-          });
-          
-          // If txClient doesn't have a query method, use the global db object instead
-          await db.query(
-            `UPDATE tasks 
-             SET status = 'submitted', progress = 100, 
-                 metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', to_jsonb($3::text)), 
-                 updated_at = $1 
-             WHERE id = $2`,
-            [now, taskId, now.toISOString()]
-          );
-        } else {
-          // Use the transaction client if it's valid
-          await txClient.query(
-            `UPDATE tasks 
-             SET status = 'submitted', progress = 100, 
-                 metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', to_jsonb($3::text)), 
-                 updated_at = $1 
-             WHERE id = $2`,
-            [now, taskId, now.toISOString()]
-          );
-        }
+        // Use our enhanced transaction client with executeSQL method
+        logger.info('[TransactionalFormHandler] Updating task status using enhanced transaction client', {
+          taskId,
+          status: 'submitted',
+          progress: 100,
+          timestamp: now.toISOString()
+        });
+        
+        await txClient.executeSQL(
+          `UPDATE tasks 
+           SET status = 'submitted', progress = 100, 
+               metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submittedAt}', to_jsonb($3::text)), 
+               updated_at = $1 
+           WHERE id = $2`,
+          [now, taskId, now.toISOString()]
+        );
       } catch (queryError) {
         console.error('[TransactionalFormHandler] Error executing query in transaction:', {
           error: queryError instanceof Error ? queryError.message : String(queryError),
@@ -197,45 +183,24 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             // Update task metadata with file information
             // UNIFIED FIX: Use properly parameterized query for the fileId and include fileName
             try {
-              // Check if the client has a valid query method
-              if (!txClient.query || typeof txClient.query !== 'function') {
-                await db.query(
-                  `UPDATE tasks 
-                   SET metadata = jsonb_set(
-                     jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)),
-                     '{fileName}', to_jsonb($3::text)
-                   ) 
-                   WHERE id = $1`,
-                  [taskId, fileId, fileResult.fileName || '']
-                );
-              } else {
-                await txClient.query(
-                  `UPDATE tasks 
-                   SET metadata = jsonb_set(
-                     jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)),
-                     '{fileName}', to_jsonb($3::text)
-                   ) 
-                   WHERE id = $1`,
-                  [taskId, fileId, fileResult.fileName || '']
-                );
-              }
+              // Use our enhanced transaction client with executeSQL method
+              await txClient.executeSQL(
+                `UPDATE tasks 
+                 SET metadata = jsonb_set(
+                   jsonb_set(COALESCE(metadata, '{}'::jsonb), '{fileId}', to_jsonb($2::text)),
+                   '{fileName}', to_jsonb($3::text)
+                 ) 
+                 WHERE id = $1`,
+                [taskId, fileId, fileResult.fileName || '']
+              );
               
               // Also ensure the file is properly linked to the task as a form submission file
-              if (!txClient.query || typeof txClient.query !== 'function') {
-                await db.query(
-                  `UPDATE files
-                   SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{formSubmission}', 'true')
-                   WHERE id = $1`,
-                  [fileId]
-                );
-              } else {
-                await txClient.query(
-                  `UPDATE files
-                   SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{formSubmission}', 'true')
-                   WHERE id = $1`,
-                  [fileId]
-                );
-              }
+              await txClient.executeSQL(
+                `UPDATE files
+                 SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{formSubmission}', 'true')
+                 WHERE id = $1`,
+                [fileId]
+              );
             } catch (metadataError) {
               console.error(`[TransactionalFormHandler] Error updating file metadata:`, {
                 error: metadataError instanceof Error ? metadataError.message : String(metadataError),
@@ -282,14 +247,8 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         transactionId: `tx-${new Date().getTime()}-${Math.random().toString(36).substring(2, 7)}`
       });
       
-      // Define a helper function to handle database queries with proper client handling
-      const executeQuery = async (sql: string, params: any[]) => {
-        if (!txClient.query || typeof txClient.query !== 'function') {
-          return await db.query(sql, params);
-        } else {
-          return await txClient.query(sql, params);
-        }
-      };
+      // We now have our enhanced txClient.executeSQL method
+      // No need for the helper function anymore
       
       try {
         // CRITICAL FIX: Explicitly update the task status and progress in the database
@@ -309,18 +268,11 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         // DEBUG: Get current task state before update for validation
         let preUpdateCheck;
         try {
-          // Check if client has a valid query method
-          if (!txClient.query || typeof txClient.query !== 'function') {
-            preUpdateCheck = await db.query(
-              `SELECT id, status, progress FROM tasks WHERE id = $1`,
-              [taskId]
-            );
-          } else {
-            preUpdateCheck = await txClient.query(
-              `SELECT id, status, progress FROM tasks WHERE id = $1`,
-              [taskId]
-            );
-          }
+          // Use our enhanced transaction client with executeSQL method
+          preUpdateCheck = await txClient.executeSQL(
+            `SELECT id, status, progress FROM tasks WHERE id = $1`,
+            [taskId]
+          );
           
           // Log original task state with more visible emoji
           console.log(`[TransactionalFormHandler] 📊 PRE-UPDATE TASK STATE for task ${taskId}:`, {
@@ -352,36 +304,20 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         
         let updateResult;
         try {
-          // Check if the client has a valid query method
-          if (!txClient.query || typeof txClient.query !== 'function') {
-            updateResult = await db.query(
-              `UPDATE tasks 
-               SET status = 'submitted', 
-                   progress = 100, 
-                   metadata = jsonb_set(
-                     jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'::jsonb),
-                     '{submissionDate}', to_jsonb($2::text)
-                   ),
-                   updated_at = NOW()
-               WHERE id = $1
-               RETURNING id, status, progress, metadata`,
-              [taskId, submissionDate]
-            );
-          } else {
-            updateResult = await txClient.query(
-              `UPDATE tasks 
-               SET status = 'submitted', 
-                   progress = 100, 
-                   metadata = jsonb_set(
-                     jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'::jsonb),
-                     '{submissionDate}', to_jsonb($2::text)
-                   ),
-                   updated_at = NOW()
-               WHERE id = $1
-               RETURNING id, status, progress, metadata`,
-              [taskId, submissionDate]
-            );
-          }
+          // Use our enhanced transaction client with executeSQL method
+          updateResult = await txClient.executeSQL(
+            `UPDATE tasks 
+             SET status = 'submitted', 
+                 progress = 100, 
+                 metadata = jsonb_set(
+                   jsonb_set(COALESCE(metadata, '{}'::jsonb), '{submitted}', 'true'::jsonb),
+                   '{submissionDate}', to_jsonb($2::text)
+                 ),
+                 updated_at = NOW()
+             WHERE id = $1
+             RETURNING id, status, progress, metadata`,
+            [taskId, submissionDate]
+          );
           
           // ENHANCED DEBUG: Log the updated task data immediately after the update
           console.log(`[TransactionalFormHandler] ✅ SQL UPDATE RESULT for task ${taskId}:`, {
