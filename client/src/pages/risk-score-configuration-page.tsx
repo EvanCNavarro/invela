@@ -116,25 +116,27 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   
   const opacity = isDragging ? 0.4 : 1;
   
-  // Calculate gradient colors based on index and position
+  // Calculate grayscale colors based on index and position
   const getGradientColors = () => {
-    // Create a gradient that transitions from top dimension color to bottom dimension color
-    // We'll use a blue family for consistency
-    const topColor = '#4285F4';
-    const bottomColor = '#0D47A1';
+    // Create a grayscale that transitions from dark to light
+    // For a more business-appropriate muted palette
+    const topColor = '#2c3e50'; // Darker slate blue-gray for top items
+    const middleColor = '#34495e'; // Mid-level slate for middle items
+    const bottomColor = '#7f8c8d'; // Lighter gray for bottom items
     
     // Since we're in the component level, we use a fixed number for consistency
     const totalItems = 6; // Fixed number of dimensions
-    const positionRatio = index / (totalItems - 1);
     
-    // Interpolate between top and bottom colors based on position
+    // Interpolate between grayscale colors based on position
     const primaryColor = index === 0 ? topColor : 
-                         index === 1 ? '#1976D2' : 
-                         index === 2 ? '#1565C0' : 
-                         index === 3 ? '#0D47A1' : 
-                         index === 4 ? '#0A3783' : 
-                         '#072C6E';
-    const secondaryColor = index === 0 ? primaryColor : topColor;
+                         index === 1 ? '#3d566e' : 
+                         index === 2 ? '#445a70' : 
+                         index === 3 ? '#516577' : 
+                         index === 4 ? '#5d6e7e' : 
+                         middleColor;
+    
+    // Accent color (slightly different shade for secondary elements)
+    const secondaryColor = '#95a5a6';
     
     return { primaryColor, secondaryColor };
   };
@@ -184,9 +186,9 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
         <div 
           className="text-3xl font-bold" 
           style={{ color: primaryColor }}
-          aria-label={`Weight ${dimension.weight} percent`}
+          aria-label={`Weight ${Math.round(dimension.weight)} percent`}
         >
-          {dimension.weight}%
+          {Math.round(dimension.weight)}%
         </div>
         <div className="text-xs font-medium" style={{ color: `${primaryColor}CC` }}>
           Priority Weight
