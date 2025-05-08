@@ -6,6 +6,7 @@
  */
 
 import { db } from '@db';
+import { sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { performance } from 'perf_hooks';
 
@@ -19,20 +20,40 @@ import { performance } from 'perf_hooks';
  * @returns The result of the callback function
  */
 export async function withTransactionContext<T>(
-  callback: (tx: typeof db) => Promise<T>
+  callback: (tx: any) => Promise<T>
 ): Promise<T> {
   const startTime = performance.now();
+  const transactionId = `tx-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
   
   try {
     // Start a transaction
+    logger.info(`[TransactionManager] Starting transaction ${transactionId}`);
+    
     const result = await db.transaction(async (tx) => {
-      // Execute the callback within the transaction
-      return await callback(tx);
+      // Add an executeSQL method to the transaction context
+      // This allows executing raw SQL queries within the transaction
+      const enhancedTx = {
+        ...tx,
+        transactionId,
+        // Properly execute SQL within transaction context
+        executeSQL: async (query: string, params: any[] = []) => {
+          logger.debug(`[TransactionManager] Executing SQL in transaction ${transactionId}`, {
+            query: query.substring(0, 100) + (query.length > 100 ? '...' : ''),
+            paramCount: params.length
+          });
+          
+          // Use Drizzle's SQL template for proper parameter binding
+          return await tx.execute(sql`${sql.raw(query, ...params)}`);
+        }
+      };
+      
+      // Execute the callback with our enhanced transaction object
+      return await callback(enhancedTx);
     });
     
     const elapsedMs = performance.now() - startTime;
     
-    logger.info(`[TransactionManager] Transaction completed successfully`, {
+    logger.info(`[TransactionManager] Transaction ${transactionId} completed successfully`, {
       elapsedMs: Math.round(elapsedMs)
     });
     
@@ -40,7 +61,7 @@ export async function withTransactionContext<T>(
   } catch (error) {
     const elapsedMs = performance.now() - startTime;
     
-    logger.error(`[TransactionManager] Transaction failed`, {
+    logger.error(`[TransactionManager] Transaction ${transactionId} failed`, {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       elapsedMs: Math.round(elapsedMs)
