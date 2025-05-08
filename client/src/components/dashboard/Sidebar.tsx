@@ -468,7 +468,7 @@ export function Sidebar({
       )}>
         <img
           src="/invela-logo.svg"
-          alt="Invela"
+          alt="Invela Trust Network"
           className="h-6 w-6"
         />
         {isExpanded && (

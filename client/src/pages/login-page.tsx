@@ -131,7 +131,7 @@ export default function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          Sign In to Invela
+          Sign In to Invela Trust Network
         </motion.h1>
         <motion.p 
           className="text-base text-muted-foreground mt-3"

@@ -105,7 +105,7 @@ export function SearchBar({
   // Determine placeholder text
   const getPlaceholder = () => {
     if (isLoading) return "Loading..."
-    if (isGlobalSearch) return "Search Invela"
+    if (isGlobalSearch) return "Search Invela Trust Network"
     if (contextualType) return `Search for ${contextualType}`
     return placeholder || "Search..."
   }

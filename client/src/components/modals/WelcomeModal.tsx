@@ -38,8 +38,8 @@ CustomDialogContent.displayName = "CustomDialogContent";
 const carouselContent = [
   {
     src: "/assets/modal_userOboarding_1.png",
-    alt: "Welcome to Invela",
-    title: "Welcome to Invela",
+    alt: "The Invela Trust Network",
+    title: "The Invela Trust Network",
     subtitle: "Your intelligent platform for managing Risk and Accreditation."
   },
   {
