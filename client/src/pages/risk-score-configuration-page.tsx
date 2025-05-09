@@ -924,8 +924,7 @@ export default function RiskScoreConfigurationPage() {
                     <RiskGauge 
                       score={score} 
                       riskLevel={riskLevel} 
-                      size={170}
-                      logger={riskScoreLogger.log}
+                      size={280}
                     />
                     
                     {/* Risk Acceptance Level Label - moved above the score as requested */}
