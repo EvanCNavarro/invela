@@ -123,14 +123,14 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
         const url = `/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`;
         console.log(`[TutorialManager] Status URL: ${url}`);
         
-        const statusResponse = await apiRequest(url);
+        const statusResponse = await apiRequest<{exists?: boolean}>(url);
         console.log(`[TutorialManager] Tutorial status response:`, statusResponse);
         
         // Log the actual response 
         console.log(`[TutorialManager] Status response details:`, JSON.stringify(statusResponse));
         
         // If tutorial doesn't exist (exists is explicitly false), create it
-        if (statusResponse && statusResponse.exists === false) {
+        if (statusResponse && 'exists' in statusResponse && statusResponse.exists === false) {
           console.log(`[TutorialManager] Creating new tutorial entry for tab: ${tabName}`);
           
           // Create a new tutorial entry
