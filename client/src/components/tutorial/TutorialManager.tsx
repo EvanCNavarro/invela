@@ -133,19 +133,20 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
         if (statusResponse && 'exists' in statusResponse && statusResponse.exists === false) {
           console.log(`[TutorialManager] Creating new tutorial entry for tab: ${tabName}`);
           
-          // Create a new tutorial entry - explicitly using POST method
-          const initResponse = await apiRequest('/api/user-tab-tutorials', {
-            method: 'POST', // Explicitly specify POST method
-            body: JSON.stringify({
+          // Create a new tutorial entry - explicitly using POST method and direct payload
+          console.log(`[TutorialManager] Raw tab name value:`, tabName);
+          
+          // Try direct POST with payload instead of using the options pattern
+          const initResponse = await apiRequest(
+            'POST', // Explicit method parameter
+            '/api/user-tab-tutorials', // URL as second parameter
+            {
               tabName: tabName, // Explicitly use the exact property name expected by the server
               currentStep: 0,
               completed: false,
               totalSteps: steps.length
-            }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
+            } // Data as third parameter 
+          );
           
           console.log(`[TutorialManager] Tutorial initialization response:`, initResponse);
         }
