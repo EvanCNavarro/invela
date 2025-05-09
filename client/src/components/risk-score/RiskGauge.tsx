@@ -32,45 +32,45 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Creates an SVG arc path for a gauge that grows from left to right
- * 
- * @param centerX - X center point of the arc
- * @param centerY - Y center point of the arc (bottom of half-circle)
- * @param radius - Radius of the arc
- * @param percentage - Value from 0-100
+ * Converts polar coordinates to cartesian coordinates
  */
-const createGaugeArc = (
-  centerX: number, 
-  centerY: number, 
-  radius: number, 
-  percentage: number = 0
+const polarToCartesian = (
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angleInDegrees: number
+): { x: number; y: number } => {
+  // Convert from degrees to radians
+  const angleInRadians = ((angleInDegrees - 180) * Math.PI) / 180;
+  
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians)
+  };
+};
+
+/**
+ * Creates an SVG Arc path description
+ * Based on best practices for drawing circular arcs with SVG
+ */
+const describeArc = (
+  x: number,
+  y: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number
 ): string => {
-  // Ensure percentage is between 0-100
-  const normalizedPercentage = Math.max(0, Math.min(100, percentage));
-  
-  // Convert percentage to radians (flipped for left-to-right)
-  // At 0%, we start at π (180 degrees - left side)
-  // At 100%, we end at 0 degrees (right side)
-  
-  // Calculate the angle (in radians) based on percentage
-  const angle = (normalizedPercentage / 100) * Math.PI;
-  
-  // Calculate start and end points
-  const startX = centerX - radius; // Always start from left side
-  const startY = centerY;
-  const endX = centerX - radius * Math.cos(angle); // Flipped x-coordinate calculation
-  const endY = centerY - radius * Math.sin(angle);
+  const start = polarToCartesian(x, y, radius, endAngle);
+  const end = polarToCartesian(x, y, radius, startAngle);
   
   // Determine if the arc should be drawn the long way around
-  const largeArcFlag = normalizedPercentage > 50 ? 1 : 0;
+  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
   
-  // Create the SVG path string
-  // M = moveto, A = elliptical arc
-  // Changed the sweep flag to 1 (clockwise direction)
-  return `
-    M ${startX} ${startY}
-    A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}
-  `;
+  // Create the SVG arc path string
+  return [
+    'M', start.x, start.y,
+    'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
+  ].join(' ');
 };
 
 /**
@@ -98,11 +98,16 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const centerY = height;
   const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
   
-  // Create the full background arc (0 to 100%)
-  const backgroundPath = createGaugeArc(centerX, centerY, radius, 100);
+  // Maps percentage (0-100) to angle (180-0) for the half-circle
+  // At 0%, angle is 180 (left)
+  // At 50%, angle is 90 (top)
+  // At 100%, angle is 0 (right)
+  const startAngle = 180;
+  const endAngle = 180 - (percentage / 100) * 180;
   
-  // Create the colored progress arc (0 to percentage%)
-  const progressPath = createGaugeArc(centerX, centerY, radius, percentage);
+  // Create arc paths using the describeArc helper
+  const backgroundPath = describeArc(centerX, centerY, radius, 0, 180);
+  const progressPath = describeArc(centerX, centerY, radius, endAngle, 180);
   
   return (
     <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
