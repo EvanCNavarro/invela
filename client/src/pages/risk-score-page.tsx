@@ -4,14 +4,14 @@ import { PageTemplate } from "@/components/ui/page-side-drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Gauge } from "lucide-react";
-import { RiskScoreTutorial } from "@/components/tutorial/tabs/RiskScoreTutorial";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 
 export default function RiskScorePage() {
   return (
     <DashboardLayout>
       <PageTemplate>
         {/* Display Risk Score Tutorial */}
-        <RiskScoreTutorial />
+        <TutorialManager tabName="risk-score" />
         
         <div className="space-y-6">
           <PageHeader
