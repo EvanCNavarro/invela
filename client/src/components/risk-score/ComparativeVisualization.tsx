@@ -90,7 +90,7 @@ export function ComparativeVisualization({
         id: company?.id || 0,
         name: company?.name || 'Invela Trust Network',
         companyType: company?.category || 'Current',
-        description: `Your current S&P Data Access Risk Score configuration${riskLevel ? ` (${riskLevel} risk)` : ''}`,
+        description: `Your current S&P Data Access Risk Score configuration`,
         score: Math.round(score), // Round to nearest integer
         dimensions: dimensionValues
       });
