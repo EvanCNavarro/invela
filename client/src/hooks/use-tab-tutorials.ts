@@ -40,7 +40,7 @@ export function useTabTutorials(tabName: string): UseTabTutorialsResult {
   const { data: tutorialStatus, isLoading: isStatusLoading } = useQuery<UserTabTutorialStatus>({
     queryKey: ['tutorials', tabName],
     queryFn: async () => {
-      const response = await apiRequest(`/api/user-tab-tutorials/${tabName}`);
+      const response = await apiRequest(`/api/user-tab-tutorials/${tabName}/status`);
       if (response.ok) {
         return await response.json();
       }
@@ -53,9 +53,12 @@ export function useTabTutorials(tabName: string): UseTabTutorialsResult {
   // Update tutorial status on the server
   const updateTutorialMutation = useMutation({
     mutationFn: async (data: Partial<UserTabTutorialStatus>) => {
-      const response = await apiRequest(`/api/user-tab-tutorials/${tabName}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
+      const response = await apiRequest('/api/user-tab-tutorials', {
+        method: 'POST',
+        body: JSON.stringify({
+          tabName,
+          ...data
+        }),
       });
       
       if (response.ok) {
