@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
-import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
@@ -254,11 +253,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     (directDbEntry?.currentStep || 0) : 
     currentStep;
   
-  console.log(`[TutorialManager] Rendering tutorial step ${stepToUse + 1} of ${steps.length}`);
-    
-  // Use our new content-area-only tutorial modal
   return (
-    <ContentTutorialModal
+    <TabTutorialModal
       title={steps[stepToUse]?.title || ''}
       description={steps[stepToUse]?.description || ''}
       imageUrl={imageUrl}
