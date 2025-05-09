@@ -1,51 +1,46 @@
-import { useEffect, useState } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
-import { 
-  GripVertical, 
-  Shield, 
-  BarChart2, 
-  Info, 
-  Gauge as GaugeIcon 
-} from 'lucide-react';
-
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription
-} from '@/components/ui/card';
-
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Slider } from '@/components/ui/slider';
-import { useToast } from '@/hooks/use-toast';
-import { PageHeader } from '@/components/page-header';
-import { PageTemplate } from '@/components/page-template';
-import { RiskGauge } from '@/components/risk-score/RiskGauge';
+import React, { useEffect } from 'react';
+import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTemplate } from "@/components/ui/page-template";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, FileCode, Globe2, MessageSquare, AlertTriangle, Database, GripVertical, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
-import { useRiskScoreData } from '@/hooks/use-risk-score-data';
-import { riskScoreLogger } from '@/lib/risk-score-logger';
-import { type RiskDimension } from '@/lib/risk-score-configuration-data';
+import { RiskGauge } from '@/components/risk-score/RiskGauge';
+import { useToast } from "@/hooks/use-toast";
+import riskScoreLogger from "@/lib/risk-score-logger";
+import { useRiskScoreData } from "@/hooks/use-risk-score-data";
+import { DndProvider } from 'react-dnd';
+import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { RiskDimension } from '@/lib/risk-score-configuration-data';
 
-// Map of dimension IDs to icons for visual representation
-const dimensionIcons: Record<string, JSX.Element> = {
-  data_access_scope: <Shield className="h-5 w-5 text-white" />,
-  compliance_status: <BarChart2 className="h-5 w-5 text-white" />,
-  technical_architecture: <GaugeIcon className="h-5 w-5 text-white" />,
-  operational_maturity: <Info className="h-5 w-5 text-white" />,
+// Define dimension icons for visual representation
+const dimensionIcons: Record<string, React.ReactNode> = {
+  cyber_security: <FileCode className="h-5 w-5" />,
+  financial_stability: <BarChart className="h-5 w-5" />,
+  dark_web_data: <Globe2 className="h-5 w-5" />,
+  public_sentiment: <MessageSquare className="h-5 w-5" />,
+  potential_liability: <AlertTriangle className="h-5 w-5" />,
+  data_access_scope: <Database className="h-5 w-5" />
 };
 
-// Define the type for drag and drop items
+// Props for dimension row component
+interface DimensionRowProps {
+  dimension: RiskDimension;
+  index: number;
+  onReorder: (dragIndex: number, hoverIndex: number) => void;
+  onValueChange: (id: string, value: number) => void;
+}
+
+// Define the item type for drag-and-drop
 const ItemTypes = {
   DIMENSION_ROW: 'dimensionRow'
 };
@@ -70,14 +65,6 @@ interface DragItem {
   type: string;
 }
 
-// Props for dimension row component
-interface DimensionRowProps {
-  dimension: RiskDimension;
-  index: number;
-  onReorder: (dragIndex: number, hoverIndex: number) => void;
-  onValueChange: (id: string, value: number) => void;
-}
-
 /**
  * Draggable and droppable dimension row component
  * Allows reordering of risk dimensions through drag and drop
@@ -93,8 +80,13 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
   });
 
   // Set up drop functionality
-  const [, drop] = useDrop({
+  const [{ handlerId }, drop] = useDrop({
     accept: ItemTypes.DIMENSION_ROW,
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId()
+      };
+    },
     hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!drop) {
         return;
@@ -123,13 +115,14 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
   return (
     <div 
       ref={ref}
+      data-handler-id={handlerId}
       className={`flex items-center space-x-4 p-4 border rounded-md mb-2 transition-opacity ${isDragging ? 'opacity-50' : 'opacity-100'}`}
       style={{ 
         backgroundColor: `${dimension.color}10`, 
         borderColor: `${dimension.color}40` 
       }}
     >
-      <div className="cursor-move">
+      <div className="cursor-move" ref={dragPreview}>
         <GripVertical className="h-5 w-5 text-gray-500" />
       </div>
       
@@ -238,11 +231,12 @@ export default function RiskScoreConfigurationPage() {
       />
     ));
   };
-
+  
+  // Render the page
   return (
-    <>
-      <PageHeader 
-        title="Risk Score Configuration" 
+    <DashboardLayout>
+      <PageHeader
+        title="Risk Score Configuration"
         description="Configure your organization's risk score calculation parameters."
       />
       
@@ -344,17 +338,20 @@ export default function RiskScoreConfigurationPage() {
                         <div className="mt-10 w-full">
                           <h3 className="text-base font-medium mb-2">Weight Distribution</h3>
                           
-                          <div className="space-y-2">
-                            {dimensions.map((dimension) => (
-                              <div key={dimension.id} className="flex items-center justify-between py-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dimension.color }}></div>
-                                  <span className="text-sm">{dimension.name}</span>
-                                </div>
-                                <span className="text-sm font-medium">{dimension.weight.toFixed(0)}%</span>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-sm text-gray-500 mb-4">
+                            Weight influence is automatically calculated based on dimension priority ordering
+                          </p>
+                          
+                          {dimensions.map((dim, index) => (
+                            <div key={dim.id} className="mb-2 flex items-center">
+                              <div
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: dim.color }}
+                              ></div>
+                              <span className="text-sm flex-1">{dim.name}</span>
+                              <span className="text-sm font-medium">{dim.weight.toFixed(0)}%</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -367,19 +364,39 @@ export default function RiskScoreConfigurationPage() {
           <TabsContent value="comparative" className="p-0 mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Comparative Risk Analysis</CardTitle>
-                <CardDescription>
-                  Compare your organization's risk profile against industry benchmarks and similar organizations.
-                </CardDescription>
+                <CardTitle>Comparative Analysis</CardTitle>
               </CardHeader>
               
               <CardContent>
-                <ComparativeVisualization />
+                <div className="mb-6">
+                  <p className="text-sm text-gray-600">
+                    Compare your risk scores across different dimensions with industry benchmarks and similar organizations.
+                  </p>
+                </div>
+                
+                <div className="h-[450px]">
+                  <ComparativeVisualization 
+                    companyDimensions={dimensions} 
+                    isLoading={isLoading} 
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </PageTemplate>
-    </>
+      
+      {/* Toast messages for successful save operations */}
+      {isSaving && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Alert>
+            <AlertTitle>Saving changes...</AlertTitle>
+            <AlertDescription>
+              Your risk score configuration is being saved.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+    </DashboardLayout>
   );
 }
