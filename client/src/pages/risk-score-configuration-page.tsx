@@ -115,7 +115,7 @@ interface DimensionRowProps {
   dimension: RiskDimension;
   index: number;
   onReorder: (dragIndex: number, hoverIndex: number) => void;
-  onValueChange: (id: string, value: number) => void;
+  // onValueChange prop removed as dimension sliders are being removed
 }
 
 /**
