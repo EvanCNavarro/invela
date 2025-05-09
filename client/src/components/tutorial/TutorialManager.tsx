@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
+import { apiRequest } from '@/lib/queryClient';
 
 // Define all tutorial content in a central location
 const TUTORIAL_CONTENT: Record<string, {
@@ -82,15 +83,62 @@ interface TutorialManagerProps {
  * and manages state, WebSocket communication, and UI rendering.
  */
 export function TutorialManager({ tabName }: TutorialManagerProps) {
+  console.log(`[TutorialManager] Initializing for tab: ${tabName}`);
+  
+  const [initializationComplete, setInitializationComplete] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+  
   // Get tutorial content for the current tab
   const tutorialContent = TUTORIAL_CONTENT[tabName];
   
   // If no tutorial content exists for this tab, don't render anything
   if (!tutorialContent) {
+    console.log(`[TutorialManager] No tutorial content found for tab: ${tabName}`);
     return null;
   }
   
   const { steps } = tutorialContent;
+  
+  // Initialize tutorial entry when component mounts
+  useEffect(() => {
+    const initializeTutorial = async () => {
+      try {
+        console.log(`[TutorialManager] Checking if tutorial exists for tab: ${tabName}`);
+        
+        // Check if tutorial exists by fetching status
+        const statusResponse = await apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
+        console.log(`[TutorialManager] Tutorial status response:`, statusResponse);
+        
+        // If tutorial doesn't exist (exists: false), create it
+        if (statusResponse && statusResponse.exists === false) {
+          console.log(`[TutorialManager] Creating new tutorial entry for tab: ${tabName}`);
+          
+          // Create a new tutorial entry
+          const initResponse = await apiRequest('/api/user-tab-tutorials', {
+            method: 'POST',
+            body: JSON.stringify({
+              tabName,
+              currentStep: 0,
+              completed: false,
+              totalSteps: steps.length
+            }),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log(`[TutorialManager] Tutorial initialization response:`, initResponse);
+        }
+        
+        setInitializationComplete(true);
+      } catch (error) {
+        console.error(`[TutorialManager] Error initializing tutorial:`, error);
+        setInitializationError(String(error));
+      }
+    };
+    
+    initializeTutorial();
+  }, [tabName, steps.length]);
   
   // Get tutorial status from the server
   const { 
@@ -99,6 +147,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     totalSteps, 
     isCompleted, 
     isLoading: tutorialLoading,
+    error: tutorialError,
     handleNext, 
     handleComplete, 
     markTutorialSeen 
@@ -107,30 +156,59 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   // Connect to WebSocket for real-time updates
   const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket(tabName);
   
-  // Load tutorial assets
+  // Load tutorial assets (only if we have a valid current step)
   const { isLoading: assetLoading, imageUrl } = useTutorialAssets(
-    steps[currentStep]?.imagePath || steps[currentStep]?.imageUrl || '',
-    tutorialEnabled && !isCompleted
+    currentStep >= 0 && currentStep < steps.length 
+      ? (steps[currentStep]?.imagePath || steps[currentStep]?.imageUrl || '')
+      : '',
+    tutorialEnabled && !isCompleted && currentStep >= 0 && currentStep < steps.length
   );
   
+  // Log tutorial errors if any
+  useEffect(() => {
+    if (tutorialError) {
+      console.error(`[TutorialManager] Error loading tutorial status:`, tutorialError);
+    }
+    
+    if (initializationError) {
+      console.error(`[TutorialManager] Initialization error:`, initializationError);
+    }
+  }, [tutorialError, initializationError]);
+  
   // Combine loading states
-  const isLoading = tutorialLoading || assetLoading;
+  const isLoading = tutorialLoading || assetLoading || !initializationComplete;
   
   // Handle WebSocket updates if needed
   React.useEffect(() => {
     if (tutorialCompleted) {
       // If we received a completion notification via WebSocket
-      console.log(`[Tutorial] Received ${tabName} tutorial completion notification via WebSocket`);
+      console.log(`[TutorialManager] Received ${tabName} tutorial completion notification via WebSocket`);
     }
     
     if (tutorialProgress && tutorialProgress.currentStep !== currentStep) {
       // If we received a progress update via WebSocket
-      console.log(`[Tutorial] Received ${tabName} tutorial progress update via WebSocket:`, tutorialProgress);
+      console.log(`[TutorialManager] Received ${tabName} tutorial progress update via WebSocket:`, tutorialProgress);
     }
   }, [tutorialProgress, tutorialCompleted, currentStep, tabName]);
 
-  // Don't render if tutorial is not enabled or already completed
-  if (!tutorialEnabled || isCompleted) {
+  console.log(`[TutorialManager] Render state:`, {
+    tutorialEnabled,
+    currentStep,
+    totalSteps,
+    isCompleted,
+    isLoading,
+    steps: steps.length
+  });
+  
+  // Don't render if tutorial is not enabled, still loading, or already completed
+  if (isLoading || !tutorialEnabled || isCompleted) {
+    console.log(`[TutorialManager] Not rendering tutorial: ${isLoading ? 'Loading' : !tutorialEnabled ? 'Not enabled' : 'Completed'}`);
+    return null;
+  }
+  
+  // Don't render if current step is invalid
+  if (currentStep < 0 || currentStep >= steps.length) {
+    console.error(`[TutorialManager] Invalid current step: ${currentStep}, total steps: ${steps.length}`);
     return null;
   }
 

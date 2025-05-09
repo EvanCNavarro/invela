@@ -24,17 +24,28 @@ export function useTabTutorials(tabName: string) {
   
   const queryClient = useQueryClient();
   
+  console.log(`[TabTutorials] Initializing for tab: ${tabName}`);
+  
   // Fetch tutorial status from the server
   const { data, isLoading, error } = useQuery<TutorialStatus>({
     queryKey: ['/api/user-tab-tutorials/status', tabName],
     queryFn: async () => {
-      return apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
+      console.log(`[TabTutorials] Fetching tutorial status for: ${tabName}`);
+      try {
+        const result = await apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
+        console.log(`[TabTutorials] Received tutorial status for ${tabName}:`, result);
+        return result;
+      } catch (err) {
+        console.error(`[TabTutorials] Error fetching tutorial status for ${tabName}:`, err);
+        throw err;
+      }
     }
   });
   
   // Update tutorial progress mutation
   const updateTutorialMutation = useMutation({
     mutationFn: async (payload: { step: number, completed: boolean }) => {
+      console.log(`[TabTutorials] Updating tutorial for ${tabName}:`, payload);
       return apiRequest('/api/user-tab-tutorials', {
         method: 'POST',
         body: JSON.stringify({
@@ -48,15 +59,20 @@ export function useTabTutorials(tabName: string) {
         }
       });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log(`[TabTutorials] Successfully updated tutorial for ${tabName}:`, result);
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
+    },
+    onError: (error) => {
+      console.error(`[TabTutorials] Error updating tutorial for ${tabName}:`, error);
     }
   });
   
   // Mark tutorial as seen mutation (for "Skip" functionality)
   const markSeenMutation = useMutation({
     mutationFn: async () => {
+      console.log(`[TabTutorials] Marking tutorial as seen for ${tabName}`);
       return apiRequest('/api/user-tab-tutorials', {
         method: 'POST',
         body: JSON.stringify({ 
@@ -68,38 +84,48 @@ export function useTabTutorials(tabName: string) {
         }
       });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log(`[TabTutorials] Successfully marked tutorial as seen for ${tabName}:`, result);
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
+    },
+    onError: (error) => {
+      console.error(`[TabTutorials] Error marking tutorial as seen for ${tabName}:`, error);
     }
   });
   
   // Update local state when data changes
   useEffect(() => {
     if (data) {
+      console.log(`[TabTutorials] Updating local state for ${tabName}:`, data);
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
       setTutorialEnabled(true);
+    } else if (error) {
+      console.error(`[TabTutorials] Error in tutorial data for ${tabName}:`, error);
     }
-  }, [data]);
+  }, [data, error, tabName]);
   
   // Handle advancing to next step
   const handleNext = useCallback(() => {
     const nextStep = currentStep + 1;
+    console.log(`[TabTutorials] Advancing to next step for ${tabName}: ${nextStep}`);
     setCurrentStep(nextStep);
     updateTutorialMutation.mutate({ step: nextStep, completed: false });
-  }, [currentStep, updateTutorialMutation]);
+  }, [currentStep, updateTutorialMutation, tabName]);
   
   // Handle completing the tutorial
   const handleComplete = useCallback(() => {
+    console.log(`[TabTutorials] Completing tutorial for ${tabName}`);
     setIsCompleted(true);
     updateTutorialMutation.mutate({ step: currentStep, completed: true });
-  }, [currentStep, updateTutorialMutation]);
+  }, [currentStep, updateTutorialMutation, tabName]);
   
   // Mark tutorial as seen (Skip)
   const markTutorialSeen = useCallback(() => {
+    console.log(`[TabTutorials] Skipping tutorial for ${tabName}`);
     markSeenMutation.mutate();
-  }, [markSeenMutation]);
+  }, [markSeenMutation, tabName]);
   
   // Calculate total steps - this would normally come from the content config
   const getTotalSteps = (tabNameInput: string) => {
@@ -114,6 +140,16 @@ export function useTabTutorials(tabName: string) {
   };
   
   const totalSteps = getTotalSteps(tabName);
+  
+  // Log the current state on every render
+  console.log(`[TabTutorials] Current state for ${tabName}:`, {
+    tutorialEnabled,
+    isLoading,
+    error,
+    currentStep,
+    totalSteps,
+    isCompleted
+  });
   
   return {
     tutorialEnabled,
