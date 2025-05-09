@@ -27,8 +27,8 @@ export interface ContentTutorialModalProps {
 /**
  * Content Tutorial Modal Component
  * 
- * A modal that overlays the main content area while keeping the navbar and sidebar accessible.
- * This implementation creates a fixed-position modal with a separate content overlay.
+ * A modal that displays on top of the content without modifying the page structure.
+ * This implementation preserves the page content while adding a semi-transparent overlay.
  */
 export function ContentTutorialModal({
   title,
@@ -64,86 +64,28 @@ export function ContentTutorialModal({
     setOpen(true);
   }, [currentStep]);
   
-  // Add body overflow control
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-  
   if (!open) return null;
   
-  // Create minimal overlay container directly in body
+  // Create portal directly to body
   return createPortal(
     <>
-      {/* Add CSS styles for z-index management and overlay */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        /* Force high z-index for navigation elements to keep them visible */
-        nav.w-16, aside, #sidebar, .sidebar, [class*="sidebar"] {
-          position: relative !important;
-          z-index: 9999 !important;
-        }
-        
-        /* Force high z-index for header elements to keep them visible */
-        header, nav:not(.w-16), .navbar, .header, [class*="navbar"], [class*="header"] {
-          position: relative !important;
-          z-index: 9999 !important;
-        }
-        
-        /* Ensure main content area is positioned correctly */
-        main, .flex-1.min-w-0, .page-content, .content, [class*="content"] {
-          position: relative !important;
-        }
-        
-        /* Set body overflow to prevent scrolling while tutorial is active */
-        body {
-          overflow: hidden !important;
-        }
-      `}} />
-      
-      {/* Semi-transparent overlay for main content only */}
+      {/* Fixed-position overlay that covers the entire viewport except sidebar */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-[3px] z-50"
+        className="fixed inset-0 z-50"
+        onClick={handleClose} // Close when clicking overlay background
         style={{
-          // Exclude sidebar width if it exists
-          left: (() => {
-            const sidebarEl = document.querySelector('nav.w-16') || 
-                            document.querySelector('aside') || 
-                            document.querySelector('.sidebar') ||
-                            document.getElementById('sidebar');
-            return sidebarEl ? sidebarEl.getBoundingClientRect().width + 'px' : '0';
-          })(),
-          // Exclude header height if it exists
-          top: (() => {
-            const headerEl = document.querySelector('header') || 
-                           document.querySelector('.navbar') ||
-                           document.querySelector('.header') ||
-                           document.querySelector('nav:not(.w-16)');
-            return headerEl ? headerEl.getBoundingClientRect().height + 'px' : '0';
-          })()
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(3px)'
         }}
-        onClick={handleClose} // Close when clicking on the overlay
       />
       
-      {/* Modal dialog - positioned in the center of the content area */}
+      {/* Modal dialog - centered in the viewport */}
       <div 
-        className="fixed z-[9000] w-[600px] max-w-[90vw] rounded-lg border bg-background shadow-lg"
+        className="fixed z-[60] w-[600px] max-w-[90vw] rounded-lg border bg-background shadow-lg"
         style={{
-          position: 'fixed',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
-          // Adjust left position to account for sidebar if present
-          marginLeft: (() => {
-            const sidebarEl = document.querySelector('nav.w-16') || 
-                            document.querySelector('aside') || 
-                            document.querySelector('.sidebar') ||
-                            document.getElementById('sidebar');
-            return sidebarEl ? (sidebarEl.getBoundingClientRect().width / 2) + 'px' : '0';
-          })()
+          transform: 'translate(-50%, -50%)'
         }}
       >
         {/* Header */}
