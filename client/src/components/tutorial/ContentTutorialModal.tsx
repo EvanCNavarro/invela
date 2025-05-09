@@ -27,9 +27,8 @@ export interface ContentTutorialModalProps {
 /**
  * Content Tutorial Modal Component
  * 
- * A modal that overlays the content area while keeping the navbar and sidebar accessible.
- * This implementation uses React's createPortal to render the modal at the document body level,
- * ensuring it works reliably across different page layouts.
+ * A modal that overlays the main content area while keeping the navbar and sidebar accessible.
+ * This implementation creates a fixed-position modal with a separate content overlay.
  */
 export function ContentTutorialModal({
   title,
@@ -43,7 +42,6 @@ export function ContentTutorialModal({
   onClose
 }: ContentTutorialModalProps) {
   const [open, setOpen] = useState(true);
-  const [contentRect, setContentRect] = useState<DOMRect | null>(null);
   
   // Handle dialog close
   const handleClose = () => {
@@ -61,115 +59,91 @@ export function ContentTutorialModal({
     }
   };
   
-  // Find the main content area and calculate its position
-  useEffect(() => {
-    const updateContentRect = () => {
-      // Try to find the main content container by looking for common elements
-      // Here we look for the content area (excluding sidebar and header)
-      const sidebarEl = document.querySelector('nav.w-16') || 
-                         document.querySelector('aside') || 
-                         document.getElementById('sidebar');
-                         
-      const headerEl = document.querySelector('header') || 
-                       document.querySelector('nav:not(.w-16)');
-                       
-      // Find the main content container
-      // Dashboard layout is typically a flex container with min-width-0
-      const contentEl = document.querySelector('.flex-1.min-w-0') || 
-                        document.querySelector('main') || 
-                        document.querySelector('.page-content') ||
-                        document.getElementById('content') ||
-                        document.body;
-                        
-      if (contentEl) {
-        setContentRect(contentEl.getBoundingClientRect());
-      }
-    };
-    
-    // Initial calculation
-    updateContentRect();
-    
-    // Recalculate on resize
-    window.addEventListener('resize', updateContentRect);
-    return () => {
-      window.removeEventListener('resize', updateContentRect);
-    };
-  }, []);
-  
   // Reset open state when a new tutorial is shown
   useEffect(() => {
     setOpen(true);
   }, [currentStep]);
   
+  // Add body overflow control
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+  
   if (!open) return null;
   
-  // Calculate main content area including offsets for sidebar and header
-  const sidebarEl = document.querySelector('nav.w-16') || 
-                   document.querySelector('aside') || 
-                   document.getElementById('sidebar');
-                   
-  const headerEl = document.querySelector('header') || 
-                  document.querySelector('nav:not(.w-16)');
-                  
-  // Get sidebar width and header height
-  const sidebarWidth = sidebarEl ? sidebarEl.getBoundingClientRect().width : 0;
-  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
-  
-  // Portal directly to body for most reliable positioning
+  // Create minimal overlay container directly in body
   return createPortal(
-    <div className="tutorial-modal-container">
-      {/* Global styles for overlay */}
-      <style jsx global>{`
+    <>
+      {/* Add CSS styles for z-index management and overlay */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* Force high z-index for navigation elements to keep them visible */
+        nav.w-16, aside, #sidebar, .sidebar, [class*="sidebar"] {
+          position: relative !important;
+          z-index: 9999 !important;
+        }
+        
+        /* Force high z-index for header elements to keep them visible */
+        header, nav:not(.w-16), .navbar, .header, [class*="navbar"], [class*="header"] {
+          position: relative !important;
+          z-index: 9999 !important;
+        }
+        
+        /* Ensure main content area is positioned correctly */
+        main, .flex-1.min-w-0, .page-content, .content, [class*="content"] {
+          position: relative !important;
+        }
+        
+        /* Set body overflow to prevent scrolling while tutorial is active */
         body {
-          overflow: hidden;
+          overflow: hidden !important;
         }
-        .tutorial-overlay::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          backdrop-filter: blur(4px);
-          z-index: 48;
-        }
-        /* Add transparent areas for sidebar and header */
-        .tutorial-overlay::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: ${sidebarWidth}px;
-          height: 100vh;
-          background: transparent;
-          z-index: 49;
-        }
-        .tutorial-overlay-header {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: ${headerHeight}px;
-          background: transparent;
-          z-index: 49;
-        }
-      `}</style>
+      `}} />
       
-      {/* Full-page overlay with transparent areas for navbar and sidebar */}
-      <div className="tutorial-overlay fixed inset-0 z-40">
-        {/* Transparent area for header */}
-        <div className="tutorial-overlay-header"></div>
-      </div>
-      
-      {/* Modal dialog - centered in the main content area */}
+      {/* Semi-transparent overlay for main content only */}
       <div 
-        className="fixed z-50 w-[600px] max-w-[90%] rounded-lg border bg-background shadow-lg"
+        className="fixed inset-0 bg-black/60 backdrop-blur-[3px] z-50"
+        style={{
+          // Exclude sidebar width if it exists
+          left: (() => {
+            const sidebarEl = document.querySelector('nav.w-16') || 
+                            document.querySelector('aside') || 
+                            document.querySelector('.sidebar') ||
+                            document.getElementById('sidebar');
+            return sidebarEl ? sidebarEl.getBoundingClientRect().width + 'px' : '0';
+          })(),
+          // Exclude header height if it exists
+          top: (() => {
+            const headerEl = document.querySelector('header') || 
+                           document.querySelector('.navbar') ||
+                           document.querySelector('.header') ||
+                           document.querySelector('nav:not(.w-16)');
+            return headerEl ? headerEl.getBoundingClientRect().height + 'px' : '0';
+          })()
+        }}
+        onClick={handleClose} // Close when clicking on the overlay
+      />
+      
+      {/* Modal dialog - positioned in the center of the content area */}
+      <div 
+        className="fixed z-[9000] w-[600px] max-w-[90vw] rounded-lg border bg-background shadow-lg"
         style={{
           position: 'fixed',
           top: '50%',
-          left: `${sidebarWidth + ((window.innerWidth - sidebarWidth) / 2)}px`,
+          left: '50%',
           transform: 'translate(-50%, -50%)',
+          // Adjust left position to account for sidebar if present
+          marginLeft: (() => {
+            const sidebarEl = document.querySelector('nav.w-16') || 
+                            document.querySelector('aside') || 
+                            document.querySelector('.sidebar') ||
+                            document.getElementById('sidebar');
+            return sidebarEl ? (sidebarEl.getBoundingClientRect().width / 2) + 'px' : '0';
+          })()
         }}
       >
         {/* Header */}
@@ -212,7 +186,7 @@ export function ContentTutorialModal({
           </div>
         </div>
       </div>
-    </div>,
+    </>,
     document.body
   );
 }
