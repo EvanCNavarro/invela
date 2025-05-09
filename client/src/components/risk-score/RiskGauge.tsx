@@ -32,41 +32,26 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Converts polar coordinates to cartesian coordinates
+ * Creates an SVG arc path for a half circle from 0 to percentage
  */
-const polarToCartesian = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angleInDegrees: number
-): { x: number; y: number } => {
-  const angleInRadians = (angleInDegrees * Math.PI) / 180;
+const createArcPath = (centerX: number, centerY: number, radius: number, percentage: number): string => {
+  // Start at the leftmost point of the circle
+  const startX = centerX - radius;
+  const startY = centerY;
   
-  return {
-    x: centerX + radius * Math.cos(angleInRadians),
-    y: centerY + radius * Math.sin(angleInRadians)
-  };
-};
-
-/**
- * Creates an SVG arc path description
- */
-const describeArc = (
-  x: number,
-  y: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number
-): string => {
-  const start = polarToCartesian(x, y, radius, endAngle);
-  const end = polarToCartesian(x, y, radius, startAngle);
+  // For a half-circle going clockwise:
+  // 0% is at 180 degrees (left)
+  // 100% is at 0 degrees (right)
+  // We need to calculate the ending point based on the percentage
+  const endAngle = Math.PI * (1 - percentage / 100);
+  const endX = centerX + radius * Math.cos(endAngle);
+  const endY = centerY - radius * Math.sin(endAngle);
   
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+  // For percentages > 50%, the arc is more than half of the half-circle,
+  // so we need to set the large-arc-flag to 1
+  const largeArcFlag = percentage > 50 ? 1 : 0;
   
-  return [
-    'M', start.x, start.y,
-    'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
-  ].join(' ');
+  return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
 };
 
 /**
@@ -88,24 +73,25 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   
   // Calculate dimensions
   const width = size;
-  const height = size / 2;
+  const height = size / 2 + 30; // Add some space below for labels
   const radius = size * 0.4; // Gauge arc radius
   const centerX = width / 2;
-  const centerY = height;
+  const centerY = height - 30; // Center point at the bottom of the semicircle
   const strokeWidth = size * 0.12; // Thickness of the gauge track
   
-  // Convert percentage to angle (180-0 degrees, with 180 being the left side)
-  // For a half-circle, 0% = 180° (left), 50% = 90° (top), 100% = 0° (right)
-  const startAngle = 180;
-  const endAngle = 180 - (percentage / 100) * 180;
+  // Create the background arc (full half-circle)
+  const backgroundArc = createArcPath(centerX, centerY, radius, 100);
+  
+  // Create the colored progress arc
+  const progressArc = createArcPath(centerX, centerY, radius, percentage);
   
   return (
-    <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: width, height: height * 1.4, margin: '0 auto' }}>
       {/* SVG containing the gauge */}
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         {/* Background arc (light gray) - full half-circle */}
         <path
-          d={`M ${centerX - radius}, ${centerY} A ${radius}, ${radius}, 0, 1, 1, ${centerX + radius}, ${centerY}`}
+          d={backgroundArc}
           fill="none"
           stroke="#e5e7eb" // Light gray background
           strokeWidth={strokeWidth}
@@ -115,17 +101,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         {/* Colored arc that grows as percentage increases */}
         {percentage > 0 && (
           <path
-            d={
-              // Create a path starting from the leftmost point
-              `M ${centerX - radius}, ${centerY} ` +
-              // Draw an arc with the proper sweeping direction
-              // For values > 50%, we need to use the large-arc-flag (1)
-              `A ${radius}, ${radius}, 0, ${percentage > 50 ? 1 : 0}, 1, ` +
-              // Calculate the ending x coordinate using cosine
-              `${centerX + radius * Math.cos(Math.PI * (1 - percentage / 100))}, ` +
-              // Calculate the ending y coordinate using sine
-              `${centerY - radius * Math.sin(Math.PI * (1 - percentage / 100))}`
-            }
+            d={progressArc}
             fill="none"
             stroke={color}
             strokeWidth={strokeWidth}
@@ -172,7 +148,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       {/* Risk Acceptance Level text - below the gauge */}
       <div style={{
         position: 'absolute',
-        top: height + 15,
+        top: height - 5,
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: size / 18,
