@@ -95,17 +95,37 @@ export function useTabTutorials(tabName: string) {
     }
   });
   
+  // Calculate total steps - this would normally come from the content config
+  const getTotalSteps = (tabNameInput: string) => {
+    switch (tabNameInput) {
+      case 'risk-score':
+        return 5;
+      case 'claims-risk':
+        return 4;
+      default:
+        return 5;
+    }
+  };
+  
+  const totalSteps = getTotalSteps(tabName);
+  
   // Update local state when data changes
   useEffect(() => {
     if (data) {
       console.log(`[TabTutorials] Updating local state for ${tabName}:`, data);
+      
+      // Log the real step information from the database
+      console.log(`[TabTutorials] Real step information: currentStep=${data.currentStep}, totalSteps=${totalSteps}`);
+      
+      // Ensure we're using the exact value from the server
+      // This will synchronize UI display with database values
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
       setTutorialEnabled(true);
     } else if (error) {
       console.error(`[TabTutorials] Error in tutorial data for ${tabName}:`, error);
     }
-  }, [data, error, tabName]);
+  }, [data, error, tabName, totalSteps]);
   
   // Handle advancing to next step
   const handleNext = useCallback(() => {
@@ -137,20 +157,6 @@ export function useTabTutorials(tabName: string) {
     console.log(`[TabTutorials] Skipping tutorial for ${tabName}`);
     markSeenMutation.mutate();
   }, [markSeenMutation, tabName]);
-  
-  // Calculate total steps - this would normally come from the content config
-  const getTotalSteps = (tabNameInput: string) => {
-    switch (tabNameInput) {
-      case 'risk-score':
-        return 5;
-      case 'claims-risk':
-        return 4;
-      default:
-        return 5;
-    }
-  };
-  
-  const totalSteps = getTotalSteps(tabName);
   
   // Log the current state on every render
   console.log(`[TabTutorials] Current state for ${tabName}:`, {

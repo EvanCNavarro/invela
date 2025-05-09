@@ -255,10 +255,9 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     return null;
   }
 
-  // Use direct DB entry step if we're forcing the tutorial
-  const stepToUse = shouldForceTutorial ? 
-    (directDbEntry?.currentStep || 0) : 
-    currentStep;
+  // Always use the actual current step from the database/state
+  // Don't rely on forced steps from dbTutorialEntries as they might be outdated
+  const stepToUse = currentStep;
   
   console.log(`[TutorialManager] Rendering tutorial step ${stepToUse + 1} of ${steps.length}`);
     
