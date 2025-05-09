@@ -137,7 +137,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
           const initResponse = await apiRequest('/api/user-tab-tutorials', {
             method: 'POST', // Explicitly specify POST method
             body: JSON.stringify({
-              tabName,
+              tabName: tabName, // Explicitly use the exact property name expected by the server
               currentStep: 0,
               completed: false,
               totalSteps: steps.length
