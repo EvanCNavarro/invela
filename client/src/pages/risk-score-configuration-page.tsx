@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration, RiskPriorities } from '@/lib/risk-score-configuration-types';
 import { defaultRiskDimensions, defaultRiskThresholds, sampleCompanyComparisons, calculateRiskScore, determineRiskLevel } from '@/lib/risk-score-configuration-data';
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
+import { RiskGauge } from '@/components/risk-score/RiskGauge';
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -917,45 +918,34 @@ export default function RiskScoreConfigurationPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
-                  {/* Gauge visualization */}
-                  <div className="relative w-36 h-36 my-4">
-                    <div className="w-full h-full rounded-full border-8 border-muted flex items-center justify-center">
-                      {/* Semi-circle gauge background */}
-                      <div 
-                        className="absolute top-0 bottom-0 left-0 right-0 rounded-full border-8" 
-                        style={{ 
-                          borderColor: getRiskLevelColor(riskLevel),
-                          clip: `rect(0, ${36 * 2}px, ${36 * 2}px, ${36}px)`,
-                          opacity: 0.2,
-                          borderRadius: '50%',
-                        }}
-                      ></div>
-                      
-                      {/* Gauge fill based on score */}
-                      <div 
-                        className="absolute top-0 bottom-0 left-0 right-0 rounded-full border-8 transition-all duration-500 ease-in-out" 
-                        style={{ 
-                          borderColor: getRiskLevelColor(riskLevel),
-                          clip: `rect(0, ${36 * 2}px, ${36 * 2}px, ${36}px)`,
-                          clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.sin(Math.PI * score / 100)}% ${50 - 50 * Math.cos(Math.PI * score / 100)}%)`,
-                          borderRadius: '50%',
-                        }}
-                      ></div>
-                      
-                      {/* Score display */}
-                      <div className="text-4xl font-bold">{score}</div>
+                  {/* Import the RiskGauge component at the top of the file */}
+                  {/* Enhanced Gauge Visualization with Recharts */}
+                  <div className="flex flex-col items-center">
+                    <RiskGauge 
+                      score={score} 
+                      riskLevel={riskLevel} 
+                      size={150}
+                      logger={riskScoreLogger.log}
+                    />
+                    
+                    {/* Risk Level Label - simplified as requested */}
+                    <div className="text-center mt-1 text-xs text-muted-foreground flex justify-between w-full px-2">
+                      <span>Low</span>
+                      <span>Medium</span>
+                      <span>High</span>
                     </div>
-                    <div className="text-center mt-2 uppercase font-semibold" style={{ color: getRiskLevelColor(riskLevel) }}>
-                      {riskLevel} Risk
+                    
+                    {/* Risk Acceptance Level Label - moved above the score as requested */}
+                    <h4 className="text-sm font-medium mt-2">Risk Acceptance Level</h4>
+                    
+                    {/* Score display - large number only */}
+                    <div className="text-4xl font-bold" style={{ color: getRiskLevelColor(riskLevel) }}>
+                      {score}
                     </div>
                   </div>
                   
                   {/* Risk Score Slider - allows manual adjustment of risk acceptance level */}
-                  <div className="w-full mt-6 px-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-sm font-medium">Risk Acceptance Level</h4>
-                      <span className="text-sm font-bold" style={{ color: getRiskLevelColor(riskLevel) }}>{score}</span>
-                    </div>
+                  <div className="w-full mt-4 px-2">
                     <Slider
                       defaultValue={[score]}
                       max={100}
@@ -970,11 +960,6 @@ export default function RiskScoreConfigurationPage() {
                         riskScoreLogger.log('slider', `Risk score manually adjusted to ${newScore} (${determineRiskLevel(newScore)} risk)`);
                       }}
                     />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Low Risk</span>
-                      <span>Medium Risk</span>
-                      <span>High Risk</span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
