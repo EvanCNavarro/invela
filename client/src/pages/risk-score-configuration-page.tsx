@@ -933,6 +933,12 @@ export default function RiskScoreConfigurationPage() {
                   
                   {/* Risk Score Slider - allows manual adjustment of risk acceptance level */}
                   <div className="w-full mt-4 px-2">
+                    {/* Risk level labels above slider */}
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-medium text-left">Low</span>
+                      <span className="text-sm font-medium text-right">High</span>
+                    </div>
+                    
                     <Slider
                       defaultValue={[score]}
                       max={100}
