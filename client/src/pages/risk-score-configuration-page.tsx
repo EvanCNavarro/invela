@@ -82,10 +82,19 @@ function WeightDistributionItemSkeleton() {
 function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionRowProps) {
   const ref = useRef<HTMLDivElement>(null);
   
+  // Define a type for the drag item
+  interface DragItem {
+    index: number;
+    type: string;
+  }
+  
   // Setup drag functionality
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.DIMENSION_ROW,
-    item: () => ({ index }),
+    item: (): DragItem => ({ 
+      index,
+      type: ItemTypes.DIMENSION_ROW
+    }),
     collect: (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -94,7 +103,7 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
   // Setup drop functionality
   const [, drop] = useDrop({
     accept: ItemTypes.DIMENSION_ROW,
-    hover(item: { index: number }, monitor: DropTargetMonitor) {
+    hover(item: DragItem, monitor: DropTargetMonitor) {
       if (!ref.current) {
         return;
       }
@@ -277,19 +286,34 @@ export default function RiskScoreConfigurationPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Interface for the configuration data
+  interface ConfigurationData {
+    dimensions: RiskDimension[];
+    thresholds?: { [key: string]: number };
+    score?: number;
+    riskLevel?: 'none' | 'low' | 'medium' | 'high' | 'critical';
+  }
+  
   // Query to fetch the risk score configuration
-  const { data: configData, isLoading: isLoadingConfig } = useQuery({
+  const { data: configData, isLoading: isLoadingConfig } = useQuery<ConfigurationData>({
     queryKey: ['/api/risk-score/configuration'],
-    onSuccess: (data) => {
+    staleTime: 0, // Always consider data stale to force refetch
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Always refetch when component mounts
+    gcTime: 0, // Don't cache the data at all
+    onSuccess: (data: ConfigurationData) => {
       if (data) {
         setDimensions(data.dimensions || defaultRiskDimensions);
         setThresholds(data.thresholds || defaultRiskThresholds);
         setScore(data.score || 50);
         setRiskLevel(data.riskLevel || 'medium');
+        // Track successful configuration load
+        riskScoreLogger.log('persist', 'Successfully loaded risk configuration data', data);
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error fetching risk score configuration:', error);
+      riskScoreLogger.error('fetch', 'Failed to load configuration', error);
       toast({
         title: 'Failed to load configuration',
         description: 'Using default configuration instead.',
@@ -301,20 +325,27 @@ export default function RiskScoreConfigurationPage() {
   // Reference to track original dimensions loaded from the server
   const originalDimensionsRef = useRef<RiskDimension[] | null>(null);
   
+  // Define interface for the priorities data to ensure type safety
+  interface PrioritiesData {
+    dimensions: RiskDimension[];
+    riskAcceptanceLevel?: number;
+    lastUpdated?: string;
+  }
+  
   // Query to fetch the risk priorities (for dimension ranking)
-  const { data: prioritiesData, isLoading: isLoadingPriorities, refetch: refetchPriorities } = useQuery({
+  const { data: prioritiesData, isLoading: isLoadingPriorities, refetch: refetchPriorities } = useQuery<PrioritiesData>({
     queryKey: ['/api/risk-score/priorities'],
     staleTime: 0, // Always consider data stale to force refetch
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Always refetch when component mounts
-    cacheTime: 0, // Don't cache the data at all
-    onSuccess: (data) => {
+    gcTime: 0, // Don't cache the data at all (replaced 'cacheTime' which is deprecated)
+    onSuccess: (data: PrioritiesData) => {
       // Enhanced logging to track data flow
       console.log('DEBUG-DIRECT: Successfully fetched priorities data', data);
       riskScoreLogger.log('fetch', 'Priorities data received from server', data);
       
       // Only process data if it exists and has dimensions
-      if (data && data.dimensions) {
+      if (data && Array.isArray(data.dimensions)) {
         riskScoreLogger.log('fetch', `Found ${data.dimensions.length} dimensions in server response`);
         
         // Create a clean copy of the dimensions to avoid reference issues
@@ -344,7 +375,7 @@ export default function RiskScoreConfigurationPage() {
         originalDimensionsRef.current = JSON.parse(JSON.stringify(defaultRiskDimensions));
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       riskScoreLogger.logFetchError(error);
       // Don't show error toast as we'll fall back to config data or defaults
       riskScoreLogger.log('fetch', 'Using default dimensions due to fetch error');
