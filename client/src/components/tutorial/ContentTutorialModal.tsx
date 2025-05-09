@@ -29,6 +29,9 @@ export interface ContentTutorialModalProps {
  * 
  * A modal that overlays only the main content area while keeping
  * navbar and sidebar visible and accessible.
+ * 
+ * Handles responsive sidebar states (expanded/collapsed) by using a
+ * resize observer to track layout changes.
  */
 export function ContentTutorialModal({
   title,
@@ -49,6 +52,11 @@ export function ContentTutorialModal({
     bottom: '0'
   });
   
+  // Keep references to sidebar and navbar elements
+  const sidebarRef = useRef<Element | null>(null);
+  const navbarRef = useRef<Element | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  
   // Handle dialog close
   const handleClose = () => {
     setOpen(false);
@@ -65,28 +73,102 @@ export function ContentTutorialModal({
     }
   };
   
-  // Find the content area to overlay
-  useEffect(() => {
-    // Find navbar and sidebar
-    const sidebar = document.querySelector('nav.w-16') || 
-                    document.querySelector('aside') || 
-                    document.querySelector('.sidebar') ||
-                    document.getElementById('sidebar');
+  // Calculate overlay position based on current sidebar and navbar dimensions
+  const updateOverlayPosition = () => {
+    // Get current dimensions
+    const sidebarWidth = sidebarRef.current ? sidebarRef.current.getBoundingClientRect().width : 0;
+    const navbarHeight = navbarRef.current ? navbarRef.current.getBoundingClientRect().height : 0;
     
-    const navbar = document.querySelector('header') || 
-                   document.querySelector('.navbar') ||
-                   document.querySelector('.header') ||
-                   document.querySelector('nav:not(.w-16)');
-    
-    // Calculate overlay position
-    const styles = {
-      top: navbar ? `${navbar.getBoundingClientRect().height}px` : '0',
-      left: sidebar ? `${sidebar.getBoundingClientRect().width}px` : '0',
+    // Update styles
+    setOverlayStyles({
+      top: `${navbarHeight}px`,
+      left: `${sidebarWidth}px`,
       right: '0',
       bottom: '0'
-    };
+    });
+  };
+  
+  // Find elements and set up observers
+  useEffect(() => {
+    // Find navbar and sidebar elements
+    sidebarRef.current = document.querySelector('nav.w-16') || 
+                         document.querySelector('aside') || 
+                         document.querySelector('.sidebar') ||
+                         document.getElementById('sidebar');
     
-    setOverlayStyles(styles);
+    navbarRef.current = document.querySelector('header') || 
+                        document.querySelector('.navbar') ||
+                        document.querySelector('.header') ||
+                        document.querySelector('nav:not(.w-16)');
+    
+    // Do initial position calculation
+    updateOverlayPosition();
+    
+    // Set up resize observer for layout changes
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      // Update positions when any observed element changes size
+      updateOverlayPosition();
+    });
+    
+    // Observe both sidebar and navbar if they exist
+    if (sidebarRef.current) {
+      resizeObserverRef.current.observe(sidebarRef.current);
+    }
+    
+    if (navbarRef.current) {
+      resizeObserverRef.current.observe(navbarRef.current);
+    }
+    
+    // Also observe window resize events
+    window.addEventListener('resize', updateOverlayPosition);
+    
+    // Clean up
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      window.removeEventListener('resize', updateOverlayPosition);
+    };
+  }, []);
+  
+  // Watch for DOM mutations (sidebar expanding/collapsing)
+  useEffect(() => {
+    // Create mutation observer to watch for class changes and DOM structure changes
+    const mutationObserver = new MutationObserver((mutations) => {
+      let needsUpdate = false;
+      
+      for (const mutation of mutations) {
+        // If attributes changed (like classes for expanded/collapsed states)
+        if (mutation.type === 'attributes' || 
+            mutation.type === 'childList' || 
+            mutation.attributeName === 'class') {
+          needsUpdate = true;
+          break;
+        }
+      }
+      
+      if (needsUpdate) {
+        // Handle new sidebar element if it changed
+        sidebarRef.current = document.querySelector('nav.w-16') || 
+                             document.querySelector('aside') || 
+                             document.querySelector('.sidebar') ||
+                             document.getElementById('sidebar');
+        
+        updateOverlayPosition();
+      }
+    });
+    
+    // Observe document body for any significant DOM changes
+    mutationObserver.observe(document.body, { 
+      attributes: true, 
+      childList: true, 
+      subtree: true,
+      attributeFilter: ['class', 'style']
+    });
+    
+    return () => {
+      mutationObserver.disconnect();
+    };
   }, []);
   
   // Reset open state when a new tutorial is shown
@@ -112,7 +194,7 @@ export function ContentTutorialModal({
       
       {/* Modal dialog - centered in the content area */}
       <div 
-        className="fixed z-[60] w-[600px] max-w-[calc(100vw-var(--sidebar-width,5rem))] rounded-lg border bg-background shadow-lg"
+        className="fixed z-[60] w-[600px] max-w-[80vw] rounded-lg border bg-background shadow-lg"
         style={{
           top: `calc(${overlayStyles.top} + ((100vh - ${overlayStyles.top}) / 2))`,
           left: `calc(${overlayStyles.left} + ((100vw - ${overlayStyles.left}) / 2))`,
