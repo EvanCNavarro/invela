@@ -38,7 +38,7 @@ const getRiskLevelColor = (level: string): string => {
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
   riskLevel, 
-  size = 280 // Increased default size for bigger gauge
+  size = 400 // Significantly larger default size for the gauge
 }) => {
   // Reference to the div that will contain the Plotly chart
   const chartRef = useRef<HTMLDivElement>(null);
@@ -78,8 +78,8 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
             // Only show values at 0 and 100
             ticktext: ['0', '', '', '', '100']
           },
-          // Thicker bar for more prominent display
-          bar: { color, thickness: 0.9 },
+          // Even thicker bar for more prominent display
+          bar: { color, thickness: 1.2 },
           bgcolor: '#e5e7eb',
           borderwidth: 0,
           bordercolor: 'transparent',
@@ -89,7 +89,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         number: {
           font: {
             family: 'Arial, sans-serif',
-            size: size * 0.16, // Smaller size relative to gauge
+            size: size * 0.20, // Larger relative to gauge
             color,
             weight: 'bold' // Make the number bold
           },
@@ -124,27 +124,27 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         // Add annotations for Low and High labels
         annotations: [
           {
-            x: 0.1,
-            y: -0.1,
+            x: 0.05,  // Move further left for better alignment
+            y: -0.15, // Slightly lower position
             xref: 'paper',
             yref: 'paper',
             text: 'Low',
             showarrow: false,
             font: {
-              size: 14,
+              size: 16, // Larger font size
               color: '#666',
               weight: 500
             }
           },
           {
-            x: 0.9,
-            y: -0.1,
+            x: 0.95, // Move further right for better alignment
+            y: -0.15, // Slightly lower position
             xref: 'paper',
             yref: 'paper',
             text: 'High',
             showarrow: false,
             font: {
-              size: 14,
+              size: 16, // Larger font size
               color: '#666',
               weight: 500
             }
