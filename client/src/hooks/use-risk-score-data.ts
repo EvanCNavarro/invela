@@ -117,10 +117,9 @@ export function useRiskScoreData() {
         if (prioritiesData.riskAcceptanceLevel !== undefined) {
           setScore(prioritiesData.riskAcceptanceLevel);
           setRiskLevel(determineRiskLevel(prioritiesData.riskAcceptanceLevel));
-          // When loading initially, don't reset userSetScore if user has already interacted with the slider
-          if (!initialDataLoaded.current) {
-            setUserSetScore(false);
-          }
+          // Mark as user-set since a risk acceptance level from the server means it was previously set by a user
+          setUserSetScore(true);
+          riskScoreLogger.log('data:hook', `Loaded user-set risk acceptance level: ${prioritiesData.riskAcceptanceLevel}`);
         }
       } 
       // If priorities data doesn't exist but config data does, fall back to config data
@@ -137,6 +136,9 @@ export function useRiskScoreData() {
         if (configData.score !== undefined) {
           setScore(configData.score);
           setRiskLevel(configData.riskLevel || determineRiskLevel(configData.score));
+          // Mark as user-set since a score from the server means it was previously saved
+          setUserSetScore(true);
+          riskScoreLogger.log('data:hook', `Loaded user-set risk score from config: ${configData.score}`);
         }
         
         if (configData.thresholds) {
@@ -250,6 +252,8 @@ export function useRiskScoreData() {
       if (data && data.newScore !== undefined) {
         setScore(data.newScore);
         setRiskLevel(determineRiskLevel(data.newScore));
+        // Mark as user-set since a direct risk score update implies user intent
+        setUserSetScore(true);
         
         // Also update the service's cached data
         riskScoreDataService.handleWebSocketScoreUpdate(data);
@@ -259,6 +263,8 @@ export function useRiskScoreData() {
           description: `Risk score has been updated to ${data.newScore}`,
           variant: 'default',
         });
+        
+        riskScoreLogger.log('websocket', `Received direct risk score update: ${data.newScore} (marked as user-set)`);
       }
     };
     
@@ -283,8 +289,9 @@ export function useRiskScoreData() {
           if (data.priorities.riskAcceptanceLevel !== previousScore) {
             setScore(data.priorities.riskAcceptanceLevel);
             setRiskLevel(determineRiskLevel(data.priorities.riskAcceptanceLevel));
-            // IMPORTANT: We maintain userSetScore state to preserve user intention
-            // Don't reset userSetScore here
+            // IMPORTANT: Mark as user-set since the server is sending a specific risk acceptance level
+            setUserSetScore(true);
+            riskScoreLogger.log('websocket', `Received risk acceptance level from WebSocket: ${data.priorities.riskAcceptanceLevel} (marked as user-set)`);
           }
         }
       } else if (data && data.dimensions) {
@@ -296,8 +303,9 @@ export function useRiskScoreData() {
           if (data.riskAcceptanceLevel !== previousScore) {
             setScore(data.riskAcceptanceLevel);
             setRiskLevel(determineRiskLevel(data.riskAcceptanceLevel));
-            // IMPORTANT: We maintain userSetScore state to preserve user intention
-            // Don't reset userSetScore here
+            // IMPORTANT: Mark as user-set since the server is sending a specific risk acceptance level
+            setUserSetScore(true);
+            riskScoreLogger.log('websocket', `Received risk acceptance level from WebSocket (alt format): ${data.riskAcceptanceLevel} (marked as user-set)`);
           }
         }
       }
