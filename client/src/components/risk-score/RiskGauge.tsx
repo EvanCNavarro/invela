@@ -115,11 +115,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         {/* Colored arc that grows as percentage increases */}
         {percentage > 0 && (
           <path
-            d={`M ${centerX - radius}, ${centerY} A ${radius}, ${radius}, 0, ${percentage > 50 ? 1 : 0}, 1, ${
-              centerX - radius + 2 * radius * (percentage / 100)
-            }, ${
-              centerY - Math.sin((percentage / 100) * Math.PI) * radius
-            }`}
+            d={`M ${centerX - radius}, ${centerY} 
+                A ${radius}, ${radius}, 0, ${percentage > 50 ? 1 : 0}, 1, 
+                ${centerX + radius * Math.cos(Math.PI * (1 - percentage / 100))}, 
+                ${centerY - radius * Math.sin(Math.PI * (1 - percentage / 100))}`}
             fill="none"
             stroke={color}
             strokeWidth={strokeWidth}
