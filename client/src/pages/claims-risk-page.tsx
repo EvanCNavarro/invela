@@ -11,7 +11,7 @@ export default function ClaimsRiskPage() {
     <DashboardLayout>
       <PageTemplate>
         {/* Display Claims Risk Tutorial */}
-        <ClaimsRiskTutorial />
+        <TutorialManager tabName="claims-risk" />
         
         <div className="space-y-6">
           <PageHeader

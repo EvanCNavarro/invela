@@ -2,7 +2,7 @@ import React from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
-import { useTutorialWebSocket } from '@/services/websocket-service';
+import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 
 // Define all tutorial content in a central location
 const TUTORIAL_CONTENT: Record<string, {
