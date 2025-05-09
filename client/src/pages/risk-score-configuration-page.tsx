@@ -54,51 +54,54 @@ const ItemTypes = {
 
 // Skeleton component for dimension rows during loading state with varying styles by index
 const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
-  // Vary the width and intensity based on priority (higher priority = more prominent)
-  const widthClasses = [
-    'w-1/3', // highest priority (larger name width)
-    'w-1/4',
-    'w-1/4',
-    'w-1/5',
-    'w-1/5',
-    'w-1/6', // lowest priority (smallest name width)
-  ];
+  // Generate a random hue for color variation in skeletons
+  const hue = (180 + index * 30) % 360;
+  const borderColor = `hsla(${hue}, 70%, 60%, 0.2)`;
+  const leftBorderColor = `hsla(${hue}, 70%, 60%, 0.5)`;
   
-  // Vary the background darkness based on priority
-  const bgIntensity = [
-    'bg-gray-300', // highest priority (darkest)
-    'bg-gray-250',
-    'bg-gray-200',
-    'bg-gray-200',
-    'bg-gray-150',
-    'bg-gray-100', // lowest priority (lightest)
-  ];
+  // Vary the width and intensity based on priority
+  const nameWidth = `${80 - index * 7}%`;
+  const descWidth = `${90 - index * 5}%`;
   
-  // Vary the weight percentage width based on priority
-  const weightWidths = [
-    'w-16', // highest (widest)
-    'w-14',
-    'w-12',
-    'w-10',
-    'w-8',
-    'w-6', // lowest (narrowest)
-  ];
+  // Calculate weight percentage based on index (higher priority = higher percentage)
+  const weight = Math.round(40 - index * 5);
   
   return (
-    <div className="flex items-center space-x-4 p-4 border rounded-md mb-2 animate-pulse"
-         style={{ animationDelay: `${index * 0.1}s` }}>
-      <div className="h-8 w-8 bg-gray-200 rounded"></div>
+    <div 
+      className="flex items-center space-x-4 p-4 border rounded-md mb-2 animate-pulse"
+      style={{ 
+        animationDelay: `${index * 0.1}s`,
+        backgroundColor: `hsla(${hue}, 70%, 95%, 0.4)`,
+        borderColor: borderColor,
+        borderLeftWidth: '4px',
+        borderLeftColor: leftBorderColor
+      }}
+    >
+      {/* Drag handle skeleton */}
+      <div className="h-5 w-5 bg-slate-200 rounded"></div>
+      
       <div className="flex-1">
-        <div className={`h-4 ${bgIntensity[index] || 'bg-gray-200'} rounded ${widthClasses[index] || 'w-1/4'} mb-2`}>
-          {/* Priority indicator */}
-          <div className="flex items-center">
-            <span className="invisible">Priority {index + 1}</span>
+        <div className="flex items-center">
+          {/* Icon skeleton */}
+          <div className="h-8 w-8 bg-slate-300 rounded-md mr-2 shadow-sm opacity-70"></div>
+          
+          <div className="flex-1">
+            {/* Name and badge skeleton */}
+            <div className="flex items-center mb-2">
+              <div className="h-4 bg-slate-300 rounded" style={{ width: nameWidth }}></div>
+              <div className="ml-2 h-4 w-10 bg-slate-200 rounded-full"></div>
+            </div>
+            
+            {/* Description skeleton */}
+            <div className="h-3 bg-slate-200 rounded" style={{ width: descWidth }}></div>
           </div>
         </div>
-        <div className="h-3 bg-gray-100 rounded w-3/4"></div>
       </div>
-      <div className="w-1/3 h-4 bg-transparent rounded"></div>
-      <div className={`h-6 ${bgIntensity[index] || 'bg-gray-200'} rounded ${weightWidths[index] || 'w-10'}`}></div>
+      
+      {/* Weight percentage skeleton */}
+      <div className="h-8 w-16 bg-slate-200 rounded-full flex items-center justify-center shadow-sm">
+        <div className="text-transparent text-sm">{weight}%</div>
+      </div>
     </div>
   );
 };
@@ -166,42 +169,41 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
   return (
     <div 
       ref={ref}
-      className={`flex items-center space-x-4 p-4 border rounded-md mb-2 transition-opacity ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+      className={`flex items-center space-x-4 p-4 border rounded-md mb-2 transition-all duration-200 
+      ${isDragging ? 'opacity-50 scale-[0.98]' : 'opacity-100 hover:shadow-sm'}`}
       style={{ 
-        backgroundColor: `${dimension.color}10`, 
-        borderColor: `${dimension.color}40` 
+        backgroundColor: `${dimension.color}08`, 
+        borderColor: `${dimension.color}30`,
+        borderLeft: `4px solid ${dimension.color}`
       }}
     >
-      <div className="cursor-move">
-        <GripVertical className="h-5 w-5 text-gray-500" />
+      <div className="cursor-move flex items-center justify-center">
+        <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors duration-150" />
       </div>
       
       <div className="flex-1">
         <div className="flex items-center">
           <div 
-            className="p-1 rounded mr-2" 
+            className="p-1.5 rounded-md mr-2 shadow-sm" 
             style={{ backgroundColor: dimension.color }}
           >
             {dimensionIcons[dimension.id] || <div className="h-5 w-5" />}
           </div>
           <div>
-            <h4 className="font-medium text-gray-900">
-              {dimension.name}
-              <span className="ml-2 px-2 py-1 bg-gray-100 text-xs rounded">
-                Priority {index + 1}
-              </span>
-            </h4>
-            <p className="text-sm text-gray-500">{dimension.description}</p>
+            <div className="flex items-center">
+              <h4 className="font-medium text-foreground">
+                {dimension.name}
+              </h4>
+              <div className="ml-2 px-2 py-0.5 bg-accent/50 text-xs rounded-full border border-accent/20 text-accent-foreground/80 font-medium">
+                #{index + 1}
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">{dimension.description}</p>
           </div>
         </div>
       </div>
       
-      {/* Empty space where sliders used to be */}
-      <div className="w-1/3">
-        {/* No content needed here */}
-      </div>
-      
-      <div className="text-right font-medium w-16 text-gray-900">
+      <div className="text-right font-semibold w-16 text-foreground text-lg bg-background/80 px-2 py-1 rounded-full shadow-sm border" style={{ borderColor: `${dimension.color}30` }}>
         {dimension.weight.toFixed(0)}%
       </div>
     </div>
@@ -324,14 +326,17 @@ export default function RiskScoreConfigurationPage() {
       
       <PageTemplate>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Right column: Risk score summary - Now always visible */}
+          {/* Left column: Risk score summary - Always visible */}
           <div className="col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Score Summary</CardTitle>
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+              <CardHeader className="border-b bg-background/40">
+                <CardTitle className="text-lg flex items-center">
+                  <GaugeIcon className="h-5 w-5 mr-2 text-muted-foreground" />
+                  Risk Score Summary
+                </CardTitle>
               </CardHeader>
               
-              <CardContent>
+              <CardContent className="pt-6">
                 {isLoading || !initialLoadAttempted ? (
                   <div className="flex flex-col items-center justify-center">
                     <Skeleton className="h-40 w-40 rounded-full mb-4" />
@@ -360,9 +365,9 @@ export default function RiskScoreConfigurationPage() {
                       </div>
                       
                       <div className="flex justify-between mb-2">
-                        <span className="text-xs">Low</span>
-                        <span className="text-xs">Medium</span>
-                        <span className="text-xs">High</span>
+                        <span className="text-xs text-muted-foreground">Low</span>
+                        <span className="text-xs text-muted-foreground">Medium</span>
+                        <span className="text-xs text-muted-foreground">High</span>
                       </div>
                       
                       <Slider
@@ -381,15 +386,32 @@ export default function RiskScoreConfigurationPage() {
                         }}
                         className="transition-all duration-150 ease-in-out"
                       />
+                      
+                      {/* Risk level indicators */}
+                      <div className="flex justify-between mt-2">
+                        <div className="w-1/3 text-center">
+                          <div className="h-1 bg-green-500 rounded"></div>
+                          <span className="text-[10px] text-muted-foreground">0-30</span>
+                        </div>
+                        <div className="w-1/3 text-center">
+                          <div className="h-1 bg-yellow-500 rounded"></div>
+                          <span className="text-[10px] text-muted-foreground">31-70</span>
+                        </div>
+                        <div className="w-1/3 text-center">
+                          <div className="h-1 bg-orange-500 rounded"></div>
+                          <span className="text-[10px] text-muted-foreground">71-100</span>
+                        </div>
+                      </div>
                     </div>
                     
                     {/* Actions */}
-                    <div className="flex justify-between w-full mt-6">
+                    <div className="flex justify-between w-full mt-8 pt-4 border-t">
                       <Button 
                         variant="outline" 
                         onClick={handleReset} 
                         disabled={isSaving || !hasDefaultsDiff} 
                         size="sm"
+                        className={!hasDefaultsDiff ? "opacity-50" : "hover:bg-slate-100 transition-colors duration-200"}
                       >
                         Reset to Defaults
                       </Button>
@@ -398,9 +420,10 @@ export default function RiskScoreConfigurationPage() {
                         onClick={handleSave} 
                         disabled={isSaving || !hasSavedDiff} 
                         size="sm"
+                        className={!hasSavedDiff ? "opacity-50" : "shadow-sm hover:shadow transition-all duration-200"}
                       >
                         {isSaving ? (
-                          <>Saving</>
+                          <>Saving...</>
                         ) : (
                           <>Save Configuration</>
                         )}
@@ -412,23 +435,36 @@ export default function RiskScoreConfigurationPage() {
             </Card>
           </div>
           
-          {/* Left column: Tabs for Dimension Priorities and Comparative Analysis */}
+          {/* Right column: Tabs for Dimension Priorities and Comparative Analysis */}
           <div className="col-span-2">
             <Tabs defaultValue="priority" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="priority">Dimension Priorities</TabsTrigger>
-                <TabsTrigger value="comparative">Comparative Analysis</TabsTrigger>
+              <TabsList className="mb-4 w-full bg-background border-b p-0 h-auto">
+                <TabsTrigger value="priority" className="flex-1 rounded-none py-3 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                  Dimension Priorities
+                </TabsTrigger>
+                <TabsTrigger value="comparative" className="flex-1 rounded-none py-3 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                  Comparative Analysis
+                </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="priority" className="p-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Dimension Priorities</CardTitle>
+              <TabsContent value="priority" className="p-0 mt-0">
+                <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                  <CardHeader className="border-b bg-background/40">
+                    <CardTitle className="text-lg flex items-center">
+                      <Shield className="h-5 w-5 mr-2 text-muted-foreground" />
+                      Dimension Priorities
+                    </CardTitle>
+                    <CardDescription>
+                      Configure the relative importance of each risk dimension
+                    </CardDescription>
                   </CardHeader>
                   
-                  <CardContent>
-                    <div className="mb-6 bg-blue-50 p-4 rounded">
-                      <h3 className="text-blue-800 font-medium mb-2">How Dimension Ranking & Priorities Work</h3>
+                  <CardContent className="pt-6">
+                    <div className="mb-6 bg-blue-50 p-4 rounded-md border border-blue-100">
+                      <h3 className="text-blue-800 font-medium mb-2 flex items-center">
+                        <Info className="h-4 w-4 mr-1.5" />
+                        How Dimension Ranking & Priorities Work
+                      </h3>
                       <p className="text-blue-700 text-sm">
                         Drag and drop dimensions to stack rank them by importance. Dimensions at the top have the highest weight in the risk 
                         score calculation, with weight decreasing as you move down the list. The priority weight is automatically calculated 
@@ -437,23 +473,28 @@ export default function RiskScoreConfigurationPage() {
                     </div>
                     
                     <div className="space-y-2 mb-6">
-                      {/* Wrap with DndProvider only if not already within one */}
-                      {renderDimensionRows()}
+                      {/* Dimensions list with animation */}
+                      <div className="animate-in slide-in-from-top-4 duration-500">
+                        {renderDimensionRows()}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
               
-              <TabsContent value="comparative" className="p-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Comparative Risk Analysis</CardTitle>
+              <TabsContent value="comparative" className="p-0 mt-0">
+                <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                  <CardHeader className="border-b bg-background/40">
+                    <CardTitle className="text-lg flex items-center">
+                      <BarChart2 className="h-5 w-5 mr-2 text-muted-foreground" />
+                      Comparative Risk Analysis
+                    </CardTitle>
                     <CardDescription>
-                      Compare your organization's risk profile against industry benchmarks and similar organizations.
+                      Compare your organization's risk profile against industry benchmarks and similar organizations
                     </CardDescription>
                   </CardHeader>
                   
-                  <CardContent>
+                  <CardContent className="pt-6">
                     {isLoading || !initialLoadAttempted ? (
                       <div className="flex justify-center items-center h-96">
                         <div className="flex flex-col items-center">
@@ -463,11 +504,13 @@ export default function RiskScoreConfigurationPage() {
                         </div>
                       </div>
                     ) : (
-                      <ComparativeVisualization 
-                        dimensions={dimensions} 
-                        globalScore={score} 
-                        riskLevel={riskLevel} 
-                      />
+                      <div className="animate-in fade-in-50 slide-in-from-bottom-8 duration-500">
+                        <ComparativeVisualization 
+                          dimensions={dimensions} 
+                          globalScore={score} 
+                          riskLevel={riskLevel} 
+                        />
+                      </div>
                     )}
                   </CardContent>
                 </Card>
