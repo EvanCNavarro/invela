@@ -42,6 +42,8 @@ import KY3PTaskPage from "@/pages/ky3p-task-page";
 import OpenBankingTaskPage from "@/pages/open-banking-task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
 import FormDebugPage from "@/pages/form-debug-page";
+import RiskScorePage from "@/pages/risk-score-page";
+import ClaimsRiskPage from "@/pages/claims-risk-page";
 // Builder pages have been removed
 // Empty component definitions for type checking - these components are no longer used
 const BuilderPage = () => null;
@@ -66,7 +68,7 @@ import LandingPage from "@/pages/landing";
 import AboutPage from "@/pages/landing/company/about";
 import ContactUsPage from "@/pages/landing/company/contact-us";
 import AccreditationPage from "@/pages/landing/products/accreditation";
-import RiskScorePage from "@/pages/landing/products/risk-score";
+import RiskScoreLandingPage from "@/pages/landing/products/risk-score";
 import InvelaRegistryPage from "@/pages/landing/products/invela-registry";
 import DataAccessGrantsServicePage from "@/pages/landing/products/data-access-grants-service";
 import LiabilityInsurancePage from "@/pages/landing/products/liability-insurance";
@@ -101,7 +103,7 @@ function Router() {
         <Route path="/landing/company/about" component={AboutPage} />
         <Route path="/landing/company/contact-us" component={ContactUsPage} />
         <Route path="/landing/products/accreditation" component={AccreditationPage} />
-        <Route path="/landing/products/risk-score" component={RiskScorePage} />
+        <Route path="/landing/products/risk-score" component={RiskScoreLandingPage} />
         <Route path="/landing/products/invela-registry" component={InvelaRegistryPage} />
         <Route path="/landing/products/data-access-grants-service" component={DataAccessGrantsServicePage} />
         <Route path="/landing/products/liability-insurance" component={LiabilityInsurancePage} />
@@ -253,6 +255,28 @@ function Router() {
             <ProtectedLayout>
               <OnboardingWrapper>
                 <ClaimsPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/risk-score" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <RiskScorePage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/claims-risk" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <ClaimsRiskPage />
               </OnboardingWrapper>
             </ProtectedLayout>
           )} 
