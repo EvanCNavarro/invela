@@ -231,6 +231,7 @@ export function ContentTutorialModal({
         {/* Footer with progress indicator and controls */}
         <div className="p-6 flex flex-row justify-between items-center border-t">
           <div className="text-sm text-muted-foreground">
+            {/* Display step numbers starting from 1 for user-friendly numbering */}
             Step {currentStep + 1} of {totalSteps}
           </div>
           <div className="flex gap-2">
