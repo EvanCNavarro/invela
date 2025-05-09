@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration, RiskPriorities } from '@/lib/risk-score-configuration-types';
 import { defaultRiskDimensions, defaultRiskThresholds, sampleCompanyComparisons, calculateRiskScore, determineRiskLevel } from '@/lib/risk-score-configuration-data';
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
@@ -45,6 +46,24 @@ interface DimensionRowProps {
 const ItemTypes = {
   DIMENSION_ROW: 'dimensionRow'
 };
+
+// Skeleton component for dimension rows during loading state
+function DimensionRowSkeleton() {
+  return (
+    <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-50 to-blue-50/60 border border-blue-100 rounded-2xl shadow-sm mb-4 relative">
+      <Skeleton className="h-14 w-14 rounded-lg flex-shrink-0" />
+      <div className="flex-grow">
+        <Skeleton className="h-6 w-48 mb-2" />
+        <Skeleton className="h-4 w-full max-w-md" />
+      </div>
+      <div className="ml-auto flex flex-col items-end justify-center">
+        <Skeleton className="h-8 w-16 mb-1" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <Skeleton className="h-8 w-8 ml-2 rounded-full" />
+    </div>
+  );
+}
 
 // Component to render a single draggable dimension row
 function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionRowProps) {
@@ -207,6 +226,17 @@ function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionR
       >
         <GripVertical className="h-5 w-5" style={{ color: primaryColor }} />
       </div>
+    </div>
+  );
+}
+
+// Skeleton component for the risk gauge during loading state
+function RiskGaugeSkeleton() {
+  return (
+    <div className="flex flex-col items-center justify-center p-4">
+      <Skeleton className="h-48 w-48 rounded-full mb-4" />
+      <Skeleton className="h-8 w-24 mb-2" />
+      <Skeleton className="h-4 w-48" />
     </div>
   );
 }
@@ -708,81 +738,96 @@ export default function RiskScoreConfigurationPage() {
   
   // Handle save configuration
   const handleSave = () => {
-    // Determine which type of data to save based on the active tab
-    if (activeTab === 'dimension-ranking') {
-      // Ensure dimensions are properly serialized
-      const cleanDimensions = JSON.parse(JSON.stringify(dimensions));
+    // Always save both risk score data and dimensions, regardless of active tab
+    
+    // Ensure dimensions are properly serialized
+    const cleanDimensions = JSON.parse(JSON.stringify(dimensions));
       
-      // Create a clean priorities object
-      const priorities: RiskPriorities = {
-        dimensions: cleanDimensions,
-        riskAcceptanceLevel: score, // Include the current risk acceptance level
-        lastUpdated: new Date().toISOString()
-      };
-      
-      // Log what we're about to save
-      riskScoreLogger.log('save', 'Saving dimension priorities');
-      console.log('[DEBUG] Saving priorities:', priorities);
-      console.log('[DEBUG] Dimensions type:', Array.isArray(priorities.dimensions) ? 'Array' : typeof priorities.dimensions);
-      console.log('[DEBUG] First dimension sample:', priorities.dimensions?.[0] ? JSON.stringify(priorities.dimensions[0]) : 'none');
-      
-      // If we have original dimensions (loaded from server), compare with what we're saving
-      if (originalDimensionsRef.current) {
-        riskScoreLogger.compareDimensions(
-          'save', 
-          'original', originalDimensionsRef.current, 
-          'current', dimensions
-        );
-      }
-      
-      // Add a callback to verify the changes were saved correctly
-      const onSuccess = (data: any) => {
-        console.log('[DEBUG] Save succeeded, received:', data);
-        riskScoreLogger.log('persist', 'Force refetching priorities query to verify changes');
+    // Create a clean priorities object with current risk acceptance level
+    const priorities: RiskPriorities = {
+      dimensions: cleanDimensions,
+      riskAcceptanceLevel: score,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // Log what we're about to save
+    riskScoreLogger.log('save', 'Saving risk priorities with risk acceptance level');
+    console.log('[DEBUG] Saving priorities with risk score:', priorities);
+    
+    // If we have original dimensions (loaded from server), compare with what we're saving
+    if (originalDimensionsRef.current) {
+      riskScoreLogger.compareDimensions(
+        'save', 
+        'original', originalDimensionsRef.current, 
+        'current', dimensions
+      );
+    }
+    
+    // Create a promise that saves the priorities
+    const savePrioritiesPromise = new Promise<void>((resolve, reject) => {
+      savePrioritiesMutation.mutate(priorities, {
+        onSuccess: () => {
+          console.log('[DEBUG] Priorities saved successfully');
+          resolve();
+        },
+        onError: (error) => {
+          console.error('[DEBUG] Failed to save priorities:', error);
+          reject(error);
+        }
+      });
+    });
+    
+    // Also create a configuration object for the risk score configuration
+    const configuration: RiskScoreConfiguration = {
+      dimensions: cleanDimensions,
+      thresholds,
+      score,
+      riskLevel
+    };
+    
+    // Create a promise that saves the general configuration
+    const saveConfigPromise = new Promise<void>((resolve, reject) => {
+      saveMutation.mutate(configuration, {
+        onSuccess: () => {
+          console.log('[DEBUG] General configuration saved successfully');
+          resolve();
+        },
+        onError: (error) => {
+          console.error('[DEBUG] Failed to save general configuration:', error);
+          reject(error);
+        }
+      });
+    });
+    
+    // After both promises complete, verify the saved data
+    Promise.allSettled([savePrioritiesPromise, saveConfigPromise])
+      .then(() => {
+        riskScoreLogger.log('persist', 'Verifying saved data from server');
         
         // Force a refetch to make sure we have the latest data
         refetchPriorities().then(result => {
           const retrievedData = result.data;
-          console.log('[DEBUG] Refetched data:', retrievedData);
           
-          // Compare saved and refetched dimensions
+          // Update UI with the latest data from server to ensure consistency
           if (retrievedData && retrievedData.dimensions) {
-            // Deep comparison of dimensions
-            const retrievedJson = JSON.stringify(retrievedData.dimensions);
-            const savedJson = JSON.stringify(priorities.dimensions);
+            if (retrievedData.riskAcceptanceLevel !== undefined && 
+                retrievedData.riskAcceptanceLevel !== score) {
+              setScore(retrievedData.riskAcceptanceLevel);
+              setRiskLevel(determineRiskLevel(retrievedData.riskAcceptanceLevel));
+            }
             
-            if (retrievedJson !== savedJson) {
-              console.log('[DEBUG] Retrieved != Saved:');
-              console.log('Retrieved:', retrievedJson);
-              console.log('Saved:', savedJson);
-              riskScoreLogger.log('persist', 'Warning: Refetched data does not match local state, updating local state');
-              
-              // Update local state to match what's on the server
+            // Update dimensions if they're different from what we have
+            if (JSON.stringify(retrievedData.dimensions) !== JSON.stringify(dimensions)) {
               setDimensions(retrievedData.dimensions);
-              originalDimensionsRef.current = [...retrievedData.dimensions];
-            } else {
-              riskScoreLogger.log('persist', 'No differences found between saved and server dimensions');
+              originalDimensionsRef.current = JSON.parse(JSON.stringify(retrievedData.dimensions));
             }
           }
         });
-      };
-      
-      // Perform the save operation with success callback
-      savePrioritiesMutation.mutate(priorities, {
-        onSuccess
+      })
+      .catch(error => {
+        console.error('[DEBUG] Error during save verification:', error);
+        riskScoreLogger.error('persist', 'Error verifying saves:', error);
       });
-    } else {
-      // Save to general configuration endpoint
-      const configuration: RiskScoreConfiguration = {
-        dimensions: JSON.parse(JSON.stringify(dimensions)), // Ensure clean serialization
-        thresholds,
-        score,
-        riskLevel
-      };
-      
-      riskScoreLogger.log('save', 'Saving general configuration');
-      saveMutation.mutate(configuration);
-    }
   };
 
   return (
@@ -848,15 +893,23 @@ export default function RiskScoreConfigurationPage() {
                         {/* Dimension rows with drag and drop */}
                         <DndProvider backend={HTML5Backend}>
                           <div className="space-y-2 mt-8">
-                            {dimensions.map((dimension, index) => (
-                              <DimensionRow 
-                                key={dimension.id}
-                                dimension={dimension}
-                                index={index}
-                                onReorder={handleReorder}
-                                onValueChange={handleValueChange}
-                              />
-                            ))}
+                            {isLoadingPriorities ? (
+                              /* Show skeleton loaders during loading state */
+                              Array(6).fill(0).map((_, i) => (
+                                <DimensionRowSkeleton key={`skeleton-${i}`} />
+                              ))
+                            ) : (
+                              /* Show actual dimension rows when loaded */
+                              dimensions.map((dimension, index) => (
+                                <DimensionRow 
+                                  key={dimension.id}
+                                  dimension={dimension}
+                                  index={index}
+                                  onReorder={handleReorder}
+                                  onValueChange={handleValueChange}
+                                />
+                              ))
+                            )}
                           </div>
                         </DndProvider>
                       </div>
@@ -902,15 +955,22 @@ export default function RiskScoreConfigurationPage() {
                 <CardContent className="flex flex-col items-center">
                   {/* Half-circle gauge visualization */}
                   <div className="flex flex-col items-center">
-                    {/* RiskGauge component for half-circle visualization */}
-                    <RiskGauge 
-                      score={score} 
-                      riskLevel={riskLevel} 
-                      size={280}
-                    />
-                    
-                    {/* Risk Acceptance Level Label - moved above the score as requested */}
-                    <h4 className="text-sm font-medium mt-2">Risk Acceptance Level</h4>
+                    {isLoadingConfig ? (
+                      /* Show skeleton loader during loading state */
+                      <RiskGaugeSkeleton />
+                    ) : (
+                      /* Show actual risk gauge when loaded */
+                      <>
+                        <RiskGauge 
+                          score={score} 
+                          riskLevel={riskLevel} 
+                          size={280}
+                        />
+                        
+                        {/* Risk Acceptance Level Label - moved above the score as requested */}
+                        <h4 className="text-sm font-medium mt-2">Risk Acceptance Level</h4>
+                      </>
+                    )}
                   </div>
                   
                   {/* Risk Score Slider - allows manual adjustment of risk acceptance level */}
