@@ -350,21 +350,21 @@ export function ComparativeVisualization({
       {/* Control panel for comparisons */}
       <div className="space-y-4">
         {/* Search and buttons row */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Company Search */}
+        <div className="flex flex-wrap items-center gap-3 mb-2">
+          {/* Company Search - Made wider */}
           <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
+                className="flex items-center gap-2 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-sm w-[300px]"
                 disabled={selectedCompanies.length >= MAX_COMPARISONS}
               >
                 <Search className="h-4 w-4" />
-                Search Companies
+                Search Companies to Compare
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0 shadow-md animate-in fade-in-50 zoom-in-95 slide-in-from-top-5">
+            <PopoverContent className="w-[400px] p-0 shadow-md animate-in fade-in-50 zoom-in-95 slide-in-from-top-5">
               <Command>
                 <CommandInput 
                   placeholder="Search network companies..." 
@@ -378,7 +378,7 @@ export function ComparativeVisualization({
                     <p className="text-sm text-muted-foreground pt-2">Searching companies...</p>
                   </div>
                 ) : (
-                  <CommandList className="max-h-[200px]">
+                  <CommandList className="max-h-[250px]">
                     <CommandEmpty>No companies found</CommandEmpty>
                     <CommandGroup heading="Network Companies">
                       {networkCompanies.map((company: CompanyComparison) => (
@@ -475,20 +475,19 @@ export function ComparativeVisualization({
             </div>
           ))}
           
-          {/* Empty slots */}
+          {/* Empty slots with "Compared Company #X" */}
           {Array.from({ length: MAX_COMPARISONS - selectedCompanies.length }).map((_, i) => (
             <div 
               key={`empty-${i}`}
-              className="h-20 flex flex-col justify-center items-center px-4 border border-dashed border-muted-foreground/30 rounded-md text-muted-foreground"
-              onClick={() => {
-                if (selectedCompanies.length < MAX_COMPARISONS) {
-                  setSearchPopoverOpen(true);
-                }
-              }}
+              className="h-20 flex flex-col justify-center px-4 border border-dashed border-muted-foreground/20 rounded-md bg-slate-50/50 text-muted-foreground"
             >
-              <div className="flex flex-col items-center cursor-pointer hover:text-foreground transition-colors duration-150">
-                <PlusCircle className="h-5 w-5 mb-1 opacity-50" />
-                <span className="text-xs">Add company</span>
+              <div className="flex flex-col">
+                <div className="font-medium text-sm text-slate-400">Compared Company #{selectedCompanies.length + i + 1}</div>
+                <div className="text-xs text-slate-400/80">Available slot</div>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-slate-200 rounded-full"></div>
+                  <span className="text-xs font-medium text-slate-400">--</span>
+                </div>
               </div>
             </div>
           ))}
@@ -501,32 +500,11 @@ export function ComparativeVisualization({
           <CardTitle className="text-lg font-medium flex items-center">
             <BarChart3 className="h-5 w-5 mr-2 text-muted-foreground" />
             Comparative Risk Dimension Analysis
-            <div className="ml-auto text-xs text-muted-foreground font-normal flex items-center">
-              <Info className="h-3.5 w-3.5 mr-1" />
-              Higher values indicate higher risk factors
-            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
           {chartComponentLoaded ? (
             <div className="flex flex-col items-center">
-              {/* Chart legend */}
-              <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
-                  <span className="text-sm">{currentCompanyData.name}</span>
-                </div>
-                
-                {selectedCompanies.map((company, index) => (
-                  <div key={`legend-${company.id}`} className="flex items-center gap-2 animate-in fade-in-50">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
-                    ></div>
-                    <span className="text-sm">{company.name}</span>
-                  </div>
-                ))}
-              </div>
               
               {/* Animated entry wrapper for chart */}
               <div 
@@ -543,6 +521,24 @@ export function ComparativeVisualization({
                   height="450"
                   width="100%"
                 />
+              </div>
+              
+              {/* Chart legend */}
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-6 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
+                  <span className="text-sm font-medium">{currentCompanyData.name}</span>
+                </div>
+                
+                {selectedCompanies.map((company, index) => (
+                  <div key={`chart-legend-${company.id}`} className="flex items-center gap-2 animate-in fade-in-50">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
+                    ></div>
+                    <span className="text-sm font-medium">{company.name}</span>
+                  </div>
+                ))}
               </div>
               
               {/* No companies selected message */}
