@@ -57,7 +57,15 @@ export function ContentTutorialModal({
   
   // Find the content container element
   const getContentElement = (): HTMLElement | null => {
-    // Try to find the content area by common selectors
+    // First try dashboard specific content area selectors
+    const dashboardContent = document.querySelector('.flex-1.min-w-0');
+    
+    // If dashboard content is found, use it
+    if (dashboardContent) {
+      return dashboardContent as HTMLElement;
+    }
+    
+    // Otherwise fall back to general content selectors
     return (
       document.querySelector('.main-content-container') ||
       document.querySelector('main') ||
@@ -149,13 +157,13 @@ export function ContentTutorialModal({
         }}
       />
       
-      {/* Modal dialog */}
+      {/* Modal dialog - positioned relative to content area */}
       <div 
         className="fixed z-50 w-[600px] max-w-[90%] rounded-lg border bg-background shadow-lg"
         style={{
           position: 'fixed',
-          top: '50%',
-          left: `${(modalPosition.left + modalPosition.width / 2)}px`,
+          top: `${modalPosition.top + (modalPosition.height / 2)}px`,
+          left: `${modalPosition.left + (modalPosition.width / 2)}px`,
           transform: 'translate(-50%, -50%)',
         }}
       >
