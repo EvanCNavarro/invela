@@ -75,9 +75,20 @@ router.get('/', requireAuth, async (req: any, res) => {
  * 
  * Marks a specific tab tutorial as completed for the current user
  */
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, async (req: any, res) => {
   try {
-    const userId = req.session.user.id;
+    // Get user ID from the authenticated request
+    // The auth middleware sets req.user
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      logger.warn('[TabTutorials] Missing user ID in authenticated request');
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID not found in authenticated session'
+      });
+    }
+    
     const { tabKey } = req.body;
     
     if (!tabKey) {
@@ -133,9 +144,20 @@ router.post('/', requireAuth, async (req, res) => {
  * 
  * Checks if a specific tab tutorial has been completed by the current user
  */
-router.get('/:tabKey/check', requireAuth, async (req, res) => {
+router.get('/:tabKey/check', requireAuth, async (req: any, res) => {
   try {
-    const userId = req.session.user.id;
+    // Get user ID from the authenticated request
+    // The auth middleware sets req.user
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      logger.warn('[TabTutorials] Missing user ID in authenticated request');
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID not found in authenticated session'
+      });
+    }
+    
     const { tabKey } = req.params;
     
     // Check if this tutorial is marked as completed
