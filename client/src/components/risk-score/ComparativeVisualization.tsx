@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { RiskDimension, CompanyComparison } from '@/lib/risk-score-configuration-types';
+import { RiskDimension, CompanyComparison } from '@/lib/risk-score-configuration-data';
 import { sampleCompanyComparisons, defaultRiskDimensions } from '@/lib/risk-score-configuration-data';
 import { useCurrentCompany } from "@/hooks/use-current-company";
 

@@ -152,11 +152,76 @@ export function getRiskLevelDescription(level: 'none' | 'low' | 'medium' | 'high
   }
 }
 
+/**
+ * Company comparison interface for benchmark visualization
+ */
+export interface CompanyComparison {
+  id: number;
+  name: string;
+  companyType: string;
+  description: string;
+  score: number;
+  dimensions: Record<string, number>; // dimension id -> value mapping
+}
+
+/**
+ * Sample company comparisons for comparative visualization
+ * These are industry benchmarks for comparison with the user's company
+ */
+export const sampleCompanyComparisons: CompanyComparison[] = [
+  {
+    id: 1,
+    name: "Industry Average",
+    companyType: "Benchmark",
+    description: "Average risk profile across financial services industry",
+    score: 42,
+    dimensions: {
+      cyber_security: 45,
+      financial_stability: 40,
+      dark_web_data: 35,
+      public_sentiment: 50,
+      potential_liability: 35,
+      data_access_scope: 45
+    }
+  },
+  {
+    id: 2,
+    name: "Best Practice",
+    companyType: "Benchmark",
+    description: "Best-in-class risk management profile",
+    score: 25,
+    dimensions: {
+      cyber_security: 20,
+      financial_stability: 15,
+      dark_web_data: 30,
+      public_sentiment: 25,
+      potential_liability: 35,
+      data_access_scope: 25
+    }
+  },
+  {
+    id: 3,
+    name: "Regulatory Minimum",
+    companyType: "Benchmark",
+    description: "Minimum acceptable risk profile per regulations",
+    score: 65,
+    dimensions: {
+      cyber_security: 70,
+      financial_stability: 60,
+      dark_web_data: 65,
+      public_sentiment: 70,
+      potential_liability: 60,
+      data_access_scope: 65
+    }
+  }
+];
+
 export default {
   defaultRiskDimensions,
   defaultRiskThresholds,
   determineRiskLevel,
   getRiskLevelColor,
   getScoreColor,
-  getRiskLevelDescription
+  getRiskLevelDescription,
+  sampleCompanyComparisons
 };
