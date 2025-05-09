@@ -1,5 +1,5 @@
 import React from 'react';
-import TabTutorialModal, { TutorialStep } from './TabTutorialModal';
+import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 
 /**
  * Risk Score Configuration tutorial component

@@ -7,7 +7,8 @@ import { Loader2, X } from 'lucide-react';
 export interface TutorialStep {
   title: string;
   description: string;
-  imagePath: string;
+  imagePath?: string;
+  imageUrl?: string;
 }
 
 interface TabTutorialModalProps {
