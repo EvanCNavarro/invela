@@ -213,6 +213,8 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
  * Allows users to configure risk score calculations and dimension priorities
  */
 export default function RiskScoreConfigurationPage() {
+  // Create a reference to the HTML5Backend
+  const dndBackend = HTML5Backend;
   // Initialize the toast component
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -312,7 +314,7 @@ export default function RiskScoreConfigurationPage() {
   };
 
   return (
-    <>
+    <DndProvider backend={dndBackend}>
       <PageHeader 
         title="Risk Score Configuration" 
         description="Configure your organization's risk score calculation parameters."
@@ -362,22 +364,20 @@ export default function RiskScoreConfigurationPage() {
                       </div>
                       
                       <Slider
-                        key={`risk-slider-${score}`} // Add key to force re-render when score changes
                         defaultValue={[score]}
                         min={0}
                         max={100}
                         step={1}
                         value={[score]}
                         onValueChange={(value) => {
-                          handleScoreChange(value[0]);
-                        }}
-                        onClick={() => {
-                          // When user clicks the slider, set userSetScore to true
+                          // When slider is being dragged, set userSetScore to true
                           if (!userSetScore) {
                             setUserSetScore(true);
                             riskScoreLogger.log('user:action', 'User manually adjusted risk acceptance level');
                           }
+                          handleScoreChange(value[0]);
                         }}
+                        className="transition-all duration-150 ease-in-out"
                       />
                     </div>
                     
@@ -426,9 +426,8 @@ export default function RiskScoreConfigurationPage() {
                     </div>
                     
                     <div className="space-y-2 mb-6">
-                      <DndProvider backend={HTML5Backend}>
-                        {renderDimensionRows()}
-                      </DndProvider>
+                      {/* Wrap with DndProvider only if not already within one */}
+                      {renderDimensionRows()}
                     </div>
                   </CardContent>
                 </Card>
@@ -466,6 +465,6 @@ export default function RiskScoreConfigurationPage() {
           </div>
         </div>
       </PageTemplate>
-    </>
+    </DndProvider>
   );
 }
