@@ -2,6 +2,7 @@
  * RiskGauge Component
  * 
  * A pure SVG half-circle gauge visualization without any dependencies.
+ * Matches the design in the reference image with a thick line and number inside the gauge.
  */
 import React from 'react';
 
@@ -31,7 +32,7 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Half-circle gauge component using pure SVG
+ * Half-circle gauge component using pure SVG with score in the center
  */
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
@@ -50,10 +51,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   // Calculate dimensions
   const width = size;
   const height = size / 2;
-  const radius = size * 0.4;
+  const radius = size * 0.35; // Slightly smaller radius for the number to fit better
   const centerX = width / 2;
   const centerY = height;
-  const strokeWidth = size * 0.08;
+  const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
   
   // SVG path for background arc (full half-circle, from left to right at the bottom)
   const backgroundPath = `
@@ -61,43 +62,29 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
     A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}
   `;
   
-  // Calculate the angle for the progress arc based on percentage (from left to top to right)
-  const angle = percentage * Math.PI / 100; // Convert percentage to angle in radians
+  // For a uniform arc progress from 0-100%, we use a simpler calculation
+  // that always starts at the left and progresses clockwise
+  const angleInRadians = percentage * Math.PI / 100; // Maps 0-100% to 0-π radians
   
-  // Start point is at the left side of the half-circle
-  const startX = centerX - radius;
-  const startY = centerY;
-  
-  // Calculate the end point based on the percentage
-  let endX, endY;
-  
-  if (percentage <= 50) {
-    // First half - left to top
-    const angleRad = (percentage / 50) * (Math.PI / 2);
-    endX = centerX - radius * Math.cos(angleRad);
-    endY = centerY - radius * Math.sin(angleRad);
-  } else {
-    // Second half - top to right
-    const angleRad = ((percentage - 50) / 50) * (Math.PI / 2);
-    endX = centerX + radius * Math.sin(angleRad);
-    endY = centerY - radius * Math.cos(angleRad);
-  }
+  // Calculate the end point on the arc based on the angle
+  const endX = centerX - radius * Math.cos(angleInRadians);
+  const endY = centerY - radius * Math.sin(angleInRadians);
   
   // Create SVG path for the progress arc
   const progressPath = `
-    M ${startX}, ${startY} 
+    M ${centerX - radius}, ${centerY}
     A ${radius} ${radius} 0 ${percentage > 50 ? 1 : 0} 1 ${endX} ${endY}
   `;
   
   return (
-    <div style={{ position: 'relative', width: width, height: height * 2.5, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
       {/* SVG containing the gauge */}
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-        {/* Background arc (gray) - full half-circle */}
+        {/* Background arc (light gray) - full half-circle */}
         <path
           d={backgroundPath}
           fill="none"
-          stroke="#f1f5f9"
+          stroke="#f0f0f0"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
@@ -111,11 +98,24 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
           strokeLinecap="round"
         />
         
+        {/* Score value inside the gauge */}
+        <text
+          x={centerX}
+          y={centerY - radius * 0.3} // Position inside the arc
+          fontSize={size * 0.18}
+          fontWeight="bold"
+          fill={color}
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          {score}
+        </text>
+        
         {/* Min label (0) */}
         <text
-          x={centerX - radius}
+          x={centerX - radius - 6}
           y={centerY + 20}
-          fontSize={size * 0.06}
+          fontSize={size * 0.05}
           fill="#666"
           textAnchor="middle"
         >
@@ -124,9 +124,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         
         {/* Max label (100) */}
         <text
-          x={centerX + radius}
+          x={centerX + radius + 6}
           y={centerY + 20}
-          fontSize={size * 0.06}
+          fontSize={size * 0.05}
           fill="#666"
           textAnchor="middle"
         >
@@ -134,10 +134,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         </text>
       </svg>
       
-      {/* Risk Acceptance Level text */}
+      {/* Risk Acceptance Level text - now below the gauge */}
       <div style={{
         position: 'absolute',
-        top: height + 10,
+        top: height + 15,
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: size / 18,
@@ -145,19 +145,6 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         fontWeight: 500
       }}>
         Risk Acceptance Level
-      </div>
-      
-      {/* Score value */}
-      <div style={{
-        position: 'absolute',
-        top: height + 40,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: size / 3.5,
-        fontWeight: 'bold',
-        color: '#333'
-      }}>
-        {score}
       </div>
     </div>
   );
