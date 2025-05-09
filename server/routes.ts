@@ -86,6 +86,8 @@ import { aiSuggestionsRouter } from './routes/ai-suggestions';
 import websocketRouter from './routes/websocket';
 // Test WebSocket router removed
 import riskScoreConfigurationRouter from './routes/risk-score-configuration';
+// Tab tutorial system for onboarding
+import userTabTutorialsRouter from './routes/user-tab-tutorials';
 // Test routes have been removed
 import submissionsRouter from './routes/submissions';
 import companyTabsRouter from './routes/company-tabs';
@@ -463,6 +465,9 @@ export function registerRoutes(app: Express): Express {
   // Register Risk Score Configuration routes with optional authentication
   // This allows unauthenticated access for demo purposes
   app.use('/api/risk-score', optionalAuth, riskScoreConfigurationRouter);
+  
+  // Register Tab Tutorials routes for the onboarding system
+  app.use('/api/user-tab-tutorials', userTabTutorialsRouter);
   
   // Register Claims Management routes
   app.use('/api/claims', claimsRouter);
