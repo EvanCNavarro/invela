@@ -34,18 +34,41 @@ export function ComparativeVisualization({ dimensions }: ComparativeVisualizatio
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // Prepare current company data in the same format as comparison companies
-  const currentCompanyData: CompanyComparison = {
+  // Track when dimensions change to update visualization
+  const [currentCompanyData, setCurrentCompanyData] = useState<CompanyComparison>({
     id: company?.id || 0,
     name: company?.name || 'Your Company',
     companyType: company?.category || 'Current',
     description: 'Your current risk configuration',
-    score: dimensions.reduce((sum, dim) => sum + (dim.weight * dim.value / 100), 0),
-    dimensions: dimensions.reduce((acc, dim) => {
-      acc[dim.id] = dim.value;
-      return acc;
-    }, {} as Record<string, number>)
-  };
+    score: 0,
+    dimensions: {}
+  });
+  
+  // Update current company data when dimensions change
+  useEffect(() => {
+    if (dimensions.length > 0) {
+      // Calculate overall risk score (weighted average)
+      const weightedScore = dimensions.reduce((sum, dim) => {
+        return sum + (dim.weight * dim.value / 100);
+      }, 0);
+      
+      // Convert dimensions to format needed for visualization
+      const dimensionValues = dimensions.reduce((acc, dim) => {
+        acc[dim.id] = dim.value;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Update the current company data
+      setCurrentCompanyData({
+        id: company?.id || 0,
+        name: company?.name || 'Invela Trust Network',
+        companyType: company?.category || 'Current',
+        description: 'Your current S&P Data Access Risk Score configuration',
+        score: Math.round(weightedScore), // Round to nearest integer
+        dimensions: dimensionValues
+      });
+    }
+  }, [dimensions, company]);
 
   // Load ApexCharts component only on client side
   useEffect(() => {
@@ -64,7 +87,7 @@ export function ComparativeVisualization({ dimensions }: ComparativeVisualizatio
     {
       name: currentCompanyData.name,
       data: dimensions.map(dim => currentCompanyData.dimensions[dim.id] || 0),
-      color: '#4965EC'
+      color: '#4965EC' // Blue color matching the dot in the comparison card
     }
   ];
 
@@ -73,7 +96,7 @@ export function ComparativeVisualization({ dimensions }: ComparativeVisualizatio
     series.push({
       name: selectedCompany.name,
       data: dimensions.map(dim => selectedCompany.dimensions[dim.id] || 0),
-      color: '#F97066'
+      color: '#F43F5E' // Red color matching the dot in the comparison card
     });
   }
 
@@ -267,34 +290,96 @@ export function ComparativeVisualization({ dimensions }: ComparativeVisualizatio
         </CardContent>
       </Card>
 
-      {selectedCompany && (
+      {selectedCompany && showComparison && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">
-              {selectedCompany.name} Profile
+              Risk Profile Comparison
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium">Company Type</h4>
-                <p className="text-muted-foreground">{selectedCompany.companyType}</p>
-              </div>
-              <div>
-                <h4 className="font-medium">Description</h4>
-                <p className="text-muted-foreground">{selectedCompany.description}</p>
-              </div>
-              <div>
-                <h4 className="font-medium">Overall Risk Score</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Current configuration */}
+              <div className="space-y-4 border-r pr-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-primary h-2.5 rounded-full"
-                      style={{ width: `${selectedCompany.score}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm font-medium">{selectedCompany.score}/100</span>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
+                  <h3 className="font-medium">{currentCompanyData.name}</h3>
                 </div>
+                <div>
+                  <h4 className="font-medium text-sm">Your Risk Configuration</h4>
+                  <p className="text-xs text-muted-foreground">{currentCompanyData.description}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Overall Risk Score</h4>
+                  <div className="flex items-center gap-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="h-2.5 rounded-full" 
+                        style={{ width: `${currentCompanyData.score}%`, backgroundColor: '#4965EC' }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium">{currentCompanyData.score}/100</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Key Priorities</h4>
+                  <ul className="text-xs text-muted-foreground mt-1">
+                    {dimensions.slice(0, 2).map(dim => (
+                      <li key={dim.id}>{dim.name} ({Math.round(dim.weight)}%)</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Comparison company */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F43F5E' }}></div>
+                  <h3 className="font-medium">{selectedCompany.name}</h3>
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Company Type</h4>
+                  <p className="text-xs text-muted-foreground">{selectedCompany.companyType}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Description</h4>
+                  <p className="text-xs text-muted-foreground">{selectedCompany.description}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Overall Risk Score</h4>
+                  <div className="flex items-center gap-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="h-2.5 rounded-full"
+                        style={{ width: `${selectedCompany.score}%`, backgroundColor: '#F43F5E' }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium">{selectedCompany.score}/100</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Score difference analysis */}
+            <div className="mt-6 pt-4 border-t">
+              <h4 className="font-medium mb-2">Risk Profile Analysis</h4>
+              <p className="text-sm text-muted-foreground">
+                {currentCompanyData.score > selectedCompany.score 
+                  ? `Your risk configuration is more conservative (${currentCompanyData.score - selectedCompany.score}% higher) than ${selectedCompany.name}.`
+                  : currentCompanyData.score < selectedCompany.score
+                    ? `Your risk configuration is less conservative (${selectedCompany.score - currentCompanyData.score}% lower) than ${selectedCompany.name}.`
+                    : `Your risk configuration matches ${selectedCompany.name}'s overall score.`
+                }
+              </p>
+              <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                <p className="text-xs font-medium">Recommended Action</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {currentCompanyData.score > selectedCompany.score + 15
+                    ? "Consider reviewing your priorities to align more closely with industry standards."
+                    : currentCompanyData.score < selectedCompany.score - 15
+                    ? "Your risk profile is lower than comparable companies. Consider elevating key priorities."
+                    : "Your risk profile is well-aligned with industry standards. Continue monitoring changes in risk landscape."}
+                </p>
               </div>
             </div>
           </CardContent>
