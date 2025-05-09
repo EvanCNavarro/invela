@@ -9,7 +9,8 @@ import {
   X,
   BarChart3,
   Search,
-  RefreshCw
+  RefreshCw,
+  Info
 } from "lucide-react";
 import {
   Command,
@@ -347,128 +348,194 @@ export function ComparativeVisualization({
   return (
     <div className="space-y-6">
       {/* Control panel for comparisons */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Industry Average Button */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
+      <div className="space-y-4">
+        {/* Search and buttons row */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Company Search */}
+          <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
+            <PopoverTrigger asChild>
               <Button
-                variant={isIndustryAverageAdded ? "secondary" : "outline"}
+                variant="outline"
                 size="sm"
-                className="flex items-center gap-2"
-                onClick={handleAddIndustryAverage}
-                disabled={isIndustryAverageAdded || selectedCompanies.length >= MAX_COMPARISONS || isLoadingIndustryAvg}
+                className="flex items-center gap-2 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
+                disabled={selectedCompanies.length >= MAX_COMPARISONS}
               >
-                {isLoadingIndustryAvg ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                <Search className="h-4 w-4" />
+                Search Companies
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0 shadow-md animate-in fade-in-50 zoom-in-95 slide-in-from-top-5">
+              <Command>
+                <CommandInput 
+                  placeholder="Search network companies..." 
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                  className="border-b focus:ring-1 focus:ring-primary/20"
+                />
+                {isLoadingCompanies ? (
+                  <div className="py-6 text-center">
+                    <RefreshCw className="h-4 w-4 animate-spin mx-auto" />
+                    <p className="text-sm text-muted-foreground pt-2">Searching companies...</p>
+                  </div>
                 ) : (
-                  <BarChart3 className="h-4 w-4" />
-                )}
-                Industry Average
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Compare with industry average risk profile</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        {/* Company Search */}
-        <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              disabled={selectedCompanies.length >= MAX_COMPARISONS}
-            >
-              <Search className="h-4 w-4" />
-              Search Companies
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0">
-            <Command>
-              <CommandInput 
-                placeholder="Search network companies..." 
-                value={searchQuery}
-                onValueChange={setSearchQuery}
-              />
-              {isLoadingCompanies ? (
-                <div className="py-6 text-center">
-                  <RefreshCw className="h-4 w-4 animate-spin mx-auto" />
-                  <p className="text-sm text-muted-foreground pt-2">Searching companies...</p>
-                </div>
-              ) : (
-                <CommandList>
-                  <CommandEmpty>No companies found</CommandEmpty>
-                  <CommandGroup heading="Network Companies">
-                    {networkCompanies.map((company: CompanyComparison) => (
-                      <CommandItem
-                        key={company.id}
-                        value={company.name}
-                        onSelect={() => handleAddCompany(company)}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex flex-col">
-                            <span>{company.name}</span>
-                            <span className="text-xs text-muted-foreground">{company.companyType}</span>
+                  <CommandList className="max-h-[200px]">
+                    <CommandEmpty>No companies found</CommandEmpty>
+                    <CommandGroup heading="Network Companies">
+                      {networkCompanies.map((company: CompanyComparison) => (
+                        <CommandItem
+                          key={company.id}
+                          value={company.name}
+                          onSelect={() => handleAddCompany(company)}
+                          className="transition-colors duration-150 hover:bg-accent hover:text-accent-foreground cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex flex-col">
+                              <span>{company.name}</span>
+                              <span className="text-xs text-muted-foreground">{company.companyType}</span>
+                            </div>
+                            <div className="transform transition-transform duration-200 group-hover:scale-110">
+                              <PlusCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                            </div>
                           </div>
-                          <PlusCircle className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              )}
-            </Command>
-          </PopoverContent>
-        </Popover>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                )}
+              </Command>
+            </PopoverContent>
+          </Popover>
+          
+          {/* Industry Average Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isIndustryAverageAdded ? "secondary" : "outline"}
+                  size="sm"
+                  className={cn(
+                    "flex items-center gap-2 transition-all duration-200",
+                    !isIndustryAverageAdded && !isLoadingIndustryAvg && 
+                    selectedCompanies.length < MAX_COMPARISONS && 
+                    "hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
+                  )}
+                  onClick={handleAddIndustryAverage}
+                  disabled={isIndustryAverageAdded || selectedCompanies.length >= MAX_COMPARISONS || isLoadingIndustryAvg}
+                >
+                  {isLoadingIndustryAvg ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <PlusCircle className="h-4 w-4 mr-1" />
+                  )}
+                  Industry Average
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-background border shadow-md">
+                <p>Add industry average to comparison</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         
-        {/* Selected Companies Badges */}
-        <div className="flex flex-wrap gap-2 ml-auto">
+        {/* Company slot cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Filled slots */}
           {selectedCompanies.map((company, index) => (
-            <Badge
+            <div 
               key={company.id}
-              variant="secondary"
-              className="flex items-center gap-1 pl-3 pr-2 py-1"
-              style={{ borderLeft: `3px solid ${COMPANY_COLORS[index % COMPANY_COLORS.length]}` }}
+              className="relative h-20 flex flex-col justify-center px-4 bg-accent/20 rounded-md shadow-sm border border-accent/30 overflow-hidden transition-all duration-200 hover:shadow-md group animate-in fade-in-50 zoom-in-95"
+              style={{ borderLeft: `4px solid ${COMPANY_COLORS[index % COMPANY_COLORS.length]}` }}
             >
-              {company.name}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
-                onClick={() => handleRemoveCompany(company.id)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
+              <div className="absolute top-2 right-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-background/80 hover:bg-background"
+                  onClick={() => handleRemoveCompany(company.id)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex flex-col">
+                <div className="font-medium text-sm truncate">{company.name}</div>
+                <div className="text-xs text-muted-foreground">{company.companyType}</div>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-background/50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${company.score}%`, 
+                        backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] 
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{company.score}</span>
+                </div>
+              </div>
+            </div>
           ))}
           
-          {/* Empty slots indicators */}
+          {/* Empty slots */}
           {Array.from({ length: MAX_COMPARISONS - selectedCompanies.length }).map((_, i) => (
-            <Badge
+            <div 
               key={`empty-${i}`}
-              variant="outline"
-              className="border-dashed pl-3 pr-2 py-1 text-muted-foreground"
+              className="h-20 flex flex-col justify-center items-center px-4 border border-dashed border-muted-foreground/30 rounded-md text-muted-foreground"
+              onClick={() => {
+                if (selectedCompanies.length < MAX_COMPARISONS) {
+                  setSearchPopoverOpen(true);
+                }
+              }}
             >
-              Add company...
-            </Badge>
+              <div className="flex flex-col items-center cursor-pointer hover:text-foreground transition-colors duration-150">
+                <PlusCircle className="h-5 w-5 mb-1 opacity-50" />
+                <span className="text-xs">Add company</span>
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
       {/* Radar chart card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-medium">
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md">
+        <CardHeader className="bg-background/70 border-b">
+          <CardTitle className="text-lg font-medium flex items-center">
+            <BarChart3 className="h-5 w-5 mr-2 text-muted-foreground" />
             Comparative Risk Dimension Analysis
+            <div className="ml-auto text-xs text-muted-foreground font-normal flex items-center">
+              <Info className="h-3.5 w-3.5 mr-1" />
+              Higher values indicate higher risk factors
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {chartComponentLoaded ? (
-            <div className="flex justify-center">
-              <div className="w-full overflow-visible">
+            <div className="flex flex-col items-center">
+              {/* Chart legend */}
+              <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
+                  <span className="text-sm">{currentCompanyData.name}</span>
+                </div>
+                
+                {selectedCompanies.map((company, index) => (
+                  <div key={`legend-${company.id}`} className="flex items-center gap-2 animate-in fade-in-50">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
+                    ></div>
+                    <span className="text-sm">{company.name}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Animated entry wrapper for chart */}
+              <div 
+                className="w-full overflow-visible transform transition-all duration-500 animate-in zoom-in-95 fade-in-50"
+                style={{ 
+                  filter: selectedCompanies.length > 0 ? 'none' : 'grayscale(0.5)',
+                  opacity: selectedCompanies.length > 0 ? 1 : 0.8
+                }}
+              >
                 <ReactApexChart
                   options={chartOptions}
                   series={series}
@@ -477,6 +544,13 @@ export function ComparativeVisualization({
                   width="100%"
                 />
               </div>
+              
+              {/* No companies selected message */}
+              {selectedCompanies.length === 0 && (
+                <div className="text-center text-muted-foreground text-sm mt-4 p-3 border border-dashed rounded-md">
+                  Add companies above to see comparative risk dimension analysis
+                </div>
+              )}
             </div>
           ) : (
             <div className="h-400 w-full flex items-center justify-center">
@@ -497,7 +571,7 @@ export function ComparativeVisualization({
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Current company */}
-              <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-background/50 border shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
                   <h3 className="font-medium">{currentCompanyData.name}</h3>
@@ -508,10 +582,10 @@ export function ComparativeVisualization({
                 </div>
                 <div>
                   <h4 className="font-medium text-sm">Overall Risk Score</h4>
-                  <div className="flex items-center gap-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="w-full bg-accent/30 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="h-2.5 rounded-full" 
+                        className="h-2.5 rounded-full transition-all duration-500" 
                         style={{ width: `${currentCompanyData.score}%`, backgroundColor: '#4965EC' }}
                       ></div>
                     </div>
@@ -520,32 +594,43 @@ export function ComparativeVisualization({
                 </div>
                 <div>
                   <h4 className="font-medium text-sm">Key Priorities</h4>
-                  <ul className="text-xs text-muted-foreground mt-1">
+                  <ul className="text-xs text-muted-foreground mt-1 space-y-1">
                     {dimensions.slice(0, 2).map(dim => (
-                      <li key={dim.id}>{dim.name} ({Math.round(dim.weight)}%)</li>
+                      <li key={dim.id} className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dim.color }}></div>
+                        <span>{dim.name} ({Math.round(dim.weight)}%)</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
               </div>
               
               {/* Grid of comparison companies */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {selectedCompanies.map((company, index) => (
-                  <div key={company.id} className="space-y-2">
-                    <div className="flex items-center gap-2">
+                  <div 
+                    key={company.id} 
+                    className="p-4 rounded-lg bg-background/50 border shadow-sm hover:shadow-md transition-shadow duration-200"
+                    style={{ borderLeft: `3px solid ${COMPANY_COLORS[index % COMPANY_COLORS.length]}` }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
                       <div 
                         className="w-3 h-3 rounded-full" 
                         style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
                       ></div>
                       <h3 className="font-medium">{company.name}</h3>
+                      <Badge variant="outline" className="ml-auto text-xs">
+                        {company.companyType}
+                      </Badge>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm">Risk Score</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-sm mb-1">Risk Score</h4>
                         <div className="flex items-center gap-2">
-                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div className="w-full bg-accent/30 rounded-full h-2.5 overflow-hidden">
                             <div
-                              className="h-2.5 rounded-full"
+                              className="h-2.5 rounded-full transition-all duration-500"
                               style={{ 
                                 width: `${company.score}%`, 
                                 backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] 
@@ -555,23 +640,44 @@ export function ComparativeVisualization({
                           <span className="text-sm font-medium whitespace-nowrap">{company.score}/100</span>
                         </div>
                       </div>
+                      
                       <div>
-                        <h4 className="font-medium text-sm">Difference</h4>
-                        <span className={`text-sm ${
-                          currentCompanyData.score > company.score 
-                            ? 'text-amber-600' 
-                            : currentCompanyData.score < company.score 
-                              ? 'text-emerald-600'
-                              : 'text-slate-600'
-                        }`}>
-                          {currentCompanyData.score > company.score 
-                            ? `+${currentCompanyData.score - company.score}%`
-                            : currentCompanyData.score < company.score
-                              ? `-${company.score - currentCompanyData.score}%`
-                              : 'Equal'
-                          }
-                        </span>
+                        <h4 className="font-medium text-sm mb-1">Comparison</h4>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className={`px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
+                              currentCompanyData.score > company.score 
+                                ? 'bg-amber-100 text-amber-800' 
+                                : currentCompanyData.score < company.score 
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-slate-100 text-slate-800'
+                            }`}
+                          >
+                            {currentCompanyData.score > company.score 
+                              ? `+${currentCompanyData.score - company.score}%`
+                              : currentCompanyData.score < company.score
+                                ? `-${company.score - currentCompanyData.score}%`
+                                : 'Equal'
+                            }
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {currentCompanyData.score > company.score 
+                              ? 'Higher risk'
+                              : currentCompanyData.score < company.score
+                                ? 'Lower risk'
+                                : 'Equal risk'
+                            }
+                          </span>
+                        </div>
                       </div>
+                    </div>
+                    
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      {currentCompanyData.score > company.score + 15
+                        ? "Your configuration is more conservative. Consider reviewing priorities."
+                        : currentCompanyData.score < company.score - 15
+                        ? "Your profile is less conservative than this comparison benchmark."
+                        : "Your risk profile is well-aligned with this benchmark."}
                     </div>
                   </div>
                 ))}
@@ -579,35 +685,86 @@ export function ComparativeVisualization({
             </div>
             
             {/* Insights section */}
-            <div className="mt-8 pt-4 border-t">
-              <h4 className="font-medium mb-3">Risk Profile Insights</h4>
-              <div className="space-y-4">
-                {selectedCompanies.map((company, index) => (
-                  <div key={`insight-${company.id}`} className="p-3 bg-gray-50 rounded-md">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
-                      ></div>
-                      <p className="text-sm font-medium">Compared to {company.name}</p>
+            <div className="mt-8 pt-6 border-t">
+              <div className="flex items-center mb-4">
+                <h4 className="font-medium">Risk Profile Insights</h4>
+                <div className="ml-auto text-xs text-muted-foreground">Based on your comparison selections</div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {selectedCompanies.map((company, index) => {
+                  // Calculate the difference percentage
+                  const difference = currentCompanyData.score - company.score;
+                  const absDifference = Math.abs(difference);
+                  
+                  // Determine color and icon based on difference
+                  let bgColor = 'bg-slate-50';
+                  let borderColor = 'border-slate-200';
+                  
+                  if (difference > 15) {
+                    bgColor = 'bg-amber-50';
+                    borderColor = 'border-amber-200';
+                  } else if (difference < -15) {
+                    bgColor = 'bg-emerald-50';
+                    borderColor = 'border-emerald-200';
+                  }
+                  
+                  return (
+                    <div 
+                      key={`insight-${company.id}`} 
+                      className={`p-4 rounded-lg border animate-in fade-in-50 ${bgColor} ${borderColor} transition-all duration-300 hover:shadow-sm`}
+                    >
+                      <div className="flex items-start gap-2 mb-3">
+                        <div className="mt-1">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{company.name}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span 
+                              className={`inline-block px-1.5 py-0.5 text-xs rounded-sm ${
+                                difference > 0 
+                                  ? 'bg-amber-100 text-amber-800' 
+                                  : difference < 0 
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-slate-100 text-slate-800'
+                              }`}
+                            >
+                              {difference > 0 
+                                ? `+${difference}%` 
+                                : difference < 0 
+                                  ? `-${absDifference}%` 
+                                  : 'Equal'
+                              }
+                            </span>
+                            <span className="text-xs text-muted-foreground">difference</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-foreground/90">
+                        {difference > 0 
+                          ? `Your risk configuration is more conservative than ${company.name}'s profile.`
+                          : difference < 0
+                            ? `Your risk configuration is less conservative than ${company.name}'s profile.`
+                            : `Your risk configuration matches ${company.name}'s risk profile.`
+                        }
+                      </div>
+                      
+                      <div className="mt-3 rounded-md bg-background/70 p-2 text-xs text-muted-foreground">
+                        <div className="font-medium mb-1">Recommendation</div>
+                        {difference > 15
+                          ? "Consider reviewing your priorities to more closely align with industry standards."
+                          : difference < -15
+                          ? "Your risk profile is lower than comparable companies. Consider elevating key priorities."
+                          : "Your risk profile is well-aligned with similar companies. Continue monitoring changes in the risk landscape."}
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {currentCompanyData.score > company.score 
-                        ? `Your risk configuration is more conservative (${currentCompanyData.score - company.score}% higher) than ${company.name}.`
-                        : currentCompanyData.score < company.score
-                          ? `Your risk configuration is less conservative (${company.score - currentCompanyData.score}% lower) than ${company.name}.`
-                          : `Your risk configuration matches ${company.name}'s overall score.`
-                      }
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {currentCompanyData.score > company.score + 15
-                        ? "Consider reviewing your priorities to align more closely with industry standards."
-                        : currentCompanyData.score < company.score - 15
-                        ? "Your risk profile is lower than comparable companies. Consider elevating key priorities."
-                        : "Your risk profile is well-aligned with similar companies. Continue monitoring changes in risk landscape."}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </CardContent>
