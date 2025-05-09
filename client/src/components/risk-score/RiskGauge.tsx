@@ -9,7 +9,6 @@ interface RiskGaugeProps {
   score: number;
   riskLevel: string;
   size?: number;
-  logger?: any; // Make logger optional and any type to avoid issues
 }
 
 /**
@@ -39,8 +38,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   riskLevel, 
   size = 220
 }) => {
-  // Don't use logger at all to avoid issues
-  // Just log to console directly for debugging
+  // Simple console log for debugging
   console.log(`[RiskScore:gauge] Rendering with score: ${score}, level: ${riskLevel}`);
   
   // Calculate the color based on risk level
@@ -51,58 +49,59 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   
   // Calculate dimensions
   const width = size;
-  const height = size / 2 + 30;
+  const height = size / 2 + 20;
   const radius = size * 0.4;
   const centerX = width / 2;
-  const centerY = height * 0.3; // Position circle at the top
+  const centerY = height * 0.4; // Position circle at the top
   const strokeWidth = size * 0.08;
   
-  // Calculate the angle for the progress arc (upside down semi-circle)
+  // Calculate the angles for the progress arc
   const startAngle = 0; // Starting from 0 radians (right side)
-  const endAngle = startAngle + (percentage / 100) * Math.PI; // Going counter-clockwise
+  const endAngle = percentage * Math.PI / 100; // Convert percentage to radians (0 to π)
   
   // Function to calculate point on the arc
-  const polarToCartesian = (angle: number) => {
+  const getPoint = (angle: number) => {
     return {
       x: centerX + radius * Math.cos(angle),
       y: centerY - radius * Math.sin(angle) // Negative to flip upside down
     };
   };
   
-  // Calculate points for the progress arc
-  const start = polarToCartesian(startAngle);
-  const end = polarToCartesian(endAngle);
+  // Calculate start and end points
+  const start = getPoint(0); // Right side (0 degrees)
+  const end = getPoint(endAngle);
   
   // Determine if we need to use the large arc flag
   const largeArcFlag = percentage > 50 ? 1 : 0;
   
-  // Create the SVG path for the progress arc
-  const arcPath = `
+  // Create the path for the colored progress arc
+  const progressPath = `
     M ${start.x},${start.y}
     A ${radius},${radius} 0 ${largeArcFlag},1 ${end.x},${end.y}
   `;
   
-  // Create the SVG path for the background arc
-  const backgroundArcPath = `
+  // Create the path for the background (gray) arc
+  const backgroundPath = `
     M ${centerX - radius},${centerY}
     A ${radius},${radius} 0 0,1 ${centerX + radius},${centerY}
   `;
-    
+  
   return (
-    <div style={{ position: 'relative', width: width, height: height, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: width, height: height * 2.5, margin: '0 auto' }}>
+      {/* SVG containing the arc */}
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-        {/* Background arc */}
+        {/* Background arc (gray) */}
         <path
-          d={backgroundArcPath}
+          d={backgroundPath}
           fill="none"
           stroke="#f1f5f9"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
-        {/* Progress arc */}
+        {/* Progress arc (colored) */}
         <path
-          d={arcPath}
+          d={progressPath}
           fill="none"
           stroke={color}
           strokeWidth={strokeWidth}
@@ -132,13 +131,13 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         </text>
       </svg>
       
-      {/* Score number */}
+      {/* Score value */}
       <div style={{
         position: 'absolute',
-        top: height * 0.75,
+        top: height + 30,
         left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontSize: size / 4,
+        transform: 'translateX(-50%)',
+        fontSize: size / 3.5,
         fontWeight: 'bold',
         color: '#333'
       }}>
@@ -148,10 +147,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       {/* Risk Acceptance Level text */}
       <div style={{
         position: 'absolute',
-        top: height * 0.55,
+        top: height - 10,
         left: '50%',
         transform: 'translateX(-50%)',
-        fontSize: size / 15,
+        fontSize: size / 18,
         color: '#666',
         fontWeight: 500
       }}>
