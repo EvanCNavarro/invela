@@ -570,7 +570,7 @@ export function ComparativeVisualization({
               {/* Current company */}
               <div className="p-4 rounded-lg bg-background/50 border shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }}></div>
                   <h3 className="font-medium">{currentCompanyData.name}</h3>
                 </div>
                 <div>
@@ -583,7 +583,7 @@ export function ComparativeVisualization({
                     <div className="w-full bg-accent/30 rounded-full h-2.5 overflow-hidden">
                       <div
                         className="h-2.5 rounded-full transition-all duration-500" 
-                        style={{ width: `${currentCompanyData.score}%`, backgroundColor: '#4965EC' }}
+                        style={{ width: `${currentCompanyData.score}%`, backgroundColor: '#1e40af' }}
                       ></div>
                     </div>
                     <span className="text-sm font-medium">{currentCompanyData.score}/100</span>
@@ -644,9 +644,9 @@ export function ComparativeVisualization({
                           <div 
                             className={`px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
                               currentCompanyData.score > company.score 
-                                ? 'bg-amber-100 text-amber-800' 
+                                ? 'bg-blue-100 text-blue-800' 
                                 : currentCompanyData.score < company.score 
-                                  ? 'bg-emerald-100 text-emerald-800'
+                                  ? 'bg-sky-100 text-sky-800'
                                   : 'bg-slate-100 text-slate-800'
                             }`}
                           >
@@ -694,16 +694,16 @@ export function ComparativeVisualization({
                   const difference = currentCompanyData.score - company.score;
                   const absDifference = Math.abs(difference);
                   
-                  // Determine color and icon based on difference
+                  // Determine color and icon based on difference using blue variations
                   let bgColor = 'bg-slate-50';
                   let borderColor = 'border-slate-200';
                   
                   if (difference > 15) {
-                    bgColor = 'bg-amber-50';
-                    borderColor = 'border-amber-200';
+                    bgColor = 'bg-blue-50';
+                    borderColor = 'border-blue-200';
                   } else if (difference < -15) {
-                    bgColor = 'bg-emerald-50';
-                    borderColor = 'border-emerald-200';
+                    bgColor = 'bg-sky-50';
+                    borderColor = 'border-sky-200';
                   }
                   
                   return (
@@ -724,9 +724,9 @@ export function ComparativeVisualization({
                             <span 
                               className={`inline-block px-1.5 py-0.5 text-xs rounded-sm ${
                                 difference > 0 
-                                  ? 'bg-amber-100 text-amber-800' 
+                                  ? 'bg-blue-100 text-blue-800' 
                                   : difference < 0 
-                                    ? 'bg-emerald-100 text-emerald-800'
+                                    ? 'bg-sky-100 text-sky-800'
                                     : 'bg-slate-100 text-slate-800'
                               }`}
                             >
