@@ -138,13 +138,14 @@ export function ContentTutorialModal({
       {/* Semi-transparent overlay only for the content area */}
       <div
         ref={overlayRef}
-        className="absolute z-50 bg-black/20"
+        className="absolute z-50 bg-black/50"
         style={{
           position: 'absolute',
           top: `${modalPosition.top}px`,
           left: `${modalPosition.left}px`,
           width: `${modalPosition.width}px`,
           height: `${modalPosition.height}px`,
+          backdropFilter: 'blur(4px)',
         }}
       />
       
