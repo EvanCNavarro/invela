@@ -1,9 +1,14 @@
 /**
  * RiskGauge Component
  * 
- * A half-circle gauge visualization using pure CSS/SVG for compatibility and stability
+ * A half-circle gauge visualization that uses a mix of SVG and dynamic imports
+ * to avoid SSR and React hydration issues.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Skeleton } from "@/components/ui/skeleton";
+
+// We'll dynamically load ReactApexChart like in ComparativeVisualization.tsx
+let ReactApexChart: any;
 
 interface RiskGaugeProps {
   score: number;
@@ -40,6 +45,8 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   size = 150,
   logger 
 }) => {
+  const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
+  
   // Log component render if logger exists
   if (logger) {
     logger('gauge', `Rendering half-circle gauge with score: ${score}, level: ${riskLevel}`);
@@ -48,84 +55,109 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   // Calculate the color based on risk level
   const color = getRiskLevelColor(riskLevel);
   
-  // Calculate the percentage of the circle to fill
-  const percentage = Math.min(Math.max(score, 0), 100);
-  
-  // Calculate the stroke-dasharray and stroke-dashoffset for the SVG arc
-  const radius = size * 0.4;
-  const circumference = radius * Math.PI;
-  const dashArray = `${circumference} ${circumference}`;
-  const dashOffset = circumference - (percentage / 100) * circumference;
+  // Load ApexCharts component only on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('react-apexcharts').then((mod) => {
+        ReactApexChart = mod.default;
+        setChartComponentLoaded(true);
+      }).catch(err => {
+        console.error("Error loading ApexCharts:", err);
+      });
+    }
+  }, []);
+
+  // Create the half-circle gauge chart options
+  const gaugeOptions = {
+    chart: {
+      fontFamily: 'Inter, sans-serif',
+      toolbar: {
+        show: false
+      },
+      background: 'transparent'
+    },
+    plotOptions: {
+      radialBar: {
+        startAngle: -180,
+        endAngle: 0,
+        hollow: {
+          size: '65%'
+        },
+        track: {
+          background: '#f1f5f9',
+          strokeWidth: '100%'
+        },
+        dataLabels: {
+          name: {
+            show: false
+          },
+          value: {
+            offsetY: -10,
+            fontSize: `${size/5}px`,
+            fontWeight: 600,
+            color: '#333',
+            formatter: function() {
+              return score.toString();
+            }
+          }
+        }
+      }
+    },
+    fill: {
+      type: 'solid',
+      colors: [color]
+    },
+    stroke: {
+      lineCap: 'round'
+    },
+    labels: [''],
+    grid: {
+      padding: {
+        bottom: 0
+      }
+    }
+  };
+
+  // Create the series data with the score
+  const series = [score];
+
+  // If the chart component is still loading, show a skeleton
+  if (!chartComponentLoaded) {
+    return (
+      <div style={{ width: size, height: size/2, margin: '0 auto' }}>
+        <Skeleton className="w-full h-full rounded-full" />
+      </div>
+    );
+  }
   
   return (
     <div style={{ 
       width: size, 
-      height: size / 2 + 20, 
+      height: size / 2 + 40, 
       margin: '0 auto', 
       position: 'relative', 
       textAlign: 'center'
     }}>
-      <svg 
-        width={size} 
-        height={size / 2 + 10} 
-        viewBox={`0 0 ${size} ${size / 2 + 10}`}
-        style={{ overflow: 'visible' }}
-      >
-        {/* Background arc (gray) */}
-        <path
-          d={`M ${size * 0.1} ${size / 2} A ${radius} ${radius} 0 0 1 ${size * 0.9} ${size / 2}`}
-          fill="none"
-          stroke="#f1f5f9"
-          strokeWidth={size * 0.1}
-          strokeLinecap="round"
-        />
-        
-        {/* Colored arc representing the score */}
-        <path
-          d={`M ${size * 0.1} ${size / 2} A ${radius} ${radius} 0 0 1 ${size * 0.9} ${size / 2}`}
-          fill="none"
-          stroke={color}
-          strokeWidth={size * 0.1}
-          strokeLinecap="round"
-          strokeDasharray={dashArray}
-          strokeDashoffset={dashOffset}
-          transform={`rotate(-180 ${size / 2} ${size / 2})`}
-        />
-        
-        {/* Min label (0) */}
-        <text
-          x={size * 0.1}
-          y={size * 0.6}
-          fontSize={size * 0.08}
-          fill="#666"
-          textAnchor="middle"
-        >
-          0
-        </text>
-        
-        {/* Max label (100) */}
-        <text
-          x={size * 0.9}
-          y={size * 0.6}
-          fontSize={size * 0.08}
-          fill="#666"
-          textAnchor="middle"
-        >
-          100
-        </text>
-      </svg>
+      <ReactApexChart
+        options={gaugeOptions}
+        series={series}
+        type="radialBar"
+        height={size}
+        width={size}
+      />
       
-      {/* Score display in the center */}
+      {/* Min and max labels */}
       <div style={{
-        position: 'absolute',
-        top: '40%',
-        left: '50%',
-        transform: 'translate(-50%, 0%)',
-        fontSize: size / 4,
-        fontWeight: 'bold',
-        color: '#333'
+        display: 'flex',
+        justifyContent: 'space-between',
+        width: '90%',
+        marginLeft: '5%',
+        marginTop: -10,
+        fontSize: size / 15,
+        color: '#666'
       }}>
-        {score}
+        <span>0</span>
+        <span>100</span>
       </div>
     </div>
   );
