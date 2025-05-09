@@ -1,10 +1,14 @@
 /**
- * Risk Score Data Service
+ * Risk Score Data Service - Simplified Implementation
  * 
- * This service provides a centralized approach to managing risk score data,
- * ensuring consistency between local state, server state, and WebSocket updates.
- * It follows the Repository pattern to abstract data access and provide a single
- * source of truth for risk score configuration.
+ * Following KISS (Keep It Simple, Stupid), DRY (Don't Repeat Yourself),
+ * and OODA (Observe, Orient, Decide, Act) principles.
+ * 
+ * This service provides:
+ * - Single source of truth for risk score data
+ * - Consistent caching and server synchronization
+ * - WebSocket updates handling
+ * - Error resilience
  */
 
 import { apiRequest } from '@/lib/queryClient';
