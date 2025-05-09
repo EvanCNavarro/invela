@@ -190,5 +190,38 @@ export function registerAllServices(options: Partial<ServiceRegistrationOptions>
  */
 export function initializeServices(): void {
   logger.info('Initializing all services with unified registration');
+  
+  // Register form services
   registerAllServices();
+  
+  // Initialize the Risk Score Data Service
+  try {
+    // Import necessary modules
+    import('../lib/app-initialization').then(({ initializeAppServices }) => {
+      // Get the query client from the global context
+      const queryClient = (window as any).__QUERY_CLIENT;
+      
+      if (queryClient) {
+        logger.info('Initializing Risk Score Data Service');
+        initializeAppServices(queryClient);
+      } else {
+        logger.warn('QueryClient not available, skipping Risk Score Data Service initialization');
+        
+        // Try to initialize later when the query client might be available
+        setTimeout(() => {
+          const queryClient = (window as any).__QUERY_CLIENT;
+          if (queryClient) {
+            logger.info('Initializing Risk Score Data Service (delayed)');
+            import('../lib/app-initialization').then(({ initializeAppServices }) => {
+              initializeAppServices(queryClient);
+            });
+          }
+        }, 1000);
+      }
+    }).catch(error => {
+      logger.error('Failed to import app initialization module:', error);
+    });
+  } catch (error) {
+    logger.error('Failed to initialize Risk Score Data Service:', error);
+  }
 }

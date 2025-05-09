@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import riskScoreLogger from '@/lib/risk-score-logger';
-import wsManager from '@/lib/web-socket-manager';
+import wsManager from '../lib/web-socket-manager';
 import { 
   RiskDimension, 
   RiskThresholds,

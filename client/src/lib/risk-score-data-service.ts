@@ -62,7 +62,7 @@ class RiskScoreDataService {
       this.queryClient.setQueryData(CACHE_KEYS.PRIORITIES, priorities);
       
       // Send the data to the server
-      const response = await apiRequest('POST', '/api/risk-score/priorities', priorities);
+      const response = await apiRequest<PrioritiesResponse>('POST', '/api/risk-score/priorities', priorities);
       
       // Invalidate the query to ensure fresh data on next fetch
       this.queryClient.invalidateQueries({ queryKey: CACHE_KEYS.PRIORITIES });
@@ -92,7 +92,7 @@ class RiskScoreDataService {
       this.queryClient.setQueryData(CACHE_KEYS.CONFIGURATION, configuration);
       
       // Send the data to the server
-      const response = await apiRequest('POST', '/api/risk-score/configuration', configuration);
+      const response = await apiRequest<ConfigurationResponse>('POST', '/api/risk-score/configuration', configuration);
       
       // Invalidate the query to ensure fresh data on next fetch
       this.queryClient.invalidateQueries({ queryKey: CACHE_KEYS.CONFIGURATION });
