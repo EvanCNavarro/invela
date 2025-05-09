@@ -57,7 +57,7 @@ const ItemTypes = {
   DIMENSION_ROW: 'dimensionRow'
 };
 
-// Skeleton component for dimension rows during loading state with updated design
+// Skeleton component for dimension rows during loading state with updated neumorphic design
 const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
   // Vary the width and intensity based on priority
   const nameWidth = `${80 - index * 7}%`;
@@ -68,23 +68,37 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
   
   return (
     <div 
-      className="flex items-center p-4 mb-2 animate-pulse rounded-lg"
+      className="flex items-center p-4 mb-3 animate-pulse rounded-lg relative"
       style={{ 
         animationDelay: `${index * 0.1}s`,
         backgroundColor: 'white',
-        borderRadius: '8px',
+        borderRadius: '10px',
         border: '1px solid #f0f0f0',
+        boxShadow: '4px 4px 10px rgba(0,0,0,0.03), -4px -4px 10px rgba(255,255,255,0.7)',
+        position: 'relative',
       }}
     >
+      {/* Left border indicator */}
+      <div 
+        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg opacity-60"
+        style={{
+          background: 'linear-gradient(to bottom, #cbd5e1, #e2e8f0)',
+        }}
+      ></div>
+      
       {/* Drag handle skeleton */}
-      <div className="h-5 w-5 bg-gray-200 rounded mr-2"></div>
+      <div className="flex flex-col items-center ml-2 mr-3">
+        <div className="h-6 w-6 bg-gray-200 rounded"></div>
+        <div className="h-2 w-8 bg-gray-200 rounded mt-1"></div>
+      </div>
       
       {/* Dimension icon skeleton with gradient */}
       <div 
         className="w-10 h-10 rounded mr-4 flex-shrink-0"
         style={{ 
           background: 'linear-gradient(to bottom, #cbd5e1, #e2e8f0)',
-          borderRadius: '8px'
+          borderRadius: '8px',
+          boxShadow: '2px 2px 5px rgba(0,0,0,0.05), -1px -1px 3px rgba(255,255,255,0.5)'
         }}
       ></div>
       
@@ -174,29 +188,43 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
     drop(node);
   };
 
-  // Render dimension row matching the latest design from screenshot
+  // Render dimension row matching the latest design from screenshot with neumorphic styling
   return (
     <div 
       ref={ref}
-      className={`flex items-center p-4 mb-2 transition-all duration-200 
-      ${isDragging ? 'opacity-50 scale-[0.98]' : 'opacity-100 hover:shadow-sm'}`}
+      className={`flex items-center p-4 mb-3 transition-all duration-200 
+      ${isDragging ? 'opacity-80 scale-[0.98] shadow-inner' : 'opacity-100 hover:shadow-md'}`}
       style={{ 
         backgroundColor: 'white',
-        borderRadius: '8px',
+        borderRadius: '10px',
         border: '1px solid #f0f0f0',
+        boxShadow: isDragging 
+          ? 'inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px rgba(255,255,255,0.8)' 
+          : '4px 4px 10px rgba(0,0,0,0.03), -4px -4px 10px rgba(255,255,255,0.7)',
+        position: 'relative',
       }}
     >
-      {/* Drag handle on the left */}
-      <div className="cursor-move flex items-center justify-center mr-2">
-        <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-150" />
+      {/* Left border line indicating draggable */}
+      <div 
+        className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-l-lg opacity-60"
+        style={{
+          background: 'linear-gradient(to bottom, #2563eb, #93c5fd)'
+        }}
+      ></div>
+      
+      {/* Drag handle on the left with more pronounced visual */}
+      <div className="cursor-move flex flex-col items-center justify-center ml-2 mr-3">
+        <GripVertical className="h-6 w-6 text-blue-400 hover:text-blue-600 transition-colors duration-150" />
+        <span className="text-[9px] font-medium text-blue-400 mt-1">DRAG</span>
       </div>
       
       {/* Icon with blue to gray gradient */}
       <div 
-        className="w-10 h-10 rounded mr-4 flex-shrink-0 shadow-sm flex items-center justify-center" 
+        className="w-10 h-10 rounded mr-4 flex-shrink-0 flex items-center justify-center" 
         style={{ 
           background: 'linear-gradient(to bottom, #1a365d, #2d3748)',
-          borderRadius: '8px'
+          borderRadius: '8px',
+          boxShadow: '2px 2px 5px rgba(0,0,0,0.1), -1px -1px 3px rgba(255,255,255,0.7)'
         }}
       >
         {/* Dimension icon based on dimension type */}
