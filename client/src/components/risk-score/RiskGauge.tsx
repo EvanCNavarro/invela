@@ -41,7 +41,7 @@ const polarToCartesian = (
   angleInDegrees: number
 ): { x: number; y: number } => {
   // Convert from degrees to radians
-  const angleInRadians = ((angleInDegrees - 180) * Math.PI) / 180;
+  const angleInRadians = (angleInDegrees * Math.PI) / 180;
   
   return {
     x: centerX + radius * Math.cos(angleInRadians),
@@ -60,16 +60,16 @@ const describeArc = (
   startAngle: number,
   endAngle: number
 ): string => {
-  const start = polarToCartesian(x, y, radius, endAngle);
-  const end = polarToCartesian(x, y, radius, startAngle);
+  const start = polarToCartesian(x, y, radius, startAngle);
+  const end = polarToCartesian(x, y, radius, endAngle);
   
   // Determine if the arc should be drawn the long way around
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+  const largeArcFlag = Math.abs(endAngle - startAngle) <= 180 ? 0 : 1;
   
   // Create the SVG arc path string
   return [
     'M', start.x, start.y,
-    'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
+    'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y
   ].join(' ');
 };
 
@@ -98,16 +98,17 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const centerY = height;
   const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
   
-  // Maps percentage (0-100) to angle (180-0) for the half-circle
-  // At 0%, angle is 180 (left)
+  // Maps percentage (0-100) to angle for the half-circle
+  // For flipped version (right to left):
+  // At 0%, angle is 0 (right)
   // At 50%, angle is 90 (top)
-  // At 100%, angle is 0 (right)
-  const startAngle = 180;
-  const endAngle = 180 - (percentage / 100) * 180;
+  // At 100%, angle is 180 (left)
+  const startAngle = 0;
+  const endAngle = (percentage / 100) * 180;
   
   // Create arc paths using the describeArc helper
   const backgroundPath = describeArc(centerX, centerY, radius, 0, 180);
-  const progressPath = describeArc(centerX, centerY, radius, endAngle, 180);
+  const progressPath = describeArc(centerX, centerY, radius, 0, endAngle);
   
   return (
     <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
@@ -144,9 +145,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
           {score}
         </text>
         
-        {/* Min label (0) */}
+        {/* Min label (0) - Now on the right side */}
         <text
-          x={centerX - radius - 6}
+          x={centerX + radius + 6}
           y={centerY + 20}
           fontSize={size * 0.05}
           fill="#666"
@@ -155,9 +156,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
           0
         </text>
         
-        {/* Max label (100) */}
+        {/* Max label (100) - Now on the left side */}
         <text
-          x={centerX + radius + 6}
+          x={centerX - radius - 6}
           y={centerY + 20}
           fontSize={size * 0.05}
           fill="#666"
