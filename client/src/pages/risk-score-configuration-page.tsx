@@ -122,7 +122,7 @@ interface DimensionRowProps {
  * Draggable and droppable dimension row component
  * Allows reordering of risk dimensions through drag and drop
  */
-const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder, onValueChange }) => {
+const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder }) => {
   // Set up drag functionality
   const [{ isDragging }, drag, dragPreview] = useDrag({
     type: ItemTypes.DIMENSION_ROW,
@@ -271,7 +271,7 @@ export default function RiskScoreConfigurationPage() {
     isLoading,
     isSaving,
     handleReorder,
-    handleValueChange,
+    // handleValueChange removed as dimension sliders are being removed
     handleSave,
     handleReset,
     handleScoreChange,
@@ -307,7 +307,6 @@ export default function RiskScoreConfigurationPage() {
         dimension={dim}
         index={index}
         onReorder={handleDimensionReorder}
-        onValueChange={handleValueChange}
       />
     ));
   };
@@ -429,21 +428,7 @@ export default function RiskScoreConfigurationPage() {
                           />
                         </div>
                         
-                        <div className="mt-10 w-full">
-                          <h3 className="text-base font-medium mb-2">Weight Distribution</h3>
-                          
-                          <div className="space-y-2">
-                            {dimensions.map((dimension) => (
-                              <div key={dimension.id} className="flex items-center justify-between py-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: dimension.color }}></div>
-                                  <span className="text-sm">{dimension.name}</span>
-                                </div>
-                                <span className="text-sm font-medium">{dimension.weight.toFixed(0)}%</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                        {/* Weight Distribution section removed as requested */}
                       </div>
                     )}
                   </CardContent>
