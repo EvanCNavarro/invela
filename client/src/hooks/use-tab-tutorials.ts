@@ -3,85 +3,137 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
-/**
- * Hook for managing tab tutorials
- * 
- * This hook handles checking tutorial completion status and marking tutorials as completed.
- * It provides an API for components to interact with the tab tutorial system.
- */
-export function useTabTutorials() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  // Get all completed tutorials for the current user
-  const { 
-    data: completedTutorials = [], 
-    isLoading,
-    error 
-  } = useQuery<string[]>({
-    queryKey: ['/api/user-tab-tutorials'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('/api/user-tab-tutorials');
-        const data = await response.json();
-        return data.completedTutorials || [];
-      } catch (error) {
-        console.error('Error fetching completed tutorials:', error);
-        return [];
-      }
-    }
-  });
-
-  // Check if a specific tutorial is completed
-  const checkIfCompleted = useCallback((tabKey: string): boolean => {
-    return completedTutorials.includes(tabKey);
-  }, [completedTutorials]);
-  
-  // Mark a tutorial as completed
-  const markTutorialCompletedMutation = useMutation({
-    mutationFn: async (tabKey: string) => {
-      const response = await apiRequest('/api/user-tab-tutorials', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ tabKey }),
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data.completed) {
-        // Invalidate queries to refetch
-        queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials'] });
-        
-        toast({
-          title: 'Tutorial completed',
-          description: 'You can always revisit this tutorial from the help menu.',
-        });
-      }
-    },
-    onError: (error) => {
-      console.error('Error marking tutorial as completed:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to mark tutorial as completed. Please try again.',
-        variant: 'destructive'
-      });
-    }
-  });
-  
-  const markTutorialCompleted = useCallback((tabKey: string) => {
-    markTutorialCompletedMutation.mutate(tabKey);
-  }, [markTutorialCompletedMutation]);
-  
-  return {
-    completedTutorials,
-    isLoading,
-    error,
-    checkIfCompleted,
-    markTutorialCompleted,
-    markingCompleted: markTutorialCompletedMutation.isPending
-  };
+export interface UserTabTutorialStatus {
+  tabName: string;
+  userId: number;
+  completed: boolean;
+  lastSeenAt: string | null;
+  currentStep: number;
 }
 
-export default useTabTutorials;
+interface UseTabTutorialsResult {
+  tutorialEnabled: boolean;
+  currentStep: number;
+  totalSteps: number;
+  isCompleted: boolean;
+  isLoading: boolean;
+  handleNext: () => void;
+  handleComplete: () => void;
+  markTutorialSeen: () => void;
+}
+
+/**
+ * Hook to manage tab-specific tutorials
+ * 
+ * This hook handles the state and progression of tab-specific tutorials,
+ * keeping track of which steps have been completed and syncing with the server.
+ * 
+ * @param tabName - The unique identifier for the tab
+ * @returns Object with tutorial state and control functions
+ */
+export function useTabTutorials(tabName: string): UseTabTutorialsResult {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [currentStep, setCurrentStep] = useState(0);
+
+  // Get tutorial status from the server
+  const { data: tutorialStatus, isLoading: isStatusLoading } = useQuery<UserTabTutorialStatus>({
+    queryKey: ['tutorials', tabName],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/user-tab-tutorials/${tabName}`);
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Failed to fetch tutorial status');
+    },
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
+  // Update tutorial status on the server
+  const updateTutorialMutation = useMutation({
+    mutationFn: async (data: Partial<UserTabTutorialStatus>) => {
+      const response = await apiRequest(`/api/user-tab-tutorials/${tabName}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      throw new Error('Failed to update tutorial status');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tutorials', tabName] });
+    },
+    onError: (error) => {
+      console.error('Error updating tutorial status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update tutorial progress',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Set the current step from the server data
+  useEffect(() => {
+    if (tutorialStatus && !isStatusLoading) {
+      setCurrentStep(tutorialStatus.currentStep || 0);
+    }
+  }, [tutorialStatus, isStatusLoading]);
+
+  // Calculate total steps based on tab type (hardcoded for simplicity)
+  const getTotalSteps = useCallback(() => {
+    switch (tabName) {
+      case 'risk-score':
+        return 5;
+      case 'claims-risk':
+        return 4;
+      default:
+        return 3; // Default number of steps
+    }
+  }, [tabName]);
+
+  // Handle advancing to the next step
+  const handleNext = useCallback(() => {
+    const nextStep = currentStep + 1;
+    setCurrentStep(nextStep);
+    updateTutorialMutation.mutate({ currentStep: nextStep });
+  }, [currentStep, updateTutorialMutation]);
+
+  // Handle completing the tutorial
+  const handleComplete = useCallback(() => {
+    updateTutorialMutation.mutate({ 
+      completed: true,
+      lastSeenAt: new Date().toISOString()
+    });
+  }, [updateTutorialMutation]);
+
+  // Handle skipping the tutorial
+  const markTutorialSeen = useCallback(() => {
+    updateTutorialMutation.mutate({ 
+      lastSeenAt: new Date().toISOString()
+    });
+  }, [updateTutorialMutation]);
+
+  // Determine if the tutorial should be shown
+  const shouldShowTutorial = useCallback(() => {
+    if (isStatusLoading) return false;
+    if (!tutorialStatus) return true; // Show if no status exists
+    
+    // Show if not completed and hasn't been seen recently
+    return !tutorialStatus.completed;
+  }, [tutorialStatus, isStatusLoading]);
+
+  return {
+    tutorialEnabled: shouldShowTutorial(),
+    currentStep,
+    totalSteps: getTotalSteps(),
+    isCompleted: tutorialStatus?.completed || false,
+    isLoading: isStatusLoading,
+    handleNext,
+    handleComplete,
+    markTutorialSeen,
+  };
+}
