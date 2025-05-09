@@ -54,6 +54,7 @@ class RiskScoreDataService {
 
   /**
    * Save risk priorities to the server with proper caching and conflict resolution
+   * Ensures both riskAcceptanceLevel in priorities JSON and chosen_score in companies table are synchronized
    * @param priorities Risk priorities data to save
    * @returns Promise resolving to the saved data or error
    */
@@ -68,16 +69,24 @@ class RiskScoreDataService {
       }
       
       // Log the save attempt for diagnostics with the normalized data
-      riskScoreLogger.log('persist:service', 'Saving priorities', priorities);
+      riskScoreLogger.log('persist:service', 'Saving priorities with risk level', priorities.riskAcceptanceLevel);
       
       // Optimistically update the cache to improve perceived performance
       this.queryClient.setQueryData(CACHE_KEYS.PRIORITIES, priorities);
       
       // Send the data to the server
-      const response = await apiRequest<PrioritiesResponse>('POST', '/api/risk-score/priorities', priorities);
+      // This will update both risk_priorities JSON and chosen_score in companies table
+      const response = await apiRequest<PrioritiesResponse>('POST', '/api/risk-score/priorities', {
+        ...priorities,
+        // Include an explicit updateCompanyScore flag to ensure server updates both values
+        updateCompanyScore: true,
+      });
       
-      // Invalidate the query to ensure fresh data on next fetch
+      // Invalidate BOTH queries to ensure fresh data on next fetch
       this.queryClient.invalidateQueries({ queryKey: CACHE_KEYS.PRIORITIES });
+      
+      // Also invalidate companies/current to reflect chosen_score changes
+      this.queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
       
       // Log successful save
       riskScoreLogger.log('persist:service', 'Priorities saved successfully', response);
@@ -123,6 +132,7 @@ class RiskScoreDataService {
   /**
    * Save both priorities and configuration in a coordinated way
    * This ensures consistency between both data sources and proper persistence
+   * Also synchronizes the company.chosen_score value with the risk acceptance level
    */
   async saveRiskScoreData(
     dimensions: RiskDimension[],
@@ -158,9 +168,15 @@ class RiskScoreDataService {
         riskLevel: determineRiskLevel(numericScore)
       };
       
+      // Add the updateCompanyScore flag to ensure chosen_score is updated
+      const prioritiesWithFlag = {
+        ...priorities,
+        updateCompanyScore: true // Always update the chosen_score in companies table
+      };
+      
       // Execute both save operations in parallel for efficiency
       const [prioritiesResult, configResult] = await Promise.all([
-        this.savePriorities(priorities),
+        this.savePriorities(prioritiesWithFlag),
         this.saveConfiguration(configuration)
       ]);
       
