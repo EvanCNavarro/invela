@@ -32,44 +32,39 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Converts polar coordinates to cartesian coordinates
- */
-const polarToCartesian = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angleInDegrees: number
-): { x: number; y: number } => {
-  // Convert from degrees to radians
-  const angleInRadians = ((angleInDegrees - 180) * Math.PI) / 180;
-  
-  return {
-    x: centerX + radius * Math.cos(angleInRadians),
-    y: centerY + radius * Math.sin(angleInRadians)
-  };
-};
-
-/**
- * Creates an SVG Arc path description
- * Based on best practices for drawing circular arcs with SVG
+ * Creates an SVG Arc path description for a semi-circle gauge
+ * Draws arcs in a bottom semi-circle from left to right
+ * 
+ * @param x - center X coordinate
+ * @param y - center Y coordinate
+ * @param radius - radius of the arc
+ * @param startDegrees - start angle in degrees (0-180, where 0 is left and 180 is right)
+ * @param endDegrees - end angle in degrees (0-180, where 0 is left and 180 is right)
  */
 const describeArc = (
   x: number,
   y: number,
   radius: number,
-  startAngle: number,
-  endAngle: number
+  startDegrees: number,
+  endDegrees: number
 ): string => {
-  const start = polarToCartesian(x, y, radius, endAngle);
-  const end = polarToCartesian(x, y, radius, startAngle);
+  // Convert degrees to radians
+  const startRadians = (startDegrees * Math.PI) / 180;
+  const endRadians = (endDegrees * Math.PI) / 180;
+  
+  // Calculate start and end points
+  const startX = x - radius * Math.cos(startRadians);
+  const startY = y + radius * Math.sin(startRadians);
+  const endX = x - radius * Math.cos(endRadians);
+  const endY = y + radius * Math.sin(endRadians);
   
   // Determine if the arc should be drawn the long way around
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+  const largeArcFlag = endDegrees - startDegrees > 180 ? 1 : 0;
   
   // Create the SVG arc path string
   return [
-    'M', start.x, start.y,
-    'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
+    'M', startX, startY,
+    'A', radius, radius, 0, largeArcFlag, 1, endX, endY
   ].join(' ');
 };
 
@@ -95,19 +90,18 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const height = size / 2;
   const radius = size * 0.35; // Slightly smaller radius for the number to fit better
   const centerX = width / 2;
-  const centerY = height;
+  const centerY = height - 10; // Adjust center Y to be below the top of the component
   const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
   
-  // Maps percentage (0-100) to angle (180-0) for the half-circle
-  // At 0%, angle is 180 (left)
-  // At 50%, angle is 90 (top)
-  // At 100%, angle is 0 (right)
-  const startAngle = 180;
-  const endAngle = 180 - (percentage / 100) * 180;
+  // Maps percentage (0-100) to angle (0-180) for the bottom half-circle
+  // At 0%, angle is 0 (left)
+  // At 50%, angle is 90 (bottom)
+  // At 100%, angle is 180 (right)
+  const endAngle = (percentage / 100) * 180;
   
   // Create arc paths using the describeArc helper
   const backgroundPath = describeArc(centerX, centerY, radius, 0, 180);
-  const progressPath = describeArc(centerX, centerY, radius, endAngle, 180);
+  const progressPath = describeArc(centerX, centerY, radius, 0, endAngle);
   
   return (
     <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
@@ -134,7 +128,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         {/* Score value inside the gauge */}
         <text
           x={centerX}
-          y={centerY - radius * 0.3} // Position inside the arc
+          y={centerY - radius * 0.1} // Position inside the arc
           fontSize={size * 0.18}
           fontWeight="bold"
           fill={color}
