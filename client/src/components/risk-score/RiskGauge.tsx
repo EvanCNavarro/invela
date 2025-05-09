@@ -38,7 +38,7 @@ const getRiskLevelColor = (level: string): string => {
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
   riskLevel, 
-  size = 220
+  size = 280 // Increased default size for bigger gauge
 }) => {
   // Reference to the div that will contain the Plotly chart
   const chartRef = useRef<HTMLDivElement>(null);
@@ -78,7 +78,8 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
             // Only show values at 0 and 100
             ticktext: ['0', '', '', '', '100']
           },
-          bar: { color, thickness: 0.8 },
+          // Thicker bar for more prominent display
+          bar: { color, thickness: 0.9 },
           bgcolor: '#e5e7eb',
           borderwidth: 0,
           bordercolor: 'transparent',
@@ -88,13 +89,14 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         number: {
           font: {
             family: 'Arial, sans-serif',
-            size: size * 0.18,
-            color
+            size: size * 0.16, // Smaller size relative to gauge
+            color,
+            weight: 'bold' // Make the number bold
           },
           suffix: '',
           prefix: ''
         },
-        // Title for additional text near the gauge
+        // Title for additional text near the gauge (empty)
         title: {
           text: '',
           font: {
@@ -108,9 +110,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       // Layout configuration for the chart
       const layout = {
         // Configure layout for a half-circle gauge
-        margin: { t: 40, b: 10, l: 30, r: 30 },
+        margin: { t: 40, b: 30, l: 40, r: 40 }, // Increased margins for labels
         width: size,
-        height: size / 1.8,
+        height: size / 1.6, // Adjusted height ratio for better proportion
         font: {
           family: 'Arial, sans-serif',
           size: size / 18,
@@ -118,7 +120,36 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        showlegend: false
+        showlegend: false,
+        // Add annotations for Low and High labels
+        annotations: [
+          {
+            x: 0.1,
+            y: -0.1,
+            xref: 'paper',
+            yref: 'paper',
+            text: 'Low',
+            showarrow: false,
+            font: {
+              size: 14,
+              color: '#666',
+              weight: 500
+            }
+          },
+          {
+            x: 0.9,
+            y: -0.1,
+            xref: 'paper',
+            yref: 'paper',
+            text: 'High',
+            showarrow: false,
+            font: {
+              size: 14,
+              color: '#666',
+              weight: 500
+            }
+          }
+        ]
       };
       
       // Configuration options
@@ -140,24 +171,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   }, [score, riskLevel, color, size]);
   
   return (
-    <div style={{ position: 'relative', width: size, height: size / 1.5 + 30, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: size, height: size / 1.6 + 20, margin: '0 auto' }}>
       {/* The div that will contain the Plotly chart */}
-      <div ref={chartRef} style={{ width: '100%', height: 'calc(100% - 30px)' }} />
-      
-      {/* Risk Acceptance Level text - below the gauge */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: size / 18,
-        color: '#666',
-        fontWeight: 500,
-        textAlign: 'center',
-        width: '100%'
-      }}>
-        Risk Acceptance Level
-      </div>
+      <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 };
