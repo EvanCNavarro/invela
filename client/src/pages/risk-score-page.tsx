@@ -9,9 +9,7 @@ import { RiskScoreTutorial } from "@/components/tutorial/tabs/RiskScoreTutorial"
 export default function RiskScorePage() {
   return (
     <DashboardLayout>
-      <PageTemplate
-        showBreadcrumbs
-      >
+      <PageTemplate>
         {/* Display Risk Score Tutorial */}
         <RiskScoreTutorial />
         
