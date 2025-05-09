@@ -866,45 +866,7 @@ export default function RiskScoreConfigurationPage() {
                 </CardContent>
               </Card>
               
-              {/* Weight distribution card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center">
-                    <BarChart className="h-5 w-5 mr-2 text-primary" />
-                    Dimension Weight Distribution
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    How each dimension contributes to the overall risk score calculation
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-4">
-                    {dimensions.map((dimension, index) => (
-                      <li key={dimension.id} className="text-sm">
-                        <div className="flex justify-between mb-1">
-                          <span className="flex items-center gap-2">
-                            <span className="flex-shrink-0 h-5 w-5 text-primary">
-                              {dimensionIcons[dimension.id] || <Shield className="h-5 w-5" />}
-                            </span>
-                            <span>{dimension.name}</span>
-                          </span>
-                          <span className="font-medium">{dimension.weight}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full" 
-                            style={{ 
-                              width: `${dimension.weight}%`,
-                              backgroundColor: dimension.color || '#ccc'
-                            }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{dimension.description}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+
             </div>
             
             {/* Right side - Summary and visualization */}
