@@ -73,11 +73,13 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
             },
             visible: true,
             showticklabels: true,
-            // Only show specific ticks - just 0 and 100
+            // Only show ticks at 0 and 100
             tickvals: [0, 100],
-            ticktext: ['0', '100']
+            ticktext: ['0', '100'],
+            // Move tick labels down slightly
+            tickmargin: 5
           },
-          bar: { color, thickness: 0.65 },
+          bar: { color, thickness: 0.75 },
           bgcolor: '#e2e2e2',
           borderwidth: 0,
           bordercolor: 'transparent',
@@ -87,8 +89,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         number: {
           font: {
             family: 'Inter, system-ui, sans-serif',
-            size: 56,
-            color
+            size: 100, // Make number very large 
+            color: color,
+            weight: 'bold'
           },
           suffix: '',
           prefix: ''
@@ -107,13 +110,13 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       // Layout configuration for the chart
       const layout = {
         // Configure layout for a half-circle gauge
-        margin: { t: 0, b: 0, l: 20, r: 20 },
+        margin: { t: 30, b: 30, l: 30, r: 30 },
         width: size,
-        height: size / 2,
+        height: size / 1.8,
         font: {
           family: 'Inter, system-ui, sans-serif',
           size: 12,
-          color: '#666'
+          color: '#666' 
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -141,10 +144,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   return (
     <div className="flex flex-col items-center" style={{ width: size, margin: '0 auto' }}>
       {/* The div that will contain the Plotly chart */}
-      <div ref={chartRef} style={{ width: '100%', height: size/2 }} />
+      <div ref={chartRef} style={{ width: '100%', height: size/1.8 }} />
       
       {/* Risk Acceptance Level text - below the gauge */}
-      <div className="text-center text-gray-600 text-sm font-medium mt-3">
+      <div className="text-center text-gray-600 text-sm font-medium mt-2">
         Risk Acceptance Level
       </div>
     </div>
