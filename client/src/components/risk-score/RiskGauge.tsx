@@ -38,7 +38,7 @@ const getRiskLevelColor = (level: string): string => {
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
   riskLevel, 
-  size = 200
+  size = 220
 }) => {
   // Reference to the div that will contain the Plotly chart
   const chartRef = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         type: 'indicator',
         mode: 'gauge+number',
         value: score,
-        domain: { x: [0, 1], y: [0, 0.85] }, // Position the gauge higher to make room for number
+        domain: { x: [0, 1], y: [0, 1] },
         gauge: {
           shape: 'angular',
           // Make the gauge a semi-circle starting at 9 o'clock and ending at 3 o'clock
@@ -66,21 +66,20 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
           axis: { 
             range: [0, 100],
             tickwidth: 1,
-            tickcolor: '#e2e2e2',
+            tickcolor: '#e5e7eb',
             tickfont: {
               size: 10,
               color: '#666'
             },
             visible: true,
             showticklabels: true,
-            // Only show ticks at 0 and 100
-            tickvals: [0, 100],
-            ticktext: ['0', '100'],
-            ticklen: 5,
-            tickangle: 0
+            // Only show specific ticks
+            tickvals: [0, 25, 50, 75, 100],
+            // Only show values at 0 and 100
+            ticktext: ['0', '', '', '', '100']
           },
-          bar: { color, thickness: 0.20 }, // Make the gauge bar much thicker
-          bgcolor: '#e2e2e2',
+          bar: { color, thickness: 0.8 },
+          bgcolor: '#e5e7eb',
           borderwidth: 0,
           bordercolor: 'transparent',
           steps: []
@@ -88,36 +87,34 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         // Display the value in the center of the gauge
         number: {
           font: {
-            family: 'Inter, system-ui, sans-serif',
-            size: 120, // Make number very large
-            color: color,
-            weight: 'bold'
+            family: 'Arial, sans-serif',
+            size: size * 0.18,
+            color
           },
           suffix: '',
           prefix: ''
         },
         // Title for additional text near the gauge
         title: {
-          text: 'Risk Acceptance Level',
+          text: '',
           font: {
-            family: 'Inter, system-ui, sans-serif',
+            family: 'Arial, sans-serif',
             size: 14,
             color: '#666'
-          },
-          position: 'bottom'
+          }
         }
       }];
       
       // Layout configuration for the chart
       const layout = {
         // Configure layout for a half-circle gauge
-        margin: { t: 0, b: 40, l: 30, r: 30 },
+        margin: { t: 40, b: 10, l: 30, r: 30 },
         width: size,
-        height: size / 1.2, // Increase height to make room for the number inside gauge
+        height: size / 1.8,
         font: {
-          family: 'Inter, system-ui, sans-serif',
-          size: 12,
-          color: '#666' 
+          family: 'Arial, sans-serif',
+          size: size / 18,
+          color: '#666'
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -143,9 +140,24 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   }, [score, riskLevel, color, size]);
   
   return (
-    <div className="flex flex-col items-center" style={{ width: size, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: size, height: size / 1.5 + 30, margin: '0 auto' }}>
       {/* The div that will contain the Plotly chart */}
-      <div ref={chartRef} style={{ width: '100%', height: size/1.2 }} />
+      <div ref={chartRef} style={{ width: '100%', height: 'calc(100% - 30px)' }} />
+      
+      {/* Risk Acceptance Level text - below the gauge */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        fontSize: size / 18,
+        color: '#666',
+        fontWeight: 500,
+        textAlign: 'center',
+        width: '100%'
+      }}>
+        Risk Acceptance Level
+      </div>
     </div>
   );
 };
