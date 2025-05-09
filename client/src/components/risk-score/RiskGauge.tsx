@@ -48,26 +48,28 @@ const createGaugeArc = (
   // Ensure percentage is between 0-100
   const normalizedPercentage = Math.max(0, Math.min(100, percentage));
   
-  // Convert percentage to radians
-  // At 0%, we start at 180 degrees (left side)
+  // Convert percentage to radians (flipped for left-to-right)
+  // At 0%, we start at π (180 degrees - left side)
   // At 100%, we end at 0 degrees (right side)
-  const startAngle = Math.PI; // 180 degrees in radians (left side)
-  const endAngle = Math.PI - (normalizedPercentage / 100) * Math.PI;
+  
+  // Calculate the angle (in radians) based on percentage
+  const angle = (normalizedPercentage / 100) * Math.PI;
   
   // Calculate start and end points
-  const startX = centerX - radius;
+  const startX = centerX - radius; // Always start from left side
   const startY = centerY;
-  const endX = centerX + radius * Math.cos(endAngle);
-  const endY = centerY - radius * Math.sin(endAngle);
+  const endX = centerX - radius * Math.cos(angle); // Flipped x-coordinate calculation
+  const endY = centerY - radius * Math.sin(angle);
   
   // Determine if the arc should be drawn the long way around
   const largeArcFlag = normalizedPercentage > 50 ? 1 : 0;
   
   // Create the SVG path string
   // M = moveto, A = elliptical arc
+  // Changed the sweep flag to 1 (clockwise direction)
   return `
     M ${startX} ${startY}
-    A ${radius} ${radius} 0 ${largeArcFlag} 0 ${endX} ${endY}
+    A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}
   `;
 };
 
