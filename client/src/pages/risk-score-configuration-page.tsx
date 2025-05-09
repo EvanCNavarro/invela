@@ -272,6 +272,8 @@ export default function RiskScoreConfigurationPage() {
   const [thresholds, setThresholds] = useState<RiskThresholds>(defaultRiskThresholds);
   const [score, setScore] = useState<number>(50);
   const [riskLevel, setRiskLevel] = useState<'none' | 'low' | 'medium' | 'high' | 'critical'>('medium');
+  // Flag to track if user has manually adjusted the risk score
+  const [userSetScore, setUserSetScore] = useState<boolean>(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -630,10 +632,10 @@ export default function RiskScoreConfigurationPage() {
     };
   }, [toast, queryClient]); // Dependencies for the effect
   
-  // Calculate score and risk level when dimensions change
+  // Calculate score and risk level when dimensions change, but only if user hasn't manually set a score
   useEffect(() => {
-    // Only calculate if we have dimensions
-    if (dimensions && dimensions.length > 0) {
+    // Only calculate if we have dimensions and user hasn't manually set a score
+    if (dimensions && dimensions.length > 0 && !userSetScore) {
       const newScore = calculateRiskScore(dimensions);
       setScore(newScore);
       setRiskLevel(determineRiskLevel(newScore));
@@ -641,7 +643,7 @@ export default function RiskScoreConfigurationPage() {
       // Log the score calculation
       riskScoreLogger.log('score', `Risk score recalculated: ${newScore} (${determineRiskLevel(newScore)} risk) based on dimension changes`);
     }
-  }, [dimensions]);
+  }, [dimensions, userSetScore]);
   
   // Helper function to calculate weight distribution based on priority position
   const calculateWeightDistribution = (dimensions: RiskDimension[]): RiskDimension[] => {
@@ -726,6 +728,14 @@ export default function RiskScoreConfigurationPage() {
     // Reset to defaults
     setDimensions(defaultRiskDimensions);
     setThresholds(defaultRiskThresholds);
+    
+    // Reset the user-set score flag
+    setUserSetScore(false);
+    
+    // Calculate a new score based on the default dimensions
+    const newScore = calculateRiskScore(defaultRiskDimensions);
+    setScore(newScore);
+    setRiskLevel(determineRiskLevel(newScore));
     
     // Log the reset
     riskScoreLogger.log('change', 'Resetting to default values');
@@ -1004,6 +1014,8 @@ export default function RiskScoreConfigurationPage() {
                         const newScore = value[0];
                         setScore(newScore);
                         setRiskLevel(determineRiskLevel(newScore));
+                        // Set the flag to indicate user has manually set the score
+                        setUserSetScore(true);
                         // Log the change for debugging purposes
                         riskScoreLogger.log('slider', `Risk score manually adjusted to ${newScore} (${determineRiskLevel(newScore)} risk)`);
                       }}
