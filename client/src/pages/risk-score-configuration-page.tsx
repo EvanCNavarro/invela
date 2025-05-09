@@ -80,23 +80,23 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
     >
       {/* Left border indicator */}
       <div 
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg opacity-60"
+        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg opacity-70"
         style={{
-          background: 'linear-gradient(to bottom, #cbd5e1, #e2e8f0)',
+          background: 'linear-gradient(to bottom, #64748b, #94a3b8)',
         }}
       ></div>
       
       {/* Drag handle skeleton */}
       <div className="flex flex-col items-center ml-2 mr-3">
-        <div className="h-6 w-6 bg-gray-200 rounded"></div>
-        <div className="h-2 w-8 bg-gray-200 rounded mt-1"></div>
+        <div className="h-6 w-6 bg-gray-300 rounded"></div>
+        <div className="h-2 w-8 bg-gray-300 rounded mt-1"></div>
       </div>
       
       {/* Dimension icon skeleton with gradient */}
       <div 
         className="w-10 h-10 rounded mr-4 flex-shrink-0"
         style={{ 
-          background: 'linear-gradient(to bottom, #cbd5e1, #e2e8f0)',
+          background: 'linear-gradient(to bottom, #334155, #475569)',
           borderRadius: '8px',
           boxShadow: '2px 2px 5px rgba(0,0,0,0.05), -1px -1px 3px rgba(255,255,255,0.5)'
         }}
@@ -108,23 +108,20 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
           <div className="h-4 bg-gray-300 rounded mr-2" style={{ width: nameWidth }}></div>
           
           {/* Priority badge skeleton */}
-          <div className="h-4 w-16 bg-blue-100 rounded"></div>
+          <div className="h-4 w-16 bg-gray-200 rounded"></div>
         </div>
         
         {/* Description skeleton */}
         <div className="h-3 bg-gray-200 rounded" style={{ width: descWidth }}></div>
       </div>
       
-      <div className="flex flex-col items-end mr-2">
+      <div className="flex flex-col items-end">
         {/* Weight percentage skeleton */}
         <div className="h-7 w-10 bg-gray-300 rounded-sm"></div>
         
         {/* Priority weight text skeleton */}
         <div className="h-3 w-20 bg-gray-200 rounded-sm mt-1"></div>
       </div>
-      
-      {/* Menu dots skeleton */}
-      <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
     </div>
   );
 };
@@ -206,16 +203,16 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
     >
       {/* Left border line indicating draggable */}
       <div 
-        className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-l-lg opacity-60"
+        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg opacity-70"
         style={{
-          background: 'linear-gradient(to bottom, #2563eb, #93c5fd)'
+          background: 'linear-gradient(to bottom, #64748b, #94a3b8)'
         }}
       ></div>
       
       {/* Drag handle on the left with more pronounced visual */}
       <div className="cursor-move flex flex-col items-center justify-center ml-2 mr-3">
-        <GripVertical className="h-6 w-6 text-blue-400 hover:text-blue-600 transition-colors duration-150" />
-        <span className="text-[9px] font-medium text-blue-400 mt-1">DRAG</span>
+        <GripVertical className="h-6 w-6 text-gray-500 hover:text-gray-700 transition-colors duration-150" />
+        <span className="text-[9px] font-medium text-gray-500 mt-1">DRAG</span>
       </div>
       
       {/* Icon with blue to gray gradient */}
@@ -241,28 +238,20 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
           <h4 className="font-medium text-gray-900 mr-2">
             {dimension.name}
           </h4>
-          <div className="px-2 py-0.5 bg-blue-100 text-xs rounded text-blue-800 font-medium">
+          <div className="px-2 py-0.5 bg-gray-100 text-xs rounded text-gray-700 font-medium">
             Priority {index + 1}
           </div>
         </div>
         <p className="text-sm text-gray-600">{dimension.description}</p>
       </div>
       
-      <div className="flex flex-col items-end mr-2">
+      <div className="flex flex-col items-end">
         <div className="text-right font-semibold text-gray-800 text-2xl leading-tight">
           {dimension.weight.toFixed(0)}%
         </div>
         <div className="text-xs text-gray-500">
           Priority Weight
         </div>
-      </div>
-      
-      <div className="cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-          <circle cx="12" cy="12" r="1"></circle>
-          <circle cx="12" cy="5" r="1"></circle>
-          <circle cx="12" cy="19" r="1"></circle>
-        </svg>
       </div>
     </div>
   );
