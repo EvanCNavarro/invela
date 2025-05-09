@@ -3,6 +3,7 @@
  * 
  * This module provides routes for managing the tab-specific tutorial system
  * that shows onboarding modals the first time a user visits each main tab.
+ * It also broadcasts WebSocket messages for real-time tutorial updates.
  */
 import { Router } from 'express';
 import { db } from '@db';
@@ -15,8 +16,75 @@ import {
 } from '@db/schema';
 import { logger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth';
+import { broadcast } from '../utils/unified-websocket';
 
 const router = Router();
+
+/**
+ * Broadcast tutorial progress update via WebSocket
+ * 
+ * @param tabName The tab name for the tutorial
+ * @param userId The user ID
+ * @param currentStep The current step index
+ * @param totalSteps The total number of steps in the tutorial
+ */
+const broadcastTutorialProgress = (
+  tabName: string, 
+  userId: number | string, 
+  currentStep: number,
+  totalSteps: number = 5 // Default to 5 steps for most tutorials
+) => {
+  try {
+    // Broadcast tutorial progress update
+    logger.info(`[TabTutorials] Broadcasting tutorial progress update for ${tabName}: step ${currentStep}/${totalSteps}`);
+    
+    // Use the unified-websocket broadcast method
+    // Adding a custom 'tutorial_progress' message type
+    broadcast('notification', {
+      title: 'Tutorial Progress Update',
+      message: `Tutorial progress update for ${tabName}`,
+      metadata: {
+        type: 'tutorial_progress',
+        tabName,
+        userId,
+        progress: {
+          currentStep,
+          totalSteps
+        }
+      }
+    });
+  } catch (error) {
+    logger.error(`[TabTutorials] Error broadcasting tutorial progress: ${error}`);
+  }
+};
+
+/**
+ * Broadcast tutorial completion via WebSocket
+ * 
+ * @param tabName The tab name for the tutorial
+ * @param userId The user ID
+ */
+const broadcastTutorialCompleted = (tabName: string, userId: number | string) => {
+  try {
+    // Broadcast tutorial completion
+    logger.info(`[TabTutorials] Broadcasting tutorial completion for ${tabName}`);
+    
+    // Use the unified-websocket broadcast method
+    // Adding a custom 'tutorial_completed' message type
+    broadcast('notification', {
+      title: 'Tutorial Completed',
+      message: `Tutorial completed for ${tabName}`,
+      variant: 'success', 
+      metadata: {
+        type: 'tutorial_completed',
+        tabName,
+        userId
+      }
+    });
+  } catch (error) {
+    logger.error(`[TabTutorials] Error broadcasting tutorial completion: ${error}`);
+  }
+};
 
 /**
  * GET /api/user-tab-tutorials
@@ -69,6 +137,7 @@ router.get('/', requireAuth, async (req: any, res) => {
  * POST /api/user-tab-tutorials
  * 
  * Updates a specific tab tutorial's status for the current user
+ * and broadcasts updates via WebSocket
  */
 router.post('/', requireAuth, async (req: any, res) => {
   try {
@@ -84,7 +153,7 @@ router.post('/', requireAuth, async (req: any, res) => {
       });
     }
     
-    const { tabName, completed, currentStep } = req.body;
+    const { tabName, completed, currentStep, totalSteps } = req.body;
     
     if (!tabName) {
       return res.status(400).json({
@@ -110,6 +179,9 @@ router.post('/', requireAuth, async (req: any, res) => {
       
       if (currentStep !== undefined) {
         updateData.current_step = currentStep;
+        
+        // Broadcast progress update via WebSocket
+        broadcastTutorialProgress(tabName, userId, currentStep, totalSteps);
       }
       
       if (completed !== undefined) {
@@ -118,6 +190,9 @@ router.post('/', requireAuth, async (req: any, res) => {
         // If marking as completed, set completed_at timestamp
         if (completed && !existingTutorial.completed) {
           updateData.completed_at = new Date();
+          
+          // Broadcast tutorial completion via WebSocket
+          broadcastTutorialCompleted(tabName, userId);
         }
       }
       
@@ -155,6 +230,16 @@ router.post('/', requireAuth, async (req: any, res) => {
       await db.insert(userTabTutorials).values(newTutorial);
       
       logger.info(`[TabTutorials] Created new tutorial entry for ${tabName} for user ${userId}`);
+      
+      // Broadcast initial progress via WebSocket
+      if (currentStep !== undefined) {
+        broadcastTutorialProgress(tabName, userId, currentStep, totalSteps);
+      }
+      
+      // Broadcast completion if already completed
+      if (completed === true) {
+        broadcastTutorialCompleted(tabName, userId);
+      }
       
       return res.json({
         success: true,
