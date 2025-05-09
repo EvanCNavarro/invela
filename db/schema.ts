@@ -358,14 +358,26 @@ export const securityResponses = pgTable("security_responses", {
 export const userTabTutorials = pgTable("user_tab_tutorials", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  tab_key: varchar("tab_key", { length: 50 }).notNull(),
-  completed_at: timestamp("completed_at").defaultNow().notNull(),
+  tab_name: varchar("tab_name", { length: 50 }).notNull(),
+  completed: boolean("completed").notNull().default(false),
+  current_step: integer("current_step").notNull().default(0),
+  last_seen_at: timestamp("last_seen_at"),
+  completed_at: timestamp("completed_at"),
   created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Add Zod schemas for the user tab tutorials table
 export const insertUserTabTutorialSchema = createInsertSchema(userTabTutorials, {
-  tab_key: z.string().min(1).max(50),
+  tab_name: z.string().min(1).max(50),
+  completed: z.boolean().default(false),
+  current_step: z.number().int().nonnegative().default(0),
+});
+
+export const updateUserTabTutorialSchema = z.object({
+  completed: z.boolean().optional(),
+  current_step: z.number().int().nonnegative().optional(),
+  last_seen_at: z.string().datetime().optional(),
 });
 
 export const selectUserTabTutorialSchema = createSelectSchema(userTabTutorials);
