@@ -55,7 +55,15 @@ class RiskScoreDataService {
    */
   async savePriorities(priorities: RiskPriorities): Promise<PrioritiesResponse> {
     try {
-      // Log the save attempt for diagnostics
+      // Ensure riskAcceptanceLevel is a number (convert from string if needed)
+      if (priorities.riskAcceptanceLevel !== undefined) {
+        const numericRiskLevel = Number(priorities.riskAcceptanceLevel);
+        if (!isNaN(numericRiskLevel)) {
+          priorities.riskAcceptanceLevel = numericRiskLevel;
+        }
+      }
+      
+      // Log the save attempt for diagnostics with the normalized data
       riskScoreLogger.log('persist:service', 'Saving priorities', priorities);
       
       // Optimistically update the cache to improve perceived performance
@@ -114,12 +122,19 @@ class RiskScoreDataService {
    */
   async saveRiskScoreData(
     dimensions: RiskDimension[],
-    score: number,
+    score: number | string,
     thresholds: RiskThresholds
   ): Promise<{priorities: PrioritiesResponse, configuration: ConfigurationResponse}> {
     try {
-      // Log the coordinated save attempt
-      riskScoreLogger.log('persist:service', 'Starting coordinated save operation');
+      // Ensure the score is a proper number
+      const numericScore = typeof score === 'string' ? parseInt(score, 10) : score;
+      
+      // Log the coordinated save attempt with the score type
+      riskScoreLogger.log('persist:service', 'Starting coordinated save operation', {
+        scoreType: typeof score,
+        originalScore: score,
+        normalizedScore: numericScore
+      });
       
       // Ensure we have clean copies of the data to avoid reference issues
       const cleanDimensions = JSON.parse(JSON.stringify(dimensions));
@@ -127,7 +142,7 @@ class RiskScoreDataService {
       // Create the priorities object with current risk acceptance level
       const priorities: RiskPriorities = {
         dimensions: cleanDimensions,
-        riskAcceptanceLevel: score,
+        riskAcceptanceLevel: numericScore,
         lastUpdated: new Date().toISOString()
       };
       
@@ -135,8 +150,8 @@ class RiskScoreDataService {
       const configuration: RiskScoreConfiguration = {
         dimensions: cleanDimensions,
         thresholds,
-        score,
-        riskLevel: determineRiskLevel(score)
+        score: numericScore,
+        riskLevel: determineRiskLevel(numericScore)
       };
       
       // Execute both save operations in parallel for efficiency
@@ -146,7 +161,10 @@ class RiskScoreDataService {
       ]);
       
       // Log successful parallel save
-      riskScoreLogger.log('persist:service', 'Coordinated save completed successfully');
+      riskScoreLogger.log('persist:service', 'Coordinated save completed successfully', {
+        savedScore: numericScore,
+        riskLevel: determineRiskLevel(numericScore)
+      });
       
       return {
         priorities: prioritiesResult,

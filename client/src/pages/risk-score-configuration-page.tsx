@@ -156,19 +156,11 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
         </div>
       </div>
       
-      <div className="space-y-1 w-1/3">
-        <Slider
-          defaultValue={[dimension.value]}
-          min={0}
-          max={100}
-          step={1}
-          value={[dimension.value]}
-          onValueChange={(value) => onValueChange(dimension.id, value[0])}
-        />
-        <div className="flex justify-between text-xs text-gray-500">
-          <span>Low</span>
-          <span>Medium</span>
-          <span>High</span>
+      {/* Dimension values are now fixed and sliders have been removed */}
+      <div className="px-3 py-2 w-1/3 rounded-md bg-blue-50">
+        <div className="flex justify-between text-xs text-gray-800">
+          <span className="font-medium">Risk Level:</span>
+          <span className="font-semibold">{dimension.value > 66 ? 'High' : dimension.value > 33 ? 'Medium' : 'Low'}</span>
         </div>
       </div>
       
@@ -317,31 +309,15 @@ export default function RiskScoreConfigurationPage() {
                         <RiskGauge score={score} riskLevel={riskLevel} />
                         
                         <div className="mt-8 w-full">
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium">Risk Acceptance Level</span>
+                          <div className="bg-blue-50 p-3 rounded-md">
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm font-medium">Risk Acceptance Level</span>
+                              <span className="font-medium text-blue-800">{score}</span>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-600">
+                              <span>Current threshold: {score > 66 ? 'High' : score > 33 ? 'Medium' : 'Low'}</span>
+                            </div>
                           </div>
-                          
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm">Low</span>
-                            <span className="text-sm">High</span>
-                          </div>
-                          
-                          <Slider
-                            defaultValue={[score]}
-                            min={0}
-                            max={100}
-                            step={1}
-                            value={[score]}
-                            onValueChange={(value) => {
-                              handleScoreChange(value[0]);
-                            }}
-                            onClick={() => {
-                              // When user clicks the slider, set userSetScore to true
-                              if (!userSetScore) {
-                                setUserSetScore(true);
-                              }
-                            }}
-                          />
                         </div>
                         
                         <div className="mt-10 w-full">
