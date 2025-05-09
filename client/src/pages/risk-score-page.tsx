@@ -4,6 +4,7 @@ import { PageTemplate } from "@/components/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Gauge } from "lucide-react";
+import { RiskScoreTutorial } from "@/components/tutorial/tabs/RiskScoreTutorial";
 
 export default function RiskScorePage() {
   return (
@@ -11,6 +12,9 @@ export default function RiskScorePage() {
       <PageTemplate
         showBreadcrumbs
       >
+        {/* Display Risk Score Tutorial */}
+        <RiskScoreTutorial />
+        
         <div className="space-y-6">
           <PageHeader
             title="S&P Data Access Risk Score"

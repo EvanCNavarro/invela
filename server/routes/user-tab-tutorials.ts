@@ -14,25 +14,9 @@ import {
   updateUserTabTutorialSchema 
 } from '@db/schema';
 import { logger } from '../utils/logger';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
-
-// Middleware to check if the user is authenticated
-const requireAuth = (req: any, res: any, next: any) => {
-  if (!req.session?.user) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Authentication required',
-      details: {
-        authenticated: false,
-        hasUser: !!req.session?.user,
-        hasSession: !!req.session,
-        timestamp: new Date().toISOString()
-      }
-    });
-  }
-  next();
-};
 
 /**
  * GET /api/user-tab-tutorials
