@@ -57,7 +57,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         type: 'indicator',
         mode: 'gauge+number',
         value: score,
-        domain: { x: [0, 1], y: [0, 1] },
+        domain: { x: [0, 1], y: [0, 0.85] }, // Position the gauge higher to make room for number
         gauge: {
           shape: 'angular',
           // Make the gauge a semi-circle starting at 9 o'clock and ending at 3 o'clock
@@ -76,10 +76,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
             // Only show ticks at 0 and 100
             tickvals: [0, 100],
             ticktext: ['0', '100'],
-            // Move tick labels down slightly
-            tickmargin: 5
+            ticklen: 5,
+            tickangle: 0
           },
-          bar: { color, thickness: 0.75 },
+          bar: { color, thickness: 0.20 }, // Make the gauge bar much thicker
           bgcolor: '#e2e2e2',
           borderwidth: 0,
           bordercolor: 'transparent',
@@ -89,7 +89,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         number: {
           font: {
             family: 'Inter, system-ui, sans-serif',
-            size: 100, // Make number very large 
+            size: 120, // Make number very large
             color: color,
             weight: 'bold'
           },
@@ -98,21 +98,22 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         },
         // Title for additional text near the gauge
         title: {
-          text: '',
+          text: 'Risk Acceptance Level',
           font: {
             family: 'Inter, system-ui, sans-serif',
-            size: 0, // Hide the title
+            size: 14,
             color: '#666'
-          }
+          },
+          position: 'bottom'
         }
       }];
       
       // Layout configuration for the chart
       const layout = {
         // Configure layout for a half-circle gauge
-        margin: { t: 30, b: 30, l: 30, r: 30 },
+        margin: { t: 0, b: 40, l: 30, r: 30 },
         width: size,
-        height: size / 1.8,
+        height: size / 1.2, // Increase height to make room for the number inside gauge
         font: {
           family: 'Inter, system-ui, sans-serif',
           size: 12,
@@ -144,12 +145,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   return (
     <div className="flex flex-col items-center" style={{ width: size, margin: '0 auto' }}>
       {/* The div that will contain the Plotly chart */}
-      <div ref={chartRef} style={{ width: '100%', height: size/1.8 }} />
-      
-      {/* Risk Acceptance Level text - below the gauge */}
-      <div className="text-center text-gray-600 text-sm font-medium mt-2">
-        Risk Acceptance Level
-      </div>
+      <div ref={chartRef} style={{ width: '100%', height: size/1.2 }} />
     </div>
   );
 };
