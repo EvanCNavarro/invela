@@ -55,10 +55,14 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       // Data for the gauge chart
       const data = [{
         type: 'indicator',
-        mode: 'gauge',
+        mode: 'gauge+number',
         value: score,
         domain: { x: [0, 1], y: [0, 1] },
         gauge: {
+          shape: 'angular',
+          // Make the gauge a semi-circle starting at 9 o'clock and ending at 3 o'clock
+          startangle: 180,
+          endangle: 0,
           axis: { 
             range: [0, 100],
             tickwidth: 1,
@@ -74,37 +78,39 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
             // Only show values at 0 and 100
             ticktext: ['0', '', '', '', '100']
           },
-          bar: { color, thickness: 0.65 },
+          bar: { color, thickness: 0.8 },
           bgcolor: '#e5e7eb',
           borderwidth: 0,
           bordercolor: 'transparent',
-          shape: 'angular',
-          // Use a 180 degree gauge (semicircle)
-          range: [0, 100],
-          steps: [],
-          threshold: {
-            line: { color: 'transparent', width: 0 },
-            thickness: 0,
-            value: 0
-          }
+          steps: []
         },
+        // Display the value in the center of the gauge
         number: {
           font: {
             family: 'Arial, sans-serif',
-            size: size * 0.06,
+            size: size * 0.18,
             color
           },
           suffix: '',
           prefix: ''
+        },
+        // Title for additional text near the gauge
+        title: {
+          text: '',
+          font: {
+            family: 'Arial, sans-serif',
+            size: 14,
+            color: '#666'
+          }
         }
       }];
       
       // Layout configuration for the chart
       const layout = {
         // Configure layout for a half-circle gauge
-        margin: { t: 10, b: 30, l: 20, r: 20 },
+        margin: { t: 40, b: 10, l: 30, r: 30 },
         width: size,
-        height: size / 1.5,
+        height: size / 1.8,
         font: {
           family: 'Arial, sans-serif',
           size: size / 18,
@@ -112,12 +118,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        showlegend: false,
-        // Set the meter to show only the top half of a circle (180 degrees)
-        polar: {
-          sector: [0, 180],
-          hole: 0.5
-        }
+        showlegend: false
       };
       
       // Configuration options
