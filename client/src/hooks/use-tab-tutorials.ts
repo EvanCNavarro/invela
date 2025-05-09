@@ -115,6 +115,16 @@ export function useTabTutorials(tabName: string) {
     updateTutorialMutation.mutate({ step: nextStep, completed: false });
   }, [currentStep, updateTutorialMutation, tabName]);
   
+  // Handle going back to previous step
+  const handleBack = useCallback(() => {
+    if (currentStep > 0) {
+      const prevStep = currentStep - 1;
+      console.log(`[TabTutorials] Going back to previous step for ${tabName}: ${prevStep}`);
+      setCurrentStep(prevStep);
+      updateTutorialMutation.mutate({ step: prevStep, completed: false });
+    }
+  }, [currentStep, updateTutorialMutation, tabName]);
+  
   // Handle completing the tutorial
   const handleComplete = useCallback(() => {
     console.log(`[TabTutorials] Completing tutorial for ${tabName}`);
@@ -160,6 +170,7 @@ export function useTabTutorials(tabName: string) {
     totalSteps,
     isCompleted,
     handleNext,
+    handleBack,
     handleComplete,
     markTutorialSeen
   };

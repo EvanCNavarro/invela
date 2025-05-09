@@ -20,6 +20,7 @@ export interface ContentTutorialModalProps {
   currentStep: number;
   totalSteps: number;
   onNext: () => void;
+  onBack?: () => void;  // New prop for going back to previous step
   onComplete: () => void;
   onClose: () => void;
 }
@@ -41,6 +42,7 @@ export function ContentTutorialModal({
   currentStep,
   totalSteps,
   onNext,
+  onBack,
   onComplete,
   onClose
 }: ContentTutorialModalProps) {
@@ -235,6 +237,11 @@ export function ContentTutorialModal({
             <Button variant="outline" onClick={handleClose}>
               Skip
             </Button>
+            {currentStep > 0 && onBack && (
+              <Button variant="outline" onClick={onBack}>
+                Back
+              </Button>
+            )}
             <Button onClick={handleNext}>
               {currentStep >= totalSteps - 1 ? 'Complete' : 'Next'}
             </Button>
