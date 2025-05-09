@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   GripVertical, 
   Shield, 
@@ -9,6 +10,7 @@ import {
   Info, 
   Gauge as GaugeIcon 
 } from 'lucide-react';
+import { getRiskScoreDataService, CACHE_KEYS } from '@/lib/risk-score-data-service';
 
 import { 
   Card, 
@@ -175,12 +177,51 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
 export default function RiskScoreConfigurationPage() {
   // Initialize the toast component
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // Log page initialization
+  // Track whether we've attempted to load fresh data
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+  
+  // Get the risk score service for direct data operations
+  const riskScoreService = getRiskScoreDataService();
+  
+  // Log page initialization and refresh data
   useEffect(() => {
     console.log('Direct console log - RiskScoreConfigurationPage mounted');
     riskScoreLogger.log('init', 'Risk score configuration page initialized');
-  }, []);
+    
+    // Force a fresh data load when the component mounts
+    const loadFreshData = async () => {
+      try {
+        riskScoreLogger.log('init', 'Forcing fresh data load on page initialization');
+        
+        // Invalidate the queries to trigger refetches
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.PRIORITIES });
+        queryClient.invalidateQueries({ queryKey: CACHE_KEYS.CONFIGURATION });
+        
+        // Also directly fetch fresh data to ensure we have the latest
+        await Promise.all([
+          riskScoreService.fetchFreshPriorities(),
+          riskScoreService.fetchFreshConfiguration()
+        ]);
+        
+        riskScoreLogger.log('init', 'Fresh data load completed successfully');
+      } catch (error) {
+        riskScoreLogger.error('init', 'Error loading fresh data on initialization', error);
+        
+        // Show a toast when there's an error loading data
+        toast({
+          title: 'Error loading data',
+          description: 'There was a problem loading your configuration. Please refresh the page.',
+          variant: 'destructive',
+        });
+      } finally {
+        setInitialLoadAttempted(true);
+      }
+    };
+    
+    loadFreshData();
+  }, [toast, queryClient]);
   
   // Use the risk score data hook for state management
   const {
@@ -295,11 +336,22 @@ export default function RiskScoreConfigurationPage() {
                   </CardHeader>
                   
                   <CardContent>
-                    {isLoading ? (
+                    {isLoading || !initialLoadAttempted ? (
                       <div className="flex flex-col items-center justify-center">
                         <Skeleton className="h-40 w-40 rounded-full mb-4" />
                         <Skeleton className="h-6 w-32 rounded mb-2" />
-                        <Skeleton className="h-4 w-24 rounded" />
+                        <Skeleton className="h-4 w-24 rounded mb-6" />
+                        
+                        <Skeleton className="h-4 w-full rounded mb-2" />
+                        <Skeleton className="h-8 w-full rounded mb-6" />
+                        
+                        <Skeleton className="h-4 w-3/4 rounded mb-4" />
+                        <Skeleton className="h-3 w-full rounded mb-2" />
+                        <Skeleton className="h-3 w-full rounded mb-2" />
+                        <Skeleton className="h-3 w-full rounded mb-2" />
+                        <Skeleton className="h-3 w-full rounded mb-2" />
+                        <Skeleton className="h-3 w-full rounded mb-2" />
+                        <Skeleton className="h-3 w-full rounded" />
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
@@ -318,6 +370,7 @@ export default function RiskScoreConfigurationPage() {
                           </div>
                           
                           <Slider
+                            key={`risk-slider-${score}`} // Add key to force re-render when score changes
                             defaultValue={[score]}
                             min={0}
                             max={100}
@@ -330,6 +383,7 @@ export default function RiskScoreConfigurationPage() {
                               // When user clicks the slider, set userSetScore to true
                               if (!userSetScore) {
                                 setUserSetScore(true);
+                                riskScoreLogger.log('user:action', 'User manually adjusted risk acceptance level');
                               }
                             }}
                           />
@@ -368,11 +422,21 @@ export default function RiskScoreConfigurationPage() {
               </CardHeader>
               
               <CardContent>
-                <ComparativeVisualization 
-                  dimensions={dimensions} 
-                  globalScore={score} 
-                  riskLevel={riskLevel} 
-                />
+                {isLoading || !initialLoadAttempted ? (
+                  <div className="flex justify-center items-center h-96">
+                    <div className="flex flex-col items-center">
+                      <Skeleton className="h-64 w-64 rounded-full mb-6" />
+                      <Skeleton className="h-4 w-3/4 rounded mb-2" />
+                      <Skeleton className="h-4 w-1/2 rounded" />
+                    </div>
+                  </div>
+                ) : (
+                  <ComparativeVisualization 
+                    dimensions={dimensions} 
+                    globalScore={score} 
+                    riskLevel={riskLevel} 
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>

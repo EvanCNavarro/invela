@@ -249,6 +249,52 @@ class RiskScoreDataService {
   }
 
   /**
+   * Fetch fresh priorities data from the server and update cache
+   * @returns Promise resolving to the fetched data
+   */
+  async fetchFreshPriorities(): Promise<PrioritiesResponse> {
+    try {
+      riskScoreLogger.log('fetch:service', 'Fetching fresh priorities data from server');
+      
+      // Make the API request
+      const response = await apiRequest<PrioritiesResponse>('GET', '/api/risk-score/priorities');
+      
+      // Update the cache with the fresh data
+      this.queryClient.setQueryData(CACHE_KEYS.PRIORITIES, response);
+      
+      riskScoreLogger.log('fetch:service', 'Priorities data fetched and cache updated');
+      
+      return response;
+    } catch (error) {
+      riskScoreLogger.error('fetch:service', 'Failed to fetch priorities data', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Fetch fresh configuration data from the server and update cache
+   * @returns Promise resolving to the fetched data
+   */
+  async fetchFreshConfiguration(): Promise<ConfigurationResponse> {
+    try {
+      riskScoreLogger.log('fetch:service', 'Fetching fresh configuration data from server');
+      
+      // Make the API request
+      const response = await apiRequest<ConfigurationResponse>('GET', '/api/risk-score/configuration');
+      
+      // Update the cache with the fresh data
+      this.queryClient.setQueryData(CACHE_KEYS.CONFIGURATION, response);
+      
+      riskScoreLogger.log('fetch:service', 'Configuration data fetched and cache updated');
+      
+      return response;
+    } catch (error) {
+      riskScoreLogger.error('fetch:service', 'Failed to fetch configuration data', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get the current priorities data from the cache
    * Useful for getting a snapshot of the current state
    */

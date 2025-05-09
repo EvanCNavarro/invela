@@ -59,13 +59,18 @@ export function useRiskScoreData() {
    */
   const { 
     data: configData, 
-    isLoading: isLoadingConfig 
+    isLoading: isLoadingConfig,
+    isStale: isStaleConfig,
+    isError: isErrorConfig,
+    refetch: refetchConfig
   } = useQuery<ConfigurationResponse>({
     queryKey: CACHE_KEYS.CONFIGURATION,
-    staleTime: 0, // Always consider data stale to force refetch
+    staleTime: 60000, // Consider data stale after 1 minute
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    gcTime: 0, // Don't cache the data
+    gcTime: 300000, // Keep in cache for 5 minutes
+    retry: 3, // Retry failed requests 3 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
   });
 
   /**
@@ -75,13 +80,17 @@ export function useRiskScoreData() {
   const { 
     data: prioritiesData, 
     isLoading: isLoadingPriorities,
+    isStale: isStalePriorities,
+    isError: isErrorPriorities,
     refetch: refetchPriorities 
   } = useQuery<PrioritiesResponse>({
     queryKey: CACHE_KEYS.PRIORITIES,
-    staleTime: 0,
+    staleTime: 60000, // Consider data stale after 1 minute
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    gcTime: 0,
+    gcTime: 300000, // Keep in cache for 5 minutes
+    retry: 3, // Retry failed requests 3 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
   });
 
   /**
