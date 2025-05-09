@@ -33,14 +33,34 @@ interface RiskPriorities {
   lastUpdated?: string;
 }
 
+// Define valid tag types to ensure type safety
+type LogTag = 
+  | 'init' 
+  | 'data' 
+  | 'data:hook' 
+  | 'persist' 
+  | 'persist:service' 
+  | 'websocket' 
+  | 'websocket:service'
+  | 'score' 
+  | 'priority'
+  | 'ui' 
+  | 'gauge' 
+  | 'radar' 
+  | 'config' 
+  | 'save'
+  | 'fetch'
+  | 'default';
+
 // Log tag colors for better console visualization
-const tagColors = {
+const tagColors: Record<LogTag, string> = {
   'init': '#3498db',      // Blue
   'data': '#2ecc71',      // Green
   'data:hook': '#27ae60', // Darker Green
   'persist': '#e74c3c',   // Red
   'persist:service': '#c0392b', // Darker Red
   'websocket': '#9b59b6', // Purple
+  'websocket:service': '#8e44ad', // Darker Purple
   'score': '#f39c12',     // Orange
   'priority': '#f1c40f',  // Yellow
   'ui': '#1abc9c',        // Teal
@@ -48,6 +68,7 @@ const tagColors = {
   'radar': '#3498db',     // Blue
   'config': '#34495e',    // Dark Blue
   'save': '#e91e63',      // Pink
+  'fetch': '#607d8b',     // Blue Gray
   'default': '#7f8c8d'    // Gray
 };
 
@@ -85,12 +106,14 @@ class RiskScoreLogger {
    * @param message The message to log
    * @param data Optional data to include in the log
    */
-  log(tag: string, message: string, data?: any): void {
+  log(tag: string | LogTag, message: string, data?: any): void {
     if (!this.debugMode || (Object.keys(this.enabledTags).length > 0 && !this.enabledTags[tag])) {
       return;
     }
 
-    const color = tagColors[tag] || tagColors.default;
+    // Cast to LogTag or use default
+    const safeTag = (Object.keys(tagColors).includes(tag) ? tag : 'default') as LogTag;
+    const color = tagColors[safeTag];
     const formattedTag = `%c${LOG_PREFIX}:${tag}%c`;
     
     if (data) {
@@ -106,9 +129,10 @@ class RiskScoreLogger {
    * @param message The warning message to log
    * @param data Optional data to include in the log
    */
-  warn(tag: string, message: string, data?: any): void {
+  warn(tag: string | LogTag, message: string, data?: any): void {
     // Warnings are always logged, even in disabled tags
-    const color = tagColors[tag] || tagColors.default;
+    const safeTag = (Object.keys(tagColors).includes(tag) ? tag : 'default') as LogTag;
+    const color = tagColors[safeTag];
     const formattedTag = `%c${LOG_PREFIX}:${tag}:WARN%c`;
     
     if (data) {
@@ -124,9 +148,10 @@ class RiskScoreLogger {
    * @param message The error message to log
    * @param error Optional error object or data to include
    */
-  error(tag: string, message: string, error?: any): void {
+  error(tag: string | LogTag, message: string, error?: any): void {
     // Errors are always logged, even in disabled tags
-    const color = tagColors[tag] || tagColors.default;
+    const safeTag = (Object.keys(tagColors).includes(tag) ? tag : 'default') as LogTag;
+    const color = tagColors[safeTag];
     const formattedTag = `%c${LOG_PREFIX}:${tag}:ERROR%c`;
     
     if (error) {
