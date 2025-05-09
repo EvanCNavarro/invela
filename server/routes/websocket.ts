@@ -11,6 +11,23 @@ import * as WebSocketService from '../services/websocket';
 import { registerWebSocketServer, broadcastWebSocketMessage } from '../utils/task-update';
 import { logger } from '../utils/logger';
 
+// Define interface for risk dimension to match client-side
+interface RiskDimension {
+  id: string;
+  name: string;
+  description: string;
+  weight: number;
+  value: number;
+  color?: string;
+}
+
+// Define interface for risk priorities to match client-side
+interface RiskPriorities {
+  dimensions: RiskDimension[];
+  riskAcceptanceLevel: number;
+  lastUpdated: string;
+}
+
 // Map to store active clients
 export const clients = new Map();
 
@@ -98,5 +115,60 @@ websocketRouter.post('/api/websocket/task-update', (req, res) => {
     res.status(500).json({ error: String(error) });
   }
 });
+
+/**
+ * Broadcast risk priorities update to all connected clients
+ * 
+ * @param priorities The updated risk priorities
+ */
+export function broadcastRiskPrioritiesUpdate(priorities: RiskPriorities): void {
+  logger.info('[RiskPriorities] Broadcasting updated priorities to clients');
+  
+  try {
+    // Use our improved broadcasting function
+    broadcastWebSocketMessage('risk_priorities_update', { 
+      priorities,
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.info('[RiskPriorities] Successfully broadcast to connected clients', {
+      dimensionCount: priorities.dimensions.length,
+      riskAcceptanceLevel: priorities.riskAcceptanceLevel,
+      timestamp: priorities.lastUpdated
+    });
+  } catch (error) {
+    logger.error('[RiskPriorities] Failed to broadcast priorities update', {
+      error: String(error)
+    });
+  }
+}
+
+/**
+ * Broadcast risk score update to all connected clients
+ * 
+ * @param newScore The updated risk score value
+ * @param riskLevel The risk level string (e.g., 'low', 'medium', 'high')
+ */
+export function broadcastRiskScoreUpdate(newScore: number, riskLevel: string): void {
+  logger.info('[RiskScore] Broadcasting updated score to clients');
+  
+  try {
+    // Use our improved broadcasting function
+    broadcastWebSocketMessage('risk_score_update', { 
+      newScore,
+      riskLevel,
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.info('[RiskScore] Successfully broadcast to connected clients', {
+      score: newScore,
+      riskLevel
+    });
+  } catch (error) {
+    logger.error('[RiskScore] Failed to broadcast score update', {
+      error: String(error)
+    });
+  }
+}
 
 export default websocketRouter;

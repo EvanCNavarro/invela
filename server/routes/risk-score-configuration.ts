@@ -94,6 +94,98 @@ router.get('/test', async (req: Request, res: Response) => {
   }
 });
 
+// Test endpoint to broadcast updates via WebSocket
+router.post('/broadcast-test', async (req: Request, res: Response) => {
+  try {
+    const { type, score, riskLevel, priorities } = req.body;
+    const websocket = await import('../routes/websocket');
+    
+    // Default test data for priorities
+    const testPriorities: RiskPriorities = priorities || {
+      dimensions: [
+        {
+          id: 'data_governance',
+          name: 'Data Governance',
+          description: 'How data is managed, controlled and protected',
+          weight: 30,
+          value: 85,
+          color: '#4285F4'
+        },
+        {
+          id: 'system_security',
+          name: 'System Security',
+          description: 'Protection against unauthorized access and attacks',
+          weight: 25,
+          value: 72,
+          color: '#EA4335'
+        },
+        {
+          id: 'access_controls',
+          name: 'Access Controls',
+          description: 'User authentication and permission management',
+          weight: 20,
+          value: 65,
+          color: '#FBBC05'
+        },
+        {
+          id: 'business_resilience',
+          name: 'Business Resilience',
+          description: 'Ability to maintain operations during disruptions',
+          weight: 15,
+          value: 78,
+          color: '#34A853'
+        },
+        {
+          id: 'compliance_posture',
+          name: 'Compliance Posture',
+          description: 'Adherence to regulatory requirements',
+          weight: 7,
+          value: 90,
+          color: '#8E44AD'
+        },
+        {
+          id: 'incident_response',
+          name: 'Incident Response',
+          description: 'Process for handling security incidents',
+          weight: 3,
+          value: 83,
+          color: '#F39C12'
+        }
+      ],
+      riskAcceptanceLevel: score || 75,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // Based on the type parameter, broadcast different updates
+    if (type === 'score' || !type) {
+      // Broadcast risk score update
+      websocket.broadcastRiskScoreUpdate(
+        score || 75, 
+        riskLevel || 'medium'
+      );
+      return res.status(200).json({ 
+        success: true, 
+        type: 'score', 
+        score: score || 75, 
+        riskLevel: riskLevel || 'medium' 
+      });
+    } else if (type === 'priorities') {
+      // Broadcast risk priorities update
+      websocket.broadcastRiskPrioritiesUpdate(testPriorities);
+      return res.status(200).json({ 
+        success: true, 
+        type: 'priorities',
+        priorities: testPriorities
+      });
+    } else {
+      return res.status(400).json({ error: 'Invalid update type' });
+    }
+  } catch (error) {
+    console.error('Error in broadcast test endpoint:', error);
+    return res.status(500).json({ error: 'Broadcast test endpoint error' });
+  }
+});
+
 // GET endpoint to retrieve the risk score configuration
 router.get('/configuration', optionalAuth, async (req: Request, res: Response) => {
   try {
