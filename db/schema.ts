@@ -350,6 +350,29 @@ export const securityResponses = pgTable("security_responses", {
   updated_at: timestamp("updated_at"),
 });
 
+/**
+ * Table for tracking which tab tutorials a user has completed
+ * This supports the feature that shows onboarding/tutorial modals
+ * the first time a user visits each main tab.
+ */
+export const userTabTutorials = pgTable("user_tab_tutorials", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  tab_key: varchar("tab_key", { length: 50 }).notNull(),
+  completed_at: timestamp("completed_at").defaultNow().notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Add Zod schemas for the user tab tutorials table
+export const insertUserTabTutorialSchema = createInsertSchema(userTabTutorials, {
+  tab_key: z.string().min(1).max(50),
+});
+
+export const selectUserTabTutorialSchema = createSelectSchema(userTabTutorials);
+
+export type UserTabTutorial = z.infer<typeof selectUserTabTutorialSchema>;
+export type NewUserTabTutorial = z.infer<typeof insertUserTabTutorialSchema>;
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.company_id],
@@ -358,6 +381,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   files: many(files),
   assignedTasks: many(tasks, { relationName: "assignedTasks" }),
   createdTasks: many(tasks, { relationName: "createdTasks" }),
+  completedTabTutorials: many(userTabTutorials),
 }));
 
 export const companiesRelations = relations(companies, ({ many }) => ({
