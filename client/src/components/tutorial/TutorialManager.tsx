@@ -89,7 +89,15 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   const [initializationError, setInitializationError] = useState<string | null>(null);
   
   // Map tab names to normalized versions for compatibility
-  const normalizedTabName = tabName === 'risk-score-configuration' ? 'risk-score' : tabName;
+  // This is critical for handling URL path vs database key mismatches
+  const normalizeTabName = (inputTabName: string): string => {
+    if (inputTabName === 'risk-score-configuration') return 'risk-score';
+    if (inputTabName === 'claims-risk-analysis') return 'claims-risk';
+    if (inputTabName === 'network-visualization') return 'network-view';
+    return inputTabName;
+  };
+  
+  const normalizedTabName = normalizeTabName(tabName);
   console.log(`[TutorialManager] Normalized tab name: ${normalizedTabName} (original: ${tabName})`);
   
   // Get tutorial content for the current tab
@@ -220,7 +228,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   };
   
   // Check if we have a direct database entry for this tab
-  const directDbEntry = dbTutorialEntries[tabName];
+  // Use the normalized tab name to look up the entry
+  const directDbEntry = dbTutorialEntries[normalizedTabName];
   const shouldForceTutorial = directDbEntry && !isCompleted;
   
   console.log(`[TutorialManager] Direct DB check - Entry for ${tabName}:`, directDbEntry);
