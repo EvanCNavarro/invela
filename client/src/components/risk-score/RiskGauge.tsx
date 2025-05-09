@@ -1,9 +1,11 @@
 /**
- * RiskGauge Component - Simplified for testing
+ * RiskGauge Component
  * 
- * A simpler implementation to avoid potential React hooks issues
+ * A half-circle gauge visualization that displays risk scores with gradient coloring
+ * based on risk level.
  */
 import React from 'react';
+import { PieChart, Pie, Cell } from 'recharts';
 
 interface RiskGaugeProps {
   score: number;
@@ -32,7 +34,7 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Simple gauge component for testing
+ * Half-circle gauge component
  */
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
@@ -42,51 +44,90 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
 }) => {
   // Log component render if logger exists
   if (logger) {
-    logger('gauge', `Rendering simple risk gauge with score: ${score}, level: ${riskLevel}`);
+    logger('gauge', `Rendering half-circle gauge with score: ${score}, level: ${riskLevel}`);
   }
   
   // Calculate the color based on risk level
   const color = getRiskLevelColor(riskLevel);
   
-  // Calculate the width of the filled portion
-  const fillWidth = (score / 100) * 100;
+  // Data for the gauge - convert score to an angle (180 = half circle)
+  // For a half-circle, we need two data points:
+  // 1. The filled portion (based on score)
+  // 2. The empty portion (remaining)
+  const filledValue = (score / 100) * 180;
+  const emptyValue = 180 - filledValue;
+  
+  const data = [
+    { name: 'filled', value: filledValue },
+    { name: 'empty', value: emptyValue }
+  ];
   
   return (
-    <div style={{ width: size, margin: '0 auto', textAlign: 'center' }}>
-      {/* Simple gauge visualization */}
-      <div style={{ 
-        width: '100%', 
-        height: 20, 
-        backgroundColor: '#f1f5f9', 
-        borderRadius: 10,
-        overflow: 'hidden',
-        margin: '10px 0'
-      }}>
-        <div style={{ 
-          width: `${fillWidth}%`, 
-          height: '100%', 
-          backgroundColor: color, 
-          borderRadius: 10,
-          transition: 'width 0.5s ease-in-out'
-        }} />
-      </div>
+    <div style={{ 
+      width: size, 
+      height: size / 2 + 30, 
+      margin: '0 auto', 
+      position: 'relative', 
+      textAlign: 'center'
+    }}>
+      {/* Half-circle gauge */}
+      <PieChart width={size} height={size}>
+        {/* Background gray arc */}
+        <Pie
+          data={[{ name: 'bg', value: 180 }]}
+          cx={size / 2}
+          cy={size / 2}
+          startAngle={180}
+          endAngle={0}
+          innerRadius={size * 0.6 / 2}
+          outerRadius={size * 0.8 / 2}
+          paddingAngle={0}
+          dataKey="value"
+        >
+          <Cell fill="#f1f5f9" />
+        </Pie>
+        
+        {/* Colored arc based on score */}
+        <Pie
+          data={data}
+          cx={size / 2}
+          cy={size / 2}
+          startAngle={180}
+          endAngle={0}
+          innerRadius={size * 0.6 / 2}
+          outerRadius={size * 0.8 / 2}
+          paddingAngle={0}
+          dataKey="value"
+        >
+          <Cell fill={color} />
+          <Cell fill="transparent" />
+        </Pie>
+      </PieChart>
       
-      {/* Level indicator */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b' }}>
-        <span>Low</span>
-        <span>Medium</span>
-        <span>High</span>
-      </div>
-      
-      {/* Score display */}
-      <div style={{ 
-        fontSize: 32, 
-        fontWeight: 'bold', 
-        color: color, 
-        margin: '10px 0',
-        textAlign: 'center'
+      {/* Score display in the center */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, 0%)',
+        fontSize: size / 4,
+        fontWeight: 'bold',
+        color: '#333'
       }}>
         {score}
+      </div>
+      
+      {/* Min and max labels */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginTop: -10,
+        fontSize: size / 12,
+        color: '#666'
+      }}>
+        <span>0</span>
+        <span>100</span>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { RiskDimension, RiskThresholds, CompanyComparison, RiskScoreConfiguration, RiskPriorities } from '@/lib/risk-score-configuration-types';
 import { defaultRiskDimensions, defaultRiskThresholds, sampleCompanyComparisons, calculateRiskScore, determineRiskLevel } from '@/lib/risk-score-configuration-data';
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
+import { RiskGauge } from '@/components/risk-score/RiskGauge';
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -917,33 +918,18 @@ export default function RiskScoreConfigurationPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
-                  {/* Simple gauge visualization instead of complex components */}
+                  {/* Half-circle gauge visualization */}
                   <div className="flex flex-col items-center">
-                    {/* Simple gauge bar */}
-                    <div className="w-full max-w-[150px] h-4 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full transition-all duration-500 ease-in-out" 
-                        style={{ 
-                          width: `${score}%`, 
-                          backgroundColor: getRiskLevelColor(riskLevel) 
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Risk Level Label - simplified as requested */}
-                    <div className="text-center mt-1 text-xs text-muted-foreground flex justify-between w-full px-2">
-                      <span>Low</span>
-                      <span>Medium</span>
-                      <span>High</span>
-                    </div>
+                    {/* RiskGauge component for half-circle visualization */}
+                    <RiskGauge 
+                      score={score} 
+                      riskLevel={riskLevel} 
+                      size={170}
+                      logger={riskScoreLogger.log}
+                    />
                     
                     {/* Risk Acceptance Level Label - moved above the score as requested */}
                     <h4 className="text-sm font-medium mt-2">Risk Acceptance Level</h4>
-                    
-                    {/* Score display - large number only */}
-                    <div className="text-4xl font-bold" style={{ color: getRiskLevelColor(riskLevel) }}>
-                      {score}
-                    </div>
                   </div>
                   
                   {/* Risk Score Slider - allows manual adjustment of risk acceptance level */}
