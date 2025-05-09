@@ -1,11 +1,9 @@
 /**
  * RiskGauge Component
  * 
- * A half-circle gauge visualization that displays risk scores with gradient coloring
- * based on risk level.
+ * A half-circle gauge visualization using pure CSS/SVG for compatibility and stability
  */
 import React from 'react';
-import { PieChart, Pie, Cell } from 'recharts';
 
 interface RiskGaugeProps {
   score: number;
@@ -50,64 +48,77 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   // Calculate the color based on risk level
   const color = getRiskLevelColor(riskLevel);
   
-  // Data for the gauge - convert score to an angle (180 = half circle)
-  // For a half-circle, we need two data points:
-  // 1. The filled portion (based on score)
-  // 2. The empty portion (remaining)
-  const filledValue = (score / 100) * 180;
-  const emptyValue = 180 - filledValue;
+  // Calculate the percentage of the circle to fill
+  const percentage = Math.min(Math.max(score, 0), 100);
   
-  const data = [
-    { name: 'filled', value: filledValue },
-    { name: 'empty', value: emptyValue }
-  ];
+  // Calculate the stroke-dasharray and stroke-dashoffset for the SVG arc
+  const radius = size * 0.4;
+  const circumference = radius * Math.PI;
+  const dashArray = `${circumference} ${circumference}`;
+  const dashOffset = circumference - (percentage / 100) * circumference;
   
   return (
     <div style={{ 
       width: size, 
-      height: size / 2 + 30, 
+      height: size / 2 + 20, 
       margin: '0 auto', 
       position: 'relative', 
       textAlign: 'center'
     }}>
-      {/* Half-circle gauge */}
-      <PieChart width={size} height={size}>
-        {/* Background gray arc */}
-        <Pie
-          data={[{ name: 'bg', value: 180 }]}
-          cx={size / 2}
-          cy={size / 2}
-          startAngle={180}
-          endAngle={0}
-          innerRadius={size * 0.6 / 2}
-          outerRadius={size * 0.8 / 2}
-          paddingAngle={0}
-          dataKey="value"
-        >
-          <Cell fill="#f1f5f9" />
-        </Pie>
+      <svg 
+        width={size} 
+        height={size / 2 + 10} 
+        viewBox={`0 0 ${size} ${size / 2 + 10}`}
+        style={{ overflow: 'visible' }}
+      >
+        {/* Background arc (gray) */}
+        <path
+          d={`M ${size * 0.1} ${size / 2} A ${radius} ${radius} 0 0 1 ${size * 0.9} ${size / 2}`}
+          fill="none"
+          stroke="#f1f5f9"
+          strokeWidth={size * 0.1}
+          strokeLinecap="round"
+        />
         
-        {/* Colored arc based on score */}
-        <Pie
-          data={data}
-          cx={size / 2}
-          cy={size / 2}
-          startAngle={180}
-          endAngle={0}
-          innerRadius={size * 0.6 / 2}
-          outerRadius={size * 0.8 / 2}
-          paddingAngle={0}
-          dataKey="value"
+        {/* Colored arc representing the score */}
+        <path
+          d={`M ${size * 0.1} ${size / 2} A ${radius} ${radius} 0 0 1 ${size * 0.9} ${size / 2}`}
+          fill="none"
+          stroke={color}
+          strokeWidth={size * 0.1}
+          strokeLinecap="round"
+          strokeDasharray={dashArray}
+          strokeDashoffset={dashOffset}
+          transform={`rotate(-180 ${size / 2} ${size / 2})`}
+        />
+        
+        {/* Min label (0) */}
+        <text
+          x={size * 0.1}
+          y={size * 0.6}
+          fontSize={size * 0.08}
+          fill="#666"
+          textAnchor="middle"
         >
-          <Cell fill={color} />
-          <Cell fill="transparent" />
-        </Pie>
-      </PieChart>
+          0
+        </text>
+        
+        {/* Max label (100) */}
+        <text
+          x={size * 0.9}
+          y={size * 0.6}
+          fontSize={size * 0.08}
+          fill="#666"
+          textAnchor="middle"
+        >
+          100
+        </text>
+      </svg>
       
       {/* Score display in the center */}
       <div style={{
         position: 'absolute',
-        top: '50%',
+        top: '40%',
         left: '50%',
         transform: 'translate(-50%, 0%)',
         fontSize: size / 4,
@@ -115,19 +126,6 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         color: '#333'
       }}>
         {score}
-      </div>
-      
-      {/* Min and max labels */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginTop: -10,
-        fontSize: size / 12,
-        color: '#666'
-      }}>
-        <span>0</span>
-        <span>100</span>
       </div>
     </div>
   );
