@@ -54,18 +54,18 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const height = size / 2 + 30;
   const radius = size * 0.4;
   const centerX = width / 2;
-  const centerY = height - 30;
+  const centerY = height * 0.3; // Position circle at the top
   const strokeWidth = size * 0.08;
   
-  // Calculate the angle for the progress arc
-  const startAngle = Math.PI;
-  const endAngle = startAngle - (percentage / 100) * Math.PI;
+  // Calculate the angle for the progress arc (upside down semi-circle)
+  const startAngle = 0; // Starting from 0 radians (right side)
+  const endAngle = startAngle + (percentage / 100) * Math.PI; // Going counter-clockwise
   
   // Function to calculate point on the arc
   const polarToCartesian = (angle: number) => {
     return {
       x: centerX + radius * Math.cos(angle),
-      y: centerY + radius * Math.sin(angle)
+      y: centerY - radius * Math.sin(angle) // Negative to flip upside down
     };
   };
   
@@ -74,18 +74,18 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const end = polarToCartesian(endAngle);
   
   // Determine if we need to use the large arc flag
-  const largeArcFlag = percentage > 50 ? 0 : 0;
+  const largeArcFlag = percentage > 50 ? 1 : 0;
   
   // Create the SVG path for the progress arc
   const arcPath = `
     M ${start.x},${start.y}
-    A ${radius},${radius} 0 ${largeArcFlag},0 ${end.x},${end.y}
+    A ${radius},${radius} 0 ${largeArcFlag},1 ${end.x},${end.y}
   `;
   
   // Create the SVG path for the background arc
   const backgroundArcPath = `
-    M ${start.x},${start.y}
-    A ${radius},${radius} 0 0,0 ${centerX + radius},${centerY}
+    M ${centerX - radius},${centerY}
+    A ${radius},${radius} 0 0,1 ${centerX + radius},${centerY}
   `;
     
   return (
@@ -135,7 +135,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       {/* Score number */}
       <div style={{
         position: 'absolute',
-        top: '40%',
+        top: height * 0.75,
         left: '50%',
         transform: 'translate(-50%, -50%)',
         fontSize: size / 4,
@@ -145,16 +145,17 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         {score}
       </div>
       
-      {/* Risk level text */}
+      {/* Risk Acceptance Level text */}
       <div style={{
         position: 'absolute',
-        bottom: '0',
+        top: height * 0.55,
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: size / 15,
-        color: '#666'
+        color: '#666',
+        fontWeight: 500
       }}>
-        {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
+        Risk Acceptance Level
       </div>
     </div>
   );
