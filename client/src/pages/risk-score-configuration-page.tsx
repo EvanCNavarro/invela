@@ -922,7 +922,32 @@ export default function RiskScoreConfigurationPage() {
                     </div>
                   </div>
                   
-                  {/* Removed Top Priority Dimensions section as requested */}
+                  {/* Risk Score Slider - allows manual adjustment of risk acceptance level */}
+                  <div className="w-full mt-6 px-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-sm font-medium">Risk Acceptance Level</h4>
+                      <span className="text-sm font-bold" style={{ color: getRiskLevelColor(riskLevel) }}>{score}</span>
+                    </div>
+                    <Slider
+                      defaultValue={[score]}
+                      max={100}
+                      step={1}
+                      className="my-4"
+                      onValueChange={(value) => {
+                        // Update score and risk level when slider changes
+                        const newScore = value[0];
+                        setScore(newScore);
+                        setRiskLevel(determineRiskLevel(newScore));
+                        // Log the change for debugging purposes
+                        riskScoreLogger.info(`Risk score manually adjusted to ${newScore} (${determineRiskLevel(newScore)} risk)`);
+                      }}
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Low Risk</span>
+                      <span>Medium Risk</span>
+                      <span>High Risk</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
               
