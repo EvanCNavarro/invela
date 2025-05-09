@@ -1,105 +1,77 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Type for tutorial asset status
- */
-export type TutorialAssetStatus = {
-  [assetUrl: string]: {
-    loaded: boolean;
-    error: boolean;
-  };
-};
+interface UseTutorialAssetsResult {
+  isLoading: boolean;
+  imageUrl: string | null;
+  error: Error | null;
+}
 
 /**
- * useAssetPreloader hook
+ * Hook to load tutorial assets with loading state
  * 
- * This hook preloads image assets for tutorials to ensure they're
- * available when the tutorial steps are shown to the user.
+ * This hook handles loading tutorial images and tracks loading state
+ * to show appropriate loading indicators in the UI.
  * 
- * @param assetUrls Array of image URLs to preload
- * @returns Object containing loading status and completion status
+ * @param imagePath - Path to the tutorial image
+ * @param enabled - Whether to load the asset (for optimization)
+ * @returns Object with loading state and image URL
  */
-export function useTutorialAssets(assetUrls: string[]) {
-  const [assetStatus, setAssetStatus] = useState<TutorialAssetStatus>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isComplete, setIsComplete] = useState(false);
-  const [progress, setProgress] = useState(0);
+export function useTutorialAssets(
+  imagePath: string,
+  enabled: boolean = true
+): UseTutorialAssetsResult {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!assetUrls || assetUrls.length === 0) {
-      setIsLoading(false);
-      setIsComplete(true);
-      setProgress(100);
+    if (!enabled || !imagePath) {
       return;
     }
 
-    // Initialize asset status
-    const initialStatus: TutorialAssetStatus = {};
-    assetUrls.forEach(url => {
-      if (url) {
-        initialStatus[url] = { loaded: false, error: false };
-      }
-    });
-    setAssetStatus(initialStatus);
+    let isMounted = true;
+    setIsLoading(true);
+    setError(null);
 
-    // Filter out any null/undefined URLs
-    const validUrls = assetUrls.filter(Boolean);
-    let loadedCount = 0;
-
-    // Function to update status when an asset loads or errors
-    const updateStatus = (url: string, loaded: boolean, error: boolean) => {
-      setAssetStatus(prev => ({
-        ...prev,
-        [url]: { loaded, error }
-      }));
-
-      loadedCount++;
-      
-      // Calculate progress percentage
-      const newProgress = Math.round((loadedCount / validUrls.length) * 100);
-      setProgress(newProgress);
-      
-      // Check if all assets have been processed
-      if (loadedCount === validUrls.length) {
-        setIsLoading(false);
-        setIsComplete(true);
+    // Simulate image loading with a small delay for better UX
+    const loadImage = async () => {
+      try {
+        // Create an image element to preload the image
+        const img = new Image();
+        
+        // Create a promise that resolves when the image loads
+        // or rejects if there's an error
+        const imageLoadPromise = new Promise<string>((resolve, reject) => {
+          img.onload = () => resolve(imagePath);
+          img.onerror = () => reject(new Error(`Failed to load image: ${imagePath}`));
+          img.src = imagePath;
+        });
+        
+        // Wait for the image to load (min 500ms for UI smoothness)
+        const result = await Promise.all([
+          imageLoadPromise,
+          new Promise(resolve => setTimeout(resolve, 500)) // Minimum loading time
+        ]);
+        
+        if (isMounted) {
+          setImageUrl(result[0]);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Error loading tutorial asset:', err);
+          setError(err instanceof Error ? err : new Error('Unknown error loading asset'));
+          setIsLoading(false);
+        }
       }
     };
 
-    // Preload each image
-    validUrls.forEach(url => {
-      // Skip non-image URLs
-      if (!url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-        updateStatus(url, true, false);
-        return;
-      }
+    loadImage();
 
-      const img = new Image();
-      
-      img.onload = () => {
-        updateStatus(url, true, false);
-      };
-      
-      img.onerror = () => {
-        console.error(`Failed to load tutorial image: ${url}`);
-        updateStatus(url, false, true);
-      };
-      
-      img.src = url;
-    });
-
-    // Cleanup function
     return () => {
-      // Nothing specific to clean up here
+      isMounted = false;
     };
-  }, [assetUrls]);
+  }, [imagePath, enabled]);
 
-  return {
-    assetStatus,
-    isLoading,
-    isComplete,
-    progress
-  };
+  return { isLoading, imageUrl, error };
 }
-
-export default useTutorialAssets;
