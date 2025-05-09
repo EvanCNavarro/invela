@@ -60,13 +60,26 @@ export function ComparativeVisualization({
       
       // Convert dimensions to format needed for visualization
       const dimensionValues = dimensions.reduce((acc, dim) => {
-        // Scale dimension values based on global score if provided
+        // Scale dimension values based on global score and weight distribution if provided
         if (globalScore !== undefined) {
-          // This scaling ensures the radar chart reflects the global score adjustment
-          const scaleFactor = globalScore / 100;
-          // Scale value but keep relative proportions between dimensions
-          acc[dim.id] = Math.min(100, Math.max(0, dim.value * scaleFactor * (100/50))); 
+          // Get total weight of all dimensions
+          const totalWeight = dimensions.reduce((sum, d) => sum + d.weight, 0);
+          
+          // Calculate how this dimension's weight contributes to the whole (normalized)
+          const weightContribution = dim.weight / totalWeight;
+          
+          // Scale value based on global score and weight contribution
+          // This makes higher weighted dimensions have more impact on the radar chart
+          // The formula creates a weighted distribution on the radar chart:
+          // 1. Each dimension's value is proportional to its weight percentage
+          // 2. The overall shape grows/shrinks based on the global score
+          // 3. Higher weighted dimensions (higher priority) have larger radar points
+          const scaledValue = globalScore * (weightContribution * 3); // Enhanced factor to make differences more visible
+          
+          // Ensure the value is within range and weighted properly
+          acc[dim.id] = Math.min(100, Math.max(0, scaledValue));
         } else {
+          // Default behavior without global score
           acc[dim.id] = dim.value;
         }
         return acc;
@@ -129,7 +142,14 @@ export function ComparativeVisualization({
         style: {
           fontSize: '11px',
           fontWeight: 500,
-          colors: Array(dimensions.length).fill('#64748b')
+          colors: dimensions.map((_, index) => {
+            // Match colors to the weight distribution gradient colors in the right panel
+            return index === 0 ? '#1a2530' : 
+                  index === 1 ? '#2c3e50' :
+                  index === 2 ? '#34495e' :
+                  index === 3 ? '#4a6178' :
+                  index === 4 ? '#607993' : '#7f8c8d';
+          })
         }
       }
     },
