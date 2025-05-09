@@ -388,42 +388,24 @@ export function useTutorialWebSocket(tabName: string) {
   useEffect(() => {
     if (!isConnected) return;
     
-    // Listen for notification messages that might contain tutorial data
-    const removeNotificationListener = addEventListener('notification', (data: NotificationMessage) => {
-      // Check if this is a tutorial-related notification
-      if (data.metadata && data.metadata.type) {
-        // Handle tutorial progress updates
-        if (data.metadata.type === 'tutorial_progress' && data.metadata.tabName === tabName) {
-          console.log('[WebSocket] Received tutorial progress update:', data.metadata);
-          setTutorialProgress(data.metadata.progress);
-        }
-        
-        // Handle tutorial completion
-        if (data.metadata.type === 'tutorial_completed' && data.metadata.tabName === tabName) {
-          console.log('[WebSocket] Received tutorial completion notification:', data.metadata);
-          setTutorialCompleted(true);
-        }
-      }
-    });
-    
-    // For backward compatibility, also listen for direct tutorial message types
+    // Listen for tutorial progress updates
     const removeProgressListener = addEventListener('tutorial_progress', (data: TutorialProgressMessage) => {
       if (data.tabName === tabName) {
-        console.log('[WebSocket] Received direct tutorial progress update:', data);
+        console.log('[WebSocket] Received tutorial progress update:', data);
         setTutorialProgress(data.progress);
       }
     });
     
+    // Listen for tutorial completion
     const removeCompletedListener = addEventListener('tutorial_completed', (data: TutorialCompletedMessage) => {
       if (data.tabName === tabName) {
-        console.log('[WebSocket] Received direct tutorial completion notification:', data);
+        console.log('[WebSocket] Received tutorial completion notification:', data);
         setTutorialCompleted(true);
       }
     });
     
     // Cleanup listeners
     return () => {
-      removeNotificationListener();
       removeProgressListener();
       removeCompletedListener();
     };

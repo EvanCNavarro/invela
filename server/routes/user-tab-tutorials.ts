@@ -16,7 +16,10 @@ import {
 } from '@db/schema';
 import { logger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth';
-import { broadcast } from '../utils/unified-websocket';
+import WebSocketService from '../services/websocket-service';
+
+// Create an instance of the WebSocket service
+const webSocketService = new WebSocketService();
 
 const router = Router();
 
@@ -38,20 +41,16 @@ const broadcastTutorialProgress = (
     // Broadcast tutorial progress update
     logger.info(`[TabTutorials] Broadcasting tutorial progress update for ${tabName}: step ${currentStep}/${totalSteps}`);
     
-    // Use the unified-websocket broadcast method
-    // Adding a custom 'tutorial_progress' message type
-    broadcast('notification', {
-      title: 'Tutorial Progress Update',
-      message: `Tutorial progress update for ${tabName}`,
-      metadata: {
-        type: 'tutorial_progress',
-        tabName,
-        userId,
-        progress: {
-          currentStep,
-          totalSteps
-        }
-      }
+    // Use the WebSocketService instance to broadcast
+    webSocketService.broadcast({
+      type: 'tutorial_progress',
+      tabName,
+      userId,
+      progress: {
+        currentStep,
+        totalSteps
+      },
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     logger.error(`[TabTutorials] Error broadcasting tutorial progress: ${error}`);
@@ -69,17 +68,12 @@ const broadcastTutorialCompleted = (tabName: string, userId: number | string) =>
     // Broadcast tutorial completion
     logger.info(`[TabTutorials] Broadcasting tutorial completion for ${tabName}`);
     
-    // Use the unified-websocket broadcast method
-    // Adding a custom 'tutorial_completed' message type
-    broadcast('notification', {
-      title: 'Tutorial Completed',
-      message: `Tutorial completed for ${tabName}`,
-      variant: 'success', 
-      metadata: {
-        type: 'tutorial_completed',
-        tabName,
-        userId
-      }
+    // Use the WebSocketService instance to broadcast
+    webSocketService.broadcast({
+      type: 'tutorial_completed',
+      tabName,
+      userId, 
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     logger.error(`[TabTutorials] Error broadcasting tutorial completion: ${error}`);
