@@ -5,13 +5,29 @@
  * to verify that they're working as expected.
  */
 
-const fetch = require('node-fetch');
-const fs = require('fs');
+import fetch from 'node-fetch';
+import fs from 'fs';
 
 // Load session cookie
 let sessionCookie;
 try {
-  sessionCookie = fs.readFileSync('.session-cookie', 'utf8').trim();
+  // Read the cookie file but extract just the value part
+  const cookieFile = fs.readFileSync('.session-cookie', 'utf8').trim();
+  
+  // The file may contain a Netscape-formatted cookie, so just extract the value
+  // Example: connect.sid=s%3AxC6eWBA0uiG4h53r4nrdaVKv_AgeNfJ2.0he405Xchkci7YVMTn9rFVuSo5PfEX7QD4yhZopBf18
+  if (cookieFile.includes('connect.sid=')) {
+    const match = cookieFile.match(/connect\.sid=([^;]+)/);
+    if (match && match[1]) {
+      sessionCookie = match[1];
+    } else {
+      sessionCookie = cookieFile; // Use as-is if pattern not found
+    }
+  } else {
+    sessionCookie = cookieFile; // Use as-is
+  }
+  
+  log(`Using session cookie: ${sessionCookie.substring(0, 15)}...`, colors.cyan);
 } catch (error) {
   console.error('Error loading session cookie:', error.message);
   process.exit(1);
