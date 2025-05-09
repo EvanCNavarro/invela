@@ -307,49 +307,49 @@ export default function RiskScoreConfigurationPage() {
     staleTime: 0, // Always consider data stale to force refetch
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Always refetch when component mounts
+    cacheTime: 0, // Don't cache the data at all
     onSuccess: (data) => {
-      // Force a console.log to check if logger is working
+      // Enhanced logging to track data flow
       console.log('DEBUG-DIRECT: Successfully fetched priorities data', data);
+      riskScoreLogger.log('fetch', 'Priorities data received from server', data);
       
-      // Try direct log call
-      riskScoreLogger.log('test', 'Testing if logger is working');
-      riskScoreLogger.logFetchSuccess(data);
-      
+      // Only process data if it exists and has dimensions
       if (data && data.dimensions) {
-        // If we have priorities data, use it instead of the general configuration
-        const newDimensions = data.dimensions;
+        riskScoreLogger.log('fetch', `Found ${data.dimensions.length} dimensions in server response`);
         
-        // Also load risk acceptance level if available
+        // Create a clean copy of the dimensions to avoid reference issues
+        const newDimensions = JSON.parse(JSON.stringify(data.dimensions));
+        
+        // Always update the risk acceptance level if it's available in the data
         if (data.riskAcceptanceLevel !== undefined) {
           const newScore = data.riskAcceptanceLevel;
           setScore(newScore);
           setRiskLevel(determineRiskLevel(newScore));
-          riskScoreLogger.log('load', `Loaded saved risk acceptance level: ${newScore}`);
+          // Reset user-set score flag since we're loading from server
+          setUserSetScore(false);
+          riskScoreLogger.log('load', `Loaded saved risk acceptance level: ${newScore} (${determineRiskLevel(newScore)})`);
         }
         
-        // Store original dimensions for comparison
-        if (!originalDimensionsRef.current) {
-          originalDimensionsRef.current = JSON.parse(JSON.stringify(newDimensions));
-          riskScoreLogger.logInitialLoad(data);
-        }
+        // Store original dimensions for comparison or update existing reference
+        originalDimensionsRef.current = JSON.parse(JSON.stringify(newDimensions));
+        riskScoreLogger.log('persist', 'Updated original dimensions reference with server data');
         
-        // If dimensions have changed on the server side, log and update
-        if (dimensions && dimensions.length > 0 && originalDimensionsRef.current) {
-          riskScoreLogger.compareDimensions(
-            'fetch', 
-            'current', dimensions, 
-            'server', newDimensions
-          );
-        }
-        
+        // Always set dimensions from the server - this is critical for persistence
         setDimensions(newDimensions);
+        riskScoreLogger.log('persist', 'Applied server dimensions data to component state');
       } else {
-        riskScoreLogger.error('fetch', 'No dimensions in priorities data');
+        riskScoreLogger.error('fetch', 'No dimensions in priorities data, using defaults');
+        // If no data, reset to defaults
+        setDimensions(defaultRiskDimensions);
+        originalDimensionsRef.current = JSON.parse(JSON.stringify(defaultRiskDimensions));
       }
     },
     onError: (error) => {
       riskScoreLogger.logFetchError(error);
       // Don't show error toast as we'll fall back to config data or defaults
+      riskScoreLogger.log('fetch', 'Using default dimensions due to fetch error');
+      setDimensions(defaultRiskDimensions);
+      originalDimensionsRef.current = JSON.parse(JSON.stringify(defaultRiskDimensions));
     }
   });
   
@@ -484,14 +484,21 @@ export default function RiskScoreConfigurationPage() {
         variant: 'success',
       });
       
+      // Critical step: Invalidate the query cache to ensure fresh data on reload
+      queryClient.invalidateQueries({ queryKey: ['/api/risk-score/priorities'] });
+      
       // Force a refetch of the priorities data to verify changes were applied
       riskScoreLogger.log('persist', 'Force refetching priorities query to verify changes');
       
       // Store what we just saved for comparison
       const savedDimensions = JSON.parse(JSON.stringify(dimensions));
       
+      // IMPORTANT: This refetch is critical for data persistence
       refetchPriorities().then(result => {
         if (result.data && result.data.dimensions) {
+          // Log successful fetch
+          riskScoreLogger.log('persist', `Successfully refetched priorities with ${result.data.dimensions.length} dimensions`);
+          
           // Compare what we just saved with what came back from the server
           riskScoreLogger.compareDimensions(
             'persist',
@@ -510,6 +517,13 @@ export default function RiskScoreConfigurationPage() {
             originalDimensionsRef.current = JSON.parse(JSON.stringify(result.data.dimensions));
           } else {
             riskScoreLogger.log('persist', 'Verification successful - server data matches what we saved');
+          }
+          
+          // Also update the risk acceptance level if it's included in the response
+          if (result.data.riskAcceptanceLevel !== undefined) {
+            riskScoreLogger.log('persist', `Updated risk acceptance level: ${result.data.riskAcceptanceLevel}`);
+            setScore(result.data.riskAcceptanceLevel);
+            setRiskLevel(determineRiskLevel(result.data.riskAcceptanceLevel));
           }
         } else {
           riskScoreLogger.error('persist', 'Refetch returned no dimensions data');
@@ -786,11 +800,19 @@ export default function RiskScoreConfigurationPage() {
       );
     }
     
+    // Preemptively update the query cache with our local state
+    // This ensures that when we navigate away and come back, we'll see our changes
+    queryClient.setQueryData(['/api/risk-score/priorities'], priorities);
+    
     // Create a promise that saves the priorities
     const savePrioritiesPromise = new Promise<void>((resolve, reject) => {
       savePrioritiesMutation.mutate(priorities, {
         onSuccess: () => {
           console.log('[DEBUG] Priorities saved successfully');
+          
+          // After successful save, update the reference to match what's saved
+          originalDimensionsRef.current = JSON.parse(JSON.stringify(cleanDimensions));
+          
           resolve();
         },
         onError: (error) => {
@@ -807,6 +829,9 @@ export default function RiskScoreConfigurationPage() {
       score,
       riskLevel
     };
+    
+    // Update the configuration cache as well
+    queryClient.setQueryData(['/api/risk-score/configuration'], configuration);
     
     // Create a promise that saves the general configuration
     const saveConfigPromise = new Promise<void>((resolve, reject) => {
@@ -831,18 +856,23 @@ export default function RiskScoreConfigurationPage() {
         refetchPriorities().then(result => {
           const retrievedData = result.data;
           
+          // Log the retrieved data for debugging
+          riskScoreLogger.log('persist', 'Retrieved data from server after save:', retrievedData);
+          
           // Update UI with the latest data from server to ensure consistency
           if (retrievedData && retrievedData.dimensions) {
             if (retrievedData.riskAcceptanceLevel !== undefined && 
                 retrievedData.riskAcceptanceLevel !== score) {
               setScore(retrievedData.riskAcceptanceLevel);
               setRiskLevel(determineRiskLevel(retrievedData.riskAcceptanceLevel));
+              riskScoreLogger.log('persist', `Updated risk level from server: ${retrievedData.riskAcceptanceLevel}`);
             }
             
             // Update dimensions if they're different from what we have
             if (JSON.stringify(retrievedData.dimensions) !== JSON.stringify(dimensions)) {
               setDimensions(retrievedData.dimensions);
               originalDimensionsRef.current = JSON.parse(JSON.stringify(retrievedData.dimensions));
+              riskScoreLogger.log('persist', 'Updated dimensions from server data');
             }
           }
         });
