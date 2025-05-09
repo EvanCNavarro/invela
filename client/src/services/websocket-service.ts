@@ -13,6 +13,7 @@ export type MessageType =
   | 'pong'
   | 'authenticate'
   | 'authenticated'
+  | 'notification'
   | 'tutorial_progress'
   | 'tutorial_completed'
   | 'task_updated'
@@ -22,6 +23,14 @@ export interface WebSocketMessage {
   type: MessageType;
   timestamp: string;
   [key: string]: any;
+}
+
+export interface NotificationMessage extends WebSocketMessage {
+  type: 'notification';
+  title: string;
+  message: string;
+  variant?: 'default' | 'destructive' | 'success';
+  metadata?: Record<string, any>;
 }
 
 export interface TutorialProgressMessage extends WebSocketMessage {
