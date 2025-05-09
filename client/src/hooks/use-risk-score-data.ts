@@ -41,6 +41,12 @@ export function useRiskScoreData() {
   const [userSetScore, setUserSetScore] = useState<boolean>(false);
   const [thresholds] = useState<RiskThresholds>(defaultRiskThresholds);
   
+  // Track original saved values to enable/disable Save button
+  const [savedValues, setSavedValues] = useState<{
+    dimensions: RiskDimension[];
+    score: number;
+  } | null>(null);
+  
   // UI feedback hooks
   const { toast } = useToast();
   const riskScoreService = getRiskScoreDataService();
@@ -101,16 +107,27 @@ export function useRiskScoreData() {
       if (Array.isArray(prioritiesData.dimensions) && prioritiesData.dimensions.length > 0) {
         riskScoreLogger.log('init', 'Applying server data', prioritiesData);
         
-        // Apply dimensions (deep copy to avoid reference issues)
-        setDimensions(JSON.parse(JSON.stringify(prioritiesData.dimensions)));
+        // Make a deep copy of the data to avoid reference issues
+        const dimensionsCopy = JSON.parse(JSON.stringify(prioritiesData.dimensions));
+        
+        // Apply dimensions to current state
+        setDimensions(dimensionsCopy);
         
         // Apply risk acceptance level if available
-        if (prioritiesData.riskAcceptanceLevel !== undefined) {
-          setScore(prioritiesData.riskAcceptanceLevel);
-          setRiskLevel(determineRiskLevel(prioritiesData.riskAcceptanceLevel));
-          setUserSetScore(true);
-          riskScoreLogger.log('init', `Loaded user-set risk acceptance level: ${prioritiesData.riskAcceptanceLevel}`);
-        }
+        const acceptanceLevel = prioritiesData.riskAcceptanceLevel !== undefined 
+          ? prioritiesData.riskAcceptanceLevel 
+          : 50; // Default if not set
+        
+        setScore(acceptanceLevel);
+        setRiskLevel(determineRiskLevel(acceptanceLevel));
+        setUserSetScore(true);
+        riskScoreLogger.log('init', `Loaded user-set risk acceptance level: ${acceptanceLevel}`);
+        
+        // Save the original values to compare against for enabling/disabling Save button
+        setSavedValues({
+          dimensions: dimensionsCopy,
+          score: acceptanceLevel
+        });
       }
     }
   }, [prioritiesData, isLoadingPriorities]);
@@ -221,7 +238,13 @@ export function useRiskScoreData() {
     });
     
     saveMutation.mutate();
-  }, [saveMutation, score, userSetScore]);
+    
+    // After saving, update the savedValues to match current values
+    setSavedValues({
+      dimensions: JSON.parse(JSON.stringify(dimensions)),
+      score
+    });
+  }, [saveMutation, score, userSetScore, dimensions]);
 
   // Reset to defaults
   const handleReset = useCallback(() => {
@@ -246,6 +269,45 @@ export function useRiskScoreData() {
     
     riskScoreLogger.log('user:action', `Risk acceptance level changed to ${newScore}`);
   }, []);
+  
+  // Check if current values differ from default values
+  const hasDiffFromDefaults = useCallback(() => {
+    // If score is not 50 (default), then there's a difference
+    if (score !== 50) return true;
+    
+    // Check if dimension order differs from default
+    if (dimensions.length !== defaultRiskDimensions.length) return true;
+    
+    // Check each dimension's id in order to see if ordering has changed
+    for (let i = 0; i < dimensions.length; i++) {
+      if (dimensions[i].id !== defaultRiskDimensions[i].id) {
+        return true;
+      }
+    }
+    
+    return false;
+  }, [dimensions, score]);
+  
+  // Check if current values differ from saved values
+  const hasDiffFromSaved = useCallback(() => {
+    // If there are no saved values yet, definitely has differences
+    if (!savedValues) return true;
+    
+    // If score is different, then there's a change
+    if (score !== savedValues.score) return true;
+    
+    // Check if dimension order differs from saved
+    if (dimensions.length !== savedValues.dimensions.length) return true;
+    
+    // Check each dimension's id in order to see if ordering has changed
+    for (let i = 0; i < dimensions.length; i++) {
+      if (dimensions[i].id !== savedValues.dimensions[i].id) {
+        return true;
+      }
+    }
+    
+    return false;
+  }, [dimensions, score, savedValues]);
 
   // Return the public API for components
   return {
@@ -258,6 +320,12 @@ export function useRiskScoreData() {
     isLoading: isLoadingPriorities,
     isSaving: saveMutation.isPending,
     isError: isErrorPriorities,
+    
+    // Flag to indicate if reset button should be enabled
+    hasDefaultsDiff: hasDiffFromDefaults(),
+    
+    // Flag to indicate if save button should be enabled
+    hasSavedDiff: hasDiffFromSaved(),
     
     // Actions
     handleReorder,
