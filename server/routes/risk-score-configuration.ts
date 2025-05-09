@@ -3,12 +3,13 @@
  * 
  * This file contains the endpoints for managing risk score configurations
  * including saving and retrieving dimension rankings and thresholds.
+ * Also includes endpoints for comparative analysis features.
  */
 
 import { Router, Request, Response } from 'express';
 import { db } from '../../db';
 import { companies } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, not, like, asc, ilike } from 'drizzle-orm';
 import { requireAuth, optionalAuth } from '../middleware/auth';
 
 const router = Router();
@@ -400,6 +401,194 @@ router.post('/priorities', optionalAuth, async (req: Request, res: Response) => 
   } catch (error) {
     console.error('Error saving risk priorities:', error);
     return res.status(500).json({ error: 'Failed to save risk priorities' });
+  }
+});
+
+// GET endpoint to search network companies for comparison
+router.get('/network-companies', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    // Log the request
+    console.log('[RiskComparison] Network companies search request received');
+    
+    // Allow access without authentication with fallback to company ID 1
+    const companyId = req.user?.company_id || 1;
+    console.log(`[RiskComparison] Using company ID: ${companyId} (${req.user ? 'authenticated' : 'unauthenticated'})`);
+    
+    // Get search query parameter with fallback to empty string
+    const searchQuery = req.query.q ? String(req.query.q).trim() : '';
+    console.log(`[RiskComparison] Search query: "${searchQuery}"`);
+    
+    // Limit the number of results
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 10;
+    
+    // Build the base query with the primary condition - exclude current company
+    let query = db.select({
+      id: companies.id,
+      name: companies.name,
+      category: companies.category,
+      riskScore: companies.risk_score,
+      chosenScore: companies.chosen_score,
+      risk_priorities: companies.risk_priorities
+    })
+    .from(companies)
+    .where(not(eq(companies.id, companyId)));
+    
+    // If search query is provided, add fuzzy search condition
+    if (searchQuery) {
+      query = query.where(ilike(companies.name, `%${searchQuery}%`));
+    }
+    
+    // Execute the query with ordering and limit
+    const networkCompanies = await query
+      .limit(limit)
+      .orderBy(asc(companies.name));
+    
+    // Transform companies for client consumption
+    const formattedCompanies = networkCompanies.map(company => {
+      // Extract the risk dimensions if available
+      const dimensions: Record<string, number> = {};
+      
+      if (company.risk_priorities && typeof company.risk_priorities === 'object') {
+        const priorities = company.risk_priorities as any;
+        if (priorities.dimensions && Array.isArray(priorities.dimensions)) {
+          // Convert dimensions array to record format expected by the chart
+          priorities.dimensions.forEach((dim: any) => {
+            if (dim.id && typeof dim.value === 'number') {
+              dimensions[dim.id] = dim.value;
+            }
+          });
+        }
+      }
+      
+      return {
+        id: company.id,
+        name: company.name,
+        companyType: company.category || 'Network',
+        description: `${company.name} - Network company`,
+        score: company.chosenScore || company.riskScore || 50, // Fallback to 50 if no score
+        dimensions
+      };
+    });
+    
+    console.log(`[RiskComparison] Returning ${formattedCompanies.length} network companies`);
+    return res.status(200).json(formattedCompanies);
+  } catch (error) {
+    console.error('Error searching network companies:', error);
+    return res.status(500).json({ error: 'Failed to search network companies' });
+  }
+});
+
+// GET endpoint to get industry average risk data for comparison
+router.get('/industry-average', optionalAuth, async (req: Request, res: Response) => {
+  try {
+    console.log('[RiskComparison] Industry average request received');
+    
+    // Generate the industry average data
+    // This is calculated from the average of all companies in the system
+    const allCompanies = await db.select({
+      id: companies.id,
+      name: companies.name,
+      category: companies.category,
+      riskScore: companies.risk_score,
+      chosenScore: companies.chosen_score,
+      risk_priorities: companies.risk_priorities
+    })
+    .from(companies)
+    .where(
+      // Only include companies that have some risk data
+      not(eq(companies.risk_score, null))
+    );
+    
+    console.log(`[RiskComparison] Found ${allCompanies.length} companies with risk data`);
+    
+    // If no companies have risk data, return a default industry average
+    if (allCompanies.length === 0) {
+      return res.status(200).json({
+        id: 0, // Special ID for industry average
+        name: "Industry Average",
+        companyType: "Benchmark",
+        description: "Average risk profile across all companies in the network",
+        score: 50, // Default mid-range score
+        dimensions: {
+          cyber_security: 50,
+          financial_stability: 50,
+          dark_web_data: 50,
+          public_sentiment: 50,
+          potential_liability: 50,
+          data_access_scope: 50
+        }
+      });
+    }
+    
+    // Calculate the average score
+    const totalScore = allCompanies.reduce((sum, company) => {
+      return sum + (company.chosenScore || company.riskScore || 50);
+    }, 0);
+    const averageScore = Math.round(totalScore / allCompanies.length);
+    
+    // Calculate average dimension values
+    // First, collect all dimension values
+    const dimensionValues: Record<string, number[]> = {};
+    
+    allCompanies.forEach(company => {
+      if (company.risk_priorities && typeof company.risk_priorities === 'object') {
+        const priorities = company.risk_priorities as any;
+        if (priorities.dimensions && Array.isArray(priorities.dimensions)) {
+          priorities.dimensions.forEach((dim: any) => {
+            if (dim.id && typeof dim.value === 'number') {
+              if (!dimensionValues[dim.id]) {
+                dimensionValues[dim.id] = [];
+              }
+              dimensionValues[dim.id].push(dim.value);
+            }
+          });
+        }
+      }
+    });
+    
+    // Calculate the average for each dimension
+    const averageDimensions: Record<string, number> = {};
+    Object.entries(dimensionValues).forEach(([dimId, values]) => {
+      if (values.length > 0) {
+        const sum = values.reduce((total, val) => total + val, 0);
+        averageDimensions[dimId] = Math.round(sum / values.length);
+      } else {
+        // Default to 50 if no values
+        averageDimensions[dimId] = 50;
+      }
+    });
+    
+    // Ensure we have values for the default dimensions
+    const defaultDimensions = [
+      'cyber_security',
+      'financial_stability',
+      'dark_web_data',
+      'public_sentiment',
+      'potential_liability',
+      'data_access_scope'
+    ];
+    
+    defaultDimensions.forEach(dimId => {
+      if (averageDimensions[dimId] === undefined) {
+        averageDimensions[dimId] = 50;
+      }
+    });
+    
+    // Return the industry average data
+    const industryAverage = {
+      id: 0, // Special ID for industry average
+      name: "Industry Average",
+      companyType: "Benchmark",
+      description: "Average risk profile across all companies in the network",
+      score: averageScore,
+      dimensions: averageDimensions
+    };
+    
+    console.log('[RiskComparison] Returning industry average data');
+    return res.status(200).json(industryAverage);
+  } catch (error) {
+    console.error('Error generating industry average data:', error);
+    return res.status(500).json({ error: 'Failed to generate industry average data' });
   }
 });
 
