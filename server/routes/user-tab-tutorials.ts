@@ -155,9 +155,13 @@ router.post('/', requireAuth, async (req: any, res) => {
       });
     }
     
+    // Log the full request body
+    logger.info(`[TabTutorials] Request body: ${JSON.stringify(req.body)}`);
+    
     const { tabName, completed, currentStep, totalSteps } = req.body;
     
     if (!tabName) {
+      logger.error(`[TabTutorials] Missing tab name in request body: ${JSON.stringify(req.body)}`);
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Tab name is required'

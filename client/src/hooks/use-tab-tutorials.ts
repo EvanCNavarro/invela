@@ -47,18 +47,18 @@ export function useTabTutorials(tabName: string) {
   const updateTutorialMutation = useMutation({
     mutationFn: async (payload: { step: number, completed: boolean }) => {
       console.log(`[TabTutorials] Updating tutorial for ${tabName}:`, payload);
-      return apiRequest('/api/user-tab-tutorials', {
-        method: 'POST',
-        body: JSON.stringify({
+      
+      // Use the direct method+url+data pattern for the API request
+      return apiRequest(
+        'POST', // Explicit HTTP method
+        '/api/user-tab-tutorials', // URL
+        {
           tabName: tabName, // Explicitly use the exact property name expected by the server
           currentStep: payload.step,
           completed: payload.completed,
           totalSteps: getTotalSteps(tabName)
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+        } // Data as third parameter
+      );
     },
     onSuccess: (result) => {
       console.log(`[TabTutorials] Successfully updated tutorial for ${tabName}:`, result);
@@ -74,16 +74,16 @@ export function useTabTutorials(tabName: string) {
   const markSeenMutation = useMutation({
     mutationFn: async () => {
       console.log(`[TabTutorials] Marking tutorial as seen for ${tabName}`);
-      return apiRequest('/api/user-tab-tutorials/mark-seen', {
-        method: 'POST',
-        body: JSON.stringify({ 
+      
+      // Use the direct method+url+data pattern for the API request
+      return apiRequest(
+        'POST', // Explicit HTTP method
+        '/api/user-tab-tutorials/mark-seen', // URL
+        { 
           tabName: tabName, // Explicitly use the exact property name expected by the server
           lastSeen: new Date().toISOString() 
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+        } // Data as third parameter
+      );
     },
     onSuccess: (result) => {
       console.log(`[TabTutorials] Successfully marked tutorial as seen for ${tabName}:`, result);
