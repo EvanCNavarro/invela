@@ -772,7 +772,7 @@ export default function RiskScoreConfigurationPage() {
   return (
     <DashboardLayout>
       <PageTemplate showBreadcrumbs>
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-visible">
           <PageHeader
             title="S&P Data Access Risk Score"
             description="Configure your risk assessment priorities for third parties accessing your data"
