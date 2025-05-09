@@ -1,10 +1,10 @@
 import React from 'react';
-import { TabTutorialModal } from '../TabTutorialModal';
+import { TabTutorialModal, TutorialStep } from '../TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 
 // Tutorial steps for Risk Score Configuration tab
-const TUTORIAL_STEPS = [
+const TUTORIAL_STEPS: TutorialStep[] = [
   {
     title: 'Risk Score Configuration',
     description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
