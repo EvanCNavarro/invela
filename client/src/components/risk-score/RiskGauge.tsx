@@ -1,10 +1,11 @@
 /**
  * RiskGauge Component
  * 
- * A pure SVG half-circle gauge visualization without any dependencies.
- * Matches the design with a gray background and colored arc that grows.
+ * Uses Plotly.js to create a gauge chart that matches the design.
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+// @ts-ignore
+import Plotly from 'plotly.js-dist-min';
 
 interface RiskGaugeProps {
   score: number;
@@ -32,128 +33,127 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Creates an SVG arc path for a half circle from 0 to percentage
- */
-const createArcPath = (centerX: number, centerY: number, radius: number, percentage: number): string => {
-  // Start at the leftmost point of the circle
-  const startX = centerX - radius;
-  const startY = centerY;
-  
-  // For a half-circle going clockwise:
-  // 0% is at 180 degrees (left)
-  // 100% is at 0 degrees (right)
-  // We need to calculate the ending point based on the percentage
-  const endAngle = Math.PI * (1 - percentage / 100);
-  const endX = centerX + radius * Math.cos(endAngle);
-  const endY = centerY - radius * Math.sin(endAngle);
-  
-  // For percentages > 50%, the arc is more than half of the half-circle,
-  // so we need to set the large-arc-flag to 1
-  const largeArcFlag = percentage > 50 ? 1 : 0;
-  
-  return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-};
-
-/**
- * Half-circle gauge component using pure SVG with growing colored arc
+ * Gauge component using Plotly.js for reliable rendering
  */
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
   riskLevel, 
   size = 220
 }) => {
+  // Reference to the div that will contain the Plotly chart
+  const chartRef = useRef<HTMLDivElement>(null);
+  
   // Simple console log for debugging
   console.log(`[RiskScore:gauge] Rendering with score: ${score}, level: ${riskLevel}`);
   
   // Calculate the color based on risk level
   const color = getRiskLevelColor(riskLevel);
   
-  // Calculate the percentage of the circle to fill (0-100)
-  const percentage = Math.min(Math.max(score, 0), 100);
-  
-  // Calculate dimensions
-  const width = size;
-  const height = size / 2 + 30; // Add some space below for labels
-  const radius = size * 0.4; // Gauge arc radius
-  const centerX = width / 2;
-  const centerY = height - 30; // Center point at the bottom of the semicircle
-  const strokeWidth = size * 0.12; // Thickness of the gauge track
-  
-  // Create the background arc (full half-circle)
-  const backgroundArc = createArcPath(centerX, centerY, radius, 100);
-  
-  // Create the colored progress arc
-  const progressArc = createArcPath(centerX, centerY, radius, percentage);
+  // Create and update the chart when component mounts or props change
+  useEffect(() => {
+    if (chartRef.current) {
+      // Data for the gauge chart
+      const data = [{
+        type: 'indicator',
+        mode: 'gauge',
+        value: score,
+        domain: { x: [0, 1], y: [0, 1] },
+        gauge: {
+          axis: { 
+            range: [0, 100],
+            tickwidth: 1,
+            tickcolor: '#e5e7eb',
+            tickfont: {
+              size: 10,
+              color: '#666'
+            },
+            visible: true,
+            showticklabels: true,
+            // Only show specific ticks
+            tickvals: [0, 25, 50, 75, 100],
+            // Only show values at 0 and 100
+            ticktext: ['0', '', '', '', '100']
+          },
+          bar: { color, thickness: 0.65 },
+          bgcolor: '#e5e7eb',
+          borderwidth: 0,
+          bordercolor: 'transparent',
+          shape: 'angular',
+          // Use a 180 degree gauge (semicircle)
+          range: [0, 100],
+          steps: [],
+          threshold: {
+            line: { color: 'transparent', width: 0 },
+            thickness: 0,
+            value: 0
+          }
+        },
+        number: {
+          font: {
+            family: 'Arial, sans-serif',
+            size: size * 0.06,
+            color
+          },
+          suffix: '',
+          prefix: ''
+        }
+      }];
+      
+      // Layout configuration for the chart
+      const layout = {
+        // Configure layout for a half-circle gauge
+        margin: { t: 10, b: 30, l: 20, r: 20 },
+        width: size,
+        height: size / 1.5,
+        font: {
+          family: 'Arial, sans-serif',
+          size: size / 18,
+          color: '#666'
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        showlegend: false,
+        // Set the meter to show only the top half of a circle (180 degrees)
+        polar: {
+          sector: [0, 180],
+          hole: 0.5
+        }
+      };
+      
+      // Configuration options
+      const config = {
+        displayModeBar: false,
+        responsive: true
+      };
+      
+      // Render the chart
+      Plotly.newPlot(chartRef.current, data, layout, config);
+    }
+    
+    // Clean up the chart when component unmounts
+    return () => {
+      if (chartRef.current) {
+        Plotly.purge(chartRef.current);
+      }
+    };
+  }, [score, riskLevel, color, size]);
   
   return (
-    <div style={{ position: 'relative', width: width, height: height * 1.4, margin: '0 auto' }}>
-      {/* SVG containing the gauge */}
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-        {/* Background arc (light gray) - full half-circle */}
-        <path
-          d={backgroundArc}
-          fill="none"
-          stroke="#e5e7eb" // Light gray background
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        
-        {/* Colored arc that grows as percentage increases */}
-        {percentage > 0 && (
-          <path
-            d={progressArc}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-          />
-        )}
-        
-        {/* Score value inside the gauge */}
-        <text
-          x={centerX}
-          y={centerY - radius * 0.3} // Position inside the arc
-          fontSize={size * 0.18}
-          fontWeight="bold"
-          fill={color}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {score}
-        </text>
-        
-        {/* Min label (0) */}
-        <text
-          x={centerX - radius - 10}
-          y={centerY + 20}
-          fontSize={size * 0.05}
-          fill="#666"
-          textAnchor="middle"
-        >
-          0
-        </text>
-        
-        {/* Max label (100) */}
-        <text
-          x={centerX + radius + 10}
-          y={centerY + 20}
-          fontSize={size * 0.05}
-          fill="#666"
-          textAnchor="middle"
-        >
-          100
-        </text>
-      </svg>
+    <div style={{ position: 'relative', width: size, height: size / 1.5 + 30, margin: '0 auto' }}>
+      {/* The div that will contain the Plotly chart */}
+      <div ref={chartRef} style={{ width: '100%', height: 'calc(100% - 30px)' }} />
       
       {/* Risk Acceptance Level text - below the gauge */}
       <div style={{
         position: 'absolute',
-        top: height - 5,
+        bottom: 0,
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: size / 18,
         color: '#666',
-        fontWeight: 500
+        fontWeight: 500,
+        textAlign: 'center',
+        width: '100%'
       }}>
         Risk Acceptance Level
       </div>
