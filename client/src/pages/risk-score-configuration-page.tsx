@@ -573,10 +573,38 @@ export default function RiskScoreConfigurationPage() {
   
   // Calculate score and risk level when dimensions change
   useEffect(() => {
-    const newScore = calculateRiskScore(dimensions);
-    setScore(newScore);
-    setRiskLevel(determineRiskLevel(newScore));
+    // Only calculate if we have dimensions
+    if (dimensions && dimensions.length > 0) {
+      const newScore = calculateRiskScore(dimensions);
+      setScore(newScore);
+      setRiskLevel(determineRiskLevel(newScore));
+      
+      // Log the score calculation
+      riskScoreLogger.log('score', `Risk score recalculated: ${newScore} (${determineRiskLevel(newScore)} risk) based on dimension changes`);
+    }
   }, [dimensions]);
+  
+  // Helper function to calculate weight distribution based on priority position
+  const calculateWeightDistribution = (dimensions: RiskDimension[]): RiskDimension[] => {
+    // For 6 dimensions, weights distributed based on position with emphasis on top positions
+    const weights = [30, 25, 20, 15, 7, 3]; // Total 100%
+    
+    return dimensions.map((dim, index) => ({
+      ...dim,
+      weight: weights[index] || 0
+    }));
+  };
+  
+  // Recalculate weights when dimensions are reordered
+  useEffect(() => {
+    if (dimensions.length) {
+      const newDimensions = calculateWeightDistribution([...dimensions]);
+      setDimensions(newDimensions);
+      
+      // Log dimension priority changes
+      riskScoreLogger.log('priority', `Dimensions updated: ${newDimensions.map((d, i) => `${i+1}. ${d.name} (${Math.round(d.weight)}%)`).join(', ')}`);
+    }
+  }, [dimensions.map(d => d.id).join(',')]);
   
   // Handle dimension reordering (for drag and drop functionality)
   const handleReorder = (dragIndex: number, hoverIndex: number) => {
