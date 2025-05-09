@@ -32,6 +32,48 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
+ * Converts polar coordinates to cartesian coordinates
+ */
+const polarToCartesian = (
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angleInDegrees: number
+): { x: number; y: number } => {
+  // Convert from degrees to radians
+  const angleInRadians = ((angleInDegrees - 180) * Math.PI) / 180;
+  
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians)
+  };
+};
+
+/**
+ * Creates an SVG Arc path description
+ * Based on best practices for drawing circular arcs with SVG
+ */
+const describeArc = (
+  x: number,
+  y: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number
+): string => {
+  const start = polarToCartesian(x, y, radius, endAngle);
+  const end = polarToCartesian(x, y, radius, startAngle);
+  
+  // Determine if the arc should be drawn the long way around
+  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+  
+  // Create the SVG arc path string
+  return [
+    'M', start.x, start.y,
+    'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
+  ].join(' ');
+};
+
+/**
  * Half-circle gauge component using pure SVG with score in the center
  */
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
@@ -56,30 +98,16 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const centerY = height;
   const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
   
-  // Calculate the angle based on the percentage (0-100%)
-  const angle = (percentage / 100) * Math.PI; // Convert to radians (0 to π)
+  // Maps percentage (0-100) to angle (180-0) for the half-circle
+  // At 0%, angle is 180 (left)
+  // At 50%, angle is 90 (top)
+  // At 100%, angle is 0 (right)
+  const startAngle = 180;
+  const endAngle = 180 - (percentage / 100) * 180;
   
-  // Calculate the end point coordinates
-  // For 0%, the end point is the left side of the semicircle
-  // For 100%, the end point is the right side of the semicircle
-  const endX = centerX + radius * Math.cos(Math.PI - angle);
-  const endY = centerY - radius * Math.sin(Math.PI - angle);
-  
-  // Generate a simple arc path
-  // If percentage > 50, the arc is more than half of the semicircle, so we need the "large-arc-flag" set to 1
-  const largeArcFlag = percentage > 50 ? 1 : 0;
-  
-  // Create the path for the background (full half-circle)
-  const backgroundPath = `
-    M ${centerX - radius}, ${centerY}
-    A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}
-  `;
-  
-  // Create the path for the progress arc
-  const progressPath = `
-    M ${centerX - radius}, ${centerY}
-    A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}
-  `;
+  // Create arc paths using the describeArc helper
+  const backgroundPath = describeArc(centerX, centerY, radius, 0, 180);
+  const progressPath = describeArc(centerX, centerY, radius, endAngle, 180);
   
   return (
     <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
