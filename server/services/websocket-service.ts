@@ -8,11 +8,27 @@
 import { WebSocketServer, WebSocket } from 'ws';
 
 /**
+ * Message types that can be sent over WebSocket
+ */
+export type MessageType = 
+  | 'ping'
+  | 'pong'
+  | 'authenticate'
+  | 'authenticated'
+  | 'notification'
+  | 'tutorial_progress'
+  | 'tutorial_completed'
+  | 'task_updated'
+  | 'form_submission_update'
+  | 'error';
+
+/**
  * WebSocket message interface
  */
 export interface WebSocketMessage {
-  type: string;
-  payload?: any;
+  type: MessageType | string;
+  timestamp?: string;
+  [key: string]: any;
 }
 
 /**
