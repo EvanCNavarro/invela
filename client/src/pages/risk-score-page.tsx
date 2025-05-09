@@ -1,6 +1,6 @@
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { PageHeader } from "@/components/page-header";
-import { PageTemplate } from "@/components/page-template";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTemplate } from "@/components/ui/page-side-drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Gauge } from "lucide-react";
