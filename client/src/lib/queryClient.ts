@@ -38,6 +38,13 @@ export async function apiRequest<T>(
     // Second parameter is not a string, assume it's the request data and methodOrUrl is the URL
     url = methodOrUrl;
     bodyData = urlOrData;
+    
+    // CRITICAL FIX: If we have body data but no explicit method, use POST instead of GET
+    // This is the root cause of the "Request with GET/HEAD method cannot have body" error
+    if (bodyData && method === 'GET') {
+      console.log(`[API Request] Auto-switching to POST method for request with body to ${url}`);
+      method = 'POST';
+    }
   }
 
   // Enhanced logging for risk score priorities API calls
