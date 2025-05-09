@@ -65,6 +65,19 @@ function DimensionRowSkeleton() {
   );
 }
 
+// Skeleton component for weight distribution items during loading state
+function WeightDistributionItemSkeleton() {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-8 w-8 rounded-lg" />
+        <Skeleton className="h-4 w-20" />
+      </div>
+      <Skeleton className="h-4 w-10" />
+    </div>
+  );
+}
+
 // Component to render a single draggable dimension row
 function DimensionRow({ dimension, index, onReorder, onValueChange }: DimensionRowProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -1011,28 +1024,36 @@ export default function RiskScoreConfigurationPage() {
                   <p className="text-sm text-muted-foreground mb-4">Weight influence is automatically calculated based on dimension priority.</p>
                   
                   <div className="space-y-3 mt-4">
-                    {dimensions.map((dimension, index) => (
-                      <div key={dimension.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white"
-                               style={{ backgroundColor: index === 0 ? '#1a2530' : 
-                                                       index === 1 ? '#2c3e50' :
-                                                       index === 2 ? '#34495e' :
-                                                       index === 3 ? '#4a6178' :
-                                                       index === 4 ? '#607993' : '#7f8c8d' }}>
-                            <span className="text-xs font-bold">{index + 1}</span>
+                    {isLoadingPriorities ? (
+                      /* Show skeleton loaders during loading state */
+                      Array(6).fill(0).map((_, i) => (
+                        <WeightDistributionItemSkeleton key={`weight-skeleton-${i}`} />
+                      ))
+                    ) : (
+                      /* Show actual weight distribution items when loaded */
+                      dimensions.map((dimension, index) => (
+                        <div key={dimension.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white"
+                                 style={{ backgroundColor: index === 0 ? '#1a2530' : 
+                                                         index === 1 ? '#2c3e50' :
+                                                         index === 2 ? '#34495e' :
+                                                         index === 3 ? '#4a6178' :
+                                                         index === 4 ? '#607993' : '#7f8c8d' }}>
+                              <span className="text-xs font-bold">{index + 1}</span>
+                            </div>
+                            <span className="text-sm font-medium truncate max-w-[120px]">{dimension.name}</span>
                           </div>
-                          <span className="text-sm font-medium truncate max-w-[120px]">{dimension.name}</span>
+                          <div className="font-bold" style={{ color: index === 0 ? '#1a2530' : 
+                                                            index === 1 ? '#2c3e50' :
+                                                            index === 2 ? '#34495e' :
+                                                            index === 3 ? '#4a6178' :
+                                                            index === 4 ? '#607993' : '#7f8c8d' }}>
+                            {Math.round(dimension.weight)}%
+                          </div>
                         </div>
-                        <div className="font-bold" style={{ color: index === 0 ? '#1a2530' : 
-                                                          index === 1 ? '#2c3e50' :
-                                                          index === 2 ? '#34495e' :
-                                                          index === 3 ? '#4a6178' :
-                                                          index === 4 ? '#607993' : '#7f8c8d' }}>
-                          {Math.round(dimension.weight)}%
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                   
                   <div className="mt-6 pt-4 border-t border-gray-100">
