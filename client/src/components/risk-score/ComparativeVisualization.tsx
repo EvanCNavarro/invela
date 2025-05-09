@@ -25,9 +25,15 @@ let ReactApexChart: any;
 
 interface ComparativeVisualizationProps {
   dimensions: RiskDimension[];
+  globalScore?: number; // Optional prop to override calculated score
+  riskLevel?: string; // Optional risk level prop
 }
 
-export function ComparativeVisualization({ dimensions }: ComparativeVisualizationProps) {
+export function ComparativeVisualization({ 
+  dimensions, 
+  globalScore, 
+  riskLevel 
+}: ComparativeVisualizationProps) {
   const { company } = useCurrentCompany();
   const [selectedCompany, setSelectedCompany] = useState<CompanyComparison | null>(null);
   const [showComparison, setShowComparison] = useState(false);
@@ -40,21 +46,29 @@ export function ComparativeVisualization({ dimensions }: ComparativeVisualizatio
     name: company?.name || 'Your Company',
     companyType: company?.category || 'Current',
     description: 'Your current risk configuration',
-    score: 0,
+    score: globalScore || 0,
     dimensions: {}
   });
   
-  // Update current company data when dimensions change
+  // Update current company data when dimensions change or when globalScore changes
   useEffect(() => {
     if (dimensions.length > 0) {
-      // Calculate overall risk score (weighted average)
-      const weightedScore = dimensions.reduce((sum, dim) => {
+      // If globalScore is provided, use it instead of calculating
+      const score = globalScore !== undefined ? globalScore : dimensions.reduce((sum, dim) => {
         return sum + (dim.weight * dim.value / 100);
       }, 0);
       
       // Convert dimensions to format needed for visualization
       const dimensionValues = dimensions.reduce((acc, dim) => {
-        acc[dim.id] = dim.value;
+        // Scale dimension values based on global score if provided
+        if (globalScore !== undefined) {
+          // This scaling ensures the radar chart reflects the global score adjustment
+          const scaleFactor = globalScore / 100;
+          // Scale value but keep relative proportions between dimensions
+          acc[dim.id] = Math.min(100, Math.max(0, dim.value * scaleFactor * (100/50))); 
+        } else {
+          acc[dim.id] = dim.value;
+        }
         return acc;
       }, {} as Record<string, number>);
       
@@ -63,12 +77,12 @@ export function ComparativeVisualization({ dimensions }: ComparativeVisualizatio
         id: company?.id || 0,
         name: company?.name || 'Invela Trust Network',
         companyType: company?.category || 'Current',
-        description: 'Your current S&P Data Access Risk Score configuration',
-        score: Math.round(weightedScore), // Round to nearest integer
+        description: `Your current S&P Data Access Risk Score configuration${riskLevel ? ` (${riskLevel} risk)` : ''}`,
+        score: Math.round(score), // Round to nearest integer
         dimensions: dimensionValues
       });
     }
-  }, [dimensions, company]);
+  }, [dimensions, company, globalScore, riskLevel]);
 
   // Load ApexCharts component only on client side
   useEffect(() => {
