@@ -2,7 +2,7 @@
  * RiskGauge Component
  * 
  * A pure SVG half-circle gauge visualization without any dependencies.
- * Matches the design in the reference image with a thick line and number inside the gauge.
+ * Matches the standard gauge design with a needle pointer.
  */
 import React from 'react';
 
@@ -32,49 +32,7 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Converts polar coordinates to cartesian coordinates
- */
-const polarToCartesian = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angleInDegrees: number
-): { x: number; y: number } => {
-  // Convert from degrees to radians
-  const angleInRadians = ((angleInDegrees - 180) * Math.PI) / 180;
-  
-  return {
-    x: centerX + radius * Math.cos(angleInRadians),
-    y: centerY + radius * Math.sin(angleInRadians)
-  };
-};
-
-/**
- * Creates an SVG Arc path description
- * Based on best practices for drawing circular arcs with SVG
- */
-const describeArc = (
-  x: number,
-  y: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number
-): string => {
-  const start = polarToCartesian(x, y, radius, startAngle);
-  const end = polarToCartesian(x, y, radius, endAngle);
-  
-  // Determine if the arc should be drawn the long way around
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-  
-  // Create the SVG arc path string
-  return [
-    'M', start.x, start.y,
-    'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y
-  ].join(' ');
-};
-
-/**
- * Half-circle gauge component using pure SVG with score in the center
+ * Half-circle gauge component using pure SVG with needle pointer
  */
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
@@ -92,50 +50,78 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   
   // Calculate dimensions
   const width = size;
-  const height = size / 2;
-  const radius = size * 0.35; // Slightly smaller radius for the number to fit better
+  const height = size / 2 + 20; // Add some space for the needle
+  const radius = size * 0.35; // Gauge arc radius
   const centerX = width / 2;
-  const centerY = height;
-  const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
+  const centerY = height - 20; // Center point at the bottom of the semicircle
+  const strokeWidth = size * 0.08; // Thickness of the gauge track
   
-  // Maps percentage (0-100) to angle (180-0) for the half-circle
-  // At 0%, angle is 180 (left)
-  // At 50%, angle is 90 (top)
-  // At 100%, angle is 0 (right)
-  const startAngle = 180;
-  const endAngle = 180 - (percentage / 100) * 180;
+  // Calculate the angle for the needle
+  // Map 0-100% to 180-0 degrees (left to right in a semicircle)
+  const needleAngleRad = ((180 - (percentage / 100) * 180) * Math.PI) / 180;
   
-  // Create arc paths using the describeArc helper
-  const backgroundPath = describeArc(centerX, centerY, radius, 180, 0);
-  const progressPath = describeArc(centerX, centerY, radius, 180, endAngle);
+  // Calculate needle endpoint
+  const needleLength = radius - 10; // Make the needle slightly shorter than the radius
+  const needleX = centerX + needleLength * Math.cos(needleAngleRad);
+  const needleY = centerY - needleLength * Math.sin(needleAngleRad);
+  
+  // Define colors for the gradient sections (red -> orange -> yellow -> light green -> green)
+  const colorStops = [
+    { offset: "0%", color: "#ef4444" },    // Red (left side)
+    { offset: "25%", color: "#f97316" },   // Orange
+    { offset: "50%", color: "#eab308" },   // Yellow
+    { offset: "75%", color: "#a3e635" },   // Light Green
+    { offset: "100%", color: "#22c55e" }   // Green (right side)
+  ];
   
   return (
-    <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: width, height: height * 1.5, margin: '0 auto' }}>
       {/* SVG containing the gauge */}
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-        {/* Background arc (light gray) - full half-circle */}
+        {/* Define the gradient for the gauge */}
+        <defs>
+          <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            {colorStops.map((stop, index) => (
+              <stop key={index} offset={stop.offset} stopColor={stop.color} />
+            ))}
+          </linearGradient>
+        </defs>
+        
+        {/* Main gauge track (colored gradient) */}
         <path
-          d={backgroundPath}
+          d={`M ${centerX - radius}, ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}`}
           fill="none"
-          stroke="#f0f0f0"
+          stroke="url(#gaugeGradient)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
-        {/* Progress arc (colored) */}
-        <path
-          d={progressPath}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
+        {/* Needle base (circle) */}
+        <circle 
+          cx={centerX} 
+          cy={centerY} 
+          r={size * 0.03} 
+          fill="#1a2b42" 
+          stroke="#fff" 
+          strokeWidth="1"
+        />
+        
+        {/* Needle */}
+        <line
+          x1={centerX}
+          y1={centerY}
+          x2={needleX}
+          y2={needleY}
+          stroke="#1a2b42"
+          strokeWidth={size * 0.015}
           strokeLinecap="round"
         />
         
-        {/* Score value inside the gauge */}
+        {/* Score value under the gauge */}
         <text
           x={centerX}
-          y={centerY - radius * 0.3} // Position inside the arc
-          fontSize={size * 0.18}
+          y={centerY + radius * 0.5} // Position below the gauge
+          fontSize={size * 0.16}
           fontWeight="bold"
           fill={color}
           textAnchor="middle"
@@ -146,8 +132,8 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         
         {/* Min label (0) */}
         <text
-          x={centerX - radius - 6}
-          y={centerY + 20}
+          x={centerX - radius}
+          y={centerY + radius * 0.2}
           fontSize={size * 0.05}
           fill="#666"
           textAnchor="middle"
@@ -157,8 +143,8 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         
         {/* Max label (100) */}
         <text
-          x={centerX + radius + 6}
-          y={centerY + 20}
+          x={centerX + radius}
+          y={centerY + radius * 0.2}
           fontSize={size * 0.05}
           fill="#666"
           textAnchor="middle"
@@ -167,10 +153,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         </text>
       </svg>
       
-      {/* Risk Acceptance Level text - now below the gauge */}
+      {/* Risk Acceptance Level text - now below the gauge and score */}
       <div style={{
         position: 'absolute',
-        top: height + 15,
+        top: height + 10,
         left: '50%',
         transform: 'translateX(-50%)',
         fontSize: size / 18,
