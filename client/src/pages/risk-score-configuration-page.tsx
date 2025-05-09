@@ -52,18 +52,56 @@ const ItemTypes = {
   DIMENSION_ROW: 'dimensionRow'
 };
 
-// Skeleton component for dimension rows during loading state
-const DimensionRowSkeleton = () => (
-  <div className="flex items-center space-x-4 p-4 border rounded-md mb-2 animate-pulse">
-    <div className="h-8 w-8 bg-gray-200 rounded"></div>
-    <div className="flex-1">
-      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-      <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+// Skeleton component for dimension rows during loading state with varying styles by index
+const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
+  // Vary the width and intensity based on priority (higher priority = more prominent)
+  const widthClasses = [
+    'w-1/3', // highest priority (larger name width)
+    'w-1/4',
+    'w-1/4',
+    'w-1/5',
+    'w-1/5',
+    'w-1/6', // lowest priority (smallest name width)
+  ];
+  
+  // Vary the background darkness based on priority
+  const bgIntensity = [
+    'bg-gray-300', // highest priority (darkest)
+    'bg-gray-250',
+    'bg-gray-200',
+    'bg-gray-200',
+    'bg-gray-150',
+    'bg-gray-100', // lowest priority (lightest)
+  ];
+  
+  // Vary the weight percentage width based on priority
+  const weightWidths = [
+    'w-16', // highest (widest)
+    'w-14',
+    'w-12',
+    'w-10',
+    'w-8',
+    'w-6', // lowest (narrowest)
+  ];
+  
+  return (
+    <div className="flex items-center space-x-4 p-4 border rounded-md mb-2 animate-pulse"
+         style={{ animationDelay: `${index * 0.1}s` }}>
+      <div className="h-8 w-8 bg-gray-200 rounded"></div>
+      <div className="flex-1">
+        <div className={`h-4 ${bgIntensity[index] || 'bg-gray-200'} rounded ${widthClasses[index] || 'w-1/4'} mb-2`}>
+          {/* Priority indicator */}
+          <div className="flex items-center">
+            <span className="invisible">Priority {index + 1}</span>
+          </div>
+        </div>
+        <div className="h-3 bg-gray-100 rounded w-3/4"></div>
+      </div>
+      <div className="w-1/3 h-4 bg-transparent rounded"></div>
+      <div className={`h-6 ${bgIntensity[index] || 'bg-gray-200'} rounded ${weightWidths[index] || 'w-10'}`}></div>
     </div>
-    <div className="w-1/3 h-4 bg-gray-200 rounded"></div>
-    <div className="h-8 w-8 bg-gray-200 rounded"></div>
-  </div>
-);
+  );
+};
 
 // Type for drag item
 interface DragItem {
@@ -258,7 +296,9 @@ export default function RiskScoreConfigurationPage() {
   // Function to render dimension rows or skeletons during loading
   const renderDimensionRows = () => {
     if (isLoading) {
-      return Array(6).fill(0).map((_, i) => <DimensionRowSkeleton key={i} />);
+      return Array(6).fill(0).map((_, i) => (
+        <DimensionRowSkeleton key={i} index={i} />
+      ));
     }
     
     return dimensions.map((dim, index) => (
