@@ -38,7 +38,7 @@ export function ClaimsRiskTutorial() {
     useTabTutorials('claims-risk');
   
   const { isLoading, imageUrl } = useTutorialAssets(
-    TUTORIAL_STEPS[currentStep]?.imagePath || '',
+    TUTORIAL_STEPS[currentStep]?.imagePath || TUTORIAL_STEPS[currentStep]?.imageUrl || '',
     tutorialEnabled && !isCompleted
   );
 
