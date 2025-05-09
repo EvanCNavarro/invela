@@ -88,8 +88,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   const [initializationComplete, setInitializationComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
   
+  // Map tab names to normalized versions for compatibility
+  const normalizedTabName = tabName === 'risk-score-configuration' ? 'risk-score' : tabName;
+  console.log(`[TutorialManager] Normalized tab name: ${normalizedTabName} (original: ${tabName})`);
+  
   // Get tutorial content for the current tab
-  const tutorialContent = TUTORIAL_CONTENT[tabName];
+  const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
   
   // If no tutorial content exists for this tab, don't render anything
   if (!tutorialContent) {
