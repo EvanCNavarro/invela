@@ -232,7 +232,9 @@ router.post('/', requireAuth, async (req: any, res) => {
         completed: completed === true,
         current_step: currentStep || 0,
         last_seen_at: new Date(),
-        completed_at: completed === true ? new Date() : null
+        // Always set a value for completed_at since it's NOT NULL in the DB
+        // If not completed, use a far future date (year 2099) as a placeholder
+        completed_at: completed === true ? new Date() : new Date('2099-12-31')
       };
       
       await db.insert(userTabTutorials).values(newTutorial);
@@ -430,7 +432,10 @@ router.post('/mark-seen', requireAuth, async (req: any, res) => {
         tab_name: tabName,
         completed: false,
         current_step: 0,
-        last_seen_at: new Date()
+        last_seen_at: new Date(),
+        // Always set a value for completed_at since it's NOT NULL in the DB
+        // If not completed, use a far future date (year 2099) as a placeholder
+        completed_at: new Date('2099-12-31')
       };
       
       await db.insert(userTabTutorials).values(newTutorial);
