@@ -387,19 +387,19 @@ export default function RiskScoreConfigurationPage() {
                         className="transition-all duration-150 ease-in-out"
                       />
                       
-                      {/* Risk level indicators */}
+                      {/* Risk level indicators using blue gradient */}
                       <div className="flex justify-between mt-2">
                         <div className="w-1/3 text-center">
-                          <div className="h-1 bg-green-500 rounded"></div>
-                          <span className="text-[10px] text-muted-foreground">0-30</span>
+                          <div className="h-1.5 bg-blue-200 rounded"></div>
+                          <span className="text-[10px] text-muted-foreground">0-30 (Low)</span>
                         </div>
                         <div className="w-1/3 text-center">
-                          <div className="h-1 bg-yellow-500 rounded"></div>
-                          <span className="text-[10px] text-muted-foreground">31-70</span>
+                          <div className="h-1.5 bg-blue-400 rounded"></div>
+                          <span className="text-[10px] text-muted-foreground">31-70 (Medium)</span>
                         </div>
                         <div className="w-1/3 text-center">
-                          <div className="h-1 bg-orange-500 rounded"></div>
-                          <span className="text-[10px] text-muted-foreground">71-100</span>
+                          <div className="h-1.5 bg-blue-600 rounded"></div>
+                          <span className="text-[10px] text-muted-foreground">71-100 (High)</span>
                         </div>
                       </div>
                     </div>
