@@ -272,6 +272,8 @@ export default function RiskScoreConfigurationPage() {
     userSetScore,
     isLoading,
     isSaving,
+    hasDefaultsDiff,  // Flag that indicates if current settings differ from defaults
+    hasSavedDiff,     // Flag that indicates if current settings differ from saved values
     handleReorder,
     // handleValueChange removed as dimension sliders are being removed
     handleSave,
@@ -383,11 +385,20 @@ export default function RiskScoreConfigurationPage() {
                     
                     {/* Actions */}
                     <div className="flex justify-between w-full mt-6">
-                      <Button variant="outline" onClick={handleReset} disabled={isSaving} size="sm">
+                      <Button 
+                        variant="outline" 
+                        onClick={handleReset} 
+                        disabled={isSaving || !hasDefaultsDiff} 
+                        size="sm"
+                      >
                         Reset to Defaults
                       </Button>
                       
-                      <Button onClick={handleSave} disabled={isSaving} size="sm">
+                      <Button 
+                        onClick={handleSave} 
+                        disabled={isSaving || !hasSavedDiff} 
+                        size="sm"
+                      >
                         {isSaving ? (
                           <>Saving</>
                         ) : (
