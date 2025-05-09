@@ -102,10 +102,11 @@ export function ContentTutorialModal({
                          document.querySelector('.sidebar') ||
                          document.getElementById('sidebar');
     
+    // Since the navbar is already fixed in the layout, we don't need to modify it
+    // but we still need the reference for calculating the overlay position
     navbarRef.current = document.querySelector('header') || 
                         document.querySelector('.navbar') ||
-                        document.querySelector('.header') ||
-                        document.querySelector('nav:not(.w-16)');
+                        document.querySelector('.header');
     
     // Do initial position calculation
     updateOverlayPosition();
@@ -188,35 +189,13 @@ export function ContentTutorialModal({
       // Disable scrolling on body when modal is open
       document.body.classList.add(NO_SCROLL_CLASS);
       
-      // Make sure navbar is fixed (if it isn't already)
-      if (navbarRef.current) {
-        // Save current styles to restore later
-        const currentPosition = window.getComputedStyle(navbarRef.current).position;
-        
-        // Only change if not already fixed
-        if (currentPosition !== 'fixed') {
-          navbarRef.current.setAttribute('data-previous-position', currentPosition);
-          (navbarRef.current as HTMLElement).style.position = 'fixed';
-          (navbarRef.current as HTMLElement).style.top = '0';
-          (navbarRef.current as HTMLElement).style.width = '100%';
-          (navbarRef.current as HTMLElement).style.zIndex = '40';
-        }
-      }
+      // No need to modify the navbar position since it's already fixed in the layout
     }
     
     // Cleanup function to re-enable scrolling when the modal closes
     return () => {
       // Always remove the class on cleanup, regardless of open state
       document.body.classList.remove(NO_SCROLL_CLASS);
-      
-      // Restore navbar position if needed
-      if (navbarRef.current) {
-        const previousPosition = navbarRef.current.getAttribute('data-previous-position');
-        if (previousPosition) {
-          (navbarRef.current as HTMLElement).style.position = previousPosition;
-          navbarRef.current.removeAttribute('data-previous-position');
-        }
-      }
     };
   }, [open]);
   
