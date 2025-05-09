@@ -4,7 +4,7 @@ import { PageTemplate } from "@/components/ui/page-side-drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, BarChart3, FileText, PieChart } from "lucide-react";
-import { ClaimsRiskTutorial } from "@/components/tutorial/tabs/ClaimsRiskTutorial";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 
 export default function ClaimsRiskPage() {
   return (
