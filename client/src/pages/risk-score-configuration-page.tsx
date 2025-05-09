@@ -29,12 +29,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { PageHeader } from '@/components/page-header';
-import { PageTemplate } from '@/components/page-template';
+import { PageHeader } from '@/components/ui/page-header';
+import { PageTemplate } from '@/components/ui/page-template';
 import { RiskGauge } from '@/components/risk-score/RiskGauge';
 import { ComparativeVisualization } from '@/components/risk-score/ComparativeVisualization';
 import { useRiskScoreData } from '@/hooks/use-risk-score-data';
-import { riskScoreLogger } from '@/lib/risk-score-logger';
+import riskScoreLogger from '@/lib/risk-score-logger';
 import { type RiskDimension } from '@/lib/risk-score-configuration-data';
 
 // Map of dimension IDs to icons for visual representation
@@ -95,21 +95,24 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
   // Set up drop functionality
   const [, drop] = useDrop({
     accept: ItemTypes.DIMENSION_ROW,
-    hover(item: DragItem, monitor: DropTargetMonitor) {
+    // Explicitly cast item as DragItem to fix type checking issues
+    hover(item: unknown, monitor: DropTargetMonitor) {
       if (!drop) {
         return;
       }
       
+      const dragItem = item as DragItem;
+      
       // Don't replace items with themselves
-      if (item.index === index) {
+      if (dragItem.index === index) {
         return;
       }
       
       // Call the reorder function
-      onReorder(item.index, index);
+      onReorder(dragItem.index, index);
       
       // Update the index for the dragged item
-      item.index = index;
+      dragItem.index = index;
     }
   });
 
@@ -374,7 +377,11 @@ export default function RiskScoreConfigurationPage() {
               </CardHeader>
               
               <CardContent>
-                <ComparativeVisualization />
+                <ComparativeVisualization 
+                  dimensions={dimensions} 
+                  globalScore={score} 
+                  riskLevel={riskLevel} 
+                />
               </CardContent>
             </Card>
           </TabsContent>

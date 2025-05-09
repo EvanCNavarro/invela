@@ -4,13 +4,34 @@
  * A specialized logger for risk score module that provides consistent
  * logging with tagged categories for improved debugging and traceability.
  * 
+ * Extended with specialized methods for tracking risk score configuration
+ * changes, dimension ordering, save operations, and data persistence.
+ * 
  * Usage:
  * import riskScoreLogger from '@/lib/risk-score-logger';
  * 
  * riskScoreLogger.log('init', 'Initializing risk score module');
  * riskScoreLogger.warn('websocket', 'Received unexpected data format', data);
  * riskScoreLogger.error('persist', 'Failed to save configuration', error);
+ * riskScoreLogger.logDimensionsChanged(oldDimensions, newDimensions, 'drag-operation');
+ * riskScoreLogger.logSaveAttempt(prioritiesData);
  */
+
+// Type to avoid importing circular dependencies
+interface RiskDimension {
+  id: string;
+  name: string;
+  color: string;
+  value: number;
+  weight: number;
+  description: string;
+}
+
+interface RiskPriorities {
+  dimensions: RiskDimension[];
+  riskAcceptanceLevel?: number;
+  lastUpdated?: string;
+}
 
 // Log tag colors for better console visualization
 const tagColors = {
@@ -26,6 +47,7 @@ const tagColors = {
   'gauge': '#16a085',     // Darker Teal
   'radar': '#3498db',     // Blue
   'config': '#34495e',    // Dark Blue
+  'save': '#e91e63',      // Pink
   'default': '#7f8c8d'    // Gray
 };
 
@@ -34,7 +56,7 @@ const LOG_PREFIX = '[RiskScore]';
 
 /**
  * Risk Score Logger Class
- * Provides consistent logging for the risk score module
+ * Provides consistent, specialized logging for the risk score module
  */
 class RiskScoreLogger {
   private debugMode: boolean;
@@ -49,7 +71,7 @@ class RiskScoreLogger {
 
     // Log the logger initialization in development only
     if (this.debugMode) {
-      console.log('Logger instance:', {
+      console.log('Risk Score Logger initialized:', {
         showDiff: this.showDiff,
         debugMode: this.debugMode,
         enabledTags: this.enabledTags
@@ -112,6 +134,142 @@ class RiskScoreLogger {
     } else {
       console.error(formattedTag, `color: ${color}; font-weight: bold`, 'color: inherit', message);
     }
+  }
+
+  /**
+   * Log fetch errors with standardized format
+   * @param error The error that occurred
+   */
+  logFetchError(error: any): void {
+    this.error('fetch', 'Error fetching risk score data', error);
+  }
+
+  /**
+   * Log when dimensions have changed with detailed tracking
+   * @param oldDimensions Previous dimensions
+   * @param newDimensions New dimensions 
+   * @param operation The operation that caused the change
+   */
+  logDimensionsChanged(oldDimensions: RiskDimension[], newDimensions: RiskDimension[], operation: string): void {
+    if (!this.debugMode) return;
+    
+    const changes: { id: string, oldIndex?: number, newIndex?: number, oldWeight?: number, newWeight?: number }[] = [];
+    
+    // Track position changes
+    oldDimensions.forEach((oldDim, oldIndex) => {
+      const newIndex = newDimensions.findIndex(d => d.id === oldDim.id);
+      const newDim = newDimensions[newIndex];
+      
+      if (newIndex !== oldIndex || (newDim && oldDim.weight !== newDim.weight)) {
+        changes.push({
+          id: oldDim.id,
+          oldIndex,
+          newIndex,
+          oldWeight: oldDim.weight,
+          newWeight: newDim?.weight
+        });
+      }
+    });
+    
+    if (changes.length > 0) {
+      this.log('priority', `Dimensions changed (${operation})`, {
+        changes,
+        oldOrder: oldDimensions.map(d => d.id),
+        newOrder: newDimensions.map(d => d.id)
+      });
+    }
+  }
+
+  /**
+   * Compare dimensions between two sources for troubleshooting
+   * @param tag Category tag for the message
+   * @param sourceAName Name of the first source
+   * @param sourceADimensions Dimensions from the first source
+   * @param sourceBName Name of the second source
+   * @param sourceBDimensions Dimensions from the second source
+   */
+  compareDimensions(
+    tag: string,
+    sourceAName: string, 
+    sourceADimensions: RiskDimension[], 
+    sourceBName: string, 
+    sourceBDimensions: RiskDimension[]
+  ): void {
+    if (!this.debugMode) return;
+    
+    const orderA = sourceADimensions.map(d => d.id);
+    const orderB = sourceBDimensions.map(d => d.id);
+    const mismatch = JSON.stringify(orderA) !== JSON.stringify(orderB);
+    
+    this.log(tag, `Comparing dimensions: ${sourceAName} vs ${sourceBName} ${mismatch ? '(MISMATCH)' : '(MATCH)'}`, {
+      [`${sourceAName}Order`]: orderA,
+      [`${sourceBName}Order`]: orderB,
+      mismatch,
+      [`${sourceAName}WeightSum`]: sourceADimensions.reduce((sum, d) => sum + d.weight, 0),
+      [`${sourceBName}WeightSum`]: sourceBDimensions.reduce((sum, d) => sum + d.weight, 0)
+    });
+  }
+
+  /**
+   * Log an attempt to save risk data
+   * @param data The data being saved
+   */
+  logSaveAttempt(data: any): void {
+    this.log('save', 'Attempting to save risk data', {
+      timestamp: new Date().toISOString(),
+      data: {
+        dimensionsCount: data.dimensions?.length,
+        riskAcceptanceLevel: data.riskAcceptanceLevel,
+        dimensionOrder: data.dimensions?.map((d: RiskDimension) => d.id)
+      }
+    });
+  }
+
+  /**
+   * Log a successful save operation
+   * @param data The data that was saved
+   * @param response The server response
+   */
+  logSaveSuccess(data: any, response: any): void {
+    this.log('save', 'Successfully saved risk data', {
+      timestamp: new Date().toISOString(),
+      saved: {
+        dimensionsCount: data.dimensions?.length,
+        riskAcceptanceLevel: data.riskAcceptanceLevel
+      },
+      response
+    });
+  }
+
+  /**
+   * Log a failed save operation
+   * @param data The data that failed to save
+   * @param error The error that occurred
+   */
+  logSaveError(data: any, error: any): void {
+    this.error('save', 'Failed to save risk data', {
+      timestamp: new Date().toISOString(),
+      attempted: {
+        dimensionsCount: data.dimensions?.length,
+        riskAcceptanceLevel: data.riskAcceptanceLevel
+      },
+      error
+    });
+  }
+
+  /**
+   * Log a direct update (fallback) operation
+   * @param data The data being updated directly
+   */
+  logDirectUpdate(data: any): void {
+    this.log('persist', 'Performing direct update as fallback', {
+      timestamp: new Date().toISOString(),
+      data: {
+        dimensionsCount: data.dimensions?.length,
+        riskAcceptanceLevel: data.riskAcceptanceLevel,
+        dimensionOrder: data.dimensions?.map((d: RiskDimension) => d.id)
+      }
+    });
   }
 
   /**
