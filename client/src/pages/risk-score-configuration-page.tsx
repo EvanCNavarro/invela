@@ -274,6 +274,14 @@ export default function RiskScoreConfigurationPage() {
         // If we have priorities data, use it instead of the general configuration
         const newDimensions = data.dimensions;
         
+        // Also load risk acceptance level if available
+        if (data.riskAcceptanceLevel !== undefined) {
+          const newScore = data.riskAcceptanceLevel;
+          setScore(newScore);
+          setRiskLevel(determineRiskLevel(newScore));
+          riskScoreLogger.log('load', `Loaded saved risk acceptance level: ${newScore}`);
+        }
+        
         // Store original dimensions for comparison
         if (!originalDimensionsRef.current) {
           originalDimensionsRef.current = JSON.parse(JSON.stringify(newDimensions));
@@ -701,6 +709,7 @@ export default function RiskScoreConfigurationPage() {
       // Create a clean priorities object
       const priorities: RiskPriorities = {
         dimensions: cleanDimensions,
+        riskAcceptanceLevel: score, // Include the current risk acceptance level
         lastUpdated: new Date().toISOString()
       };
       

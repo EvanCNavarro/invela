@@ -40,6 +40,7 @@ interface RiskScoreConfiguration {
 // Define interface for risk priorities
 interface RiskPriorities {
   dimensions: RiskDimension[];
+  riskAcceptanceLevel: number;
   lastUpdated: string;
 }
 
