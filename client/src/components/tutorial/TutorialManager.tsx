@@ -106,7 +106,11 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
         console.log(`[TutorialManager] Checking if tutorial exists for tab: ${tabName}`);
         
         // Check if tutorial exists by fetching status
-        const statusResponse = await apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
+        console.log(`[TutorialManager] Fetching tutorial status for tab: ${tabName}`);
+        const url = `/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`;
+        console.log(`[TutorialManager] Status URL: ${url}`);
+        
+        const statusResponse = await apiRequest(url);
         console.log(`[TutorialManager] Tutorial status response:`, statusResponse);
         
         // If tutorial doesn't exist (exists: false), create it
