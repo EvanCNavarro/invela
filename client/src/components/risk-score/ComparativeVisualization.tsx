@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Check, 
+  ChevronsUpDown, 
+  PlusCircle,
+  X,
+  BarChart3,
+  Search,
+  RefreshCw
+} from "lucide-react";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -15,13 +25,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { RiskDimension, CompanyComparison } from '@/lib/risk-score-configuration-data';
-import { sampleCompanyComparisons, defaultRiskDimensions } from '@/lib/risk-score-configuration-data';
+import { defaultRiskDimensions } from '@/lib/risk-score-configuration-data';
 import { useCurrentCompany } from "@/hooks/use-current-company";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 // Dynamic import for ApexCharts to avoid SSR issues
 let ReactApexChart: any;
+
+// Constants
+const MAX_COMPARISONS = 3; // Maximum number of companies that can be added for comparison
+const COMPANY_COLORS = [
+  '#F43F5E', // Rose
+  '#8B5CF6', // Violet
+  '#10B981', // Emerald
+];
 
 interface ComparativeVisualizationProps {
   dimensions: RiskDimension[];
@@ -35,20 +56,113 @@ export function ComparativeVisualization({
   riskLevel 
 }: ComparativeVisualizationProps) {
   const { company } = useCurrentCompany();
-  const [selectedCompany, setSelectedCompany] = useState<CompanyComparison | null>(null);
-  const [showComparison, setShowComparison] = useState(false);
+  const [selectedCompanies, setSelectedCompanies] = useState<CompanyComparison[]>([]);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isIndustryAverageAdded, setIsIndustryAverageAdded] = useState(false);
+  const { toast } = useToast();
 
   // Track when dimensions change to update visualization
   const [currentCompanyData, setCurrentCompanyData] = useState<CompanyComparison>({
     id: company?.id || 0,
-    name: company?.name || 'Your Company',
+    name: company?.name || 'Invela Trust Network',
     companyType: company?.category || 'Current',
-    description: 'Your current risk configuration',
+    description: 'Your current S&P Data Access Risk Score configuration',
     score: globalScore || 0,
     dimensions: {}
   });
+  
+  // Fetch network companies for comparison
+  const { data: networkCompanies = [], isLoading: isLoadingCompanies } = useQuery({
+    queryKey: ['/api/risk-score/network-companies', searchQuery],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('q', searchQuery);
+      
+      const response = await fetch(`/api/risk-score/network-companies?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch network companies');
+      }
+      return response.json();
+    },
+    enabled: searchPopoverOpen, // Only fetch when the popover is open
+  });
+  
+  // Fetch industry average for comparison
+  const { data: industryAverage, isLoading: isLoadingIndustryAvg } = useQuery({
+    queryKey: ['/api/risk-score/industry-average'],
+    queryFn: async () => {
+      const response = await fetch('/api/risk-score/industry-average');
+      if (!response.ok) {
+        throw new Error('Failed to fetch industry average');
+      }
+      return response.json();
+    },
+  });
+  
+  // Handle adding a company to the comparison list
+  const handleAddCompany = (company: CompanyComparison) => {
+    // Check if we've reached the maximum number of comparisons
+    if (selectedCompanies.length >= MAX_COMPARISONS) {
+      toast({
+        title: "Maximum comparisons reached",
+        description: `You can compare up to ${MAX_COMPARISONS} companies at once. Remove one to add another.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if company is already in the list
+    if (selectedCompanies.some(c => c.id === company.id)) {
+      toast({
+        title: "Company already added",
+        description: "This company is already in your comparison list.",
+        variant: "default",
+      });
+      return;
+    }
+    
+    // Add company to selected list
+    setSelectedCompanies([...selectedCompanies, company]);
+    setSearchPopoverOpen(false);
+  };
+  
+  // Handle removing a company from the comparison list
+  const handleRemoveCompany = (companyId: number) => {
+    setSelectedCompanies(selectedCompanies.filter(c => c.id !== companyId));
+    
+    // If removing industry average, update state
+    if (companyId === 0) {
+      setIsIndustryAverageAdded(false);
+    }
+  };
+  
+  // Handle adding industry average to comparison
+  const handleAddIndustryAverage = () => {
+    if (isIndustryAverageAdded) {
+      toast({
+        title: "Already added",
+        description: "Industry Average is already in your comparison list.",
+        variant: "default",
+      });
+      return;
+    }
+    
+    if (selectedCompanies.length >= MAX_COMPARISONS) {
+      toast({
+        title: "Maximum comparisons reached",
+        description: `You can compare up to ${MAX_COMPARISONS} companies at once. Remove one to add another.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (industryAverage) {
+      setSelectedCompanies([...selectedCompanies, industryAverage]);
+      setIsIndustryAverageAdded(true);
+    }
+  };
   
   // Update current company data when dimensions change or when globalScore changes
   useEffect(() => {
@@ -114,18 +228,18 @@ export function ComparativeVisualization({
     {
       name: currentCompanyData.name,
       data: dimensions.map(dim => currentCompanyData.dimensions[dim.id] || 0),
-      color: '#4965EC' // Blue color matching the dot in the comparison card
+      color: '#4965EC' // Blue color for current company
     }
   ];
 
-  // Add comparison company to the series if selected
-  if (showComparison && selectedCompany) {
+  // Add comparison companies to the series
+  selectedCompanies.forEach((company, index) => {
     series.push({
-      name: selectedCompany.name,
-      data: dimensions.map(dim => selectedCompany.dimensions[dim.id] || 0),
-      color: '#F43F5E' // Red color matching the dot in the comparison card
+      name: company.name,
+      data: dimensions.map(dim => company.dimensions[dim.id] || 0),
+      color: COMPANY_COLORS[index % COMPANY_COLORS.length]
     });
-  }
+  });
 
   // Chart configuration options
   const chartOptions = {
@@ -232,73 +346,119 @@ export function ComparativeVisualization({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex-1 max-w-md">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
+      {/* Control panel for comparisons */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Industry Average Button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between text-muted-foreground"
+                variant={isIndustryAverageAdded ? "secondary" : "outline"}
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={handleAddIndustryAverage}
+                disabled={isIndustryAverageAdded || selectedCompanies.length >= MAX_COMPARISONS || isLoadingIndustryAvg}
               >
-                {selectedCompany ? selectedCompany.name : "Select company to compare..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                {isLoadingIndustryAvg ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <BarChart3 className="h-4 w-4" />
+                )}
+                Industry Average
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <Command>
-                <CommandInput placeholder="Search companies..." />
-                <CommandEmpty>No company found.</CommandEmpty>
-                <CommandGroup>
-                  {sampleCompanyComparisons.map((company) => (
-                    <CommandItem
-                      key={company.id}
-                      value={company.name}
-                      onSelect={() => {
-                        setSelectedCompany(company);
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedCompany?.id === company.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <div className="flex flex-col">
-                        <span>{company.name}</span>
-                        <span className="text-xs text-muted-foreground">{company.companyType}</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Compare with industry average risk profile</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        <Button
-          variant="outline"
-          size="sm"
-          className={`flex items-center gap-2 ${!selectedCompany ? 'opacity-50 cursor-not-allowed' : ''}`}
-          onClick={() => setShowComparison(!showComparison)}
-          disabled={!selectedCompany}
-        >
-          {showComparison ? (
-            <>
-              <EyeOff className="h-4 w-4" />
-              Hide Comparison
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4" />
-              Show Comparison
-            </>
-          )}
-        </Button>
+        {/* Company Search */}
+        <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              disabled={selectedCompanies.length >= MAX_COMPARISONS}
+            >
+              <Search className="h-4 w-4" />
+              Search Companies
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0">
+            <Command>
+              <CommandInput 
+                placeholder="Search network companies..." 
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+              />
+              {isLoadingCompanies ? (
+                <div className="py-6 text-center">
+                  <RefreshCw className="h-4 w-4 animate-spin mx-auto" />
+                  <p className="text-sm text-muted-foreground pt-2">Searching companies...</p>
+                </div>
+              ) : (
+                <CommandList>
+                  <CommandEmpty>No companies found</CommandEmpty>
+                  <CommandGroup heading="Network Companies">
+                    {networkCompanies.map((company: CompanyComparison) => (
+                      <CommandItem
+                        key={company.id}
+                        value={company.name}
+                        onSelect={() => handleAddCompany(company)}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col">
+                            <span>{company.name}</span>
+                            <span className="text-xs text-muted-foreground">{company.companyType}</span>
+                          </div>
+                          <PlusCircle className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              )}
+            </Command>
+          </PopoverContent>
+        </Popover>
+        
+        {/* Selected Companies Badges */}
+        <div className="flex flex-wrap gap-2 ml-auto">
+          {selectedCompanies.map((company, index) => (
+            <Badge
+              key={company.id}
+              variant="secondary"
+              className="flex items-center gap-1 pl-3 pr-2 py-1"
+              style={{ borderLeft: `3px solid ${COMPANY_COLORS[index % COMPANY_COLORS.length]}` }}
+            >
+              {company.name}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 ml-1 text-muted-foreground hover:text-foreground"
+                onClick={() => handleRemoveCompany(company.id)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ))}
+          
+          {/* Empty slots indicators */}
+          {Array.from({ length: MAX_COMPARISONS - selectedCompanies.length }).map((_, i) => (
+            <Badge
+              key={`empty-${i}`}
+              variant="outline"
+              className="border-dashed pl-3 pr-2 py-1 text-muted-foreground"
+            >
+              Add company...
+            </Badge>
+          ))}
+        </div>
       </div>
 
+      {/* Radar chart card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-medium">
@@ -309,14 +469,14 @@ export function ComparativeVisualization({
           {chartComponentLoaded ? (
             <div className="flex justify-center">
               <div className="w-full overflow-visible">
-            <ReactApexChart
-              options={chartOptions}
-              series={series}
-              type="radar"
-              height="450"
-              width="100%"
-            />
-          </div>
+                <ReactApexChart
+                  options={chartOptions}
+                  series={series}
+                  type="radar"
+                  height="450"
+                  width="100%"
+                />
+              </div>
             </div>
           ) : (
             <div className="h-400 w-full flex items-center justify-center">
@@ -326,7 +486,8 @@ export function ComparativeVisualization({
         </CardContent>
       </Card>
 
-      {selectedCompany && showComparison && (
+      {/* Comparison details card - only show if companies are selected */}
+      {selectedCompanies.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">
@@ -334,9 +495,9 @@ export function ComparativeVisualization({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Current configuration */}
-              <div className="space-y-4 border-r pr-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Current company */}
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
                   <h3 className="font-medium">{currentCompanyData.name}</h3>
@@ -367,55 +528,86 @@ export function ComparativeVisualization({
                 </div>
               </div>
               
-              {/* Comparison company */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F43F5E' }}></div>
-                  <h3 className="font-medium">{selectedCompany.name}</h3>
-                </div>
-                <div>
-                  <h4 className="font-medium text-sm">Company Type</h4>
-                  <p className="text-xs text-muted-foreground">{selectedCompany.companyType}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-sm">Description</h4>
-                  <p className="text-xs text-muted-foreground">{selectedCompany.description}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-sm">Overall Risk Score</h4>
-                  <div className="flex items-center gap-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="h-2.5 rounded-full"
-                        style={{ width: `${selectedCompany.score}%`, backgroundColor: '#F43F5E' }}
+              {/* Grid of comparison companies */}
+              <div className="space-y-6">
+                {selectedCompanies.map((company, index) => (
+                  <div key={company.id} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
                       ></div>
+                      <h3 className="font-medium">{company.name}</h3>
                     </div>
-                    <span className="text-sm font-medium">{selectedCompany.score}/100</span>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">Risk Score</h4>
+                        <div className="flex items-center gap-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                              className="h-2.5 rounded-full"
+                              style={{ 
+                                width: `${company.score}%`, 
+                                backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] 
+                              }}
+                            ></div>
+                          </div>
+                          <span className="text-sm font-medium whitespace-nowrap">{company.score}/100</span>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">Difference</h4>
+                        <span className={`text-sm ${
+                          currentCompanyData.score > company.score 
+                            ? 'text-amber-600' 
+                            : currentCompanyData.score < company.score 
+                              ? 'text-emerald-600'
+                              : 'text-slate-600'
+                        }`}>
+                          {currentCompanyData.score > company.score 
+                            ? `+${currentCompanyData.score - company.score}%`
+                            : currentCompanyData.score < company.score
+                              ? `-${company.score - currentCompanyData.score}%`
+                              : 'Equal'
+                          }
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
             
-            {/* Score difference analysis */}
-            <div className="mt-6 pt-4 border-t">
-              <h4 className="font-medium mb-2">Risk Profile Analysis</h4>
-              <p className="text-sm text-muted-foreground">
-                {currentCompanyData.score > selectedCompany.score 
-                  ? `Your risk configuration is more conservative (${currentCompanyData.score - selectedCompany.score}% higher) than ${selectedCompany.name}.`
-                  : currentCompanyData.score < selectedCompany.score
-                    ? `Your risk configuration is less conservative (${selectedCompany.score - currentCompanyData.score}% lower) than ${selectedCompany.name}.`
-                    : `Your risk configuration matches ${selectedCompany.name}'s overall score.`
-                }
-              </p>
-              <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                <p className="text-xs font-medium">Recommended Action</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {currentCompanyData.score > selectedCompany.score + 15
-                    ? "Consider reviewing your priorities to align more closely with industry standards."
-                    : currentCompanyData.score < selectedCompany.score - 15
-                    ? "Your risk profile is lower than comparable companies. Consider elevating key priorities."
-                    : "Your risk profile is well-aligned with industry standards. Continue monitoring changes in risk landscape."}
-                </p>
+            {/* Insights section */}
+            <div className="mt-8 pt-4 border-t">
+              <h4 className="font-medium mb-3">Risk Profile Insights</h4>
+              <div className="space-y-4">
+                {selectedCompanies.map((company, index) => (
+                  <div key={`insight-${company.id}`} className="p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
+                      ></div>
+                      <p className="text-sm font-medium">Compared to {company.name}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {currentCompanyData.score > company.score 
+                        ? `Your risk configuration is more conservative (${currentCompanyData.score - company.score}% higher) than ${company.name}.`
+                        : currentCompanyData.score < company.score
+                          ? `Your risk configuration is less conservative (${company.score - currentCompanyData.score}% lower) than ${company.name}.`
+                          : `Your risk configuration matches ${company.name}'s overall score.`
+                      }
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {currentCompanyData.score > company.score + 15
+                        ? "Consider reviewing your priorities to align more closely with industry standards."
+                        : currentCompanyData.score < company.score - 15
+                        ? "Your risk profile is lower than comparable companies. Consider elevating key priorities."
+                        : "Your risk profile is well-aligned with similar companies. Continue monitoring changes in risk landscape."}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </CardContent>
