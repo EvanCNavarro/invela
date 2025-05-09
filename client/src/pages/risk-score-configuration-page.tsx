@@ -967,7 +967,7 @@ export default function RiskScoreConfigurationPage() {
                         setScore(newScore);
                         setRiskLevel(determineRiskLevel(newScore));
                         // Log the change for debugging purposes
-                        riskScoreLogger.info(`Risk score manually adjusted to ${newScore} (${determineRiskLevel(newScore)} risk)`);
+                        riskScoreLogger.log('slider', `Risk score manually adjusted to ${newScore} (${determineRiskLevel(newScore)} risk)`);
                       }}
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
