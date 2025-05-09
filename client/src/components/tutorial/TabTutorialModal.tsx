@@ -1,9 +1,16 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Loader2, X } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
+// Define the tutorial step interface
 export interface TutorialStep {
   title: string;
   description: string;
@@ -11,11 +18,12 @@ export interface TutorialStep {
   imageUrl?: string;
 }
 
-interface TabTutorialModalProps {
+// Define props interface
+export interface TabTutorialModalProps {
   title: string;
   description: string;
-  imageUrl: string | null;
-  isLoading: boolean;
+  imageUrl?: string;
+  isLoading?: boolean;
   currentStep: number;
   totalSteps: number;
   onNext: () => void;
@@ -24,92 +32,93 @@ interface TabTutorialModalProps {
 }
 
 /**
- * Tutorial Modal Component
+ * Tab Tutorial Modal Component
  * 
- * This component displays a tutorial modal with a blurred background,
- * showing tutorial content with an image, description, and navigation controls.
+ * This reusable component renders a tutorial modal for any tab
+ * with a consistent UI and navigation controls.
  */
 export function TabTutorialModal({
   title,
   description,
   imageUrl,
-  isLoading,
+  isLoading = false,
   currentStep,
   totalSteps,
   onNext,
   onComplete,
-  onClose,
+  onClose
 }: TabTutorialModalProps) {
-  const isLastStep = currentStep === totalSteps - 1;
+  const [open, setOpen] = useState(true);
+  
+  // Handle dialog close
+  const handleClose = () => {
+    setOpen(false);
+    onClose();
+  };
+  
+  // Handle next step or completion
+  const handleNext = () => {
+    if (currentStep >= totalSteps - 1) {
+      onComplete();
+      setOpen(false);
+    } else {
+      onNext();
+    }
+  };
+  
+  // Reset open state when a new tutorial is shown
+  useEffect(() => {
+    setOpen(true);
+  }, []);
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop with blur effect */}
-      <div 
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal content */}
-      <div className="relative max-w-3xl w-full mx-4 bg-white rounded-lg shadow-xl">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-          aria-label="Close tutorial"
-        >
-          <X className="h-5 w-5 text-gray-500" />
-        </button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent 
+        className="sm:max-w-[600px] p-0 overflow-hidden"
+        onInteractOutside={(e) => {
+          // Prevent closing on outside click to ensure users complete the tutorial
+          e.preventDefault();
+        }}
+      >
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle className="text-2xl">{title}</DialogTitle>
+          <DialogDescription className="text-base mt-2">
+            {description}
+          </DialogDescription>
+        </DialogHeader>
         
-        {/* Progress indicator */}
-        <div className="w-full bg-gray-100 h-1.5 rounded-t-lg overflow-hidden">
-          <div 
-            className="bg-blue-600 h-full transition-all duration-300 ease-out"
-            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-          />
+        {/* Image area with loading state */}
+        <div className="p-6 flex justify-center items-center bg-muted/20">
+          {isLoading ? (
+            <Skeleton className="w-full h-64 rounded-lg" />
+          ) : imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt={title} 
+              className="max-h-64 rounded-lg object-contain" 
+            />
+          ) : (
+            <div className="w-full h-64 rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
+              No image available
+            </div>
+          )}
         </div>
         
-        <div className="p-6">
-          {/* Tutorial content */}
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">{title}</h2>
-          <p className="text-gray-600 mb-6">{description}</p>
-          
-          {/* Tutorial image */}
-          <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center mb-6 overflow-hidden">
-            {isLoading ? (
-              <Loader2 className="h-10 w-10 text-gray-400 animate-spin" />
-            ) : imageUrl ? (
-              <img 
-                src={imageUrl} 
-                alt={title}
-                className="w-full h-full object-contain" 
-              />
-            ) : (
-              <div className="text-gray-400">No image available</div>
-            )}
+        {/* Footer with progress indicator and controls */}
+        <DialogFooter className="p-6 flex flex-row justify-between items-center">
+          <div className="text-sm text-muted-foreground">
+            Step {currentStep + 1} of {totalSteps}
           </div>
-          
-          {/* Navigation */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              Step {currentStep + 1} of {totalSteps}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={onClose}
-              >
-                Skip
-              </Button>
-              <Button
-                onClick={isLastStep ? onComplete : onNext}
-              >
-                {isLastStep ? 'Complete' : 'Next'}
-              </Button>
-            </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose}>
+              Skip
+            </Button>
+            <Button onClick={handleNext}>
+              {currentStep >= totalSteps - 1 ? 'Complete' : 'Next'}
+            </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
