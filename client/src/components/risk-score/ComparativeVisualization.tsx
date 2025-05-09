@@ -358,7 +358,7 @@ export function ComparativeVisualization({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2 transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-sm w-[300px]"
+                className="flex items-center gap-2 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm w-[300px]"
                 disabled={selectedCompanies.length >= MAX_COMPARISONS}
               >
                 <Search className="h-4 w-4" />
@@ -418,7 +418,7 @@ export function ComparativeVisualization({
                     "flex items-center gap-2 transition-all duration-200",
                     !isIndustryAverageAdded && !isLoadingIndustryAvg && 
                     selectedCompanies.length < MAX_COMPARISONS && 
-                    "hover:bg-accent hover:text-accent-foreground hover:shadow-sm"
+                    "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm"
                   )}
                   onClick={handleAddIndustryAverage}
                   disabled={isIndustryAverageAdded || selectedCompanies.length >= MAX_COMPARISONS || isLoadingIndustryAvg}
@@ -444,7 +444,7 @@ export function ComparativeVisualization({
           {selectedCompanies.map((company, index) => (
             <div 
               key={company.id}
-              className="relative h-20 flex flex-col justify-center px-4 bg-accent/20 rounded-md shadow-sm border border-accent/30 overflow-hidden transition-all duration-200 hover:shadow-md group animate-in fade-in-50 zoom-in-95"
+              className="relative h-20 flex flex-col justify-center px-4 bg-blue-50/30 rounded-md shadow-sm border border-blue-200/30 overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-blue-50/40 group animate-in fade-in-50 zoom-in-95"
               style={{ borderLeft: `4px solid ${COMPANY_COLORS[index % COMPANY_COLORS.length]}` }}
             >
               <div className="absolute top-2 right-2">
@@ -480,14 +480,14 @@ export function ComparativeVisualization({
           {Array.from({ length: MAX_COMPARISONS - selectedCompanies.length }).map((_, i) => (
             <div 
               key={`empty-${i}`}
-              className="h-20 flex flex-col justify-center px-4 border border-dashed border-muted-foreground/20 rounded-md bg-slate-50/50 text-muted-foreground"
+              className="h-20 flex flex-col justify-center px-4 border border-dashed border-blue-200/30 rounded-md bg-blue-50/20 text-muted-foreground transition-all duration-300 hover:bg-blue-50/40"
             >
               <div className="flex flex-col">
-                <div className="font-medium text-sm text-slate-400">Compared Company #{selectedCompanies.length + i + 1}</div>
-                <div className="text-xs text-slate-400/80">Available slot</div>
+                <div className="font-medium text-sm text-blue-400/70">Compared Company #{selectedCompanies.length + i + 1}</div>
+                <div className="text-xs text-blue-400/50">Available slot</div>
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 h-1 bg-slate-200 rounded-full"></div>
-                  <span className="text-xs font-medium text-slate-400">--</span>
+                  <div className="flex-1 h-1 bg-blue-100/50 rounded-full"></div>
+                  <span className="text-xs font-medium text-blue-300/80">--</span>
                 </div>
               </div>
             </div>
@@ -544,7 +544,7 @@ export function ComparativeVisualization({
               
               {/* No companies selected message */}
               {selectedCompanies.length === 0 && (
-                <div className="text-center text-muted-foreground text-sm mt-4 p-3 border border-dashed rounded-md">
+                <div className="text-center text-blue-500/70 text-sm mt-4 p-3 border border-dashed border-blue-200 rounded-md bg-blue-50/30 transition-all duration-300 hover:bg-blue-50/50">
                   Add companies above to see comparative risk dimension analysis
                 </div>
               )}
