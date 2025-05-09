@@ -60,8 +60,8 @@ const describeArc = (
   startAngle: number,
   endAngle: number
 ): string => {
-  const start = polarToCartesian(x, y, radius, endAngle);
-  const end = polarToCartesian(x, y, radius, startAngle);
+  const start = polarToCartesian(x, y, radius, startAngle);
+  const end = polarToCartesian(x, y, radius, endAngle);
   
   // Determine if the arc should be drawn the long way around
   const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
@@ -69,7 +69,7 @@ const describeArc = (
   // Create the SVG arc path string
   return [
     'M', start.x, start.y,
-    'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
+    'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y
   ].join(' ');
 };
 
@@ -106,8 +106,8 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const endAngle = 180 - (percentage / 100) * 180;
   
   // Create arc paths using the describeArc helper
-  const backgroundPath = describeArc(centerX, centerY, radius, 0, 180);
-  const progressPath = describeArc(centerX, centerY, radius, endAngle, 180);
+  const backgroundPath = describeArc(centerX, centerY, radius, 180, 0);
+  const progressPath = describeArc(centerX, centerY, radius, 180, endAngle);
   
   return (
     <div style={{ position: 'relative', width: width, height: height * 1.6, margin: '0 auto' }}>
