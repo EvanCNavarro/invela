@@ -144,6 +144,7 @@ export const companies = pgTable("companies", {
       value: number;
       color?: string;
     }[];
+    riskAcceptanceLevel: number;
     lastUpdated: string;
   }>(),
   accreditation_status: text("accreditation_status"),
