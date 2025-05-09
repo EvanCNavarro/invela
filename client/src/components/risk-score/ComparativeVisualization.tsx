@@ -202,7 +202,7 @@ export function ComparativeVisualization({
     },
     plotOptions: {
       radar: {
-        size: 140,
+        size: 180, // Increased from 140 to 180
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -308,13 +308,15 @@ export function ComparativeVisualization({
         <CardContent>
           {chartComponentLoaded ? (
             <div className="flex justify-center">
-              <ReactApexChart
-                options={chartOptions}
-                series={series}
-                type="radar"
-                height="400"
-                width="100%"
-              />
+              <div className="w-full overflow-visible">
+            <ReactApexChart
+              options={chartOptions}
+              series={series}
+              type="radar"
+              height="450"
+              width="100%"
+            />
+          </div>
             </div>
           ) : (
             <div className="h-400 w-full flex items-center justify-center">
