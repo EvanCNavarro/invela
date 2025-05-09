@@ -56,24 +56,29 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   const centerY = height;
   const strokeWidth = size * 0.12; // Make the stroke thicker like in the reference image
   
-  // SVG path for background arc (full half-circle, from left to right at the bottom)
+  // Calculate the angle based on the percentage (0-100%)
+  const angle = (percentage / 100) * Math.PI; // Convert to radians (0 to π)
+  
+  // Calculate the end point coordinates
+  // For 0%, the end point is the left side of the semicircle
+  // For 100%, the end point is the right side of the semicircle
+  const endX = centerX + radius * Math.cos(Math.PI - angle);
+  const endY = centerY - radius * Math.sin(Math.PI - angle);
+  
+  // Generate a simple arc path
+  // If percentage > 50, the arc is more than half of the semicircle, so we need the "large-arc-flag" set to 1
+  const largeArcFlag = percentage > 50 ? 1 : 0;
+  
+  // Create the path for the background (full half-circle)
   const backgroundPath = `
     M ${centerX - radius}, ${centerY}
     A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}
   `;
   
-  // For a uniform arc progress from 0-100%, we use a simpler calculation
-  // that always starts at the left and progresses clockwise
-  const angleInRadians = percentage * Math.PI / 100; // Maps 0-100% to 0-π radians
-  
-  // Calculate the end point on the arc based on the angle
-  const endX = centerX - radius * Math.cos(angleInRadians);
-  const endY = centerY - radius * Math.sin(angleInRadians);
-  
-  // Create SVG path for the progress arc
+  // Create the path for the progress arc
   const progressPath = `
     M ${centerX - radius}, ${centerY}
-    A ${radius} ${radius} 0 ${percentage > 50 ? 1 : 0} 1 ${endX} ${endY}
+    A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}
   `;
   
   return (
