@@ -269,6 +269,8 @@ router.get('/:tabName/status', requireAuth, async (req: any, res) => {
     // The auth middleware sets req.user
     const userId = req.user?.id;
     
+    logger.info(`[TabTutorials] Status request for tab "${req.params.tabName}" from user ID: ${userId || 'unknown'}`);
+    
     if (!userId) {
       logger.warn('[TabTutorials] Missing user ID in authenticated request');
       return res.status(401).json({
@@ -278,6 +280,16 @@ router.get('/:tabName/status', requireAuth, async (req: any, res) => {
     }
     
     const { tabName } = req.params;
+    
+    if (!tabName) {
+      logger.error(`[TabTutorials] Missing tab name in request params: ${JSON.stringify(req.params)}`);
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Tab name is required'
+      });
+    }
+    
+    logger.info(`[TabTutorials] Checking tutorial status for tab: ${tabName}, user: ${userId}`);
     
     // Get the tutorial status for this tab
     const tutorial = await db.query.userTabTutorials.findFirst({
