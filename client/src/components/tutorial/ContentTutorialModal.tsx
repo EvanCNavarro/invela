@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,13 +27,9 @@ export interface ContentTutorialModalProps {
 /**
  * Content Tutorial Modal Component
  * 
- * A simplified modal that only overlays the content area, keeping the navbar and sidebar accessible.
- * This component uses React Portal and positions itself relative to the main content area.
- * 
- * KISS Approach:
- * - Uses a simple div structure instead of complex Dialog component
- * - Calculates position based on DOM elements
- * - Uses React Portal for clean DOM placement
+ * A modal that overlays the content area while keeping the navbar and sidebar accessible.
+ * This implementation uses React's createPortal to render the modal at the document body level,
+ * ensuring it works reliably across different page layouts.
  */
 export function ContentTutorialModal({
   title,
@@ -47,57 +43,7 @@ export function ContentTutorialModal({
   onClose
 }: ContentTutorialModalProps) {
   const [open, setOpen] = useState(true);
-  const [modalPosition, setModalPosition] = useState({
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0
-  });
-  const overlayRef = useRef<HTMLDivElement>(null);
-  
-  // Find the content container element
-  const getContentElement = (): HTMLElement | null => {
-    // First try dashboard specific content area selectors
-    const dashboardContent = document.querySelector('.flex-1.min-w-0');
-    
-    // If dashboard content is found, use it
-    if (dashboardContent) {
-      return dashboardContent as HTMLElement;
-    }
-    
-    // Otherwise fall back to general content selectors
-    return (
-      document.querySelector('.main-content-container') ||
-      document.querySelector('main') ||
-      document.getElementById('content') ||
-      document.querySelector('.page-wrapper') ||
-      // Fallback to body if no content container found
-      document.body
-    ) as HTMLElement;
-  };
-  
-  // Calculate the position of the modal relative to the content
-  const calculatePosition = () => {
-    const contentEl = getContentElement();
-    if (!contentEl) return;
-    
-    // Get the sidebar and navbar elements
-    const sidebar = document.querySelector('aside') || document.getElementById('sidebar');
-    const navbar = document.querySelector('nav') || document.querySelector('header');
-    
-    // Get the content position
-    const contentRect = contentEl.getBoundingClientRect();
-    
-    // Calculate the position for the overlay
-    const position = {
-      top: navbar ? navbar.getBoundingClientRect().height : 0,
-      left: sidebar ? sidebar.getBoundingClientRect().width : 0,
-      width: contentRect.width,
-      height: contentRect.height - (navbar ? navbar.getBoundingClientRect().height : 0)
-    };
-    
-    setModalPosition(position);
-  };
+  const [contentRect, setContentRect] = useState<DOMRect | null>(null);
   
   // Handle dialog close
   const handleClose = () => {
@@ -115,17 +61,38 @@ export function ContentTutorialModal({
     }
   };
   
-  // Calculate position on mount and window resize
+  // Find the main content area and calculate its position
   useEffect(() => {
-    calculatePosition();
-    
-    const handleResize = () => {
-      calculatePosition();
+    const updateContentRect = () => {
+      // Try to find the main content container by looking for common elements
+      // Here we look for the content area (excluding sidebar and header)
+      const sidebarEl = document.querySelector('nav.w-16') || 
+                         document.querySelector('aside') || 
+                         document.getElementById('sidebar');
+                         
+      const headerEl = document.querySelector('header') || 
+                       document.querySelector('nav:not(.w-16)');
+                       
+      // Find the main content container
+      // Dashboard layout is typically a flex container with min-width-0
+      const contentEl = document.querySelector('.flex-1.min-w-0') || 
+                        document.querySelector('main') || 
+                        document.querySelector('.page-content') ||
+                        document.getElementById('content') ||
+                        document.body;
+                        
+      if (contentEl) {
+        setContentRect(contentEl.getBoundingClientRect());
+      }
     };
     
-    window.addEventListener('resize', handleResize);
+    // Initial calculation
+    updateContentRect();
+    
+    // Recalculate on resize
+    window.addEventListener('resize', updateContentRect);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', updateContentRect);
     };
   }, []);
   
@@ -136,34 +103,72 @@ export function ContentTutorialModal({
   
   if (!open) return null;
   
-  // Get the content element to portal into
-  const contentEl = getContentElement();
-  if (!contentEl) return null;
+  // Calculate main content area including offsets for sidebar and header
+  const sidebarEl = document.querySelector('nav.w-16') || 
+                   document.querySelector('aside') || 
+                   document.getElementById('sidebar');
+                   
+  const headerEl = document.querySelector('header') || 
+                  document.querySelector('nav:not(.w-16)');
+                  
+  // Get sidebar width and header height
+  const sidebarWidth = sidebarEl ? sidebarEl.getBoundingClientRect().width : 0;
+  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0;
   
-  // Create a portal to render the modal inside the content element
+  // Portal directly to body for most reliable positioning
   return createPortal(
-    <>
-      {/* Semi-transparent overlay only for the content area */}
-      <div
-        ref={overlayRef}
-        className="absolute z-50 bg-black/50"
-        style={{
-          position: 'absolute',
-          top: `${modalPosition.top}px`,
-          left: `${modalPosition.left}px`,
-          width: `${modalPosition.width}px`,
-          height: `${modalPosition.height}px`,
-          backdropFilter: 'blur(4px)',
-        }}
-      />
+    <div className="tutorial-modal-container">
+      {/* Global styles for overlay */}
+      <style jsx global>{`
+        body {
+          overflow: hidden;
+        }
+        .tutorial-overlay::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(4px);
+          z-index: 48;
+        }
+        /* Add transparent areas for sidebar and header */
+        .tutorial-overlay::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: ${sidebarWidth}px;
+          height: 100vh;
+          background: transparent;
+          z-index: 49;
+        }
+        .tutorial-overlay-header {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: ${headerHeight}px;
+          background: transparent;
+          z-index: 49;
+        }
+      `}</style>
       
-      {/* Modal dialog - positioned relative to content area */}
+      {/* Full-page overlay with transparent areas for navbar and sidebar */}
+      <div className="tutorial-overlay fixed inset-0 z-40">
+        {/* Transparent area for header */}
+        <div className="tutorial-overlay-header"></div>
+      </div>
+      
+      {/* Modal dialog - centered in the main content area */}
       <div 
         className="fixed z-50 w-[600px] max-w-[90%] rounded-lg border bg-background shadow-lg"
         style={{
           position: 'fixed',
-          top: `${modalPosition.top + (modalPosition.height / 2)}px`,
-          left: `${modalPosition.left + (modalPosition.width / 2)}px`,
+          top: '50%',
+          left: `${sidebarWidth + ((window.innerWidth - sidebarWidth) / 2)}px`,
           transform: 'translate(-50%, -50%)',
         }}
       >
@@ -207,7 +212,7 @@ export function ContentTutorialModal({
           </div>
         </div>
       </div>
-    </>,
-    contentEl
+    </div>,
+    document.body
   );
 }
