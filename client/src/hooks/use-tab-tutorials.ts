@@ -26,21 +26,22 @@ export function useTabTutorials(tabName: string) {
   
   // Fetch tutorial status from the server
   const { data, isLoading, error } = useQuery<TutorialStatus>({
-    queryKey: ['/api/tutorials/status', tabName],
+    queryKey: ['/api/user-tab-tutorials/status', tabName],
     queryFn: async () => {
-      return apiRequest(`/api/tutorials/status?tab=${encodeURIComponent(tabName)}`);
+      return apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
     }
   });
   
   // Update tutorial progress mutation
   const updateTutorialMutation = useMutation({
     mutationFn: async (payload: { step: number, completed: boolean }) => {
-      return apiRequest('/api/tutorials/update', {
+      return apiRequest('/api/user-tab-tutorials', {
         method: 'POST',
         body: JSON.stringify({
           tabName,
           currentStep: payload.step,
-          completed: payload.completed
+          completed: payload.completed,
+          totalSteps: getTotalSteps(tabName)
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -49,16 +50,19 @@ export function useTabTutorials(tabName: string) {
     },
     onSuccess: () => {
       // Invalidate tutorial status after update
-      queryClient.invalidateQueries({ queryKey: ['/api/tutorials/status', tabName] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
     }
   });
   
   // Mark tutorial as seen mutation (for "Skip" functionality)
   const markSeenMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/tutorials/mark-seen', {
+      return apiRequest('/api/user-tab-tutorials', {
         method: 'POST',
-        body: JSON.stringify({ tabName }),
+        body: JSON.stringify({ 
+          tabName,
+          lastSeen: new Date().toISOString() 
+        }),
         headers: {
           'Content-Type': 'application/json'
         }
@@ -66,7 +70,7 @@ export function useTabTutorials(tabName: string) {
     },
     onSuccess: () => {
       // Invalidate tutorial status after update
-      queryClient.invalidateQueries({ queryKey: ['/api/tutorials/status', tabName] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
     }
   });
   
