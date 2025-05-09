@@ -220,16 +220,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Fixed navbar that spans across the entire width minus sidebar */}
+      <header 
+        className={cn(
+          "fixed top-0 right-0 z-30 h-14 bg-background/90 backdrop-blur-sm border-b flex-shrink-0",
+          "transition-all duration-300 ease-in-out",
+          isExpanded ? "left-64" : "left-20"
+        )}
+      >
+        <TopNav />
+      </header>
+
+      {/* Content area with proper spacing for fixed navbar */}
       <div
         className={cn(
-          "min-h-screen flex flex-col transition-all duration-300 ease-in-out",
+          "min-h-screen flex flex-col pt-14 transition-all duration-300 ease-in-out", 
           isExpanded ? "ml-64" : "ml-20"
         )}
       >
-        <header className="flex-shrink-0 z-30 bg-background/80 backdrop-blur-sm border-b">
-          <TopNav />
-        </header>
-
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className={cn(
             "px-4 sm:px-6 md:px-8 py-4",
