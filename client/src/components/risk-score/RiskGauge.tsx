@@ -14,21 +14,25 @@ interface RiskGaugeProps {
 }
 
 /**
- * Returns the color for a given risk level
+ * Returns the color for a given risk level using a blue-centric color palette
+ * 
+ * This function creates a cohesive color scheme based on our brand's primary blue color,
+ * using saturation and lightness variations to indicate risk levels while maintaining
+ * visual consistency across the application.
  */
 const getRiskLevelColor = (level: string): string => {
   switch (level.toLowerCase()) {
     case 'critical':
-      return '#ef4444'; // Red-500 - Critical risk
+      return '#2563eb'; // Primary blue - Critical risk (stronger, more saturated blue)
     case 'high':
-      return '#f97316'; // Orange-500 - High risk
+      return '#3b82f6'; // Blue-500 - High risk (standard blue)
     case 'medium':
-      return '#eab308'; // Yellow-500 - Medium risk
+      return '#60a5fa'; // Blue-400 - Medium risk (lighter blue)
     case 'low':
-      return '#22c55e'; // Green-500 - Low risk
+      return '#93c5fd'; // Blue-300 - Low risk (pale blue)
     case 'none':
     default:
-      return '#94a3b8'; // Slate-400 - No risk or default
+      return '#cbd5e1'; // Slate-300 - No risk or default (cool gray)
   }
 };
 
@@ -52,6 +56,14 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
   // Create and update the chart when component mounts or props change
   useEffect(() => {
     if (chartRef.current) {
+      // Create a gradient background effect by defining steps on the gauge
+      const steps = [
+        { range: [0, 25], color: '#f0f9ff' },    // Blue-50 - Very light blue
+        { range: [25, 50], color: '#e0f2fe' },   // Blue-100 - Light blue
+        { range: [50, 75], color: '#bae6fd' },   // Blue-200 - Pale blue
+        { range: [75, 100], color: '#93c5fd' }   // Blue-300 - Slightly darker blue
+      ];
+      
       // Data for the gauge chart
       const data = [{
         type: 'indicator',
@@ -66,10 +78,10 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
           axis: { 
             range: [0, 100],
             tickwidth: 1,
-            tickcolor: '#e5e7eb',
+            tickcolor: '#cbd5e1',  // Slate-300 - Cool gray for subtle ticks
             tickfont: {
               size: 10,
-              color: '#666'
+              color: '#64748b'     // Slate-500 - Cool gray for text
             },
             visible: true,
             showticklabels: true,
@@ -79,15 +91,15 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
             ticktext: ['0', '', '', '', '100']
           },
           bar: { color, thickness: 0.8 },
-          bgcolor: '#e5e7eb',
+          bgcolor: 'rgba(0,0,0,0)',  // Transparent background to show gradient steps
           borderwidth: 0,
           bordercolor: 'transparent',
-          steps: []
+          steps: steps  // Add the gradient steps
         },
         // Display the value in the center of the gauge
         number: {
           font: {
-            family: 'Arial, sans-serif',
+            family: 'Inter, sans-serif',
             size: size * 0.22,
             color,
             weight: 'bold'
@@ -99,9 +111,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         title: {
           text: '',
           font: {
-            family: 'Arial, sans-serif',
+            family: 'Inter, sans-serif',
             size: 14,
-            color: '#666'
+            color: '#64748b'  // Slate-500 - Cool gray text
           }
         }
       }];
