@@ -7,71 +7,60 @@ interface UseTutorialAssetsResult {
 }
 
 /**
- * Hook to load tutorial assets with loading state
+ * Hook to load and manage tutorial assets
  * 
- * This hook handles loading tutorial images and tracks loading state
- * to show appropriate loading indicators in the UI.
+ * This hook handles loading tutorial images and provides loading state
+ * for the tutorial UI. It supports both direct asset paths and full URLs.
  * 
- * @param imagePath - Path to the tutorial image
- * @param enabled - Whether to load the asset (for optimization)
- * @returns Object with loading state and image URL
+ * @param {string} assetPath - Path or URL to the tutorial asset
+ * @param {boolean} shouldLoad - Whether the asset should be loaded
+ * @returns {UseTutorialAssetsResult} Loading state and image URL
  */
 export function useTutorialAssets(
-  imagePath: string,
-  enabled: boolean = true
+  assetPath: string,
+  shouldLoad: boolean = true
 ): UseTutorialAssetsResult {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!enabled || !imagePath) {
+    // Reset state when path changes
+    setIsLoading(true);
+    setImageUrl(null);
+    setError(null);
+    
+    if (!assetPath || !shouldLoad) {
+      setIsLoading(false);
       return;
     }
-
-    let isMounted = true;
-    setIsLoading(true);
-    setError(null);
-
-    // Simulate image loading with a small delay for better UX
-    const loadImage = async () => {
-      try {
-        // Create an image element to preload the image
-        const img = new Image();
-        
-        // Create a promise that resolves when the image loads
-        // or rejects if there's an error
-        const imageLoadPromise = new Promise<string>((resolve, reject) => {
-          img.onload = () => resolve(imagePath);
-          img.onerror = () => reject(new Error(`Failed to load image: ${imagePath}`));
-          img.src = imagePath;
-        });
-        
-        // Wait for the image to load (min 500ms for UI smoothness)
-        const result = await Promise.all([
-          imageLoadPromise,
-          new Promise(resolve => setTimeout(resolve, 500)) // Minimum loading time
-        ]);
-        
-        if (isMounted) {
-          setImageUrl(result[0]);
-          setIsLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('Error loading tutorial asset:', err);
-          setError(err instanceof Error ? err : new Error('Unknown error loading asset'));
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadImage();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [imagePath, enabled]);
-
+    
+    // Check if the path is a full URL or a relative path
+    const isFullUrl = assetPath.startsWith('http://') || assetPath.startsWith('https://');
+    
+    if (isFullUrl) {
+      // For full URLs, just set them directly
+      setImageUrl(assetPath);
+      setIsLoading(false);
+    } else {
+      // For relative paths, load the image to check if it exists
+      const img = new Image();
+      
+      img.onload = () => {
+        setImageUrl(assetPath);
+        setIsLoading(false);
+      };
+      
+      img.onerror = (e) => {
+        console.error(`Failed to load tutorial asset: ${assetPath}`, e);
+        setError(new Error(`Failed to load image: ${assetPath}`));
+        setIsLoading(false);
+      };
+      
+      // Start loading the image
+      img.src = assetPath;
+    }
+  }, [assetPath, shouldLoad]);
+  
   return { isLoading, imageUrl, error };
 }
