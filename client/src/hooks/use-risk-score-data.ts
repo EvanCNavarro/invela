@@ -108,7 +108,10 @@ export function useRiskScoreData() {
         if (prioritiesData.riskAcceptanceLevel !== undefined) {
           setScore(prioritiesData.riskAcceptanceLevel);
           setRiskLevel(determineRiskLevel(prioritiesData.riskAcceptanceLevel));
-          setUserSetScore(false); // Reset user-set flag when loading from server
+          // When loading initially, don't reset userSetScore if user has already interacted with the slider
+          if (!initialDataLoaded.current) {
+            setUserSetScore(false);
+          }
         }
       } 
       // If priorities data doesn't exist but config data does, fall back to config data
@@ -259,23 +262,34 @@ export function useRiskScoreData() {
       
       // Then determine what to apply to our local state
       let newDimensions: RiskDimension[] | null = null;
+      let previousScore = score;
       
       // Handle both formats for backward compatibility
       if (data && data.priorities && data.priorities.dimensions) {
         newDimensions = data.priorities.dimensions;
         
-        // Apply risk acceptance level if provided
+        // Apply risk acceptance level if provided and preserve userSetScore
         if (data.priorities.riskAcceptanceLevel !== undefined) {
-          setScore(data.priorities.riskAcceptanceLevel);
-          setRiskLevel(determineRiskLevel(data.priorities.riskAcceptanceLevel));
+          // Only update if the score has actually changed
+          if (data.priorities.riskAcceptanceLevel !== previousScore) {
+            setScore(data.priorities.riskAcceptanceLevel);
+            setRiskLevel(determineRiskLevel(data.priorities.riskAcceptanceLevel));
+            // IMPORTANT: We maintain userSetScore state to preserve user intention
+            // Don't reset userSetScore here
+          }
         }
       } else if (data && data.dimensions) {
         newDimensions = data.dimensions;
         
-        // Apply risk acceptance level if provided
+        // Apply risk acceptance level if provided and preserve userSetScore
         if (data.riskAcceptanceLevel !== undefined) {
-          setScore(data.riskAcceptanceLevel);
-          setRiskLevel(determineRiskLevel(data.riskAcceptanceLevel));
+          // Only update if the score has actually changed
+          if (data.riskAcceptanceLevel !== previousScore) {
+            setScore(data.riskAcceptanceLevel);
+            setRiskLevel(determineRiskLevel(data.riskAcceptanceLevel));
+            // IMPORTANT: We maintain userSetScore state to preserve user intention
+            // Don't reset userSetScore here
+          }
         }
       }
       
@@ -340,9 +354,24 @@ export function useRiskScoreData() {
    * Save both configuration and priorities
    */
   const handleSave = useCallback(() => {
+    // Log the current state before saving
+    riskScoreLogger.log('persist:save', 'Saving risk score configuration', {
+      score,
+      userSetScore,
+      dimensionsCount: dimensions.length
+    });
+    
     // Trigger the save mutation
     saveMutation.mutate();
-  }, [saveMutation]);
+    
+    // Ensure we don't lose the userSetScore flag after saving
+    if (userSetScore) {
+      // This ensures the flag stays true even after the WebSocket response
+      setTimeout(() => {
+        setUserSetScore(true);
+      }, 500);
+    }
+  }, [saveMutation, score, userSetScore, dimensions.length]);
 
   /**
    * Reset to defaults
