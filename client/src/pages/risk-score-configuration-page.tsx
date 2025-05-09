@@ -52,7 +52,7 @@ const ItemTypes = {
   DIMENSION_ROW: 'dimensionRow'
 };
 
-// Skeleton component for dimension rows during loading state with light mode style
+// Skeleton component for dimension rows during loading state with updated design
 const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
   // Vary the width and intensity based on priority
   const nameWidth = `${80 - index * 7}%`;
@@ -63,33 +63,39 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
   
   return (
     <div 
-      className="flex items-center space-x-4 p-4 mb-2 animate-pulse rounded-lg"
+      className="flex items-center p-4 mb-2 animate-pulse rounded-lg"
       style={{ 
         animationDelay: `${index * 0.1}s`,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        border: '1px solid #f0f0f0',
       }}
     >
-      {/* Drag handle skeleton */}
-      <div className="h-5 w-5 bg-gray-300 rounded"></div>
+      {/* Dimension icon skeleton */}
+      <div className="w-10 h-10 bg-gray-300 rounded mr-4 flex-shrink-0"></div>
       
       <div className="flex-1">
-        <div className="flex items-center">
-          <div className="flex-1">
-            {/* Name and badge skeleton */}
-            <div className="flex items-center mb-2">
-              <div className="h-4 bg-gray-300 rounded" style={{ width: nameWidth }}></div>
-              <div className="ml-2 h-4 w-10 bg-gray-300 rounded-full"></div>
-            </div>
-            
-            {/* Description skeleton */}
-            <div className="h-3 bg-gray-200 rounded" style={{ width: descWidth }}></div>
-          </div>
+        <div className="flex items-center mb-2">
+          {/* Name skeleton */}
+          <div className="h-4 bg-gray-300 rounded mr-2" style={{ width: nameWidth }}></div>
+          
+          {/* Priority badge skeleton */}
+          <div className="h-4 w-16 bg-blue-100 rounded"></div>
         </div>
+        
+        {/* Description skeleton */}
+        <div className="h-3 bg-gray-200 rounded" style={{ width: descWidth }}></div>
       </div>
       
-      {/* Weight percentage skeleton */}
-      <div className="h-8 w-16 bg-blue-300 rounded-full flex items-center justify-center">
-        <div className="text-transparent text-sm">{weight}%</div>
+      <div className="flex items-center">
+        {/* Weight percentage skeleton */}
+        <div className="h-7 w-10 bg-gray-300 rounded-sm mr-1"></div>
+        
+        {/* Priority weight text skeleton */}
+        <div className="h-4 w-24 bg-gray-200 rounded-sm mr-2"></div>
+        
+        {/* Menu dots skeleton */}
+        <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
       </div>
     </div>
   );
@@ -154,37 +160,49 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
     drop(node);
   };
 
-  // Render dimension row with neumorphic light mode style matching the app screenshot
+  // Render dimension row matching the exact design from the screenshot
   return (
     <div 
       ref={ref}
-      className={`flex items-center space-x-4 p-4 mb-2 transition-all duration-200 
-      ${isDragging ? 'opacity-50 scale-[0.98]' : 'opacity-100 hover:shadow-md'}`}
+      className={`flex items-center p-4 mb-2 transition-all duration-200 
+      ${isDragging ? 'opacity-50 scale-[0.98]' : 'opacity-100 hover:shadow-sm'}`}
       style={{ 
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'white',
         borderRadius: '8px',
+        border: '1px solid #f0f0f0',
       }}
     >
-      <div className="cursor-move flex items-center justify-center">
-        <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-150" />
+      {/* Icon placeholder - would need actual icon for each dimension */}
+      <div className="w-10 h-10 rounded bg-gray-900 mr-4 flex-shrink-0 shadow-sm">
+        {/* This would be replaced with actual icons */}
       </div>
       
       <div className="flex-1">
-        <div className="flex items-center">
-          <div className="flex items-center">
-            <h4 className="font-medium text-gray-900">
-              {dimension.name}
-            </h4>
-            <div className="ml-2 px-2 py-0.5 bg-gray-200 text-xs rounded-full text-gray-700 font-medium">
-              #{index + 1}
-            </div>
+        <div className="flex items-center mb-1">
+          <h4 className="font-medium text-gray-900 mr-2">
+            {dimension.name}
+          </h4>
+          <div className="px-2 py-0.5 bg-blue-100 text-xs rounded text-blue-800 font-medium">
+            Priority {index + 1}
           </div>
         </div>
-        <p className="text-sm text-gray-600 mt-0.5">{dimension.description}</p>
+        <p className="text-sm text-gray-600">{dimension.description}</p>
       </div>
       
-      <div className="text-right font-semibold w-16 text-white text-lg bg-blue-600 px-2 py-1 rounded-full">
-        {dimension.weight.toFixed(0)}%
+      <div className="flex items-center">
+        <div className="text-right font-semibold text-gray-800 text-2xl mr-1">
+          {dimension.weight.toFixed(0)}%
+        </div>
+        <div className="text-sm text-gray-500 mr-2">
+          Priority Weight
+        </div>
+        <div className="cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
+        </div>
       </div>
     </div>
   );
