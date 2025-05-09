@@ -16,6 +16,7 @@ import {
   Users
 } from 'lucide-react';
 import { getRiskScoreDataService, CACHE_KEYS } from '@/lib/risk-score-data-service';
+import { TutorialManager } from '@/components/tutorial/TutorialManager';
 
 import { 
   Card, 
@@ -372,6 +373,9 @@ export default function RiskScoreConfigurationPage() {
       />
       
       <PageTemplate>
+        {/* Add the tutorial manager for risk-score-configuration */}
+        <TutorialManager tabName="risk-score-configuration" />
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left column: Risk score summary - Always visible */}
           <div className="col-span-1">
