@@ -9,9 +9,7 @@ import { ClaimsRiskTutorial } from "@/components/tutorial/tabs/ClaimsRiskTutoria
 export default function ClaimsRiskPage() {
   return (
     <DashboardLayout>
-      <PageTemplate
-        showBreadcrumbs
-      >
+      <PageTemplate>
         {/* Display Claims Risk Tutorial */}
         <ClaimsRiskTutorial />
         

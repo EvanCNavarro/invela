@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, X } from 'lucide-react';
 
+export interface TutorialStep {
+  title: string;
+  description: string;
+  imagePath: string;
+}
+
 interface TabTutorialModalProps {
   title: string;
   description: string;

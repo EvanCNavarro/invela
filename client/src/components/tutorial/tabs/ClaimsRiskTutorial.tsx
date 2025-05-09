@@ -1,10 +1,10 @@
 import React from 'react';
-import { TabTutorialModal } from '../TabTutorialModal';
+import { TabTutorialModal, TutorialStep } from '../TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 
 // Tutorial steps for Claims Risk tab
-const TUTORIAL_STEPS = [
+const TUTORIAL_STEPS: TutorialStep[] = [
   {
     title: 'Claims Risk Analysis',
     description: 'Welcome to the Claims Risk Analysis page. Here you can analyze insurance claims data and identify potential risk patterns across your organization.',
