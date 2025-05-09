@@ -25,6 +25,20 @@ export function useTabTutorials(tabName: string) {
   
   const queryClient = useQueryClient();
   
+  // Calculate total steps - this would normally come from the content config
+  const getTotalSteps = useCallback((tabNameInput: string) => {
+    switch (tabNameInput) {
+      case 'risk-score':
+        return 5;
+      case 'claims-risk':
+        return 4;
+      default:
+        return 5;
+    }
+  }, []);
+  
+  const totalSteps = getTotalSteps(tabName);
+  
   console.log(`[TabTutorials] Initializing for tab: ${tabName}`);
   
   // Fetch tutorial status from the server
@@ -94,20 +108,6 @@ export function useTabTutorials(tabName: string) {
       console.error(`[TabTutorials] Error marking tutorial as seen for ${tabName}:`, error);
     }
   });
-  
-  // Calculate total steps - this would normally come from the content config
-  const getTotalSteps = (tabNameInput: string) => {
-    switch (tabNameInput) {
-      case 'risk-score':
-        return 5;
-      case 'claims-risk':
-        return 4;
-      default:
-        return 5;
-    }
-  };
-  
-  const totalSteps = getTotalSteps(tabName);
   
   // Update local state when data changes
   useEffect(() => {
