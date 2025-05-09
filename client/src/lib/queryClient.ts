@@ -211,6 +211,20 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     refetchOnMount: true,
   };
   
+  // Risk score data - critical to always fetch fresh from server
+  if (urlStr.includes('/api/risk-score/')) {
+    return {
+      refetchInterval: false,       // Don't poll automatically
+      refetchOnWindowFocus: true,   // Always fetch when window gets focus
+      staleTime: 0,                 // Always consider data stale - critical fix
+      cacheTime: 1000 * 60,         // 1 minute cache time
+      retry: true,                  // Retry failed requests
+      retryDelay: 1000,             // Retry after 1 second
+      refetchOnReconnect: true,     // Always refetch on reconnect
+      refetchOnMount: true,         // Always refetch on mount - critical fix
+    };
+  }
+  
   // Frequently accessed endpoints - moderate caching but ensure updates are reflected for company permissions
   if (urlStr.includes('/api/companies/current')) {
     return {

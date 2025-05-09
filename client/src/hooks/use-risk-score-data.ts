@@ -65,10 +65,10 @@ export function useRiskScoreData() {
     refetch: refetchConfig
   } = useQuery<ConfigurationResponse>({
     queryKey: CACHE_KEYS.CONFIGURATION,
-    staleTime: 60000, // Consider data stale after 1 minute
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 0, // Always consider data stale - critical fix
+    refetchOnWindowFocus: true, // Always fetch fresh data when tab regains focus
+    refetchOnMount: true, // Always fetch fresh data when component mounts
+    gcTime: 60000, // Keep in cache for only 1 minute
     retry: 3, // Retry failed requests 3 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
   });
@@ -85,10 +85,10 @@ export function useRiskScoreData() {
     refetch: refetchPriorities 
   } = useQuery<PrioritiesResponse>({
     queryKey: CACHE_KEYS.PRIORITIES,
-    staleTime: 60000, // Consider data stale after 1 minute
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 0, // Always consider data stale - critical fix
+    refetchOnWindowFocus: true, // Always fetch fresh data when tab regains focus
+    refetchOnMount: true, // Always fetch fresh data when component mounts
+    gcTime: 60000, // Keep in cache for only 1 minute
     retry: 3, // Retry failed requests 3 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
   });
