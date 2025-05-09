@@ -4,11 +4,16 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
-  GripVertical, 
-  Shield, 
+  AlertTriangle,
   BarChart2, 
+  Database,
+  DollarSign,
+  Eye,
+  Gauge as GaugeIcon,
+  GripVertical, 
   Info, 
-  Gauge as GaugeIcon 
+  Shield,
+  Users
 } from 'lucide-react';
 import { getRiskScoreDataService, CACHE_KEYS } from '@/lib/risk-score-data-service';
 
@@ -71,8 +76,17 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
         border: '1px solid #f0f0f0',
       }}
     >
-      {/* Dimension icon skeleton */}
-      <div className="w-10 h-10 bg-gray-300 rounded mr-4 flex-shrink-0"></div>
+      {/* Drag handle skeleton */}
+      <div className="h-5 w-5 bg-gray-200 rounded mr-2"></div>
+      
+      {/* Dimension icon skeleton with gradient */}
+      <div 
+        className="w-10 h-10 rounded mr-4 flex-shrink-0"
+        style={{ 
+          background: 'linear-gradient(to bottom, #cbd5e1, #e2e8f0)',
+          borderRadius: '8px'
+        }}
+      ></div>
       
       <div className="flex-1">
         <div className="flex items-center mb-2">
@@ -87,16 +101,16 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
         <div className="h-3 bg-gray-200 rounded" style={{ width: descWidth }}></div>
       </div>
       
-      <div className="flex items-center">
+      <div className="flex flex-col items-end mr-2">
         {/* Weight percentage skeleton */}
-        <div className="h-7 w-10 bg-gray-300 rounded-sm mr-1"></div>
+        <div className="h-7 w-10 bg-gray-300 rounded-sm"></div>
         
         {/* Priority weight text skeleton */}
-        <div className="h-4 w-24 bg-gray-200 rounded-sm mr-2"></div>
-        
-        {/* Menu dots skeleton */}
-        <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
+        <div className="h-3 w-20 bg-gray-200 rounded-sm mt-1"></div>
       </div>
+      
+      {/* Menu dots skeleton */}
+      <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
     </div>
   );
 };
@@ -160,7 +174,7 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
     drop(node);
   };
 
-  // Render dimension row matching the exact design from the screenshot
+  // Render dimension row matching the latest design from screenshot
   return (
     <div 
       ref={ref}
@@ -172,9 +186,26 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
         border: '1px solid #f0f0f0',
       }}
     >
-      {/* Icon placeholder - would need actual icon for each dimension */}
-      <div className="w-10 h-10 rounded bg-gray-900 mr-4 flex-shrink-0 shadow-sm">
-        {/* This would be replaced with actual icons */}
+      {/* Drag handle on the left */}
+      <div className="cursor-move flex items-center justify-center mr-2">
+        <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-150" />
+      </div>
+      
+      {/* Icon with blue to gray gradient */}
+      <div 
+        className="w-10 h-10 rounded mr-4 flex-shrink-0 shadow-sm flex items-center justify-center" 
+        style={{ 
+          background: 'linear-gradient(to bottom, #1a365d, #2d3748)',
+          borderRadius: '8px'
+        }}
+      >
+        {/* Dimension icon based on dimension type */}
+        {dimension.id === 'financial_stability' && <DollarSign className="h-5 w-5 text-white" />}
+        {dimension.id === 'public_sentiment' && <Users className="h-5 w-5 text-white" />}
+        {dimension.id === 'dark_web_data' && <Eye className="h-5 w-5 text-white" />}
+        {dimension.id === 'cyber_security' && <Shield className="h-5 w-5 text-white" />}
+        {dimension.id === 'potential_liability' && <AlertTriangle className="h-5 w-5 text-white" />}
+        {dimension.id === 'data_access_scope' && <Database className="h-5 w-5 text-white" />}
       </div>
       
       <div className="flex-1">
@@ -189,20 +220,21 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
         <p className="text-sm text-gray-600">{dimension.description}</p>
       </div>
       
-      <div className="flex items-center">
-        <div className="text-right font-semibold text-gray-800 text-2xl mr-1">
+      <div className="flex flex-col items-end mr-2">
+        <div className="text-right font-semibold text-gray-800 text-2xl leading-tight">
           {dimension.weight.toFixed(0)}%
         </div>
-        <div className="text-sm text-gray-500 mr-2">
+        <div className="text-xs text-gray-500">
           Priority Weight
         </div>
-        <div className="cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="12" cy="5" r="1"></circle>
-            <circle cx="12" cy="19" r="1"></circle>
-          </svg>
-        </div>
+      </div>
+      
+      <div className="cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="12" cy="5" r="1"></circle>
+          <circle cx="12" cy="19" r="1"></circle>
+        </svg>
       </div>
     </div>
   );
