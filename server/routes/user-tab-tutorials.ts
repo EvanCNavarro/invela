@@ -16,10 +16,12 @@ import {
 } from '@db/schema';
 import { logger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth';
-import WebSocketService from '../services/websocket-service';
+import WebSocketService, { WebSocketMessage, MessageType } from '../services/websocket-service';
+import { WebSocketServer } from 'ws';
 
 // Create an instance of the WebSocket service
-const webSocketService = new WebSocketService();
+// For broadcasts in this module, we don't need an actual WSS instance
+const webSocketService = new WebSocketService(null);
 
 const router = Router();
 
