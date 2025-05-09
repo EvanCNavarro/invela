@@ -222,7 +222,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   
   // Direct database entry check - check if we have tutorials in the database (from the SQL inserts)
   // This is a workaround for authentication issues with the API
-  const dbTutorialEntries = {
+  const dbTutorialEntries: Record<string, { exists: boolean, tabName: string, completed: boolean, currentStep: number }> = {
     'risk-score': { exists: true, tabName: 'risk-score', completed: false, currentStep: 0 },
     'claims-risk': { exists: true, tabName: 'claims-risk', completed: false, currentStep: 0 },
     'network-view': { exists: true, tabName: 'network-view', completed: false, currentStep: 0 },
@@ -234,7 +234,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   
   // Check if we have a direct database entry for this tab
   // First try the original tab name, then fall back to the normalized name
-  const directDbEntry = dbTutorialEntries[tabName] || dbTutorialEntries[normalizedTabName];
+  const directDbEntry = (dbTutorialEntries[tabName] || dbTutorialEntries[normalizedTabName]);
   const shouldForceTutorial = directDbEntry && !isCompleted;
   
   console.log(`[TutorialManager] Direct DB check - Entry for ${tabName}:`, directDbEntry);

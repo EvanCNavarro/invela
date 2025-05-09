@@ -8,6 +8,7 @@ interface TutorialStatus {
   completed: boolean;
   currentStep: number;
   lastSeenAt: string | null;
+  exists?: boolean;
 }
 
 /**
@@ -29,12 +30,12 @@ export function useTabTutorials(tabName: string) {
   // Fetch tutorial status from the server
   const { data, isLoading, error } = useQuery<TutorialStatus>({
     queryKey: ['/api/user-tab-tutorials/status', tabName],
-    queryFn: async () => {
+    queryFn: async (): Promise<TutorialStatus> => {
       console.log(`[TabTutorials] Fetching tutorial status for: ${tabName}`);
       try {
         const result = await apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
         console.log(`[TabTutorials] Received tutorial status for ${tabName}:`, result);
-        return result;
+        return result as TutorialStatus;
       } catch (err) {
         console.error(`[TabTutorials] Error fetching tutorial status for ${tabName}:`, err);
         throw err;
@@ -73,7 +74,7 @@ export function useTabTutorials(tabName: string) {
   const markSeenMutation = useMutation({
     mutationFn: async () => {
       console.log(`[TabTutorials] Marking tutorial as seen for ${tabName}`);
-      return apiRequest('/api/user-tab-tutorials', {
+      return apiRequest('/api/user-tab-tutorials/mark-seen', {
         method: 'POST',
         body: JSON.stringify({ 
           tabName,
