@@ -39,11 +39,13 @@ let ReactApexChart: any;
 
 // Constants
 const MAX_COMPARISONS = 3; // Maximum number of companies that can be added for comparison
-// Using a blue-based color palette for consistent branding
+// Using a diverse color palette with better contrast for comparison
 const COMPANY_COLORS = [
-  '#2563eb', // Blue-600 - Main company color
-  '#3b82f6', // Blue-500 - Slightly lighter blue
-  '#60a5fa', // Blue-400 - Even lighter blue
+  '#2563eb', // Royal Blue - First comparison color
+  '#0891b2', // Cyan - Second comparison color
+  '#6366f1', // Indigo - Third comparison color
+  '#0d9488', // Teal - Fallback comparison color
+  '#8b5cf6', // Purple - Extra fallback color
 ];
 
 interface ComparativeVisualizationProps {
@@ -230,7 +232,7 @@ export function ComparativeVisualization({
     {
       name: currentCompanyData.name,
       data: dimensions.map(dim => currentCompanyData.dimensions[dim.id] || 0),
-      color: '#1e40af' // Blue-800 - Deeper blue for current company to make it stand out
+      color: '#1e3a8a' // Blue-900 - Deeper blue for current company to clearly stand out from comparison colors
     }
   ];
 
@@ -527,7 +529,7 @@ export function ComparativeVisualization({
               {/* Chart legend */}
               <div className="flex flex-wrap items-center justify-center gap-4 mt-6 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }}></div>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></div>
                   <span className="text-sm font-medium">{currentCompanyData.name}</span>
                 </div>
                 
@@ -570,7 +572,7 @@ export function ComparativeVisualization({
               {/* Current company */}
               <div className="p-4 rounded-lg bg-background/50 border shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }}></div>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></div>
                   <h3 className="font-medium">{currentCompanyData.name}</h3>
                 </div>
                 <div>
@@ -583,7 +585,7 @@ export function ComparativeVisualization({
                     <div className="w-full bg-accent/30 rounded-full h-2.5 overflow-hidden">
                       <div
                         className="h-2.5 rounded-full transition-all duration-500" 
-                        style={{ width: `${currentCompanyData.score}%`, backgroundColor: '#1e40af' }}
+                        style={{ width: `${currentCompanyData.score}%`, backgroundColor: '#1e3a8a' }}
                       ></div>
                     </div>
                     <span className="text-sm font-medium">{currentCompanyData.score}/100</span>
