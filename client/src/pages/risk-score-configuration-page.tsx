@@ -314,6 +314,7 @@ export default function RiskScoreConfigurationPage() {
       // Log the save attempt
       riskScoreLogger.logSaveAttempt({
         dimensions: configuration.dimensions,
+        riskAcceptanceLevel: configuration.score,
         lastUpdated: new Date().toISOString()
       });
       
@@ -326,6 +327,7 @@ export default function RiskScoreConfigurationPage() {
         
         riskScoreLogger.logSaveSuccess({
           dimensions: configuration.dimensions,
+          riskAcceptanceLevel: configuration.score,
           lastUpdated: new Date().toISOString()
         }, response);
         
@@ -333,6 +335,7 @@ export default function RiskScoreConfigurationPage() {
       } catch (error) {
         riskScoreLogger.logSaveError({
           dimensions: configuration.dimensions,
+          riskAcceptanceLevel: configuration.score,
           lastUpdated: new Date().toISOString()
         }, error);
         throw error;
@@ -426,6 +429,7 @@ export default function RiskScoreConfigurationPage() {
     onSuccess: (data) => {
       riskScoreLogger.logSaveSuccess({
         dimensions,
+        riskAcceptanceLevel: score,
         lastUpdated: new Date().toISOString()
       }, data);
       
@@ -472,6 +476,7 @@ export default function RiskScoreConfigurationPage() {
     onError: (error) => {
       riskScoreLogger.logSaveError({
         dimensions,
+        riskAcceptanceLevel: score,
         lastUpdated: new Date().toISOString()
       }, error);
       
@@ -537,6 +542,7 @@ export default function RiskScoreConfigurationPage() {
         // Update our query client cache to match the new data
         queryClient.setQueryData(['/api/risk-score/priorities'], {
           dimensions: data.priorities.dimensions,
+          riskAcceptanceLevel: data.priorities.riskAcceptanceLevel || score,
           lastUpdated: data.updatedAt || new Date().toISOString()
         });
         
@@ -558,6 +564,7 @@ export default function RiskScoreConfigurationPage() {
         // Update our query client cache to match the new data
         queryClient.setQueryData(['/api/risk-score/priorities'], {
           dimensions: data.dimensions,
+          riskAcceptanceLevel: data.riskAcceptanceLevel || score,
           lastUpdated: data.updatedAt || new Date().toISOString()
         });
         
