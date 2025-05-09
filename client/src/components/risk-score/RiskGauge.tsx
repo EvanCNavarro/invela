@@ -58,8 +58,8 @@ const describeArc = (
   startAngle: number,
   endAngle: number
 ): string => {
-  const start = polarToCartesian(x, y, endAngle);
-  const end = polarToCartesian(x, y, startAngle);
+  const start = polarToCartesian(x, y, radius, endAngle);
+  const end = polarToCartesian(x, y, radius, startAngle);
   
   const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
   
@@ -115,10 +115,17 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         {/* Colored arc that grows as percentage increases */}
         {percentage > 0 && (
           <path
-            d={`M ${centerX - radius}, ${centerY} 
-                A ${radius}, ${radius}, 0, ${percentage > 50 ? 1 : 0}, 1, 
-                ${centerX + radius * Math.cos(Math.PI * (1 - percentage / 100))}, 
-                ${centerY - radius * Math.sin(Math.PI * (1 - percentage / 100))}`}
+            d={
+              // Create a path starting from the leftmost point
+              `M ${centerX - radius}, ${centerY} ` +
+              // Draw an arc with the proper sweeping direction
+              // For values > 50%, we need to use the large-arc-flag (1)
+              `A ${radius}, ${radius}, 0, ${percentage > 50 ? 1 : 0}, 1, ` +
+              // Calculate the ending x coordinate using cosine
+              `${centerX + radius * Math.cos(Math.PI * (1 - percentage / 100))}, ` +
+              // Calculate the ending y coordinate using sine
+              `${centerY - radius * Math.sin(Math.PI * (1 - percentage / 100))}`
+            }
             fill="none"
             stroke={color}
             strokeWidth={strokeWidth}
