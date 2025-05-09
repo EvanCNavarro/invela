@@ -379,16 +379,27 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
       try {
         console.log(`[TutorialManager] Checking if tutorial exists for tab: ${tabName}`);
         
+        // Track initialization attempts for diagnostics
+        console.log(`[TutorialManager] Tutorial initialization started for: ${tabName} (normalized: ${normalizedTabName})`);
+        
         // Check if tutorial exists by fetching status
         console.log(`[TutorialManager] Fetching tutorial status for tab: ${tabName}`);
         const url = `/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`;
         console.log(`[TutorialManager] Status URL: ${url}`);
         
-        const statusResponse = await apiRequest<{exists?: boolean}>(url);
-        console.log(`[TutorialManager] Tutorial status response:`, statusResponse);
-        
-        // Log the actual response 
-        console.log(`[TutorialManager] Status response details:`, JSON.stringify(statusResponse));
+        let statusResponse;
+        try {
+          statusResponse = await apiRequest<{exists?: boolean}>(url);
+          console.log(`[TutorialManager] Tutorial status response:`, statusResponse);
+          
+          // Log the actual response 
+          console.log(`[TutorialManager] Status response details:`, JSON.stringify(statusResponse));
+        } catch (statusError) {
+          console.error(`[TutorialManager] Error fetching tutorial status:`, statusError);
+          console.log(`[TutorialManager] Will attempt to create a new tutorial entry`);
+          // Continue with creation if status check fails
+          statusResponse = { exists: false };
+        }
         
         // If tutorial doesn't exist (exists is explicitly false), create it
         if (statusResponse && 'exists' in statusResponse && statusResponse.exists === false) {
@@ -397,30 +408,38 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
           // Create a new tutorial entry - explicitly using POST method and direct payload
           console.log(`[TutorialManager] Raw tab name value:`, tabName);
           
-          // Try direct POST with payload instead of using the options pattern
-          const initResponse = await apiRequest(
-            'POST', // Explicit method parameter
-            '/api/user-tab-tutorials', // URL as second parameter
-            {
-              tabName: tabName, // Explicitly use the exact property name expected by the server
-              currentStep: 0,
-              completed: false,
-              totalSteps: steps.length
-            } // Data as third parameter 
-          );
-          
-          console.log(`[TutorialManager] Tutorial initialization response:`, initResponse);
+          try {
+            // Try direct POST with payload instead of using the options pattern
+            const initResponse = await apiRequest(
+              'POST', // Explicit method parameter
+              '/api/user-tab-tutorials', // URL as second parameter
+              {
+                tabName: tabName, // Explicitly use the exact property name expected by the server
+                currentStep: 0,
+                completed: false,
+                totalSteps: steps.length
+              } // Data as third parameter 
+            );
+            
+            console.log(`[TutorialManager] Tutorial initialization response:`, initResponse);
+          } catch (createError) {
+            console.error(`[TutorialManager] Error creating tutorial entry:`, createError);
+            console.log(`[TutorialManager] Will use fallback mechanism for tutorial display`);
+            // Continue even if creation fails - we'll use the fallback mechanism
+          }
         }
         
         setInitializationComplete(true);
       } catch (error) {
-        console.error(`[TutorialManager] Error initializing tutorial:`, error);
+        console.error(`[TutorialManager] Error in initialization process:`, error);
         setInitializationError(String(error));
+        // Still mark as complete so the fallback can take over
+        setInitializationComplete(true);
       }
     };
     
     initializeTutorial();
-  }, [tabName, steps.length]);
+  }, [tabName, normalizedTabName, steps.length]);
   
   // Get tutorial status from the server
   const { 
@@ -517,22 +536,44 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   console.log(`[TutorialManager] Direct DB check - Entry for ${tabName}:`, directDbEntry);
   console.log(`[TutorialManager] Should force tutorial: ${shouldForceTutorial}`);
   
-  // Don't render if tutorial is not enabled, still loading, or already completed
-  // UNLESS we have a direct database entry for this tab
-  if ((isLoading || !tutorialEnabled || isCompleted) && !shouldForceTutorial) {
-    console.log(`[TutorialManager] Not rendering tutorial: ${isLoading ? 'Loading' : !tutorialEnabled ? 'Not enabled' : 'Completed'}`);
+  // Enhanced fallback system for tutorial display
+  // Set default values for tutorial state before conditional checks
+  let shouldDisplay = false;
+  let stepToUse = 0;
+  
+  // First, check if we have a valid API response (normal path)
+  if (tutorialEnabled && !isLoading && !isCompleted && currentStep >= 0 && currentStep < steps.length) {
+    console.log(`[TutorialManager] Displaying tutorial via standard API path`);
+    shouldDisplay = true;
+    stepToUse = currentStep;
+  }
+  // Otherwise, check if we have a valid fallback entry (fallback path)
+  else if (shouldForceTutorial) {
+    console.log(`[TutorialManager] Displaying tutorial via fallback path - forceTutorial`);
+    shouldDisplay = true;
+    // Get step from directDbEntry, defaulting to 0 if not available
+    stepToUse = directDbEntry?.currentStep || 0;
+    
+    // Ensure step is within valid range
+    if (stepToUse < 0 || stepToUse >= steps.length) {
+      console.log(`[TutorialManager] Fallback step ${stepToUse} out of bounds, resetting to 0`);
+      stepToUse = 0;
+    }
+  }
+  // If neither condition is met, don't display tutorial
+  else {
+    console.log(`[TutorialManager] Not rendering tutorial: ${isLoading ? 'Loading' : !tutorialEnabled ? 'Not enabled' : isCompleted ? 'Completed' : 'Unknown state'}`);
     return null;
   }
   
-  // Don't render if current step is invalid
-  if (currentStep < 0 || currentStep >= steps.length) {
-    console.error(`[TutorialManager] Invalid current step: ${currentStep}, total steps: ${steps.length}`);
-    return null;
+  // Additional logging for successful tutorial display
+  console.log(`[TutorialManager] Tutorial will display for ${tabName} (step ${stepToUse + 1}/${steps.length})`);
+  
+  // Safety check for step value - should never happen with the above logic
+  if (stepToUse < 0 || stepToUse >= steps.length) {
+    console.error(`[TutorialManager] Critical error - invalid step after all checks: ${stepToUse}`);
+    stepToUse = 0; // Recover by setting to first step
   }
-
-  // Always use the actual current step from the database/state
-  // Don't rely on forced steps from dbTutorialEntries as they might be outdated
-  const stepToUse = currentStep;
   
   console.log(`[TutorialManager] Rendering tutorial step ${stepToUse + 1} of ${steps.length}`);
     
