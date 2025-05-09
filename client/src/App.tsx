@@ -226,9 +226,11 @@ function Router() {
           path="/risk-score-configuration" 
           component={() => (
             <ProtectedLayout>
-              <OnboardingWrapper>
-                <RiskScoreConfigurationPage />
-              </OnboardingWrapper>
+              <DashboardLayout>
+                <OnboardingWrapper>
+                  <RiskScoreConfigurationPage />
+                </OnboardingWrapper>
+              </DashboardLayout>
             </ProtectedLayout>
           )} 
         />
