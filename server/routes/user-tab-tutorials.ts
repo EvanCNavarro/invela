@@ -7,7 +7,12 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { eq, and } from 'drizzle-orm';
-import { users, userTabTutorials, insertUserTabTutorialSchema } from '@db/schema';
+import { 
+  users, 
+  userTabTutorials, 
+  insertUserTabTutorialSchema,
+  updateUserTabTutorialSchema 
+} from '@db/schema';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -32,7 +37,7 @@ const requireAuth = (req: any, res: any, next: any) => {
 /**
  * GET /api/user-tab-tutorials
  * 
- * Retrieves all completed tab tutorials for the current user
+ * Retrieves all tab tutorials status for the current user
  */
 router.get('/', requireAuth, async (req: any, res) => {
   try {
@@ -48,24 +53,30 @@ router.get('/', requireAuth, async (req: any, res) => {
       });
     }
     
-    // Query all completed tab tutorials for this user
-    const completedTutorials = await db.query.userTabTutorials.findMany({
+    // Query all tab tutorials for this user
+    const tutorialsData = await db.query.userTabTutorials.findMany({
       where: eq(userTabTutorials.user_id, userId)
     });
     
-    // Return as a simple array of tab keys for frontend convenience
-    const completedTabKeys = completedTutorials.map(tutorial => tutorial.tab_key);
+    // Format the response with detailed information for each tutorial
+    const tutorials = tutorialsData.map(tutorial => ({
+      tabName: tutorial.tab_name,
+      userId: tutorial.user_id,
+      completed: tutorial.completed,
+      lastSeenAt: tutorial.last_seen_at,
+      currentStep: tutorial.current_step
+    }));
     
-    logger.info(`[TabTutorials] Retrieved ${completedTabKeys.length} completed tutorials for user ${userId}`);
+    logger.info(`[TabTutorials] Retrieved ${tutorials.length} tutorials for user ${userId}`);
     
     return res.json({
-      completedTutorials: completedTabKeys
+      tutorials
     });
   } catch (error) {
-    logger.error(`[TabTutorials] Error retrieving completed tutorials: ${error}`);
+    logger.error(`[TabTutorials] Error retrieving tutorials: ${error}`);
     return res.status(500).json({
       error: 'Server Error',
-      message: 'Failed to retrieve completed tutorials'
+      message: 'Failed to retrieve tutorials'
     });
   }
 });
@@ -73,7 +84,7 @@ router.get('/', requireAuth, async (req: any, res) => {
 /**
  * POST /api/user-tab-tutorials
  * 
- * Marks a specific tab tutorial as completed for the current user
+ * Updates a specific tab tutorial's status for the current user
  */
 router.post('/', requireAuth, async (req: any, res) => {
   try {
@@ -89,62 +100,105 @@ router.post('/', requireAuth, async (req: any, res) => {
       });
     }
     
-    const { tabKey } = req.body;
+    const { tabName, completed, currentStep } = req.body;
     
-    if (!tabKey) {
+    if (!tabName) {
       return res.status(400).json({
         error: 'Bad Request',
-        message: 'Tab key is required'
+        message: 'Tab name is required'
       });
     }
     
-    // Check if this tutorial is already marked as completed
+    // Check if this tutorial already exists for the user
     const existingTutorial = await db.query.userTabTutorials.findFirst({
       where: and(
         eq(userTabTutorials.user_id, userId),
-        eq(userTabTutorials.tab_key, tabKey)
+        eq(userTabTutorials.tab_name, tabName)
       )
     });
     
     if (existingTutorial) {
-      // Tutorial already completed, just return success
-      logger.info(`[TabTutorials] Tutorial ${tabKey} already completed for user ${userId}`);
+      // Update the existing tutorial
+      const updateData: any = {
+        updated_at: new Date(),
+        last_seen_at: new Date(),
+      };
+      
+      if (currentStep !== undefined) {
+        updateData.current_step = currentStep;
+      }
+      
+      if (completed !== undefined) {
+        updateData.completed = completed;
+        
+        // If marking as completed, set completed_at timestamp
+        if (completed && !existingTutorial.completed) {
+          updateData.completed_at = new Date();
+        }
+      }
+      
+      await db.update(userTabTutorials)
+        .set(updateData)
+        .where(and(
+          eq(userTabTutorials.user_id, userId),
+          eq(userTabTutorials.tab_name, tabName)
+        ));
+      
+      logger.info(`[TabTutorials] Updated tutorial ${tabName} for user ${userId} (completed: ${completed}, currentStep: ${currentStep})`);
+      
       return res.json({
-        completed: true,
-        message: 'Tutorial already marked as completed'
+        success: true,
+        message: 'Tutorial status updated successfully',
+        tutorialStatus: {
+          tabName,
+          userId,
+          completed: completed !== undefined ? completed : existingTutorial.completed,
+          currentStep: currentStep !== undefined ? currentStep : existingTutorial.current_step,
+          lastSeenAt: new Date()
+        }
+      });
+    } else {
+      // Insert new tutorial record
+      const newTutorial = {
+        user_id: userId,
+        tab_name: tabName,
+        completed: completed === true,
+        current_step: currentStep || 0,
+        last_seen_at: new Date(),
+        completed_at: completed === true ? new Date() : null
+      };
+      
+      await db.insert(userTabTutorials).values(newTutorial);
+      
+      logger.info(`[TabTutorials] Created new tutorial entry for ${tabName} for user ${userId}`);
+      
+      return res.json({
+        success: true,
+        message: 'Tutorial created successfully',
+        tutorialStatus: {
+          tabName,
+          userId,
+          completed: completed === true,
+          currentStep: currentStep || 0,
+          lastSeenAt: new Date()
+        }
       });
     }
-    
-    // Insert new completed tutorial record
-    const newTutorial = {
-      user_id: userId,
-      tab_key: tabKey,
-      completed_at: new Date()
-    };
-    
-    await db.insert(userTabTutorials).values(newTutorial);
-    
-    logger.info(`[TabTutorials] Marked tutorial ${tabKey} as completed for user ${userId}`);
-    
-    return res.json({
-      completed: true,
-      message: 'Tutorial marked as completed'
-    });
   } catch (error) {
-    logger.error(`[TabTutorials] Error marking tutorial as completed: ${error}`);
+    logger.error(`[TabTutorials] Error updating tutorial: ${error}`);
     return res.status(500).json({
       error: 'Server Error',
-      message: 'Failed to mark tutorial as completed'
+      message: 'Failed to update tutorial status'
     });
   }
 });
 
 /**
- * GET /api/user-tab-tutorials/:tabKey/check
+ * GET /api/user-tab-tutorials/:tabName/status
  * 
- * Checks if a specific tab tutorial has been completed by the current user
+ * Gets the status of a specific tab tutorial for the current user
  */
-router.get('/:tabKey/check', requireAuth, async (req: any, res) => {
+router.get('/:tabName/status', requireAuth, async (req: any, res) => {
   try {
     // Get user ID from the authenticated request
     // The auth middleware sets req.user
@@ -158,26 +212,49 @@ router.get('/:tabKey/check', requireAuth, async (req: any, res) => {
       });
     }
     
-    const { tabKey } = req.params;
+    const { tabName } = req.params;
     
-    // Check if this tutorial is marked as completed
-    const existingTutorial = await db.query.userTabTutorials.findFirst({
+    // Get the tutorial status for this tab
+    const tutorial = await db.query.userTabTutorials.findFirst({
       where: and(
         eq(userTabTutorials.user_id, userId),
-        eq(userTabTutorials.tab_key, tabKey)
+        eq(userTabTutorials.tab_name, tabName)
       )
     });
     
-    logger.info(`[TabTutorials] Checked completion status of tutorial ${tabKey} for user ${userId}: ${!!existingTutorial}`);
+    if (!tutorial) {
+      logger.info(`[TabTutorials] No tutorial status found for ${tabName} for user ${userId}`);
+      return res.json({
+        exists: false,
+        completed: false,
+        currentStep: 0,
+        tabName
+      });
+    }
+    
+    // Update the last seen timestamp
+    await db.update(userTabTutorials)
+      .set({ last_seen_at: new Date(), updated_at: new Date() })
+      .where(and(
+        eq(userTabTutorials.user_id, userId),
+        eq(userTabTutorials.tab_name, tabName)
+      ));
+    
+    logger.info(`[TabTutorials] Retrieved tutorial status for ${tabName} for user ${userId}: completed=${tutorial.completed}, step=${tutorial.current_step}`);
     
     return res.json({
-      completed: !!existingTutorial
+      exists: true,
+      completed: tutorial.completed,
+      currentStep: tutorial.current_step,
+      lastSeenAt: tutorial.last_seen_at,
+      completedAt: tutorial.completed_at,
+      tabName
     });
   } catch (error) {
-    logger.error(`[TabTutorials] Error checking tutorial completion: ${error}`);
+    logger.error(`[TabTutorials] Error retrieving tutorial status: ${error}`);
     return res.status(500).json({
       error: 'Server Error',
-      message: 'Failed to check tutorial completion status'
+      message: 'Failed to retrieve tutorial status'
     });
   }
 });
