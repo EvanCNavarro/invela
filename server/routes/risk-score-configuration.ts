@@ -311,8 +311,11 @@ router.post('/priorities', optionalAuth, async (req: Request, res: Response) => 
 
     console.log(`[RiskPriorities] Processing request for company ID: ${companyId}`);
     
-    const priorities: RiskPriorities = req.body;
+    const { updateCompanyScore, ...prioritiesData } = req.body;
+    const priorities: RiskPriorities = prioritiesData;
+    
     console.log('[RiskPriorities] Request body:', JSON.stringify(priorities));
+    console.log('[RiskPriorities] Update company score flag:', updateCompanyScore);
 
     // Validate the priorities
     if (!priorities.dimensions || !Array.isArray(priorities.dimensions)) {
@@ -346,12 +349,24 @@ router.post('/priorities', optionalAuth, async (req: Request, res: Response) => 
     // Force stringification and reparsing to avoid any hidden issues with the object
     const sanitizedPriorities = JSON.parse(JSON.stringify(priorities));
     
-    // Update the company record with the new priorities
+    // Prepare update data
+    const updateData: any = {
+      risk_priorities: sanitizedPriorities as any,
+      updated_at: new Date()
+    };
+    
+    // Also update chosen_score if updateCompanyScore flag is true
+    if (updateCompanyScore && priorities.riskAcceptanceLevel !== undefined) {
+      const numericRiskLevel = Number(priorities.riskAcceptanceLevel);
+      if (!isNaN(numericRiskLevel)) {
+        console.log(`[RiskPriorities] Also updating company chosen_score to ${numericRiskLevel}`);
+        updateData.chosen_score = numericRiskLevel;
+      }
+    }
+    
+    // Update the company record with the new priorities and chosen_score if needed
     await db.update(companies)
-      .set({
-        risk_priorities: sanitizedPriorities as any,
-        updated_at: new Date()
-      })
+      .set(updateData)
       .where(eq(companies.id, companyId));
 
     // Get the updated company record
