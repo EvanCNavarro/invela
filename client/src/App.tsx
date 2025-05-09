@@ -10,6 +10,7 @@ import { WebSocketProvider } from "@/providers/websocket-provider";
 import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 // Import new unified services and phased startup components
 import { initializeServices } from "./services/unified-service-registration";
