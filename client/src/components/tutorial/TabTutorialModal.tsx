@@ -1,12 +1,4 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -34,8 +26,8 @@ export interface TabTutorialModalProps {
 /**
  * Tab Tutorial Modal Component
  * 
- * This reusable component renders a tutorial modal for any tab
- * with a consistent UI and navigation controls.
+ * This reusable component renders a tutorial modal specifically for the content area
+ * with a consistent UI and navigation controls, while keeping sidebar and navbar accessible.
  */
 export function TabTutorialModal({
   title,
@@ -50,7 +42,7 @@ export function TabTutorialModal({
 }: TabTutorialModalProps) {
   const [open, setOpen] = useState(true);
   
-  // Handle dialog close
+  // Handle skip action
   const handleClose = () => {
     setOpen(false);
     onClose();
@@ -71,21 +63,25 @@ export function TabTutorialModal({
     setOpen(true);
   }, []);
   
+  if (!open) return null;
+  
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent 
-        className="sm:max-w-[600px] p-0 overflow-hidden"
-        onInteractOutside={(e) => {
-          // Prevent closing on outside click to ensure users complete the tutorial
-          e.preventDefault();
-        }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" style={{ pointerEvents: 'none' }}>
+      {/* Content-only overlay - doesn't cover navbar or sidebar */}
+      <div className="absolute top-[64px] left-[70px] right-0 bottom-0 bg-black/20" style={{ pointerEvents: 'auto' }}></div>
+      
+      {/* Modal container */}
+      <div 
+        className="bg-white rounded-lg shadow-xl w-[600px] z-50 overflow-hidden"
+        style={{ pointerEvents: 'auto' }}
       >
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle className="text-2xl">{title}</DialogTitle>
-          <DialogDescription className="text-base mt-2">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-0">
+          <h2 className="text-2xl font-semibold">{title}</h2>
+          <p className="text-base mt-2 text-muted-foreground">
             {description}
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
         
         {/* Image area with loading state */}
         <div className="p-6 flex justify-center items-center bg-muted/20">
@@ -105,7 +101,7 @@ export function TabTutorialModal({
         </div>
         
         {/* Footer with progress indicator and controls */}
-        <DialogFooter className="p-6 flex flex-row justify-between items-center">
+        <div className="p-6 flex flex-row justify-between items-center border-t">
           <div className="text-sm text-muted-foreground">
             Step {currentStep + 1} of {totalSteps}
           </div>
@@ -117,8 +113,8 @@ export function TabTutorialModal({
               {currentStep >= totalSteps - 1 ? 'Complete' : 'Next'}
             </Button>
           </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }
