@@ -50,7 +50,7 @@ export function useTabTutorials(tabName: string) {
       return apiRequest('/api/user-tab-tutorials', {
         method: 'POST',
         body: JSON.stringify({
-          tabName,
+          tabName: tabName, // Explicitly use the exact property name expected by the server
           currentStep: payload.step,
           completed: payload.completed,
           totalSteps: getTotalSteps(tabName)
@@ -77,7 +77,7 @@ export function useTabTutorials(tabName: string) {
       return apiRequest('/api/user-tab-tutorials/mark-seen', {
         method: 'POST',
         body: JSON.stringify({ 
-          tabName,
+          tabName: tabName, // Explicitly use the exact property name expected by the server
           lastSeen: new Date().toISOString() 
         }),
         headers: {
