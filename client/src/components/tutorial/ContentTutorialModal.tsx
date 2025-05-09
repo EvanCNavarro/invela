@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export interface TutorialStep {
   title: string;
   description: string;
+  imagePath?: string;
   imageUrl?: string;
 }
 
