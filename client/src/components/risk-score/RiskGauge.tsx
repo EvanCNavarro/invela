@@ -38,7 +38,7 @@ const getRiskLevelColor = (level: string): string => {
 export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
   score, 
   riskLevel, 
-  size = 220
+  size = 320
 }) => {
   // Reference to the div that will contain the Plotly chart
   const chartRef = useRef<HTMLDivElement>(null);
@@ -88,8 +88,9 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         number: {
           font: {
             family: 'Arial, sans-serif',
-            size: size * 0.18,
-            color
+            size: size * 0.22,
+            color,
+            weight: 'bold'
           },
           suffix: '',
           prefix: ''
@@ -110,7 +111,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         // Configure layout for a half-circle gauge
         margin: { t: 40, b: 10, l: 30, r: 30 },
         width: size,
-        height: size / 1.8,
+        height: size / 1.5,
         font: {
           family: 'Arial, sans-serif',
           size: size / 18,
@@ -143,21 +144,6 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
     <div style={{ position: 'relative', width: size, height: size / 1.5 + 30, margin: '0 auto' }}>
       {/* The div that will contain the Plotly chart */}
       <div ref={chartRef} style={{ width: '100%', height: 'calc(100% - 30px)' }} />
-      
-      {/* Risk Acceptance Level text - below the gauge */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: size / 18,
-        color: '#666',
-        fontWeight: 500,
-        textAlign: 'center',
-        width: '100%'
-      }}>
-        Risk Acceptance Level
-      </div>
     </div>
   );
 };
