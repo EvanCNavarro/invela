@@ -96,12 +96,12 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
           bordercolor: 'transparent',
           steps: steps  // Add the gradient steps
         },
-        // Display the value in the center of the gauge
+        // Display the value in the center of the gauge with black color as requested
         number: {
           font: {
             family: 'Inter, sans-serif',
             size: size * 0.22,
-            color,
+            color: '#000000', // Black color for better visibility
             weight: 'bold'
           },
           suffix: '',
