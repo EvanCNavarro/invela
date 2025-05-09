@@ -52,7 +52,7 @@ const ItemTypes = {
   DIMENSION_ROW: 'dimensionRow'
 };
 
-// Skeleton component for dimension rows during loading state with varying styles by index
+// Skeleton component for dimension rows during loading state with light mode style
 const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
   // Vary the width and intensity based on priority
   const nameWidth = `${80 - index * 7}%`;
@@ -66,29 +66,29 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
       className="flex items-center space-x-4 p-4 mb-2 animate-pulse rounded-lg"
       style={{ 
         animationDelay: `${index * 0.1}s`,
-        backgroundColor: '#222222',
+        backgroundColor: '#f8f9fa',
       }}
     >
       {/* Drag handle skeleton */}
-      <div className="h-5 w-5 bg-gray-700 rounded"></div>
+      <div className="h-5 w-5 bg-gray-300 rounded"></div>
       
       <div className="flex-1">
         <div className="flex items-center">
           <div className="flex-1">
             {/* Name and badge skeleton */}
             <div className="flex items-center mb-2">
-              <div className="h-4 bg-gray-700 rounded" style={{ width: nameWidth }}></div>
-              <div className="ml-2 h-4 w-10 bg-gray-700 rounded-full"></div>
+              <div className="h-4 bg-gray-300 rounded" style={{ width: nameWidth }}></div>
+              <div className="ml-2 h-4 w-10 bg-gray-300 rounded-full"></div>
             </div>
             
             {/* Description skeleton */}
-            <div className="h-3 bg-gray-700/60 rounded" style={{ width: descWidth }}></div>
+            <div className="h-3 bg-gray-200 rounded" style={{ width: descWidth }}></div>
           </div>
         </div>
       </div>
       
       {/* Weight percentage skeleton */}
-      <div className="h-8 w-16 bg-gray-800/60 rounded-full flex items-center justify-center">
+      <div className="h-8 w-16 bg-blue-300 rounded-full flex items-center justify-center">
         <div className="text-transparent text-sm">{weight}%</div>
       </div>
     </div>
@@ -154,36 +154,36 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
     drop(node);
   };
 
-  // Render dimension row with neumorphic style matching the app
+  // Render dimension row with neumorphic light mode style matching the app screenshot
   return (
     <div 
       ref={ref}
       className={`flex items-center space-x-4 p-4 mb-2 transition-all duration-200 
       ${isDragging ? 'opacity-50 scale-[0.98]' : 'opacity-100 hover:shadow-md'}`}
       style={{ 
-        backgroundColor: '#222222',
+        backgroundColor: '#f8f9fa',
         borderRadius: '8px',
       }}
     >
       <div className="cursor-move flex items-center justify-center">
-        <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-200 transition-colors duration-150" />
+        <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors duration-150" />
       </div>
       
       <div className="flex-1">
         <div className="flex items-center">
           <div className="flex items-center">
-            <h4 className="font-medium text-white">
+            <h4 className="font-medium text-gray-900">
               {dimension.name}
             </h4>
-            <div className="ml-2 px-2 py-0.5 bg-gray-700 text-xs rounded-full text-gray-300 font-medium">
+            <div className="ml-2 px-2 py-0.5 bg-gray-200 text-xs rounded-full text-gray-700 font-medium">
               #{index + 1}
             </div>
           </div>
         </div>
-        <p className="text-sm text-gray-400 mt-0.5">{dimension.description}</p>
+        <p className="text-sm text-gray-600 mt-0.5">{dimension.description}</p>
       </div>
       
-      <div className="text-right font-semibold w-16 text-white text-lg bg-gray-800/60 px-2 py-1 rounded-full">
+      <div className="text-right font-semibold w-16 text-white text-lg bg-blue-600 px-2 py-1 rounded-full">
         {dimension.weight.toFixed(0)}%
       </div>
     </div>
