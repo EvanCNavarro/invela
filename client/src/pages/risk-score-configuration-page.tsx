@@ -859,8 +859,12 @@ export default function RiskScoreConfigurationPage() {
                         </div>
                       </div>
                       
-                      {/* Comparative visualization component */}
-                      <ComparativeVisualization dimensions={dimensions} />
+                      {/* Comparative visualization component - linked to the risk score summary */}
+                      <ComparativeVisualization 
+                        dimensions={dimensions} 
+                        globalScore={score} 
+                        riskLevel={riskLevel} 
+                      />
                     </TabsContent>
                   </Tabs>
                 </CardContent>
