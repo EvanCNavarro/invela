@@ -225,12 +225,16 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   const dbTutorialEntries = {
     'risk-score': { exists: true, tabName: 'risk-score', completed: false, currentStep: 0 },
     'claims-risk': { exists: true, tabName: 'claims-risk', completed: false, currentStep: 0 },
-    'network-view': { exists: true, tabName: 'network-view', completed: false, currentStep: 0 }
+    'network-view': { exists: true, tabName: 'network-view', completed: false, currentStep: 0 },
+    // Add additional entries for all normalized tab names
+    'risk-score-configuration': { exists: true, tabName: 'risk-score', completed: false, currentStep: 0 },
+    'claims-risk-analysis': { exists: true, tabName: 'claims-risk', completed: false, currentStep: 0 },
+    'network-visualization': { exists: true, tabName: 'network-view', completed: false, currentStep: 0 }
   };
   
   // Check if we have a direct database entry for this tab
-  // Use the normalized tab name to look up the entry
-  const directDbEntry = dbTutorialEntries[normalizedTabName];
+  // First try the original tab name, then fall back to the normalized name
+  const directDbEntry = dbTutorialEntries[tabName] || dbTutorialEntries[normalizedTabName];
   const shouldForceTutorial = directDbEntry && !isCompleted;
   
   console.log(`[TutorialManager] Direct DB check - Entry for ${tabName}:`, directDbEntry);
