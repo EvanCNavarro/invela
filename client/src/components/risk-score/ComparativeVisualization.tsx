@@ -39,10 +39,11 @@ let ReactApexChart: any;
 
 // Constants
 const MAX_COMPARISONS = 3; // Maximum number of companies that can be added for comparison
+// Using a blue-based color palette for consistent branding
 const COMPANY_COLORS = [
-  '#F43F5E', // Rose
-  '#8B5CF6', // Violet
-  '#10B981', // Emerald
+  '#2563eb', // Blue-600 - Main company color
+  '#3b82f6', // Blue-500 - Slightly lighter blue
+  '#60a5fa', // Blue-400 - Even lighter blue
 ];
 
 interface ComparativeVisualizationProps {
@@ -229,7 +230,7 @@ export function ComparativeVisualization({
     {
       name: currentCompanyData.name,
       data: dimensions.map(dim => currentCompanyData.dimensions[dim.id] || 0),
-      color: '#4965EC' // Blue color for current company
+      color: '#1e40af' // Blue-800 - Deeper blue for current company to make it stand out
     }
   ];
 
@@ -526,7 +527,7 @@ export function ComparativeVisualization({
               {/* Chart legend */}
               <div className="flex flex-wrap items-center justify-center gap-4 mt-6 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4965EC' }}></div>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }}></div>
                   <span className="text-sm font-medium">{currentCompanyData.name}</span>
                 </div>
                 
