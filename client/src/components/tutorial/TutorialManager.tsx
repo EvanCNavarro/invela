@@ -170,6 +170,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     isLoading: tutorialLoading,
     error: tutorialError,
     handleNext, 
+    handleBack,
     handleComplete, 
     markTutorialSeen 
   } = useTabTutorials(tabName);
@@ -271,6 +272,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
       currentStep={stepToUse}
       totalSteps={shouldForceTutorial ? steps.length : totalSteps}
       onNext={handleNext}
+      onBack={handleBack}
       onComplete={handleComplete}
       onClose={() => markTutorialSeen()}
     />
