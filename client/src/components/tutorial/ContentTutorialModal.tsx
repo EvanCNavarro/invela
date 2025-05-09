@@ -3,6 +3,10 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Class to be applied to body when modal is open
+// Using Tailwind's overflow-hidden class
+const NO_SCROLL_CLASS = 'overflow-hidden';
+
 // Define the tutorial step interface
 export interface TutorialStep {
   title: string;
@@ -177,6 +181,44 @@ export function ContentTutorialModal({
   useEffect(() => {
     setOpen(true);
   }, [currentStep]);
+  
+  // Disable scrolling when modal is open
+  useEffect(() => {
+    if (open) {
+      // Disable scrolling on body when modal is open
+      document.body.classList.add(NO_SCROLL_CLASS);
+      
+      // Make sure navbar is fixed (if it isn't already)
+      if (navbarRef.current) {
+        // Save current styles to restore later
+        const currentPosition = window.getComputedStyle(navbarRef.current).position;
+        
+        // Only change if not already fixed
+        if (currentPosition !== 'fixed') {
+          navbarRef.current.setAttribute('data-previous-position', currentPosition);
+          (navbarRef.current as HTMLElement).style.position = 'fixed';
+          (navbarRef.current as HTMLElement).style.top = '0';
+          (navbarRef.current as HTMLElement).style.width = '100%';
+          (navbarRef.current as HTMLElement).style.zIndex = '40';
+        }
+      }
+    }
+    
+    // Cleanup function to re-enable scrolling when the modal closes
+    return () => {
+      // Always remove the class on cleanup, regardless of open state
+      document.body.classList.remove(NO_SCROLL_CLASS);
+      
+      // Restore navbar position if needed
+      if (navbarRef.current) {
+        const previousPosition = navbarRef.current.getAttribute('data-previous-position');
+        if (previousPosition) {
+          (navbarRef.current as HTMLElement).style.position = previousPosition;
+          navbarRef.current.removeAttribute('data-previous-position');
+        }
+      }
+    };
+  }, [open]);
   
   if (!open) return null;
   
