@@ -33,5 +33,6 @@ export interface RiskScoreConfiguration {
 
 export interface RiskPriorities {
   dimensions: RiskDimension[];
+  riskAcceptanceLevel: number;
   lastUpdated: string;
 }
